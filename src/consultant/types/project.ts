@@ -170,6 +170,9 @@ export interface NewProjectData {
   country?: string;
   region?: string;
   currency?: string;
+  country_rid?: string;
+  region_rid?: string;
+  currency_rid?: string;
   total_effort?: string | null;
   total_cost?: string | null;
   total_fte?: number | null;

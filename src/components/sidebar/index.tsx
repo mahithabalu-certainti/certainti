@@ -2,7 +2,6 @@ import {
   Box,
   Collapse,
   Drawer,
-  Link,
   List,
   ListItem,
   ListItemButton,
@@ -251,40 +250,53 @@ export const Sidebar: React.FC<SideBarProps> = ({
       // onClose={handleBackdropClick}
       classes={{
         paper: `transform transition-all ease-in-out ${
-          sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
+          sidebarExpand ? 'w-[200px] duration-500' : 'w-[65px] duration-300'
         }`,
       }}
       sx={{
         '& .MuiDrawer-paper': {
           backgroundColor: 'primary.main',
-          color: 'white', // Set text color to white
+          color: 'white',
           border: 'none !important',
           transition: (theme) =>
-            theme.transitions.create(['width', 'background-color'], {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.standard,
+            theme.transitions.create(['width'], {
+              easing: theme.transitions.easing.easeInOut,
+              duration: sidebarExpand ? 500 : 300,
             }),
+          overflow: 'hidden',
         },
       }}
     >
       <React.Suspense fallback={null}>
-        <div className='flex items-center justify-center h-[40px]'>
-          <Link aria-label='logo'>
-            {sidebarExpand ? (
-              <Logo alt='logo' className='h-[16px]' />
-            ) : (
-              <LogoSmall alt='logo' className='h-[18px]' />
-            )}
-          </Link>
+        <div className='flex items-center justify-center h-[40px] relative'>
+          <div
+            className={`
+                absolute inset-0 flex items-center justify-center
+                transition-opacity ease-in-out
+                ${sidebarExpand ? 'opacity-100 duration-500' : 'opacity-0 duration-200'}
+              `}
+          >
+            <Logo alt='logo' className='h-[16px]' />
+          </div>
+          {/* Collapsed Logo */}
+          <div
+            className={`
+                absolute inset-0 flex items-center justify-center
+                transition-opacity ease-in-out
+                ${!sidebarExpand ? 'opacity-100 duration-300' : 'opacity-0 duration-200'}
+              `}
+          >
+            <LogoSmall alt='logo' className='h-[18px]' />
+          </div>
         </div>
         <List
           sx={{
-            mx: !sidebarExpand ? 'auto' : 'none',
             mt: 0.5,
             flexGrow: 1,
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
+            px: 1,
           }}
         >
           {!showAdminSidebar &&
@@ -301,30 +313,30 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   key={i}
                   disablePadding
                   sx={{
-                    maxWidth: '170px',
-                    mx: 'auto',
+                    width: '100%',
                     ...(isAfterDivider && { mt: 'auto' }),
                   }}
                 >
                   <ListItemButton
                     sx={{
-                      justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                       minHeight: 32,
-                      width: !sidebarExpand ? '32px' : '100%',
-                      height: !sidebarExpand ? '32px' : '32px',
-                      px: '4px',
+                      height: 32,
+                      width: '100%',
+                      px: 1,
                       py: 0,
                       mt: '4px',
-                      gap: '4px',
-                      borderRadius: '2px',
+                      borderRadius: '4px',
                       backgroundColor:
                         item.matchLink === trimmedPathname(1)
                           ? '#FFFFFF33'
-                          : '',
+                          : 'transparent',
                       '&:hover': {
                         backgroundColor: '#FFFFFF33',
                       },
-                      transition: 'all 0.3s ease-in-out',
+                      transition: 'background-color 0.4s ease-in-out',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-start',
                     }}
                     onClick={() => {
                       if (item.name === 'Logout') {
@@ -335,8 +347,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     }}
                   >
                     <Tooltip
-                      title={item.name}
-                      placement='right-end'
+                      title={!sidebarExpand ? item.name : ''}
+                      placement='right'
+                      arrow
                       slotProps={{
                         tooltip: {
                           sx: {
@@ -346,30 +359,52 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             borderRadius: '4px',
                           },
                         },
-                        popper: {
-                          modifiers: [
-                            {
-                              name: 'offset',
-                              options: {
-                                offset: [30, -40],
-                              },
-                            },
-                          ],
-                        },
                       }}
                     >
                       <ListItemIcon
                         sx={{
-                          minWidth: '32px',
-                          height: '26px',
+                          minWidth: 'auto',
+                          width: 24,
+                          height: 24,
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          ml: '4px',
+                          mr: 1,
+                          flexShrink: 0,
+                          opacity: 1,
+                          transition: sidebarExpand
+                            ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                            : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                          transform: 'scale(1)',
                         }}
                       >
-                        <item.icon alt='menu-icon' className='h-[16px]' />
+                        <item.icon
+                          alt='menu-icon'
+                          className='h-[16px] w-[16px]'
+                          style={{
+                            transition: sidebarExpand
+                              ? 'all 400ms ease-in-out'
+                              : 'all 250ms ease-in-out',
+                          }}
+                        />
                       </ListItemIcon>
                     </Tooltip>
-                    {sidebarExpand && (
+                    <Box
+                      sx={{
+                        opacity: sidebarExpand ? 1 : 0,
+                        transition: sidebarExpand
+                          ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                          : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                        transitionDelay: sidebarExpand ? '100ms' : '0ms',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        width: sidebarExpand ? 'auto' : 0,
+                        transform: sidebarExpand
+                          ? 'translateX(0)'
+                          : 'translateX(-10px)',
+                      }}
+                    >
                       <ListItemText
                         sx={{
                           '& .MuiTypography-root': {
@@ -379,40 +414,73 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         }}
                         primary={item.name}
                       />
-                    )}
+                    </Box>
                   </ListItemButton>
                 </ListItem>
               );
             })}
           {showAdminSidebar && (
-            <ListItem disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
+            <ListItem disablePadding sx={{ width: '100%' }}>
               <ListItemButton
                 sx={{
-                  justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                   minHeight: 32,
-                  width: !sidebarExpand ? '32px' : '100%',
-                  height: !sidebarExpand ? '32px' : '32px',
-                  px: '4px',
+                  height: 32,
+                  width: '100%',
+                  px: 1,
                   py: 0,
                   mt: 0,
-                  gap: '4px',
-                  borderRadius: '2px',
+                  borderRadius: '4px',
                   '&:hover': {
                     backgroundColor: 'transparent',
                   },
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: '26px',
-                    height: '26px',
+                    minWidth: 'auto',
+                    width: 24,
+                    height: 24,
+                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    ml: '4px',
+                    mr: 1,
+                    flexShrink: 0,
+                    opacity: 1,
+                    transition: sidebarExpand
+                      ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                      : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                    transform: 'scale(1)',
                   }}
                 >
-                  <AdministrationIcon alt='menu-icon' className='h-[16px]' />
+                  <AdministrationIcon
+                    alt='menu-icon'
+                    className='h-[16px] w-[16px]'
+                    style={{
+                      transition: sidebarExpand
+                        ? 'all 400ms ease-in-out'
+                        : 'all 250ms ease-in-out',
+                    }}
+                  />
                 </ListItemIcon>
-                {sidebarExpand && (
+                <Box
+                  sx={{
+                    opacity: sidebarExpand ? 1 : 0,
+                    transition: sidebarExpand
+                      ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                      : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                    transitionDelay: sidebarExpand ? '100ms' : '0ms',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    width: sidebarExpand ? 'auto' : 0,
+                    transform: sidebarExpand
+                      ? 'translateX(0)'
+                      : 'translateX(-10px)',
+                  }}
+                >
                   <ListItemText
                     sx={{
                       '& .MuiTypography-root': {
@@ -422,7 +490,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     }}
                     primary='Administration'
                   />
-                )}
+                </Box>
               </ListItemButton>
             </ListItem>
           )}
@@ -430,169 +498,252 @@ export const Sidebar: React.FC<SideBarProps> = ({
             adminNavItems.map((item, index) => (
               <div key={index}>
                 <ListItem
-                  key={index}
                   disablePadding
-                  sx={{ maxWidth: '170px', mx: 'auto', mt: '4px' }}
+                  sx={{
+                    width: '100%',
+                    mt: '4px',
+                    display:
+                      !sidebarExpand && !noItemsOpen && !item.openStatus
+                        ? 'none'
+                        : 'flex',
+                  }}
                 >
                   <ListItemButton
                     sx={{
-                      display:
-                        !sidebarExpand && !noItemsOpen && !item.openStatus
-                          ? 'none'
-                          : 'flex',
-                      justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                       minHeight: 32,
-                      width: !sidebarExpand ? '32px' : '100%',
-                      height: !sidebarExpand ? '32px' : '32px',
-                      px: '4px',
+                      height: 32,
+                      width: '100%',
+                      px: 1,
                       py: 0,
-                      mt: 0,
-                      gap: '4px',
-                      borderRadius: '2px',
-                      backgroundColor: item.openStatus ? '#FFFFFF33' : '',
+                      borderRadius: '4px',
+                      backgroundColor: item.openStatus
+                        ? '#FFFFFF33'
+                        : 'transparent',
                       '&:hover': {
                         backgroundColor: '#FFFFFF33',
                       },
-                      transition: 'all 0.3s ease-in-out',
+                      transition: 'background-color 0.4s ease-in-out',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-start',
                     }}
                     onClick={() => handleToggle(index)}
                   >
                     <ListItemIcon
                       sx={{
-                        minWidth: '26px',
-                        height: '26px',
+                        minWidth: 'auto',
+                        width: 24,
+                        height: 24,
+                        display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        ml: '4px',
+                        mr: 1,
+                        flexShrink: 0,
+                        opacity: 1,
+                        transition: sidebarExpand
+                          ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                          : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                        transform: 'scale(1)',
                       }}
                     >
-                      <item.icon alt='menu-icon' className='h-[16px]' />
-                    </ListItemIcon>
-                    {sidebarExpand && (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          width: '100%',
+                      <item.icon
+                        alt='menu-icon'
+                        className='h-[16px] w-[16px]'
+                        style={{
+                          transition: sidebarExpand
+                            ? 'all 400ms ease-in-out'
+                            : 'all 250ms ease-in-out',
                         }}
-                      >
-                        <ListItemText
+                      />
+                    </ListItemIcon>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        opacity: sidebarExpand ? 1 : 0,
+                        transition: sidebarExpand
+                          ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                          : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                        transitionDelay: sidebarExpand ? '100ms' : '0ms',
+                        overflow: 'hidden',
+                        transform: sidebarExpand
+                          ? 'translateX(0)'
+                          : 'translateX(-10px)',
+                      }}
+                    >
+                      <ListItemText
+                        sx={{
+                          flex: 1,
+                          '& .MuiTypography-root': {
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap',
+                          },
+                        }}
+                        primary={item.title}
+                      />
+                      {item.subItemTitle.length > 0 && (
+                        <Box
                           sx={{
-                            '& .MuiTypography-root': {
-                              fontWeight: 600,
-                              fontSize: '13px',
-                            },
+                            ml: 'auto',
+                            display: 'flex',
+                            alignItems: 'center',
+                            opacity: 1,
+                            transition: sidebarExpand
+                              ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                              : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                            transform: 'scale(1)',
                           }}
-                          primary={item.title}
-                        />
-                        {item.subItemTitle.length > 0 && (
+                        >
                           <Suspense fallback={null}>
                             {item.openStatus ? (
                               <AdminChevronUpIcon
                                 alt='up'
-                                className='h-[16px] mr-0.5'
+                                className='h-[16px] w-[16px]'
+                                style={{
+                                  transition: sidebarExpand
+                                    ? 'all 400ms ease-in-out'
+                                    : 'all 250ms ease-in-out',
+                                }}
                               />
                             ) : (
                               <AdminChevronDownIcon
                                 alt='down'
-                                className='h-[16px] mr-0.5'
+                                className='h-[16px] w-[16px]'
+                                style={{
+                                  transition: sidebarExpand
+                                    ? 'all 400ms ease-in-out'
+                                    : 'all 250ms ease-in-out',
+                                }}
                               />
                             )}
                           </Suspense>
-                        )}
-                      </Box>
-                    )}
+                        </Box>
+                      )}
+                    </Box>
                   </ListItemButton>
                 </ListItem>
-                <Collapse in={item.openStatus}>
+                <Collapse in={item.openStatus} timeout={400}>
                   {item.subItemTitle &&
                     item.subItemTitle.map((subItem, subIndex) => {
                       if (subItem.hide) return null;
+                      const isActive = matchCheck(subItem, trimmedPathname(2));
                       return (
                         <List
                           key={subIndex}
                           component='div'
                           sx={{
-                            fontWeight: 300,
-                            fontSize: '13px',
-                            maxWidth: '170px',
-                            mx: 'auto',
+                            width: '100%',
                             mt: '4px',
+                            pl: 1,
                           }}
                           disablePadding
                         >
                           <ListItemButton
                             sx={{
-                              justifyContent: !sidebarExpand
-                                ? 'center'
-                                : 'flex-start',
-                              mt: 1,
                               minHeight: 40,
-                              height: '40px',
-                              width: !sidebarExpand ? '40px' : '100%',
-                              px: '3px',
-                              borderRadius: '2px',
+                              height: 40,
+                              width: '100%',
+                              px: 1,
+                              borderRadius: '4px',
                               '&:hover': {
                                 backgroundColor: '#FFFFFF33',
                               },
+                              transition: 'background-color 0.4s ease-in-out',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-start',
                             }}
                             onClick={() => navigate(subItem.link)}
                           >
                             <ListItemIcon
                               sx={{
-                                minWidth: '26px',
-                                height: '26px',
+                                minWidth: 'auto',
+                                width: 24,
+                                height: 24,
+                                display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                ml: '4px',
+                                mr: 1,
+                                flexShrink: 0,
+                                opacity: 1,
+                                transition: sidebarExpand
+                                  ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                  : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                                transform: 'scale(1)',
                               }}
                             >
                               <subItem.icon
                                 alt='menu-icon'
-                                className='h-[16px]'
+                                className='h-[16px] w-[16px]'
                                 style={{
                                   filter:
-                                    !sidebarExpand &&
-                                    matchCheck(subItem, trimmedPathname(2))
+                                    !sidebarExpand && isActive
                                       ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
                                       : 'none',
+                                  transition: sidebarExpand
+                                    ? 'all 400ms ease-in-out'
+                                    : 'all 250ms ease-in-out',
                                 }}
                               />
                             </ListItemIcon>
-                            {sidebarExpand && (
-                              <Box
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                width: '100%',
+                                opacity: sidebarExpand ? 1 : 0,
+                                transition: sidebarExpand
+                                  ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                  : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                                transitionDelay: sidebarExpand
+                                  ? '100ms'
+                                  : '0ms',
+                                overflow: 'hidden',
+                                transform: sidebarExpand
+                                  ? 'translateX(0)'
+                                  : 'translateX(-10px)',
+                              }}
+                            >
+                              <ListItemText
                                 sx={{
-                                  display: 'flex',
-                                  justifyContent: 'flex-start',
-                                  gap: 1,
-                                  alignItems: 'center',
-                                  width: '100%',
+                                  flex: 1,
+                                  '& .MuiTypography-root': {
+                                    fontWeight: isActive ? 400 : 300,
+                                    fontSize: '13px',
+                                    color: isActive ? '#F16137' : '#FFFFFF',
+                                    whiteSpace: 'nowrap',
+                                  },
                                 }}
-                              >
-                                <ListItemText
+                                primary={subItem.name}
+                              />
+                              {isActive && (
+                                <Box
                                   sx={{
-                                    flex: 'unset',
-                                    '& .MuiTypography-root': {
-                                      fontWeight: matchCheck(
-                                        subItem,
-                                        trimmedPathname(2)
-                                      )
-                                        ? 400
-                                        : 300,
-                                      fontSize: '13px',
-                                      color: matchCheck(
-                                        subItem,
-                                        trimmedPathname(2)
-                                      )
-                                        ? '#F16137'
-                                        : '#FFFFFF',
-                                    },
+                                    ml: 'auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    opacity: 1,
+                                    transition: sidebarExpand
+                                      ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                      : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                                    transform: 'scale(1)',
                                   }}
-                                  primary={subItem.name}
-                                />
-                                {matchCheck(subItem, trimmedPathname(2)) && (
-                                  <AdminSubmenuActiveIcon className='h-[16px] w-[16px] mr-0.5' />
-                                )}
-                              </Box>
-                            )}
+                                >
+                                  <AdminSubmenuActiveIcon
+                                    className='h-[16px] w-[16px]'
+                                    style={{
+                                      transition: sidebarExpand
+                                        ? 'all 400ms ease-in-out'
+                                        : 'all 250ms ease-in-out',
+                                    }}
+                                  />
+                                </Box>
+                              )}
+                            </Box>
                           </ListItemButton>
                         </List>
                       );

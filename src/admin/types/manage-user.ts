@@ -105,7 +105,7 @@ export interface UserDetail {
   organization: string;
   profile_id: string;
   updated_by: UserRole;
-  phone?: string;
+  phone?: string | null;
   r_number: string;
   created_by: string;
   modified_by: string;
@@ -214,4 +214,25 @@ export interface OrgNameApiResponse {
   statusMessage: string;
   data: OrgNameData;
   requestId: string;
+}
+
+export interface UserPayload {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  is_consultant_firm: boolean;
+  org_id: string;
+  status?: string;
+  street?: string;
+  zip_code?: string;
+  role: string;
+  profile_id: string;
+  country_rid: string | null;
+  city_rid: string | null;
+  region_rid: string | null;
+  rid?: string;
+  azure_id?: string;
+  created_by?: string;
+  phone?: string | null;
+  organization?: string;
 }

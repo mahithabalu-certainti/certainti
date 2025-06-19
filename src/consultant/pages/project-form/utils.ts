@@ -137,9 +137,9 @@ export const transformFormData = (
       ? (capitalize(formData.project_status) as Status)
       : ('Active' as Status),
     fiscal_year: formData.fiscal_year,
-    country: formData.country,
-    region: formData.region,
-    currency: formData.currency,
+    country_rid: formData.country,
+    region_rid: formData.region,
+    currency_rid: formData.currency,
     total_effort: String(formData.total_effort) || null,
     total_cost: String(formData.total_cost) || null,
     total_fte: parseNullableNumber(formData.total_fte) || null,

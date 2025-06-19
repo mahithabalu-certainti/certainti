@@ -284,11 +284,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
         <TableContainer
           sx={{
             height: '100%',
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': {
-              display: 'none',
-            },
+            maxHeight: 'calc(100vh - 130px)',
+            overflow: 'auto',
           }}
         >
           <Table stickyHeader>

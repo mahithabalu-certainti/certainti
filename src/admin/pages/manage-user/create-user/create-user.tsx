@@ -25,13 +25,14 @@ import {
   useManageUserRole,
   useUpdateUserDetails,
 } from '../../../service/manage-user/manage-user-service';
-import { UserDetail, UserRole } from '../../../types/manage-user';
+import { UserDetail } from '../../../types/manage-user';
 import { FormData } from './form-data';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
+import { transFormPayload } from './utils';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -55,9 +56,9 @@ export const CreateUser: React.FC = () => {
   const navigate = useNavigate();
 
   const userDetails = useManageUserDetail(userid as string);
-  const userDatas = userDetails.data?.data?.users;
+  const userData = userDetails.data?.data?.users;
   const userFullName =
-    `${userDatas?.first_name || ''} ${userDatas?.last_name || ''}`.trim();
+    `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim();
 
   const userProfiles = useManageUserProfile();
   const allCountries = useGetAllCountries();
@@ -103,23 +104,23 @@ export const CreateUser: React.FC = () => {
   }, [commonSuccess, isEditView]);
 
   useEffect(() => {
-    if (userDatas && isEditView) {
+    if (userData && isEditView) {
       setIsConsultantFirm((prev) => ({
         ...prev,
-        isConsultantFirm: userDatas?.is_consultant_firm ? YesNo.Yes : YesNo.No,
+        isConsultantFirm: userData?.is_consultant_firm ? YesNo.Yes : YesNo.No,
       }));
     }
-  }, [userDatas?.is_consultant_firm]);
+  }, [userData?.is_consultant_firm]);
 
   useEffect(() => {
-    if (userDatas?.country || userDatas?.state) {
+    if (userData?.country || userData?.state) {
       setCurrentCountry((prev) => ({
         ...prev,
-        country: userDatas?.country,
-        state: userDatas?.state,
+        country: userData?.country,
+        state: userData?.state,
       }));
     }
-  }, [userDatas?.country, userDatas?.state]);
+  }, [userData?.country, userData?.state]);
 
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
@@ -192,43 +193,17 @@ export const CreateUser: React.FC = () => {
   );
 
   const submitData = (data: Partial<UserDetail>) => {
-    if (isEditView && userDatas) {
-      const constructData = {
-        ...data,
-        role: data?.role_rid,
-        rid: userDatas?.rid,
-        azure_id: userDatas?.azure_id,
-        profile_id: data.profile_rid,
-        country: data.country || null,
-        is_consultant_firm:
-          isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
-        org_id: data.org_id,
-      } as Partial<UserDetail>;
-      delete constructData.profile_rid;
-      delete constructData.email;
-      delete constructData.role_rid;
-      if (!constructData.phone) {
-        delete constructData.phone;
-      }
+    const payload = transFormPayload(
+      data,
+      isEditView,
+      userData,
+      isConsultantFirm.isConsultantFirm
+    );
 
-      updateUser.mutate(constructData);
+    if (isEditView && userData) {
+      updateUser.mutate(payload);
     } else {
-      const constructData = {
-        ...data,
-        country: data.country || null,
-        role: data.role_rid,
-        profile_id: data.profile_rid,
-        created_by: UserRole.Admin,
-        is_consultant_firm:
-          isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
-        org_id: data.org_id,
-      } as Partial<UserDetail>;
-      delete constructData.profile_rid;
-      delete constructData.role_rid;
-      if (!constructData.phone) {
-        delete constructData.phone;
-      }
-      createUser.mutate(constructData);
+      createUser.mutate(payload);
     }
   };
 
@@ -290,14 +265,11 @@ export const CreateUser: React.FC = () => {
       {/* Header Section */}
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
-          <ManageUserIcon
-            alt='manage user'
-            className='h-6 w-6 rounded'
-          />
+          <ManageUserIcon alt='manage user' className='h-6 w-6 rounded' />
           <div className='w-[90%]'>
             <div className={HEADER_STYLES.adminPermission}>
               {isEditView
-                ? `Admin Permission > ${userDatas?.full_name ?? userFullName}`
+                ? `Admin Permission > ${userData?.full_name ?? userFullName}`
                 : 'Admin Permission'}
             </div>
             <div className={HEADER_STYLES.manageUser}>
@@ -338,11 +310,11 @@ export const CreateUser: React.FC = () => {
             loading={false}
             data={formConfig}
             values={
-              isEditView && userDatas
+              isEditView && userData
                 ? {
-                    ...userDatas,
+                    ...userData,
                     is_consultant_firm:
-                      userDatas?.is_consultant_firm === true
+                      userData?.is_consultant_firm === true
                         ? YesNo.Yes
                         : YesNo.No,
                   }

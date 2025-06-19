@@ -665,16 +665,17 @@ export const ResourceFormData = (
       disableCost,
       currency,
       currencyLoading,
+      isresourceType,
+      isSalaryRequired,
+      autoCalculatedValue,
+      isEditView,
       disableSkill,
       skillTypeOptions,
       currentSkillType,
       skillSubTypeOptions,
       skillSubTypeLoading,
       currentskillSubType,
-      isSalaryRequired,
-      isEditView,
       createResource,
-      autoCalculatedValue,
     ]
   );
 };

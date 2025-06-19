@@ -410,7 +410,10 @@ export const AccountDetails = () => {
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
           />
         </div>
-        <div className='flex-1 overflow-hidden'>
+        <div
+          className='flex-1'
+          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+        >
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

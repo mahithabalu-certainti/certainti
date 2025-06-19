@@ -333,20 +333,19 @@ const TabPanel: React.FC<TabProps> = ({
 
         <Box className='flex items-center'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-
+          {tabValue === 'account_projects_view_overview' && (
+            <div className='flex items-center gap-2'>
+              <span className='text-sm text-gray-700'>Include Aggregation</span>
+              <Switch
+                checked={toggleEnabled}
+                onChange={handleToggleChange}
+                size='small'
+                color='success'
+              />
+            </div>
+          )}
           {filterVisibility && value !== 'details' && (
             <>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-700'>
-                  Include Aggregation
-                </span>
-                <Switch
-                  checked={toggleEnabled}
-                  onChange={handleToggleChange}
-                  size='small'
-                  color='success'
-                />
-              </div>
               <Box className='relative'>
                 <Box
                   component='button'
