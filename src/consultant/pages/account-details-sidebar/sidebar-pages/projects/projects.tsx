@@ -324,7 +324,7 @@ const Projects: React.FC<ProjectsProps> = ({
               onSelectionChange={(selectedIds) =>
                 console.log('Selected:', selectedIds)
               }
-              component='global-project'
+              component='project'
             />
           </div>
         </>
