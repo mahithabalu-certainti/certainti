@@ -350,7 +350,7 @@ class ResourceCostService {
             .minus(deductions || 0)
         );
 
-        let status = "active";
+        let status = "Active";
 
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
@@ -362,21 +362,21 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status: "active",
+            status: "Active",
             net_resource_cost: calculatedResourceCost,
             account_rid,
           },
         });
 
         if (existingCost) {
-          status = "duplicate";
+          status = "Duplicate";
         } else if (effort_in_hrs !== undefined && Number(effort_in_hrs) > 3000) {
-          status = "anomaly";
+          status = "Anomaly";
         } else if (
           (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
           (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
         ) {
-          status = "anomaly";
+          status = "Anomaly";
         }
 
         createdResourceCost = await ResourceCost.create({
@@ -632,20 +632,20 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status: "active",
+            status: "Active",
             net_resource_cost: calculatedResourceCost,
           },
         });
 
         if (existingCost) {
-          resourceCostStatus = "duplicate";
+          resourceCostStatus = "Duplicate";
         } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
-          resourceCostStatus = "anomaly";
+          resourceCostStatus = "Anomaly";
         } else if (
           (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
           (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
         ) {
-          resourceCostStatus = "anomaly";
+          resourceCostStatus = "Anomaly";
         }
 
         const [affectedCounts, affectedRows] = await ResourceCost.update(
@@ -1060,10 +1060,10 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     const mainDbSequelize = await this.getMainDbSequelize();
     ResourceCost.initialize(sequelize, schemaName);
 
-    let resourceCostStatus = "active";
+    let resourceCostStatus = "Active";
 
     // Only check for anomaly conditions if handling duplicate type
-    if (type === 'duplicate') {
+    if (type === 'Duplicate') {
       const resourceCostBy = await ResourceCost.findOne({
         where: {
           rid: id,
@@ -1078,19 +1078,19 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
           resourceCostBy.effort_in_hrs &&
           Number(resourceCostBy.effort_in_hrs) > 3000
         ) {
-          resourceCostStatus = "anomaly";
+          resourceCostStatus = "Anomaly";
         } else if (
           (resourceCostBy?.salary && currencyThreshold !== null && Number(resourceCostBy.salary) > currencyThreshold) ||
           (resourceCostBy?.resource_cost && currencyThreshold !== null && Number(resourceCostBy.resource_cost) > currencyThreshold)
         ) {
-          resourceCostStatus = "anomaly";
+          resourceCostStatus = "Anomaly";
         }
       }
     }
 
     const updateStatus = await ResourceCost.update(
       {
-        status: action === "accept" ? resourceCostStatus : "inactive",
+        status: action === "accept" ? resourceCostStatus : "Inactive",
       },
       {
         where: {
