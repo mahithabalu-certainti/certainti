@@ -19,7 +19,7 @@ interface HeaderProps {
   subtitle?: string;
   placeholder?: string;
   totalRecords?: number;
-  icon?:  React.ReactNode;
+  icon?: React.ReactNode;
   actionItems?: ActionsDropdownItem[];
   primaryButton?: {
     label: string;

@@ -85,7 +85,6 @@ export const ResourceFormData = (
   isresourceType?: boolean,
   isSalaryRequired?: boolean,
   isEditView?: boolean,
-  isEditView?: boolean,
   currentResource?: { resource_firstname: string; resource_lastname: string },
   autoCalculatedValue?: number
 ): FormType[] => {
@@ -417,7 +416,6 @@ export const ResourceFormData = (
             placeholder: 'Choose Status',
             required: false,
             disabled: true,
-            hide: !isEditView,
             hide: !isEditView,
           }),
         ],

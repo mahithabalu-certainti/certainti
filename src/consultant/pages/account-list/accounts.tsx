@@ -187,7 +187,7 @@ export const Accounts: React.FC = () => {
 
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+      <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
             <AccountHomeIcon
