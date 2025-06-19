@@ -143,12 +143,12 @@ export const transformFormData = (
     total_effort: String(formData.total_effort) || null,
     total_cost: String(formData.total_cost) || null,
     total_fte: parseNullableNumber(formData.total_fte) || null,
-    total_sub_con: formData.total_sub_con || null,
-    total_non_labor_cost: String(formData.total_non_labor_cost) || null,
-    total_fte_effort: String(formData.total_fte_effort) || null,
-    total_sub_con_effort: String(formData.total_sub_con_effort) || null,
-    total_fte_cost: String(formData.total_fte_cost) || null,
-    total_sub_con_cost: String(formData.total_sub_con_cost) || null,
+    total_subcon: formData.total_subcon || null,
+    total_cost_nonlabor: String(formData.total_cost_nonlabor) || null,
+    total_effort_fte: String(formData.total_effort_fte) || null,
+    total_effort_subcon: String(formData.total_effort_subcon) || null,
+    total_cost_fte: String(formData.total_cost_fte) || null,
+    total_cost_subcon: String(formData.total_cost_subcon) || null,
     auto_send_ai_interaction:
       String(formData.auto_send_ai_interaction) === 'Yes',
     auto_access_rd: String(formData.auto_access_rd) === 'Yes',
@@ -157,8 +157,8 @@ export const transformFormData = (
     blended_rate_fte: formData.blended_rate_fte
       ? `${formData.blended_rate_fte}`
       : null,
-    blended_rate_sub_con: formData.blended_rate_sub_con
-      ? `${formData.blended_rate_sub_con}`
+    blended_rate_subcon: formData.blended_rate_subcon
+      ? `${formData.blended_rate_subcon}`
       : null,
     comments: formData.comments || '',
     key_contacts:
@@ -166,7 +166,8 @@ export const transformFormData = (
   };
 
   if (isEdit && formData.rid) {
-    data.project_id = formData.rid;
+    // data.account_id = formData.rid;
+    data.project_fiscal_id = formData.project_id;
   }
 
   return data;

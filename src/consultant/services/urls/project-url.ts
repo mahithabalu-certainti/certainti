@@ -9,6 +9,7 @@ export const ProjectListURL = ({
   fiscalYear,
   accountNumber,
   globalFilters,
+  bothParentAndChild,
 }: ProjectListParams): string => {
   const baseUrl = `/api/project/list${accountNumber ? `/${accountNumber}` : ''}`;
   const searchParams = new URLSearchParams();
@@ -23,6 +24,9 @@ export const ProjectListURL = ({
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
   if (globalFilters !== undefined) {
     searchParams.set('globalFilters', JSON.stringify(globalFilters));
+  }
+  if (bothParentAndChild !== undefined) {
+    searchParams.set('bothParentAndChild', bothParentAndChild.toString());
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
@@ -42,6 +46,7 @@ export const ProjectExportListURL = ({
   accountNumber,
   globalFilters,
   timezone,
+  bothParentAndChild,
 }: ProjectListParams): string => {
   const baseUrl = accountNumber
     ? `/api/project/export${accountNumber ? `/${accountNumber}` : ''}`
@@ -56,6 +61,9 @@ export const ProjectExportListURL = ({
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
   if (globalFilters !== undefined) {
     searchParams.set('globalFilters', JSON.stringify(globalFilters));
+  }
+  if (bothParentAndChild !== undefined) {
+    searchParams.set('bothParentAndChild', bothParentAndChild.toString());
   }
   if (timezone !== undefined) searchParams.set('timezone', timezone);
   const queryString = searchParams.toString();

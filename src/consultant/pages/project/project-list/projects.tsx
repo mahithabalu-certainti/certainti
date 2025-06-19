@@ -21,6 +21,7 @@ import { exportProjectData } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
 
 export const Projects: React.FC = () => {
+  const [toggleEnabled, setToggleEnabled] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -101,6 +102,7 @@ export const Projects: React.FC = () => {
       fiscalYear: tableParams.fiscalYear,
       globalFilters: tableParams.globalFilters,
       timezone: systemTimezone,
+      bothParentAndChild: toggleEnabled,
     };
     exportProjectData('projectall', projectParams);
   };
@@ -203,6 +205,8 @@ export const Projects: React.FC = () => {
               setCurrentPage={setPage}
               mode={'date'}
               handleSorting={handleSorting}
+              toggleEnabled={toggleEnabled}
+              setToggleEnabled={setToggleEnabled}
             />
           </Suspense>
         </div>
@@ -217,6 +221,7 @@ export const Projects: React.FC = () => {
           isProjectEditEnable={isProjectEditEnable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
+          toggleEnabled={toggleEnabled}
         />
       </div>
     </div>

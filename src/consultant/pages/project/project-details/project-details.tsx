@@ -254,7 +254,6 @@ export const ProjectDetails = () => {
   };
 
   if (!projectIsEnable) return <AccessRestricted />;
-
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
