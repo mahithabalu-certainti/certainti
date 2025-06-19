@@ -1069,7 +1069,7 @@ class SchemaService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by:
+          created_by:
             newResourceData.modified_by ||
             newResourceData.created_by ||
             "system",
