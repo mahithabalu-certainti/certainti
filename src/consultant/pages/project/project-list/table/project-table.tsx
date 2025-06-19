@@ -1,17 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
-import { ProjectList, ProjectListParams } from '../../../../types/project';
-import { ListTable } from '../../../../../components/table';
+import {
+  // ProjectList,
+  ProjectListParams,
+} from '../../../../types/project';
 import { getAllProjectListColumns } from './columns';
 import { useAllProjects } from '../../../../services/project';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { PROJECT_DETAILS } from '../../../../../routes';
-import { ActionItem } from '../../../../../components/table/types';
+import { ActionItem, Project } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
+import { AccordionTable } from '../../../../../components/table';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
@@ -21,6 +24,7 @@ interface IProjectTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshProjectsTrigger?: number;
+  toggleEnabled?: boolean;
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -31,6 +35,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshProjectsTrigger,
+  toggleEnabled,
 }) => {
   const navigate = useNavigate();
   const { fiscalYear, filters } = useSelector<
@@ -51,7 +56,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(
-    tableParams,
+    { ...tableParams, bothParentAndChild: toggleEnabled },
     undefined,
     refreshProjectsTrigger
   );
@@ -64,13 +69,14 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }
   }, [data]);
 
-  const getRowId = (row: ProjectList) => row.rid;
+  const getRowId = (row: Project) => row.project_rid;
 
   const handleEdit = (account: any) => {
-    navigate(`/Project/edit/${account?.project_id}`, {
+    navigate(`/project/edit/${account?.project_fiscal_rid}`, {
       state: {
-        accountID: account?.account_id,
-        projectID: account?.project_id,
+        accountID: account?.account_rid,
+        projectID: account?.project_fiscal_rid,
+        breadcrumbs: [{ label: 'Project' }, { label: account?.project_code }],
       },
     });
   };
@@ -99,12 +105,15 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }));
   };
 
-  const handleAccountName = (project: ProjectList) => {
+  const handleAccountName = (project: Project) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.project_id ?? null,
+      projectid: project?.project_fiscal_rid ?? null,
     });
     navigate(path, {
-      state: { accountID: project?.account_id, projectID: project?.project_id },
+      state: {
+        accountID: project?.account_rid,
+        projectID: project?.project_fiscal_rid,
+      },
     });
   };
 
@@ -131,8 +140,8 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   ];
 
   return (
-    <ListTable
-      data={data?.projects as any}
+    <AccordionTable
+      data={data?.projects as Project[]}
       columns={projectColumns}
       getRowId={getRowId}
       hoverHighlight={false}

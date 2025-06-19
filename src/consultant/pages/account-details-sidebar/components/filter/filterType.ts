@@ -221,4 +221,6 @@ export interface FilterComponentProps {
   setCurrentPage: (page: number) => void;
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  toggleEnabled?: boolean;
+  setToggleEnabled?: (val: boolean) => void;
 }
