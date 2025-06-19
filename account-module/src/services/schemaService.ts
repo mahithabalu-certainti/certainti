@@ -1543,6 +1543,7 @@ class SchemaService {
         const queries = Array.from(schemaToAccountRids).map(
           async ([schema, accountRids]) => {
             try {
+                const schemaName = `trd365_${schema.replace(/\D/g, '')}`;
               return await orgDbSequelize.query(
                 `SELECT fiscal_year, account_rid,
              SUM(total_projects::NUMERIC) AS total_projects,
@@ -1552,7 +1553,7 @@ class SchemaService {
              SUM(qualifying_project_qre_fed::NUMERIC) AS qualifying_project_qre_fed,
              SUM(qualifying_project_rd_credits_fed::NUMERIC) AS qualifying_project_rd_credits_fed,
              SUM(total_projects_rd_credits::NUMERIC) AS total_projects_rd_credits
-             FROM "trd365_${schema}".account_fiscal
+             FROM "${schemaName}".account_fiscal
              WHERE account_rid IN (:accountRids)
              GROUP BY account_rid, fiscal_year`,
                 { replacements: { accountRids }, type: "SELECT" }
