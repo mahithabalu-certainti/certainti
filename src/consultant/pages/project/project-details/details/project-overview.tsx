@@ -157,7 +157,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     { label: 'Name', value: projectDetails?.project_name },
     { label: 'Project Type', value: projectDetails?.project_type },
     {
-      label: 'Effect From',
+      label: 'Effective From',
       value: getDateFormat(projectDetails?.project_startdate ?? undefined),
     },
     {

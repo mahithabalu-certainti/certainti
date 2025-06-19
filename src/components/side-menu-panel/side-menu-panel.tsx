@@ -78,14 +78,29 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       <div
         className={`relative h-[30px] flex items-center ${isCollapsed ? 'justify-end' : 'justify-between'} gap-1.5 mb-1`}
       >
-        <span
-          className={`text-[15px] text-[#2D3E4F] font-bold ${!isCollapsed ? 'pl-6.5' : 'absolute right-[19px]'}`}
-        >
-          {!isCollapsed ? headerTitle : getShortName(headerTitle)}
-        </span>
+        <div className={`relative h-[20px] w-full`}>
+          {/* Full header title */}
+          <span
+            className={`absolute left-0 -top-0.5 text-[15px] text-[#2D3E4F] font-bold transition-opacity duration-300 ${
+              isCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible pl-6.5'
+            }`}
+          >
+            {headerTitle}
+          </span>
+
+          {/* Short name */}
+          <span
+            className={`absolute -right-1 -top-0.5 text-[15px] text-[#2D3E4F] font-bold transition-opacity duration-300 ${
+              isCollapsed ? 'opacity-100 visible' : 'opacity-0 invisible'
+            }`}
+          >
+            {getShortName(headerTitle)}
+          </span>
+        </div>
+
         {showBackIcon && (
           <div
-            className={`w-[18px] h-[18px] cursor-pointer transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
+            className={`w-[18px] h-[18px] cursor-pointer transform transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
             onClick={onToggleCollapse}
           >
             <BackIcon alt='Back' className='w-[18px] h-[18px]' />
@@ -115,9 +130,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   disableHoverListener={!isCollapsed}
                 >
                   <span
-                    className={
-                      'flex items-center justify-center w-[22px] h-[22px]'
-                    }
+                    className={`flex items-center justify-center ${isCollapsed ? 'pl-1.5' : ''} w-[22px] h-[22px]`}
                   >
                     {item.icon ? (
                       <span className='flex items-center justify-center w-4 h-4'>
@@ -131,9 +144,14 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   </span>
                 </Tooltip>
                 {/* Show text only in expanded view */}
-                {!isCollapsed && (
-                  <span className='flex-1 truncate'>{item.name}</span>
-                )}
+                <span
+                  className={`truncate transition-opacity duration-300 ${
+                    isCollapsed ? 'opacity-0 w-0' : 'flex-1 opacity-100 w-auto'
+                  }`}
+                >
+                  {item.name}
+                </span>
+
                 {!isCollapsed && (
                   <AdminSubmenuActiveIcon
                     alt='active'

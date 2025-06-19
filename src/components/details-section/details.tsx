@@ -31,7 +31,7 @@ const DetailsSection: React.FC<{
   }
 
   const renderValue = (value: React.ReactNode, label?: string) => {
-    if (value === 'empty') return <span></span>;
+    if (!value) return <span>-</span>;
 
     if (typeof value === 'string') {
       const status = value.toLowerCase();
@@ -130,6 +130,7 @@ const DetailsSection: React.FC<{
                               text={String(item.value)}
                               maxWidth={'100%'}
                               className='truncate max-w-full'
+                              alwaysShowTooltip={item.value ? true : false}
                             >
                               {renderValue(item.value, item.label)}
                             </TruncateWithTooltip>
