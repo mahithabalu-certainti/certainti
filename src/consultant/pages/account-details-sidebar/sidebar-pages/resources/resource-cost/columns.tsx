@@ -13,14 +13,6 @@ export interface ResourceCostTableColumn<T> {
   render?: (row: T) => React.ReactNode;
 }
 
-// const costDisplay = (cost: string | number | null | undefined) => {
-//   if (cost === null || cost === undefined) return '-';
-//   const formattedCost = Number(cost).toLocaleString('en-US', {
-//     minimumFractionDigits: 2,
-//   });
-//   return <>{formattedCost}</>;
-// };
-
 export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
   [
     {

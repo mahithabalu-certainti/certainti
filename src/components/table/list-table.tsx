@@ -199,11 +199,11 @@ const ListTable = <T extends RowData>({
                   sx={{
                     padding: '0px 8px',
                     width: 280,
-                    minWidth: 280,
+                    minWidth: 110,
                     maxWidth: 280,
                   }}
                 >
-                  Condition
+                  Status Action
                 </TableCell>
               )}
 
@@ -213,6 +213,7 @@ const ListTable = <T extends RowData>({
                     width: actionWidth,
                     minWidth: actionWidth,
                     maxWidth: actionWidth,
+                    textAlign: 'center',
                   }}
                 >
                   Action
@@ -387,7 +388,7 @@ const ListTable = <T extends RowData>({
                         sx={{
                           padding: '0px 8px',
                           width: 280,
-                          minWidth: 280,
+                          minWidth: 110,
                           maxWidth: 280,
                           whiteSpace: 'nowrap',
                         }}

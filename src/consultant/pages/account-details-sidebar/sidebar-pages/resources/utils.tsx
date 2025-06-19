@@ -107,9 +107,6 @@ export const getSkillFilterFields = (
   skillSubTypeOptions: any[]
 ): FieldConfig[] => {
   return [
-    // { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
-    // { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
-    // { name: 'Resource Type', value: 'resource_type', type: 'enum', required: true, options: resourceTypeOptions, filterOptions: requiredFieldFilterOptionsForEnum },
     {
       name: 'Effective From',
       value: 'start_date',
@@ -147,9 +144,6 @@ export const getSkillFilterFields = (
       required: true,
       filterOptions: requiredFieldFilterOptionsForText,
     },
-    // { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
-    // { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
-    // { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
     {
       name: 'Years of Experience',
       value: 'resource_total_experience',

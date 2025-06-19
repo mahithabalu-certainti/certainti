@@ -116,10 +116,6 @@ export const ResourceFormData = (
                 errorMessage:
                   'Only letters, numbers, hyphens, and underscores are allowed.',
               },
-              // {
-              //   regex: REGEX_PATTERNS.NO_TRAILING_SPECIAL_REGEX,
-              //   errorMessage: 'Cannot end with a hyphen or underscore.',
-              // },
             ],
             placeholder: 'Enter Resource Code',
             disabled: disableCostAndSkill,
@@ -283,12 +279,6 @@ export const ResourceFormData = (
                 errorMessage:
                   'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
               },
-              // {
-              //   regex:
-              //     REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-              //   errorMessage:
-              //     'Cannot start or end with a space or special character',
-              // },
             ],
           }),
           createSelectField('resource_status', 'Status', {
@@ -619,7 +609,6 @@ export const ResourceFormData = (
             placeholder: 'Enter Comments',
             regexErrorMessage: 'Max length exceeded.',
             regex: RESOURCE_REGEX.DESCRIPTION,
-            // disabled: disableCostAndSkill,
           }),
         ],
       },
