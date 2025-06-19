@@ -225,6 +225,7 @@ const updateAccountSchema = Joi.object({
     "any.invalid": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
   }).allow(null).allow(""),
   modified_by: Joi.string().max(255).optional(),
+  logo_action:Joi.string().max(255).optional().allow("").allow(null),
   industry_rid: Joi.string().required().label("Industry"),
   industry_name_other: Joi.string().min(3).max(255).optional().allow("").allow(null).label("Industry Other"),
   business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
