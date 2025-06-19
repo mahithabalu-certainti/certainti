@@ -603,6 +603,7 @@ const ResourceForm: React.FC = () => {
     isAnyResourceNameFilled,
     isresourceType,
     isSalaryRequired,
+    isEditView,
     currentResource,
     autoCalculatedValue
   );

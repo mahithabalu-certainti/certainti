@@ -162,8 +162,8 @@ export interface AccountById {
   industry: string;
   industry_rid: string;
   business_details: string;
-  country_rid: string;
-  currency_rid: string;
+  country_rid: string | null;
+  currency_rid: string | null;
   status: Status;
   primary_contact_name: string;
   is_parent: boolean;
@@ -216,6 +216,7 @@ export interface NewAccountData extends AccountFieldsTypes, AccountById {
   account_currency_rid: string | null;
   account_country_rid: string | null;
   account_country_region_rid: string | null;
+  region_rid: string | null;
   account_city_rid: string;
   created_by: string;
   modified_by: string;

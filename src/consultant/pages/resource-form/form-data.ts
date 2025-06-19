@@ -84,6 +84,7 @@ export const ResourceFormData = (
   isAnyResourceNameFilled?: boolean,
   isresourceType?: boolean,
   isSalaryRequired?: boolean,
+  isEditView?: boolean,
   currentResource?: { resource_firstname: string; resource_lastname: string },
   autoCalculatedValue?: number
 ): FormType[] => {
@@ -425,7 +426,7 @@ export const ResourceFormData = (
             placeholder: 'Choose Status',
             required: false,
             disabled: true,
-            hide: !disableFields,
+            hide: !isEditView,
           }),
         ],
       },
@@ -675,15 +676,17 @@ export const ResourceFormData = (
       disableCost,
       currency,
       currencyLoading,
+      isresourceType,
+      isSalaryRequired,
+      autoCalculatedValue,
+      isEditView,
       disableSkill,
       skillTypeOptions,
       currentSkillType,
       skillSubTypeOptions,
       skillSubTypeLoading,
       currentskillSubType,
-      isSalaryRequired,
       createResource,
-      autoCalculatedValue,
     ]
   );
 };
