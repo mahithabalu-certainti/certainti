@@ -1,31 +1,33 @@
-import express from 'express';
-import cors from 'cors';
-import requestLogger from '../middlewares/requestLoggerMiddleware';
-import routes from '../routes/index';
-import { RedisService } from '../services/redisService';
-
+import express from "express";
+import cors from "cors";
+import compression from "compression";
+import helmet from "helmet";
+import requestLogger from "../middlewares/requestLoggerMiddleware";
+import routes from "../routes/index";
 interface Server {
-    app: express.Application;
+  app: express.Application;
 }
 
 const initExpressServer = async (): Promise<Server> => {
-   const app: express.Application = express();
-   
-   app.use(express.json()),
-   app.use(
+  const app: express.Application = express();
+
+  app.use(helmet());
+  
+  app.use(compression());
+
+  app.use(express.json({ limit: "50mb" }));
+
+  app.use(
     cors({
-        origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true,
+      origin: "*",
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true,
     })
-   );
+  );
 
-//    const redis = new RedisService();
-//    await redis.connect();
-
-   app.use(requestLogger);
-   app.use('/api', routes);
-   return {app};
-}
+  app.use(requestLogger);
+  app.use("/api", routes);
+  return { app };
+};
 
 export default initExpressServer;
