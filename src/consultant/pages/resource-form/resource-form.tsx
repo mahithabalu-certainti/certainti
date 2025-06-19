@@ -271,10 +271,6 @@ const ResourceForm: React.FC = () => {
     }
   }, [state, costDetails, resource]);
 
-  // useEffect(() => {
-  //   setAutoCalculatedValue(calculateAutoValue(resourceFinancials));
-  // }, [resourceFinancials]);
-
   const countryId = resource?.data?.resourceDetails.resource_country;
   const stateId = resource?.data?.resourceDetails.resource_region;
   useEffect(() => {
@@ -576,9 +572,6 @@ const ResourceForm: React.FC = () => {
       }
     }
   };
-
-  //disable orgname in the formdata if the user select resource type as full-time
-  // const disableOrgname = resourceDetails?.resource_type === 'full-time';
 
   // Form configuration
   const formConfig = ResourceFormData(

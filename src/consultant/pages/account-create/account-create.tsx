@@ -104,9 +104,24 @@ export const AccountForm: React.FC = () => {
   const account = getAccount.data?.data;
   const logoUrl = account?.accountById?.logo_url;
   const logoName = logoUrl && logoUrl.substring(logoUrl.lastIndexOf('/') + 1);
+  const getMimeTypeFromExtension = (fileName: string): string => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg'; // browser treats .jpg as image/jpeg
+      case 'png':
+        return 'image/png';
+      case 'svg':
+        return 'image/svg+xml';
+      default:
+        return '';
+    }
+  };
   useEffect(() => {
-    if (account?.accountById?.logo_url) {
-      setLogo({ name: logoName || '' } as File);
+    if (logoUrl && logoName) {
+      const fileType = getMimeTypeFromExtension(logoName);
+      setLogo({ name: logoName, type: fileType } as File);
     }
   }, [account, logoName]);
   // Remaping all fields to match with form controls
@@ -278,13 +293,27 @@ export const AccountForm: React.FC = () => {
     const newKeyData = newKeyContactFields(memoizedRole);
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
-
   const submitData = (formValues: Partial<AccountFormData>) => {
+    let logoAction: 'update' | 'delete' | '' = '';
+
+    if (isEditView) {
+      if (!logo && logoUrl) {
+        // Logo existed before, but now it's null — user deleted it
+        logoAction = 'delete';
+      } else if (logo instanceof File) {
+        // New image uploaded
+        logoAction = 'update';
+      } else {
+        // No change to logo
+        logoAction = '';
+      }
+    }
     const transformData = transformFormData(
       formValues,
       isEditView,
       accountData?.rid,
-      account?.accountDetails?.keyContacts
+      account?.accountDetails?.keyContacts,
+      logoAction
     );
     const formData = new FormData();
     formData.append('logo', logo as Blob);

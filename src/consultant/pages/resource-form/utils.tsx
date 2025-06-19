@@ -16,9 +16,10 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
   { label: 'In-Active', value: 'Inactive' },
 ];
 export const RESOURCE_STATUS_COST: SelectOption[] = [
-  { label: 'Active', value: 'active' },
-  { label: 'Anomaly', value: 'anomaly' },
-  { label: 'Duplicate', value: 'duplicate' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Inactive', value: 'Inactive' },
+  { label: 'Anomaly', value: 'Anomaly' },
+  { label: 'Duplicate', value: 'Duplicate' },
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
