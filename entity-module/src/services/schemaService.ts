@@ -1192,7 +1192,7 @@ class SchemaService {
         event_status: "success",
         event_type: "ui handler",
         entity_rid: resourceId,
-        created_by: resourceData.created_by,
+        created_by: resourceData.created_by || resourceData.modified_by ,
       });
     } catch (err) {
       throw new Error("Error adding timeline : " + (err as Error).message);
