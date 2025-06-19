@@ -1,6 +1,7 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
 import { States } from "./stateModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface CityAttributes {
   rid: string;
@@ -10,6 +11,9 @@ interface CityAttributes {
   currency_code?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
+
 }
 
 interface CityCreationAttributes extends Optional<CityAttributes, "rid"> {}
@@ -25,30 +29,24 @@ export class City
   currency_code?: string;
   created_datetime!: Date;
   modified_datetime!: Date;
+  created_by?: string;
+  modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     City.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
         },
-        city_name: {
-          type: DataTypes.STRING(255),
+        created_by: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
-        state_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        country_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        currency_code: {
-          type: DataTypes.STRING(10),
+        modified_by: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         created_datetime: {
@@ -61,6 +59,22 @@ export class City
           allowNull: true,
           defaultValue: DataTypes.NOW,
         },
+        city_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        state_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        country_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        currency_code: {
+          type: DataTypes.STRING(10),
+          allowNull: true,
+        }
       },
       {
         sequelize,

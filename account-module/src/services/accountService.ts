@@ -681,7 +681,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         account_name,
         comments: comments || "",
         // r_number: "fnfdfn",
-        region: account_country_region_rid,
+        region_rid: account_country_region_rid,
         is_parent: parent_account_rid ? false : true,
         parent_account_rid: parent_account_rid || null,
         storage_type: data_storage,
@@ -691,8 +691,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         industry_name_other: industry_name_other,
         status,
         created_by: userId,
-        modified_by: userId,
-        annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
+        annual_revenue: annual_revenue  || null,
         organisation_name
       });
       if(account.rid && file)
@@ -869,13 +868,13 @@ async insertClientTemplateDetails(
           account_name,
           comments: comments || "",
           status,
-          region: account_country_region_rid,
+          region_rid: account_country_region_rid,
           country_rid: account_country_rid,
           currency_rid: account_currency_rid,
           industry_rid: industry_rid,
           modified_by: userId,
           industry_name_other: industry_name_other,
-          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
+          annual_revenue: annual_revenue || null,
           modified_datetime: new Date(),
           logo_url:logo_url,
           organisation_name

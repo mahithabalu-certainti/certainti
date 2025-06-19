@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface ProfileHistoryAttributes {
   rid: string;
@@ -9,6 +10,8 @@ interface ProfileHistoryAttributes {
   new_value: string;
   modified_by?: string;
   modified_datetime?: Date;
+  created_by?: string;
+  created_datetime?: Date;
 }
 
 interface ProfileHistoryCreationAttributes extends Optional<ProfileHistoryAttributes, "rid"> {}
@@ -24,17 +27,35 @@ export class ProfileHistory
   public new_value!: string;
   public modified_by?: string;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public created_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
     ProfileHistory.init(
       {
         rid: { 
-          type: DataTypes.UUID, 
-          defaultValue: DataTypes.UUIDV4, 
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true 
         },
+        created_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        created_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false
+        },
+        modified_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        modified_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false
+        },
         profile_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
           references: { model: "profile", key: "rid" },
         },
@@ -49,16 +70,7 @@ export class ProfileHistory
         new_value: { 
           type: DataTypes.TEXT, 
           allowNull: true 
-        },
-        modified_by: { 
-          type: DataTypes.STRING,
-          allowNull: true 
-        },
-        modified_datetime: { 
-          type: DataTypes.DATE, 
-          allowNull: false,
-          defaultValue: DataTypes.NOW  
-        },
+        }
       },
       {
         sequelize,

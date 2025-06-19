@@ -1,9 +1,9 @@
-import { DataTypes, Model, Optional, Sequelize, UUID } from "sequelize";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX} from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { States } from "./stateModel";
 interface AccountAttributes {
@@ -12,7 +12,7 @@ interface AccountAttributes {
   r_number?: string;
   account_name: string;
   comments?: string;
-  region?: string;
+  region_rid?: string;
   is_parent: boolean;
   parent_account_rid?: string | null;
   storage_type: string;
@@ -22,7 +22,7 @@ interface AccountAttributes {
   industry_rid: string;
   industry_name_other?: string;
   status: string;
-  annual_revenue: string;
+  annual_revenue?: number | null;
   is_file_drop_enabled?: boolean;
   file_drop_medium?: string;
   file_drop_config_id?: string; 
@@ -30,7 +30,7 @@ interface AccountAttributes {
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
-  total_projects?:string;
+  total_projects?:number;
   total_project_cost?:number;
   total_project_hours?:number;
   qualifying_project_hours_fed?:number;
@@ -55,7 +55,7 @@ export class Account
   public comments?: string;
   public is_parent!: boolean;
   public eid?: string;
-  public region?: string;
+  public region_rid?: string;
   public storage_type!: string;
   public parent_account_rid?: string | null;
   public database_connection_rid?: string;
@@ -64,7 +64,7 @@ export class Account
   public industry_rid!: string;
   public industry_name_other?: string;
   public status!: string;
-  public annual_revenue!: string;
+  public annual_revenue?: number | null;
   public is_file_drop_enabled?: boolean;
   public file_drop_medium?: string;
   public file_drop_config_id?: string; 
@@ -72,7 +72,7 @@ export class Account
   public modified_datetime?: Date;
   public created_by?: string;
   public modified_by?: string;
-  public total_projects?:string;
+  public total_projects?:number;
   public total_project_cost?:number;
   public total_project_hours?:number;
   public qualifying_project_hours_fed?:number;
@@ -86,14 +86,36 @@ export class Account
     Account.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
+        type: DataTypes.STRING(50),
+        primaryKey: true,
+        allowNull: false,
+        defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
         },
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
           unique: true,
+        },
+        eid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+         created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
         },
         account_name: {
           type: DataTypes.STRING(255),
@@ -102,10 +124,6 @@ export class Account
         },
         comments: {
           type: DataTypes.STRING(2000),
-          allowNull: true,
-        },
-        eid: {
-          type: DataTypes.STRING,
           allowNull: true,
         },
         status: {
@@ -120,11 +138,11 @@ export class Account
           allowNull: false,
         },
         annual_revenue: {
-          type: DataTypes.STRING(20),
-          allowNull: false,
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
         },
-        region: {
-          type: DataTypes.UUID,
+        region_rid: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         storage_type: {
@@ -135,29 +153,29 @@ export class Account
           type: DataTypes.STRING,
           allowNull: true,
         },
-         organisation_name: {
+        organisation_name: {
           type: DataTypes.STRING,
           allowNull: false,
           unique: true,
         },
         parent_account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         database_connection_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         country_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         currency_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         industry_rid: {
-          type: UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         industry_name_other: {
@@ -174,39 +192,20 @@ export class Account
           allowNull: true,
         },
         file_drop_config_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
           references: {
             model: "account_file_drop_config",
             key: "rid"
           }
         },
-        total_projects: DataTypes.DOUBLE,
-        total_project_cost: DataTypes.DECIMAL(13, 2),
-        total_projects_rd_credits: DataTypes.DECIMAL(13, 2),
-        total_project_hours: DataTypes.DECIMAL(13, 2),
-        qualifying_project_hours_fed: DataTypes.DECIMAL(13, 2),
-        qualifying_project_qre_fed: DataTypes.DECIMAL(13, 2),
-        qualifying_project_rd_credits_fed: DataTypes.DECIMAL(13, 2),
-  
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        }
+        total_projects: DataTypes.DECIMAL(18, 2),
+        total_project_cost: DataTypes.DECIMAL(18, 2),
+        total_projects_rd_credits: DataTypes.DECIMAL(18, 2),
+        total_project_hours: DataTypes.DECIMAL(18, 2),
+        qualifying_project_hours_fed: DataTypes.DECIMAL(18, 2),
+        qualifying_project_qre_fed: DataTypes.DECIMAL(18, 2),
+        qualifying_project_rd_credits_fed: DataTypes.DECIMAL(18, 2)
       },
       {
         sequelize,
@@ -252,7 +251,7 @@ export class Account
     });
 
     Account.belongsTo(States, {
-      foreignKey: "region",
+      foreignKey: "region_rid",
       as: "region_details",
     });
 
@@ -260,23 +259,5 @@ export class Account
       foreignKey: "file_drop_config_id",
       as: "file_drop_config",
     });
-  }
-}
-
-
-export async function setupAccountSequence(sequelize: Sequelize) {
-  try {
-    // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS account_seq START 1');
-    
-    // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE account
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT} ' || LPAD(nextval('account_seq')::text, 10, '0')`);
-    
-    console.log('Account sequence setup complete');
-  } catch (error) {
-    console.error('Error setting up Account sequence:', error);
-    // Don't throw the error to allow the application to continue starting up
-    // The sequence setup can be handled separately if needed
   }
 }

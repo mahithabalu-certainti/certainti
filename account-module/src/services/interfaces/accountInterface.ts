@@ -130,5 +130,43 @@ export interface IGeoDataService {
     colors: any;
     count: number;
   }>
-  >
+  >;
+  status(): Promise<
+  GeoDataResponse<{
+    status: any;
+    count: number;
+  }>
+  >;
+  resourceType(): Promise<
+  GeoDataResponse<{
+    resouceType: any;
+    count: number;
+  }>
+  >;
+  resourceType(): Promise<
+  GeoDataResponse<{
+    resouceType: any;
+    count: number;
+  }>
+  >;
+  projectTypes(): Promise<
+  GeoDataResponse<{
+    projectType: any;
+    count: number;
+  }>
+  >;
+  skillLevel(): Promise<
+  GeoDataResponse<{
+    skillLevel: any;
+    count: number;
+  }>
+  >;
+  resourceStatus(): Promise<
+  GeoDataResponse<{
+    resourceStatus: any;
+    count: number;
+  }>
+  >;
+  
+  
 }

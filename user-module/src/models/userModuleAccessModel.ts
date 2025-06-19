@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { User } from "./userModel";
 import { MenuModule } from "./menuModuleModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface UserModuleAccessAttributes {
   rid: string;
@@ -32,21 +33,9 @@ export class UserModuleAccess
     UserModuleAccess.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
-        },
-        user_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        menu_module_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        is_enabled: {
-          type: DataTypes.BOOLEAN,
-          allowNull: false,
         },
         created_by: DataTypes.STRING,
         modified_by: DataTypes.STRING,
@@ -55,6 +44,19 @@ export class UserModuleAccess
           defaultValue: DataTypes.NOW,
         },
         modified_datetime: DataTypes.DATE,
+        user_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        menu_module_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        is_enabled: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+        },
+       
       },
       {
         sequelize,

@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 export interface ProjectFiscalAttributes {
   rid: string;
   r_number?: string;
@@ -255,8 +255,8 @@ export class ProjectFiscal
     ProjectFiscal.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -264,12 +264,16 @@ export class ProjectFiscal
           allowNull: true,
           unique: true,
         },
-        project_rid: {
-          type: DataTypes.UUID,
+         eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
-        eid: {
-          type: DataTypes.STRING(120),
+        modified_by: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         created_datetime: {
@@ -279,23 +283,18 @@ export class ProjectFiscal
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
           allowNull: true,
         },
-        created_by: {
-          type: DataTypes.UUID,
+        project_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
         },
         project_code: {
           type: DataTypes.STRING(120),
           allowNull: false,
         },
         industry_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         industry_name: {
@@ -319,7 +318,7 @@ export class ProjectFiscal
           allowNull: false,
         },
         project_classification_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         project_classification_other: {
@@ -340,19 +339,19 @@ export class ProjectFiscal
           defaultValue: false,
         },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         country_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         region_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         currency_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         max_ai_interaction: {
@@ -492,7 +491,7 @@ export async function setupProjectFiscal(
     );
 
     await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL} ' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL}-' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
 
     console.log("Project fiscal sequence setup complete");
   } catch (error) {

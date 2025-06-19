@@ -21,10 +21,10 @@ export interface IUserData {
   role: string;
   status: string;
   street: string;
-  city: string;
-  state: string;
+  city_rid: string;
+  region_rid: string;
   zip_code: string;
-  country: string;
+  country_rid: string;
   designation?: string;
   manager_name?: string;
   manager_email?: string;
@@ -47,10 +47,10 @@ export interface IUpdateUserData {
   profile_id: string;
   status: string;
   street: string;
-  city: string;
-  state: string;
+  city_rid: string;
+  region_rid: string;
   zip_code: string;
-  country: string;
+  country_rid: string;
   mobile?: string;
   role: string;
   designation?: string;

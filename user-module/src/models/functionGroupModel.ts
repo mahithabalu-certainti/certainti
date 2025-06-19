@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Department } from "./departmentModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface FunctionGroupAttributes {
   function_group_id: string;
@@ -7,6 +8,8 @@ interface FunctionGroupAttributes {
   department_id: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface FunctionGroupCreationAttributes
@@ -24,29 +27,26 @@ export class FunctionGroup
   public department_id!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     FunctionGroup.init(
       {
         function_group_id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
-        function_group_name: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true,
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
-        department_id: {
-          type: DataTypes.UUID,
-          references: {
-            model: "departments",
-            key: "department_id",
-          },
-          onDelete: "CASCADE",
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
-        created_datetime: {
+         created_datetime: {
           type: DataTypes.DATE,
           allowNull: false,
           defaultValue: DataTypes.NOW,
@@ -56,6 +56,20 @@ export class FunctionGroup
           allowNull: true,
           defaultValue: null,
         },
+        function_group_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        department_id: {
+          type: DataTypes.STRING(50),
+          references: {
+            model: "departments",
+            key: "department_id",
+          },
+          onDelete: "CASCADE",
+        },
+       
       },
       {
         sequelize,

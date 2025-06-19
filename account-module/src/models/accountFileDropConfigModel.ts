@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { ENV_PREFIX } from "../utils/constant";
 interface AccountFileDropConfigAttributes {
   rid: string;
   account_id: string;
@@ -11,6 +12,8 @@ interface AccountFileDropConfigAttributes {
   status: string;
   created_datetime?: Date;
   created_by?: string;
+  modified_by?: string;
+  modified_datetime?: Date;
 }
 
 interface AccountFileDropConfigCreationAttributes
@@ -31,17 +34,36 @@ export class AccountFileDropConfig
   public status!: string;
   public created_datetime?: Date;
   public created_by?: string;
+  public modified_by?: string;
+  public modified_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
     AccountFileDropConfig.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
+        created_by: {
+          type: DataTypes.STRING(64),
+          allowNull: true,
+        },
+         modified_by: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
+        },
         account_id: {
-            type: DataTypes.UUID,
+            type: DataTypes.STRING(50),
             allowNull: false,
           },
         drop_medium: {
@@ -72,16 +94,7 @@ export class AccountFileDropConfig
           type: DataTypes.ENUM('ACTIVE', 'INACTIVE'),
           allowNull: false,
           defaultValue: 'ACTIVE',
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.STRING(64),
-          allowNull: true,
-        },
+        }       
       },
       {
         sequelize,

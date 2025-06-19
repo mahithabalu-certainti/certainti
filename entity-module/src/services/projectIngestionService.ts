@@ -62,7 +62,7 @@ class ProjectIngestionService {
   }
 
   private async getModels(accountNumber: string) {
-    const schemaName = `platform_v2_${accountNumber}`;
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
     if (this.modelCache.has(schemaName)) {
       return this.modelCache.get(schemaName)!;
     }
@@ -417,10 +417,8 @@ class ProjectIngestionService {
       event_status: "success",
       event_type: "ui handler",
       entity_rid: projectId,
-      modified_by:
-        eventName === "update"
-          ? projectData.modified_by || ""
-          : projectData.created_by || "",
+      created_by: projectData.created_by
+        
     });
   }
 
@@ -555,8 +553,7 @@ class ProjectIngestionService {
         total_projects: 1,
         account_rid,
         fiscal_year,
-        created_datetime: new Date(),
-        modified_datetime: new Date(),
+        created_datetime: new Date()
       });
     } else {
       await this.updateAccountFiscalAggregatesFromFiscal(
@@ -840,7 +837,7 @@ class ProjectIngestionService {
             : "",
         new_value:
           newValue !== null && newValue !== undefined ? String(newValue) : "",
-        modified_by: newProjectData["modified_by"] || "",
+        created_by: newProjectData["modified_by"] || "",
       }));
 
     if (historyChanges.length === 0) return;
@@ -1496,9 +1493,9 @@ class ProjectIngestionService {
   ): Promise<any[]> {
     const filterableClientFields = [
       "account_name",
-      "country",
-      "region",
-      "currency",
+      "country_rid",
+      "region_rid",
+      "currency_rid",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
@@ -1509,9 +1506,9 @@ class ProjectIngestionService {
     ];
 
     const enumFields = [
-      "country",
-      "currency",
-      "region",
+      "country_rid",
+      "currency_rid",
+      "region_rid",
       "classification_name",
       "project_type",
     ];

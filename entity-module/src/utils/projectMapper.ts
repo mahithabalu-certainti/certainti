@@ -26,9 +26,9 @@ export class ProjectMapper {
       project_group: projectData.project_group || null,
       project_status: projectData.project_status,
       fiscal_year: projectData.fiscal_year,
-      country_rid: projectData.country || null,
-      region_rid: projectData.region || null,
-      currency_rid: projectData.currency || null,
+      country_rid: projectData.country_rid || null,
+      region_rid: projectData.region_rid || null,
+      currency_rid: projectData.currency_rid || null,
       total_effort: projectData.total_effort || null,
       total_cost: projectData.total_cost || null,
       total_fte: Number(projectData.total_fte) || 0,
@@ -73,9 +73,9 @@ export class ProjectMapper {
       program_name: data.program_name || null,
       account_rid: data.account_id,
 
-      country_rid: data.country || null,
-      region_rid: data.region || null,
-      currency_rid: data.currency || null,
+      country_rid: data.country_rid || null,
+      region_rid: data.region_rid || null,
+      currency_rid: data.currency_rid || null,
 
       max_ai_interaction: data.max_ai_interaction,
       expiry_duration: null,
@@ -192,9 +192,9 @@ export class ProjectMapper {
       industry_rid: projectData.industry_rid || null,
       industry_name: projectData.industry_name || null,
 
-      country_rid: projectData.country || null,
-      region_rid: projectData.region || null,
-      currency_rid: projectData.currency || null,
+      country_rid: projectData.country_rid || null,
+      region_rid: projectData.region_rid || null,
+      currency_rid: projectData.currency_rid || null,
 
       project_type: projectData.project_type,
       project_classification_rid:
@@ -246,9 +246,7 @@ export class ProjectMapper {
       project_fiscal_rid: projectFiscalId,
 
       created_datetime: new Date(),
-      modified_datetime: new Date(),
       created_by: projectData.created_by,
-      modified_by: projectData.modified_by || null,
 
       project_code: projectData.project_code,
       industry_rid: projectData.industry_rid || null,
@@ -260,9 +258,9 @@ export class ProjectMapper {
 
       account_rid: projectData.account_id,
 
-      country_rid: projectData.country || null,
-      region_rid: projectData.region || null,
-      currency_rid: projectData.currency || null,
+      country_rid: projectData.country_rid || null,
+      region_rid: projectData.region_rid || null,
+      currency_rid: projectData.currency_rid || null,
 
       max_ai_interaction: projectData.max_ai_interaction,
       expiry_duration: null,
@@ -436,11 +434,12 @@ export class ProjectMapper {
       project_client_group: data.project_client_group || null,
       project_group: data.project_group || null,
       project_status: data.project_status || null,
+      region_rid: data.region_rid || null,
+      comments_rid: data.comments || "",
+      currency_rid: data.currency_rid || null,
       project_description: data.project_description || null,
-      country_rid: data.country || null,
-      region_rid: data.region || null,
+      country_rid: data.country_rid || null,
       comments: data.comments || "",
-      currency_rid: data.currency || null,
 
       total_fte_prj: data.total_fte || 0,
       total_subcon_prj: data.total_subcon || 0,
@@ -488,9 +487,9 @@ export class ProjectMapper {
       project_client_group: projectData.project_client_group || null,
       project_group: projectData.project_group || null,
       project_status: projectData.project_status || null,
-      country_rid: projectData.country || null,
-      region_rid: projectData.region || null,
-      currency_rid: projectData.currency || null,
+      country_rid: projectData.country_rid || null,
+      region_rid: projectData.region_rid || null,
+      currency_rid: projectData.currency_rid || null,
       comments: projectData.comments || null,
       project_description: projectData.project_description || null,
 

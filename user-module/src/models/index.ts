@@ -140,9 +140,9 @@ export async function initModels() {
         model.associate(models); 
       } 
     });
-    await sequelize.sync({ force: false });
-    await setupProfileSequence(sequelize);
-    await setupUserSequence(sequelize);
+    //await sequelize.sync({ force: false });
+    //await setupProfileSequence(sequelize);
+    ///await setupUserSequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }

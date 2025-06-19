@@ -75,7 +75,7 @@ class ResourceSkillService {
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+         const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
 
       
       // if (skill_type_rid && resource_rid) {
@@ -210,8 +210,7 @@ class ResourceSkillService {
           skill_subtype_others,
           comments,
           skill_details: skill_details || undefined,
-          created_by: userId,
-          modified_by: userId,
+          created_by: userId
         });
 
         // Update the resource_fiscal table
@@ -302,7 +301,7 @@ class ResourceSkillService {
         event_name: eventName,
         event_status: eventStatus,
         entity_rid: resourceSkill.rid || "",
-        modified_by: modifiedBy,
+        created_by: modifiedBy,
       });
     } catch (error) {
       console.error("Failed to create timeline entry:", error);
@@ -345,7 +344,7 @@ class ResourceSkillService {
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
 
       // Create tables in parallel for better performance
       const [timelineTableCreated, historyTableCreated] = await Promise.all([
@@ -523,7 +522,7 @@ class ResourceSkillService {
   ): Promise<void> {
     try {
       // Make sure we're in the right schema context
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const validatedSchema = await resourceSkillSchemaService.validateSchema(
         schemaName,
         "resource_skill_history"
@@ -589,7 +588,7 @@ class ResourceSkillService {
                 formattedNewValue !== undefined
                   ? String(formattedNewValue)
                   : "",
-              modified_by: modifiedBy,
+              created_by: modifiedBy
             });
           }
         } catch (attrError) {
@@ -663,7 +662,7 @@ class ResourceSkillService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_skill";
       const schemaAndTableValidation =
         await resourceSkillSchemaService.validateSchema(
@@ -739,7 +738,7 @@ class ResourceSkillService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_skill";
       const schemaAndTableValidation =
         await resourceSkillSchemaService.validateSchema(
@@ -790,7 +789,7 @@ class ResourceSkillService {
     try {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const validateSchema = await resourceSkillSchemaService.validateSchema(
         schemaName,
         "resource_skill"
