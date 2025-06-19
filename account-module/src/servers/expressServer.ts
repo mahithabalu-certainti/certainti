@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
 import routes from "../routes";
 import requestLogger from "../middlewares/requestLoggerMiddleware";
 import { rateLimiter } from "../utils/rateLimiter";
@@ -11,7 +13,12 @@ interface Server {
 const initExpressServer = (): Server => {
   const app: express.Application = express();
 
-  app.use(express.json());
+  app.use(helmet());
+
+  app.use(compression());
+
+  app.use(express.json({ limit: "50mb" }));
+
   app.use(
     cors({
       origin: "*",

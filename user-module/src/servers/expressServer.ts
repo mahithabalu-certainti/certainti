@@ -1,14 +1,20 @@
 import express, { Express } from "express";
 import cors, { CorsOptions } from "cors";
+import helmet from "helmet";
+import compression from "compression";
 import routes from "../routes";
 import requestLogger from "../middlewares/requestLogger";
 import { rateLimiter } from "../utils/rateLimiter";
 
 export const initExpressServer = (): { app: Express } => {
   const app: Express = express();
-// Increase the request body limit
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  app.use(helmet());
+
+  app.use(compression());
+
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   app.use(express.json());
 
