@@ -141,7 +141,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   return (
     <AccordionTable
-      data={data?.projects as any}
+      data={data?.projects as Project[]}
       columns={projectColumns}
       getRowId={getRowId}
       hoverHighlight={false}

@@ -1,4 +1,4 @@
-import { ProjectAccordionResponse } from './types';
+import { ProjectAccordionResponse } from '../../components/table/types';
 
 export const ManageProjectsMockData: ProjectAccordionResponse = {
   statusCode: 200,
@@ -7,6 +7,7 @@ export const ManageProjectsMockData: ProjectAccordionResponse = {
   data: {
     projects: [
       {
+        rid: '8087694d-b28a-40db-a871-39479243e61e',
         project_code: 'PRC460',
         project_name: null,
         account_name: 'acc-123',

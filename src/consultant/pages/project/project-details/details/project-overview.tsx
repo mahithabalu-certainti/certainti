@@ -11,7 +11,7 @@ import {
   formatDateToYYYYMMDDWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 import { KeyContactProps } from '../../../account-details/utils';
-import { costDisplay } from '../../../../../common-utils';
+import { costDisplay, getDateFormat } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 interface DetailItem {
@@ -156,8 +156,14 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     { label: 'Fiscal Year', value: projectDetails?.fiscal_year },
     { label: 'Name', value: projectDetails?.project_name },
     { label: 'Project Type', value: projectDetails?.project_type },
-    { label: 'Start Date', value: projectDetails?.project_startdate },
-    { label: 'End Date', value: projectDetails?.project_enddate },
+    {
+      label: 'Effect From',
+      value: getDateFormat(projectDetails?.project_startdate ?? undefined),
+    },
+    {
+      label: 'End Date',
+      value: getDateFormat(projectDetails?.project_enddate ?? undefined),
+    },
     {
       label: 'Classification',
       value:

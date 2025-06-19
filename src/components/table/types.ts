@@ -116,7 +116,7 @@ export type ProjectAccordionResponse = {
 export type Project = {
   project_code: string;
   project_name: string | null;
-  account_name: string;
+  account_name?: string;
   account_id: string;
   project_rid: string;
   modified_datetime: string;

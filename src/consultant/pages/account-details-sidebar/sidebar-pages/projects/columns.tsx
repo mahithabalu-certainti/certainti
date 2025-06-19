@@ -3,7 +3,7 @@ import {
   formatDateToYYYYMMDDWithTime,
   valueDisplay,
 } from '../../../../../common-utils';
-import { ProjectList } from '../../../../types/project';
+import { Project } from '../../../../../components/table/types';
 interface TableColumn<T> {
   id: string;
   sortId: string;
@@ -23,8 +23,8 @@ export const formatDateToYMD = (dateString: string): string => {
   return `${year}-${month}-${day}`;
 };
 export const getProjectColumns = (
-  onClick: (row: ProjectList) => void
-): TableColumn<ProjectList>[] => [
+  onClick: (row: Project) => void
+): TableColumn<Project>[] => [
   {
     // id: 'account_name',
     // label: 'Account Name',
@@ -45,7 +45,7 @@ export const getProjectColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       onClick ? (
         <span
           onClick={() => onClick(row)}
@@ -118,7 +118,7 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_effort ? valueDisplay(row.total_effort) : '-',
   },
   {
@@ -130,7 +130,7 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
   },
   {
@@ -142,7 +142,7 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_cost_fte
         ? costDisplay(row.total_cost_fte, row.currency_symbol)
         : '-',
@@ -156,7 +156,7 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_cost_subcon
         ? costDisplay(row.total_cost_subcon, row.currency_symbol)
         : '-',
@@ -170,7 +170,7 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_cost_nonlabor
         ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
         : '-',
@@ -191,22 +191,20 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.qre ? costDisplay(row.qre, row.currency_symbol) : '-',
   },
   {
-    id: 'qualified_research_expenditure',
+    id: 'qre_final',
     label: 'QRE',
     sortable: true,
-    sortId: 'qualified_research_expenditure',
+    sortId: 'qre_final',
     width: 130,
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
-      row.qualified_research_expenditure
-        ? costDisplay(row.qualified_research_expenditure, row.currency_symbol)
-        : '-',
+    render: (row: Project) =>
+      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
   },
   {
     id: 'project_point_of_contact',
@@ -235,7 +233,7 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'modified_datetime',
     width: 190,
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
         : '-',
