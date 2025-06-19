@@ -103,7 +103,9 @@ export const AccountForm: React.FC = () => {
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
   const logoUrl = account?.accountById?.logo_url;
-  const logoName = logoUrl && logoUrl.substring(logoUrl.lastIndexOf('/') + 1);
+  const logoName = logoUrl
+    ? decodeURIComponent(logoUrl.substring(logoUrl.lastIndexOf('/') + 1))
+    : '';
   const getMimeTypeFromExtension = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase();
     switch (ext) {

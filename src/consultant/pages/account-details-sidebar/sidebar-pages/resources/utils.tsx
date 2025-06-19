@@ -149,7 +149,13 @@ export const getSkillFilterFields = (
       value: 'resource_total_experience',
       type: 'number',
     },
-    { name: 'Skill ID', value: 'r_number', type: 'textCostAndSkill' },
+    {
+      name: 'Skill ID',
+      value: 'r_number',
+      type: 'textCostAndSkill',
+      required: true,
+      filterOptions: requiredFieldFilterOptionsForText,
+    },
     {
       name: 'Sort Options',
       value: 'sort_options',
@@ -205,7 +211,13 @@ export const resourceFilterFields = (
     filterOptions: requiredFieldFilterOptionsForEnum,
   },
   { name: 'Comments', value: 'comments', type: 'text' },
-  { name: 'Resource ID', value: 'r_number', type: 'text' },
+  {
+    name: 'Resource ID',
+    value: 'r_number',
+    type: 'text',
+    required: true,
+    filterOptions: requiredFieldFilterOptionsForText,
+  },
   {
     name: 'Sort Options',
     value: 'sort_options',
