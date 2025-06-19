@@ -160,6 +160,31 @@ export async function uploadToAzureBlob(file: Express.Multer.File,account_id:str
   return blockBlobClient.url;
 }
 
+export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
+  if (!blobUrl) return;
+
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  const containerName = 'account';
+
+  const url = new URL(blobUrl);
+  const blobName = decodeURIComponent(url.pathname.split('/').slice(2).join('/')); 
+  // slice(2) skips the container and empty slash
+  if (!connectionString) {
+    throw new Error('Azure storage connection string is required');
+  }
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+  const exists = await blockBlobClient.exists();
+  if (exists) {
+    await blockBlobClient.delete();
+    console.log(`Blob deleted: ${blobName}`);
+  } else {
+    console.log(`Blob not found: ${blobName}`);
+  }
+}
+
 type ColumnSchema = {
   column_name: string;
   data_type: string;
