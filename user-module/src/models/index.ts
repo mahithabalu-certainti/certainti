@@ -141,8 +141,8 @@ export async function initModels() {
       } 
     });
     //await sequelize.sync({ force: false });
-    await setupProfileSequence(sequelize);
-    await setupUserSequence(sequelize);
+    //await setupProfileSequence(sequelize);
+    ///await setupUserSequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }
