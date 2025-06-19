@@ -364,7 +364,8 @@ class SchemaService {
       interaction_cc_list TEXT,
       assessment_status TEXT,
       claim_status TEXT,
-      comments VARCHAR(2000)
+      comments VARCHAR(2000),
+      project_description VARCHAR(2000)
     );
 
     `);
