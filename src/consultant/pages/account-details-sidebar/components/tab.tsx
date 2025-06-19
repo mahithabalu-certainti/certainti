@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
+import { Box, Menu, MenuItem, Switch, Tab, Tabs } from '@mui/material';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ResourceFilterIcon, RefreshIcon } from '../../../../assets';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
@@ -274,6 +274,11 @@ const TabPanel: React.FC<TabProps> = ({
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `resource${value}-filter-popover` : undefined;
 
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (setToggleEnabled) {
+      setToggleEnabled(event.target.checked);
+    }
+  };
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>
@@ -331,6 +336,17 @@ const TabPanel: React.FC<TabProps> = ({
 
           {filterVisibility && value !== 'details' && (
             <>
+              <div className='flex items-center gap-2'>
+                <span className='text-sm text-gray-700'>
+                  Include Aggregation
+                </span>
+                <Switch
+                  checked={toggleEnabled}
+                  onChange={handleToggleChange}
+                  size='small'
+                  color='success'
+                />
+              </div>
               <Box className='relative'>
                 <Box
                   component='button'
@@ -365,8 +381,6 @@ const TabPanel: React.FC<TabProps> = ({
                     setCurrentPage={setCurrentPage}
                     mode={'date'}
                     handleSorting={handleSorting}
-                    setToggleEnabled={setToggleEnabled}
-                    toggleEnabled={toggleEnabled}
                   />
                 </Suspense>
               </Box>

@@ -173,8 +173,7 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: Project) =>
-      row.qre ? costDisplay(row.qre, row.currency_symbol) : '-',
+    render: (row: Project) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'qre_final',
