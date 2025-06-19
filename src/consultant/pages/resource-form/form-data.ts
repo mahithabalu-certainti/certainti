@@ -683,6 +683,7 @@ export const ResourceFormData = (
       skillSubTypeLoading,
       currentskillSubType,
       isSalaryRequired,
+      isEditView,
       createResource,
       autoCalculatedValue,
     ]
