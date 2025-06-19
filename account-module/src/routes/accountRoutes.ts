@@ -17,6 +17,14 @@ routes.get('/regions', checkUserStatusMiddleware("NA"), controller.geoDataContro
 routes.get('/states', checkUserStatusMiddleware("NA"), controller.geoDataController.states);
 routes.get('/cities', checkUserStatusMiddleware("NA"), controller.geoDataController.cities);
 routes.get('/colors', checkUserStatusMiddleware("NA"), controller.geoDataController.colorCodes);
+
+routes.get('/status', checkUserStatusMiddleware("NA"), controller.geoDataController.statusList);
+routes.get('/resouceType', checkUserStatusMiddleware("NA"), controller.geoDataController.resourceType);
+routes.get('/projectType', checkUserStatusMiddleware("NA"), controller.geoDataController.projectType);
+routes.get('/skillLevel', checkUserStatusMiddleware("NA"), controller.geoDataController.skillLevel);
+routes.get('/resourceStatus', checkUserStatusMiddleware("NA"), controller.geoDataController.resourceStatus);
+
+
 routes.get('/list/:id', checkUserStatusMiddleware("account_details_view"), controller.accountController.accountById);
 routes.post('/new', checkUserStatusMiddleware("accounts_create"),upload.single('logo'), controller.accountController.createAccount);
 routes.put('/update', checkUserStatusMiddleware("accounts_edit_update"),  upload.single('logo'),controller.accountController.updateAccount);

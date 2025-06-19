@@ -21,8 +21,8 @@ export interface IAccount {
   fiscal_start_date: string;
   fiscal_end_date: string;
   interaction_cc_list?: string | null;
-  blended_rate_fte?: string | null;
-  blended_rate_subcon?: string | null;
+  blended_rate_fte?: number | null;
+  blended_rate_subcon?: number | null;
   created_by?: string | null;
   modified_by?: string | null;
   industry_rid: string;
@@ -32,7 +32,7 @@ export interface IAccount {
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue?: string | null;
+  annual_revenue?: number | null;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   key_contacts:any;
@@ -65,8 +65,8 @@ export interface IUpdateAccount {
   fiscal_start_date: string;
   fiscal_end_date: string;
   interaction_cc_list?: string | null;
-  blended_rate_fte?: string | null;
-  blended_rate_subcon?: string | null;
+  blended_rate_fte?: number | null;
+  blended_rate_subcon?: number | null;
   created_by?: string | null;
   modified_by?: string | null;
   industry_rid: string;
@@ -76,7 +76,7 @@ export interface IUpdateAccount {
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue?: string | null;
+  annual_revenue?: number | null;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   r_number: string;

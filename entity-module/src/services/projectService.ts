@@ -116,7 +116,8 @@ export class ProjectService {
     try {
       const orgDbSequlize = await initOrgSequelize();
       const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      
 
       const KeyContactModel = await KeyContact.initialize(
         orgDbSequlize,
@@ -963,7 +964,7 @@ export class ProjectService {
     projectData: ICreateProject
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const ProjectTimelineModel = await ProjectTimeline.initialize(
@@ -1108,7 +1109,7 @@ export class ProjectService {
     existingProjectData: any
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const ProjectHistoryModel = await ProjectHistory.initialize(
         sequelize,
@@ -1150,7 +1151,7 @@ export class ProjectService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by: newProjectData["modified_by"],
+          created_by: newProjectData["modified_by"],
         }));
 
       if (historyChanges.length === 0) return;
@@ -1251,7 +1252,7 @@ export class ProjectService {
       "total_subcon",
       "total_cost_subcon",
       "total_cost_nonlabor",
-      "country",
+      "country_rid",
       "region",
       "currency",
       "qualified_research_expenditure",

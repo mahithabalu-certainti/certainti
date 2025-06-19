@@ -7,6 +7,11 @@ import { models } from "../models";
 import { Industry } from "../models/industryModel";
 import { ColorCodes } from "../models/colorCodes";
 import { IColorCodeType } from "../utils/types";
+import { ProjectType } from "../models/projectType";
+import { ResourceStatus } from "../models/resourceStatus";
+import { ResourceType } from "../models/resourceType";
+import { SkillLevel } from "../models/skillLevel";
+import { Status } from "../models/status";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.
@@ -297,6 +302,187 @@ class GeoDataService {
         data: {
           colors: colorCodes,
           count: colorCodes.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+ /**
+   * Fetches a list of status from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of status if the request is successful.
+   */
+  async status(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { status: any; count: number };
+  }> {
+    try {
+      const status = await Status.findAll({
+        attributes: ["rid", "status_name", "status_description","status"],
+        where: {
+          status: "active"
+        },
+        order: [["status_name", "ASC"]] 
+      });
+      console.log(status)
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          status,
+          count: status.length,
+        },
+      };
+    } catch (err) {
+      console.log(err)
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Fetches a list of resource type from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of resource type if the request is successful.
+   */
+  async resourceType(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resouceType: any; count: number };
+  }> {
+    try {
+      const resouceType = await ResourceType.findAll({
+        attributes: ["rid", "resource_type_name", "resource_type_description","status"],
+        where: {
+          status: "active"
+        },
+        order: [["resource_type_name", "ASC"]] 
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resouceType,
+          count: resouceType.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+/**
+   * Fetches a list of resource type from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of project type if the request is successful.
+   */
+  async projectTypes(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectType: any; count: number };
+  }> {
+    try {
+      const projectType = await ProjectType.findAll({
+        attributes: ["rid", "project_type_name", "project_type_description","status"],
+        where: {
+          status: "active"
+        },
+        order: [["project_type_name", "ASC"]] 
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projectType,
+          count: projectType.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+/**
+   * Fetches a list of resource type from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of skill level if the request is successful.
+   */
+  async skillLevel(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { skillLevel: any; count: number };
+  }> {
+    try {
+      const skillLevel = await SkillLevel.findAll({
+        attributes: ["rid", "skill_level_name", "skill_level_description","status"],
+        where: {
+          status: "active"
+        },
+        order: [["skill_level_name", "ASC"]] 
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          skillLevel,
+          count: skillLevel.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+/**
+   * Fetches a list of resource status from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of resource status if the request is successful.
+   */
+  async resourceStatus(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceStatus: any; count: number };
+  }> {
+    try {
+      const resourceStatus = await ResourceStatus.findAll({
+        attributes: ["rid", "resource_status_name", "resource_status_description","status"],
+        where: {
+          status: "active"
+        },
+        order: [["resource_status_name", "ASC"]] 
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resourceStatus,
+          count: resourceStatus.length,
         },
       };
     } catch (err) {

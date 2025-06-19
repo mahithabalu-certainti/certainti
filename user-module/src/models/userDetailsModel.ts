@@ -2,6 +2,7 @@ import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Department } from "./departmentModel";
 import { FunctionGroup } from "./functionGroupModel";
 import { User } from "./userModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface UserDetailsAttributes {
   rid: string;
@@ -18,6 +19,8 @@ interface UserDetailsAttributes {
   function_group_id?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface UserCreationAttributes
@@ -40,6 +43,8 @@ export class UserDetails
   public employment_date?: Date;
   public department_id?: string;
   public function_group_id?: string;
+  public created_by?: string;
+  public modified_by?: string;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
@@ -48,12 +53,30 @@ export class UserDetails
     UserDetails.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
+        created_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
         user_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         serial_number: {
@@ -86,7 +109,7 @@ export class UserDetails
           allowNull: true,
         },
         department_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
           references: {
             model: "departments",
@@ -95,22 +118,12 @@ export class UserDetails
           onDelete: "NO ACTION",
         },
         function_group_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           references: {
             model: "function_groups",
             key: "function_group_id",
           },
           onDelete: "NO ACTION",
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
         },
       },
       {

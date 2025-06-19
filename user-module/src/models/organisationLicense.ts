@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { ENV_PREFIX } from "../utils/constant";
 interface OrganizationLicensesAttributes {
   rid: string;
   firm_name: string;
@@ -6,6 +7,8 @@ interface OrganizationLicensesAttributes {
   license_type: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface OrganizationLicensesCreationAttributes
@@ -23,14 +26,34 @@ export class OrganizationLicenses
   // Timestamps
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
+  public created_by?: string;
+  public modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     OrganizationLicenses.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
         },
         firm_name: {
           type: DataTypes.STRING,
@@ -44,16 +67,7 @@ export class OrganizationLicenses
           type: DataTypes.TEXT,
           allowNull: false,
         },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: null,
-        },
+        
       },
       {
         sequelize,

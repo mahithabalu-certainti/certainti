@@ -96,8 +96,7 @@ class UserManagementService {
         profile_description: profile_description || "",
         profile_type: profile_type,
         profile_status: "active",
-        created_by: userId,
-        modified_by: userId
+        created_by: userId
       });
       const cloneSuccess = await this.profileClone({
         profileId: profile.rid,
@@ -164,7 +163,7 @@ class UserManagementService {
         event_name: eventName,
         event_status: eventStatus,
         event_datetime: new Date(),
-        modified_by: userId
+        created_by: userId
       });
 
       return true;
@@ -198,7 +197,7 @@ class UserManagementService {
         event_name: eventName,
         event_status: eventStatus,
         event_datetime: new Date(),
-        modified_by: loggedInUser
+        created_by: loggedInUser
       });
 
       return true;
@@ -295,28 +294,28 @@ class UserManagementService {
         // Only perform bulkCreate if there are records to create
         newMenuAccess.length > 0 ?
           ProfileMenuAccess.bulkCreate(newMenuAccess, {
-            fields: ['rid', 'profile_id', 'menu_id', 'is_enabled', 'created_by', 'modified_by', 'created_datetime', 'modified_datetime'],
+            fields: ['rid', 'profile_id', 'menu_id', 'is_enabled', 'created_by', 'created_datetime'],
             updateOnDuplicate: ['modified_by', 'modified_datetime'],
             returning: true // Ensure all fields are returned
           }) : Promise.resolve([]),
 
         newModuleAccess.length > 0 ?
           ProfileModuleAccess.bulkCreate(newModuleAccess, {
-            fields: ['rid', 'profile_id', 'menu_module_id', 'is_enabled', 'created_by', 'modified_by', 'created_datetime', 'modified_datetime'],
+            fields: ['rid', 'profile_id', 'menu_module_id', 'is_enabled', 'created_by', 'created_datetime'],
             updateOnDuplicate: ['modified_by', 'modified_datetime'],
             returning: true // Ensure all fields are returned
           }) : Promise.resolve([]),
 
         newPermissionAccess.length > 0 ?
           ProfilePermissionAccess.bulkCreate(newPermissionAccess, {
-            fields: ['rid', 'profile_id', 'module_permission_id', 'is_enabled', 'created_by', 'modified_by', 'created_datetime', 'modified_datetime'],
+            fields: ['rid', 'profile_id', 'module_permission_id', 'is_enabled', 'created_by', 'created_datetime'],
             updateOnDuplicate: ['modified_by', 'modified_datetime'],
             returning: true // Ensure all fields are returned
           }) : Promise.resolve([]),
 
         newFieldAccess.length > 0 ?
           ProfileFieldsAccess.bulkCreate(newFieldAccess, {
-            fields: ['rid', 'profile_id', 'permission_field_id', 'read', 'edit', 'created_by', 'modified_by', 'created_datetime', 'modified_datetime'],
+            fields: ['rid', 'profile_id', 'permission_field_id', 'read', 'edit', 'created_by', 'created_datetime'],
             updateOnDuplicate: ['modified_by', 'modified_datetime'],
             returning: true // Ensure all fields are returned
           }) : Promise.resolve([])
@@ -1205,7 +1204,7 @@ class UserManagementService {
         attribute_name: 'name',
         old_value: currentProfileName,
         new_value: profileName,
-        modified_by: userId
+        created_by: userId
       });
 
       // Update the profile name
@@ -1257,7 +1256,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: isEnabled.toString(),
-          modified_by: userId
+          created_by: userId
         });
       }
 
@@ -1265,7 +1264,8 @@ class UserManagementService {
       const [updated] = await ProfileMenuAccess.update(
         {
           is_enabled: isEnabled,
-          modified_by: userId
+          modified_by: userId,
+          modified_datetime:new Date()
         },
         {
           where: { rid: accessId }
@@ -1309,7 +1309,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: isEnabled.toString(),
-          modified_by: userId
+          created_by: userId
         });
       }
 
@@ -1317,7 +1317,8 @@ class UserManagementService {
       const [updated] = await ProfileModuleAccess.update(
         {
           is_enabled: isEnabled,
-          modified_by: userId
+          modified_by: userId,
+          modified_datetime:new Date()
         },
         {
           where: { rid: accessId }
@@ -1361,7 +1362,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: isEnabled.toString(),
-          modified_by: userId
+          created_by: userId
         });
       }
 
@@ -1369,7 +1370,8 @@ class UserManagementService {
       const [updated] = await ProfilePermissionAccess.update(
         {
           is_enabled: isEnabled,
-          modified_by: userId
+          modified_by: userId,
+          modified_datetime:new Date()
         },
         {
           where: { rid: accessId }
@@ -1419,7 +1421,7 @@ class UserManagementService {
             attribute_name: 'read',
             old_value: currentAccess.read.toString(),
             new_value: read.toString(),
-            modified_by: userId
+            created_by: userId
           });
         }
 
@@ -1430,7 +1432,7 @@ class UserManagementService {
             attribute_name: 'edit',
             old_value: currentAccess.edit.toString(),
             new_value: edit.toString(),
-            modified_by: userId
+            created_by: userId
           });
         }
       }
@@ -1440,7 +1442,8 @@ class UserManagementService {
         {
           read,
           edit,
-          modified_by: userId
+          modified_by: userId,
+          modified_datetime:new Date()
         },
         {
           where: { rid: accessId }
@@ -1486,7 +1489,7 @@ class UserManagementService {
            attribute_name: 'is_enabled',
            old_value: "",
            new_value: isEnabled.toString(),
-           modified_by: loggedInUsername
+           created_by: loggedInUsername
          });
           await this.recordUserExtendedProfileEvent(
           requestedUserId,
@@ -1512,7 +1515,7 @@ class UserManagementService {
            attribute_name: 'is_enabled',
            old_value: currentAccess.is_enabled.toString(),
            new_value: isEnabled.toString(),
-           modified_by: loggedInUsername
+           created_by: loggedInUsername
          });
 
           await this.recordUserExtendedProfileEvent(
@@ -1572,7 +1575,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: "",
           new_value: has_extended_permission.toString(),
-          modified_by: loggedInUsername
+          created_by: loggedInUsername
         });
          await this.recordUserExtendedProfileEvent(
           requestedUserId,
@@ -1596,7 +1599,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: has_extended_permission.toString(),
-          modified_by: loggedInUsername
+          created_by: loggedInUsername
         });
          await this.recordUserExtendedProfileEvent(
           requestedUserId,
@@ -1659,7 +1662,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: "",
           new_value: isEnabled.toString(),
-          modified_by: loggedInUsername
+          created_by: loggedInUsername
         });
          await this.recordUserExtendedProfileEvent(
           requestedUserId,
@@ -1683,7 +1686,7 @@ class UserManagementService {
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: isEnabled.toString(),
-          modified_by: loggedInUsername
+          created_by: loggedInUsername
         });
       
         await this.recordUserExtendedProfileEvent(
@@ -1745,7 +1748,7 @@ class UserManagementService {
             attribute_name: 'read',
             old_value: "",
             new_value: read.toString(),
-            modified_by: loggedInUsername
+            created_by: loggedInUsername
           });
            await this.recordUserExtendedProfileEvent(
           requestedUserId,
@@ -1775,7 +1778,7 @@ class UserManagementService {
             attribute_name: 'read',
             old_value: currentAccess.read.toString(),
             new_value: read.toString(),
-            modified_by: loggedInUsername
+            created_by: loggedInUsername
           });
            await this.recordUserExtendedProfileEvent(
           requestedUserId,
@@ -1793,7 +1796,7 @@ class UserManagementService {
             attribute_name: 'edit',
             old_value: currentAccess.edit.toString(),
             new_value: edit.toString(),
-            modified_by: loggedInUsername
+            created_by: loggedInUsername
           });
            await this.recordUserExtendedProfileEvent(
           requestedUserId,

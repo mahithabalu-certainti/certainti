@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 import { ProjectFiscal } from "./projectFiscal";
 export interface ProjectAttributes {
   rid: string;
@@ -138,8 +138,8 @@ export class Project
     const model = Project.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -159,11 +159,11 @@ export class Project
           type: DataTypes.DATE,
         },
         created_by: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         modified_by: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         project_code: {
@@ -171,7 +171,7 @@ export class Project
           allowNull: false,
         },
         industry_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         industry_name: {
@@ -179,7 +179,7 @@ export class Project
           allowNull: true,
         },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         program_name: {
@@ -197,7 +197,7 @@ export class Project
           allowNull: false,
         },
         project_classification_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         project_classification_other: {
@@ -217,15 +217,15 @@ export class Project
           allowNull: false,
         },
         country_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         region_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         currency_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         comments: {
@@ -307,7 +307,7 @@ export async function setupProjectSequence(
     );
 
     await sequelize.query(`ALTER TABLE "${schemaName}".project
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT} ' || LPAD(nextval('"${schemaName}".project_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT}-' || LPAD(nextval('"${schemaName}".project_seq')::text, 10, '0')`);
 
     console.log("Project sequence setup complete");
   } catch (error) {

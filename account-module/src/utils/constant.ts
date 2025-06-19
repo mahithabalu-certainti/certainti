@@ -38,3 +38,6 @@ export const R_NUMBER_PREFIX = {
   PROJECT_SUMMARY: 'PRS',
   KEY_CONTACT_DETAILS: 'KEY'
 }
+
+
+export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';

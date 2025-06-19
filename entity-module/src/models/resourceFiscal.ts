@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceFiscalAttributes {
   rid?: string;
@@ -92,26 +92,44 @@ export class ResourceFiscal
     const model = ResourceFiscal.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
-        eid: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
-        },
-        account_rid: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        r_number: {
+         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
           unique: true,
         },
+        eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        account_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+       
         resource_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_type: {
@@ -123,11 +141,11 @@ export class ResourceFiscal
           allowNull: true,
         },
         country_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         country_region_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         cost_type: {
@@ -292,23 +310,8 @@ export class ResourceFiscal
           type: DataTypes.DATE,
           allowNull: true,
         },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
+        
+        
       },
       {
         sequelize,
@@ -336,7 +339,7 @@ export async function setupResourceFiscalSeq(sequelize: Sequelize, schemaName: s
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resource_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_FISCAL} ' || LPAD(nextval('"${schemaName}".resource_fiscal_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_FISCAL}-' || LPAD(nextval('"${schemaName}".resource_fiscal_seq')::text, 10, '0')`);
     
     console.log('Resource fiscal sequence setup complete');
   } catch (error) {

@@ -1,5 +1,5 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes,Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceCostTimelineAttributes  {
  rid: string,
@@ -11,7 +11,9 @@ interface ResourceCostTimelineAttributes  {
  entity_rid: string
  event_datetime?: Date,
  modified_datetime?: Date,
- modified_by: string,
+ modified_by?: string,
+ created_datetime?: Date,
+ created_by?: string,
 }
 
 interface ResourceCostTimelineCreationAttributes
@@ -28,14 +30,16 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
  event_datetime?: Date;
  entity_rid!: string;
  modified_datetime?: Date;
- modified_by!: string;
+ modified_by?: string;
+ created_datetime?: Date;
+ created_by?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ResourceCostTimeline.init(
       {
        rid: {
-        type: DataTypes.UUID,
-        defaultValue: UUIDV4,
+        type: DataTypes.STRING(50),
+        defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
         primaryKey: true,
        },
        r_number: {
@@ -43,8 +47,25 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
         allowNull: true,
         unique: true,
        },
+        created_by: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+       },
+        created_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW,
+       },
+        modified_by: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+       },
+       modified_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true
+       },
        account_rid: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(50),
         allowNull: false,
        },
        event_name: {
@@ -61,23 +82,14 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
         defaultValue: "Ui Handler"
        },
        entity_rid: {
-         type: DataTypes.UUID,
+         type: DataTypes.STRING(50),
          allowNull: false,
        },
        event_datetime: {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW
-       },
-       modified_datetime: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: DataTypes.NOW,
-       },
-       modified_by: {
-        type: DataTypes.STRING(),
-        allowNull: false,
-       },
+       }, 
       },
       {
         sequelize,
@@ -99,7 +111,7 @@ export async function setupResourceCostTimelineSeq(sequelize: Sequelize, schemaN
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resource_cost_timeline
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE} ' || LPAD(nextval('"${schemaName}".resource_cost_timeline_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE}-' || LPAD(nextval('"${schemaName}".resource_cost_timeline_seq')::text, 10, '0')`);
     
     console.log('Resource cost timeline sequence setup complete');
   } catch (error) {

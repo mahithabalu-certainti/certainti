@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ModulePermission } from "./modulePermissionModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface PermissionFieldAttributes {
   rid: string;
@@ -9,6 +10,8 @@ interface PermissionFieldAttributes {
   status: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface PermissionFieldCreationAttributes extends Optional<PermissionFieldAttributes, "rid"> {}
@@ -24,35 +27,24 @@ export class PermissionField
   public status!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     PermissionField.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
-        field_name: {
-          type: DataTypes.STRING,
-          allowNull: false,
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
-        field_desc: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        module_permission_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: "module_permission",
-            key: "rid",
-          },
-        },
-        status: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          defaultValue: "active",
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -63,6 +55,27 @@ export class PermissionField
           type: DataTypes.DATE,
           allowNull: true,
           defaultValue: null,
+        },
+        field_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        field_desc: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        module_permission_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: {
+            model: "module_permission",
+            key: "rid",
+          },
+        },
+        status: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          defaultValue: "active",
         },
       },
       {

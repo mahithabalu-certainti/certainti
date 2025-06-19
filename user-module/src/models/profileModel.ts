@@ -1,11 +1,11 @@
 import { DataTypes, Model, Optional, Sequelize, Op } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
 
 // Import User model
 // import { User } from "./userModel";
 
 interface ProfileAttributes {
-  rid: string; // UUID
+  rid: string;
   r_number?: string;
   eid?: number;
   profile_name: string;
@@ -52,8 +52,8 @@ export class Profile
     Profile.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
         },
@@ -63,8 +63,33 @@ export class Profile
           unique: true,
         },
         eid: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING(120),
           allowNull: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+          references: {
+            model: 'user',
+            key: 'rid'
+          }
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+          references: {
+            model: 'user',
+            key: 'rid'
+          }
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
         },
         profile_name: {
           type: DataTypes.STRING,
@@ -82,32 +107,7 @@ export class Profile
           type: DataTypes.STRING,
           allowNull: true,
         },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-          references: {
-            model: 'user',
-            key: 'rid'
-          }
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-          references: {
-            model: 'user',
-            key: 'rid'
-          }
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
+        
       },
       {
         sequelize,
@@ -142,7 +142,7 @@ export async function setupProfileSequence(sequelize: Sequelize) {
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE profile
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROFILE} ' || LPAD(nextval('profile_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROFILE}-' || LPAD(nextval('profile_seq')::text, 10, '0')`);
     
     console.log('Profile sequence setup complete');
   } catch (error) {

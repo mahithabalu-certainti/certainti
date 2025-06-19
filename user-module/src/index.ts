@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import 'cross-fetch/polyfill';
 dotenv.config(); 
 import { initExpressServer } from './servers/expressServer';
 import { initModels } from './models';
