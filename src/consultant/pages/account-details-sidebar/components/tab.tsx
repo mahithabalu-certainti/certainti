@@ -40,6 +40,8 @@ interface TabProps {
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   sortFilterCount: number;
   setSortFilterCount: (count: number) => void;
+  toggleEnabled?: boolean;
+  setToggleEnabled?: (val: boolean) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -55,6 +57,8 @@ const TabPanel: React.FC<TabProps> = ({
   handleSorting,
   sortFilterCount,
   setSortFilterCount,
+  toggleEnabled,
+  setToggleEnabled,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -361,6 +365,8 @@ const TabPanel: React.FC<TabProps> = ({
                     setCurrentPage={setCurrentPage}
                     mode={'date'}
                     handleSorting={handleSorting}
+                    setToggleEnabled={setToggleEnabled}
+                    toggleEnabled={toggleEnabled}
                   />
                 </Suspense>
               </Box>
