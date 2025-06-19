@@ -7,7 +7,6 @@ import {
   Select,
   SelectChangeEvent,
   Tooltip,
-  Switch,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
@@ -63,8 +62,6 @@ const Filter: React.FC<FilterComponentProps> = ({
   setCurrentCountry,
   handleSorting,
   mode,
-  toggleEnabled,
-  setToggleEnabled,
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -623,12 +620,6 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
   };
 
-  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (setToggleEnabled) {
-      setToggleEnabled(event.target.checked);
-    }
-  };
-
   return (
     <Popover
       id={filterId}
@@ -749,19 +740,6 @@ const Filter: React.FC<FilterComponentProps> = ({
                       </button>
                     ))
                   )}
-              </div>
-              <div>
-                <div className='flex items-center gap-2'>
-                  <span className='text-sm text-gray-700'>
-                    Include Aggregation
-                  </span>
-                  <Switch
-                    checked={toggleEnabled}
-                    onChange={handleToggleChange}
-                    size='small'
-                    color='success'
-                  />
-                </div>
               </div>
             </div>
           </div>
