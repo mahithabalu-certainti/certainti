@@ -9,7 +9,7 @@ interface ResourcesHistoryAttributes {
   old_value?: string;
   new_value: string;
   created_by?: string;
-  modified_by: string;
+  modified_by?: string;
   modified_datetime?: Date;
   created_datetime?: Date;
 }
@@ -28,7 +28,7 @@ export class ResourcesHistory
   public old_value?: string;
   public new_value!: string;
   public modified_datetime?: Date;
-  public modified_by!: string;
+  public modified_by?: string;
   public created_datetime?: Date;
   public created_by?: string;
 
@@ -53,7 +53,7 @@ export class ResourcesHistory
         },
         modified_by: {
           type: DataTypes.STRING(50),
-          allowNull: false,
+          allowNull: true,
         },
         modified_datetime: {
           type: DataTypes.DATE,

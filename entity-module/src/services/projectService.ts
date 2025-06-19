@@ -978,7 +978,7 @@ export class ProjectService {
         event_status: "success",
         event_type: "ui handler",
         entity_rid: projectId,
-        modified_by:
+        created_by:
           eventName === "update"
             ? projectData.modified_by || ""
             : projectData.created_by || "",
