@@ -117,7 +117,8 @@ export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
   account_rid?: string,
-  keyContactsList?: KeyContacts[]
+  keyContactsList?: KeyContacts[],
+  logoAction?: 'update' | 'delete' | ''
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
@@ -159,6 +160,9 @@ export const transformFormData = (
   if (isEdit) {
     data.account_rid = account_rid;
     data.r_number = account_rid;
+  }
+  if (isEdit && logoAction !== undefined) {
+    (data as any).logo_action = logoAction;
   }
   return data;
 };

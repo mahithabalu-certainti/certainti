@@ -177,6 +177,7 @@ export const createSelectField = (
     clearValue?: Record<string, string>;
     onChange?: boolean;
     isLoading?: boolean;
+    hide?: boolean;
     resetDependsFields?: string[];
     defaultValue?: string;
     assignDefaultValue?: boolean;
@@ -194,6 +195,7 @@ export const createSelectField = (
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
+  hide: others.hide,
   defaultValue: others.defaultValue,
   resetDependsFields: others.resetDependsFields,
   assignDefaultValue: others.assignDefaultValue,

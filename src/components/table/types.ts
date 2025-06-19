@@ -69,6 +69,15 @@ export interface ActionItem<T extends RowData> {
   iconStyle?: React.CSSProperties;
   hide?: boolean;
 }
+export interface ConditionMenuItem<T extends RowData> {
+  label: string;
+  onClick: (row: T) => void;
+  hide?: boolean;
+  icon?: React.ElementType;
+  className?: string;
+  iconStyle?: React.CSSProperties;
+  disabled?: boolean;
+}
 
 export interface ListTableProps<T extends RowData> {
   data: T[];
@@ -85,6 +94,8 @@ export interface ListTableProps<T extends RowData> {
   actionWidth: string | number;
   actionDisplayMode?: 'dropdown' | 'icon';
   actionMenuItems?: ActionItem<T>[];
+  // condition
+  conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];
   // State
   loading?: boolean;
   error?: string;
