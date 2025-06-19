@@ -940,7 +940,7 @@ const updateResourceCostSchema = Joi.object({
 });
 
 export const updateResourceDuplicateStatus = Joi.object({
-  rid: Joi.string().uuid().required(),
+  rid: Joi.string().pattern(uuidRegex).required(),
   action: Joi.string()
     .valid("accept", "reject")
     .required()
