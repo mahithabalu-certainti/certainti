@@ -831,7 +831,6 @@ class SchemaService {
          resource_cost numeric(18,2),
          salary numeric(18,2),
          net_resource_cost numeric(20,2),
-         CONSTRAINT resource_cost_pkey PRIMARY KEY (rid),
          CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
               REFERENCES "${schemaName}".resources (rid)
               ON UPDATE CASCADE
@@ -885,7 +884,7 @@ class SchemaService {
           ),
           created_by varchar(50) NOT NULL,
           modified_by varchar(50),
-          created_datetime timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,,
+          created_datetime timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
           modified_datetime timestamptz,
           resource_cost_rid varchar(50) NOT NULL,
           attribute_name varchar(255) NOT NULL,

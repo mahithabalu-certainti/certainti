@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-const uuidRegex = /^[A-Z0-9]{4}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const allowedTLDs = [
   "com",
   "org",
@@ -141,7 +141,7 @@ const accountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Invalid Key Contact Email Address."
         }),
-        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
