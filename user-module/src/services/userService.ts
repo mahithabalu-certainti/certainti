@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs';
 import { OrganizationLicenses } from "../models/organisationLicense";
 import moment, { Moment } from "moment";
 import "moment-timezone"; 
+import { Status } from "../models/statusModel";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -67,7 +68,7 @@ class UserService {
         last_name,
         email,
         profile_id,
-        status,
+        status_id,
         street,
         city_rid,
         region_rid,
@@ -90,7 +91,7 @@ class UserService {
         last_name,
         email,
         profile_rid: profile_id,
-        status,
+        status_id,
         street,
         city_rid,
         region_rid,
@@ -148,7 +149,7 @@ class UserService {
         first_name,
         last_name,
         profile_id,
-        status,
+        status_id,
         street,
         city_rid,
         region_rid,
@@ -179,7 +180,7 @@ class UserService {
           first_name,
           last_name,
           profile_rid: profile_id,
-          status,
+          status_id,
           street,
           city_rid,
           region_rid,
@@ -503,6 +504,12 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
               attributes: ["business_teams"],
               required: true,
             },
+             {
+            model: Status,
+            as: 'status',
+            attributes: [['status_description','status_name']],
+            required: false,
+          },
           ],
         });
 
@@ -948,23 +955,6 @@ async getAllUserPermission(userId: string, profileId: string) {
     sortOrder: string
   ) {
     const order: any[] = [];
-     const mainDbSequelize = await initSequelize();
-const Status = mainDbSequelize.define(
-  'status',
-  {
-    status_description: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-    },
-    status_name: {
-      type: DataTypes.STRING,
-    },
-  },
-  {
-    tableName: 'status',
-    timestamps: false,
-  }
-);
     if (sortBy === "$business_teams.business_teams$") {
         order.push(
           [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
@@ -978,13 +968,7 @@ const Status = mainDbSequelize.define(
     } else {
         order.push([sortBy, sortOrder]);
     }
-    if (!User.associations.statusDetails) {
-        User.belongsTo(Status, {
-          foreignKey: 'status',
-          targetKey: 'status_description',
-          as: 'status',
-        });
-      }
+   
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
       attributes: ["rid", "email", "status_id", "first_name","created_datetime","modified_datetime"],
@@ -1007,7 +991,7 @@ const Status = mainDbSequelize.define(
         {
         model: Status,
         as: 'status',
-        attributes: ['rid'],
+        attributes: ['status_description','status_name'],
         required: false,
       },
       ],
@@ -1546,6 +1530,12 @@ const rawResult = users || [];
           attributes: ["business_teams"],
           required: true,
         },
+        {
+            model: Status,
+            as: 'status',
+            attributes: [['status_description','status_name']],
+            required: false,
+        }
       ],
     });
     return {

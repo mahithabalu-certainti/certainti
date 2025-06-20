@@ -44,7 +44,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       whereClause = 'azure_id = :userId';
     } else if (userIdHeader) {
       userId = userIdHeader;
-      whereClause = 'rid = :userId';
+      whereClause = '"user".rid = :userId';
     } else {
       res.status(HttpStatus.BAD_REQUEST).json({
         error: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -64,8 +64,29 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       // Get the first user from the array
       const user = users[0];
       
-     
-      
+      if ((typeof user === 'object' && user !== null && 'status' in user && (user as { status: string }).status !== 'active')||!user) {
+          res.status(HttpStatus.FORBIDDEN).json({
+              error: HttpStatus.FORBIDDEN_MESSAGE,
+              message: 'User account is inactive. Please contact administrator.'
+          });
+          return;
+      }
+
+      if (permissionName  && permissionName !== "NA") {
+        const hasPermission = await checkUserAPIPermission(
+          user.rid,
+          user.profile_rid,
+          permissionName,
+          req.originalUrl
+        );
+        if (!hasPermission) {
+          res.status(HttpStatus.FORBIDDEN).json({
+            error: HttpStatus.FORBIDDEN_MESSAGE,
+            message: "Access Restricted. Contact administrator to gain access"
+          });
+          return;
+        }
+      }
       
       next();
   } catch (error) {
