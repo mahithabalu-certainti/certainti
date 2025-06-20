@@ -145,17 +145,11 @@ const accountSchema = Joi.object({
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
-        interaction_cc_recipient: Joi.array()
-        .items(
-          Joi.string()
-            .email({ tlds: { allow: false } }) 
-            .message('Each item in interaction_cc_recipient must be a valid email')
-        )
-        .min(1)
+        interaction_cc_recipient: Joi.boolean()
         .required()
         .messages({
-          'array.base': 'interaction_cc_recipient must be an array of emails',
-          'array.min': 'At least one email is required in interaction_cc_recipient',
+          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
+          'any.required': 'interaction_cc_recipient is required',
         }),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
@@ -288,17 +282,11 @@ const updateAccountSchema = Joi.object({
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
-        interaction_cc_recipient: Joi.array()
-        .items(
-          Joi.string()
-            .email({ tlds: { allow: false } }) 
-            .message('Each item in interaction_cc_recipient must be a valid email')
-        )
-        .min(1)
+        interaction_cc_recipient: Joi.boolean()
         .required()
         .messages({
-          'array.base': 'interaction_cc_recipient must be an array of emails',
-          'array.min': 'At least one email is required in interaction_cc_recipient',
+          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
+          'any.required': 'interaction_cc_recipient is required',
         }),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })

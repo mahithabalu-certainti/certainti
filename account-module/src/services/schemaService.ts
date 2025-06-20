@@ -1360,9 +1360,7 @@ class SchemaService {
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
-            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient?.length
-            ? `{${keyContactDetails.interaction_cc_recipient.join(',')}}`
-            : '{}',
+            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient,
             modified_by: userId,
           },
         }
@@ -1404,9 +1402,7 @@ class SchemaService {
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
-            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient?.length
-            ? `{${keyContactDetails.interaction_cc_recipient.join(',')}}`
-            : '{}',
+            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient,
             created_by: userId,
             modified_by: userId,
           },
@@ -1435,7 +1431,7 @@ class SchemaService {
           key_contact_role varchar(50),
           is_primary_contact BOOLEAN,
           include_in_communication BOOLEAN,
-          interaction_cc_recipient  TEXT[],
+          interaction_cc_recipient BOOLEAN,
           status VARCHAR(10) CHECK (status IN ('Active', 'Inactive')) DEFAULT 'Active'
         );
       `);

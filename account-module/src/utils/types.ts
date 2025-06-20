@@ -93,7 +93,7 @@ export interface IKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  interaction_cc_recipient: [];
+  interaction_cc_recipient: boolean;
   status: "active" | "inactive";
 }
 
@@ -104,7 +104,7 @@ export interface IUpdateKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  interaction_cc_recipient: [];
+  interaction_cc_recipient: boolean;
   status: "active" | "inactive";
 }
 
