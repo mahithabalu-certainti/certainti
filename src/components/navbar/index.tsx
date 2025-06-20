@@ -1,11 +1,9 @@
-import {
-  BrowserAuthError,
-  PublicClientApplication,
-} from '@azure/msal-browser';
+import { BrowserAuthError, PublicClientApplication } from '@azure/msal-browser';
 import {
   AppBar,
   Badge,
   Box,
+  debounce,
   IconButton,
   Menu,
   MenuItem,
@@ -43,6 +41,7 @@ import GlobalFilterModal from '../global-modal/global-filter';
 import { useMsal } from '@azure/msal-react';
 import { msalResetPasswordConfig } from '../../config/msalConfig';
 import CompanyBadge from './company-badge';
+import { useIsFetching } from '@tanstack/react-query';
 
 interface NavbarProps {
   showAdminSidebar: boolean;
@@ -75,6 +74,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isAdminEnable = useSelector(
     (state: RootState) => state.permission.isAdminEnable
   );
+  const fetchingCount = useIsFetching();
+  const isAnyApiWasLoading = fetchingCount > 0;
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -141,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     instance
       .handleRedirectPromise()
-      .then(async(response) => {
+      .then(async (response) => {
         if (localStorage.getItem('resetPassword') && response) {
           successToast('Your password has been updated successfully');
           await passwordResetInstanceRef?.current?.clearCache();
@@ -149,10 +150,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         }
       })
       .catch((error) => {
-        localStorage.removeItem('resetPassword')
+        localStorage.removeItem('resetPassword');
         console.log('Password reset processing error:', error);
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance]);
 
   const handleProfileMenuOpen = useCallback(
@@ -466,16 +467,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </IconButton>
             {isAdminEnable && (
               <Tooltip
-                title={`Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}
+                title={`${isAnyApiWasLoading ? 'Loading...' : `Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}`}
                 arrow
               >
-                <IconButton
-                  size='large'
-                  color='inherit'
-                  onClick={switchSideBarMenus}
-                >
-                  <SettingsIcon alt='settings' className='h-[20px] w-[20px]' />
-                </IconButton>
+                <span>
+                  <IconButton
+                    size='large'
+                    color='inherit'
+                    onClick={debounce(switchSideBarMenus, 300)}
+                    disabled={isAnyApiWasLoading}
+                  >
+                    <SettingsIcon
+                      alt='settings'
+                      className='h-[20px] w-[20px]'
+                    />
+                  </IconButton>
+                </span>
               </Tooltip>
             )}
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />

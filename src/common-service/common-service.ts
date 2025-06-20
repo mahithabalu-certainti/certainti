@@ -33,8 +33,11 @@ export const useGetAllCountries = () => {
   return useQuery<GetAllCountriesApiResponse, Error>({
     queryKey: ['getAllCountry'], // Unique query key
     queryFn: () => fetchAllCountries(),
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 

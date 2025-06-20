@@ -16,7 +16,13 @@ import './config/i18n.ts';
 import './index.css';
 
 const msalInstance = new PublicClientApplication(msalConfig);
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // disables auto refetch on focus
+    },
+  },
+});
 
 // Account selection logic
 msalInstance.addEventCallback((event) => {

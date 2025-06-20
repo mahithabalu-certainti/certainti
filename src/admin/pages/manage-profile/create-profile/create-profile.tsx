@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ProfileForm } from './profile-form';
 import { SelectOption } from '../../../../consultant/types';
@@ -170,15 +170,17 @@ export const CreateProfile: React.FC = () => {
             isEditView={isEditView}
             profileLoading={getProfileDetails.isLoading}
           />
-          <ProfilePermissions
-            createProfilePermissionsData={
-              isEditView
-                ? getProfileDetails?.data?.data.privileges
-                : createProfile?.data?.data.privileges
-            }
-            loading={getProfileDetails.isLoading}
-            onPrivilegesChange={handlePrivilegesChange}
-          />
+          <Suspense fallback={null}>
+            <ProfilePermissions
+              createProfilePermissionsData={
+                isEditView
+                  ? getProfileDetails?.data?.data.privileges
+                  : createProfile?.data?.data.privileges
+              }
+              loading={getProfileDetails.isLoading}
+              onPrivilegesChange={handlePrivilegesChange}
+            />
+          </Suspense>
         </>
       )}
     </>

@@ -61,7 +61,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       fiscalYear,
     },
-    undefined,
     refreshAccountTrigger
   );
   const colorCodes = useFetchColorCodes();

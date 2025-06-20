@@ -24,8 +24,6 @@ import {
   AdministrationIcon,
   AdminPermissionIcon,
   AdminSubmenuActiveIcon,
-  Logo,
-  LogoSmall,
   ManagerUserIcon,
   ManageProfileIcon,
   ManageGroupIcon,
@@ -65,6 +63,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuOption } from '../../common-service';
 import { accountNavItems } from './accounts-menu';
+import LogoSmall from '../../assets/icons/logo-small.svg?react';
+import Logo from '../../assets/icons/logo.svg?react';
 
 const sideNavAdminItems: AdminNavItem[] = [
   {

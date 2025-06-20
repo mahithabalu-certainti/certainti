@@ -83,6 +83,14 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_EXPORT
   );
+  const isResourcesExportEnable = checkPermission(
+    permission,
+    AllPermissions.RESOURCES_DOWNLOAD
+  );
+  const isProjectExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+  );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -187,6 +195,16 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
+  const checkExport = () => {
+    if (searchParams.get('list') === 'resources') {
+      return !isResourcesExportEnable;
+    } else if (searchParams.get('list') === 'projects') {
+      return !isProjectExportEnable;
+    } else {
+      return !isAccountExportEnable;
+    }
+  };
+
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
@@ -195,7 +213,7 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
-      hide: !isAccountExportEnable,
+      hide: checkExport(),
     },
   ];
 

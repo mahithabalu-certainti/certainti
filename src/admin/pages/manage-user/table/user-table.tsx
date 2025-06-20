@@ -37,6 +37,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       page: 1,
       filters: appliedFilters,
     }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters]);
 
   const { data, isLoading, isError } = useManageUserList(

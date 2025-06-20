@@ -151,6 +151,8 @@ const processQueue = (error: unknown, token: string | null = null) => {
           showToast('Session expired. Please login again.', 'error');
           setTimeout(() => {
             localStorage.removeItem('auth');
+            localStorage.removeItem('showAdminSidebar');
+            localStorage.removeItem('resetPassword');
             window.location.href = LOGIN;
           }, 3000);
           return Promise.reject(refreshError);
