@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommonApiResponse } from '../../common-service';
 
 export interface ResourceSkillListParams {
@@ -111,4 +112,5 @@ export type ExportModule = {
   fiscalYear?: string;
   rNumber?: string;
   resourceRid?: string;
+  filter?: Record<string, any>;
 };

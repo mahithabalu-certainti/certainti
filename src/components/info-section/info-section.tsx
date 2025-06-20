@@ -101,7 +101,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
 
   return (
     <Box
-      className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
+      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
     >
       {[...Array(rowCount)].map((_, rowIndex) => (
         <React.Fragment key={rowIndex}>

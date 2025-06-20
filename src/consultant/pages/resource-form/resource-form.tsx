@@ -152,7 +152,7 @@ const ResourceForm: React.FC = () => {
       accountNumber ||
       accNumber
   );
-
+  const accountName = location?.state?.data?.accountById?.account_name;
   useEffect(() => {
     const resourceDetailsData = resource?.data?.resourceDetails;
     const finalResourceDetails = {
@@ -598,7 +598,8 @@ const ResourceForm: React.FC = () => {
     isSalaryRequired,
     isEditView,
     currentResource,
-    autoCalculatedValue
+    autoCalculatedValue,
+    accountName
   );
 
   return (

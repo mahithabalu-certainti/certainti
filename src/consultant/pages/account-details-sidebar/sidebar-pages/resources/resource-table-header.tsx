@@ -41,10 +41,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
               onClick={onBackClick}
             >
-              <LeftArrowIcon
-                className='h-[12px]'
-                alt='leftArrowIcon'
-              />
+              <LeftArrowIcon className='h-[12px]' alt='leftArrowIcon' />
             </div>
             //   <button
             //     onClick={onBackClick}

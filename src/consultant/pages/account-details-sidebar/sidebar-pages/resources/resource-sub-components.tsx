@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
-import React, { Fragment } from 'react';
-import { AccountData } from '../../../account-details/utils';
+import React, { Fragment, useEffect, useState } from 'react';
+import {
+  AccountData,
+  DisplayColumn,
+  transformResourceData,
+} from '../../../account-details/utils';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
@@ -10,6 +14,8 @@ import { ResourceSkillList } from '../../../../types/resource-skill';
 import { AllPermissions, Permissions } from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { TabMenus } from './resources';
+import { InfoSection } from '../../../../../components';
+import { useResourceDetail } from '../../../../services/resource-details';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -92,9 +98,26 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     permission || [],
     AllPermissions.RESOURCE_SKILL_DELETE
   );
+  const {
+    data: resource,
+    isLoading,
+    error,
+  } = useResourceDetail(resourceId, accountId);
+  const [resourceDetails, setResourceDetails] = useState<DisplayColumn[]>([]);
+
+  useEffect(() => {
+    setResourceDetails(resource ? transformResourceData(resource) : []);
+  }, [resource]);
 
   return (
     <Fragment>
+      <Box className='max-w-[100%] border-t border border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
+        <InfoSection
+          columns={resourceDetails}
+          loading={isLoading}
+          singleLineView={true}
+        />
+      </Box>
       <Box className='max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
         {value && (
           <Tabs
@@ -135,7 +158,11 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         {/* You can add the content for each tab below */}
         {value === 'details' && isResourceViewEnable && (
           <Box>
-            <ResourceDetails resourceId={resourceId} accountId={accountId} />
+            <ResourceDetails
+              resource={resource?.data || null}
+              isLoading={isLoading}
+              error={error}
+            />
           </Box>
         )}
 

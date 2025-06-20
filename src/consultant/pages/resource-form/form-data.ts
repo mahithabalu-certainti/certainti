@@ -86,7 +86,8 @@ export const ResourceFormData = (
   isSalaryRequired?: boolean,
   isEditView?: boolean,
   currentResource?: { resource_firstname: string; resource_lastname: string },
-  autoCalculatedValue?: number
+  autoCalculatedValue?: number,
+  accountName?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -320,6 +321,32 @@ export const ResourceFormData = (
         ],
       },
       {
+        sectionName: 'Basic Information',
+        fillType: 'half',
+        hide: !disableCostAndSkill,
+        fields: [
+          createTextField('account_name', 'Account Name', {
+            required: false,
+            placeholder: 'Enter Resource Code',
+            disabled: true,
+            onChange: true,
+            defaultValue: accountName,
+          }),
+          createTextField('resource_code', 'Resource Code', {
+            required: false,
+            placeholder: 'Enter Resource Code',
+            disabled: true,
+            onChange: true,
+          }),
+          createSelectField('resource_type', 'Resource Type', {
+            options: RESOURCE_TYPE_OPTIONS,
+            placeholder: 'Choose Resource Type',
+            required: false,
+            disabled: true,
+          }),
+        ],
+      },
+      {
         sectionName: 'Financial Information',
         fillType: 'half',
         hide: !disableCost,
@@ -343,13 +370,6 @@ export const ResourceFormData = (
             type: '',
             required: false,
           }),
-          createTextField('effort_in_hrs', 'Effort In Hrs', {
-            required: true,
-            placeholder: 'Enter Effort In Hrs',
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-          }),
           createDateField('financial_start_date', 'Effective From', {
             required: false,
             minDate: minDate,
@@ -360,6 +380,13 @@ export const ResourceFormData = (
             minDate: minDate,
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
+          }),
+          createTextField('effort_in_hrs', 'Effort In Hrs', {
+            required: true,
+            placeholder: 'Enter Effort In Hrs',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
           }),
           createTextField('salary', 'Salary', {
             required: false,
@@ -509,15 +536,18 @@ export const ResourceFormData = (
             placeholder: 'Choose Skill Level',
             required: false,
           }),
-          createTextField('skill_details', 'Skill Details', {
+        ],
+      },
+      {
+        sectionName: '',
+        fillType: 'half',
+        hide: !disableSkill,
+        fields: [
+          createTextAreaField('skill_details', 'Skill Details', {
             required: true,
             placeholder: 'Enter Skill Details',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_2000,
-                errorMessage: 'Input must be between 1 and 2,000 characters.',
-              },
-            ],
+            regex: REGEX_PATTERNS.MAX_2000,
+            regexErrorMessage: 'Input must be between 1 and 2,000 characters.',
           }),
         ],
       },
