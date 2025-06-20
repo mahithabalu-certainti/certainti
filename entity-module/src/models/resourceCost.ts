@@ -1,6 +1,6 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { Model, DataTypes,Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceCostAttributes {
   rid: string;
@@ -11,18 +11,24 @@ interface ResourceCostAttributes {
   resource_rid: string;
   resource_number: string;
   resource_code: string;
-  effective_date?: Date | null;
+  effective_from?: Date | null;
   end_date?: Date | null;
   // cost?: number;
   // cost_type?: string;
-  annual_cost?: number;
+  // annual_cost?: number;
   // semi_annual_cost?: number;
-  monthly_cost?: number;
-  weekly_cost?: number;
-  bi_weekly_cost?: number;
-  daily_cost?: number;
-  hourly_cost?: number;
+  // monthly_cost?: number;
+  // weekly_cost?: number;
+  // bi_weekly_cost?: number;
+  // daily_cost?: number;
+  // hourly_cost?: number;
   effort_in_hrs?: number;
+  salary?: number;
+  bonus?: number;
+  insurance?: number;
+  deductions?: number;
+  net_resource_cost: number;
+  resource_cost?: number;
   currency_rid?: string;
   fiscal_year: number;
   status?: string;
@@ -48,19 +54,25 @@ export class ResourceCost
   resource_rid!: string;
   resource_number!: string;
   resource_code!: string;
-  effective_date?: Date;
+  effective_from?: Date;
   end_date?: Date;
   // cost?: number;
   // cost_type?: string;
   fiscal_year!: number;
-  annual_cost?: number;
+  // annual_cost?: number;
   // semi_annual_cost?: number;
-  monthly_cost?: number;
-  weekly_cost?: number;
-  bi_weekly_cost?: number;
-  daily_cost?: number;
-  hourly_cost?: number;
+  // monthly_cost?: number;
+  // weekly_cost?: number;
+  // bi_weekly_cost?: number;
+  // daily_cost?: number;
+  // hourly_cost?: number;
   effort_in_hrs?: number;
+  salary?: number;
+  bonus?: number;
+  insurance?: number;
+  deductions?: number;
+  net_resource_cost!: number;
+  resource_cost?: number;
   currency_rid?: string;
   status?: string;
   comments?: string;
@@ -73,8 +85,8 @@ export class ResourceCost
     ResourceCost.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -83,11 +95,28 @@ export class ResourceCost
           unique:true,
         },
         eid: {
-          type: DataTypes.STRING(255),
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
           allowNull: true,
         },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_type: {
@@ -95,7 +124,7 @@ export class ResourceCost
           allowNull: false,
         },
         resource_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         resource_code: {
@@ -110,7 +139,7 @@ export class ResourceCost
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-        effective_date: {
+        effective_from: {
           type: DataTypes.DATE,
           allowNull: true,
           validate: {
@@ -133,8 +162,8 @@ export class ResourceCost
           allowNull: true,
           validate: {
             isAfterEffectiveDate(value: Date) {
-              if (value && this.effective_date) {
-                const effectiveDate = new Date(this.effective_date as Date);
+              if (value && this.effective_from) {
+                const effectiveDate = new Date(this.effective_from as Date);
                 effectiveDate.setHours(0, 0, 0, 0);
                 const endDate = new Date(value);
                 endDate.setHours(0, 0, 0, 0);
@@ -156,31 +185,55 @@ export class ResourceCost
         //   type: DataTypes.STRING(255),
         //   allowNull: true,
         // },
-        annual_cost: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-        },
+        // annual_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
         // semi_annual_cost: {
         //   type: DataTypes.DECIMAL(18, 2),
         //   allowNull: true,
         // },
-        monthly_cost: {
+        // monthly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // weekly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // bi_weekly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // daily_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // hourly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        salary: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        weekly_cost: {
+        bonus: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        bi_weekly_cost: {
+        insurance: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        daily_cost: {
+        deductions: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        hourly_cost: {
+        net_resource_cost: {
+          type: DataTypes.DECIMAL(20, 2),
+          allowNull: true,
+        },
+        resource_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
@@ -189,7 +242,7 @@ export class ResourceCost
           allowNull: true,
         },
         currency_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         status: {
@@ -198,24 +251,6 @@ export class ResourceCost
         },
         comments: {
           type: DataTypes.TEXT,
-          allowNull: true,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
           allowNull: true,
         },
       },
@@ -227,7 +262,7 @@ export class ResourceCost
         timestamps: false,
         validate: {
           bothDatesOrNeither() {
-            const hasEffectiveDate = this.effective_date !== null && this.effective_date !== undefined;
+            const hasEffectiveDate = this.effective_from !== null && this.effective_from !== undefined;
             const hasEndDate = this.end_date !== null && this.end_date !== undefined;
             
             if (hasEffectiveDate !== hasEndDate) {
@@ -261,7 +296,7 @@ export async function setupResourceCostSeq(sequelize: Sequelize, schemaName: str
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resource_cost
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST} ' || LPAD(nextval('"${schemaName}".resource_cost_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST}-' || LPAD(nextval('"${schemaName}".resource_cost_seq')::text, 10, '0')`);
     
     console.log('Resource cost sequence setup complete');
   } catch (error) {

@@ -5,7 +5,6 @@ import {
   IResourceSkillService,
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
-import { RedisService } from "./redisService";
 import ResourceCostService from "./resourceCostService";
 import { ResourceService } from "./resourceServices";
 import ResourceSkillService from "./resourceSkillService";
@@ -25,7 +24,6 @@ class Services implements IServiceContainer {
     resourceCostServices: IResourceCostService = new ResourceCostService(),
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
     projectServices: IProjectService = new ProjectService()
-    // redisService: RedisService = new RedisService()
   ) {
     try {
       this.resourceCostServices = resourceCostServices;

@@ -1,4 +1,4 @@
-name: Deploy Platform 2.0 Pre-Production Backend Services
+name: Deploy thinkrd365 Pre-Production Backend Services
 
 on:
   push:
@@ -101,6 +101,8 @@ jobs:
           AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -109,7 +111,7 @@ jobs:
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
           EMAIL_FROM=interactions@certainti.ai
-          LOGIN_URL=https://platform20-preprod.certainti.ai
+          LOGIN_URL=https://thinkrd365-preprod.certainti.ai
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=PREPROD
@@ -213,6 +215,8 @@ jobs:
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username

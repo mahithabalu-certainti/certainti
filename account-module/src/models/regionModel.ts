@@ -1,6 +1,6 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
 interface RegionAttributes {
   rid: string;
   r_number?: string;
@@ -9,6 +9,8 @@ interface RegionAttributes {
   region_name: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface RegionCreationAttributes extends Optional<RegionAttributes, "rid"> {}
@@ -24,23 +26,37 @@ export class Region
   region_name!: string;
   created_datetime!: Date;
   modified_datetime!: Date;
+  created_by?: string;
+  modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     Region.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
         },
-        r_number: {
-          type: DataTypes.STRING(20),
+        created_by: {
+          type: DataTypes.STRING(50),
           allowNull: true,
-          unique: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+         created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
         },
         country_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         country_name: {
@@ -51,16 +67,7 @@ export class Region
           type: DataTypes.STRING,
           allowNull: false,
         },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
+       
       },
       {
         sequelize,
@@ -85,7 +92,7 @@ export async function setupRegionSequence(sequelize: Sequelize) {
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE regions
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.REGION} ' || LPAD(nextval('region_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.REGION}-' || LPAD(nextval('region_seq')::text, 10, '0')`);
     
     console.log('Region sequence setup complete');
   } catch (error) {

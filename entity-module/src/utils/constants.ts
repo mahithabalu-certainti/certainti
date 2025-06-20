@@ -11,6 +11,7 @@ export const HttpStatus = {
   FORBIDDEN_MESSAGE: "Forbidden",
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
+  SUCCESS_NOTIFICATION: "Operation completed successfully!",
 }
 
 export const NODE_ENV = {
@@ -28,7 +29,7 @@ export const constants = {
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 }
-
+export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const R_NUMBER_PREFIX = {
   PROJECT: 'PRJ',
   PROJECT_FISCAL: 'PFI',
@@ -45,6 +46,7 @@ export const R_NUMBER_PREFIX = {
   RESOURCE_COST_TIMELINE: 'RCT',
   RESOURCE_FISCAL: 'RSF',
   PROJECT_SUMMARY: 'PRS',
+  PROJECT_FISCAL_SUMMARY: 'PFS',
   CLASSIFICATION: 'CSF',
   KEY_CONTACT_DETAILS: 'KEY'
 }

@@ -1,7 +1,7 @@
 import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
-import { getTableSchemaByEntity} from  "../utils/helpers";
+import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
 import Decimal from "decimal.js";
@@ -218,7 +218,8 @@ async accountList(
             attributes: ["rid", "industry_name"],
             required: false,
           }
-        ]
+        ],
+        order: [["account_name", "ASC"]]
       });
 
       // Set USD currency for child accounts with no currency
@@ -449,7 +450,8 @@ async accountList(
                 as: "parent_account",
                 attributes: ["rid", "account_name"],
               },
-            ]
+            ],
+            order: [["account_name", "ASC"]]
           });
   
           // Group child accounts by parent_account_rid
@@ -594,7 +596,7 @@ async accountList(
       }
     }
   
-  async createAccount(accountData: IAccount, userId:string): Promise<{
+  async createAccount(accountData: IAccount, userId:string,file:Express.Multer.File): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -607,15 +609,16 @@ async accountList(
         account_name,
         comments,
         parent_account_rid,
-        account_country_rid,
-        account_currency_rid,
+        country_rid,
+        currency_rid,
         industry_rid,
         industry_name_other,
-        account_country_region_rid,
+        region_rid,
         data_storage,
         status,
         annual_revenue,
         key_contacts,
+        organisation_name
       } = accountData;
 
       if (data_storage === "store_in_parent" && !parent_account_rid) {
@@ -632,6 +635,15 @@ async accountList(
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
+        };
+      }
+
+      const isUniqueOrg = await this.checkIsAccounOrgUnique(organisation_name);
+      if(!isUniqueOrg){
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the organisation name "${organisation_name}" already exists. Please choose a different name.`
         };
       }
 
@@ -662,20 +674,30 @@ async accountList(
         account_name,
         comments: comments || "",
         // r_number: "fnfdfn",
-        region: account_country_region_rid,
+        region_rid: region_rid,
         is_parent: parent_account_rid ? false : true,
         parent_account_rid: parent_account_rid || null,
         storage_type: data_storage,
-        country_rid:account_country_rid,
-        currency_rid:account_currency_rid,
+        country_rid:country_rid,
+        currency_rid:currency_rid,
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
         status,
         created_by: userId,
-        modified_by: userId,
-        annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
+        annual_revenue: annual_revenue  || null,
+        organisation_name
       });
-
+      if(account.rid && file)
+      {
+        if(file)
+            {
+             const file_url = await uploadToAzureBlob(file,account.rid);
+              await repository.update({logo_url: file_url},
+              { where: { rid: account.rid},
+                returning: true
+              })
+            }
+      }
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number || '',
@@ -779,14 +801,16 @@ async insertClientTemplateDetails(
         comments,
         status,
         annual_revenue,
-        account_country_region_rid,
+        region_rid,
         data_storage,
-        account_country_rid,
-        account_currency_rid,
+        country_rid,
+        currency_rid,
         industry_rid,
         industry_name_other,
         key_contacts,
-        parent_account_rid
+        parent_account_rid,
+        logo_url,
+        organisation_name
       } = accountData;
 
       // Check if account name already exists before update
@@ -797,11 +821,28 @@ async insertClientTemplateDetails(
         }
       });
 
+       // Check if organisation name already exists before update
+      const existingOrgAccount = await repository.findOne({
+        where: {
+          organisation_name: { [Op.iLike]: organisation_name }, // Case insensitive comparison
+          rid: { [Op.ne]: account_rid } // Exclude current account
+        }
+      });
+
+
+
       if (existingAccount) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
+        };
+      }
+      if (existingOrgAccount) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the organisation name "${organisation_name}" already exists. Please choose a different name.`
         };
       }
 
@@ -820,14 +861,16 @@ async insertClientTemplateDetails(
           account_name,
           comments: comments || "",
           status,
-          region: account_country_region_rid,
-          country_rid: account_country_rid,
-          currency_rid: account_currency_rid,
+          region_rid: region_rid,
+          country_rid: country_rid,
+          currency_rid: currency_rid,
           industry_rid: industry_rid,
           modified_by: userId,
           industry_name_other: industry_name_other,
-          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
-          modified_datetime: new Date()
+          annual_revenue: annual_revenue || null,
+          modified_datetime: new Date(),
+          logo_url:logo_url,
+          organisation_name
         },
         {
           where: {
@@ -923,6 +966,7 @@ async insertClientTemplateDetails(
           } as any,
         },
         attributes: ["rid", "account_name"],
+         order: [["account_name", "ASC"]] 
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1115,7 +1159,37 @@ async insertClientTemplateDetails(
     
     return result;
   }
-
+  async listAllAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountData: any; orgData: any };
+  }> {
+    try {
+      const repository = await this.getAccountRepository();
+      const accountData = await repository.findAll({
+         where: {
+          status: 'active',
+           organisation_name: {
+          [Op.ne]: '',
+        },    
+        },
+        attributes: ["rid", "account_name","organisation_name"],
+        order: [['organisation_name', 'ASC']]
+      });
+      const orgData = await this.schemaService.getOrgInfo();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          accountData,
+          orgData
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
   
   async listGlobalAccounts(): Promise<{
     statusCode: number;
@@ -1137,10 +1211,12 @@ async insertClientTemplateDetails(
             model: Account,
             as: "child_accounts",
             attributes: ["rid", "account_name"],
-            required: false
+            required: false,
+            separate: true,  // Ensures child ordering works
+            order: [["account_name", "ASC"]]
           }
         ],
-        order: [["created_datetime", "DESC"]]
+        order: [["account_name", "ASC"]]
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1565,6 +1641,21 @@ async insertClientTemplateDetails(
     }
     return true;
   }
+
+   private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean> {
+    const response = await Account.findOne({
+      where: {
+        organisation_name: {
+          [Op.eq]: organisation_name,
+        },
+      },
+    });
+    if (response && response.organisation_name) {
+      return false;
+    }
+    return true;
+  }
+  
 
   private throwServiceError(err: Error): {
     statusCode: number;

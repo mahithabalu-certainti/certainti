@@ -423,8 +423,8 @@ export class ResourceService {
       // "resource_email",
       "resource_designation",
       "resource_total_experience",
-      "resource_country",
-      "resource_region",
+      "country_rid",
+      "region_rid",
       "account_name",
       "total_project_hours",
       "comments",
@@ -506,7 +506,7 @@ export class ResourceService {
     havingClause: Record<string, any>
   ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
     const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
-    const uuidFields = ["resource_country","resource_region"];
+    const uuidFields = ["country_rid","region_rid"];
 
     const filterFields = [
       { clientField: "resource_code", dbField: "Resources.resource_code" },
@@ -515,8 +515,8 @@ export class ResourceService {
       { clientField: "resource_type", dbField: "Resources.resource_type" },
       { clientField: "resource_status", dbField: "Resources.resource_status" },
       { clientField: "resource_designation", dbField: "Resources.resource_designation" },
-      { clientField: "resource_country", dbField: "Resources.resource_country" },
-      { clientField: "resource_region", dbField: "Resources.resource_region" },
+      { clientField: "country_rid", dbField: "Resources.country_rid" },
+      { clientField: "region_rid", dbField: "Resources.region_rid" },
       { clientField: "resource_role", dbField: "Resources.resource_role" },
       { clientField: "resource_orgname", dbField: "Resources.resource_orgname" },
       { clientField: "comments", dbField: "Resources.comments" },
@@ -700,7 +700,7 @@ processGeoDataSort(
     sortOrder: string
 ) {
     const geoDataSort: string[][] = [];
-    const geoFields = ["resource_country", "resource_region", "resource_city"];
+    const geoFields = ["country_rid", "region_rid", "city_rid"];
 
     if (geoFields.includes(sortBy)) {
         geoDataSort.push([

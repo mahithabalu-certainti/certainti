@@ -21,10 +21,10 @@ export interface IUserData {
   role: string;
   status: string;
   street: string;
-  city: string;
-  state: string;
+  city_rid: string;
+  region_rid: string;
   zip_code: string;
-  country: string;
+  country_rid: string;
   designation?: string;
   manager_name?: string;
   manager_email?: string;
@@ -35,7 +35,9 @@ export interface IUserData {
   function_group_id?: string;
   phone?: string;
   created_by: string;
-  organization: string
+  organization: string;
+  is_consultant_firm:boolean;
+  org_id:string;
 }
 
 export interface IUpdateUserData {
@@ -45,10 +47,10 @@ export interface IUpdateUserData {
   profile_id: string;
   status: string;
   street: string;
-  city: string;
-  state: string;
+  city_rid: string;
+  region_rid: string;
   zip_code: string;
-  country: string;
+  country_rid: string;
   mobile?: string;
   role: string;
   designation?: string;
@@ -62,4 +64,7 @@ export interface IUpdateUserData {
   organization: string
   phone?: string;
   modified_by: string;
+  is_consultant_firm:boolean;
+  org_id:string;
+  
 }

@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { PermissionField } from "./permissionFieldModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface ProfileFieldsAccessAttributes {
   rid: string;
@@ -34,16 +35,23 @@ export class ProfileFieldsAccess
     ProfileFieldsAccess.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
+        created_by: DataTypes.STRING,
+        modified_by: DataTypes.STRING,
+        created_datetime: {
+          type: DataTypes.DATE,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: DataTypes.DATE,
         profile_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         permission_field_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         read: {
@@ -54,13 +62,7 @@ export class ProfileFieldsAccess
           type: DataTypes.BOOLEAN,
           allowNull: false,
         },
-        created_by: DataTypes.STRING,
-        modified_by: DataTypes.STRING,
-        created_datetime: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: DataTypes.DATE,
+       
       },
       {
         sequelize,

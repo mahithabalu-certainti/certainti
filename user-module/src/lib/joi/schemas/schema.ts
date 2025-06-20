@@ -21,12 +21,14 @@ const createUserSchema = Joi.object({
   role: Joi.string().max(255).required().label("Role"),
   status: Joi.string().valid("active", "inactive").required().label("Status"),
   street: Joi.string().max(255).allow('', null).optional().label("Street"),
-  city: Joi.string().max(255).allow('', null).optional().label("City"),
-  state: Joi.string().max(255).allow('', null).optional().label("Region"),
+  city_rid: Joi.string().max(255).allow('', null).optional().label("City"),
+  region_rid: Joi.string().max(255).allow('', null).optional().label("Region"),
   zip_code: Joi.string().max(20).allow('', null).optional().label("Zip Code"),
-  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().label("Phone"),
-  country: Joi.string().max(255).allow('', null).optional().label("Country"),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).allow('', null).optional().label("Phone"),
+  country_rid: Joi.string().max(255).allow('', null).optional().label("Country"),
   created_by: Joi.string().max(255).required().label("Created By"),
+  is_consultant_firm:Joi.boolean().required(),
+  org_id:Joi.string().required()
 });
 
 const enterpriseUserSchema = Joi.object({
@@ -67,12 +69,14 @@ const updateUserSchema = Joi.object({
   role: Joi.string().max(255).required().label("Role"),
   status: Joi.string().valid("active", "inactive").required().label("Status"),
   street: Joi.string().max(255).allow('', null).optional().label("Street"),
-  city: Joi.string().max(255).allow('', null).optional().label("City"),
-  state: Joi.string().max(255).allow('', null).optional().label("Region"),
+  city_rid: Joi.string().max(255).allow('', null).optional().label("City"),
+  region_rid: Joi.string().max(255).allow('', null).optional().label("Region"),
   zip_code: Joi.string().max(20).allow('', null).optional().label("Zip code"),
-  country: Joi.string().max(255).allow('', null).optional().label("Country"),
-  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().label("Phone"),
+  country_rid: Joi.string().max(255).allow('', null).optional().label("Country"),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().allow('', null).label("Phone"),
   modified_by: Joi.string().max(255).allow('', null).optional(),
+  is_consultant_firm:Joi.boolean().required(),
+  org_id:Joi.string().required()
 });
 
 const userDetailsUpdateSchema = Joi.object({
@@ -128,6 +132,7 @@ const exportUserSchema = Joi.object({
   sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
+  timezone: Joi.string().optional(),
 });
 
 const listUserByIdSchema = Joi.object({

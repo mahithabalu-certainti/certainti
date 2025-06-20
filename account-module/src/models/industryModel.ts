@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
 interface IndustryAttributes {
-  rid: string; // UUID
+  rid: string; 
   r_number?: string;
   eid?: number;
   industry_name: string;
@@ -30,6 +30,7 @@ export class Industry
   public industry_status?: string;
   public created_by?: string;
   public modified_by?: string;
+  
 
   // Timestamps
   public readonly created_datetime!: Date;
@@ -40,18 +41,26 @@ export class Industry
     Industry.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
         },
-        r_number: {
-          type: DataTypes.STRING(20),
+        created_by: {
+          type: DataTypes.STRING(50),
           allowNull: true,
-          unique: true,
         },
-        eid: {
-          type: DataTypes.INTEGER,
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
           allowNull: true,
         },
         industry_name: {
@@ -65,25 +74,7 @@ export class Industry
         industry_status: {
           type: DataTypes.STRING,
           allowNull: true,
-        },
-        created_by: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: null,
-        },
+        }
       },
       {
         sequelize,
@@ -103,7 +94,7 @@ export async function setupIndustrySequence(sequelize: Sequelize) {
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE industry
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.INDUSTRY} ' || LPAD(nextval('industry_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.INDUSTRY}-' || LPAD(nextval('industry_seq')::text, 10, '0')`);
     
     console.log('Industry sequence setup complete');
   } catch (error) {

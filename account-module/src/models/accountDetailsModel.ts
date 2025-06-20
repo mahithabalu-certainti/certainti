@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface AccountDetailsAttributes {
   rid: number;
@@ -11,8 +12,8 @@ interface AccountDetailsAttributes {
   fiscal_start_date: string;
   fiscal_end_date: string;
   interaction_cc_list?: string;
-  blended_rate_fte?: string;
-  blended_rate_subcon?: string;
+  blended_rate_fte?:  number | null;
+  blended_rate_subcon?:  number | null;
   created_by?: string;
   modified_by?: string;
   website?: string;
@@ -20,6 +21,8 @@ interface AccountDetailsAttributes {
   data_residency?: string;
   data_storage?: string;
   business_details: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface AccountDetailsCreationAttributes
@@ -41,8 +44,8 @@ class AccountDetails
   public fiscal_start_date!: string;
   public fiscal_end_date!: string;
   public interaction_cc_list?: string;
-  public blended_rate_fte?: string;
-  public blended_rate_subcon?: string;
+  public blended_rate_fte?:  number | null;;
+  public blended_rate_subcon?:  number | null;;
   public created_by?: string;
   public modified_by?: string;
   public industry_rid!: string;
@@ -65,12 +68,29 @@ const sequelize = new Sequelize("database", "username", "password", {
 AccountDetails.init(
   {
     rid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.STRING(50),
+      defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
       primaryKey: true,
     },
+    created_by: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    modified_by: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     account_rid: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     account_name: {
@@ -110,21 +130,14 @@ AccountDetails.init(
       allowNull: true,
     },
     blended_rate_fte: {
-      type: DataTypes.STRING(10),
+      type: DataTypes.DECIMAL(18, 2),
       allowNull: true,
     },
     blended_rate_subcon: {
-      type: DataTypes.STRING(10),
+      type: DataTypes.DECIMAL(18, 2),
       allowNull: true,
     },
-    created_by: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    modified_by: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
+   
   
     website: {
       type: DataTypes.STRING(255),

@@ -225,10 +225,10 @@ class ResourceCostSchemaService {
     accountNumber: string,
     tableName?: string
   ): Promise<boolean> {
-    // Check if accountNumber already includes the platform_v2_ prefix
-    const schemaName = accountNumber.startsWith("platform_v2_")
+    // Check if accountNumber already includes the trd365_ prefix
+    const schemaName = accountNumber.startsWith("trd365_")
       ? accountNumber
-      : `platform_v2_${accountNumber}`;
+      : `trd365_${accountNumber.replace(/\D/g, '')}`;
 
     // If we're creating resource_cost, make sure resources table exists first
     if (tableName === "resource_cost") {
@@ -354,7 +354,7 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_from,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
@@ -548,7 +548,7 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_from,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
@@ -694,21 +694,27 @@ class ResourceCostSchemaService {
           "Fiscal Year": resource.fiscal_year || "-",
           "Name": resource.resource_name || "-",
           "Resource Type": resource.resource_type || "-",
-          "Effective From": resource.effective_date || "-",
+          "Effective From": resource.effective_from || "-",
           "End Date": resource.end_date || "-",
           "Currency": resource.currency_code || "USD",
-          "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
-          "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
-          "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
-          "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
-          "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
-          "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
           "Effort In Hours": resource.effort_in_hrs || "-",
+          "Salary": formatNumberForExport(resource.salary , resource.currency_symbol) || "-",
+          "Bonus": formatNumberForExport(resource.bonus , resource.currency_symbol) || "-",
+          "Insurance": formatNumberForExport(resource.insurance , resource.currency_symbol) || "-",
+          "Deductions": formatNumberForExport(resource.deductions , resource.currency_symbol) || "-",
+          "Cost": formatNumberForExport(resource.resource_cost , resource.currency_symbol) || "-",
           "Org Name": resource.resource_orgname || "-",
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
           "Comments": resource.comments || "-",
+          "Status": resource.status || "-",
           "Cost ID": resource.r_number || "-",
+          // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
+          // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
+          // "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
+          // "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
+          // "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
+          // "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
           // "Semi Annual": resource.semi_annual_cost,
         };
       });
@@ -799,15 +805,21 @@ class ResourceCostSchemaService {
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "resource_cost_number",
-      "effective_date",
+      "effective_from",
       "end_date",
-      "annual_cost",
+      // "annual_cost",
       // "semi_annual_cost",
-      "monthly_cost",
-      "weekly_cost",
-      "bi_weekly_cost",
-      "daily_cost",
-      "hourly_cost",
+      // "monthly_cost",
+      // "weekly_cost",
+      // "bi_weekly_cost",
+      // "daily_cost",
+      // "hourly_cost",
+      "salary",
+      "deductions",
+      "insurance",
+      "bonus",
+      "resource_cost",
+      "net_resource_cost",
       "effort_in_hrs",
       "currency",
       "account_name",
@@ -818,6 +830,7 @@ class ResourceCostSchemaService {
       "resource_orgname",
       "resource_role",
       "resource_designation",
+      "status",
       "comments",
     ];
     if (!validSortColumns.includes(sortBy)) {
@@ -840,17 +853,23 @@ class ResourceCostSchemaService {
     // Define field types for proper filter handling
     const alphanumericFields = ["status","resource_code"];
     const numericFields = [
-      "annual",
-      "monthly",
-      "weekly",
-      "daily",
-      "hourly",
-      "bi_weekly",
+      // "annual",
+      // "monthly",
+      // "weekly",
+      // "daily",
+      // "hourly",
+      // "bi_weekly",
       "fiscal_year",
       "effort_in_hrs",
+      "salary",
+      "bonus",
+      "insurance",
+      "deductions",
+      "resource_cost",
+      "net_resource_cost"
       // "semi_annual",
     ];
-    const dateFields = ["effective_date", "end_date"];
+    const dateFields = ["effective_from", "end_date"];
     const specialFields = ["resource_cost_number"];
 
     // Process each filter
@@ -893,7 +912,7 @@ class ResourceCostSchemaService {
     if (value.equals) {
       condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}') OR rc."${key}" IS NULL`;
+      condition += ` AND (LOWER(rc."${key}") != LOWER('${value.not_equals}') OR rc."${key}" IS NULL)`;
     } else if (value.contains) {
       condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
@@ -932,19 +951,22 @@ class ResourceCostSchemaService {
   processNumericFilter(key: string, value: any): string {
     // Your existing implementation
     let condition = "";
-    if(key === "fiscal_year") {
-      key = "fiscal_year";
-    }
-    else if(key === "effort_in_hrs") {
-      key = "effort_in_hrs";
-    }
-    else {
-      key = `${key}_cost`;
-    }
+    // if(key === "fiscal_year") {
+    //   key = "fiscal_year";
+    // }
+    // else if(key === "effort_in_hrs") {
+    //   key = "effort_in_hrs";
+    // }
+    // else if(key === "bonus") {
+    //   key = "bonus";
+    // }
+    // else {
+    //   key = `${key}_cost`;
+    // }
     if (value.equals !== undefined) {
       condition += ` AND rc."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {
-      condition += ` AND rc."${key}" != ${value.not_equals} OR rc."${key}" IS NULL`;
+      condition += ` AND (rc."${key}" != ${value.not_equals} OR rc."${key}" IS NULL)`;
     } else if (value.greater_than !== undefined) {
       condition += ` AND rc."${key}" > ${value.greater_than}`;
     } else if (value.less_than !== undefined) {
@@ -985,7 +1007,7 @@ class ResourceCostSchemaService {
     if (value.equals) {
       condition += ` AND rc."${key}"::date = '${value.equals}'::date`;
     } else if (value.not_equals) {
-      condition += ` AND rc."${key}"::date != '${value.not_equals}'::date OR rc."${key}" IS NULL`;
+      condition += ` AND (rc."${key}"::date != '${value.not_equals}'::date OR rc."${key}" IS NULL)`;
     } else if (value.before) {
       condition += ` AND rc."${key}" < '${value.before}'`;
     } else if (value.after) {
@@ -1029,7 +1051,7 @@ class ResourceCostSchemaService {
 
   processDefaultFilter(key: string, value: any): string {
     let tableAlias = "rc";
-
+    
   // Set alias based on key
   const aliasMapR = ["resource_name", "resource_orgname", "resource_designation", "resource_role"];
   const aliasMapAD = ["account_name"];
@@ -1055,12 +1077,12 @@ class ResourceCostSchemaService {
     } else if (value.not_equals !== undefined) {
       if (typeof value.not_equals === "string") {
         if (isUuidField) {
-          condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL`;
+          condition += ` AND (${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL)`;
         } else {
           condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
         }
       } else {
-        condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
+        condition += ` AND (${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL)`;
       }
     } else if (value.contains !== undefined) {
       condition += ` AND LOWER(${tableAlias}."${key}") LIKE LOWER('%${value.contains}%')`;
@@ -1139,7 +1161,7 @@ class ResourceCostSchemaService {
       if (resourceCostNumber.equals) {
         condition += ` AND LOWER(rc."r_number") = LOWER('${resourceCostNumber.equals}')`;
       } else if (resourceCostNumber.not_equals) {
-        condition += ` AND LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}') OR rc."r_number" IS NULL`;
+        condition += ` AND (LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}') OR rc."r_number" IS NULL)`;
       } else if (resourceCostNumber.contains) {
         condition += ` AND LOWER(rc."r_number") LIKE LOWER('%${resourceCostNumber.contains}%')`;
       } else if (resourceCostNumber.not_contains) {

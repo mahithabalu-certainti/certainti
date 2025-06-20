@@ -1,5 +1,5 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourcesTimelineAttributes {
   rid?: string;
@@ -10,7 +10,10 @@ interface ResourcesTimelineAttributes {
   event_datetime?: Date;
   event_type: string;
   entity_rid: string;
-  modified_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  created_by?: string;
 }
 
 interface ResourcesTimelineCreationAttributes
@@ -31,28 +34,49 @@ export class ResourcesTimeline
   public event_datetime?: Date;
   public event_type!: string;
   public entity_rid!: string;
-  public modified_by!: string;
+  public modified_by?: string;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
+  public created_by?: string;
+
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     const model = ResourcesTimeline.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
         r_number: {
-          type: DataTypes.STRING(20),
+          type: DataTypes.STRING(50),
           allowNull: true,
           unique: true,
         },
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+         created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
+        },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         entity_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         event_name: {
@@ -72,10 +96,7 @@ export class ResourcesTimeline
           allowNull: false,
           defaultValue: DataTypes.NOW,
         },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
+        
       },
       {
         sequelize,
@@ -102,7 +123,7 @@ export async function setupResourceTimelineSeq(sequelize: Sequelize, schemaName:
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resources_timeline
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_TIMELINE} ' || LPAD(nextval('"${schemaName}".resource_timeline_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_TIMELINE}-' || LPAD(nextval('"${schemaName}".resource_timeline_seq')::text, 10, '0')`);
     
     console.log('Resource timeline sequence setup complete');
   } catch (error) {

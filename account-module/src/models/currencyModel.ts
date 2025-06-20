@@ -1,4 +1,5 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
+import { ENV_PREFIX } from "../utils/constant";
 interface CurrencyAttributes {
   rid: string;
   currency_code: string;
@@ -6,6 +7,8 @@ interface CurrencyAttributes {
   currency_symbol: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface CurrencyCreationAttributes
@@ -21,15 +24,35 @@ export class Currency
   currency_symbol!: string;
   created_datetime!: Date;
   modified_datetime!: Date;
+  created_by?: string;
+  modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     Currency.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+         created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
         },
         currency_code: {
           type: DataTypes.STRING,
@@ -43,17 +66,7 @@ export class Currency
         currency_symbol: {
           type: DataTypes.STRING,
           allowNull: false,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
+       }
       },
       {
         sequelize,

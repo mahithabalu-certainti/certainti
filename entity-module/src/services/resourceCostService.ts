@@ -12,7 +12,6 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
-import { isNull, isNullOrUndefined } from "util";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -81,7 +80,7 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -169,7 +168,7 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -234,7 +233,7 @@ class ResourceCostService {
    * @param resourceCost - Object containing resource cost details including costs, dates, and identifiers
    * @returns Promise resolving to status object with created resource cost data or error message
    */
-async createResourceCost(
+  async createResourceCost(
     resourceCost: IResourceCost,
     userId: string
   ): Promise<{
@@ -250,17 +249,22 @@ async createResourceCost(
         resource_type,
         resource_rid,
         resource_code,
-        effective_date,
+        effective_from,
         end_date,
         // cost_frequency,
         // cost,
-        annual_cost,
+        // annual_cost,
         // semi_annual_cost,
-        monthly_cost,
-        weekly_cost,
-        bi_weekly_cost,
-        daily_cost,
-        hourly_cost,
+        // monthly_cost,
+        // weekly_cost,
+        // bi_weekly_cost,
+        // daily_cost,
+        // hourly_cost,
+        salary,
+        deductions,
+        insurance,
+        bonus,
+        resource_cost,
         effort_in_hrs,
         currency_rid,
         accountNumber,
@@ -270,7 +274,7 @@ async createResourceCost(
       } = resourceCost;
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       
       const [resourceCostTableCreated, timelineTableCreated] =
         await Promise.all([
@@ -298,88 +302,81 @@ async createResourceCost(
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
-      // let frequency: Record<string, string | null> = {
-      //   annual_cost: null,
-      //   semi_annual_cost: null,
-      //   monthly_cost: null,
-      //   weekly_cost: null,
-      //   bi_weekly_cost: null,
-      //   daily_cost: null,
-      //   hourly_cost: null
-      // };
+
       try {
         const costFields = {
-          annual_cost,
-          // semi_annual_cost,
-          monthly_cost,
-          weekly_cost,
-          bi_weekly_cost,
-          daily_cost,
-          hourly_cost,
+          deductions,
+          insurance,
+          bonus,
           effort_in_hrs,
+          resource_cost,
+          salary,
         };
 
-        const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
-          // Normalize empty string to null
-          if (value === "" || value === null || value === undefined) {
-            acc[key] = null;
-          } else {
-            try {
-              // Convert valid string/number to Decimal
-              acc[key] = new Decimal(value).toString();
-            } catch (error) {
-              throw new Error(`Invalid number format for ${key}: ${value}`);
+        const costValues = Object.entries(costFields).reduce(
+          (acc, [key, value]) => {
+            // Normalize empty string to null
+            if (value === "" || value === null || value === undefined) {
+              acc[key] = null;
+            } else {
+              try {
+                // Convert valid string/number to Decimal
+                acc[key] = new Decimal(value).toString();
+              } catch (error) {
+                throw new Error(`Invalid number format for ${key}: ${value}`);
+              }
             }
-          }
-        
-          return acc;
-        }, {} as Record<string, string | null>);
-        
-        // Set only the relevant frequency cost field
-        // switch (cost_frequency) {
-        //   case "annual":
-        //     frequency.annual_cost = costValue;
-        //     break;
-        //   case "semi_annual":
-        //     frequency.semi_annual_cost = costValue;
-        //     break;
-        //   case "monthly":
-        //     frequency.monthly_cost = costValue;
-        //     break;
-        //   case "weekly":
-        //     frequency.weekly_cost = costValue;
-        //     break;
-        //   case "bi_weekly":
-        //     frequency.bi_weekly_cost = costValue;
-        //     break;
-        //   case "daily":
-        //     frequency.daily_cost = costValue;
-        //     break;
-        //   case "hourly":
-        //     frequency.hourly_cost = costValue;
-        //     break;
-        //   default:
-        //     throw new Error(`Invalid cost frequency: ${cost_frequency}`);
-        // }
+            return acc;
+          },
+          {} as Record<string, string | null>
+        );
+
         const sequelize = await this.getOrgSequelize();
+        const mainDbSequelize = await this.getMainDbSequelize();
+        
+        // Get currency threshold
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
+
         ResourceCost.initialize(sequelize, schemaName);
-        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
-        if (effectiveDate && endDate) {
-          // Find which cost type has a value
-          const costType = Object.entries(costValues).find(([key, value]) => value !== null)?.[0];
-          
-          const existingCost = await ResourceCost.findOne({
-            where: {
-              resource_rid,
-              effective_date: effectiveDate,
-              end_date: endDate,
-              [costType as string]: { [Op.ne]: null } // Check for existing record with same cost type
-            },
-          });
-          if (existingCost) {
-            throw new Error("Compensation already exists for this duration.");
-          }
+
+        // Calculate resource cost
+        const calculatedResourceCost = Number(
+          new Decimal(salary || 0)
+            .plus(bonus || 0)
+            .plus(insurance || 0)
+            .plus(resource_cost || 0)
+            .minus(deductions || 0)
+        );
+
+        let status = "Active";
+
+        // Check for duplicate record
+        const existingCost = await ResourceCost.findOne({
+          where: {
+            resource_rid,
+            effective_from: effectiveFrom,
+            end_date: endDate,
+            ...costValues,
+            fiscal_year,
+            comments,
+            currency_rid,
+            status: "Active",
+            net_resource_cost: calculatedResourceCost,
+            account_rid,
+          },
+        });
+
+        if (existingCost) {
+          status = "Duplicate";
+        } else if (effort_in_hrs !== undefined && Number(effort_in_hrs) > 3000) {
+          status = "Anomaly";
+        } else if (
+          (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
+          (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
+        ) {
+          status = "Anomaly";
         }
 
         createdResourceCost = await ResourceCost.create({
@@ -389,19 +386,21 @@ async createResourceCost(
           resource_rid,
           resource_number,
           resource_code,
-          effective_date: effectiveDate || null,
+          effective_from: effectiveFrom || null,
           end_date: endDate || null,
           // cost_type: cost_frequency,
           // cost: cost,
           // ...frequency,
           ...costValues,
+          net_resource_cost: calculatedResourceCost,
           currency_rid: currency_rid || undefined,
           fiscal_year,
           comments,
+          status,
           created_datetime: new Date(),
-          created_by: userId,
-          modified_by: userId,
+          created_by: userId
         });
+
         if (resource_rid) {
           try {
             ResourceFiscal.initialize(sequelize, schemaName);
@@ -412,7 +411,6 @@ async createResourceCost(
             });
             if (existingFiscal) {
               await existingFiscal.update({
-                // ...frequency,
                 ...costValues,
                 modified_datetime: new Date(),
                 modified_by: userId,
@@ -426,6 +424,7 @@ async createResourceCost(
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
       }
+
       try {
         await this.createResourceCostTimeline(
           createdResourceCost ? createdResourceCost : {},
@@ -438,6 +437,7 @@ async createResourceCost(
       } catch (timelineError) {
         console.error("Failed to create timeline entry:", timelineError);
       }
+
       if (eventStatus === "Failure") {
         return {
           statusCode: HttpStatus.FAILED,
@@ -445,6 +445,7 @@ async createResourceCost(
           errorMessage: errorMessage,
         };
       }
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -456,6 +457,7 @@ async createResourceCost(
       return this.throwServiceError(err as Error);
     }
   }
+
   /**
    * Creates a record in the ResourceCostTimeline table using Sequelize ORM
    * @param resourceCost - The created resource cost object
@@ -482,8 +484,8 @@ async createResourceCost(
         event_name: eventName,
         event_status: eventStatus,
         entity_rid: resourceCost.rid || "",
-        modified_datetime: new Date(),
-        modified_by: modifiedBy,
+        created_datetime: new Date(),
+        created_by: modifiedBy
       });
     } catch (error) {
       console.error("Failed to create timeline entry:", error);
@@ -509,19 +511,25 @@ async createResourceCost(
     try {
       const {
         eid,
-        effective_date,
+        effective_from,
         end_date,
         // cost_frequency,
         // cost,
-        annual_cost,
+        // annual_cost,
         // semi_annual_cost,
-        monthly_cost,
-        weekly_cost,
-        bi_weekly_cost,
-        daily_cost,
-        hourly_cost,
+        // monthly_cost,
+        // weekly_cost,
+        // bi_weekly_cost,
+        // daily_cost,
+        // hourly_cost,
+        salary,
+        deductions,
+        insurance,
+        bonus,
+        resource_cost,
         effort_in_hrs,
         currency_rid,
+        resource_rid,
         accountNumber,
         rid,
         fiscal_year,
@@ -532,7 +540,7 @@ async createResourceCost(
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_cost_timeline";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(schemaName, tableName);
@@ -566,112 +574,94 @@ async createResourceCost(
         };
       }
 
-      // let frequency: Record<string, string | null> = {
-      //   annual_cost: null,
-      //   semi_annual_cost: null,
-      //   monthly_cost: null,
-      //   weekly_cost: null,
-      //   bi_weekly_cost: null,
-      //   daily_cost: null,
-      //   hourly_cost: null
-      // };
       try {
         const costFields = {
-          annual_cost,
-          // semi_annual_cost,
-          monthly_cost,
-          weekly_cost,
-          bi_weekly_cost,
-          daily_cost,
-          hourly_cost,
+          deductions,
+          insurance,
+          bonus,
           effort_in_hrs,
+          resource_cost,
+          salary,
         };
 
-        const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
-          // Normalize empty string to null
-          if (value === "" || value === null || value === undefined) {
-            acc[key] = null;
-          } else {
-            try {
-              // Convert valid string/number to Decimal
-              acc[key] = new Decimal(value).toString();
-            } catch (error) {
-              throw new Error(`Invalid number format for ${key}: ${value}`);
+        const costValues = Object.entries(costFields).reduce(
+          (acc, [key, value]) => {
+            // Normalize empty string to null
+            if (value === "" || value === null || value === undefined) {
+              acc[key] = null;
+            } else {
+              try {
+                // Convert valid string/number to Decimal
+                acc[key] = new Decimal(value).toString();
+              } catch (error) {
+                throw new Error(`Invalid number format for ${key}: ${value}`);
+              }
             }
-          }
-        
-          return acc;
-        }, {} as Record<string, string | null>);
-        
-        // Set only the relevant frequency cost field
-        // switch (cost_frequency) {
-        //   case "annual":
-        //     frequency.annual_cost = costValue;
-        //     break;
-        //   case "semi_annual":
-        //     frequency.semi_annual_cost = costValue;
-        //     break;
-        //   case "monthly":
-        //     frequency.monthly_cost = costValue;
-        //     break;
-        //   case "weekly":
-        //     frequency.weekly_cost = costValue;
-        //     break;
-        //   case "bi_weekly":
-        //     frequency.bi_weekly_cost = costValue;
-        //     break;
-        //   case "daily":
-        //     frequency.daily_cost = costValue;
-        //     break;
-        //   case "hourly":
-        //     frequency.hourly_cost = costValue;
-        //     break;
-        //   default:
-        //     throw new Error(`Invalid cost frequency: ${cost_frequency}`);
-        // }
 
-        const effectiveDate = this.formatDateForDb(effective_date as string);
+            return acc;
+          },
+          {} as Record<string, string | null>
+        );
+
+        const mainDbSequelize = await this.getMainDbSequelize();
+        
+        // Get currency threshold
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
+
+        const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
-        if (effectiveDate && endDate) {
-          const existingRow = await ResourceCost.findOne({
-            where: {
-              rid: rid,
-            },
-          });
+        // Calculate resource cost
+        const calculatedResourceCost = Number(
+          new Decimal(salary || 0)
+            .plus(bonus || 0)
+            .plus(insurance || 0)
+            .plus(resource_cost || 0)
+            .minus(deductions || 0)
+        );
 
-          if (existingRow) {
-            // Find which cost type has a value
-          const costType = Object.entries(costValues).find(([key, value]) => value !== null)?.[0];
+        let resourceCostStatus = status;
 
-            const existingCost = await ResourceCost.findOne({
-              where: {
-                resource_rid: existingRow.resource_rid,
-                effective_date: effectiveDate,
-                end_date: endDate,
-                [costType as string]: { [Op.ne]: null }, // Check for existing record with same cost type
-                rid: { [Op.ne]: rid } // Exclude the current record being updated
-              },
-            });
+        // Check for duplicate record
+        const existingCost = await ResourceCost.findOne({
+          where: {
+            resource_rid,
+            effective_from: effectiveFrom,
+            end_date: endDate,
+            ...costValues,
+            fiscal_year,
+            comments,
+            currency_rid,
+            status: "Active",
+            net_resource_cost: calculatedResourceCost,
+          },
+        });
 
-            if (existingCost) {
-              throw new Error("Compensation already exists for this duration.");
-            }
-          }
+        if (existingCost) {
+          resourceCostStatus = "Duplicate";
+        } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
+          resourceCostStatus = "Anomaly";
+        } else if (
+          (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
+          (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
+        ) {
+          resourceCostStatus = "Anomaly";
         }
+
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
-            effective_date: effectiveDate || null,
+            effective_from: effectiveFrom || null,
             end_date: endDate || null,
             // cost_type: cost_frequency,
             // cost: cost,
             // ...frequency,
             ...costValues,
+            net_resource_cost: calculatedResourceCost,
             currency_rid,
             fiscal_year,
             comments,
             rid,
-            status,
+            status: resourceCostStatus,
             modified_datetime: new Date(),
             modified_by: userId,
           },
@@ -713,7 +703,7 @@ async createResourceCost(
             originalResourceCost.toJSON(),
             affectedRows[0],
             userId,
-            accountNumberFetched,
+            accountNumberFetched
           );
 
           // Also log to timeline
@@ -785,7 +775,7 @@ async createResourceCost(
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Make sure we're in the right schema context
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableExists = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost_history"
@@ -799,15 +789,21 @@ async createResourceCost(
       // Define the attributes to track changes for
       const trackedAttributes = [
         "eid",
-        "effective_date",
+        "effective_from",
         "end_date",
-        "annual_cost",
+        // "annual_cost",
         // "semi_annual_cost",
-        "monthly_cost",
-        "weekly_cost",
-        "bi_weekly_cost",
-        "daily_cost",
-        "hourly_cost",
+        // "monthly_cost",
+        // "weekly_cost",
+        // "bi_weekly_cost",
+        // "daily_cost",
+        // "hourly_cost",
+        "salary",
+        "deductions",
+        "insurance",
+        "bonus",
+        "resource_cost",
+        "net_resource_cost",
         "effort_in_hrs",
         "currency_rid",
         "fiscal_year",
@@ -830,7 +826,7 @@ async createResourceCost(
             let formattedOldValue = oldValue;
             let formattedNewValue = newValue;
 
-            if (attribute === "effective_date" || attribute === "end_date") {
+            if (attribute === "effective_from" || attribute === "end_date") {
               if (oldValue)
                 formattedOldValue = new Date(oldValue)
                   .toISOString()
@@ -855,8 +851,8 @@ async createResourceCost(
                 formattedNewValue !== undefined
                   ? String(formattedNewValue)
                   : "",
-              modified_by: modifiedBy,
-              modified_datetime: new Date(),
+              created_by: modifiedBy,
+              created_datetime: new Date(),
             });
           }
         } catch (attrError) {
@@ -885,7 +881,7 @@ async createResourceCost(
     try {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const validateSchema = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost"
@@ -921,7 +917,7 @@ async createResourceCost(
       if (resourceCostById) {
         const costData = resourceCostById.toJSON();
         const sequelize = await this.getMainDbSequelize();
-        await resourceCostSchemaService.assignCurrencyRid(costData,sequelize);
+        await resourceCostSchemaService.assignCurrencyRid(costData, sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
           `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
@@ -976,8 +972,8 @@ async createResourceCost(
         costData.modified_by = userNames.modified_by_name;
 
         // Format dates to yyyy-mm-dd format
-        if (costData.effective_date) {
-          costData.effective_date = moment(costData.effective_date).format(
+        if (costData.effective_from) {
+          costData.effective_from = moment(costData.effective_from).format(
             "YYYY-MM-DD"
           ) as any;
         }
@@ -1039,6 +1035,84 @@ async createResourceCost(
       };
     }
   }
+
+async acceptResourceCostStatus(id: string, accountNumber: string, action: string, type: string) {
+  try {
+    let { accountNumber: accountNumberFetched } =
+      await this.schemaService.fetchAccountByNumber(accountNumber);
+
+    const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+    const validateSchema = await resourceCostSchemaService.validateSchema(
+      schemaName,
+      "resource_cost"
+    );
+
+    if (!validateSchema) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Account schema does not exist",
+      };
+    }
+
+    const sequelize = await this.getOrgSequelize();
+    const mainDbSequelize = await this.getMainDbSequelize();
+    ResourceCost.initialize(sequelize, schemaName);
+
+    let resourceCostStatus = "Active";
+
+    // Only check for anomaly conditions if handling duplicate type
+    if (type === 'Duplicate') {
+      const resourceCostBy = await ResourceCost.findOne({
+        where: {
+          rid: id,
+        },
+      });
+
+      if (resourceCostBy) {
+        // Get currency threshold based on resource cost's currency_rid
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, resourceCostBy.currency_rid);
+
+        if (
+          resourceCostBy.effort_in_hrs &&
+          Number(resourceCostBy.effort_in_hrs) > 3000
+        ) {
+          resourceCostStatus = "Anomaly";
+        } else if (
+          (resourceCostBy?.salary && currencyThreshold !== null && Number(resourceCostBy.salary) > currencyThreshold) ||
+          (resourceCostBy?.resource_cost && currencyThreshold !== null && Number(resourceCostBy.resource_cost) > currencyThreshold)
+        ) {
+          resourceCostStatus = "Anomaly";
+        }
+      }
+    }
+
+    const updateStatus = await ResourceCost.update(
+      {
+        status: action === "accept" ? resourceCostStatus : "Inactive",
+      },
+      {
+        where: {
+          rid: id,
+        },
+      }
+    );
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        updateStatus,
+      },
+    };
+  } catch (err) {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: (err as Error).message,
+    };
+  }
+}
 
   /**
    * Creates a standardized error response object for service errors.
@@ -1129,6 +1203,40 @@ async createResourceCost(
 
     return date.toDate();
   }
+}
+
+/**
+ * Fetches the currency threshold from the currency table.
+ * Falls back to USD if currency_rid is not provided.
+ *
+ * @param mainDbSequelize - Sequelize instance for the main DB.
+ * @param currency_rid - Optional currency RID to lookup.
+ * @returns currency_threshold value or null if not found.
+ */
+async function getCurrencyThreshold(
+  mainDbSequelize: Sequelize,
+  currency_rid?: string
+): Promise<number | null> {
+  let currencyResult;
+
+  if (currency_rid) {
+    [currencyResult] = await mainDbSequelize.query(
+      `SELECT currency_threshold FROM public.currency WHERE rid = :currency_rid`,
+      {
+        replacements: { currency_rid },
+        type: "SELECT",
+      }
+    );
+  } else {
+    [currencyResult] = await mainDbSequelize.query(
+      `SELECT currency_threshold FROM public.currency WHERE currency_code = 'USD'`,
+      {
+        type: "SELECT",
+      }
+    );
+  }
+
+  return (currencyResult as any)?.currency_threshold ?? null;
 }
 
 export default ResourceCostService;

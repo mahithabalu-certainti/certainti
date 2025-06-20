@@ -1,8 +1,6 @@
 import Decimal from "decimal.js";
 import Joi from "joi";
-
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
@@ -159,7 +157,7 @@ const costFields = [
 ];
 
 // Shared validation method
-const MAX_COST_VALUE = 999999999999.99;
+const MAX_COST_VALUE = 9999999999999999.99;
 
 const costFieldValidator = (fieldName: string) => {
   return Joi.string()
@@ -169,12 +167,12 @@ const costFieldValidator = (fieldName: string) => {
 
       const numValue = parseFloat(value);
       if (numValue > MAX_COST_VALUE) {
-        return helpers.error('number.maxCost');
-      }
+          return helpers.error('number.maxCost');
+        }
 
-      return value;
+        return value;
     })
-    .allow('')
+    .allow('').allow(null)
     .messages({
       'string.pattern.base': `${fieldName.replace(/_/g, ' ')} must be a valid number with up to 2 decimal places`,
       'number.maxCost': `${fieldName.replace(/_/g, ' ')} must be a valid string number maximum up to (${MAX_COST_VALUE})`
@@ -184,7 +182,7 @@ const costFieldValidator = (fieldName: string) => {
 const createResourcesSchema = Joi.object({
   account_number: Joi.string().max(50).required(),
   account_id: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .required(),
   resource_code: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
@@ -263,16 +261,16 @@ const createResourcesSchema = Joi.object({
       "string.min": "Role must be at least 3 characters long",
       "string.max": "Role must not exceed 64 characters"
     }),  
-  resource_country: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  country_rid: Joi.string()
+     .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_region: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  region_rid: Joi.string()
+     .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_city: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  city_rid: Joi.string()
+     .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
   effective_from_date: Joi.string()
@@ -370,14 +368,14 @@ const createResourcesSchema = Joi.object({
     }),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   created_by: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .optional(),
   comments: Joi.string().optional().allow("").allow(null),
 });
 
 const updateResourceSchema = Joi.object({
   resource_id: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_code: Joi.string()
@@ -457,16 +455,16 @@ const updateResourceSchema = Joi.object({
       "string.min": "Role must be at least 3 characters long",
       "string.max": "Role must not exceed 64 characters"
     }),
-  resource_country: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  country_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_region: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  region_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_city: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  city_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
     effective_from_date: Joi.string()
@@ -588,6 +586,7 @@ const listResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
 });
 
 const exportListResourceSchema = Joi.object({
@@ -606,6 +605,8 @@ const exportListResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  timezone: Joi.string().optional()
 });
 
 const exportResourceSchema = Joi.object({
@@ -862,15 +863,16 @@ const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
+  resource_rid: Joi.string().pattern(uuidRegex).required(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  effective_date: Joi.string()
+  effective_from: Joi.string()
     .max(10)
     .custom(isValidDate, "Effective date validation")
     .optional()
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
+      "string.pattern.base": "Effective from must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
         "Invalid effective date. Please use the format YYYY-MM-DD",
@@ -886,13 +888,18 @@ const updateResourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format YYYY-MM-DD",
     }),
-  annual_cost: costFieldValidator('annual_cost'),
+  // annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
-  monthly_cost: costFieldValidator('monthly_cost'),
-  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
-  weekly_cost: costFieldValidator('weekly_cost'),
-  daily_cost: costFieldValidator('daily_cost'),
-  hourly_cost: costFieldValidator('hourly_cost'),
+  // monthly_cost: costFieldValidator('monthly_cost'),
+  // bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  // weekly_cost: costFieldValidator('weekly_cost'),
+  // daily_cost: costFieldValidator('daily_cost'),
+  // hourly_cost: costFieldValidator('hourly_cost'),
+  salary: costFieldValidator('salary'),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  resource_cost: costFieldValidator('resource_cost'),
   effort_in_hrs: Joi.string()
   .pattern(/^\d{1,16}(\.\d{1,2})?$/)
   .messages({
@@ -912,7 +919,7 @@ const updateResourceCostSchema = Joi.object({
   .optional()
   .allow(null)
   .allow(""),
-  status: Joi.string().max(255).default("active").optional(),
+  status: Joi.string().max(255).default("Active").optional(),
   fiscal_year: Joi.number()
    .integer()
    .min(1000)
@@ -930,22 +937,40 @@ const updateResourceCostSchema = Joi.object({
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
-}).custom((value, helpers) => {
-  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
-
-  if (filled.length === 0) {
-    return helpers.error('any.atLeastOneCostRequired');
-  }
-
-  if (filled.length > 1) {
-    return helpers.error('any.onlyOneCostAllowed');
-  }
-
-  return value;
-}).messages({
-  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
-  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
+
+export const updateResourceDuplicateStatus = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  action: Joi.string()
+    .valid("accept", "reject")
+    .required()
+    .messages({
+      "any.only": 'Action must be either "accept" or "reject"',
+      "any.required": "Action is required"
+    }),
+  accountNumber: Joi.string().max(255).required(),
+  type: Joi.string().valid("Anomaly", "Duplicate").required().messages({
+      "any.only": 'Type must be either "Anomaly" or "Duplicate"',
+      "any.required": "Type is required"
+    }),
+});
+
+// .custom((value, helpers) => {
+//   const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+//   if (filled.length === 0) {
+//     return helpers.error('any.atLeastOneCostRequired');
+//   }
+
+//   if (filled.length > 1) {
+//     return helpers.error('any.onlyOneCostAllowed');
+//   }
+
+//   return value;
+// }).messages({
+//   'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+//   'any.atLeastOneCostRequired': 'At least one cost field is required'
+// });
 
 
 const getResourceCostSchema = Joi.object({
@@ -1012,14 +1037,14 @@ const resourceCostSchema = Joi.object({
   }),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().max(255).required(),
-  effective_date: Joi.string()
+  effective_from: Joi.string()
     .max(10)
     .custom(isValidDate, "Effective date validation")
     .optional()
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
+      "string.pattern.base": "Effective from must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
         "Invalid effective date. Please use the format YYYY-MM-DD",
@@ -1035,13 +1060,18 @@ const resourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format YYYY-MM-DD",
     }),
-  annual_cost: costFieldValidator('annual_cost'),
+  // annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
-  monthly_cost: costFieldValidator('monthly_cost'),
-  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
-  weekly_cost: costFieldValidator('weekly_cost'),
-  daily_cost: costFieldValidator('daily_cost'),
-  hourly_cost: costFieldValidator('hourly_cost'),
+  // monthly_cost: costFieldValidator('monthly_cost'),
+  // bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  // weekly_cost: costFieldValidator('weekly_cost'),
+  // daily_cost: costFieldValidator('daily_cost'),
+  // hourly_cost: costFieldValidator('hourly_cost'),
+  salary: costFieldValidator('salary'),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  resource_cost: costFieldValidator('resource_cost'),
   effort_in_hrs: Joi.string()
   .pattern(/^\d{1,16}(\.\d{1,2})?$/)
   .messages({
@@ -1074,7 +1104,7 @@ const resourceCostSchema = Joi.object({
        "any.required": "Fiscal year is required",
     }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  status: Joi.string().max(255).default("active"),
+  status: Joi.string().max(255).default("Active"),
   comments: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
@@ -1084,32 +1114,34 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-}).custom((value, helpers) => {
-  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
-
-  if (filled.length === 0) {
-    return helpers.error('any.atLeastOneCostRequired');
-  }
-
-  if (filled.length > 1) {
-    return helpers.error('any.onlyOneCostAllowed');
-  }
-
-  return value;
-}).messages({
-  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
-  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
+
+// .custom((value, helpers) => {
+//   const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+//   if (filled.length === 0) {
+//     return helpers.error('any.atLeastOneCostRequired');
+//   }
+
+//   if (filled.length > 1) {
+//     return helpers.error('any.onlyOneCostAllowed');
+//   }
+
+//   return value;
+// }).messages({
+//   'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+//   'any.atLeastOneCostRequired': 'At least one cost field is required'
+// });
 
 const createProjectSchema = Joi.object({
   account_id: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   project_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   industry_rid: Joi.string()
-  .guid({ version: ["uuidv4"] })
+  .pattern(uuidRegex, "valid UUID")
   .optional().allow(null),
   industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
@@ -1139,7 +1171,7 @@ const createProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid Project end date.",
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+  project_classification_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
@@ -1150,16 +1182,16 @@ const createProjectSchema = Joi.object({
     "number.max": "Fiscal year must be a 4-digit number",
     "any.required": "Fiscal year is required",
   }),
-  country: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  country_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  region: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  region_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  currency: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  currency_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
   total_effort: Joi.string()
@@ -1168,11 +1200,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1201,8 +1237,8 @@ const createProjectSchema = Joi.object({
   .optional()
   .allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
-  total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.string()
+  total_subcon: Joi.number().greater(0).optional().allow(null),
+  total_cost_nonlabor: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1223,41 +1259,49 @@ const createProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_fte_effort: Joi.string()
+  total_effort_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_sub_con_effort: Joi.string()
+  total_effort_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_fte_cost: Joi.string()
+  total_cost_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1278,7 +1322,7 @@ const createProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_sub_con_cost: Joi.string()
+  total_cost_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1308,28 +1352,36 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Blended Rate FTE must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  blended_rate_sub_con: Joi.string()
+  blended_rate_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Blended Rate Sub Con must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Blended Rate Sub Con must be a valid positive number",
@@ -1358,7 +1410,7 @@ const createProjectSchema = Joi.object({
         "string.max": "Key Contact Email cannot exceed 254 characters.",
         "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
       }),
-      key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+      key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
       include_in_communication: Joi.boolean().optional().allow(null),
       status: Joi.string().valid("Active", "Inactive").optional().allow(null),
@@ -1370,13 +1422,13 @@ const createProjectSchema = Joi.object({
 });
 
 const updateProjectSchema = Joi.object({
-  project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
-  account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
+  project_fiscal_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+  account_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   project_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   industry_rid: Joi.string()
-  .guid({ version: ["uuidv4"] })
+  .pattern(uuidRegex, "valid UUID")
   .optional().allow(null),
   industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
@@ -1404,7 +1456,7 @@ const updateProjectSchema = Joi.object({
     }),
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+  project_classification_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
@@ -1415,20 +1467,24 @@ const updateProjectSchema = Joi.object({
     "number.max": "Fiscal year must be a 4-digit number",
     "any.required": "Fiscal year is required",
   }),
-  country: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
-  region: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
-  currency: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  country_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
+  region_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
+  currency_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
   total_effort: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1458,43 +1514,51 @@ const updateProjectSchema = Joi.object({
   .allow(null),
 
   total_fte: Joi.number().greater(0).optional().allow(null),
-  total_sub_con: Joi.number().greater(0).optional().allow(null),
+  total_subcon: Joi.number().greater(0).optional().allow(null),
   
-  total_fte_effort: Joi.string()
+  total_effort_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_sub_con_effort: Joi.string()
+  total_effort_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_fte_cost: Joi.string()
+  total_cost_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1515,7 +1579,7 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_sub_con_cost: Joi.string()
+  total_cost_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1536,7 +1600,7 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_non_labor_cost: Joi.string()
+  total_cost_nonlabor: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1557,7 +1621,7 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  last_rd_ai_assess_by: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  last_rd_ai_assess_by: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
   auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
   max_ai_interaction: Joi.number().greater(0).optional().allow(null),
@@ -1568,28 +1632,36 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Blended Rate FTE  must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  blended_rate_sub_con: Joi.string()
+  blended_rate_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Blened Rate SUB Con must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1603,7 +1675,7 @@ const updateProjectSchema = Joi.object({
       Joi.object({
         action_type: Joi.string().valid('edit', "add", "delete").required(),
         rid: Joi.string()
-        .guid({ version: ["uuidv4"] })
+         .pattern(uuidRegex, "valid UUID")
         .when("action_type", {
           is: "edit",
           then: Joi.required(),
@@ -1627,7 +1699,7 @@ const updateProjectSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+        key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
         include_in_communication: Joi.boolean().optional().allow(null),
         status: Joi.string().valid("Active", "Inactive").optional().allow(null)

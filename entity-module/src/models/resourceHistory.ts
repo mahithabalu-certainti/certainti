@@ -1,5 +1,5 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes,Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourcesHistoryAttributes {
   rid?: string;
@@ -8,7 +8,8 @@ interface ResourcesHistoryAttributes {
   attribute_name: string;
   old_value?: string;
   new_value: string;
-  modified_by: string;
+  created_by?: string;
+  modified_by?: string;
   modified_datetime?: Date;
   created_datetime?: Date;
 }
@@ -27,15 +28,16 @@ export class ResourcesHistory
   public old_value?: string;
   public new_value!: string;
   public modified_datetime?: Date;
-  public modified_by!: string;
+  public modified_by?: string;
   public created_datetime?: Date;
+  public created_by?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ResourcesHistory.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
@@ -44,8 +46,27 @@ export class ResourcesHistory
           allowNull: true,
           unique: true,
         },
+
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
         resource_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         attribute_name: {
@@ -59,21 +80,7 @@ export class ResourcesHistory
         new_value: {
           type: DataTypes.STRING(1000),
           allowNull: false,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
+        }, 
       },
       {
         sequelize,
@@ -101,7 +108,7 @@ export async function setupResourceHistorySeq(sequelize: Sequelize, schemaName: 
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resources_history
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_HISTORY} ' || LPAD(nextval('"${schemaName}".resource_history_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_HISTORY}-' || LPAD(nextval('"${schemaName}".resource_history_seq')::text, 10, '0')`);
     
     console.log('Resource history sequence setup complete');
   } catch (error) {

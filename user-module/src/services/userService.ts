@@ -4,6 +4,9 @@ import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints } from "sequelize";
 import ExcelJS from 'exceljs';
+import { OrganizationLicenses } from "../models/organisationLicense";
+import moment, { Moment } from "moment";
+import "moment-timezone"; 
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -66,15 +69,17 @@ class UserService {
         profile_id,
         status,
         street,
-        city,
-        state,
+        city_rid,
+        region_rid,
         zip_code,
-        country,
+        country_rid,
         role,
         middle_name,
         created_by,
         organization,
         phone,
+        is_consultant_firm,
+        org_id
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -87,15 +92,16 @@ class UserService {
         profile_rid: profile_id,
         status,
         street,
-        city,
-        state,
+        city_rid,
+        region_rid,
         zip_code,
-        country,
+        country_rid:country_rid,
         role_rid: role,
         middle_name,
         phone,
         created_by: userId,
-        modified_by: userId,
+        is_consultant_firm:is_consultant_firm,
+        org_id
       });
 
       if (organization === constants.PLATFORM_ONE) {
@@ -144,14 +150,16 @@ class UserService {
         profile_id,
         status,
         street,
-        city,
-        state,
+        city_rid,
+        region_rid,
         zip_code,
-        country,
+        country_rid,
         role,
         middle_name,
         organization,
         phone,
+        is_consultant_firm,
+        org_id
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -173,15 +181,17 @@ class UserService {
           profile_rid: profile_id,
           status,
           street,
-          city,
-          state,
+          city_rid,
+          region_rid,
           zip_code,
-          country,
+          country_rid,
           role_rid: role,
           middle_name,
           phone,
           modified_by: loggedInUser,
           modified_datetime: new Date(),
+          is_consultant_firm,
+          org_id
         },
         {
           where: {
@@ -497,14 +507,17 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
         });
 
         if (users) {
-          const { country, state, city } = await this.getGeoData(
-            users.country || "",
-            users.state || "",
-            users.city || ""
+          const { country, state, city,orgName } = await this.getGeoData(
+            users.country_rid || "",
+            users.region_rid || "",
+            users.city_rid || "",
+            users.org_id || "",
+            users.is_consultant_firm
           );
           (users as any).dataValues.country_name = country;
           (users as any).dataValues.state_name = state;
           (users as any).dataValues.city_name = city;
+          (users as any).dataValues.org_name = orgName;
 
           // Fetch user names for created_by and modified_by
         const userNames = await this.fetchUserNames({
@@ -594,11 +607,19 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string; profile_id: string; permissions: any[] } | null;
+    data?: {
+    rid: string;
+    user_role: string;
+    user_id: string;
+    profile_id: string;
+    permissions: any[];
+    organisation_name: string;
+    logo_url: string;
+  } | null;
   }> {
     try {
       const roles = await User.findOne({
-        attributes: ["role_rid", "rid", "profile_rid"],
+        attributes: ["role_rid", "rid", "profile_rid", "is_consultant_firm", "org_id"],
         where: { azure_id: azureId },
         include: [
           {
@@ -609,8 +630,10 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           },
         ],
       });
-      console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
+      console.log(`After Profile retrieve: ${new Date().toISOString()}`);
 
+      let organisation_name = "";
+      let logo_url = "";
 
       if (!roles || !roles.business_teams) {
         return {
@@ -619,19 +642,55 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           data: null,
         };
       }
+    const mainDbSequelize = await initSequelize();
+   if (roles.is_consultant_firm) {
+      const org = await OrganizationLicenses.findOne({
+        attributes: ["firm_name", "logo_url"],
+      });
+      if (org) {
+        organisation_name = org.firm_name || "";
+        logo_url = org.logo_url || "";
+      }
+    } else {
+      const mainDbSequelize = await initSequelize();
+      const [account]: any[] = await mainDbSequelize.query(
+        `SELECT organisation_name, logo_url FROM account WHERE rid = :rid`,
+        {
+          replacements: { rid: roles.org_id },
+          type: "SELECT",
+        }
+      );
+      if (account) {
+        organisation_name = account.organisation_name || "";
+        logo_url = account.logo_url || "";
+      }
+    }
 
-      // Call getAllUserPermission here
-      const permissions = await this.getAllUserPermission(roles.rid, roles.profile_rid || "");
+    // Check again for roles.business_teams
+    if (!roles.business_teams) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        data: null,
+      };
+    }
+
+  const permissions = await this.getAllUserPermission(
+      roles.rid,
+      roles.profile_rid || ""
+    );
 
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
           rid: roles.role_rid || "",
-          user_role: roles.business_teams?.business_teams,
+          user_role: roles.business_teams.business_teams,
           user_id: roles.rid,
           profile_id: roles.profile_rid || "",
-          permissions
+          permissions,
+          organisation_name,
+          logo_url,
         },
       };
     } catch (err) {
@@ -890,22 +949,23 @@ async getAllUserPermission(userId: string, profileId: string) {
   ) {
     const order: any[] = [];
 
-    if (sortBy !== "$profile.profile_name$") {
-      order.push([sortBy, sortOrder]);
-    }
-
-    if (sortBy === "$profile.profile_name$") {
-      order.push([
-        { model: Profile, as: "profile" },
-        "profile_name",
-        sortOrder,
-      ]);
-      order.push(["first_name", "asc"]);
+    if (sortBy === "$business_teams.business_teams$") {
+        order.push(
+          [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else if (sortBy === "$profile.profile_name$") {
+        order.push(
+          [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else {
+        order.push([sortBy, sortOrder]);
     }
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name"],
+      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
       limit,
       offset,
       order,
@@ -1023,6 +1083,8 @@ async getAllUserPermission(userId: string, profileId: string) {
       { clientField: "middle_name", dbField: "middle_name" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "email", dbField: "email" },
+      { clientField: "created_datetime", dbField: "created_datetime" },
+      { clientField: "modified_datetime", dbField: "modified_datetime" },
       // Status is handled separately
     ];
   
@@ -1032,6 +1094,56 @@ async getAllUserPermission(userId: string, profileId: string) {
   
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
+      
+      if (clientField === 'created_datetime' || clientField === 'modified_datetime') {
+        if (fieldFilter.equals !== undefined) {
+          const dateStr = fieldFilter.equals;
+
+          const startOfDay = moment
+                            .utc(dateStr, "YYYY-MM-DD")
+                            .startOf("day")
+                            .toDate();
+          const endOfDay = moment
+                            .utc(dateStr, "YYYY-MM-DD")
+                            .endOf("day")
+                            .toDate();
+
+          whereClause[dbField] = {
+          [Op.between]: [startOfDay, endOfDay],
+          };  
+          return;
+        }
+
+        if (fieldFilter.before !== undefined) {
+          whereClause[dbField] = { [Op.lt]: this.normalizeDate(fieldFilter.before),};
+          return;
+        }
+
+        if (fieldFilter.after !== undefined) {
+          whereClause[dbField] = { [Op.gt]: this.normalizeDate(fieldFilter.after),};
+          return;
+        }
+
+        if ( fieldFilter.between && typeof fieldFilter.between === 'object' && fieldFilter.between.from && fieldFilter.between.to) {
+          const startDate = moment
+                            .utc(fieldFilter.between.from, "YYYY-MM-DD")
+                            .startOf("day")
+                            .toDate();
+
+          const endDate = moment
+                            .utc(fieldFilter.between.to, "YYYY-MM-DD")
+                            .endOf("day")
+                            .toDate();
+
+          whereClause[dbField] = { [Op.between]: [startDate, endDate],};
+          return;
+        }
+
+        if (fieldFilter.is_empty === true) {
+            whereClause[dbField] = {[Op.or]: [null],};
+          return;
+        }
+      }
   
         if (fieldFilter.startsWith) {
           whereClause[dbField] = { [Op.iLike]: `${fieldFilter.startsWith}%` };
@@ -1080,8 +1192,25 @@ async getAllUserPermission(userId: string, profileId: string) {
         };
       }
     }
+
+        // Handle profile filters
+    if (filters.role) {
+       whereClause["$business_teams.business_teams$"] = this.getMultiValueFilter(filters.role, 'business_teams.business_teams');
+      if (Array.isArray(filters.role)) {
+        whereClause["$business_teams.business_teams$"] = {
+          [Op.in]: filters.role
+        };
+      }
+    }
   
     return whereClause;
+  }
+    normalizeDate(input: string): any | null {
+    let parsed = moment.utc(input, "YYYY-MM-DD", true);
+    if (!parsed.isValid()) throw new Error("Invalid date");
+
+    const startOfDay = parsed.startOf("day").toDate();
+    return startOfDay;
   }
   private getMultiValueFilter(filter: any, fieldName: string): any {
   if (!filter) return null;
@@ -1161,6 +1290,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       "created_datetime",
       "modified_datetime",
       "profile",
+      "business_teams"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1171,16 +1301,43 @@ async getAllUserPermission(userId: string, profileId: string) {
       sortBy = "$profile.profile_name$";
     }
 
+    if (sortBy === "business_teams") {
+      sortBy = "$business_teams.business_teams$";
+    }
+
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
   }
 
-  async getGeoData(countryId: string, stateId: string, cityId: string) {
+  async getGeoData(countryId: string, stateId: string, cityId: string,orgId:string,isConsultantFirm:boolean) {
     const mainDbSequelize = await initSequelize();
 
     let country: string | null = null;
     let state: string | null = null;
     let city: string | null = null;
+    let orgName: string | null = null;
+
+    if (orgId) {
+      if(isConsultantFirm)
+      {
+         const org = await OrganizationLicenses.findOne({
+          attributes: ["firm_name"]});
+         if (org) {
+            orgName = org.firm_name || "";
+         }
+      }
+      else
+      {
+        const [orgNameResult]: any[] = await mainDbSequelize.query(
+        `SELECT organisation_name FROM account WHERE rid = :rid`,
+        {
+          replacements: { rid: orgId },
+          type: "SELECT",
+        }
+        );
+        orgName = orgNameResult?.organisation_name || null;
+      }
+    }
 
     if (countryId) {
       const [countryResult]: any[] = await mainDbSequelize.query(
@@ -1218,7 +1375,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     return {
       country,
       state,
-      city
+      city,
+      orgName
     };
   }
 
@@ -1243,7 +1401,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    organization: string
+    organization: string,
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1293,6 +1452,17 @@ const rawResult = users || [];
           "Username": basicUserInfo.first_name || "-",
           "Email": basicUserInfo.email || "-", 
           "Profile": profile?.profile_name || "-",
+          "Role": business_teams.business_teams || "-",
+          "Created On": basicUserInfo.created_datetime
+          ? timezone && isValidTimezone(timezone)
+          ? moment(basicUserInfo.created_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(basicUserInfo.created_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
+          "Updated On": basicUserInfo.modified_datetime
+          ? timezone && isValidTimezone(timezone)
+          ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
           "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
         };
       });
@@ -1317,22 +1487,23 @@ const rawResult = users || [];
   ) {
     const order: any[] = [];
 
-    if (sortBy !== "$profile.profile_name$") {
-      order.push([sortBy, sortOrder]);
-    }
-
-    if (sortBy === "$profile.profile_name$") {
-      order.push([
-        { model: Profile, as: "profile" },
-        "profile_name",
-        sortOrder,
-      ]);
-      order.push(["first_name", "asc"]);
+    if (sortBy === "$business_teams.business_teams$") {
+        order.push(
+          [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else if (sortBy === "$profile.profile_name$") {
+        order.push(
+          [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else {
+        order.push([sortBy, sortOrder]);
     }
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name"],
+      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
       order,
       include: [
         {
@@ -1376,6 +1547,11 @@ const rawResult = users || [];
         {
           model: FunctionGroup,
           attributes: ["function_group_name"],
+          required: true,
+        },        {
+          model: BusinessTeams,
+          as: "business_teams",
+          attributes: ["business_teams"],
           required: true,
         },
       ],
@@ -1763,6 +1939,9 @@ if (fieldData.length > 0) {
 
 }
 
+function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
+}
 
   // Helper function to calculate unique key based on type
 function getPermissionKey(permission: any): string {

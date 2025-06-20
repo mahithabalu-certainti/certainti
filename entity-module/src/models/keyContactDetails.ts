@@ -1,6 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { Project } from "./project";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { ProjectFiscal } from "./projectFiscal";
 
 export interface KeyContactDetailsAttributes {
   rid?: string;
@@ -48,23 +48,40 @@ export class KeyContact
     KeyContact.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
+         r_number: {
+          type: DataTypes.STRING(14),
+          allowNull: true,
+          unique: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
         entity_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         entity_type: {
           type: DataTypes.STRING(500),
           allowNull: false,
-        },
-        r_number: {
-          type: DataTypes.STRING(14),
-          allowNull: true,
-          unique: true,
         },
         key_contact_name: {
           type: DataTypes.STRING(128),
@@ -75,7 +92,7 @@ export class KeyContact
           allowNull: true,
         },
         key_contact_role: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         is_primary_contact: {
@@ -91,24 +108,6 @@ export class KeyContact
           defaultValue: "Active",
           allowNull: true
         },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
       },
       {
         sequelize,
@@ -119,17 +118,11 @@ export class KeyContact
       }
     );
 
-    KeyContact.belongsTo(Project, {
-      foreignKey: 'entity_rid',
-      targetKey: 'rid',
-      as: 'project',
-    });
-
-    Project.hasMany(KeyContact, {
-      foreignKey: 'entity_rid',
-      sourceKey: 'rid',
-      as: 'keyContact',
-    });
+    // KeyContact.belongsTo(ProjectFiscal, {
+    //   foreignKey: 'entity_rid',
+    //   targetKey: 'rid',
+    //   as: 'project',
+    // });
 
     return KeyContact;
   }
@@ -142,7 +135,7 @@ export async function setupKeyContactsSequence(sequelize: Sequelize, schemaName:
     );
 
     await sequelize.query(`ALTER TABLE "${schemaName}".key_contact_details
-          ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS} ' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
+          ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS}-' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
 
     console.log("Key contact sequence setup complete");
   } catch (error) {

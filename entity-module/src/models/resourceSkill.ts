@@ -1,7 +1,7 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { Model, DataTypes,Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
 import { Skill } from "./skill";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceSkillAttributes  {
  rid: string,
@@ -62,8 +62,8 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
     ResourceSkill.init(
       {
        rid: {
-        type: DataTypes.UUID,
-        defaultValue: UUIDV4,
+        type: DataTypes.STRING(50),
+        defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
         primaryKey: true,
        },
        r_number: {
@@ -72,11 +72,28 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         unique: true,
        },
        eid: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING(120),
         allowNull: true,
        },
+       created_by: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+       },
+       modified_by: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+       },
+       created_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW,
+       },
+       modified_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true
+       },
        account_rid: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(50),
         allowNull: false,
        },
        resource_type: {
@@ -84,7 +101,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         allowNull: false,
        },
        resource_rid: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(50),
         allowNull: false,
        },
        resource_number: {
@@ -140,24 +157,6 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.TEXT,
         allowNull: true,
        },
-       created_datetime: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: DataTypes.NOW,
-       },
-       modified_datetime: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: DataTypes.NOW,
-       },
-       created_by: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-       },
-       modified_by: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-       },
       },
       {
         sequelize,
@@ -202,7 +201,7 @@ export async function setupResourceSkillSeq(sequelize: Sequelize, schemaName: st
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resource_skill
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_SKILL} ' || LPAD(nextval('"${schemaName}".resource_skill_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_SKILL}-' || LPAD(nextval('"${schemaName}".resource_skill_seq')::text, 10, '0')`);
     
     console.log('Resource skill sequence setup complete');
   } catch (error) {

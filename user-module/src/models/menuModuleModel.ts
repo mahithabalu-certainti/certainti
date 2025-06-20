@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Menu } from "./menuModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface MenuModuleAttributes {
   rid: string;
@@ -9,6 +10,8 @@ interface MenuModuleAttributes {
   status: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface MenuModuleCreationAttributes extends Optional<MenuModuleAttributes, "rid"> {}
@@ -24,35 +27,24 @@ export class MenuModule
   public status!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     MenuModule.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
-        module_name: {
-          type: DataTypes.STRING,
-          allowNull: false,
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
-        module_desc: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        menu_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: "menu",
-            key: "rid",
-          },
-        },
-        status: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          defaultValue: "active",
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -64,6 +56,27 @@ export class MenuModule
           allowNull: true,
           defaultValue: null,
         },
+        module_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        module_desc: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        menu_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: {
+            model: "menu",
+            key: "rid",
+          },
+        },
+        status: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          defaultValue: "active",
+        }
       },
       {
         sequelize,

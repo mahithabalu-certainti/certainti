@@ -1,6 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 import { Project } from "./project";
+import { ProjectFiscal } from "./projectFiscal";
 
 interface ProjectHistoryAttributes {
   rid?: string;
@@ -9,9 +10,10 @@ interface ProjectHistoryAttributes {
   attribute_name: string;
   old_value?: string;
   new_value: string;
-  modified_by: string;
+  modified_by?: string;
   modified_datetime?: Date;
   created_datetime?: Date;
+  created_by: string;
 }
 
 interface ProjectHistoryCreationAttributes
@@ -28,15 +30,16 @@ export class ProjectHistory
   public old_value?: string;
   public new_value!: string;
   public modified_datetime?: Date;
-  public modified_by!: string;
+  public modified_by?: string;
   public created_datetime?: Date;
+  public created_by!: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectHistory.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
@@ -45,8 +48,26 @@ export class ProjectHistory
           allowNull: true,
           unique: true,
         },
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        
         project_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         attribute_name: {
@@ -61,20 +82,7 @@ export class ProjectHistory
           type: DataTypes.STRING(2000),
           allowNull: false,
         },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
+        
       },
       {
         sequelize,
@@ -90,15 +98,14 @@ export class ProjectHistory
         },
       }
     );
-    
 
-    ProjectHistory.belongsTo(Project, {
+    ProjectHistory.belongsTo(ProjectFiscal, {
       foreignKey: 'project_rid',
       targetKey: 'rid',
       as: 'project',
     });
 
-    Project.hasMany(ProjectHistory, {
+    ProjectFiscal.hasMany(ProjectHistory, {
       foreignKey: 'project_rid',
       sourceKey: 'rid',
       as: 'ProjectHistory',
@@ -116,7 +123,7 @@ export async function setupProjectHistorySeq(sequelize: Sequelize, schemaName: s
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".project_history
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_HISTORY} ' || LPAD(nextval('"${schemaName}".project_history_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_HISTORY}-' || LPAD(nextval('"${schemaName}".project_history_seq')::text, 10, '0')`);
     
     console.log('Project history sequence setup complete');
   } catch (error) {

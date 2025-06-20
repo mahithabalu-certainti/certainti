@@ -31,6 +31,7 @@ import { UserModuleAccessHistory } from "./userModuleAccessHistoryModel";
 import { UserPermissionAccessHistory } from "./userPermissionAccessHistoryModel";
 import { UserFieldsAccessHistory } from "./userFieldsAccessHistoryModel";
 import { ProfileHistory } from "./profileHistoryModel";
+import { OrganizationLicenses } from "./organisationLicense";
 
 
 export const models: {
@@ -64,6 +65,7 @@ export const models: {
   UserFieldsAccessHistory: typeof UserFieldsAccessHistory;
   ProfileHistory: typeof ProfileHistory;
   UserExtendedPermissionTimeline: typeof UserExtendedPermissionTimeline;
+  OrganizationLicenses:typeof OrganizationLicenses;
 
 } = {
   BusinessTeams: BusinessTeams,
@@ -95,7 +97,8 @@ export const models: {
   UserPermissionAccessHistory: UserPermissionAccessHistory,
   UserFieldsAccessHistory: UserFieldsAccessHistory,
   ProfileHistory: ProfileHistory,
-  UserExtendedPermissionTimeline:UserExtendedPermissionTimeline
+  UserExtendedPermissionTimeline:UserExtendedPermissionTimeline,
+  OrganizationLicenses:OrganizationLicenses
 };
 
 export async function initModels() {
@@ -131,14 +134,15 @@ export async function initModels() {
     UserFieldsAccessHistory.initialize(sequelize);
     ProfileHistory.initialize(sequelize);
     UserExtendedPermissionTimeline.initialize(sequelize)
+    OrganizationLicenses.initialize(sequelize)
     Object.values(models).forEach((model: any) => { 
       if (model.associate) { 
         model.associate(models); 
       } 
     });
-    await sequelize.sync({ force: false });
-    await setupProfileSequence(sequelize);
-    await setupUserSequence(sequelize);
+    //await sequelize.sync({ force: false });
+    //await setupProfileSequence(sequelize);
+    ///await setupUserSequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }

@@ -4,7 +4,7 @@ import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { States } from "./stateModel";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
 
 interface ProjectSummaryAttributes {
   rid: string;
@@ -105,8 +105,8 @@ export class ProjectSummary
     ProjectSummary.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+           defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -114,8 +114,24 @@ export class ProjectSummary
           allowNull: false,
           unique: true,
         },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
         project_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         project_number: {
@@ -127,7 +143,7 @@ export class ProjectSummary
           allowNull: false,
         },
         industry_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         industry_name: {
@@ -135,7 +151,7 @@ export class ProjectSummary
           allowNull: true,
         },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         program_name: {
@@ -163,7 +179,7 @@ export class ProjectSummary
           allowNull: false,
         },
         project_classification_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         project_client_group: {
@@ -179,15 +195,15 @@ export class ProjectSummary
           allowNull: false,
         },
         country: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         region: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         currency: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         total_effort: {
@@ -244,24 +260,6 @@ export class ProjectSummary
         },
         technical_point_of_contact: {
           type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
           allowNull: true,
         },
         assessment_status: {
@@ -321,7 +319,7 @@ export async function setupProjectSummarySequence(sequelize: Sequelize) {
     );
 
     await sequelize.query(`ALTER TABLE project_summary
-        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY} ' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
+        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
 
     console.log("Project summary sequence setup complete");
   } catch (error) {
@@ -339,7 +337,7 @@ export async function setupKeyContactsSequence(
     );
 
     await sequelize.query(`ALTER TABLE "${schemaName}".key_contact_details
-          ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS} ' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
+          ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS}-' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
 
     console.log("Key contact sequence setup complete");
   } catch (error) {

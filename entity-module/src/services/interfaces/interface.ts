@@ -127,6 +127,18 @@ export interface IResourceCostService {
     errorMessage?: string;
     data?: { resourceCostById: any };
   }>;
+
+  acceptResourceCostStatus(
+    id: string,
+    accountNumber: string,
+    action: string,
+    type: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { updateStatus: any };
+  }>;
 }
 
 export interface IResourceSkillService {
@@ -211,7 +223,7 @@ export interface IProjectService {
     errorMessage?: string;
     data?: { project: any };
   }>;
-  updateProjectRecords(projectData: IUpdateProject, userId: string): Promise<{
+  updateProject(projectData: IUpdateProject, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -220,7 +232,9 @@ export interface IProjectService {
   createProjectTables(accountNumber: string): void;
   createProjectRecords(
     projectData: ICreateProject,
-    accountNumber: string
+    accountNumber: string,
+    accountData: any,
+    userId: string
   ): Promise<Project>;
   projectById(
     accountId: string,
@@ -239,7 +253,8 @@ export interface IProjectService {
     search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    bothParentAndChild: boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -255,7 +270,8 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    userId: string
+    userId: string,
+    bothParentAndChild: boolean, 
   ): Promise<{
     statusCode: number;
     message: string;
@@ -275,7 +291,9 @@ export interface IProjectService {
     search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    bothParentAndChild: boolean,
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -289,7 +307,9 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    userId: string
+    userId: string,
+    bothParentAndChild: boolean,
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;

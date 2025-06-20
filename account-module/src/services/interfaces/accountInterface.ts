@@ -31,13 +31,18 @@ export interface IAccountService {
     data?: { account: any };
   }>;
 
-  createAccount(accountData: IAccount, userId: string): Promise<{
+  createAccount(accountData: IAccount, userId: string,file?:Express.Multer.File): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { account: any };
   }>;
-
+  listAllAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountData: any; orgData: any };
+  }>;
   updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
     message: string;
@@ -125,5 +130,43 @@ export interface IGeoDataService {
     colors: any;
     count: number;
   }>
-  >
+  >;
+  status(): Promise<
+  GeoDataResponse<{
+    status: any;
+    count: number;
+  }>
+  >;
+  resourceType(): Promise<
+  GeoDataResponse<{
+    resouceType: any;
+    count: number;
+  }>
+  >;
+  resourceType(): Promise<
+  GeoDataResponse<{
+    resouceType: any;
+    count: number;
+  }>
+  >;
+  projectTypes(): Promise<
+  GeoDataResponse<{
+    projectType: any;
+    count: number;
+  }>
+  >;
+  skillLevel(): Promise<
+  GeoDataResponse<{
+    skillLevel: any;
+    count: number;
+  }>
+  >;
+  resourceStatus(): Promise<
+  GeoDataResponse<{
+    resourceStatus: any;
+    count: number;
+  }>
+  >;
+  
+  
 }

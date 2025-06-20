@@ -342,6 +342,163 @@ async function colorCodes(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+async function statusList(req: Request, res: Response): Promise<void> {
+  const methodName = "statusList";
+  try {
+    const statuses = await services.geoDataServices.status();
+    if (statuses.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, statuses.data);
+      return;
+    } else {
+      errorLog(methodName, statuses.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        statuses.message
+      );
+      return;
+    }
+  } catch (err) {
+    console.log(err)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function resourceType(req: Request, res: Response): Promise<void> {
+  const methodName = "Resource Type";
+  try {
+
+    const resouceTypes = await services.geoDataServices.resourceType();
+    if (resouceTypes.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, resouceTypes.data);
+      return;
+    } else {
+      errorLog(methodName, resouceTypes.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resouceTypes.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function projectType(req: Request, res: Response): Promise<void> {
+  const methodName = "Project Type";
+  try {
+    const projectTypes = await services.geoDataServices.projectTypes();
+    if (projectTypes.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectTypes.data);
+      return;
+    } else {
+      errorLog(methodName, projectTypes.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectTypes.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function skillLevel(req: Request, res: Response): Promise<void> {
+  const methodName = "Skill Level";
+  try {
+
+    const skillLevel = await services.geoDataServices.skillLevel();
+    if (skillLevel.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, skillLevel.data);
+      return;
+    } else {
+      errorLog(methodName, skillLevel.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        skillLevel.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function resourceStatus(req: Request, res: Response): Promise<void> {
+  const methodName = "Resource Status";
+  try {
+    const resourceStatus = await services.geoDataServices.resourceStatus();
+    if (resourceStatus.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, resourceStatus.data);
+      return;
+    } else {
+      errorLog(methodName, resourceStatus.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resourceStatus.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
 // Update the export to include the cities function
 export default {
@@ -351,5 +508,11 @@ export default {
   states,
   cities,
   industries,
-  colorCodes
+  colorCodes,
+  statusList,
+  resourceType,
+  projectType,
+  skillLevel,
+  resourceStatus
+
 };

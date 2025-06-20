@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ProfileModuleAccess } from "./profileModuleAccessModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface ProfileModuleAccessHistoryAttributes {
   rid: string;
@@ -9,6 +10,8 @@ interface ProfileModuleAccessHistoryAttributes {
   new_value: string;
   modified_by?: string;
   modified_datetime?: Date;
+  created_by?: string;
+  created_datetime?: Date;
 }
 
 interface ProfileModuleAccessHistoryCreationAttributes extends Optional<ProfileModuleAccessHistoryAttributes, "rid"> {}
@@ -24,17 +27,37 @@ export class ProfileModuleAccessHistory
   public new_value!: string;
   public modified_by?: string;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public created_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
     ProfileModuleAccessHistory.init(
       {
         rid: { 
-          type: DataTypes.UUID, 
-          defaultValue: DataTypes.UUIDV4, 
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true 
         },
+        created_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        created_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false,
+          defaultValue: DataTypes.NOW  
+        },
+        modified_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        modified_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false,
+          defaultValue: DataTypes.NOW  
+        },
         profile_module_access_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
           references: { model: "profile_module_access", key: "rid" },
         },
@@ -50,15 +73,7 @@ export class ProfileModuleAccessHistory
           type: DataTypes.TEXT, 
           allowNull: true 
         },
-        modified_by: { 
-          type: DataTypes.STRING,
-          allowNull: true 
-        },
-        modified_datetime: { 
-          type: DataTypes.DATE, 
-          allowNull: false,
-          defaultValue: DataTypes.NOW  
-        },
+       
       },
       {
         sequelize,

@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface ProfileTimelineAttributes {
   rid: string;
@@ -9,6 +10,8 @@ interface ProfileTimelineAttributes {
   event_datetime: Date;
   modified_by?: string;
   modified_datetime?: Date;
+  created_by?: string;
+  created_datetime?: Date;
 }
 
 interface ProfileTimelineCreationAttributes extends Optional<ProfileTimelineAttributes, "rid"> {}
@@ -24,17 +27,36 @@ export class ProfileTimeline
   public event_datetime!: Date;
   public modified_by?: string;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public created_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
     ProfileTimeline.init(
       {
         rid: { 
-          type: DataTypes.UUID, 
-          defaultValue: DataTypes.UUIDV4, 
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true 
         },
+        created_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        created_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false,
+          defaultValue: DataTypes.NOW  
+        },
+        modified_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        modified_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false
+        },
         profile_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
           references: { model: "profile", key: "rid" },
         },
@@ -50,15 +72,6 @@ export class ProfileTimeline
           type: DataTypes.DATE, 
           allowNull: false,
           defaultValue: DataTypes.NOW 
-        },
-        modified_by: { 
-          type: DataTypes.STRING,
-          allowNull: true 
-        },
-        modified_datetime: { 
-          type: DataTypes.DATE, 
-          allowNull: false,
-          defaultValue: DataTypes.NOW  
         },
       },
       {
