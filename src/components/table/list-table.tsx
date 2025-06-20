@@ -177,6 +177,7 @@ const ListTable = <T extends RowData>({
                       maxWidth: column.width || 160,
                       ...(column.sx || {}),
                       left: selectable ? '32px' : 0,
+                      textAlign: 'left',
                     }}
                   />
                 ) : (
@@ -188,6 +189,7 @@ const ListTable = <T extends RowData>({
                       maxWidth: column.width || 160,
                       ...(column.sx || {}),
                       left: selectable ? '32px' : 0,
+                      textAlign: 'left',
                     }}
                   >
                     {column.label}
@@ -243,7 +245,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={rowsPerPage > 15 ? 15 : rowsPerPage}
-                columnsCount={columns.length}
+                columnsCount={columns.length + (conditionMenuItems ? 1 : 0)}
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}
                 stickyColumnsCount={stickyColumnsCount}
@@ -257,7 +259,8 @@ const ListTable = <T extends RowData>({
                   colSpan={
                     columns.length +
                     (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0)
+                    (actionMenuItems?.length > 0 ? 1 : 0) +
+                    (conditionMenuItems ? 1 : 0)
                   }
                   align='center'
                 >
@@ -273,7 +276,8 @@ const ListTable = <T extends RowData>({
                   colSpan={
                     columns.length +
                     (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0)
+                    (actionMenuItems?.length > 0 ? 1 : 0) +
+                    (conditionMenuItems ? 1 : 0)
                   }
                   align='center'
                 >
@@ -510,7 +514,8 @@ const ListTable = <T extends RowData>({
                   colSpan={
                     columns.length +
                     (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0)
+                    (actionMenuItems?.length > 0 ? 1 : 0) +
+                    (conditionMenuItems ? 1 : 0)
                   }
                   sx={{ height: '10px !important' }}
                 ></TableCell>

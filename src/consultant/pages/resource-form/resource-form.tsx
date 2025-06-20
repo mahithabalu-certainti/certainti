@@ -152,7 +152,7 @@ const ResourceForm: React.FC = () => {
       accountNumber ||
       accNumber
   );
-
+  const accountName = location?.state?.data?.accountById?.account_name;
   useEffect(() => {
     const resourceDetailsData = resource?.data?.resourceDetails;
     const finalResourceDetails = {
@@ -172,10 +172,12 @@ const ResourceForm: React.FC = () => {
         resourceDetailsData?.created_datetime
       ),
       Created_By: resourceDetailsData?.created_by,
-      Updated_On: formatDateToYYYYMMDDWithTime(
-        resourceDetailsData?.modified_datetime
-      ),
-      Updated_By: resourceDetailsData?.modified_by,
+      Updated_On: resourceDetailsData?.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(
+            resourceDetailsData?.modified_datetime || '-'
+          )
+        : '-',
+      Updated_By: resourceDetailsData?.modified_by || '-',
       resource_name:
         resourceDetailsData?.resource_firstname &&
         resourceDetailsData?.resource_lastname
@@ -217,6 +219,7 @@ const ResourceForm: React.FC = () => {
     const formValues = resource?.data?.resourceDetails;
 
     if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
+      console.log('costInfo', costInfo);
       const costValues = {
         ...formValues,
         financial_start_date: costInfo?.effective_from || '',
@@ -231,8 +234,27 @@ const ResourceForm: React.FC = () => {
         resource_status: costInfo?.status || '',
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
+        Record_id: costInfo?.rid,
+        Resource_id: costInfo?.resource_number,
+        Created_On: formatDateToYYYYMMDDWithTime(costInfo?.created_datetime),
+        Created_By: costInfo?.created_by,
+        Updated_On: costInfo?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(costInfo.modified_datetime)
+          : '-',
+        Updated_By:
+          costInfo?.modified_by !== null &&
+          costInfo.modified_by !== undefined &&
+          costInfo.modified_by !== ''
+            ? costInfo.modified_by
+            : '-',
       };
       setFormValues(costValues);
+      setIsSalaryRequired(
+        costInfo?.salary === null ||
+          costInfo?.salary === undefined ||
+          costInfo?.salary === ''
+      );
+      // Calculate and set auto value
       // Update resource financials state
       const financials = {
         salary: costInfo?.salary || '',
@@ -258,6 +280,19 @@ const ResourceForm: React.FC = () => {
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
         comments: skillInfo?.comments || '',
+        Record_id: skillInfo?.skillRId,
+        Resource_id: skillInfo?.resourceNumber,
+        Created_On: formatDateToYYYYMMDDWithTime(skillInfo?.Created_On),
+        Created_By: skillInfo?.Created_By,
+        Updated_On: skillInfo?.Updated_On
+          ? formatDateToYYYYMMDDWithTime(skillInfo.Updated_On)
+          : '-',
+        Updated_By:
+          skillInfo?.Updated_By !== null &&
+          skillInfo.Updated_By !== undefined &&
+          skillInfo.Updated_By !== ''
+            ? skillInfo.Updated_By
+            : '-',
       };
       setFormValues(skillValues);
     } else if (formValues && !isEditView && state?.cost) {
@@ -598,7 +633,8 @@ const ResourceForm: React.FC = () => {
     isSalaryRequired,
     isEditView,
     currentResource,
-    autoCalculatedValue
+    autoCalculatedValue,
+    accountName
   );
 
   return (
@@ -673,41 +709,43 @@ const ResourceForm: React.FC = () => {
           />
         </div>
       </div>
-      <FormBuilder
-        data={formConfig}
-        loading={allCountries.isLoading}
-        values={
-          isEditView &&
-          !state?.cost &&
-          !state?.skill &&
-          (resourceDetails as unknown as Record<
-            string,
-            string | number | boolean | string[] | null
-          >)
-            ? (resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
+      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        <FormBuilder
+          data={formConfig}
+          loading={allCountries.isLoading}
+          values={
+            isEditView &&
+            !state?.cost &&
+            !state?.skill &&
+            (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
+              ? (resourceDetails as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
-              : undefined
-        }
-        // values={
-        //   resource.data?.data?.resource as unknown as Record<
-        //     string,
-        //     string | number | boolean | string[] | null
-        //   >
-        // }
-        outData={handleSubmit}
-        formRef={formRef}
-        onChange={onChangeField}
-        layout={Layout.TYPE_1}
-        keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
-        keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
-      />
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
+                    string,
+                    string | number | boolean | string[] | null
+                  >)
+                : undefined
+          }
+          // values={
+          //   resource.data?.data?.resource as unknown as Record<
+          //     string,
+          //     string | number | boolean | string[] | null
+          //   >
+          // }
+          outData={handleSubmit}
+          formRef={formRef}
+          onChange={onChangeField}
+          layout={Layout.TYPE_1}
+          keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
+          keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
+        />
+      </div>
     </div>
   );
 };

@@ -22,8 +22,21 @@ export interface AccountData {
     parent_account_name: string;
   };
 }
+export interface ResourceData {
+  data: {
+    resourceDetails: {
+      resource_name: string;
+      resource_code: string;
+      resource_type: string;
+      resource_role: string;
+      resource_designation: string;
+      resource_orgname: string;
+      resource_status: string;
+    };
+  };
+}
 
-interface DisplayColumn {
+export interface DisplayColumn {
   items: Array<{
     label: string;
     value: string;
@@ -127,6 +140,51 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
         {
           label: 'Industry',
           value: getValueOrDefault(account?.industry?.industry_name),
+        },
+      ],
+    },
+  ];
+};
+export const transformResourceData = (
+  resource: ResourceData
+): DisplayColumn[] => {
+  const resourceData = resource?.data?.resourceDetails;
+  const status = resourceData?.resource_status;
+  return [
+    {
+      items: [
+        {
+          label: 'Resource Code',
+          value: getValueOrDefault(resourceData?.resource_code),
+          className: `${status === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+        },
+        {
+          label: 'Role',
+          value: `${getValueOrDefault(resourceData?.resource_role)} `,
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Name',
+          value: getValueOrDefault(resourceData?.resource_name),
+        },
+        {
+          label: 'Designation',
+          value: getValueOrDefault(resourceData?.resource_designation),
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Resource Type',
+          value: getValueOrDefault(resourceData?.resource_type),
+        },
+        {
+          label: 'Resource Org Name',
+          value: getValueOrDefault(resourceData?.resource_orgname),
         },
       ],
     },

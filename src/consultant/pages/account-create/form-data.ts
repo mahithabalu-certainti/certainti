@@ -326,9 +326,9 @@ export const AccFormData = (
             placeholder: 'Choose Country',
             required: false,
             onChange: true,
-            resetDependsFields: ['region'],
+            resetDependsFields: ['region_rid'],
           }),
-          createSelectField('region', 'Region', {
+          createSelectField('region_rid', 'Region', {
             options: state,
             placeholder: 'Choose Region',
             required: false,

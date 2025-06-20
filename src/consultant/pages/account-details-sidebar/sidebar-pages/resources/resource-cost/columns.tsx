@@ -16,14 +16,14 @@ export interface ResourceCostTableColumn<T> {
 export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
   [
     {
-      id: 'account_name',
-      sortId: 'account_name',
-      label: 'Account Name',
+      id: 'fiscal_year',
+      sortId: 'fiscal_year',
+      label: 'Fiscal Year',
       width: 130,
-      sortable: false,
-
+      sortable: true,
       sticky: true,
       sx: {
+        textAlign: 'right',
         position: 'sticky',
         left: 0,
         background: '#fff',
@@ -31,36 +31,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
       },
-    },
-    {
-      id: 'resource_code',
-      sortId: 'resource_code',
-      label: 'Resource Code',
-      width: 130,
-    },
-    {
-      id: 'fiscal_year',
-      sortId: 'fiscal_year',
-      label: 'Fiscal Year',
-      width: 130,
-      sortable: true,
-      sx: {
-        textAlign: 'right',
-      },
-    },
-    {
-      id: 'resource_name',
-      sortId: 'resource_name',
-      label: 'Name',
-      width: 160,
-      sortable: false,
-    },
-    {
-      id: 'resource_type',
-      sortId: 'resource_type',
-      label: 'Resource Type',
-      width: 130,
-      sortable: false,
     },
     {
       id: 'effective_from',
@@ -170,27 +140,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       ),
     },
     {
-      id: 'resource_orgname',
-      sortId: 'resource_orgname',
-      label: 'Org Name',
-      width: 130,
-      sortable: false,
-    },
-    {
-      id: 'resource_designation',
-      sortId: 'resource_designation',
-      label: 'Designation',
-      width: 130,
-      sortable: false,
-    },
-    {
-      id: 'resource_role',
-      sortId: 'resource_role',
-      label: 'Role',
-      width: 130,
-      sortable: false,
-    },
-    {
       id: 'comments',
       sortId: 'comments',
       label: 'Comments',
@@ -203,6 +152,19 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Status',
       width: 130,
       sortable: true,
+      render: (row: ResourceCostList) => (
+        <span
+          className={`${
+            row.status === 'Active'
+              ? 'text-[#199806]'
+              : row.status === 'Inactive'
+                ? 'text-[#f44336] '
+                : ''
+          }`}
+        >
+          {row.status}
+        </span>
+      ),
     },
     {
       id: 'r_number',

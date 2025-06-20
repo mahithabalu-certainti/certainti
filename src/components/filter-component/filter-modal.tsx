@@ -657,7 +657,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               placement='top'
               arrow
             >
-              <span>
+              <span className='text-[12px] font-medium text-[#425A76]'>
                 <button
                   onClick={handleApplyFilters}
                   disabled={isApplyDisabled}
@@ -806,10 +806,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               );
                               return (
                                 <div className='flex items-center gap-1'>
-                                  <CheckedIcon
-                                    alt='checked'
-                                    className='w-3'
-                                  />
+                                  <CheckedIcon alt='checked' className='w-3' />
                                   <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.label || selected}
                                   </span>
@@ -834,11 +831,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '4px',
+                                  overflow: 'hidden',
                                 }}
                               >
                                 <CheckedIcon
                                   alt='checked'
                                   className='w-4 h-4'
+                                  style={{ flexShrink: 0 }}
                                 />
                                 {field.label}
                               </MenuItem>
@@ -906,26 +905,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
             Fields
             <ArrowIcon alt='arrowIcon' className='mt-0.5' />
           </button>
-          {/* <div className='flex justify-end gap-2'>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleCloseFilter}
-            >
-              Close
-            </button>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleApplyFilters}
-            >
-              Apply
-            </button>
-          </div> */}
         </div>
       </div>
       <Menu
@@ -971,9 +950,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   lineHeight: '30px',
                   color: '#425A76',
                   py: '1px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden',
                 }}
               >
-                <CheckedIcon alt='checked' className='w-4 h-4 mr-1' />
+                <CheckedIcon
+                  alt='checked'
+                  className='w-4 h-4 mr-1'
+                  style={{ flexShrink: 0 }}
+                />
                 {field.label}
               </MenuItem>
             ))

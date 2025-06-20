@@ -97,6 +97,7 @@ export const AccountDetails = () => {
     fiscalYear: String(convertedFiscalYear),
     rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
     resourceRid: '',
+    filter: {},
   });
   const [projectParams, setProjectParams] = useState<ProjectListParams>({
     sortBy: 'created_datetime',
@@ -119,12 +120,14 @@ export const AccountDetails = () => {
     }
 
     //"resource" | "cost" | "skill"
-    const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder } = tableParams;
+    const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder, filter } =
+      tableParams;
 
     const commonPayload = {
       rNumber,
       sortBy,
       sortOrder,
+      filter,
     };
 
     const exportPayload = {

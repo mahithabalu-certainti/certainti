@@ -656,7 +656,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               placement='top'
               arrow
             >
-              <span>
+              <span className='text-[12px] font-medium text-[#425A76]'>
                 <button
                   onClick={handleApplyFilters}
                   disabled={isApplyDisabled}
@@ -832,11 +832,13 @@ const Filter: React.FC<FilterComponentProps> = ({
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '4px',
+                                  overflow: 'hidden',
                                 }}
                               >
                                 <CheckedIcon
                                   alt='checked'
                                   className='w-4 h-4'
+                                  style={{ flexShrink: 0 }}
                                 />
                                 {field.name}
                               </MenuItem>
@@ -946,9 +948,16 @@ const Filter: React.FC<FilterComponentProps> = ({
                   lineHeight: '30px',
                   color: '#425A76',
                   py: '1px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden',
                 }}
               >
-                <CheckedIcon alt='checked' className='w-4 h-4 mr-1' />
+                <CheckedIcon
+                  alt='checked'
+                  className='w-4 h-4 mr-1'
+                  style={{ flexShrink: 0 }}
+                />
                 {field.name}
               </MenuItem>
             ))
