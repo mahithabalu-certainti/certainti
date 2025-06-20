@@ -645,37 +645,37 @@ export const ResourceFormData = (
       {
         sectionName: 'Audit Information',
         fillType: 'half',
-        hide: disableCostAndSkill || createResource,
+        hide: !isEditView,
         fields: [
           createTextField('Record_id', 'Record ID', {
             required: false,
             disabled: true,
-            hide: disableCostAndSkill,
+            // hide: disableCostAndSkill,
           }),
           createTextField('Created_On', 'Created On', {
             required: false,
             disabled: true,
-            hide: disableCostAndSkill,
+            // hide: disableCostAndSkill,
           }),
           createTextField('Created_By', 'Created By', {
             required: false,
             disabled: true,
-            hide: disableCostAndSkill,
+            // hide: disableCostAndSkill,
           }),
           createTextField('Resource_id', 'Resource ID', {
             required: false,
             disabled: true,
-            hide: disableCostAndSkill,
+            // hide: disableCostAndSkill,
           }),
           createTextField('Updated_On', 'Updated On', {
             required: false,
             disabled: true,
-            hide: disableCostAndSkill,
+            // hide: disableCostAndSkill,
           }),
           createTextField('Updated_By', 'Updated By', {
             required: false,
             disabled: true,
-            hide: disableCostAndSkill,
+            // hide: disableCostAndSkill,
           }),
         ],
       },

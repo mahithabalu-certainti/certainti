@@ -112,6 +112,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [skillOrderBy, setSkillOrderBy] =
     useState<keyof ResourceSkillList>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [count, setCount] = useState(0);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -218,7 +219,11 @@ const Resource: React.FC<ResourceProps> = ({
       setResourceNumber(null);
     }
   }, [searchParams, ResourceList]);
-
+  useEffect(() => {
+    if (setCount) {
+      setCount(ResourceList?.count || 0);
+    }
+  }, [ResourceList, setCount]);
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -228,6 +233,7 @@ const Resource: React.FC<ResourceProps> = ({
     setShowFilter(false);
     setAppliedFilters({});
     setSortFilterCount(0);
+    setCount(0);
     clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
@@ -370,6 +376,7 @@ const Resource: React.FC<ResourceProps> = ({
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setShowFilter(false);
+    setCount(ResourceList?.count || 0);
     // clear query params
     searchParams.delete('res_id');
     searchParams.delete('tab');
@@ -512,7 +519,6 @@ const Resource: React.FC<ResourceProps> = ({
       setSortField(apiSortBy);
     }
   };
-
   return (
     <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
@@ -543,6 +549,7 @@ const Resource: React.FC<ResourceProps> = ({
           <ResourceTableHeader
             value={value}
             title='Resources'
+            count={count}
             resourceNumber={resourceData?.r_number ?? resourceNumber}
             titleIcon={<ResourceProfileIcon alt='resource header icon' />}
             headerButtons={headerButtons}
@@ -574,6 +581,7 @@ const Resource: React.FC<ResourceProps> = ({
               setSkillOrderBy={setSkillOrderBy}
               refreshCostTrigger={refreshCostTrigger}
               refreshSkillTrigger={refreshSkillTrigger}
+              setCount={setCount}
             />
           )}
           {viewResourceList && !value && (

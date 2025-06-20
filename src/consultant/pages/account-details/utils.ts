@@ -158,26 +158,6 @@ export const transformResourceData = (
           value: getValueOrDefault(resourceData?.resource_code),
           className: `${status === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Name',
-          value: getValueOrDefault(resourceData?.resource_name),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Resource Type',
-          value: getValueOrDefault(resourceData?.resource_type),
-        },
-      ],
-    },
-    {
-      items: [
         {
           label: 'Role',
           value: `${getValueOrDefault(resourceData?.resource_role)} `,
@@ -187,6 +167,10 @@ export const transformResourceData = (
     {
       items: [
         {
+          label: 'Name',
+          value: getValueOrDefault(resourceData?.resource_name),
+        },
+        {
           label: 'Designation',
           value: getValueOrDefault(resourceData?.resource_designation),
         },
@@ -195,7 +179,11 @@ export const transformResourceData = (
     {
       items: [
         {
-          label: 'org Name',
+          label: 'Resource Type',
+          value: getValueOrDefault(resourceData?.resource_type),
+        },
+        {
+          label: 'Resource Org Name',
           value: getValueOrDefault(resourceData?.resource_orgname),
         },
       ],

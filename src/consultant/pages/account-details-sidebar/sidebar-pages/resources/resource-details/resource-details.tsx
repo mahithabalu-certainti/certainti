@@ -11,7 +11,7 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 interface ResourceDetailsProps {
   resource: ResourceData | null;
   isLoading: boolean;
-  error: any;
+  error: string | null;
 }
 
 const formatKey = (key: string): string => {
@@ -126,8 +126,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           color='textSecondary'
           className='text-center'
         >
-          {error.message ||
-            'Failed to fetch resource details. Please try again later.'}
+          {error || 'Failed to fetch resource details. Please try again later.'}
         </Typography>
       </div>
     );

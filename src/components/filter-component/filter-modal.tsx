@@ -657,7 +657,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               placement='top'
               arrow
             >
-              <span>
+              <span className='text-[12px] font-medium text-[#425A76]'>
                 <button
                   onClick={handleApplyFilters}
                   disabled={isApplyDisabled}

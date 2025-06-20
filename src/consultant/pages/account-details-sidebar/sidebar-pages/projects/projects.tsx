@@ -294,6 +294,7 @@ const Projects: React.FC<ProjectsProps> = ({
           <ResourceTableHeader
             value={'projects'}
             title='Projects'
+            count={totalItems}
             titleIcon={<ProjectHeaderIcon alt='project-header-icon' />}
             headerButtons={headerButtons}
           />
