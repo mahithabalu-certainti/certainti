@@ -1,14 +1,14 @@
 import { initSequelize } from "../config/maindbDataSource";
-import { Account, setupAccountSequence } from "./accountModel";
+import { Account } from "./accountModel";
 import { Currency } from "./currencyModel";
 import { Country } from "./countryModel";
-import { DatabaseConnection, setupDbConnectionSequence } from "./dbConnectionModel";
-import { Region, setupRegionSequence } from "./regionModel";
-import { States, setupStateSequence } from "./stateModel";
+import { DatabaseConnection } from "./dbConnectionModel";
+import { Region } from "./regionModel";
+import { States } from "./stateModel";
 import { City } from "./cityModel";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
-import { Industry, setupIndustrySequence} from "./industryModel";
-import { ProjectSummary, setupProjectSummarySequence } from "./projectSummary";
+import { Industry} from "./industryModel";
+import { ProjectSummary } from "./projectSummary";
 import { ColorCodes } from "./colorCodes";
 import { Status } from "./status";
 import { ResourceStatus } from "./resourceStatus";
@@ -72,12 +72,7 @@ export async function initModels() {
     Account.initialize(sequelize);
     ProjectSummary.initialize(sequelize);
     //await sequelize.sync({ force: false });
-    await setupDbConnectionSequence(sequelize);
-    await setupRegionSequence(sequelize);
-    await setupStateSequence(sequelize);
-    await setupIndustrySequence(sequelize);
-    await setupAccountSequence(sequelize);
-    await setupProjectSummarySequence(sequelize);
+    
   } catch (err) {
     console.log("Errr loading models", err);
   }

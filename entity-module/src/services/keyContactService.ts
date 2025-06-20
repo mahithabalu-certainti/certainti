@@ -66,7 +66,7 @@ export class KeyContactService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Technical Consultant" && e.is_primary_contact
+          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
@@ -220,7 +220,7 @@ export class KeyContactService {
 
         return {
           keyContact: [],
-          technical_point_of_contact: findPrimary("Technical Consultant"),
+          technical_point_of_contact: findPrimary("Client Project Technical Point of Contact"),
           financial_consultant: findPrimary("Financial Consultant"),
           project_point_of_contact: findPrimary("Client Project Point of Contact"),
         };

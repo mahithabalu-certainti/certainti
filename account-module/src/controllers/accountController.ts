@@ -8,7 +8,8 @@ import {
   successLog,
   validateRequest,
   generateExcelBase64,
-  uploadToAzureBlob
+  uploadToAzureBlob,
+  deleteFromAzureBlob
 } from "../utils/helpers";
 import {
   accountSchema,
@@ -270,10 +271,19 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    if(req.file)
+    if(req.file && value.logo_action  ==="upload")
     {
+      if(value.logo_url)
+      {
+        await deleteFromAzureBlob(value.logo_url);
+      }
       file_url = await uploadToAzureBlob(req.file,value?.account_rid);
       value.logo_url = file_url; 
+    }
+    else if(value.logo_action  === "delete")
+    {
+       await deleteFromAzureBlob(value.logo_url);
+        value.logo_url = ""; 
     }
     const account = await accountServices.updateAccount(value, userId);
 

@@ -3,7 +3,7 @@ import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
-import { R_NUMBER_PREFIX ,ENV_PREFIX} from "../utils/constant";
+import { ENV_PREFIX} from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { States } from "./stateModel";
 interface AccountAttributes {
@@ -259,23 +259,5 @@ export class Account
       foreignKey: "file_drop_config_id",
       as: "file_drop_config",
     });
-  }
-}
-
-
-export async function setupAccountSequence(sequelize: Sequelize) {
-  try {
-    // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS account_seq START 1');
-    
-    // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE account
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT}-' || LPAD(nextval('account_seq')::text, 5, '0')`);
-    
-    console.log('Account sequence setup complete');
-  } catch (error) {
-    console.error('Error setting up Account sequence:', error);
-    // Don't throw the error to allow the application to continue starting up
-    // The sequence setup can be handled separately if needed
   }
 }

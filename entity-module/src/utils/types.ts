@@ -75,7 +75,7 @@ export interface IResourceCost {
   comments?: string;
   created_by?: string | null;
   modified_by?: string | null;
-  status?: "active" | "inactive";
+  status?: "Active" | "Inactive" | "Duplicate" | "Anomaly";
   accountNumber: string;
   resource_number: string;
 }
@@ -107,7 +107,7 @@ export interface IUpdateResourceCost {
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
-  status?: "active" | "inactive"| "duplicate" | "anomaly";
+  status?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
   accountNumber: string;
 }
 

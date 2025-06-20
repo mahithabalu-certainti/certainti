@@ -1,4 +1,4 @@
-name: Deploy Platform 2.0 Development Backend Services
+name: Deploy thinkrd365 Development Backend Services
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       - entity-module/**
 
 env:
-  ENVIRONMENT: dev
+  ENVIRONMENT: development
 
 jobs:
   # JOB to run change detection
@@ -52,25 +52,25 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.DEV_ACR_NAME }}
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
         working-directory: user-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DEV_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
         working-directory: user-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.DEV_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
         working-directory: user-module
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.DEV_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: user-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.DEV_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
           ENV_FILE=".env.usermodule"
           
           # Ensure Azure CLI is authenticated
@@ -111,7 +111,7 @@ jobs:
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
           EMAIL_FROM=interactions@certainti.ai
-          LOGIN_URL=https://platform20-dev.certainti.ai
+          LOGIN_URL=https://thinkrd365-development.certainti.ai
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=DEV
@@ -123,11 +123,11 @@ jobs:
           ls -la
       - name: Copy .env file to VM
         run: |
-          scp -v -o StrictHostKeyChecking=no .env.usermodule adminuser@${{ secrets.DEV_BACKEND_VM_HOST }}:/tmp/
+          scp -v -o StrictHostKeyChecking=no .env.usermodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
         working-directory: user-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEV_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -143,11 +143,11 @@ jobs:
             
             # Update only the usermodule image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*user-module:.*|image: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*user-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
             
             # Login to ACR 
-            az acr login --name ${{ secrets.DEV_ACR_NAME }}
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
             echo "Logged in to ACR successfully!"
             
             # Pull latest changes and restart
@@ -180,25 +180,25 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.DEV_ACR_NAME }}
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
         working-directory: account-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DEV_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }} .
         working-directory: account-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.DEV_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
         working-directory: account-module
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.DEV_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: account-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.DEV_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
           ENV_FILE=".env.accountmodule"
           
           # Ensure Azure CLI is authenticated
@@ -236,11 +236,11 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.accountmodule adminuser@${{ secrets.DEV_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.accountmodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
         working-directory: account-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEV_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -256,11 +256,11 @@ jobs:
           
             # Update only the account-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*account-module:.*|image: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*account-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.DEV_ACR_NAME }}
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -293,25 +293,25 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.DEV_ACR_NAME }}
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
         working-directory: entity-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DEV_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
         working-directory: entity-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.DEV_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
         working-directory: entity-module
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.DEV_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: entity-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.DEV_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
           ENV_FILE=".env.entitymodule"
           
           # Ensure Azure CLI is authenticated
@@ -347,11 +347,11 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.DEV_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
         working-directory: entity-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEV_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -367,11 +367,11 @@ jobs:
           
             # Update only the entity-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*entity-module:.*|image: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*entity-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.DEV_ACR_NAME }}
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart

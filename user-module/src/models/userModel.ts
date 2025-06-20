@@ -15,7 +15,7 @@ interface UserAttributes {
   email: string;
   street?: string;
   city_rid?: string;
-  state_rid?: string;
+  region_rid?: string;
   zip_code?: string;
   country_rid?: string;
   role_rid?: string;
@@ -51,7 +51,7 @@ export class User
   public email!: string;
   public street?: string;
   public city_rid?: string;
-  public state_rid?: string;
+  public region_rid?: string;
   public zip_code?: string;
   public country_rid?: string;
   public role_rid?: string;
@@ -142,7 +142,7 @@ export class User
           type: DataTypes.STRING,
           allowNull: true,
         },
-        state_rid: {
+        region_rid: {
           type: DataTypes.STRING,
           allowNull: true,
         },

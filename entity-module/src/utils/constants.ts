@@ -11,6 +11,7 @@ export const HttpStatus = {
   FORBIDDEN_MESSAGE: "Forbidden",
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
+  SUCCESS_NOTIFICATION: "Operation completed successfully!",
 }
 
 export const NODE_ENV = {

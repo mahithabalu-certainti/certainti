@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-const uuidRegex = /^[A-Z0-9]{4}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const allowedTLDs = [
   "com",
   "org",
@@ -32,21 +32,21 @@ const accountSchema = Joi.object({
   status: Joi.string().valid("active", "inactive").required().label("Status"),
   is_parent: Joi.boolean().required().label("Is Parent"),
   parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
-  account_currency_rid: Joi.string().allow("").allow(null)
+  currency_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for currency RID",
       "any.required": "Account currency RID is required",
     }),
-  account_country_rid: Joi.string()
+  country_rid: Joi.string()
     .pattern(uuidRegex, "valid UUID").allow("").allow(null)
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for country RID",
       "any.required": "Account country RID is required",
     }),
-  account_country_region_rid: Joi.string()
+  region_rid: Joi.string()
     .pattern(uuidRegex, "valid UUID").allow("").allow(null)
     .optional()
     .messages({
@@ -141,7 +141,7 @@ const accountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Invalid Key Contact Email Address."
         }),
-        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
@@ -160,21 +160,21 @@ const updateAccountSchema = Joi.object({
   status: Joi.string().valid("active", "inactive").required().label("Status"),
   is_parent: Joi.boolean().required().label("Is Parent"),
   parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
-  account_currency_rid: Joi.string().allow("").allow(null)
+  currency_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for currency RID",
       "any.required": "Account currency RID is required",
     }).label("Currency"),
-  account_country_rid: Joi.string()
+  country_rid: Joi.string()
     .pattern(uuidRegex, "valid UUID").allow("").allow(null)
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for country RID",
       "any.required": "Account country RID is required",
     }).label("Country"),
-  account_country_region_rid: Joi.string().allow("").allow(null)
+  region_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
     .optional()
     .messages({
@@ -223,6 +223,7 @@ const updateAccountSchema = Joi.object({
     "any.invalid": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
   }).allow(null).allow(""),
   modified_by: Joi.string().max(255).optional(),
+  logo_action:Joi.string().max(255).optional().allow("").allow(null),
   industry_rid: Joi.string().required().label("Industry"),
   industry_name_other: Joi.string().min(3).max(255).optional().allow("").allow(null).label("Industry Other"),
   business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
@@ -271,7 +272,7 @@ const updateAccountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Invalid Key Contact Email Address"
         }),
-        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),

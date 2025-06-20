@@ -364,7 +364,8 @@ class SchemaService {
       interaction_cc_list TEXT,
       assessment_status TEXT,
       claim_status TEXT,
-      comments VARCHAR(2000)
+      comments VARCHAR(2000),
+      project_description VARCHAR(2000)
     );
 
     `);
@@ -831,7 +832,6 @@ class SchemaService {
          resource_cost numeric(18,2),
          salary numeric(18,2),
          net_resource_cost numeric(20,2),
-         CONSTRAINT resource_cost_pkey PRIMARY KEY (rid),
          CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
               REFERENCES "${schemaName}".resources (rid)
               ON UPDATE CASCADE
@@ -885,7 +885,7 @@ class SchemaService {
           ),
           created_by varchar(50) NOT NULL,
           modified_by varchar(50),
-          created_datetime timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,,
+          created_datetime timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
           modified_datetime timestamptz,
           resource_cost_rid varchar(50) NOT NULL,
           attribute_name varchar(255) NOT NULL,
@@ -1543,6 +1543,7 @@ class SchemaService {
         const queries = Array.from(schemaToAccountRids).map(
           async ([schema, accountRids]) => {
             try {
+                const schemaName = `trd365_${schema.replace(/\D/g, '')}`;
               return await orgDbSequelize.query(
                 `SELECT fiscal_year, account_rid,
              SUM(total_projects::NUMERIC) AS total_projects,
@@ -1552,7 +1553,7 @@ class SchemaService {
              SUM(qualifying_project_qre_fed::NUMERIC) AS qualifying_project_qre_fed,
              SUM(qualifying_project_rd_credits_fed::NUMERIC) AS qualifying_project_rd_credits_fed,
              SUM(total_projects_rd_credits::NUMERIC) AS total_projects_rd_credits
-             FROM "trd365_${schema}".account_fiscal
+             FROM "${schemaName}".account_fiscal
              WHERE account_rid IN (:accountRids)
              GROUP BY account_rid, fiscal_year`,
                 { replacements: { accountRids }, type: "SELECT" }

@@ -1050,7 +1050,7 @@ class SchemaService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by:
+          created_by:
             newResourceData.modified_by ||
             newResourceData.created_by ||
             "system",
@@ -1182,7 +1182,7 @@ class SchemaService {
         event_status: "success",
         event_type: "ui handler",
         entity_rid: resourceId,
-        created_by: resourceData.created_by,
+        created_by: resourceData.created_by || resourceData.modified_by ,
       });
     } catch (err) {
       throw new Error("Error adding timeline : " + (err as Error).message);
@@ -2801,7 +2801,7 @@ class SchemaService {
 
         const technicalConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Technical Consultant" && e.is_primary_contact
+            e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
         );
         const financialConsultant = enrichedKeyContacts.find(
           (e: any) =>

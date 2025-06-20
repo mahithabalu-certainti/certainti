@@ -22,7 +22,7 @@ export interface IUserData {
   status: string;
   street: string;
   city_rid: string;
-  state_rid: string;
+  region_rid: string;
   zip_code: string;
   country_rid: string;
   designation?: string;
@@ -48,7 +48,7 @@ export interface IUpdateUserData {
   status: string;
   street: string;
   city_rid: string;
-  state_rid: string;
+  region_rid: string;
   zip_code: string;
   country_rid: string;
   mobile?: string;

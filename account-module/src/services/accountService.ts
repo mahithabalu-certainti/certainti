@@ -59,8 +59,8 @@ async accountList(
     try {
       const repository = this.getAccountRepository();
       
-      // Get USD currency_rid (with caching)
-      let usdCurrency = await this.getUSDCurrency();
+      // Get USD currency_rid
+      const usdCurrency = await this.getUSDCurrency();
       
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
@@ -144,23 +144,9 @@ async accountList(
       // Check if filters contain key_contact filter
       const hasKeyContactFilter = !!(parsedFilters?.finance_executive || parsedFilters?.professional_services_consultant || parsedFilters?.finance_lead)  ||
            ['professional_services_consultant', 'financial_lead', 'finance_executive'].includes(finalSortBy || '');
-
-      // Combined query for parent and child accounts
-      const combinedWhere = {
-        [Op.or]: [
-          baseWhereClause,
-          {
-            parent_account_rid: {
-              [Op.not]: null,
-            },
-            ...(Object.keys(childClause).length > 0 ? childClause : {}),
-          }
-        ]
-      };
-
       // Build the query options dynamically
       const queryOptions: any = {
-        where: combinedWhere,
+        where: baseWhereClause,
         order,
         include: [
           {
@@ -180,12 +166,6 @@ async accountList(
             as: "industry",
             attributes: ["rid", "industry_name"],
             required: false,
-          },
-          {
-            model: Account,
-            as: "parent_account",
-            attributes: ["rid", "account_name"],
-            required: false,
           }
         ]
       };
@@ -194,14 +174,56 @@ async accountList(
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
-      const allAccounts = await repository.findAll(queryOptions);
+    const parentAccounts = await repository.findAll(queryOptions);
 
-      // Separate parent and child accounts
-      const parentAccounts = allAccounts.filter(account => account.parent_account_rid === null);
-      const childAccounts = allAccounts.filter(account => account.parent_account_rid !== null);
+    // Set USD currency for accounts with no currency
+    parentAccounts.forEach((account: any) => {
+      if (!account.currency_rid || account.currency_rid === '') {
+        account.currency_rid = usdCurrency?.rid;
+        account.setDataValue('currency', usdCurrency);
+      }      
+    });
 
-      // Set USD currency for all accounts with no currency
-      allAccounts.forEach((account: any) => {
+    // Then, for each account, fetch its child accounts separately
+    const accountIds = parentAccounts.map((account: any) => account.rid);
+    //  const { whereClauseChildAccount } = this.buildchildAccountWhereClause(parsedFilters);
+    if(accountIds.length > 0) {
+      const childAccounts = await repository.findAll({
+        where: {
+          parent_account_rid: {
+            [Op.in]: accountIds,
+          },
+      //    ...whereClauseChildAccount,
+          ...(Object.keys(childClause).length > 0 ? childClause : {}),
+        },
+        include: [
+          {
+            model: Country,
+            as: "country",
+            attributes: ["rid", "country_name"]
+          },
+          {
+            model: Currency,
+            as: "currency",
+            attributes: ["rid", "currency_code", "currency_symbol"]
+          },
+          {
+            model: Account,
+            as: "parent_account",
+            attributes: ["rid", "account_name"],
+          },
+          {
+            model: Industry,
+            as: "industry",
+            attributes: ["rid", "industry_name"],
+            required: false,
+          }
+        ],
+        order: [["account_name", "ASC"]]
+      });
+
+      // Set USD currency for child accounts with no currency
+      childAccounts.forEach((account: any) => {
         if (!account.currency_rid || account.currency_rid === '') {
           account.currency_rid = usdCurrency?.rid;
           account.setDataValue('currency', usdCurrency);
@@ -221,15 +243,37 @@ async accountList(
       parentAccounts.forEach((account: any) => {
         account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
       });
+    } else {
+      // If no parent accounts found, set empty child_accounts array
+      parentAccounts.forEach((account: any) => {
+        account.setDataValue('child_accounts', []);
+      });
+    }
 
     const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,limit,offset,finalSortBy,finalSortOrder,'create');
 
-      // Get total count without pagination (simplified)
-      const totalCount = await repository.count({
-        where: baseWhereClause,
-        distinct: true,
-        col: 'rid', // Specify the column to count on
-      });
+    // Get total count without pagination
+    const totalCount = await repository.count({
+      where: baseWhereClause,
+      distinct: true,
+      include: [
+        {
+          model: Country,
+          as: "country",
+          attributes: []
+        },
+        {
+          model: Currency,
+          as: "currency",
+          attributes: []
+        },
+        {
+          model: Industry,
+          as: "industry",
+          attributes: []
+        }
+      ]
+    });
 
     return {
       statusCode: HttpStatus.SUCCESS,
@@ -565,11 +609,11 @@ async accountList(
         account_name,
         comments,
         parent_account_rid,
-        account_country_rid,
-        account_currency_rid,
+        country_rid,
+        currency_rid,
         industry_rid,
         industry_name_other,
-        account_country_region_rid,
+        region_rid,
         data_storage,
         status,
         annual_revenue,
@@ -630,12 +674,12 @@ async accountList(
         account_name,
         comments: comments || "",
         // r_number: "fnfdfn",
-        region_rid: account_country_region_rid,
+        region_rid: region_rid,
         is_parent: parent_account_rid ? false : true,
         parent_account_rid: parent_account_rid || null,
         storage_type: data_storage,
-        country_rid:account_country_rid,
-        currency_rid:account_currency_rid,
+        country_rid:country_rid,
+        currency_rid:currency_rid,
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
         status,
@@ -757,10 +801,10 @@ async insertClientTemplateDetails(
         comments,
         status,
         annual_revenue,
-        account_country_region_rid,
+        region_rid,
         data_storage,
-        account_country_rid,
-        account_currency_rid,
+        country_rid,
+        currency_rid,
         industry_rid,
         industry_name_other,
         key_contacts,
@@ -817,9 +861,9 @@ async insertClientTemplateDetails(
           account_name,
           comments: comments || "",
           status,
-          region_rid: account_country_region_rid,
-          country_rid: account_country_rid,
-          currency_rid: account_currency_rid,
+          region_rid: region_rid,
+          country_rid: country_rid,
+          currency_rid: currency_rid,
           industry_rid: industry_rid,
           modified_by: userId,
           industry_name_other: industry_name_other,

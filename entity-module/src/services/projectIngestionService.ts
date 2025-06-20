@@ -645,15 +645,15 @@ class ProjectIngestionService {
     await AccountFiscal.update(
       {
         total_projects: aggregates.total_projects,
-        total_project_cost: aggregates.total_cost,
-        total_project_hours: aggregates.total_effort,
-        total_fte: aggregates.total_fte,
-        total_subcon: aggregates.total_subcon,
-        total_project_hours_fte: aggregates.total_effort_fte,
-        total_project_hours_subcon: aggregates.total_effort_subcon,
-        total_project_cost_fte: aggregates.total_cost_fte,
-        total_project_cost_subcon: aggregates.total_cost_subcon,
-        total_project_cost_nonlabor: aggregates.total_cost_nonlabor,
+        total_project_cost: aggregates.total_cost_prj,
+        total_project_hours: aggregates.total_effort_prj,
+        total_fte: aggregates.total_fte__prj,
+        total_subcon: aggregates.total_subcon_prj,
+        total_project_hours_fte: aggregates.total_effort_fte_prj,
+        total_project_hours_subcon: aggregates.total_effort_subcon_prj,
+        total_project_cost_fte: aggregates.total_cost_fte_prj,
+        total_project_cost_subcon: aggregates.total_cost_subcon_prj,
+        total_project_cost_nonlabor: aggregates.total_cost_nonlabor_prj,
       },
       {
         where: {
@@ -696,7 +696,6 @@ class ProjectIngestionService {
         account_rid: accountId,
       },
       group: ["account_rid"],
-      raw: true,
     });
 
     if (!aggregates) return;
