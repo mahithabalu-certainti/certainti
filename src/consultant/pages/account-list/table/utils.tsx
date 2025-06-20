@@ -82,7 +82,7 @@ export const renderRows = ({
       <React.Fragment key={account.accountName}>
         <TableRow
           hover
-          className={`${openRows.has(account.accountId) ? 'bg-[#F2F2F2]' : ''} group`}
+          className={`${openRows.has(account.accountId) ? 'bg-[#ECECEC]' : ''} group`}
           selected={selectedRows.has(globalIndex as number)}
           sx={{
             '&:hover td': {
@@ -106,7 +106,7 @@ export const renderRows = ({
             sx={{
               position: 'sticky',
               left: 0,
-              background: openRows.has(account.accountId) ? '#F2F2F2' : '#fff',
+              background: openRows.has(account.accountId) ? '#ECECEC' : '#fff',
               zIndex: 7,
               width: '32px',
               maxWidth: '32px',
@@ -136,7 +136,7 @@ export const renderRows = ({
             sx={{
               position: 'sticky',
               left: '32px',
-              background: openRows.has(account.accountId) ? '#F2F2F2' : '#fff',
+              background: openRows.has(account.accountId) ? '#ECECEC' : '#fff',
               zIndex: 6,
               fontWeight: '400 !important',
               color: '#2D3E4F !important',

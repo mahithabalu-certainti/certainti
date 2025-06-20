@@ -315,7 +315,8 @@ const AccordionTable = <T extends RowData>({
                       key={rowId}
                       hover
                       selected={selectedRows.has(rowId)}
-                      className={`${hoverHighlight ? 'group' : ''}`}
+                      // className={`${hoverHighlight ? 'group' : ''}`}
+                      className={`${isExpanded ? 'bg-[#F2F2F2]' : ''} ${hoverHighlight ? 'group' : ''}`}
                       sx={{
                         '&:hover td': {
                           backgroundColor: '#f5f7fa',
@@ -334,7 +335,7 @@ const AccordionTable = <T extends RowData>({
                           sx={{
                             position: 'sticky',
                             left: 0,
-                            background: '#fff',
+                            background: isExpanded ? '#ECECEC' : '#fff',
                             zIndex: 7,
                             width: '32px',
                             maxWidth: '32px',
@@ -388,6 +389,7 @@ const AccordionTable = <T extends RowData>({
                               ...(column.sx || {}),
                               zIndex: column.sticky ? 6 : 'auto',
                               left: selectable ? '32px' : 0,
+                              background: isExpanded ? '#ECECEC' : '#fff',
                             }}
                             className={`${
                               hoverHighlight &&
@@ -396,20 +398,16 @@ const AccordionTable = <T extends RowData>({
                                 : 'group-hover:!text-blue-600 group-hover:underline')
                             } cursor-context-menu`}
                           >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'start',
-                              }}
-                            >
+                            <div className='inline-flex items-center'>
                               {colIndex === 0 &&
                                 (Array.isArray(row.ProjectFiscal) &&
                                 row.ProjectFiscal.length > 0 ? (
                                   <IconButton
+                                    aria-label='expand row'
                                     size='small'
+                                    disableRipple
+                                    className='!p-0 !pr-1 !mt-1'
                                     onClick={() => handleToggleRowExpand(rowId)}
-                                    className='px-[0px] py-[0px] mx-[0px] my-[0px]'
                                   >
                                     <ArrowDownIcon
                                       alt='expand-icon'
@@ -421,7 +419,7 @@ const AccordionTable = <T extends RowData>({
                                         filter:
                                           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
                                       }}
-                                      className='h-[18px] w-[18px] mb-1 mr-1'
+                                      className='h-[18px] w-[18px] mb-1'
                                     />
                                   </IconButton>
                                 ) : (
@@ -526,9 +524,20 @@ const AccordionTable = <T extends RowData>({
                       project.ProjectFiscal?.map((summary, index) => (
                         <TableRow
                           key={`${rowId}-summary-${index}`}
-                          sx={{ bgcolor: '#f9f9f9' }}
                           selected={selectedRows.has(rowId)}
                           className={`${hoverHighlight ? 'group' : ''}`}
+                          sx={{
+                            backgroundColor: '#fff',
+                            '&:hover td': {
+                              backgroundColor: '#f5f7fa',
+                            },
+                            '&.Mui-selected td': {
+                              backgroundColor: '#f5f7fa',
+                            },
+                            '&.Mui-selected:hover td': {
+                              backgroundColor: '#f5f7fa',
+                            },
+                          }}
                         >
                           {/* Row checkbox */}
                           {selectable && (

@@ -234,7 +234,7 @@ export const NewDateFilterControl: React.FC<{
                       '& .MuiInputBase-input': {
                         fontSize: '12px',
                         color: '#425A76',
-                        width: isBetween ? '50%' : '140px',
+                        width: isBetween ? '50%' : '125px',
                       },
                     },
                     placeholder: 'YYYY-MM-DD',
@@ -294,7 +294,7 @@ export const NewDateFilterControl: React.FC<{
                     '& .MuiInputBase-input': {
                       fontSize: '12px',
                       color: '#425A76',
-                      width: isBetween ? '50%' : '140px',
+                      width: isBetween ? '50%' : '125px',
                     },
                   },
                   placeholder: 'YYYY-MM-DD',
