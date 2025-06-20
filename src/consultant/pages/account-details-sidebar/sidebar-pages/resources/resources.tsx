@@ -428,6 +428,7 @@ const Resource: React.FC<ResourceProps> = ({
       sortOrder: 'DESC',
       resourceRid: searchParams.get('res_id') || '',
       rNumber: accountDetails?.data?.accountById?.r_number,
+      filter: appliedFilters,
     };
 
     if (value === 'cost') {
@@ -457,6 +458,7 @@ const Resource: React.FC<ResourceProps> = ({
     sortField,
     sortOrder,
     searchParams,
+    appliedFilters,
     setTableParams,
     setExportType,
     accountDetails?.data?.accountById?.r_number,
@@ -542,9 +544,7 @@ const Resource: React.FC<ResourceProps> = ({
             value={value}
             title='Resources'
             resourceNumber={resourceData?.r_number ?? resourceNumber}
-            titleIcon={
-              <ResourceProfileIcon alt='resource header icon' />
-            }
+            titleIcon={<ResourceProfileIcon alt='resource header icon' />}
             headerButtons={headerButtons}
             showBackArrow={showBackArrow}
             onBackClick={handleBackClick}

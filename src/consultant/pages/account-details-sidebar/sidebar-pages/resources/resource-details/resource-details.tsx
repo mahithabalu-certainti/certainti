@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
-import { useResourceDetail } from '../../../../../services/resource-details';
-import { CreateSectionData } from '../../../../../types';
+import { CreateSectionData, ResourceData } from '../../../../../types';
 import { formatDateToYYYYMMDD } from '../utils';
 import DetailsSection, {
   DetailItem,
@@ -10,8 +9,9 @@ import DetailsSection, {
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 
 interface ResourceDetailsProps {
-  resourceId: string;
-  accountId: string;
+  resource: ResourceData | null;
+  isLoading: boolean;
+  error: any;
 }
 
 const formatKey = (key: string): string => {
@@ -20,29 +20,13 @@ const formatKey = (key: string): string => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
-// interface AuditDetailsSectionProps {
-//   title: string;
-//   data: {
-//     rid: string;
-//     r_number: string;
-//     created_datetime: string;
-//     created_by: string;
-//     modified_datetime: string;
-//     modified_by: string | null;
-//   };
-// }
 
 const ResourceDetails: React.FC<ResourceDetailsProps> = ({
-  resourceId,
-  accountId,
+  resource,
+  isLoading,
+  error,
 }) => {
-  const {
-    data: resource,
-    isLoading,
-    error,
-  } = useResourceDetail(resourceId, accountId);
-
-  const resourceData = resource?.data?.resourceDetails;
+  const resourceData = resource?.resourceDetails;
 
   const CreateSectionData = (
     dataObj: Partial<CreateSectionData>,
@@ -161,21 +145,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
-    resource_code: resourceData.resource_code,
-    resource_type: resourceData.resource_type,
-    resource_orgname: resourceData.resource_orgname,
-    resource_fullname:
-      resourceData?.resource_name?.trim() ||
-      (
-        (resourceData?.resource_firstname?.trim() || '') +
-        ' ' +
-        (resourceData?.resource_lastname?.trim() || '')
-      ).trim() ||
-      ' - ',
     first_name: resourceData.resource_firstname,
     last_name: resourceData.resource_lastname,
-    role: resourceData.resource_role,
-    status: resourceData.resource_status,
   });
 
   const locationInfo = CreateSectionData({
@@ -183,20 +154,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     region: resourceData.region_name,
     city: resourceData.city_name,
   });
-
-  // const employmentDetails = CreateSectionData(
-  //   {
-  //     resource_startdate: resourceData.resource_startdate,
-  //     resource_enddate: resourceData.resource_enddate,
-  //     total_years_experience: resourceData.resource_total_experience,
-  //     designation: resourceData.resource_designation,
-  //     total_years_in_org: resourceData.resource_total_experience_organization,
-  //   }
-  //   // {
-  //   //   resource_effective_from: formatDateToYYYYMMDD,
-  //   //   resource_end_date: formatDateToYYYYMMDD,
-  //   // }
-  // );
 
   const employmentDetails: DetailItem[] = [
     {
@@ -210,10 +167,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       label: '',
       value: 'empty',
-    },
-    {
-      label: 'Designation',
-      value: resourceData?.resource_designation,
     },
     {
       label: 'Total Years of Experience',

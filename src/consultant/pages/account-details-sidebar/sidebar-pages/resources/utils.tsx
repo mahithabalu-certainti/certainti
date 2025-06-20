@@ -145,11 +145,6 @@ export const getSkillFilterFields = (
       filterOptions: requiredFieldFilterOptionsForText,
     },
     {
-      name: 'Years of Experience',
-      value: 'resource_total_experience',
-      type: 'number',
-    },
-    {
       name: 'Skill ID',
       value: 'r_number',
       type: 'textCostAndSkill',

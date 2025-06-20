@@ -32,6 +32,7 @@ const DetailsSection: React.FC<{
 
   const renderValue = (value: React.ReactNode, label?: string) => {
     if (!value) return <span>-</span>;
+    if (value === 'empty') return <span></span>;
 
     if (typeof value === 'string') {
       const status = value.toLowerCase();

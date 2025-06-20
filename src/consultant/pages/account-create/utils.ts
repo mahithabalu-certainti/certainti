@@ -28,14 +28,8 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`is_primary_contact_${index}`] = contact.is_primary_contact
       ? 'yes'
       : 'no';
-    formData[`include_in_communication_${index}`] = formData[
-      `include_in_communication_${index}`
-    ] =
-      contact.include_in_communication === true
-        ? 'yes'
-        : contact.include_in_communication === false
-          ? 'no'
-          : null;
+    formData[`include_in_communication_${index}`] =
+      contact.include_in_communication ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
       contact.status?.toLowerCase() || 'active';
   });
@@ -77,11 +71,7 @@ export const keyContactsTransformPayload = (
         key_contact_role: role || null,
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
-          formData[`include_in_communication_${index}`] === 'yes'
-            ? true
-            : formData[`include_in_communication_${index}`] === 'no'
-              ? false
-              : null,
+          formData[`include_in_communication_${index}`] === 'yes',
         status: formData[`key_contact_status_${index}`]
           ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
           : ('Active' as Status),
@@ -129,7 +119,7 @@ export const transformFormData = (
     parent_account_rid: formData.parent_account_rid || null,
     currency_rid: formData.currency_rid || null,
     country_rid: formData.country_rid || null,
-    region_rid: formData.region || null,
+    region_rid: formData.region_rid || null,
     max_ai_interactions: Number(formData.max_ai_interactions),
     autosend_interaction: formData.autosend_interaction === 'yes',
     auto_access_rd: formData.auto_access_rd === 'yes',

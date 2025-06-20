@@ -111,7 +111,7 @@ export interface CreateSectionData {
   Updated_On?: string;
   Updated_By?: string | null;
 }
-interface ResourceData {
+export interface ResourceData {
   resourceDetails: ResourceDetailsTypes;
 }
 
