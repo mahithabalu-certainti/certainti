@@ -19,7 +19,7 @@ export interface IUserData {
   user_name?: string;
   profile_id: string;
   role: string;
-  status: string;
+  status_id: string;
   street: string;
   city_rid: string;
   region_rid: string;
@@ -45,7 +45,7 @@ export interface IUpdateUserData {
   middle_name?: string;
   last_name: string;
   profile_id: string;
-  status: string;
+  status_id: string;
   street: string;
   city_rid: string;
   region_rid: string;

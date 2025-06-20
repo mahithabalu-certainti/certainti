@@ -30,7 +30,7 @@ export interface ProjectAttributes {
   project_client_group?: string | null;
   project_group?: string | null;
 
-  project_status: "Active" | "Inactive";
+  status_id: string;
 
   country_rid?: string | null;
   region_rid?: string | null;
@@ -100,7 +100,7 @@ export class Project
   public project_client_group?: string | null;
   public project_group?: string | null;
 
-  public project_status!: "Active" | "Inactive";
+  public status_id!:string;
 
   public country_rid?: string | null;
   public region_rid?: string | null;
@@ -212,8 +212,8 @@ export class Project
           type: DataTypes.STRING(255),
           allowNull: true,
         },
-        project_status: {
-          type: DataTypes.ENUM("Active", "Inactive"),
+        status_id: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         country_rid: {

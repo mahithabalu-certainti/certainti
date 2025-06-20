@@ -365,7 +365,7 @@ const createResourcesSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  resource_status: Joi.string().valid("Active", "Inactive").optional(),
+  status_id: Joi.string().optional(),
   created_by: Joi.string()
     .pattern(uuidRegex, "valid UUID")
     .optional(),
@@ -558,7 +558,7 @@ const updateResourceSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  resource_status: Joi.string().valid("Active", "Inactive").optional(),
+  status_id: Joi.string().optional(),
   comments: Joi.string().optional().allow("").allow(null),
 });
 
@@ -1169,7 +1169,7 @@ const createProjectSchema = Joi.object({
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
-  project_status: Joi.string().valid("Active", "Inactive").required(),
+  status_id: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1454,7 +1454,7 @@ const updateProjectSchema = Joi.object({
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
-  project_status: Joi.string().valid("Active", "Inactive").required(),
+  status_id: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",

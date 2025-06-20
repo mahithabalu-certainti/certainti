@@ -976,7 +976,6 @@ class ProjectIngestionService {
       project_group: "project_group",
       project_client_group: "project_client_group",
       fiscal_year: "fiscal_year",
-      project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code"
     };
@@ -1244,7 +1243,7 @@ class ProjectIngestionService {
             "max_ai_interaction",
             "expiry_duration",
             "auto_access_rd",
-            "project_status",
+            "status_id",
             "project_startdate",
             "project_enddate",
             "qre_final",
@@ -1414,7 +1413,8 @@ class ProjectIngestionService {
   ) {
     try {
       const allClassificationIds = new Set<string>();
-       const allProjectTypeIds = new Set<string>();
+      const allProjectTypeIds = new Set<string>();
+      const allStatusIds = new Set<string>();
 
       for (const project of projects) {
         if (project.project_classification_rid) {
@@ -1423,14 +1423,20 @@ class ProjectIngestionService {
         if (project.project_type_rid) {
           allProjectTypeIds.add(project.project_type_rid);
         }
+        if (project.status_id) {
+          allStatusIds.add(project.status_id);
+        }
 
         if (Array.isArray(project.ProjectFiscal)) {
           for (const child of project.ProjectFiscal) {
             if (child.project_classification_rid) {
               allClassificationIds.add(child.project_classification_rid);
             }
-             if (child.project_type_rid) {
+            if (child.project_type_rid) {
               allProjectTypeIds.add(child.project_type_rid);
+            }
+            if (child.status_id) {
+              allStatusIds.add(child.status_id);
             }
           }
         }
@@ -1438,9 +1444,11 @@ class ProjectIngestionService {
 
       const classificationIds = [...allClassificationIds];
       const projectTypeIds = [...allProjectTypeIds];
+      const statusTypeIds = [...allStatusIds];
 
       let classificationMap: Record<string, any> = {};
       let projectTypeMap: Record<string, any> = {};
+      let statusMap: Record<string, any> = {};
 
       if (classificationIds.length > 0) {
         const classificationRows = await mainDbSequelize.query(
@@ -1473,6 +1481,24 @@ class ProjectIngestionService {
         );
       }
 
+      if (statusTypeIds.length > 0) {
+        const statusTypeList = await mainDbSequelize.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusTypeIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          (Array.isArray(statusTypeList) ? statusTypeList : []).map(
+            (c: any) => [c.rid, c]
+          )
+        );
+      }
+
+
+
       const updatedProjects = projects.map((project) => {
         const updatedProject: any = {
           ...(typeof project.toJSON === "function"
@@ -1484,6 +1510,7 @@ class ProjectIngestionService {
                 ?.classification_name || null,
           is_other_classification: !!project.project_classification_other,
           project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
+          status_name:statusMap[project.status_id]?.status_name
         };
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1496,6 +1523,7 @@ class ProjectIngestionService {
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
               project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
+              status_name:statusMap[project.status_id]?.status_name
             })
           );
         }

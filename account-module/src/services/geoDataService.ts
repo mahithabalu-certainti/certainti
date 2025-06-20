@@ -11,7 +11,7 @@ import { ProjectType } from "../models/projectType";
 import { ResourceStatus } from "../models/resourceStatus";
 import { ResourceType } from "../models/resourceType";
 import { SkillLevel } from "../models/skillLevel";
-import { Status } from "../models/status";
+import { Status } from "../models/statusModel";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.

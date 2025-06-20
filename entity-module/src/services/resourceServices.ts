@@ -239,7 +239,7 @@ export class ResourceService {
           "Country": resource.country_name || "-",
           "Total Project Hours": resource.total_project_hours || "-",
           "Estimated R&D Hours": resource.estimated_rd_hours || "-",
-          "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
+          "Status": resource.status_name,
           "Comments": resource.comments || "-",
           "Resource ID": resource.r_number || "-"
         };
@@ -417,7 +417,7 @@ export class ResourceService {
       "resource_code",
       "resource_name",
       "resource_type_rid",
-      "resource_status",
+      "status_id",
       "resource_role",
       // "resource_mobile",
       // "resource_email",
@@ -505,7 +505,7 @@ export class ResourceService {
     whereClause: Record<string, any>,
     havingClause: Record<string, any>
   ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
-    const castToTextFields = ["resource_type_rid", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
+    const castToTextFields = ["resource_type_rid", "resource_name", "resource_designation", "r_number", "resource_code","status_id","resource_orgname","resource_role","comments"];
     const uuidFields = ["country_rid","region_rid"];
 
     const filterFields = [
@@ -513,7 +513,7 @@ export class ResourceService {
       { clientField: "r_number", dbField: "Resources.r_number" },
       { clientField: "resource_name", dbField: "Resources.resource_name" },
       { clientField: "resource_type_rid", dbField: "Resources.resource_type_rid" },
-      { clientField: "resource_status", dbField: "Resources.resource_status" },
+      { clientField: "status_id", dbField: "Resources.status_id" },
       { clientField: "resource_designation", dbField: "Resources.resource_designation" },
       { clientField: "country_rid", dbField: "Resources.country_rid" },
       { clientField: "region_rid", dbField: "Resources.region_rid" },

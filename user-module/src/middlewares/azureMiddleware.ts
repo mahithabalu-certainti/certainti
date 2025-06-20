@@ -44,7 +44,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       whereClause = 'azure_id = :userId';
     } else if (userIdHeader) {
       userId = userIdHeader;
-      whereClause = 'rid = :userId';
+      whereClause = '"user".rid = :userId';
     } else {
       res.status(constants.BAD_REQUEST).json({
         error: constants.BAD_REQUEST_MESSAGE,

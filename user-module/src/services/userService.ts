@@ -965,7 +965,13 @@ async getAllUserPermission(userId: string, profileId: string) {
           [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
           ["first_name", "asc"]
         );
-    } else {
+    } else if (sortBy === "$status.status_name$") {
+        order.push(
+          [{ model: Status, as: "status" }, "status_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } 
+    else {
         order.push([sortBy, sortOrder]);
     }
    
@@ -1298,7 +1304,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       "first_name",
       "last_name",
       "email",
-      "status",
+      "status_id",
       "created_datetime",
       "modified_datetime",
       "profile",
@@ -1315,6 +1321,9 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (sortBy === "business_teams") {
       sortBy = "$business_teams.business_teams$";
+    }
+    if (sortBy === "status_id") {
+      sortBy = "$status.status_name$";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
