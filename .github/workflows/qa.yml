@@ -202,7 +202,7 @@ jobs:
           ENV_FILE=".env.accountmodule"
           
           # Ensure Azure CLI is authenticated
-          az account show > /QA/null 2>&1
+          az account show > /dev/null 2>&1
           if [ $? -ne 0 ]; then
           echo "Error: Azure CLI is not authenticated. Run 'az login' first."
           exit 1
@@ -315,7 +315,7 @@ jobs:
           ENV_FILE=".env.entitymodule"
           
           # Ensure Azure CLI is authenticated
-          az account show > /QA/null 2>&1
+          az account show > /dev/null 2>&1
           if [ $? -ne 0 ]; then
           echo "Error: Azure CLI is not authenticated. Run 'az login' first."
           exit 1
