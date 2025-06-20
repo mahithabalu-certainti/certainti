@@ -145,6 +145,12 @@ const accountSchema = Joi.object({
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
+        interaction_cc_recipient: Joi.boolean()
+        .required()
+        .messages({
+          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
+          'any.required': 'interaction_cc_recipient is required',
+        }),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
@@ -276,6 +282,12 @@ const updateAccountSchema = Joi.object({
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
+        interaction_cc_recipient: Joi.boolean()
+        .required()
+        .messages({
+          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
+          'any.required': 'interaction_cc_recipient is required',
+        }),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
