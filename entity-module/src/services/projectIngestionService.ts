@@ -940,6 +940,7 @@ class ProjectIngestionService {
       "project_name",
       "industry_name",
       "classification_name",
+      "project_type_name",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
@@ -976,7 +977,7 @@ class ProjectIngestionService {
       project_group: "project_group",
       project_client_group: "project_client_group",
       fiscal_year: "fiscal_year",
-      project_type: "project_type",
+      project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code"
     };
@@ -1414,10 +1415,14 @@ class ProjectIngestionService {
   ) {
     try {
       const allClassificationIds = new Set<string>();
+       const allProjectTypeIds = new Set<string>();
 
       for (const project of projects) {
         if (project.project_classification_rid) {
           allClassificationIds.add(project.project_classification_rid);
+        }
+        if (project.project_type_rid) {
+          allProjectTypeIds.add(project.project_type_rid);
         }
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1425,13 +1430,18 @@ class ProjectIngestionService {
             if (child.project_classification_rid) {
               allClassificationIds.add(child.project_classification_rid);
             }
+             if (child.project_type_rid) {
+              allProjectTypeIds.add(child.project_type_rid);
+            }
           }
         }
       }
 
       const classificationIds = [...allClassificationIds];
+      const projectTypeIds = [...allProjectTypeIds];
 
       let classificationMap: Record<string, any> = {};
+      let projectTypeMap: Record<string, any> = {};
 
       if (classificationIds.length > 0) {
         const classificationRows = await mainDbSequelize.query(
@@ -1448,6 +1458,21 @@ class ProjectIngestionService {
           )
         );
       }
+      if (projectTypeIds.length > 0) {
+        const projectTypeList = await mainDbSequelize.query(
+          `SELECT rid, project_type_name FROM project_type WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: projectTypeIds },
+            type: "SELECT",
+          }
+        );
+
+        projectTypeMap = Object.fromEntries(
+          (Array.isArray(projectTypeList) ? projectTypeList : []).map(
+            (c: any) => [c.rid, c]
+          )
+        );
+      }
 
       const updatedProjects = projects.map((project) => {
         const updatedProject: any = {
@@ -1459,6 +1484,7 @@ class ProjectIngestionService {
             : classificationMap[project.project_classification_rid]
                 ?.classification_name || null,
           is_other_classification: !!project.project_classification_other,
+          project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
         };
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1470,6 +1496,7 @@ class ProjectIngestionService {
                 : classificationMap[child.project_classification_rid]
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
+              project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
             })
           );
         }

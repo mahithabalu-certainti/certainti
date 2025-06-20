@@ -1,7 +1,7 @@
 export interface ICreateResource {
   account_number: string;
   resource_code: string;
-  resource_type: "Full-Time" | "Sub Con"| "Non-Labor";
+  resource_type_rid: string;
   name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -26,7 +26,7 @@ export interface IUpdateResource {
   resource_id: string;
   account_number: string;
   resource_code: string;
-  resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
+  resource_type_rid: string;
   name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -47,7 +47,7 @@ export interface IUpdateResource {
 export interface IResourceCost {
   eid: string;
   account_rid: string;
-  resource_type: string;
+  resource_type_rid: string;
   resource_rid: string;
   resource_code: string;
   effective_from?: string | null;
@@ -114,12 +114,12 @@ export interface IUpdateResourceCost {
 export interface IResourceSkill {
    eid?: string;
    account_rid: string;
-   resource_type: string;
+   resource_type_rid: string;
    resource_rid: string;
    resource_code: string,
    effective_from?: string | null;
    skill_description?: string;
-   skill_level?: string;
+   skill_level_rid?: string;
    skill_type_rid: string;
    skill_subtype_rid: string;
    skill_type_others: string;
@@ -138,7 +138,7 @@ export interface IUpdateResourceSkill {
   eid?: string;
   effective_from?: string | null;
   skill_description?: string;
-  skill_level?: string;
+  skill_level_rid?: string;
   status?: string;
   modified_by?: string | null;
   skill_type_rid: string;
@@ -161,7 +161,7 @@ export interface ICreateProject {
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
   project_client_group?: string | null;
@@ -219,7 +219,7 @@ export interface IUpdateProject {
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
   project_client_group?: string | null;

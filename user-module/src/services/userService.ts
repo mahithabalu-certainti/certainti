@@ -2,7 +2,7 @@ import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op, Sequelize, IndexHints } from "sequelize";
+import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
 import ExcelJS from 'exceljs';
 import { OrganizationLicenses } from "../models/organisationLicense";
 import moment, { Moment } from "moment";
@@ -948,7 +948,23 @@ async getAllUserPermission(userId: string, profileId: string) {
     sortOrder: string
   ) {
     const order: any[] = [];
-
+     const mainDbSequelize = await initSequelize();
+const Status = mainDbSequelize.define(
+  'status',
+  {
+    status_description: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    status_name: {
+      type: DataTypes.STRING,
+    },
+  },
+  {
+    tableName: 'status',
+    timestamps: false,
+  }
+);
     if (sortBy === "$business_teams.business_teams$") {
         order.push(
           [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
@@ -962,10 +978,16 @@ async getAllUserPermission(userId: string, profileId: string) {
     } else {
         order.push([sortBy, sortOrder]);
     }
-
+    if (!User.associations.statusDetails) {
+        User.belongsTo(Status, {
+          foreignKey: 'status',
+          targetKey: 'status_description',
+          as: 'status',
+        });
+      }
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
+      attributes: ["rid", "email", "status_id", "first_name","created_datetime","modified_datetime"],
       limit,
       offset,
       order,
@@ -982,6 +1004,12 @@ async getAllUserPermission(userId: string, profileId: string) {
           attributes: ["business_teams"],
           required: true,
         },
+        {
+        model: Status,
+        as: 'status',
+        attributes: ['rid'],
+        required: false,
+      },
       ],
     });
     return {

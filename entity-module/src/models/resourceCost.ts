@@ -7,7 +7,7 @@ interface ResourceCostAttributes {
   r_number?: string;
   eid?: string;
   account_rid: string;
-  resource_type: string;
+  resource_type_rid: string;
   resource_rid: string;
   resource_number: string;
   resource_code: string;
@@ -50,7 +50,7 @@ export class ResourceCost
   r_number?: string;
   eid?: string;
   account_rid!: string;
-  resource_type!: string;
+  resource_type_rid!: string;
   resource_rid!: string;
   resource_number!: string;
   resource_code!: string;
@@ -119,8 +119,8 @@ export class ResourceCost
           type: DataTypes.STRING(50),
           allowNull: false,
         },
-        resource_type: {
-          type: DataTypes.STRING(255),
+        resource_type_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_rid: {

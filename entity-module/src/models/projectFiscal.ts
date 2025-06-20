@@ -34,7 +34,7 @@ export interface ProjectFiscalAttributes {
   project_startdate?: Date | null;
   project_enddate?: Date | null;
 
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
 
   project_client_group?: string | null;
   project_group?: string | null;
@@ -150,7 +150,7 @@ export class ProjectFiscal
   public project_name?: string | null;
   public program_name?: string | null;
 
-  public project_type!: "Fixed" | "Time & Material";
+  public project_type_rid!: string;
   public project_classification_rid?: string | null;
   public project_classification_other?: string | null;
 
@@ -313,8 +313,8 @@ export class ProjectFiscal
           type: DataTypes.STRING,
           allowNull: true,
         },
-        project_type: {
-          type: DataTypes.ENUM("Fixed", "Time & Material"),
+        project_type_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         project_classification_rid: {

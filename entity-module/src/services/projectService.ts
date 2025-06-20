@@ -1238,7 +1238,7 @@ export class ProjectService {
       "project_name",
       "program_name",
       "project_enddate",
-      "project_type",
+      "project_type_rid",
       "project_classification_rid",
       "project_client_group",
       "project_group",
@@ -1287,6 +1287,7 @@ export class ProjectService {
       "project_point_of_contact",
       "classification_name",
       "industry_name",
+      "project_type_name"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1616,7 +1617,7 @@ export class ProjectService {
       "classification_name",
       "modified_datetime",
       "assessment_status",
-      "project_type",
+      "project_type_name",
     ];
 
     if (!validSortColumns.includes(sortBy)) {

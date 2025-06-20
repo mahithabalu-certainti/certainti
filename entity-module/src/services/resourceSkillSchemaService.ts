@@ -296,7 +296,7 @@ async exportResoucreSkill(
     ${filterConditions}
     ${searchCondition}
     ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
-    `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
+    `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
   `;
 
   const replacements = {
@@ -314,6 +314,7 @@ async exportResoucreSkill(
   if (resourceSkill.length > 0) {
     const skillTypeRids = [...new Set(resourceSkill.map(r => r.skill_type_rid))];
     const skillSubtypeRids = [...new Set(resourceSkill.map(r => r.skill_subtype_rid))];
+    const skillLevelRids = [...new Set(resourceSkill.map(r => r.skill_level_rid))];
 
     // Fetch skill type names
     const skillTypeQuery = `SELECT rid, skill_type_name FROM "public"."skill_type" WHERE rid IN (:skillTypeRids)`;
@@ -329,15 +330,24 @@ async exportResoucreSkill(
       type: "SELECT"
     });
 
+     // Fetch skill level names
+    const skillLevelQuery = `SELECT rid, skill_level_name FROM "public"."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
+      replacements: { skillLevelRids },
+      type: "SELECT"
+    });
+
     // Create lookup maps
     const skillTypeMap = new Map(skillTypes.map((st: any) => [st.rid, st.skill_type_name]));
     const skillSubtypeMap = new Map(skillSubtypes.map((sst: any) => [sst.rid, sst.skill_subtype_name]));
-
+    const skillLevelMap = new Map(skillLevels.map((st: any) => [st.rid, st.skill_level_name]));
     // Add names to resource skills
     resourceSkill = resourceSkill.map((rs: any) => ({
       ...rs,
       skill_type_name: skillTypeMap.get(rs.skill_type_rid) || '',
-      skill_subtype_name: skillSubtypeMap.get(rs.skill_subtype_rid) || ''
+      skill_subtype_name: skillSubtypeMap.get(rs.skill_subtype_rid) || '',
+      skill_level_name: skillLevelMap.get(rs.skill_level_rid) || '',
+      
     }));
 
     // Add names to resource skills and format for export
@@ -350,7 +360,7 @@ async exportResoucreSkill(
       "Effective From": rs.start_date || "-",
       "Skill Type": rs.skill_type_name || "-",
       "Skill SubType": rs.skill_subtype_name || "-",
-      "Skill Level": rs.skill_level || "-",
+      "Skill Level": rs.skill_level_name || "-",
       "Skill Details": rs.skill_details || "-",
       "Org Name": rs.resource_orgname || "-",
       "Designation": rs.resource_designation || "-",
@@ -360,7 +370,7 @@ async exportResoucreSkill(
     }));
 
     // Apply sorting if needed
-    if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name') {
+    if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name') {
       resourceSkill.sort((a: any, b: any) => {
         const aValue = (a[finalSortBy] || '').toLowerCase();
         const bValue = (b[finalSortBy] || '').toLowerCase();
@@ -420,7 +430,7 @@ async executeQueries(
     ${filterConditions}
     ${searchCondition}
     ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
-      `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
+      `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
     LIMIT :limit OFFSET :offset
   `;
 
@@ -463,6 +473,7 @@ async executeQueries(
   if (resourceSkill.length > 0) {
     const skillTypeRids = [...new Set(resourceSkill.map((r: any) => r.skill_type_rid))];
     const skillSubtypeRids = [...new Set(resourceSkill.map((r: any) => r.skill_subtype_rid))];
+    const skillLevelRids = [...new Set(resourceSkill.map((r: any) => r.skill_level_rid))];
 
     // Fetch skill type names
     const skillTypeQuery = `SELECT rid, skill_type_name FROM "public"."skill_type" WHERE rid IN (:skillTypeRids)`;
@@ -478,19 +489,28 @@ async executeQueries(
       type: "SELECT"
     });
 
+    // Fetch skill level names
+    const skillLevelQuery = `SELECT rid, skill_level_name FROM "public"."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
+      replacements: { skillLevelRids },
+      type: "SELECT"
+    });
+
     // Create lookup maps
     const skillTypeMap = new Map(skillTypes.map((st: any) => [st.rid, st.skill_type_name]));
     const skillSubtypeMap = new Map(skillSubtypes.map((sst: any) => [sst.rid, sst.skill_subtype_name]));
+    const skillLevelMap = new Map(skillLevels.map((sst: any) => [sst.rid, sst.skill_level_name]));
 
     // Add names to resource skills
     resourceSkill = resourceSkill.map((rs: any) => ({
       ...rs,
       skill_type_name: skillTypeMap.get(rs.skill_type_rid) || '',
-      skill_subtype_name: skillSubtypeMap.get(rs.skill_subtype_rid) || ''
+      skill_subtype_name: skillSubtypeMap.get(rs.skill_subtype_rid) || '',
+      skill_level_name: skillLevelMap.get(rs.skill_level_rid) || ''
     }));
 
     // Apply sorting if needed
-    if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name') {
+    if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name') {
       resourceSkill.sort((a: any, b: any) => {
         const aValue = a[finalSortBy].toLowerCase();
         const bValue = b[finalSortBy].toLowerCase();
@@ -526,7 +546,7 @@ async executeQueries(
     const validSortColumns = [
       "skill_type_name",
       "skill_subtype_name",
-      "skill_level",
+      "skill_level_name",
       "start_date",
       "skill_details",
       "account_name",
@@ -608,7 +628,7 @@ async executeQueries(
     const alphanumericFields = ["resource_code","r_number"];
     const numericFields = ["resource_total_experience"];
     const dateFields = ["start_date"];
-    const enumFields = ["skill_level","status","skill_type_rid","skill_subtype_rid"];
+    const enumFields = ["skill_level_rid","status","skill_type_rid","skill_subtype_rid"];
 
     // Process each filter
     Object.entries(filters).forEach(([key, value]) => {
@@ -791,7 +811,7 @@ processAlphanumericFilter(key: string, value: any): string {
 processEnumFilter(key: string, value: any) {
   let condition = "";
   let tableAlias = "rs";
-
+console.log("Enum filter",key)
   // Check if the field is a UUID type
   const isUuidField = key.toLowerCase().includes('rid');
   if (value.equals !== undefined) {

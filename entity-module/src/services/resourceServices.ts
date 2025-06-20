@@ -416,7 +416,7 @@ export class ResourceService {
       "r_number",
       "resource_code",
       "resource_name",
-      "resource_type",
+      "resource_type_rid",
       "resource_status",
       "resource_role",
       // "resource_mobile",
@@ -505,14 +505,14 @@ export class ResourceService {
     whereClause: Record<string, any>,
     havingClause: Record<string, any>
   ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
-    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
+    const castToTextFields = ["resource_type_rid", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
     const uuidFields = ["country_rid","region_rid"];
 
     const filterFields = [
       { clientField: "resource_code", dbField: "Resources.resource_code" },
       { clientField: "r_number", dbField: "Resources.r_number" },
       { clientField: "resource_name", dbField: "Resources.resource_name" },
-      { clientField: "resource_type", dbField: "Resources.resource_type" },
+      { clientField: "resource_type_rid", dbField: "Resources.resource_type_rid" },
       { clientField: "resource_status", dbField: "Resources.resource_status" },
       { clientField: "resource_designation", dbField: "Resources.resource_designation" },
       { clientField: "country_rid", dbField: "Resources.country_rid" },
@@ -700,7 +700,7 @@ processGeoDataSort(
     sortOrder: string
 ) {
     const geoDataSort: string[][] = [];
-    const geoFields = ["country_rid", "region_rid", "city_rid"];
+    const geoFields = ["country_rid", "region_rid", "city_rid","resource_type_rid"];
 
     if (geoFields.includes(sortBy)) {
         geoDataSort.push([

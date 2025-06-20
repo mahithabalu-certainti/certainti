@@ -246,7 +246,7 @@ class ResourceCostService {
       const {
         eid,
         account_rid,
-        resource_type,
+        resource_type_rid,
         resource_rid,
         resource_code,
         effective_from,
@@ -377,7 +377,7 @@ class ResourceCostService {
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
-          resource_type,
+          resource_type_rid,
           resource_rid,
           resource_number,
           resource_code,

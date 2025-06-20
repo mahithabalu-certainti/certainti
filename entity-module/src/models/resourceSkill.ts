@@ -8,7 +8,7 @@ interface ResourceSkillAttributes  {
  r_number?: string,
  eid?: string,
  account_rid: string,
- resource_type: string,
+ resource_type_rid: string,
  resource_rid: string,
  resource_number: string,
  resource_code: string,
@@ -20,7 +20,7 @@ interface ResourceSkillAttributes  {
  skill_details?: string,             
  start_date?: Date | null,
  skill_description?: string,     
- skill_level: string,  
+ skill_level_rid: string,  
  skill_type_others?: string,
  skill_subtype_others?: string,
  comments?: string,       
@@ -39,7 +39,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   r_number?: string;
   eid?: string;
   account_rid!: string;
-  resource_type!: string;
+  resource_type_rid!: string;
   resource_rid!: string;
   resource_number!: string;
   resource_code!: string;
@@ -49,7 +49,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   skill_details?: string;
   start_date?: Date | null;
   skill_description?: string;
-  skill_level!: string;
+  skill_level_rid!: string;
   skill_type_others?: string;
   skill_subtype_others?: string;
   comments?: string;
@@ -96,7 +96,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.STRING(50),
         allowNull: false,
        },
-       resource_type: {
+       resource_type_rid: {
         type: DataTypes.STRING(255),
         allowNull: false,
        },
@@ -119,7 +119,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.STRING(255),
         allowNull: true,
        },
-       skill_level: {
+       skill_level_rid: {
        type: DataTypes.STRING(255),
        allowNull: true,
        defaultValue: "Beginner", 

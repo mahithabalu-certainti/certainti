@@ -23,7 +23,7 @@ export interface ProjectSummaryAttributes {
   industry_rid: string | null;
   industry_name?: string | null;
 
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
 
@@ -85,7 +85,7 @@ export class ProjectSummary
   public project_startdate?: Date | null;
   public project_enddate?: Date | null;
 
-  public project_type!: "Fixed" | "Time & Material";
+  public project_type_rid!: string;
   public project_classification_rid?: string | null;
   public project_classification_other?: string | null;
 
@@ -179,8 +179,8 @@ export class ProjectSummary
         },
         project_startdate: DataTypes.DATE,
         project_enddate: DataTypes.DATE,
-        project_type: {
-          type: DataTypes.ENUM("Fixed", "Time & Material"),
+        project_type_rid: {
+          type: DataTypes.STRING,
           allowNull: false,
         },
         project_classification_rid: {
