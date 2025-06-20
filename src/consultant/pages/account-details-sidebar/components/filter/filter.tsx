@@ -656,7 +656,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               placement='top'
               arrow
             >
-              <span>
+              <span className='text-[12px] font-medium text-[#425A76]'>
                 <button
                   onClick={handleApplyFilters}
                   disabled={isApplyDisabled}

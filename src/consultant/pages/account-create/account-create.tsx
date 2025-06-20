@@ -146,11 +146,13 @@ export const AccountForm: React.FC = () => {
           created_on: formatDateToYYYYMMDDWithTime(
             account?.accountById?.created_datetime
           ),
-          updated_on: formatDateToYYYYMMDDWithTime(
-            account?.accountById?.modified_datetime
-          ),
+          updated_on: account?.accountById?.modified_datetime
+            ? formatDateToYYYYMMDDWithTime(
+                account?.accountById?.modified_datetime || '-'
+              )
+            : '-',
           created_by: account?.accountDetails?.created_by,
-          updated_by: account?.accountDetails?.modified_by,
+          updated_by: account?.accountDetails?.modified_by || '-',
           website: account?.accountDetails?.website || '',
         }),
     }),

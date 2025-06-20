@@ -657,7 +657,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               placement='top'
               arrow
             >
-              <span>
+              <span className='text-[12px] font-medium text-[#425A76]'>
                 <button
                   onClick={handleApplyFilters}
                   disabled={isApplyDisabled}
@@ -806,10 +806,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               );
                               return (
                                 <div className='flex items-center gap-1'>
-                                  <CheckedIcon
-                                    alt='checked'
-                                    className='w-3'
-                                  />
+                                  <CheckedIcon alt='checked' className='w-3' />
                                   <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.label || selected}
                                   </span>
