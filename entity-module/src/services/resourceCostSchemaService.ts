@@ -397,9 +397,20 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+      const resourceStatus = `SELECT rid, resource_status_name FROM resource_status`;
+      const allResourcestatus = await mainDbSequelize.query(resourceStatus, {
+        type: "SELECT"
+      });
+      
+    const statusMap = new Map(allResourcestatus.map((st: any) => [st.resource_status_name,st.rid]));
+    
 
       // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
-      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+      await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatus(result, statusMap);
+        }));
+     
 
       // If sorting by currency_code, we need to fetch currency info first
       if (sortBy === "currency") {
@@ -460,7 +471,10 @@ class ResourceCostSchemaService {
         });
 
         // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
-        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+        await Promise.all(results.map(result =>
+          { this.assignCurrencyRid(result, mainDbSequelize);
+            this.assignResourceStatus(result, statusMap);
+          }));
       }
 
       // Apply pagination if sorting was done in memory
@@ -830,7 +844,7 @@ class ResourceCostSchemaService {
       "resource_orgname",
       "resource_role",
       "resource_designation",
-      "status",
+      "status_id",
       "comments",
     ];
     if (!validSortColumns.includes(sortBy)) {
@@ -851,7 +865,8 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["status","resource_code"];
+    const alphanumericFields = ["resource_code"];
+    const multiValueFields = ["status_id"]
     const numericFields = [
       // "annual",
       // "monthly",
@@ -887,6 +902,8 @@ class ResourceCostSchemaService {
           filterConditions += this.processNumericFilter(key, value);
         } else if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
+         } else if (multiValueFields.includes(key)) {
+          filterConditions += this.processDefaultFilter(key, value);
         } else {
           filterConditions += this.processDefaultFilter(key, value);
         }
@@ -1218,8 +1235,27 @@ class ResourceCostSchemaService {
       return null;
     }
   }
-
+async assignResourceStatus(
+  result: any,
+  statusMap: Map<string, string> // Map<status_name, rid>
+): Promise<void> {
+  // Case 1: If status_rid exists but status_name is missing/wrong → correct it
+  if (result.status_id) {
+    // Find the correct status_name for this status_rid
+    for (const [name, rid] of statusMap.entries()) {
+      if (rid === result.status_id) {
+        result.status_name = name; // Update status_name if needed
+        return;
+      }
+    }
+    // If not found, mark as "Unknown"
+    result.status_name = "Unknown";
+  }
+ 
+}
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
+     if (!result.status_rid) {
+     }
     if (!result.currency_rid) {
       const currencyRid = await this.getCurrencyRidByAccountRidRaw(result.account_rid);
       if (currencyRid) {

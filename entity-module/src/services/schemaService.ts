@@ -272,7 +272,7 @@ class SchemaService {
           "Resources.resource_orgname",
           "Resources.comments",
           "Resources.resource_type_rid",
-          "Resources.resource_status",
+          "Resources.status_id",
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
@@ -294,7 +294,7 @@ class SchemaService {
           "resource_firstname",
           "resource_lastname",
           "resource_type_rid",
-          "resource_status",
+          "status_id",
           "resource_role",
           "resource_designation",
           "resource_orgname",
@@ -413,7 +413,7 @@ class SchemaService {
         resource_name: resourceData.name || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
-        resource_status: resourceData.resource_status,
+        status_id: resourceData.status_id || null,
         resource_orgname: resourceData.org_name || null,
         resource_startdate: moment(startDate).isValid()
           ? moment(startDate).toDate()
@@ -563,7 +563,7 @@ class SchemaService {
           "Resources.resource_orgname",
           "Resources.comments",
           "Resources.resource_type_rid",
-          "Resources.resource_status",
+          "Resources.status_id",
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
@@ -585,7 +585,7 @@ class SchemaService {
           "resource_firstname",
           "resource_lastname",
           "resource_type_rid",
-          "resource_status",
+          "status_id",
           "resource_role",
           "resource_designation",
           "resource_orgname",
@@ -638,7 +638,7 @@ class SchemaService {
           "Resources.resource_orgname",
           "Resources.comments",
           "Resources.resource_type_rid",
-          "Resources.resource_status",
+          "Resources.status_id",
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
@@ -834,7 +834,7 @@ class SchemaService {
         resource_orgname: resourceData.org_name || null,
         resource_role: resourceData.role || null,
         resource_type_rid: resourceData.resource_type_rid || "",
-        resource_status: resourceData.resource_status,
+        status_id: resourceData.status_id,
         country_rid: resourceData.country_rid || null,
         region_rid: resourceData.region_rid || null,
         city_rid: resourceData.city_rid || null,
@@ -1124,6 +1124,13 @@ class SchemaService {
             type: "SELECT",
           }
         );
+        const [status]: any[] = await mainDbSequelize.query(
+          `SELECT status_name from status  WHERE rid = :rid`,
+          {
+            replacements: { rid: resource.status_id },
+            type: "SELECT",
+          }
+        );
 
         (resource as any).dataValues.country_code =
           country?.country_code || null;
@@ -1132,6 +1139,7 @@ class SchemaService {
         (resource as any).dataValues.region_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         (resource as any).dataValues.resource_type_name = resource_type?.resource_type_name || null;
+        (resource as any).dataValues.status_name = status?.status_name || null;
         //Added to format date as yyyy-mm-dd
         resource = {
           ...resource.toJSON(),
@@ -1203,12 +1211,16 @@ class SchemaService {
       const resourceTypeRids = [
         ...new Set(resources.map((r: any) => r.resource_type_rid)),
       ].filter(Boolean);
+      const statusRids = [
+        ...new Set(resources.map((r: any) => r.status_id)),
+      ].filter(Boolean);
 
 
       let countryRows: any[] = [];
       let states: any[] = [];
       let cities: any[] = [];
       let resourceType: any[] = [];
+      let status: any[] = [];
 
 
       if (countryIds.length > 0) {
@@ -1249,6 +1261,15 @@ class SchemaService {
           }
         );
       }
+      if (statusRids.length > 0) {
+        status = await mainDdSequilze.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusRids },
+            type: "SELECT",
+          }
+        );
+      }
 
       const countryMap = Object.fromEntries(
         (Array.isArray(countryRows) ? countryRows : []).map((c: any) => [
@@ -1268,6 +1289,9 @@ class SchemaService {
       const resourceTypeMap = Object.fromEntries(
         (Array.isArray(resourceType) ? resourceType : []).map((s: any) => [s.rid, s])
       );
+      const statusMap = Object.fromEntries(
+        (Array.isArray(status) ? status : []).map((s: any) => [s.rid, s])
+      );
 
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
@@ -1275,6 +1299,7 @@ class SchemaService {
         region_name: regionMap[res.region_rid]?.state_name || null,
         city_name: cityMap[res.city_rid]?.city_name || null,
         resource_type_name: resourceTypeMap[res.resource_type_rid]?.resource_type_name || null,
+        status_name: statusMap[res.status_id]?.status_name || null,
       }));
 
       return updatedResources;
@@ -1424,7 +1449,9 @@ class SchemaService {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
-        `SELECT * FROM account WHERE rid = :rid`,
+        `SELECT account.*, status.status_description AS status  FROM account
+          LEFT JOIN status ON account.status_id = status.rid
+          WHERE account.rid = :rid`,
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -1541,7 +1568,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1565,7 +1592,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,  pt.project_type_name,
-        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1661,7 +1688,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1683,7 +1710,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1825,7 +1852,7 @@ class SchemaService {
         pt.project_type_name,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1848,7 +1875,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1937,7 +1964,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1958,7 +1985,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -2222,7 +2249,7 @@ class SchemaService {
       project_client_group: `${tablePrefix}.project_client_group`,
       project_classification_rid: `${tablePrefix}.project_classification_rid`,
       project_classification_other: `${tablePrefix}.project_classification_other`,
-      project_status: `${tablePrefix}.project_status`,
+      status_id: `${tablePrefix}.status_id`,
       project_type_rid: `${tablePrefix}.project_type_rid`,
       project_name: `${tablePrefix}.project_name`,
       project_startdate: `${tablePrefix}.project_startdate`,
@@ -2259,7 +2286,7 @@ class SchemaService {
       "modified_datetime",
     ];
     const enumFields = [
-      "project_status",
+      "status_id",
       `${tablePrefix}.project_type_rid`,
       // "fiscal_year",
       "st.rid",
@@ -2291,7 +2318,7 @@ class SchemaService {
         "project_client_group",
         "project_group",
         "classification_name",
-        "project_status",
+        "status_id",
         "project_point_of_contact",
         "technical_point_of_contact",
         "r_number",
@@ -2322,7 +2349,7 @@ class SchemaService {
         comments: `${tablePrefix}.comments`,
         region_name: "st.state_name",
         industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
-        project_status: `CAST(${tablePrefix}.project_status AS TEXT)`,
+        status_id: `CAST(${tablePrefix}.status_id AS TEXT)`,
         project_type: `CAST(${tablePrefix}.project_type AS TEXT)`,
         fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
         is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
@@ -2847,6 +2874,38 @@ class SchemaService {
         const industry = industryResult[0];
         project.industry_name =
           industry?.industry_name || project.industry_name;
+      }
+
+      return project;
+    } catch (err) {
+      throw new Error("Error enriching key roles: " + (err as Error).message);
+    }
+  }
+
+  async insertProjectTypeAndStatus(project: any, mainDdSequilze: Sequelize) {
+    try {
+      if (project.status_id) {
+        const statusResult: any = await mainDdSequilze.query(
+          `SELECT status_name FROM status WHERE rid = :id`,
+          {
+            replacements: { id: project.status_id },
+            type: "SELECT",
+          }
+        );
+
+        const status = statusResult[0];
+        project.status_name = status?.status_name;
+      }
+      if (project.project_type_rid) {
+        const projectTypeResult: any = await mainDdSequilze.query(
+          `SELECT project_type_name FROM project_type WHERE rid = :id`,
+          {
+            replacements: { id: project.project_type_rid },
+            type: "SELECT",
+          }
+        );
+        const projectType = projectTypeResult[0];
+        project.project_type_name = projectType?.project_type_name;
       }
 
       return project;

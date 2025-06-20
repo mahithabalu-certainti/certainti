@@ -21,7 +21,7 @@ export interface ResourcesAttributes {
   resource_designation?: string | null;
   resource_total_experience?: number | null;
   resource_total_experience_organization?: number | null;
-  resource_status?: "Active" | "Inactive";
+  status_id?: string | null;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string | null;
@@ -54,7 +54,7 @@ export class Resources
   public resource_designation?: string | null;
   public resource_total_experience?: number;
   public resource_total_experience_organization?: number;
-  public resource_status?: "Active" | "Inactive";
+  public status_id?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by?: string;
@@ -186,9 +186,9 @@ export class Resources
             min: 0,
           },
         },
-        resource_status: {
-          type: DataTypes.ENUM("Active", "Inactive"),
-          allowNull: true,
+        status_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
         },
         comments: {
           type: DataTypes.TEXT,

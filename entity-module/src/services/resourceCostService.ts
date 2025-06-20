@@ -351,7 +351,8 @@ class ResourceCostService {
         );
 
         let status = "Active";
-
+        const statusMap = await getResourceStatuses(mainDbSequelize);
+        const activeStatusId = statusMap?.get(status);
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
           where: {
@@ -362,7 +363,7 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status: "Active",
+            status_id: activeStatusId,
             net_resource_cost: calculatedResourceCost,
             account_rid,
           },
@@ -378,7 +379,7 @@ class ResourceCostService {
         ) {
           status = "Anomaly";
         }
-
+        const status_id = statusMap?.get(status);
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
@@ -396,7 +397,7 @@ class ResourceCostService {
           currency_rid: currency_rid || undefined,
           fiscal_year,
           comments,
-          status,
+          status_id,
           created_datetime: new Date(),
           created_by: userId
         });
@@ -421,6 +422,7 @@ class ResourceCostService {
           }
         }
       } catch (error) {
+        console.log(error)
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
       }
@@ -454,6 +456,7 @@ class ResourceCostService {
         },
       };
     } catch (err) {
+      console.log(err)
       return this.throwServiceError(err as Error);
     }
   }
@@ -534,7 +537,7 @@ class ResourceCostService {
         rid,
         fiscal_year,
         comments,
-        status,
+        status_id,
       } = resourceCostData;
 
       let { accountNumber: accountNumberFetched, accountId } =
@@ -620,7 +623,8 @@ class ResourceCostService {
         );
 
         let resourceCostStatus = status;
-
+         const statusMap = await getResourceStatuses(mainDbSequelize);
+        const activeStatusId = statusMap?.get("Active");
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
           where: {
@@ -631,7 +635,7 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status: "Active",
+            status_id: activeStatusId,
             net_resource_cost: calculatedResourceCost,
           },
         });
@@ -646,7 +650,7 @@ class ResourceCostService {
         ) {
           resourceCostStatus = "Anomaly";
         }
-
+        const status_id = statusMap?.get(resourceCostStatus);
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
@@ -661,7 +665,7 @@ class ResourceCostService {
             fiscal_year,
             comments,
             rid,
-            status: resourceCostStatus,
+            status_id,
             modified_datetime: new Date(),
             modified_by: userId,
           },
@@ -909,10 +913,21 @@ class ResourceCostService {
           },
         ],
       });
+// 1. Fetch ResourceCost with Resource (from DB1)
+const resourceCost = await ResourceCost.findOne({
+  where: { rid: id },
+  include: [{
+    model: Resources,
+    as: "Resource",
+    required: true,
+  }],
+});
+
 
       let currencyName = "";
       let currencyCode = "";
       let currencySymbol = "";
+      let statusName = "";
       // Transform the response to simplify cost frequency data
       if (resourceCostById) {
         const costData = resourceCostById.toJSON();
@@ -927,6 +942,16 @@ class ResourceCostService {
           }
         );
 
+         const [statusResult] = await sequelize.query(
+          `SELECT resource_status_name as status_name FROM public.resource_status WHERE rid = :status_id`,
+          {
+            replacements: { status_id: costData.status_id },
+            type: "SELECT",
+          }
+        );
+        if (statusResult) {
+          statusName = (statusResult as any).status_name;
+        }
         if (currencyResult) {
           currencyName = (currencyResult as any).currency_name;
           currencyCode = (currencyResult as any).currency_code;
@@ -992,6 +1017,18 @@ class ResourceCostService {
           resourceInfo.resource_enddate = moment(
             resourceInfo.resource_enddate
           ).format("YYYY-MM-DD") as any;
+           if (resourceInfo.status_id) {
+             const sequelize = await this.getMainDbSequelize();
+            const status = await sequelize.query(
+              `SELECT status_name FROM status WHERE rid = :rid`,
+              {
+                replacements: { rid: resourceInfo.status_id },
+                type: "SELECT",
+                plain: true,
+              }
+            );
+            resourceInfo.status_name = status?.status_name || "Unknown";
+  }
         }
 
         //Create a new response object with simplified cost data
@@ -1000,6 +1037,7 @@ class ResourceCostService {
           currency_name: currencyName,
           currency_code: currencyCode,
           currency_symbol: currencySymbol,
+          status_name:statusName
         };
 
         // // Remove the individual cost frequency fields
@@ -1060,6 +1098,8 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     ResourceCost.initialize(sequelize, schemaName);
 
     let resourceCostStatus = "Active";
+    const statusMap = await getResourceStatuses(mainDbSequelize);
+    const activeStatusId = statusMap?.get("Active");
 
     // Only check for anomaly conditions if handling duplicate type
     if (type === 'Duplicate') {
@@ -1086,10 +1126,9 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
         }
       }
     }
-
-    const updateStatus = await ResourceCost.update(
+     const updateStatus = await ResourceCost.update(
       {
-        status: action === "accept" ? resourceCostStatus : "Inactive",
+        status_id: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("Inactive"),
       },
       {
         where: {
@@ -1204,6 +1243,31 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     return date.toDate();
   }
 }
+
+async function getResourceStatuses(
+  mainDbSequelize: Sequelize,
+): Promise<Map<string, string> | null> {
+  try {
+    const resourceStatus = `SELECT rid, resource_status_name FROM resource_status`;
+    const results = await mainDbSequelize.query(resourceStatus, {
+      type: "SELECT"
+    });
+
+    if (!results || !Array.isArray(results)) {
+      return null;
+    }
+
+    // Create lookup maps
+    const statusMap = new Map(results.map((st: any) => [st.resource_status_name,st.rid]));
+        
+
+    return statusMap;
+  } catch (error) {
+    console.error('Error fetching resource statuses:', error);
+    return null;
+  }
+}
+  
 
 /**
  * Fetches the currency threshold from the currency table.
