@@ -250,6 +250,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
       // onClose={handleBackdropClick}
       classes={{
         paper: `transform transition-all ease-in-out ${
+          // Adjusted duration
           sidebarExpand ? 'w-[200px] duration-500' : 'w-[65px] duration-300'
         }`,
       }}
@@ -271,9 +272,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
         <div className='flex items-center justify-center h-[40px] relative'>
           <div
             className={`
-                absolute inset-0 flex items-center justify-center
-                transition-opacity ease-in-out
-                ${sidebarExpand ? 'opacity-100 duration-500' : 'opacity-0 duration-200'}
+                absolute inset-0 flex items-center justify-start pl-3
+                transition-opacity ease-in-out 
+                ${sidebarExpand ? 'opacity-100 duration-650 delay-200' : 'opacity-0 duration-300'}
               `}
           >
             <Logo alt='logo' className='h-[16px]' />
@@ -281,9 +282,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
           {/* Collapsed Logo */}
           <div
             className={`
-                absolute inset-0 flex items-center justify-center
+                absolute inset-0 flex items-center justify-start pl-6
                 transition-opacity ease-in-out
-                ${!sidebarExpand ? 'opacity-100 duration-300' : 'opacity-0 duration-200'}
+                ${!sidebarExpand ? 'opacity-100 duration-650 delay-200' : 'opacity-0 duration-300'}
               `}
           >
             <LogoSmall alt='logo' className='h-[18px]' />
@@ -320,20 +321,22 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   <ListItemButton
                     sx={{
                       minHeight: 32,
-                      height: 32,
-                      width: '100%',
-                      px: 1,
+                      width: !sidebarExpand ? '32px' : '100%',
+                      height: !sidebarExpand ? '32px' : '32px',
+                      px: '4px',
                       py: 0,
                       mt: '4px',
-                      borderRadius: '4px',
+                      pl: 1,
+                      gap: '4px',
+                      borderRadius: '2px',
                       backgroundColor:
                         item.matchLink === trimmedPathname(1)
-                          ? '#FFFFFF33'
+                          ? 'rgba(255, 255, 255, 0.2)'
                           : 'transparent',
                       '&:hover': {
-                        backgroundColor: '#FFFFFF33',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       },
-                      transition: 'background-color 0.4s ease-in-out',
+                      transition: 'all 0.3s ease-in-out',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'flex-start',
@@ -356,21 +359,18 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             backgroundColor: '#fff',
                             color: 'rgba(0, 0, 0, 0.87)',
                             boxShadow: 2,
-                            borderRadius: '4px',
+                            borderRadius: '2px',
                           },
                         },
                       }}
                     >
                       <ListItemIcon
                         sx={{
-                          minWidth: 'auto',
-                          width: 24,
-                          height: 24,
+                          minWidth: '32px', // Reference style
+                          height: '26px', // Reference style
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          ml: '4px',
-                          mr: 1,
                           flexShrink: 0,
                           opacity: 1,
                           transition: sidebarExpand
@@ -424,48 +424,64 @@ export const Sidebar: React.FC<SideBarProps> = ({
               <ListItemButton
                 sx={{
                   minHeight: 32,
-                  height: 32,
-                  width: '100%',
-                  px: 1,
+                  width: !sidebarExpand ? '32px' : '100%',
+                  height: !sidebarExpand ? '32px' : '32px',
+                  px: '4px',
                   py: 0,
-                  mt: 0,
-                  borderRadius: '4px',
+                  mt: '4px',
+                  pl: 1,
+                  gap: '4px',
+                  borderRadius: '2px',
                   '&:hover': {
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   },
+                  transition: 'all 0.3s ease-in-out',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'flex-start',
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 'auto',
-                    width: 24,
-                    height: 24,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    ml: '4px',
-                    mr: 1,
-                    flexShrink: 0,
-                    opacity: 1,
-                    transition: sidebarExpand
-                      ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
-                      : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
-                    transform: 'scale(1)',
+                <Tooltip
+                  title={!sidebarExpand ? 'Administration' : ''}
+                  placement='right'
+                  arrow
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        backgroundColor: '#fff',
+                        color: 'rgba(0, 0, 0, 0.87)',
+                        boxShadow: 2,
+                        borderRadius: '2px',
+                      },
+                    },
                   }}
                 >
-                  <AdministrationIcon
-                    alt='menu-icon'
-                    className='h-[16px] w-[16px]'
-                    style={{
+                  <ListItemIcon
+                    sx={{
+                      minWidth: '32px', // Reference style
+                      height: '26px', // Reference style
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      opacity: 1,
                       transition: sidebarExpand
-                        ? 'all 400ms ease-in-out'
-                        : 'all 250ms ease-in-out',
+                        ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                        : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                      transform: 'scale(1)',
                     }}
-                  />
-                </ListItemIcon>
+                  >
+                    <AdministrationIcon
+                      alt='menu-icon'
+                      className='h-[16px] w-[16px]'
+                      style={{
+                        transition: sidebarExpand
+                          ? 'all 400ms ease-in-out'
+                          : 'all 250ms ease-in-out',
+                      }}
+                    />
+                  </ListItemIcon>
+                </Tooltip>
                 <Box
                   sx={{
                     opacity: sidebarExpand ? 1 : 0,
@@ -511,52 +527,68 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   <ListItemButton
                     sx={{
                       minHeight: 32,
-                      height: 32,
-                      width: '100%',
-                      px: 1,
+                      width: !sidebarExpand ? '32px' : '100%',
+                      height: !sidebarExpand ? '32px' : '32px',
+                      px: '4px',
                       py: 0,
-                      borderRadius: '4px',
+                      mt: '4px',
+                      pl: 1,
+                      gap: '4px',
+                      borderRadius: '2px',
                       backgroundColor: item.openStatus
-                        ? '#FFFFFF33'
+                        ? 'rgba(255, 255, 255, 0.2)'
                         : 'transparent',
                       '&:hover': {
-                        backgroundColor: '#FFFFFF33',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       },
-                      transition: 'background-color 0.4s ease-in-out',
+                      transition: 'all 0.3s ease-in-out',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                     }}
                     onClick={() => handleToggle(index)}
                   >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 'auto',
-                        width: 24,
-                        height: 24,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        ml: '4px',
-                        mr: 1,
-                        flexShrink: 0,
-                        opacity: 1,
-                        transition: sidebarExpand
-                          ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
-                          : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
-                        transform: 'scale(1)',
+                    <Tooltip
+                      title={!sidebarExpand ? item.title : ''}
+                      placement='right'
+                      arrow
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#fff',
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            boxShadow: 2,
+                            borderRadius: '2px',
+                          },
+                        },
                       }}
                     >
-                      <item.icon
-                        alt='menu-icon'
-                        className='h-[16px] w-[16px]'
-                        style={{
+                      <ListItemIcon
+                        sx={{
+                          minWidth: '32px', // Reference style
+                          height: '26px', // Reference style
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          opacity: 1,
                           transition: sidebarExpand
-                            ? 'all 400ms ease-in-out'
-                            : 'all 250ms ease-in-out',
+                            ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                            : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                          transform: 'scale(1)',
                         }}
-                      />
-                    </ListItemIcon>
+                      >
+                        <item.icon
+                          alt='menu-icon'
+                          className='h-[16px] w-[16px]'
+                          style={{
+                            transition: sidebarExpand
+                              ? 'all 400ms ease-in-out'
+                              : 'all 250ms ease-in-out',
+                          }}
+                        />
+                      </ListItemIcon>
+                    </Tooltip>
                     <Box
                       sx={{
                         display: 'flex',
@@ -631,65 +663,83 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       if (subItem.hide) return null;
                       const isActive = matchCheck(subItem, trimmedPathname(2));
                       return (
-                        <List
+                        <ListItem
                           key={subIndex}
-                          component='div'
+                          disablePadding
                           sx={{
                             width: '100%',
                             mt: '4px',
-                            pl: 1,
                           }}
-                          disablePadding
                         >
                           <ListItemButton
                             sx={{
-                              minHeight: 40,
-                              height: 40,
-                              width: '100%',
-                              px: 1,
-                              borderRadius: '4px',
+                              minHeight: 32,
+                              width: !sidebarExpand ? '32px' : '100%',
+                              height: !sidebarExpand ? '32px' : '32px',
+                              px: '4px',
+                              py: 0,
+                              mt: '4px',
+                              pl: 1,
+                              gap: '4px',
+                              borderRadius: '2px',
+                              backgroundColor: isActive
+                                ? 'rgba(255, 255, 255, 0.2)'
+                                : 'transparent',
                               '&:hover': {
-                                backgroundColor: '#FFFFFF33',
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
                               },
-                              transition: 'background-color 0.4s ease-in-out',
+                              transition: 'all 0.3s ease-in-out',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'flex-start',
                             }}
                             onClick={() => navigate(subItem.link)}
                           >
-                            <ListItemIcon
-                              sx={{
-                                minWidth: 'auto',
-                                width: 24,
-                                height: 24,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                ml: '4px',
-                                mr: 1,
-                                flexShrink: 0,
-                                opacity: 1,
-                                transition: sidebarExpand
-                                  ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
-                                  : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
-                                transform: 'scale(1)',
+                            <Tooltip
+                              title={!sidebarExpand ? subItem.name : ''}
+                              placement='right'
+                              arrow
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    backgroundColor: '#fff',
+                                    color: 'rgba(0, 0, 0, 0.87)',
+                                    boxShadow: 2,
+                                    borderRadius: '2px',
+                                  },
+                                },
                               }}
                             >
-                              <subItem.icon
-                                alt='menu-icon'
-                                className='h-[16px] w-[16px]'
-                                style={{
-                                  filter:
-                                    !sidebarExpand && isActive
-                                      ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
-                                      : 'none',
+                              <ListItemIcon
+                                sx={{
+                                  minWidth: '32px', // Reference style
+                                  height: '26px', // Reference style
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                  opacity: 1,
                                   transition: sidebarExpand
-                                    ? 'all 400ms ease-in-out'
-                                    : 'all 250ms ease-in-out',
+                                    ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                    : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                                  transform: 'scale(1)',
                                 }}
-                              />
-                            </ListItemIcon>
+                              >
+                                <subItem.icon
+                                  alt='menu-icon'
+                                  className='h-[16px] w-[16px]'
+                                  style={{
+                                    filter:
+                                      !sidebarExpand && isActive
+                                        ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
+                                        : 'none',
+                                    transition: sidebarExpand
+                                      ? 'all 400ms ease-in-out'
+                                      : 'all 250ms ease-in-out',
+                                  }}
+                                />
+                              </ListItemIcon>
+                            </Tooltip>
                             <Box
                               sx={{
                                 display: 'flex',
@@ -745,7 +795,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                               )}
                             </Box>
                           </ListItemButton>
-                        </List>
+                        </ListItem>
                       );
                     })}
                 </Collapse>
