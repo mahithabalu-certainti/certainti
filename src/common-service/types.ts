@@ -144,6 +144,7 @@ export enum AllPermissions {
   ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_view_overview',
   ACCOUNT_PROJECTS_TIMELINE = 'account_projects_view_timeline',
   ACCOUNT_PROJECTS_VIEW_ALL = 'account_projects_view_all',
+  ACCOUNT_PROJECTS_EXPORT = 'account_project_export',
   ACCOUNT_PROJECTS_CREATE = 'account_projects_create',
   ACCOUNT_PROJECTS_DOWNLOAD = 'account_projects_download',
   ACCOUNT_PROJECTS_EDIT = 'account_projects_edit_update',

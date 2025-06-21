@@ -32,11 +32,9 @@ export const Projects: React.FC = () => {
     sortBy: 'project_code',
     sortOrder: 'ASC',
     fiscalYear: 0,
-    globalFilters: {},
   });
-  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
-    Date.now()
-  );
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] =
+    useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -229,7 +227,10 @@ export const Projects: React.FC = () => {
         <ProjectTable
           appliedFilters={appliedFilters}
           tableParams={tableParams}
-          setTableParams={setTableParams}
+          setTableParams={(data) => {
+            setTableParams(data);
+            onRefreshClick()
+          }}
           setTotalCount={setTotalCount}
           isProjectEditEnable={isProjectEditEnable}
           isProjectDeleteEnable={isProjectDeleteEnable}

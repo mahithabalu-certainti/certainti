@@ -45,6 +45,10 @@ export const useFetchIndustrys = () => {
     queryKey: ['industrys'],
     queryFn: fetchIndustrys,
     retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 
@@ -53,6 +57,10 @@ export const useFetchCurrency = () => {
     queryKey: ['currency'],
     queryFn: fetchCurrency,
     retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 export const useFetchClassification = () => {
@@ -60,6 +68,10 @@ export const useFetchClassification = () => {
     queryKey: ['classification'],
     queryFn: fetchClassification,
     retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 
@@ -86,5 +98,9 @@ export const useFetchColorCodes = () => {
     queryKey: ['colorCodes'],
     queryFn: fetchColorCodes,
     retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };

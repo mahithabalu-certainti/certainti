@@ -1,6 +1,6 @@
 import { useMsal } from '@azure/msal-react';
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LeftPane, RightPane } from '.';
 import { fetchCurrentUserRole } from '../../../common-service/common-service';
@@ -27,22 +27,30 @@ export const Login: React.FC = () => {
   const { instance, inProgress } = useMsal();
   const allAccount = instance.getAllAccounts();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isError, setIsError] = useState<boolean>(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { login } = useAuthHook();
   const { errorToast } = useToast();
   const t = useAppTranslation();
+  const didRun = useRef(false);
 
   useEffect(() => {
-    if (allAccount.length > 0) {
-      setIsLoading(true);
-      const getResponse = async () => {
-        const { localAccountId, idToken, username, name, idTokenClaims } =
-          allAccount[0];
+    // Avoid Multiple Time API Call
+    if (didRun.current) return;
+    if (inProgress !== InteractionStatus.None) return;
+    if (allAccount.length === 0 || isError) return;
+    didRun.current = true;
+    setIsLoading(true);
+    const getResponse = async () => {
+      const { localAccountId, idToken, username, name, idTokenClaims } =
+        allAccount[0];
+      try {
         const userRole = await fetchCurrentUserRole(
           localAccountId,
           idToken as string
         );
+
         const reShapeData = reShapePermissionData(userRole.data.permissions);
         const isAdminEnable = checkPermission(reShapeData.modules, [
           AllModules.USER_MANAGEMENT,
@@ -72,18 +80,20 @@ export const Login: React.FC = () => {
             !menu.noRedirect &&
             reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
         );
-        localStorage.removeItem('loginInitiated');
         navigate(currentActiveRoute?.link || NOT_FOUND);
-      };
-      getResponse();
-    }
+      } catch (e) {
+        console.error('Error in login:', e);
+        setIsError(true);
+        setIsLoading(false);
+      }
+    };
+    getResponse();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allAccount]);
+  }, [allAccount, inProgress, isError]);
 
   const handleLogin = () => {
     setIsLoading(true);
     instance.loginRedirect().catch((e) => {
-      localStorage.removeItem('loginInitiated');
       setIsLoading(false);
       const err = e as Error;
       if (err?.message !== 'user_cancelled: User cancelled the flow.') {
