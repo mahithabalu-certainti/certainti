@@ -151,10 +151,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           <ProjectOverview
             title='Projects'
             titleIcon={
-              <ProjectsBook
-                alt='project-header-icon'
-                className='w-6 h-6'
-              />
+              <ProjectsBook alt='project-header-icon' className='w-6 h-6' />
             }
             headerButtons={headerButtons}
             projectDetails={projectDetails}

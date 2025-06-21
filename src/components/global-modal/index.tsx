@@ -140,10 +140,7 @@ export const GlobalModal = ({
                 Filter Types
               </p>
               <div className='flex items-center gap-3 h-[28px]'>
-                <AllAccountIcon
-                  alt='all account'
-                  className='w-5 h-5'
-                />
+                <AllAccountIcon alt='all account' className='w-5 h-5' />
                 <span className='text-[#425A76] text-[13px] font-normal'>
                   All Accounts
                 </span>

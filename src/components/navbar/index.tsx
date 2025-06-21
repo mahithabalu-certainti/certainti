@@ -1,7 +1,4 @@
-import {
-  BrowserAuthError,
-  PublicClientApplication,
-} from '@azure/msal-browser';
+import { BrowserAuthError, PublicClientApplication } from '@azure/msal-browser';
 import {
   AppBar,
   Badge,
@@ -141,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     instance
       .handleRedirectPromise()
-      .then(async(response) => {
+      .then(async (response) => {
         if (localStorage.getItem('resetPassword') && response) {
           successToast('Your password has been updated successfully');
           await passwordResetInstanceRef?.current?.clearCache();
@@ -149,10 +146,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         }
       })
       .catch((error) => {
-        localStorage.removeItem('resetPassword')
+        localStorage.removeItem('resetPassword');
         console.log('Password reset processing error:', error);
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance]);
 
   const handleProfileMenuOpen = useCallback(

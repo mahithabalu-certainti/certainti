@@ -34,6 +34,6 @@ export const useManageUserDetail = (userId: string) => {
     enabled: !!userId, // Only fetch if userId exists
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 2, // Retry up to 2 times on failure
-    refetchOnMount: "always", // Refetch on mount
+    refetchOnMount: 'always', // Refetch on mount
   });
 };

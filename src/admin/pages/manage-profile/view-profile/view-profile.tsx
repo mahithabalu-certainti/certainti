@@ -50,10 +50,7 @@ export const ViewProfile: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[50px] h-[50px] px-4 flex items-center justify-between border-b-1 border-[#CBD6E2]'>
           <div className='flex items-center gap-2'>
-            <ProfileIcon
-              alt='create profile'
-              className='h-8 w-8 rounded'
-            />
+            <ProfileIcon alt='create profile' className='h-8 w-8 rounded' />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
                 Admin Permission

@@ -1,5 +1,4 @@
-
-import { ImportIcon} from '../../../../../assets';
+import { ImportIcon } from '../../../../../assets';
 const Timeline = () => {
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
@@ -8,8 +7,7 @@ const Timeline = () => {
         <span className='font-medium'>History</span>
       </div>
 
-      <div className='flex flex-col items-center justify-center gap-4 p-4'>
-      </div>
+      <div className='flex flex-col items-center justify-center gap-4 p-4'></div>
     </div>
   );
 };

@@ -45,7 +45,7 @@ export const AppLayout: React.FC = () => {
       ? checkConsultantRoute()?.link
       : ADMIN_MANAGE_USER;
     navigate(intendedRoute || MAIN_ROUTE);
-   // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAdminSidebar]);
 
   const checkConsultantRoute = () => {
