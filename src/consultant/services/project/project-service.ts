@@ -1,7 +1,4 @@
-import {
-  useQuery,
-  UseQueryResult,
-} from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   // ProjectList,
   ProjectListParams,
@@ -47,7 +44,7 @@ export const useAllProjects = (
     queryKey: ['allProjects', params, refreshProjectsTrigger],
     queryFn: () => fetchProjects(params),
     retry: 0,
-    enabled: !!refreshProjectsTrigger
+    enabled: !!refreshProjectsTrigger,
   });
 };
 

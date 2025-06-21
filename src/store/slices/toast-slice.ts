@@ -12,7 +12,10 @@ export const toastSlice = createSlice({
   name: 'toast',
   initialState,
   reducers: {
-    showToast: (state, action: PayloadAction<{ message: string; severity?: AlertColor }>) => {
+    showToast: (
+      state,
+      action: PayloadAction<{ message: string; severity?: AlertColor }>
+    ) => {
       state.open = true;
       state.message = action.payload.message;
       state.severity = action.payload.severity || 'info';

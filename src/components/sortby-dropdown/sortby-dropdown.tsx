@@ -24,7 +24,7 @@ const SortByDropdown: React.FC = () => {
       {/* Styled Sort Button */}
       <Button
         variant='outlined'
-        endIcon={<ArrowDownIcon alt='arrowDown'/>}
+        endIcon={<ArrowDownIcon alt='arrowDown' />}
         onClick={handleOpen}
         sx={{
           color: '#1A3D6F', // Text color

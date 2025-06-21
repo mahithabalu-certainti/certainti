@@ -117,10 +117,7 @@ export const ManageUserDetails: React.FC = () => {
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-center'>
-          <ManageUserIcon
-            alt='manage user'
-            className='h-7 w-7 rounded'
-          />
+          <ManageUserIcon alt='manage user' className='h-7 w-7 rounded' />
           <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               {`Admin Permission > ${userDetail?.full_name ?? userFullName}`}
@@ -161,10 +158,7 @@ export const ManageUserDetails: React.FC = () => {
         <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
           <Box className='flex items-center gap-2'>
             <Box>
-              <RealatedListDetailsIcon
-                alt='details'
-                className='w-6 h-6'
-              />
+              <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
             </Box>
             <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
               Details

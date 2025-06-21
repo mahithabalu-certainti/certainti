@@ -17,4 +17,3 @@ export const languageSlice = createSlice({
 });
 
 export const { setLang } = languageSlice.actions;
-
