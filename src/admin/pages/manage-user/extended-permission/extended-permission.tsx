@@ -8,7 +8,7 @@ import {
 import { ProfileHeaderDetail, ProfilePermissions } from '../../manage-profile';
 import { Skeleton } from '@mui/material';
 import { Privilege } from '../../../types';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 
@@ -100,10 +100,12 @@ export const ExtendedPermission: React.FC = () => {
               ))}
             </div>
           ) : (
-            <ProfilePermissions
-              createProfilePermissionsData={data?.data.permissions}
-              onPrivilegesChange={handlePrivilegesChange}
-            />
+            <Suspense fallback={null}>
+              <ProfilePermissions
+                createProfilePermissionsData={data?.data.permissions}
+                onPrivilegesChange={handlePrivilegesChange}
+              />
+            </Suspense>
           )}
         </div>
       </div>

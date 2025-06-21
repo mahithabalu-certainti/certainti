@@ -46,9 +46,7 @@ const UserList: React.FC = () => {
     sortOrder: 'ASC',
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>(
-    Date.now()
-  );
+  const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
@@ -333,7 +331,10 @@ const UserList: React.FC = () => {
         <UserTable
           appliedFilters={appliedFilters}
           tableParams={tableParams}
-          setTableParams={setTableParams}
+          setTableParams={(data) => {
+            setTableParams(data);
+            onRefreshClick();
+          }}
           isUserEditEnable={isUserEditEnable}
           isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}

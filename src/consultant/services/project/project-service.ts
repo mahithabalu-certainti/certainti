@@ -1,6 +1,5 @@
 import {
   useQuery,
-  UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
 import {
@@ -42,14 +41,13 @@ export const useAccountProjects = (
 };
 export const useAllProjects = (
   params: ProjectListParams,
-  options?: UseQueryOptions<{ projects: Project[]; count: number }, Error>,
   refreshProjectsTrigger?: number
 ): UseQueryResult<{ projects: Project[]; count: number }, Error> => {
   return useQuery<{ projects: Project[]; count: number }, Error>({
     queryKey: ['allProjects', params, refreshProjectsTrigger],
     queryFn: () => fetchProjects(params),
     retry: 0,
-    ...options,
+    enabled: !!refreshProjectsTrigger
   });
 };
 
