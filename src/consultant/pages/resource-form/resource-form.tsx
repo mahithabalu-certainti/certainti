@@ -154,7 +154,8 @@ const ResourceForm: React.FC = () => {
   );
   const accountName = location?.state?.data?.accountById?.account_name;
   useEffect(() => {
-    const resourceDetailsData = resource?.data?.resourceDetails;
+    const resourceDetailsData =
+      resource?.data?.resourceDetails || state?.resource;
     const finalResourceDetails = {
       ...resourceDetailsData,
       country: resourceDetailsData?.resource_country,
@@ -219,7 +220,6 @@ const ResourceForm: React.FC = () => {
     const formValues = resource?.data?.resourceDetails;
 
     if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
-      console.log('costInfo', costInfo);
       const costValues = {
         ...formValues,
         financial_start_date: costInfo?.effective_from || '',
