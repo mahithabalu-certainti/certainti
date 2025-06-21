@@ -229,7 +229,7 @@ export const Projects: React.FC = () => {
           tableParams={tableParams}
           setTableParams={(data) => {
             setTableParams(data);
-            onRefreshClick()
+            onRefreshClick();
           }}
           setTotalCount={setTotalCount}
           isProjectEditEnable={isProjectEditEnable}

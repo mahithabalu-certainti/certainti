@@ -53,7 +53,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       fiscalYear: convertedFiscalYear,
       globalFilters: reshapeGlobalFilter(filters as FilterState),
     }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(
@@ -67,7 +67,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     if (data) {
       setTotalCount(data?.count || 0);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const getRowId = (row: Project) => row.project_rid;
