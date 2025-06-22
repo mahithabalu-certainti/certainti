@@ -59,11 +59,11 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
     label: 'Interaction Recipient?',
     width: '200px',
   },
-  // {
-  //   name: 'interaction_cc_recipient',
-  //   label: 'Interaction CC Recipient?',
-  //   width: '200px',
-  // },
+  {
+    name: 'interaction_cc_recipient',
+    label: 'Interaction CC Recipient?',
+    width: '200px',
+  },
   {
     name: 'key_contact_status',
     label: 'Key Contact Status',
@@ -282,7 +282,7 @@ export const AccountForm: React.FC = () => {
 
   const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
-    const groupSize = 8;
+    const groupSize = 9;
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
@@ -474,6 +474,7 @@ export const AccountForm: React.FC = () => {
             layout={Layout.TYPE_1}
             logo={logo}
             keyContactHeaders={defaultKeyContactHeaders}
+            newContactLength={9}
           />
         )}
       </div>

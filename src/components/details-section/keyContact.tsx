@@ -16,6 +16,7 @@ interface KeyContact {
   keyContactEmail?: string;
   isPrimaryContact?: boolean;
   includeInCommnunications?: boolean;
+  interactionccRecipient?: boolean;
   keyContactStatus?: string;
 }
 
@@ -48,6 +49,7 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
               { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
               { label: 'Interaction Recipient?', fixedWidth: 200 },
+              { label: 'Interaction CC Recipient?', fixedWidth: 200 },
               { label: 'Key Contact Status', fixedWidth: 160 },
             ].map((col, i) => (
               <TableCell
@@ -81,7 +83,7 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
         >
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} sx={{ textAlign: 'center', py: 1 }}>
+              <TableCell colSpan={9} sx={{ textAlign: 'center', py: 1 }}>
                 Key contact information is not available
               </TableCell>
             </TableRow>
@@ -164,6 +166,21 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                   {field.includeInCommnunications === true
                     ? 'Yes'
                     : field.includeInCommnunications === false
+                      ? 'No'
+                      : '-'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    width: '200px',
+                    minWidth: '200px',
+                    maxWidth: '200px',
+                  }}
+                >
+                  {field.interactionccRecipient === true
+                    ? 'Yes'
+                    : field.interactionccRecipient === false
                       ? 'No'
                       : '-'}
                 </TableCell>

@@ -75,6 +75,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   admin = false,
   logo,
   keyContactHeaders = [],
+  newContactLength,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -179,19 +180,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
 
     if (!keyContactSection) return;
-
-    const fieldsPerRow = 8;
+    const isFromAccount = formData?.find((item) => item.from === 'account');
+    const fieldsPerRow = newContactLength ?? 8;
     const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const baseIndex = rowIndex * fieldsPerRow;
-
+      const statusIndex = isFromAccount ? 7 : 6;
       const nameField = keyContactSection.fields[baseIndex];
       const roleField = keyContactSection.fields[baseIndex + 1];
       const emailField = keyContactSection.fields[baseIndex + 2];
       const primaryField = keyContactSection.fields[baseIndex + 4];
       const includeInCommField = keyContactSection.fields[baseIndex + 5];
-      const statusField = keyContactSection.fields[baseIndex + 6];
+      const statusField = keyContactSection.fields[baseIndex + statusIndex];
 
       if (
         !nameField ||
@@ -255,7 +256,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [constructFormData, formData]);
 
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
-    const fieldsPerRow = 8;
+    const fieldsPerRow = newContactLength ?? 8;
 
     setFormData((prevFormData) => {
       if (!prevFormData) return prevFormData;
@@ -327,7 +328,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const handleAddKeyContact = () => {
-    const fieldsPerRow = 8;
+    const isFromAccount = formData?.find((item) => item.from === 'account');
+    const fieldsPerRow = newContactLength ?? 8;
     // Update constructFormData with default values for the new row
     setConstructFormData((prevData) => {
       if (!prevData) return prevData;
@@ -343,6 +345,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       newData[`key_contact_rid_${newRowIndex}`] = '';
       newData[`is_primary_contact_${newRowIndex}`] = 'no';
       newData[`include_in_communication_${newRowIndex}`] = 'no';
+      if (isFromAccount) {
+        newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
+      }
       newData[`key_contact_status_${newRowIndex}`] = 'active';
       newData[`button_${newRowIndex}`] = '';
 
@@ -461,6 +466,52 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             },
           });
           return;
+        }
+
+        const ccRecipientField = `interaction_cc_recipient_${currentIndex}`;
+        const isCCRecipient = constructFormData[ccRecipientField] === 'yes';
+
+        if (value === 'yes' && isCCRecipient) {
+          setConfirmationState({
+            isOpen: true,
+            message:
+              "A contact marked as 'Interaction Recipient' cannot also be marked as 'Interaction CC Recipient'. This field will be set to 'No'. Do you want to continue?",
+            onConfirm: () => {
+              const updatedData = {
+                ...constructFormData,
+                [field.name]: 'yes',
+                [ccRecipientField]: 'no',
+              };
+              setConstructFormData(updatedData);
+            },
+          });
+          return;
+        }
+      }
+
+      // Prevent Interaction Recipient from also being Interaction CC Recipient
+      if (
+        field.name.startsWith('interaction_cc_recipient_') &&
+        value === 'yes'
+      ) {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const interactionRecipientField = `include_in_communication_${currentIndex}`;
+        const isRecipient =
+          constructFormData[interactionRecipientField] === 'yes';
+
+        if (isRecipient) {
+          setConfirmationState({
+            isOpen: true,
+            message:
+              "'Interaction CC Recipient' must be 'No' when a contact is marked as 'Interaction Recipient'.",
+            onConfirm: () => {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [field.name]: 'no',
+              }));
+            },
+          });
+          return; // Prevent changing to 'yes'
         }
       }
 
@@ -2088,13 +2139,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const loadKeyContactSection = (section: FormType) => {
+    const newContactColumn = newContactLength ? 8 : 7;
     const visibleFields = section.fields.filter(
       (field) => !field.name.startsWith('key_contact_rid_')
     );
     const hasFields = visibleFields.length > 0;
     // const headerFields = visibleFields.slice(0, 7);
-    const headerFields = keyContactHeaders.slice(0, 7);
-    const fieldRows = chunkFields(visibleFields, 7);
+    const headerFields = keyContactHeaders.slice(0, newContactColumn);
+    const fieldRows = chunkFields(visibleFields, newContactColumn);
     return (
       <div className='px-10'>
         <TableContainer sx={{ overflowX: 'auto' }}>

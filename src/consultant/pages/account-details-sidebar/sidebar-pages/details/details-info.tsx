@@ -30,6 +30,7 @@ interface trasnformedKeyContacts {
   keyContactEmail?: string | undefined;
   isPrimaryContact?: boolean | undefined;
   includeInCommnunications?: boolean | undefined;
+  interactionccRecipient?: boolean | undefined;
   keyContactStatus?: string | undefined;
 }
 
@@ -141,6 +142,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       keyContactEmail: contact.key_contact_email,
       isPrimaryContact: contact.is_primary_contact,
       includeInCommnunications: contact.include_in_communication,
+      interactionccRecipient: contact.interaction_cc_recipient,
       keyContactStatus: contact.status,
     }));
 

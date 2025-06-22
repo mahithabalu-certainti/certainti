@@ -184,6 +184,7 @@ export interface KeyContacts {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
+  interaction_cc_recipient?: boolean;
   status: Status;
   action_type?: string;
   rid?: string;
