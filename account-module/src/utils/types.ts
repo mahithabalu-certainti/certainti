@@ -94,7 +94,7 @@ export interface IKeyContactDetail {
   is_primary_contact: boolean;
   include_in_communication: boolean;
   interaction_cc_recipient: boolean;
-  status: "active" | "inactive";
+  status_id:string;
 }
 
 export interface IUpdateKeyContactDetail {
@@ -105,7 +105,7 @@ export interface IUpdateKeyContactDetail {
   is_primary_contact: boolean;
   include_in_communication: boolean;
   interaction_cc_recipient: boolean;
-  status: "active" | "inactive";
+  status_id: string;
 }
 
 export type IColorCodeType = 'Active' | 'Inactive' | 'All';

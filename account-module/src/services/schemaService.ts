@@ -1340,7 +1340,7 @@ class SchemaService {
               key_contact_name = :key_contact_name,
               key_contact_email = :key_contact_email,
               key_contact_role = :key_contact_role_rid,
-              status = :status,
+              status_id = :status_id,
               is_primary_contact = :is_primary_contact,
               include_in_communication = :include_in_communication,
               interaction_cc_recipient = :interaction_cc_recipient,
@@ -1356,7 +1356,7 @@ class SchemaService {
             key_contact_name: keyContactDetails.key_contact_name,
             key_contact_email: keyContactDetails.key_contact_email,
             key_contact_role_rid: keyContactDetails.key_contact_role,
-            status: keyContactDetails.status,
+            status_id: keyContactDetails.status_id,
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
@@ -1383,12 +1383,12 @@ class SchemaService {
       await sequelize.query(
         `INSERT INTO "${schemaName}"."key_contact_details" (
          entity_rid, key_contact_name, 
-          key_contact_email, key_contact_role, status, 
+          key_contact_email, key_contact_role, status_id, 
           is_primary_contact, include_in_communication, interaction_cc_recipient,
           created_by, modified_by, entity_type
         ) VALUES (
           :account_rid, :key_contact_name, 
-          :key_contact_email, :key_contact_role_rid, :status, 
+          :key_contact_email, :key_contact_role_rid, :status_id, 
           :is_primary_contact, :include_in_communication, :interaction_cc_recipient,
           :created_by, :modified_by, 'Account'
         );`,
@@ -1398,7 +1398,7 @@ class SchemaService {
             key_contact_name: keyContactDetails.key_contact_name,
             key_contact_email: keyContactDetails.key_contact_email,
             key_contact_role_rid: keyContactDetails.key_contact_role,
-            status: keyContactDetails.status,
+            status_id: keyContactDetails.status_id,
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
@@ -1432,7 +1432,7 @@ class SchemaService {
           is_primary_contact BOOLEAN,
           include_in_communication BOOLEAN,
           interaction_cc_recipient BOOLEAN,
-          status VARCHAR(10) CHECK (status IN ('Active', 'Inactive')) DEFAULT 'Active'
+          status_id VARCHAR(50)
         );
       `);
     } catch (err) {

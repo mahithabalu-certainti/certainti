@@ -397,23 +397,46 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
-      const resourceStatus = `SELECT rid, resource_status_name FROM resource_status`;
-      const allResourcestatus = await mainDbSequelize.query(resourceStatus, {
-        type: "SELECT"
-      });
-      
-    const statusMap = new Map(allResourcestatus.map((st: any) => [st.resource_status_name,st.rid]));
-    
+      const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+      const query = `SELECT ${idField}, ${nameField} FROM ${table}`;
+      const items = await mainDbSequelize.query(query, { type: "SELECT" });
+      return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+    };
 
+    // Fetch all reference data in parallel
+    const [statusMap, resourceTypeMap] = await Promise.all([
+      fetchReferenceMap('resource_status', 'rid', 'resource_status_name'),
+      fetchReferenceMap('resource_type', 'rid', 'resource_type_name')
+    ]);
       // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
       await Promise.all(results.map(result => 
         {this.assignCurrencyRid(result, mainDbSequelize);
-          this.assignResourceStatus(result, statusMap);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
         }));
      
+      // Handle sorting by status name
+        if (sortBy === "status_id") {
+            // Add status name to each result
+            results.forEach((rc: any) => {
+                rc.status_name = rc.status_id 
+                    ? statusMap.get(rc.status_id) 
+                    : "";
+            });
 
+            // Sort in memory
+            results.sort((a: any, b: any) => {
+                const aStatus = a.status_name || "";
+                const bStatus = b.status_name || "";
+                return sortOrder === "ASC"
+                    ? aStatus.localeCompare(bStatus)
+                    : bStatus.localeCompare(aStatus);
+            });
+
+            // Apply pagination
+            results = results.slice(offset, offset + limit) as any;
+        } 
       // If sorting by currency_code, we need to fetch currency info first
-      if (sortBy === "currency") {
+      else if (sortBy === "currency") {
         // Get all currency RIDs from results
         const currencyIds = [
           ...new Set(results.map((rc: any) => rc.currency_rid)),
@@ -455,7 +478,8 @@ class ResourceCostSchemaService {
               : bCode.localeCompare(aCode);
           });
         }
-      } else {
+      } 
+      else {
         if(sortBy === "account_name"){
           query += ` ORDER BY ad."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
         }
@@ -471,10 +495,10 @@ class ResourceCostSchemaService {
         });
 
         // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
-        await Promise.all(results.map(result =>
-          { this.assignCurrencyRid(result, mainDbSequelize);
-            this.assignResourceStatus(result, statusMap);
-          }));
+       await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
       }
 
       // Apply pagination if sorting was done in memory
@@ -585,11 +609,46 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+      const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+        const query = `SELECT ${idField}, ${nameField} FROM ${table}`;
+        const items = await mainDbSequelize.query(query, { type: "SELECT" });
+        return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+      };
 
-      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
-
+      // Fetch all reference data in parallel
+      const [statusMap, resourceTypeMap] = await Promise.all([
+        fetchReferenceMap('resource_status', 'rid', 'resource_status_name'),
+        fetchReferenceMap('resource_type', 'rid', 'resource_type_name')
+      ]);
+      // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
+      await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
+     
+      // Handle sorting by status name
+        if (sortBy === "status_id") {
+            // Sort in memory
+            results.sort((a: any, b: any) => {
+                const aStatus = a.status_name || "";
+                const bStatus = b.status_name || "";
+                return sortOrder === "ASC"
+                    ? aStatus.localeCompare(bStatus)
+                    : bStatus.localeCompare(aStatus);
+            });    
+        } 
+        else if (sortBy === "resource_type_rid") {
+            // Sort in memory
+            results.sort((a: any, b: any) => {
+                const aStatus = a.resource_type_name || "";
+                const bStatus = b.resource_type_name || "";
+                return sortOrder === "ASC"
+                    ? aStatus.localeCompare(bStatus)
+                    : bStatus.localeCompare(aStatus);
+            });    
+        } 
       // If sorting by currency_code, we need to fetch currency info first
-      if (sortBy === "currency") {
+      else if (sortBy === "currency") {
         // Get all currency RIDs from results
         const currencyIds = [
           ...new Set(results.map((rc: any) => rc.currency_rid)),
@@ -646,7 +705,10 @@ class ResourceCostSchemaService {
           type: "SELECT",
         });
 
-        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+       await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
       }
 
       const resourceCost = results;
@@ -707,7 +769,7 @@ class ResourceCostSchemaService {
           "Resource Code": resource.resource_code || "-",
           "Fiscal Year": resource.fiscal_year || "-",
           "Name": resource.resource_name || "-",
-          "Resource Type": resource.resource_type || "-",
+          "Resource Type": resource.resource_type_name || "-",
           "Effective From": resource.effective_from || "-",
           "End Date": resource.end_date || "-",
           "Currency": resource.currency_code || "USD",
@@ -721,7 +783,7 @@ class ResourceCostSchemaService {
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
           "Comments": resource.comments || "-",
-          "Status": resource.status || "-",
+          "Status": resource.status_name || "-",
           "Cost ID": resource.r_number || "-",
           // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
           // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
@@ -839,7 +901,7 @@ class ResourceCostSchemaService {
       "account_name",
       "resource_name",
       "fiscal_year",
-      "resource_type",
+      "resource_type_rid",
       "resource_code",
       "resource_orgname",
       "resource_role",
@@ -1235,27 +1297,19 @@ class ResourceCostSchemaService {
       return null;
     }
   }
-async assignResourceStatus(
+async assignResourceStatusandType(
   result: any,
-  statusMap: Map<string, string> // Map<status_name, rid>
+  statusMap: Map<string, string>,
+  resourceTypeMap: Map<string, string>,
 ): Promise<void> {
-  // Case 1: If status_rid exists but status_name is missing/wrong → correct it
   if (result.status_id) {
-    // Find the correct status_name for this status_rid
-    for (const [name, rid] of statusMap.entries()) {
-      if (rid === result.status_id) {
-        result.status_name = name; // Update status_name if needed
-        return;
-      }
-    }
-    // If not found, mark as "Unknown"
-    result.status_name = "Unknown";
+    result.status_name = statusMap.get(result.status_id) || "Unknown";
   }
- 
+  if (result.resource_type_rid) {
+    result.resource_type_name = resourceTypeMap.get(result.resource_type_rid) || "Unknown";
+  }
 }
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
-     if (!result.status_rid) {
-     }
     if (!result.currency_rid) {
       const currencyRid = await this.getCurrencyRidByAccountRidRaw(result.account_rid);
       if (currencyRid) {

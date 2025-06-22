@@ -430,7 +430,7 @@ async executeQueries(
     ${filterConditions}
     ${searchCondition}
     ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
-      `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
+      `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
     LIMIT :limit OFFSET :offset
   `;
 

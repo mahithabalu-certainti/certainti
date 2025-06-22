@@ -122,7 +122,7 @@ export class KeyContactService {
           key_contact_name: keyContactDetails.key_contact_name || null,
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
-          status: keyContactDetails.status || "Active",
+          status_id: keyContactDetails.status_id,
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -157,7 +157,7 @@ export class KeyContactService {
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
-        status: keyContactDetails.status || null,
+        status_id: keyContactDetails.status_id || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,

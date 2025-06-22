@@ -790,7 +790,7 @@ const updateResourceSkillSchema = Joi.object({
   }),
   skill_details: Joi.string().optional().allow(null).allow(""),
   comments: Joi.string().optional().allow(null).allow(""),
-  status: Joi.string().max(255).optional(),
+  status_id: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -914,7 +914,7 @@ const updateResourceCostSchema = Joi.object({
   .optional()
   .allow(null)
   .allow(""),
-  status: Joi.string().max(255).default("Active").optional(),
+  status_id: Joi.string().max(255).optional(),
   fiscal_year: Joi.number()
    .integer()
    .min(1000)
@@ -1098,7 +1098,7 @@ const resourceCostSchema = Joi.object({
        "any.required": "Fiscal year is required",
     }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  status: Joi.string().max(255).default("Active"),
+  status_id: Joi.string().max(255),
   comments: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
@@ -1407,7 +1407,7 @@ const createProjectSchema = Joi.object({
       key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
       include_in_communication: Joi.boolean().optional().allow(null),
-      status: Joi.string().valid("Active", "Inactive").optional().allow(null),
+      status_id: Joi.string().optional().allow(null),
       action_type: Joi.string().valid('add').required()
     })
   )
@@ -1696,7 +1696,7 @@ const updateProjectSchema = Joi.object({
         key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
         include_in_communication: Joi.boolean().optional().allow(null),
-        status: Joi.string().valid("Active", "Inactive").optional().allow(null)
+        status_id: Joi.string().optional().allow(null)
       })
     )
     .optional(),

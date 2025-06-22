@@ -1568,7 +1568,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1585,6 +1585,7 @@ class SchemaService {
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
         LEFT JOIN project_type pt on pc.rid = ps.type_rid 
+        LEFT JOIN status s on s.rid = ps.status_id 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1592,7 +1593,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,  pt.project_type_name,
-        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1612,6 +1613,7 @@ class SchemaService {
           LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid 
+           LEFT JOIN status s on s.rid = ps.status_id 
           WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1852,7 +1854,7 @@ class SchemaService {
         pt.project_type_name,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1868,6 +1870,7 @@ class SchemaService {
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
         LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
+        LEFT JOIN status s on s.rid = ps.status_id 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1875,7 +1878,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1894,6 +1897,7 @@ class SchemaService {
           LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
+          LEFT JOIN status s on s.rid = ps.status_id 
           WHERE acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1964,7 +1968,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_id,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1979,13 +1983,14 @@ class SchemaService {
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
-        LEFT JOIN project_type pt on pt.rid = ps.project_type_rid  
+        LEFT JOIN project_type pt on pt.rid = ps.project_type_rid 
+        LEFT JOIN status s on s.rid = ps.status_id  
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
+        ps.industry_name, ind.industry_name, ps.project_type_rid,pt.project_type_name, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_id,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -2113,7 +2118,7 @@ class SchemaService {
           key_contact_name: keyContactDetails.key_contact_name || null,
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
-          status: keyContactDetails.status || "Active",
+          status_id: keyContactDetails.status_id || "Active",
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -2148,7 +2153,7 @@ class SchemaService {
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
-        status: keyContactDetails.status || null,
+        status_id: keyContactDetails.status_id|| null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,
@@ -2350,7 +2355,7 @@ class SchemaService {
         region_name: "st.state_name",
         industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
         status_id: `CAST(${tablePrefix}.status_id AS TEXT)`,
-        project_type: `CAST(${tablePrefix}.project_type AS TEXT)`,
+        project_type_name: `CAST(pt.project_type_name AS TEXT)`,
         fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
         is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
         project_startdate: `CAST(${tablePrefix}.project_startdate AS TEXT)`,

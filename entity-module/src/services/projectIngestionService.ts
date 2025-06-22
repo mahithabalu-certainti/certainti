@@ -939,7 +939,7 @@ class ProjectIngestionService {
       "project_name",
       "industry_name",
       "classification_name",
-      "project_type_name",
+      "project_type_rid",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",

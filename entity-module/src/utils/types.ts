@@ -271,7 +271,7 @@ export interface IKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: "active" | "inactive";
+  status_id: string;
 }
 
 export interface IUpdateKeyContactDetail {
@@ -281,5 +281,5 @@ export interface IUpdateKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: "active" | "inactive";
+  status_id: string;
 }
