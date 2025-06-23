@@ -369,6 +369,7 @@ const AccordionTable = <T extends RowData>({
                       {columns.map((column, colIndex) => {
                         const isStatus = column.id === 'status';
                         const statusValue = row[column.id];
+                        const columnId = column.id;
                         const cellValue = column.render
                           ? column.render(row)
                           : row[column.id];
@@ -398,7 +399,20 @@ const AccordionTable = <T extends RowData>({
                                 : 'group-hover:!text-blue-600 group-hover:underline')
                             } cursor-context-menu`}
                           >
-                            <div className='inline-flex items-center'>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent:
+                                  columnId === 'total_effort' ||
+                                  columnId === 'total_cost' ||
+                                  columnId === 'total_cost_fte' ||
+                                  columnId === 'total_cost_subcon' ||
+                                  columnId === 'total_cost_nonlabor'
+                                    ? 'flex-end'
+                                    : 'flex-start',
+                              }}
+                            >
                               {colIndex === 0 &&
                                 (Array.isArray(row.ProjectFiscal) &&
                                 row.ProjectFiscal.length > 0 ? (
@@ -578,6 +592,7 @@ const AccordionTable = <T extends RowData>({
                           {columns.map((column, colIndex) => {
                             const isStatus = column.id === 'status';
                             const statusValue = row[column.id];
+                            const columnId = column.id;
                             const cellValue = column.render
                               ? column.render(summary as any)
                               : (summary as any)[column.id];
