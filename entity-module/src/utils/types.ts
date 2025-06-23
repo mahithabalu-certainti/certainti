@@ -78,6 +78,7 @@ export interface IResourceCost {
   status?: "Active" | "Inactive" | "Duplicate" | "Anomaly";
   accountNumber: string;
   resource_number: string;
+  user_preference?: string | null;
 }
 
 export interface IUpdateResourceCost {
@@ -109,6 +110,7 @@ export interface IUpdateResourceCost {
   modified_by?: string | null;
   status?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
   accountNumber: string;
+  user_preference?: string | null;
 }
 
 export interface IResourceSkill {
