@@ -19,11 +19,13 @@ import { AccountFiscal } from "../models/accountFiscal";
 import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
+import { Logger } from "winston";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   keyContactService: KeyContactService;
+  private logger: Logger;
 
   private modelCache: Map<
     string,
@@ -39,7 +41,8 @@ class ProjectIngestionService {
     }
   > = new Map();
 
-  constructor() {
+  constructor(logger: Logger) {
+    this.logger = logger;
     this.keyContactService = new KeyContactService();
   }
 
@@ -1062,6 +1065,8 @@ class ProjectIngestionService {
         },
       ],
     });
+
+    this.logger.info(`After project retrieve | Total count: ${count}`);
 
     if (this.mainDbSequelize) {
 
