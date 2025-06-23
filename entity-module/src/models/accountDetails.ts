@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { ENV_PREFIX } from "../utils/constants";
 
 interface AccountDetailsAttributes {
   rid: number;
@@ -21,6 +22,8 @@ interface AccountDetailsAttributes {
   data_residency?: string;
   data_storage?: string;
   business_details: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface AccountDetailsCreationAttributes
@@ -61,12 +64,29 @@ static initialize(sequelize: Sequelize, schema: string){
 AccountDetails.init(
   {
     rid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.STRING(50),
+      defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
       primaryKey: true,
     },
+    created_by: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    modified_by: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
     account_rid: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     account_name: {
@@ -113,15 +133,6 @@ AccountDetails.init(
       type: DataTypes.STRING(10),
       allowNull: true,
     },
-    created_by: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    modified_by: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-  
     website: {
       type: DataTypes.STRING(255),
       allowNull: true,

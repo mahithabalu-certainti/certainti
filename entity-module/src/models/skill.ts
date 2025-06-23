@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX } from "../utils/constants";
 
 interface SkillAttributes {
   rid: string;
@@ -34,8 +35,8 @@ export class Skill
     Skill.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -43,18 +44,14 @@ export class Skill
           allowNull: true,
         },
         eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+         created_by: {
           type: DataTypes.STRING(255),
           allowNull: true,
         },
-        skill_type: {
-          type: DataTypes.STRING(255),
-          allowNull: true,
-        },
-        skill_name: {
-          type: DataTypes.STRING(255),
-          allowNull: false,
-        },
-        skill_description: {
+        modified_by: {
           type: DataTypes.STRING(255),
           allowNull: true,
         },
@@ -68,14 +65,19 @@ export class Skill
           allowNull: true,
           defaultValue: DataTypes.NOW,
         },
-        created_by: {
+        skill_type: {
           type: DataTypes.STRING(255),
           allowNull: true,
         },
-        modified_by: {
+        skill_name: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        skill_description: {
           type: DataTypes.STRING(255),
           allowNull: true,
         },
+  
       },
       {
         sequelize,

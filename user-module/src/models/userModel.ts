@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { BusinessTeams } from "./businessTeamModel";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
 interface UserAttributes {
   rid: string;
   r_number?: string;
@@ -14,10 +14,10 @@ interface UserAttributes {
   middle_name?: string;
   email: string;
   street?: string;
-  city?: string;
-  state?: string;
+  city_rid?: string;
+  region_rid?: string;
   zip_code?: string;
-  country?: string;
+  country_rid?: string;
   role_rid?: string;
   profile_rid?: string;
   last_login_datetime?: Date;
@@ -29,6 +29,8 @@ interface UserAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   business_teams?: string;
+  is_consultant_firm: boolean;
+  org_id?:string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "rid"> {}
@@ -48,10 +50,10 @@ export class User
   public last_name!: string;
   public email!: string;
   public street?: string;
-  public city?: string;
-  public state?: string;
+  public city_rid?: string;
+  public region_rid?: string;
   public zip_code?: string;
-  public country?: string;
+  public country_rid?: string;
   public role_rid?: string;
   public profile_rid?: string;
   public last_login_datetime?: Date;
@@ -61,6 +63,8 @@ export class User
   public created_by?: string;
   public modified_by?: string;
   public business_teams?: any;
+  public is_consultant_firm!: boolean;
+  public org_id?: string;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
@@ -70,8 +74,8 @@ export class User
     User.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -80,8 +84,25 @@ export class User
           unique: true,
         },
         eid: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING(120),
           allowNull: true,
+        },
+         created_by: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
         },
         azure_id: {
           type: DataTypes.STRING,
@@ -117,11 +138,11 @@ export class User
           type: DataTypes.STRING,
           allowNull: true,
         },
-        city: {
+        city_rid: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        state: {
+        region_rid: {
           type: DataTypes.STRING,
           allowNull: true,
         },
@@ -129,19 +150,19 @@ export class User
           type: DataTypes.STRING,
           allowNull: true,
         },
-        country: {
-          type: DataTypes.UUID,
+        country_rid: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         role_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           references: {
             model: "business_teams",
             key: "rid",
           },
         },
         profile_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           references: {
             model: "profile",
             key: "rid",
@@ -158,24 +179,14 @@ export class User
         status: {
           type: DataTypes.STRING,
         },
-        created_by: {
-          type: DataTypes.STRING,
+         is_consultant_firm: {
+          type: DataTypes.BOOLEAN,
           allowNull: false,
-        },
-        modified_by: {
+        }, 
+         org_id: {
           type: DataTypes.STRING,
           allowNull: true,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
+        }
       },
       {
         sequelize,
@@ -221,7 +232,7 @@ export async function setupUserSequence(sequelize: Sequelize) {
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE public."user"
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER} ' || LPAD(nextval('user_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER}-' || LPAD(nextval('user_seq')::text, 10, '0')`);
     
     console.log('User sequence setup complete');
   } catch (error) {

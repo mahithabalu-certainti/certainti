@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 import { Project } from "./project";
 
 interface ProjectTimelineAttributes {
@@ -11,7 +11,8 @@ interface ProjectTimelineAttributes {
   event_datetime?: Date;
   event_type: string;
   entity_rid: string;
-  modified_by: string;
+  modified_by?: string;
+  created_by?:string
 }
 
 interface ProjectTimelineCreationAttributes
@@ -29,14 +30,15 @@ export class ProjectTimeline
   public event_datetime?: Date;
   public event_type!: string;
   public entity_rid!: string;
-  public modified_by!: string;
+  public modified_by?: string;
+  public created_by?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
      const model = ProjectTimeline.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
@@ -45,12 +47,25 @@ export class ProjectTimeline
           allowNull: true,
           unique: true,
         },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+         event_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         entity_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         event_name: {
@@ -65,15 +80,8 @@ export class ProjectTimeline
           type: DataTypes.STRING(100),
           allowNull: false,
         },
-        event_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
+       
+        
       },
       {
         sequelize,
@@ -112,7 +120,7 @@ export async function setupProjectTimelineSeq(sequelize: Sequelize, schemaName: 
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".project_timeline
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_TIMELINE} ' || LPAD(nextval('"${schemaName}".project_timeline_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_TIMELINE}-' || LPAD(nextval('"${schemaName}".project_timeline_seq')::text, 10, '0')`);
     
     console.log('Project timeline sequence setup complete');
   } catch (error) {

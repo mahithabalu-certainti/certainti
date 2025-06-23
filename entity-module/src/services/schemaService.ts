@@ -54,7 +54,7 @@ class SchemaService {
    */
   async checkIfSchemaExists(accountNumber: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const result = await sequelize.query(
@@ -112,7 +112,7 @@ class SchemaService {
    */
   async createResourceTable(accountNumber: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -203,7 +203,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
@@ -295,9 +295,9 @@ class SchemaService {
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
-          "Resources.resource_country",
-          "Resources.resource_region",
-          "Resources.resource_city",
+          "Resources.country_rid",
+          "Resources.region_rid",
+          "Resources.city_rid",
           "AccountDetails.rid",
           "AccountDetails.account_rid",
           "AccountDetails.account_name",
@@ -319,9 +319,9 @@ class SchemaService {
           "resource_orgname",
           "comments",
           "resource_total_experience",
-          "resource_country",
-          "resource_region",
-          "resource_city",
+          "country_rid",
+          "region_rid",
+          "city_rid",
           [Sequelize.col("AccountDetails.account_name"), "account_name"],
           [
             Sequelize.literal(
@@ -376,7 +376,7 @@ class SchemaService {
    */
   async fetchResourceById(accountNumber: string, accountId: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -408,7 +408,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
 
       const sequelize = await initOrgSequelize();
 
@@ -441,15 +441,14 @@ class SchemaService {
           ? moment(endDate).toDate()
           : null,
         resource_role: resourceData.role || null,
-        resource_region: resourceData.resource_region || null,
-        resource_country: resourceData.resource_country || null,
-        resource_city: resourceData.resource_city || null,
+        resource_region: resourceData.region_rid || null,
+        country_rid: resourceData.country_rid || null,
+        city_rid: resourceData.city_rid || null,
         resource_designation: resourceData.resource_designation || null,
         resource_total_experience: resourceData.total_years_experience || null,
         resource_total_experience_organization:
           resourceData.total_years_in_org || null,
         created_by: resourceData.created_by,
-        modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
         comments: resourceData.comments || "",
       };
@@ -497,7 +496,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
@@ -587,9 +586,9 @@ class SchemaService {
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
-          "Resources.resource_country",
-          "Resources.resource_region",
-          "Resources.resource_city",
+          "Resources.country_rid",
+          "Resources.region_rid",
+          "Resources.city_rid",
           "AccountDetails.rid",
           "AccountDetails.account_rid",
           "AccountDetails.account_name",
@@ -611,9 +610,9 @@ class SchemaService {
           "resource_orgname",
           "comments",
           "resource_total_experience",
-          "resource_country",
-          "resource_region",
-          "resource_city",
+          "country_rid",
+          "region_rid",
+          "city_rid",
           [Sequelize.col("AccountDetails.account_name"), "account_name"],
           [
             Sequelize.literal(
@@ -662,9 +661,9 @@ class SchemaService {
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
-          "Resources.resource_country",
-          "Resources.resource_region",
-          "Resources.resource_city",
+          "Resources.country_rid",
+          "Resources.region_rid",
+          "Resources.city_rid",
           "AccountDetails.rid",
           "AccountDetails.account_rid",
           "AccountDetails.account_name",
@@ -728,8 +727,8 @@ class SchemaService {
         account_rid: resourceData.account_id,
         resource_type: resourceData.resource_type,
         resource_rid: resourceId,
-        country_rid: resourceData.resource_country || null,
-        country_region_rid: resourceData.resource_region || null,
+        country_rid: resourceData.country_rid || null,
+        country_region_rid: resourceData.region_rid || null,
         effective_date: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
@@ -760,7 +759,7 @@ class SchemaService {
         throw new Error("Resource ID and account number are required");
       }
 
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       // Verify schema exists before querying
@@ -812,7 +811,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -855,9 +854,9 @@ class SchemaService {
         resource_role: resourceData.role || null,
         resource_type: resourceData.resource_type || "",
         resource_status: resourceData.resource_status,
-        resource_country: resourceData.resource_country || null,
-        resource_region: resourceData.resource_region || null,
-        resource_city: resourceData.resource_city || null,
+        country_rid: resourceData.country_rid || null,
+        region_rid: resourceData.region_rid || null,
+        city_rid: resourceData.city_rid || null,
         resource_startdate: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
@@ -926,7 +925,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const ResourceFiscalModel = ResourceFiscal.initialize(
@@ -936,8 +935,8 @@ class SchemaService {
       await ResourceFiscalModel.update(
         {
           resource_type: resourceData.resource_type || "",
-          country_rid: resourceData.resource_country || null,
-          country_region_rid: resourceData.resource_region || null,
+          country_rid: resourceData.country_rid || null,
+          country_region_rid: resourceData.region_rid || null,
           effective_date: moment(startDate).isValid()
             ? moment(startDate).toDate()
             : null,
@@ -1036,7 +1035,7 @@ class SchemaService {
     existingResourceData: any
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const ResourcesHistoryModel = await ResourcesHistory.initialize(
         sequelize,
@@ -1070,7 +1069,7 @@ class SchemaService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by:
+          created_by:
             newResourceData.modified_by ||
             newResourceData.created_by ||
             "system",
@@ -1103,7 +1102,7 @@ class SchemaService {
    */
   async resourceDetails(accountNumber: string, resourceId: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const mainDbSequelize = await initMainDbSequelize();
 
@@ -1119,21 +1118,21 @@ class SchemaService {
         const [country]: any[] = await mainDbSequelize.query(
           `SELECT country_code,country_name FROM country WHERE rid = :rid`,
           {
-            replacements: { rid: resource.resource_country },
+            replacements: { rid: resource.country_rid },
             type: "SELECT",
           }
         );
         const [state]: any[] = await mainDbSequelize.query(
           `SELECT state_name FROM state WHERE rid = :rid`,
           {
-            replacements: { rid: resource.resource_region },
+            replacements: { rid: resource.region_rid },
             type: "SELECT",
           }
         );
         const [city]: any[] = await mainDbSequelize.query(
           `SELECT city_name FROM city WHERE rid = :rid`,
           {
-            replacements: { rid: resource.resource_city },
+            replacements: { rid: resource.city_rid },
             type: "SELECT",
           }
         );
@@ -1180,7 +1179,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const ResourcesTimelineModel = await ResourcesTimeline.initialize(
         sequelize,
@@ -1193,10 +1192,7 @@ class SchemaService {
         event_status: "success",
         event_type: "ui handler",
         entity_rid: resourceId,
-        modified_by:
-          eventName === "update"
-            ? resourceData.modified_by
-            : resourceData.created_by,
+        created_by: resourceData.created_by || resourceData.modified_by ,
       });
     } catch (err) {
       throw new Error("Error adding timeline : " + (err as Error).message);
@@ -1206,13 +1202,13 @@ class SchemaService {
   async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
     try {
       const countryIds = [
-        ...new Set(resources.map((r: any) => r.resource_country)),
+        ...new Set(resources.map((r: any) => r.country_rid)),
       ].filter(Boolean);
       const regionIds = [
-        ...new Set(resources.map((r: any) => r.resource_region)),
+        ...new Set(resources.map((r: any) => r.region_rid)),
       ].filter(Boolean);
       const cityIds = [
-        ...new Set(resources.map((r: any) => r.resource_city)),
+        ...new Set(resources.map((r: any) => r.city_rid)),
       ].filter(Boolean);
 
       let countryRows: any[] = [];
@@ -1266,9 +1262,9 @@ class SchemaService {
 
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
-        country_name: countryMap[res.resource_country]?.country_name || null,
-        region_name: regionMap[res.resource_region]?.state_name || null,
-        city_name: cityMap[res.resource_city]?.city_name || null,
+        country_name: countryMap[res.country_rid]?.country_name || null,
+        region_name: regionMap[res.region_rid]?.state_name || null,
+        city_name: cityMap[res.city_rid]?.city_name || null,
       }));
 
       return updatedResources;
@@ -1287,11 +1283,11 @@ class SchemaService {
         let compareValueA, compareValueB;
 
         switch (sortField) {
-          case "resource_country":
+          case "country_rid":
             compareValueA = a.country_name || null;
             compareValueB = b.country_name || null;
             break;
-          case "resource_region":
+          case "region_rid":
             compareValueA = a.region_name || null;
             compareValueB = b.region_name || null;
             break;
@@ -1351,9 +1347,9 @@ class SchemaService {
 
   async insertProjectGeoData(project: any, mainDdSequilze: Sequelize) {
     try {
-      const countryId = project.country;
-      const regionId = project.region;
-      const currencyId = project.currency;
+      const countryId = project.country_rid;
+      const regionId = project.region_rid;
+      const currencyId = project.currency_rid;
 
       let countryRow: any = null;
       let regionRow: any = null;
@@ -1395,8 +1391,8 @@ class SchemaService {
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
 
-      project.dataValues = {
-        ...project.dataValues,
+      project = {
+        ...project,
         country_name: countryRow?.country_name || null,
         country_code: countryRow?.country_code || null,
         region_name: regionRow?.state_name || null,
@@ -1438,7 +1434,8 @@ class SchemaService {
     accountMeta: string[],
     userId: string,
     search: string,
-    accountDataSort: string[][]
+    accountDataSort: string[][],
+    bothParentAndChild: boolean
   ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
@@ -1453,52 +1450,109 @@ class SchemaService {
 
       const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
 
+      const childLevelSortingFields = new Set([
+      "fiscal_year",
+      "qre_final",      
+        // Add more child-level fields here if needed
+      ]);
+  
+      const isAlwaysChildSort = childLevelSortingFields.has(sort.sortCol);
+      const applyChildSort = isAlwaysChildSort || !bothParentAndChild || bothParentAndChild;
+      const applyParentSort = !isAlwaysChildSort && bothParentAndChild;
+
+      // Check if whereClause contains fiscal_year or qre_final
+      const hasChildOnlyFilters = whereClause && 
+        (whereClause.fiscal_year !== undefined || whereClause.qre_final !== undefined);
+
       if (accountMeta.length > 0) {
         const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
 
-        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
-          this.buildRawWhereClause(whereClause, search);
+        const { 
+          whereSQL: filterWhereSQLParent, 
+          replacements: whereReplacementsParent 
+        } = (!hasChildOnlyFilters && bothParentAndChild === true)
+          ? this.buildRawWhereClause(whereClause, search, true) 
+          : { whereSQL: "", replacements: [] };
+        
+        const { 
+          whereSQL: filterWhereSQLChild, 
+          replacements: whereReplacementsChild 
+        } = this.buildRawWhereClause(whereClause, search, false);
 
         const whereConditions: string[] = [];
-        replacements.push(...whereReplacements);
+        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
 
+        let fiscalYearClause = "";
         if (fiscalYear && fiscalYear !== 0) {
-          whereConditions.push(`fiscal_year = ?`);
-          replacements.push(fiscalYear);
+           fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
         }
-
-        let fullWhereClause = filterWhereSQL;
+        
+        let fullWhereClause = filterWhereSQLParent;
         if (whereConditions.length > 0) {
           fullWhereClause += fullWhereClause
-          ? ` AND ${whereConditions.join(" AND ")}`
-          : `${whereConditions.join(" AND ")}`;
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `${whereConditions.join(" AND ")}`;
         }
 
+        const childAggSQL = `
+      COALESCE((
+        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
+        FROM (
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
+          CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
+          CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
+          CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, 
+          pfs.project_rid, pfs.project_fiscal_rid, acc.rid
+          FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
+          WHERE pfs.project_code = ps.project_code
+            AND pfs.project_rid = ps.project_rid
+            ${fiscalYearClause}
+            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ) AS pfs_sub
+      ), '[]') AS "ProjectFiscal"
+    `;
+
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
-        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
-        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
-        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate ,
+        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
+        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , 
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
+        ${childAggSQL}
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
-        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
-        ORDER BY ${sortCol} ${sort.sortOrder}
+        GROUP BY 
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
+        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
+        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
+        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
+        st.state_name, ps.created_datetime
+        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}
         LIMIT ? OFFSET ?
       `;
 
@@ -1507,9 +1561,9 @@ class SchemaService {
           FROM project_summary AS ps
           INNER JOIN account acc ON acc.rid = ps.account_rid 
           LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country 
-          LEFT JOIN state st ON st.rid = ps.region 
-          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN country cou ON cou.rid = ps.country_rid 
+          LEFT JOIN state st ON st.rid = ps.region_rid 
+          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
@@ -1528,47 +1582,88 @@ class SchemaService {
           type: "SELECT",
         });
       } else {
-        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
-          this.buildRawWhereClause(whereClause, search);
+        const { 
+          whereSQL: filterWhereSQLParent, 
+          replacements: whereReplacementsParent 
+        } = (!hasChildOnlyFilters && bothParentAndChild === true)
+          ? this.buildRawWhereClause(whereClause, search, true) 
+          : { whereSQL: "", replacements: [] };
+        
+        const { 
+          whereSQL: filterWhereSQLChild, 
+          replacements: whereReplacementsChild 
+        } = this.buildRawWhereClause(whereClause, search, false);
 
-        const whereConditions = [];
-        const replacements = [...whereReplacements];
+        const whereConditions: string[] = [];
+        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
 
+        let fiscalYearClause = "";
         if (fiscalYear && fiscalYear !== 0) {
-          whereConditions.push(`fiscal_year = ?`);
-          replacements.push(fiscalYear);
+           fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
         }
 
-        let fullWhereClause = filterWhereSQL;
+        let fullWhereClause = filterWhereSQLParent;
         if (whereConditions.length > 0) {
           fullWhereClause += fullWhereClause
             ? ` AND ${whereConditions.join(" AND ")}`
             : `${whereConditions.join(" AND ")}`;
         }
 
+        const childAggSQL = `
+      COALESCE((
+        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
+        FROM (
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
+          CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
+          CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
+          CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, pfs.account_rid
+          FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
+          WHERE pfs.project_code = ps.project_code
+            AND pfs.project_rid = ps.project_rid
+            ${fiscalYearClause}
+            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ) AS pfs_sub
+      ), '[]') AS "ProjectFiscal"
+    `;
+
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name,acc.status as account_status, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
-        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
-        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate ,
+        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
+        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
+        ${childAggSQL}
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
-        ORDER BY ${sortCol} ${sort.sortOrder}
+        GROUP BY 
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
+        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
+        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
+        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
+        st.state_name, ps.created_datetime
+        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}       
         LIMIT ? OFFSET ?
       `;
 
@@ -1577,10 +1672,10 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
+        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
 
@@ -1615,7 +1710,8 @@ class SchemaService {
     fiscalYear: number,
     accountMeta: string[],
     userId: string,
-    search: string
+    search: string,
+    bothParentAndChild : boolean
   ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
@@ -1630,52 +1726,105 @@ class SchemaService {
 
       const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
 
+      const childLevelSortingFields = new Set([
+        "fiscal_year",
+        "qre_final",
+        // Add more child-level fields here if needed
+      ]);
+  
+      const isAlwaysChildSort = childLevelSortingFields.has(sort.sortCol);
+      const applyChildSort = isAlwaysChildSort || !bothParentAndChild || bothParentAndChild;
+      const applyParentSort = !isAlwaysChildSort && bothParentAndChild;
+
+      // Check if whereClause contains fiscal_year or qre_final
+      const hasChildOnlyFilters = whereClause && 
+        (whereClause.fiscal_year !== undefined || whereClause.qre_final !== undefined);
+
       if (accountMeta.length > 0) {
         const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
 
-        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
-          this.buildRawWhereClause(whereClause, search);
+        const { 
+          whereSQL: filterWhereSQLParent, 
+          replacements: whereReplacementsParent 
+        } = (!hasChildOnlyFilters && bothParentAndChild === true)
+          ? this.buildRawWhereClause(whereClause, search, true) 
+          : { whereSQL: "", replacements: [] };
+        
+        const { 
+          whereSQL: filterWhereSQLChild, 
+          replacements: whereReplacementsChild 
+        } = this.buildRawWhereClause(whereClause, search, false);
 
         const whereConditions: string[] = [];
-        replacements.push(...whereReplacements);
+        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
 
+        let fiscalYearClause = "";
         if (fiscalYear && fiscalYear !== 0) {
-          whereConditions.push(`fiscal_year = ?`);
-          replacements.push(fiscalYear);
+          fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
         }
 
-        let fullWhereClause = filterWhereSQL;
+        let fullWhereClause = filterWhereSQLParent;
         if (whereConditions.length > 0) {
-          fullWhereClause += fullWhereClause
-            ? ` AND ${whereConditions.join(" AND ")}`
-            : `${whereConditions.join(" AND ")}`;
+        fullWhereClause += fullWhereClause
+        ? ` AND ${whereConditions.join(" AND ")}`
+        : `${whereConditions.join(" AND ")}`;
         }
+
+        const childAggSQL = `
+      COALESCE((
+        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
+        FROM (
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
+          FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
+          WHERE pfs.project_code = ps.project_code
+            AND pfs.project_rid = ps.project_rid
+            ${fiscalYearClause}
+            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ) AS pfs_sub
+      ), '[]') AS project_fiscal_summary
+    `;
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
-        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
-        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
-        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate,
+        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
+        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
+        ${childAggSQL}
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
-        ORDER BY ${sortCol} ${sort.sortOrder}
+        GROUP BY 
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
+        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
+        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
+        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
+        st.state_name, ps.created_datetime
+        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}       
       `;
 
         const countQuery = `
@@ -1683,9 +1832,9 @@ class SchemaService {
           FROM project_summary AS ps
           INNER JOIN account acc ON acc.rid = ps.account_rid 
           LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country 
-          LEFT JOIN state st ON st.rid = ps.region 
-          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN country cou ON cou.rid = ps.country_rid 
+          LEFT JOIN state st ON st.rid = ps.region_rid 
+          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           WHERE acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
@@ -1702,47 +1851,86 @@ class SchemaService {
           type: "SELECT",
         });
       } else {
-        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
-          this.buildRawWhereClause(whereClause, search);
+        const { 
+          whereSQL: filterWhereSQLParent, 
+          replacements: whereReplacementsParent 
+        } = (!hasChildOnlyFilters && bothParentAndChild === true) 
+          ? this.buildRawWhereClause(whereClause, search, true) 
+          : { whereSQL: "", replacements: [] };
+        
+        const { 
+          whereSQL: filterWhereSQLChild, 
+          replacements: whereReplacementsChild 
+        } = this.buildRawWhereClause(whereClause, search, false);
 
-        const whereConditions = [];
-        const replacements = [...whereReplacements];
+        const whereConditions: string[] = [];
+        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
 
+        let fiscalYearClause = "";
         if (fiscalYear && fiscalYear !== 0) {
-          whereConditions.push(`fiscal_year = ?`);
-          replacements.push(fiscalYear);
+          fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
         }
 
-        let fullWhereClause = filterWhereSQL;
+        let fullWhereClause = filterWhereSQLParent;
         if (whereConditions.length > 0) {
-          fullWhereClause += fullWhereClause
-            ? ` AND ${whereConditions.join(" AND ")}`
-            : `${whereConditions.join(" AND ")}`;
+        fullWhereClause += fullWhereClause
+        ? ` AND ${whereConditions.join(" AND ")}`
+        : `${whereConditions.join(" AND ")}`;
         }
+
+        const childAggSQL = `
+      COALESCE((
+        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
+        FROM (
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
+          FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
+          WHERE pfs.project_code = ps.project_code
+            AND pfs.project_rid = ps.project_rid
+            ${fiscalYearClause}
+            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ) AS pfs_sub
+      ), '[]') AS project_fiscal_summary
+    `;
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
-        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
-        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate ,
+        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
+        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
+        ${childAggSQL}
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
-        ORDER BY ${sortCol} ${sort.sortOrder}
+        GROUP BY 
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
+        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
+        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
+        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
+        st.state_name, ps.created_datetime
+        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}       
       `;
 
         const countQuery = `
@@ -1750,9 +1938,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
         LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
@@ -1905,7 +2093,6 @@ class SchemaService {
           keyContactDetails.include_in_communication || null,
         entity_rid: project_rid,
         created_by: userId,
-        modified_by: userId,
         entity_type: "Project",
       });
     } catch (error) {
@@ -1927,7 +2114,7 @@ class SchemaService {
 
   async checkIfSchemaAndTableExists(accountNumber: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const result = await sequelize.query(
@@ -1981,41 +2168,66 @@ class SchemaService {
     }
   }
 
-  buildRawWhereClause(where: Record<string, any>, search: string) {
+  buildRawWhereClause(where: Record<string, any>, search: string, isParent: boolean) {
+
+    const tablePrefix = isParent ? "ps" : "pfs";
+
     const fieldAliasMap: Record<string, string> = {
-      r_number: "ps.r_number",
-      comments: "ps.comments",
-      region: "st.rid",
-      currency: "curr.rid",
-      country: "cou.rid",
-      industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
-      industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
-      modified_datetime: "ps.modified_datetime",
+      r_number: `${tablePrefix}.r_number`,
+      comments: `${tablePrefix}.comments`,
+      region_rid: "st.rid",
+      currency_rid: "curr.rid",
+      country_rid: "cou.rid",
+      industry_name: `COALESCE(${tablePrefix}.industry_name, ind.industry_name)`,
+      industry_name_other: `COALESCE(${tablePrefix}.industry_name, ind.industry_name)`,
+      // modified_datetime: `modified_datetime`,
       classification_name:
-        "COALESCE(ps.project_classification_other, pc.classification_name)",
+        `COALESCE(${tablePrefix}.project_classification_other, pc.classification_name)`,
+      account_name: `acc.account_name`,
+      project_group: `${tablePrefix}.project_group`,
+      project_client_group: `${tablePrefix}.project_client_group`,
+      project_classification_rid: `${tablePrefix}.project_classification_rid`,
+      project_classification_other: `${tablePrefix}.project_classification_other`,
+      project_status: `${tablePrefix}.project_status`,
+      project_type: `${tablePrefix}.project_type`,
+      project_name: `${tablePrefix}.project_name`,
+      project_startdate: `${tablePrefix}.project_startdate`,
+      project_enddate: `${tablePrefix}.project_enddate`,
+      // total_effort: `total_effort`,
+      // total_cost: `${tablePrefix}.total_cost`,
+      // total_fte: `${tablePrefix}.total_fte`,
+      // total_cost_fte: `${tablePrefix}.total_cost_fte`,
+      // total_cost_subcon: `${tablePrefix}.total_cost_subcon`,
+      // total_subcon: `${tablePrefix}.total_subcon`,
+      // total_cost_nonlabor: `${tablePrefix}.total_cost_nonlabor`,
+      project_code: `${tablePrefix}.project_code`,
+      assessment_status: `${tablePrefix}.assessment_status`,
+      project_point_of_contact: `${tablePrefix}.project_point_of_contact`,
+      technical_point_of_contact: `${tablePrefix}.technical_point_of_contact`,
+      // financial_consultant: `${tablePrefix}.financial_consultant`,
     };
 
     const numberFields = [
-      "total_effort",
-      "total_cost",
+      `total_effort`,
+      `total_cost`,
       "fiscal_year",
       "total_fte",
-      "total_fte_cost",
-      "total_sub_con",
-      "total_sub_con_cost",
-      "total_non_labor_cost",
-      "qualified_research_expenditure",
+      `total_cost_fte`,
+      "total_subcon",
+      `total_cost_subcon`,
+      `total_cost_nonlabor`,
       "qre",
+      "qre_final"
     ];
     const dateFields = [
       "project_startdate",
       "project_enddate",
-      "ps.modified_datetime",
+      "modified_datetime",
     ];
     const enumFields = [
       "project_status",
-      "project_type",
-      "fiscal_year",
+      `${tablePrefix}.project_type`,
+      // "fiscal_year",
       "st.rid",
       "curr.rid",
       "cou.rid",
@@ -2028,7 +2240,8 @@ class SchemaService {
       enumFields,
       booleanFields,
       numberFields,
-      fieldAliasMap
+      fieldAliasMap,
+      tablePrefix
     );
 
     if (search) {
@@ -2052,16 +2265,16 @@ class SchemaService {
         "program_name",
         "project_startdate",
         "project_enddate",
-        "qualified_research_expenditure",
         "is_rd_qualified",
         "qre",
         "total_cost",
         "total_effort",
         "total_fte",
-        "total_fte_cost",
-        "total_sub_con",
-        "total_sub_con_cost",
-        "total_non_labor_cost",
+        "total_cost_fte",
+        "total_subcon",
+        "total_cost_subcon",
+        "total_cost_nonlabor",
+        "assessment_status",
         "comments",
         "country_name",
         "currency_code",
@@ -2071,26 +2284,24 @@ class SchemaService {
       ];
 
       const searchFieldAliasMap: Record<string, string> = {
-        r_number: "ps.r_number",
-        comments: "ps.comments",
+        r_number: `${tablePrefix}.r_number`,
+        comments: `${tablePrefix}.comments`,
         region_name: "st.state_name",
-        industry_name_other: "COALESCE(ind.industry_name, ps.industry_name)",
-        project_status: "CAST(ps.project_status AS TEXT)",
-        project_type: "CAST(ps.project_type AS TEXT)",
-        fiscal_year: "CAST(ps.fiscal_year AS TEXT)",
-        is_rd_qualified: "CAST(ps.is_rd_qualified AS TEXT)",
-        project_startdate: "CAST(ps.project_startdate AS TEXT)",
-        project_enddate: "CAST(ps.project_enddate AS TEXT)",
-        total_cost: "CAST(ps.total_cost AS TEXT)",
-        total_effort: "CAST(ps.total_effort AS TEXT)",
-        total_fte: "CAST(ps.total_fte AS TEXT)",
-        total_fte_cost: "CAST(ps.total_fte_cost AS TEXT)",
-        total_sub_con: "CAST(ps.total_sub_con AS TEXT)",
-        total_sub_con_cost: "CAST(ps.total_sub_con_cost AS TEXT)",
-        total_non_labor_cost: "CAST(ps.total_non_labor_cost AS TEXT)",
-        qualified_research_expenditure:
-          "CAST(ps.qualified_research_expenditure AS TEXT)",
-        qre: "CAST(ps.qre AS TEXT)",
+        industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
+        project_status: `CAST(${tablePrefix}.project_status AS TEXT)`,
+        project_type: `CAST(${tablePrefix}.project_type AS TEXT)`,
+        fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
+        is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
+        project_startdate: `CAST(${tablePrefix}.project_startdate AS TEXT)`,
+        project_enddate: `CAST(${tablePrefix}.project_enddate AS TEXT)`,
+        total_cost: `CAST(${tablePrefix}.total_cost AS TEXT)`,
+        total_effort: `CAST(${tablePrefix}.total_effort AS TEXT)`,
+        total_fte: `CAST(${tablePrefix}.total_fte AS TEXT)`,
+        total_fte_cost: `CAST(${tablePrefix}.total_cost_fte AS TEXT)`,
+        total_sub_con: `CAST(${tablePrefix}.total_subcon AS TEXT)`,
+        total_sub_con_cost: `CAST(${tablePrefix}.total_cost_subcon AS TEXT)`,
+        total_non_labor_cost: `CAST(${tablePrefix}.total_cost_nonlabor AS TEXT)`,
+        qre: `CAST(ps.qre AS TEXT)`,
       };
 
       const searchConditions: string[] = [];
@@ -2103,9 +2314,9 @@ class SchemaService {
 
       if (numericSearch) {
         searchConditions.push(
-          "ps.total_cost = ?",
-          "ps.total_effort = ?",
-          "ps.fiscal_year = ?"
+          `${tablePrefix}.total_cost = ?`,
+          `${tablePrefix}.total_effort = ?`,
+          `ps.fiscal_year = ?`
         );
         replacements.push(
           parseFloat(search),
@@ -2127,7 +2338,8 @@ class SchemaService {
     enumFields: string[],
     booleanFields: string[],
     numberFields: string[],
-    fieldAliasMap: Record<string, string>
+    fieldAliasMap: Record<string, string>,
+    tablePrefix: string,
   ) {
     const conditions: string[] = [];
     const replacements: any[] = [];
@@ -2153,7 +2365,7 @@ class SchemaService {
           const conditionsToJoin: string[] = [];
 
           if (condition.equals !== undefined) {
-            conditionsToJoin.push(`ps.project_classification_other = ?`);
+            conditionsToJoin.push(`${tablePrefix}.project_classification_other = ?`);
             replacements.push(condition.equals);
             conditionsToJoin.push(`pc.classification_name = ?`);
             replacements.push(condition.equals);
@@ -2164,7 +2376,7 @@ class SchemaService {
               conditions.push(`pc.classification_name != ?`);
               replacements.push(condition.not_equals);
             }else{
-              conditions.push(`(ps.project_classification_other != ? OR ps.project_classification_other = '' OR ps.project_classification_other IS NULL) AND pc.classification_name = 'Other'`);
+              conditions.push(`(${tablePrefix}.project_classification_other != ? OR ${tablePrefix}.project_classification_other = '' OR ${tablePrefix}.project_classification_other IS NULL) AND pc.classification_name = 'Other'`);
               replacements.push(condition.not_equals);
             }
           }
@@ -2172,7 +2384,7 @@ class SchemaService {
           if (condition.in && Array.isArray(condition.in)) {
             const placeholders = condition.in.map(() => "?").join(", ");
             conditionsToJoin.push(
-              `ps.project_classification_other IN (${placeholders})`
+              `${tablePrefix}.project_classification_other IN (${placeholders})`
             );
             replacements.push(...condition.in);
             conditionsToJoin.push(
@@ -2183,7 +2395,7 @@ class SchemaService {
 
           if (condition.is_empty === true) {
             conditionsToJoin.push(
-              `COALESCE(ps.project_classification_other, pc.classification_name) IS NULL OR COALESCE(ps.project_classification_other, pc.classification_name) = ''`
+              `COALESCE(${tablePrefix}.project_classification_other, pc.classification_name) IS NULL OR COALESCE(${tablePrefix}.project_classification_other, pc.classification_name) = ''`
             );
           }
 
@@ -2230,7 +2442,7 @@ class SchemaService {
         // DATE fields
         if (isDateField) {
           const updatedField =
-            field === "modified_datetime" ? "ps.modified_datetime" : field;
+            field === "modified_datetime" ? `${tablePrefix}.modified_datetime` : field;
           const normalize = (d: any) => {
             let parsed = moment.utc(d, "YYYY-MM-DD", true);
             if (!parsed.isValid()) throw new Error("Invalid date");
@@ -2462,7 +2674,7 @@ class SchemaService {
       );
 
       const updatedProjects = project.map((res: any) => ({
-        ...res.toJSON(),
+        ...res,
         country_name: countryMap[res.country]?.country_name || null,
         region_name: regionMap[res.region]?.state_name || null,
         currency_name: currencyMap[res.currency]?.currency_code || null,
@@ -2555,7 +2767,7 @@ class SchemaService {
 
         const technicalConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Technical Consultant" && e.is_primary_contact
+            e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
         );
         const financialConsultant = enrichedKeyContacts.find(
           (e: any) =>
@@ -2599,7 +2811,7 @@ class SchemaService {
         );
 
         const industry = industryResult[0];
-        project.dataValues.industry_name =
+        project.industry_name =
           industry?.industry_name || project.industry_name;
       }
 
@@ -2642,7 +2854,7 @@ class SchemaService {
       }));
 
       return {
-        ...project.dataValues,
+        ...project,
         keyContact: enrichedKeyContacts,
       };
     } catch (err) {
@@ -2673,7 +2885,7 @@ class SchemaService {
       }
 
       return {
-        ...(project.dataValues || project),
+        ...(project),
         classification_name: classificationName,
       };
     } catch (err) {
@@ -2729,9 +2941,9 @@ class SchemaService {
   ): any {
     const filterableClientFields = [
       "account_name",
-      "country",
-      "region",
-      "currency",
+      "country_rid",
+      "region_rid",
+      "currency_rid",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
@@ -2739,7 +2951,7 @@ class SchemaService {
       "industry_name",
     ];
 
-    const enumFields = ["country", "currency", "region", "classification_name"];
+    const enumFields = ["country_rid", "currency_rid", "region_rid", "classification_name"];
 
     let filteredProjects = [...project];
 

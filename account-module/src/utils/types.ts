@@ -9,10 +9,10 @@ export interface IAccount {
   region: number;
   storage_type: "separate_db" | "store_in_parent";
   parent_account_rid?: string | null;
-  account_currency_rid: string;
-  account_country_rid: string;
-  account_country_region_rid: string;
-  account_city_rid: number;
+  currency_rid: string;
+  country_rid: string;
+  region_rid: string;
+  city_rid: number;
   tax_claim_level: string;
   max_ai_interactions: number;
   expiry_duration: number;
@@ -21,8 +21,8 @@ export interface IAccount {
   fiscal_start_date: string;
   fiscal_end_date: string;
   interaction_cc_list?: string | null;
-  blended_rate_fte?: string | null;
-  blended_rate_subcon?: string | null;
+  blended_rate_fte?: number | null;
+  blended_rate_subcon?: number | null;
   created_by?: string | null;
   modified_by?: string | null;
   industry_rid: string;
@@ -32,11 +32,13 @@ export interface IAccount {
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue?: string | null;
+  annual_revenue?: number | null;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   key_contacts:any;
   business_details:string
+  logo_url:string;
+  organisation_name:string;
 }
 
 export interface IUpdateAccount {
@@ -51,10 +53,10 @@ export interface IUpdateAccount {
   region: number;
   storage_type: "separate_db" | "store_in_parent";
   parent_account_rid?: string | null;
-  account_currency_rid: string;
-  account_country_rid: string;
-  account_country_region_rid: string;
-  account_city_rid: number;
+  currency_rid: string;
+  country_rid: string;
+  region_rid: string;
+  city_rid: number;
   tax_claim_level: string;
   max_ai_interactions: number;
   expiry_duration: number;
@@ -63,8 +65,8 @@ export interface IUpdateAccount {
   fiscal_start_date: string;
   fiscal_end_date: string;
   interaction_cc_list?: string | null;
-  blended_rate_fte?: string | null;
-  blended_rate_subcon?: string | null;
+  blended_rate_fte?: number | null;
+  blended_rate_subcon?: number | null;
   created_by?: string | null;
   modified_by?: string | null;
   industry_rid: string;
@@ -74,12 +76,14 @@ export interface IUpdateAccount {
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue?: string | null;
+  annual_revenue?: number | null;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   r_number: string;
   business_details:string;
   key_contacts:any;
+  logo_url:string;
+  organisation_name:string;
 }
 
 export interface IKeyContactDetail {

@@ -1,13 +1,14 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
-import { R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
 interface StateAttributes {
   rid: string;
-  r_number?: string;
   country_rid: string;
   state_name: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface StateCreationAttributes extends Optional<StateAttributes, "rid"> {}
@@ -17,33 +18,29 @@ export class States
   implements StateAttributes
 {
   rid!: string;
-  r_number?: string;
   country_rid!: string;
   state_name!: string;
   created_datetime!: Date;
   modified_datetime!: Date;
+  created_by?: string;
+  modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     States.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
         },
-        r_number: {
-          type: DataTypes.STRING(20),
-          allowNull: false,
-          unique: true,
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
-        country_rid: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        state_name: {
-          type: DataTypes.STRING,
-          allowNull: false,
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -52,9 +49,16 @@ export class States
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
+          allowNull: true
         },
+        country_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        state_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        }
       },
       {
         sequelize,
@@ -79,7 +83,7 @@ export async function setupStateSequence(sequelize: Sequelize) {
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE state
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.STATE} ' || LPAD(nextval('state_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.STATE}-' || LPAD(nextval('state_seq')::text, 10, '0')`);
     
     console.log('State sequence setup complete');
   } catch (error) {

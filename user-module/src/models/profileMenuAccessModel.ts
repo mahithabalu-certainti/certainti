@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { Menu } from "./menuModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface ProfileMenuAccessAttributes {
   rid: string;
@@ -31,22 +32,25 @@ export class ProfileMenuAccess
   static initialize(sequelize: Sequelize) {
     ProfileMenuAccess.init(
       {
-        rid: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-        profile_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: { model: "profile", key: "rid" },
-        },
-        menu_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: { model: "menu", key: "rid" },
-        },
-        is_enabled: { type: DataTypes.BOOLEAN, allowNull: false },
+        rid: { 
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          primaryKey: true },
         created_by: { type: DataTypes.STRING },
         modified_by: { type: DataTypes.STRING },
         created_datetime: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
         modified_datetime: { type: DataTypes.DATE, defaultValue: null },
+        profile_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: { model: "profile", key: "rid" },
+        },
+        menu_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: { model: "menu", key: "rid" },
+        },
+        is_enabled: { type: DataTypes.BOOLEAN, allowNull: false }
       },
       {
         sequelize,

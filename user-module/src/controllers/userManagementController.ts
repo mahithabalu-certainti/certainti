@@ -224,6 +224,7 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
       );
     }
   } catch (error) {
+    console.log(error)
     const err = error as Error;
     errorLog(methodName, err.message);
     handleErrorResponse(

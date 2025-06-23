@@ -80,7 +80,7 @@ export function handleSuccessResponse(
   res: Response,
   data: any
 ) {
-  return successResponse(res, HttpStatus.SUCCESS, HttpStatus.SUCCESS_MESSAGE, data);
+  return successResponse(res, HttpStatus.SUCCESS, HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
 }
 
 export function handleErrorResponse(

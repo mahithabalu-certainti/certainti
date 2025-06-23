@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { User } from "./userModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface UserExtendedPermissionTimelineAttributes {
   rid: string;
@@ -11,6 +12,8 @@ interface UserExtendedPermissionTimelineAttributes {
   event_datetime: Date;
   modified_by?: string;
   modified_datetime?: Date;
+  created_by?: string;
+  created_datetime?: Date;
 }
 
 interface UserExtendedPermissionTimelineCreationAttributes extends Optional<UserExtendedPermissionTimelineAttributes, "rid"> {}
@@ -27,22 +30,42 @@ export class UserExtendedPermissionTimeline
   public event_datetime!: Date;
   public modified_by?: string;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public created_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
     UserExtendedPermissionTimeline.init(
       {
         rid: { 
-          type: DataTypes.UUID, 
-          defaultValue: DataTypes.UUIDV4, 
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true 
         },
+        created_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        created_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false,
+          defaultValue: DataTypes.NOW  
+        },
+        modified_by: { 
+          type: DataTypes.STRING,
+          allowNull: true 
+        },
+        modified_datetime: { 
+          type: DataTypes.DATE, 
+          allowNull: false,
+          defaultValue: DataTypes.NOW  
+        },
         user_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
           references: { model: "user", key: "rid" },
         },
         profile_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
           references: { model: "profile", key: "rid" },
         },
@@ -58,16 +81,7 @@ export class UserExtendedPermissionTimeline
           type: DataTypes.DATE, 
           allowNull: false,
           defaultValue: DataTypes.NOW 
-        },
-        modified_by: { 
-          type: DataTypes.STRING,
-          allowNull: true 
-        },
-        modified_datetime: { 
-          type: DataTypes.DATE, 
-          allowNull: false,
-          defaultValue: DataTypes.NOW  
-        },
+        }
       },
       {
         sequelize,

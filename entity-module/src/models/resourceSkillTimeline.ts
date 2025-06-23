@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceSkillTimelineAttributes  {
  rid: string,
@@ -11,7 +11,9 @@ interface ResourceSkillTimelineAttributes  {
  entity_rid: string
  event_datetime?: Date,
  modified_datetime?: Date,
- modified_by: string,
+ modified_by?: string,
+ created_datetime?: Date;
+ created_by?: string;
 }
 
 interface ResourceSkillTimelineCreationAttributes
@@ -28,14 +30,16 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
  event_datetime?: Date;
  entity_rid!: string;
  modified_datetime?: Date;
- modified_by!: string;
+ modified_by?: string;
+ created_datetime?: Date;
+ created_by!: string;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
     ResourceSkillTimeline.init(
       {
        rid: {
-        type: DataTypes.UUID,
-        defaultValue: UUIDV4,
+        type: DataTypes.STRING(50),
+        defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
         primaryKey: true,
        },
        r_number: {
@@ -43,8 +47,26 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
         allowNull: true,
         unique: true,
        },
+       created_by: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+       },
+        modified_by: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+       },
+       created_datetime: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+       },
+       modified_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true
+       },
+      
        account_rid: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(50),
         allowNull: false,
        },
        event_name: {
@@ -61,7 +83,7 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
         defaultValue: "Ui Handler"
        },
        entity_rid: {
-         type: DataTypes.UUID,
+         type: DataTypes.STRING(50),
          allowNull: false,
        },
        event_datetime: {
@@ -69,15 +91,7 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
         allowNull: false,
         defaultValue: DataTypes.NOW
        },
-       modified_datetime: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: DataTypes.NOW,
-       },
-       modified_by: {
-        type: DataTypes.STRING(),
-        allowNull: false,
-       },
+       
       },
       {
         sequelize,
@@ -99,7 +113,7 @@ export async function setupResourceSkillTimelineSeq(sequelize: Sequelize, schema
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resource_skill_timeline
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_SKILL_TIMELINE} ' || LPAD(nextval('"${schemaName}".resource_skill_timeline_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_SKILL_TIMELINE}-' || LPAD(nextval('"${schemaName}".resource_skill_timeline_seq')::text, 10, '0')`);
     
     console.log('Resource skill timeline sequence setup complete');
   } catch (error) {
