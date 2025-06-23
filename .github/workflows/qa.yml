@@ -6,7 +6,7 @@ on:
       - uat
 
 env:
-  ENVIRONMENT: QA
+  ENVIRONMENT: qa
 
 jobs:
   # JOB to build and deploy Frontend App
