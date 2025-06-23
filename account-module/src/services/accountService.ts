@@ -528,19 +528,35 @@ async accountList(
         },
       };
     }
-        const formatNumberForExport = (value: any, currency_symbol: string): string => {
-          if (value == null || value === '') return '-';
-          const num = Number(value);
-          if (isNaN(num)) return '-';
-          // Use currency.js to format the number with the provided currency symbol
-          return currency(num, {
-            symbol: currency_symbol? currency_symbol : '$',
-            precision: 2,
-            pattern: '! #',
-            separator: ',',
-            decimal: '.'
-          }).format();
-        };
+    const formatNumberForExport = (value: any, currency_symbol: string): string => {
+      if (value == null || value === '') return '-';
+    
+      try {
+        const decimalValue = new Decimal(value.toString());
+        if (!decimalValue.isFinite()) return '-';
+    
+        // Extract just the formatted currency pattern using a dummy value
+        const pattern = currency(0, {
+          symbol: currency_symbol || '$',
+          precision: 2,
+          pattern: '! #',
+          separator: ',',
+          decimal: '.',
+        }).format(); // e.g., "$ 0.00"
+    
+        // Format actual value manually using Decimal
+        const [intPart, decPart] = decimalValue.toFixed().split('.');
+        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+        const formattedNumber = decPart ? `${formattedInt}.${decPart}` : formattedInt;
+        // Replace "0.00" in pattern with our real number
+        return pattern.replace('0.00', formattedNumber);
+    
+      } catch (error) {
+        console.error('Error formatting number:', error);
+        return '-';
+      }
+    };
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const currency_symbol = account?.currency?.currency_symbol;

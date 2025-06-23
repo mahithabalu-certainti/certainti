@@ -31,14 +31,17 @@ import {
   setupAccountFiscalSequence,
 } from "../models/accountFiscal";
 import { isValidTimezone } from "../utils/valideTimeChecker";
+import { Logger } from "winston";
 
 export class ProjectService {
   private schemaService: SchemaService;
   private projectIngestion: ProjectIngestionService;
+  private logger: Logger;
 
-  constructor() {
+  constructor(logger: Logger) {
+    this.logger = logger;
     this.schemaService = new SchemaService();
-    this.projectIngestion = new ProjectIngestionService();
+    this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
   async createProject(

@@ -1304,7 +1304,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       "first_name",
       "last_name",
       "email",
-      "status_id",
+      "status_name",
       "created_datetime",
       "modified_datetime",
       "profile",
@@ -1322,7 +1322,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     if (sortBy === "business_teams") {
       sortBy = "$business_teams.business_teams$";
     }
-    if (sortBy === "status_id") {
+    if (sortBy === "status_name") {
       sortBy = "$status.status_name$";
     }
 
@@ -1484,7 +1484,7 @@ const rawResult = users || [];
           ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
+          "Status": basicUserInfo.status_name,
         };
       });
 
@@ -1524,7 +1524,7 @@ const rawResult = users || [];
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
+      attributes: ["rid", "email", "status_id", "first_name","created_datetime","modified_datetime"],
       order,
       include: [
         {

@@ -29,7 +29,7 @@ class Configurations {
       transports: [new transports.Console()],
     });
 
-    this.services = new Services();
+    this.services = new Services(this.logger);
   }
 
   /**

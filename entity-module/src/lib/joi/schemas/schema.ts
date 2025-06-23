@@ -915,6 +915,7 @@ const updateResourceCostSchema = Joi.object({
   .allow(null)
   .allow(""),
   status_id: Joi.string().max(255).optional(),
+  user_preference: Joi.string().optional().allow(null).allow(""),
   fiscal_year: Joi.number()
    .integer()
    .min(1000)
@@ -1100,6 +1101,7 @@ const resourceCostSchema = Joi.object({
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status_id: Joi.string().max(255),
   comments: Joi.string().optional().allow(null).allow(""),
+  user_preference: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
     .default(() => new Date()),

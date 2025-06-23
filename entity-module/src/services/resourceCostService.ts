@@ -235,7 +235,8 @@ class ResourceCostService {
    */
   async createResourceCost(
     resourceCost: IResourceCost,
-    userId: string
+    userId: string,
+    userPreference: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -363,15 +364,29 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status_id: activeStatusId,
+           status_id: { 
+            [Op.in]: [
+              statusMap?.get('Active'), 
+              statusMap?.get('Anomaly'), 
+              statusMap?.get('Duplicate')
+            ].filter(Boolean) as string[] // Filter out undefined and assert as string[]
+          },
             net_resource_cost: calculatedResourceCost,
             account_rid,
           },
         });
 
-        if (existingCost) {
-          status = "Duplicate";
-        } else if (effort_in_hrs !== undefined && Number(effort_in_hrs) > 3000) {
+        if (existingCost && (userPreference === null || userPreference === "")) {
+            return {
+                statusCode: HttpStatus.PROMPT,
+                message: "Entered compensation details already exists for the resource. Would you like to create another compensation with same values?",
+                data: {
+                    resourceCost: existingCost
+                }
+            };
+        }
+
+        if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
           status = "Anomaly";
         } else if (
           (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
@@ -507,7 +522,8 @@ class ResourceCostService {
    */
   async updateResourceCost(
     resourceCostData: IUpdateResourceCost,
-    userId: string
+    userId: string,
+    userPreference: string,
   ) {
     try {
       const {
@@ -563,6 +579,9 @@ class ResourceCostService {
       const sequelize = await this.getOrgSequelize();
       ResourceCost.initialize(sequelize, schemaName);
       // Get the original resource cost before updating
+      const mainDbSequelize = await this.getMainDbSequelize();
+       const statusMap = await getResourceStatuses(mainDbSequelize);
+        const activeStatusId = statusMap?.get("Active");
       const originalResourceCost = await ResourceCost.findOne({
         where: { rid: rid },
       });
@@ -573,6 +592,42 @@ class ResourceCostService {
           message: HttpStatus.FAILED_MESSAGE,
           errorMessage: "Resource cost record not found",
         };
+      }
+
+      if(originalResourceCost.status_id === statusMap?.get("Duplicate")){
+         return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Duplicate Record cannot be update. Please resolve duplicate status. Alternately you can reject this record and add new compensation."
+         }
+      }
+
+      // Check for any other records with same values and Duplicate status
+      const duplicateRecords = await ResourceCost.findOne({
+        where: {
+          resource_rid: originalResourceCost.resource_rid,
+          account_rid: originalResourceCost.account_rid,
+          effective_from: originalResourceCost.effective_from,
+          end_date: originalResourceCost.end_date,
+          salary: originalResourceCost.salary,
+          deductions: originalResourceCost.deductions,
+          insurance: originalResourceCost.insurance,
+          bonus: originalResourceCost.bonus,
+          resource_cost: originalResourceCost.resource_cost,
+          effort_in_hrs: originalResourceCost.effort_in_hrs,
+          fiscal_year: originalResourceCost.fiscal_year,
+          comments: originalResourceCost.comments,
+          currency_rid: originalResourceCost.currency_rid,
+          status_id: statusMap?.get("Duplicate")
+        }
+      });
+
+      if (duplicateRecords) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Please resolve the other duplicate records of this data."
+        }
       }
 
       try {
@@ -604,7 +659,7 @@ class ResourceCostService {
           {} as Record<string, string | null>
         );
 
-        const mainDbSequelize = await this.getMainDbSequelize();
+        
         
         // Get currency threshold
         const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
@@ -621,8 +676,7 @@ class ResourceCostService {
         );
 
         let resourceCostStatus = status;
-         const statusMap = await getResourceStatuses(mainDbSequelize);
-        const activeStatusId = statusMap?.get("Active");
+        
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
           where: {
@@ -633,13 +687,26 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status_id: activeStatusId,
+            status_id: { 
+            [Op.in]: [
+              statusMap?.get('Active'), 
+              statusMap?.get('Anomaly'), 
+              statusMap?.get('Duplicate')
+            ].filter(Boolean) as string[] // Filter out undefined and assert as string[]
+          },
             net_resource_cost: calculatedResourceCost,
           },
         });
 
-        if (existingCost) {
-          resourceCostStatus = "Duplicate";
+        if (existingCost && (userPreference === null || userPreference === "")) {
+          return {
+            statusCode: HttpStatus.PROMPT,
+            message: "Compensation details already exists for the resource. Would to like proceed updating with same values ?",
+            data: {
+              affectedCounts: 0,
+              resourceCost: [],
+            },
+        };
         } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
           resourceCostStatus = "Anomaly";
         } else if (
@@ -1280,7 +1347,7 @@ async function getCurrencyThreshold(
   currency_rid?: string
 ): Promise<number | null> {
   let currencyResult;
-
+  console.log("currency_rid :",currency_rid);
   if (currency_rid) {
     [currencyResult] = await mainDbSequelize.query(
       `SELECT currency_threshold FROM public.currency WHERE rid = :currency_rid`,
