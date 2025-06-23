@@ -419,10 +419,10 @@ export const AccountDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
+          className={`flex transition-all ease-in-out ${
             isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
           }`}
         >
           <SideMenuPanel
