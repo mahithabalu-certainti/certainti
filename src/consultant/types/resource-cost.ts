@@ -124,7 +124,7 @@ export type ResourceCostPayload = {
   eid?: string;
   rid?: string;
   account_rid?: string;
-  resource_type?: string;
+  resource_type_rid?: string;
   resource_number?: string;
   resource_rid: string;
   resource_ref_id: string;

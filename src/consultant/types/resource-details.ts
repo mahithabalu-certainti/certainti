@@ -3,12 +3,14 @@ export interface ResourceDetailsTypes {
   account_number: string;
   rid: string;
   r_number: string;
+  status_rid: string;
   eid: string | null;
   resource_code: string;
   resource_region: string;
   resource_designation: string;
   resource_city: string;
   resource_type: string;
+  resource_type_rid: string;
   resource_name: string;
   resource_firstname: string;
   resource_lastname: string;

@@ -90,6 +90,7 @@ export interface UserDetail {
   rid: string;
   email: string;
   status: string;
+  status_rid: string;
   full_name: string;
   first_name: string;
   last_name: string;
@@ -222,7 +223,7 @@ export interface UserPayload {
   email?: string;
   is_consultant_firm: boolean;
   org_id: string;
-  status?: string;
+  status_rid?: string;
   street?: string;
   zip_code?: string;
   role: string;

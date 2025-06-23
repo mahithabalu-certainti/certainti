@@ -152,6 +152,7 @@ const createDynamicField = (
 };
 
 export const AccFormData = (
+  statusOptions: SelectOption[],
   country: SelectOption[],
   parentAccount: SelectOption[],
   currency: SelectOption[],
@@ -274,7 +275,7 @@ export const AccFormData = (
           }),
           createSelectField('status', 'Status', {
             required: true,
-            options: STATUS_OPTIONS,
+            options: statusOptions,
             placeholder: 'Choose Status',
           }),
           createTextField('organisation_name', 'Org Name', {
@@ -473,6 +474,7 @@ export const AccFormData = (
       },
     ],
     [
+      statusOptions,
       industrys,
       disableFields,
       parentAccount,

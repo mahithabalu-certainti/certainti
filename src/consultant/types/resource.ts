@@ -1,3 +1,4 @@
+import { CommonApiResponse } from '../../common-service';
 import { FilterState } from '../pages/account-details-sidebar/components/filter/filterType';
 import { Status, YesNo } from './account';
 
@@ -107,4 +108,43 @@ export interface SKillSubTypeApiResponse {
   statusCodeValue: 'Success' | string; // Add other possible values (e.g., "Error")
   statusMessage: string;
   data: SkillSubtype[];
+}
+
+export interface ResourceStatusItem {
+  rid: string;
+  resource_status_name: string;
+  resource_status_description: string;
+  status: string;
+}
+
+export interface GetResourceStatusApiResponse extends CommonApiResponse {
+  data: {
+    resourceStatus: ResourceStatusItem[];
+  };
+}
+
+export interface ResourceTypeItem {
+  rid: string;
+  resource_type_name: string;
+  resource_type_description: string;
+  status: string;
+}
+
+export interface GetResourceTypeApiResponse extends CommonApiResponse {
+  data: {
+    resouceType: ResourceTypeItem[];
+  };
+}
+
+export interface SkillLevelItem {
+  rid: string;
+  skill_level_name: string;
+  skill_level_description: string;
+  status: string;
+}
+
+export interface GetSkillLevelApiResponse extends CommonApiResponse {
+  data: {
+    skillLevel: SkillLevelItem[];
+  };
 }

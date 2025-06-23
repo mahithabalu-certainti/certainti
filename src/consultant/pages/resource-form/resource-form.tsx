@@ -8,7 +8,12 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { CreateResourceIcon, EditIcon } from '../../../assets';
-import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
+import {
+  Layout,
+  OnChange,
+  useGetAllCountries,
+  useGetStatus,
+} from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -28,6 +33,7 @@ import {
   useCreateResourceSkill,
   useFetchResourceSkillSubType,
   useFetchResourceSkillType,
+  useGetSkillLevel,
   // useFetchResourceSkillById,
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
@@ -35,6 +41,7 @@ import { useUpdateResource } from '../../services/resource-update';
 import { SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
 import {
+  ResourceTypeEnum,
   transformCostData,
   transformPayloadforCreateResource,
   transformPayloadforUpdateResource,
@@ -42,6 +49,10 @@ import {
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import {
+  useGetResourceStatus,
+  useGetResourceType,
+} from '../../services/resource-list/resource-list-service.ts';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -81,7 +92,7 @@ const ResourceForm: React.FC = () => {
     resource_firstname: '',
     resource_lastname: '',
   });
-  const [disableOrgname, setDisableOrgname] = useState<string>('');
+  const [disableOrgname, setDisableOrgname] = useState<boolean>(false);
   const [, setResourceFinancials] = useState({
     salary: '',
     bonus: '',
@@ -139,7 +150,6 @@ const ResourceForm: React.FC = () => {
     return s + b + i + r - d;
   };
 
-  const isresourceType = resourceDetails?.resource_type === 'Full-Time';
   const costInfo =
     (costDetails as { resourceCostById?: Record<string, any> })
       ?.resourceCostById || {};
@@ -157,6 +167,8 @@ const ResourceForm: React.FC = () => {
     const resourceDetailsData = resource?.data?.resourceDetails;
     const finalResourceDetails = {
       ...resourceDetailsData,
+      status_rid: resourceDetailsData?.status_rid,
+      resource_type: resourceDetailsData?.resource_type_rid,
       country: resourceDetailsData?.resource_country,
       state: resourceDetailsData?.resource_region,
       city: resourceDetailsData?.resource_city,
@@ -194,7 +206,11 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const resourceDetailsData = resource?.data?.resourceDetails;
-    setDisableOrgname(resourceDetailsData?.resource_type || '');
+    const isFullTime =
+      resourceTypeMap[
+        resourceDetailsData?.resource_type_rid || ''
+      ]?.toLowerCase() === ResourceTypeEnum.FULL_TIME;
+    setDisableOrgname(isFullTime);
     setCurrentResource({
       resource_firstname: resourceDetailsData?.resource_firstname || '',
       resource_lastname: resourceDetailsData?.resource_lastname || '',
@@ -231,7 +247,7 @@ const ResourceForm: React.FC = () => {
         insurance: costInfo?.insurance || '',
         deductions: costInfo?.deductions || '',
         resource_cost: costInfo?.resource_cost || '',
-        resource_status: costInfo?.status || '',
+        resource_status: costInfo?.status_rid || '',
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
         Record_id: costInfo?.rid,
@@ -344,6 +360,10 @@ const ResourceForm: React.FC = () => {
     useFetchResourceSkillSubType(currentSkillType.skill_type);
 
   const currency = useFetchCurrency();
+  const statusOptions = useGetStatus();
+  const resourceStatusOptions = useGetResourceStatus();
+  const resourceTypeOptions = useGetResourceType();
+  const skillLevelOptions = useGetSkillLevel();
   // Mutations
   const createResource = useCreateResource(accountId as string);
   const updateResource = useUpdateResource(accountId as string);
@@ -361,6 +381,50 @@ const ResourceForm: React.FC = () => {
     createResource.isSuccess || updateResource.isSuccess || costSkillSuccess;
 
   // Memoized data transformations
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedResourceStatus: SelectOption[] = useMemo(
+    () =>
+      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
+        label: item.resource_status_name,
+        value: item.rid,
+      })) || [],
+    [resourceStatusOptions?.data?.data?.resourceStatus]
+  );
+
+  const memoizedResourceType: SelectOption[] = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedSkillLevels: SelectOption[] = useMemo(
+    () =>
+      skillLevelOptions?.data?.data?.skillLevel.map((item) => ({
+        label: item.skill_level_name,
+        value: item.rid,
+      })) || [],
+    [skillLevelOptions?.data?.data?.skillLevel]
+  );
+
+  const resourceTypeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    resourceTypeOptions?.data?.data?.resouceType.forEach((item) => {
+      map[item.rid] = item.resource_type_name.toLowerCase();
+    });
+    return map;
+  }, [resourceTypeOptions?.data?.data?.resouceType]);
+
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
@@ -572,7 +636,10 @@ const ResourceForm: React.FC = () => {
       setIsAnyResourceNameFilled(hasName);
     }
     if (fieldName === 'resource_type') {
-      setDisableOrgname(String(fieldValue));
+      const isFullTime =
+        resourceTypeMap[String(fieldValue)]?.toLowerCase() ===
+        ResourceTypeEnum.FULL_TIME;
+      setDisableOrgname(isFullTime);
     }
     if (
       ['salary', 'bonus', 'insurance', 'resource_cost', 'deductions'].includes(
@@ -600,7 +667,8 @@ const ResourceForm: React.FC = () => {
       // Salary-specific validation
       if (
         fieldName === 'salary' &&
-        resourceDetails?.resource_type === 'Full-Time'
+        resourceTypeMap[resourceDetails?.resource_type]?.toLowerCase() ===
+          ResourceTypeEnum.FULL_TIME
       ) {
         const salaryValue = (fieldValue as string).trim();
         setIsSalaryRequired(salaryValue === '');
@@ -608,8 +676,16 @@ const ResourceForm: React.FC = () => {
     }
   };
 
+  const isresourceType =
+    resourceTypeMap[resourceDetails?.resource_type]?.toLowerCase() ===
+    ResourceTypeEnum.FULL_TIME;
+
   // Form configuration
   const formConfig = ResourceFormData(
+    memoizedStatus,
+    memoizedResourceType,
+    memoizedSkillLevels,
+    memoizedResourceStatus,
     memoizedCountry,
     memoizedState,
     memoizeCity,
@@ -687,6 +763,10 @@ const ResourceForm: React.FC = () => {
               createResourceSkill.isPending ||
               updateResourceSkill.isPending ||
               createResourceCost.isPending ||
+              statusOptions.isPending ||
+              resourceTypeOptions.isPending ||
+              skillLevelOptions.isPending ||
+              resourceStatusOptions.isPending ||
               updateResourceCost.isPending
             }
             onClick={handleExternalSubmit}

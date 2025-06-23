@@ -1,3 +1,5 @@
+import { CommonApiResponse } from '../../common-service';
+
 export type ProjectList = {
   rid: string;
   account_id?: string;
@@ -116,6 +118,7 @@ export interface KeyContacts {
 }
 export interface NewProjectData {
   account_id?: string;
+  status_rid: string;
   name?: string;
   r_number?: string;
   industry_rid_name?: string;
@@ -160,6 +163,7 @@ export interface NewProjectData {
   project_startdate?: string | null;
   project_enddate?: string | null;
   project_type?: string;
+  project_type_rid?: string;
   project_classification_rid?: string | null;
   project_classification_name?: string;
   project_client_group?: string;
@@ -203,4 +207,17 @@ export interface NewProjectData {
   key_contact_status?: Status;
   project_fiscal_id?: string;
   project_fiscal_rid?: string;
+}
+
+export interface ProjectTypeItem {
+  rid: string;
+  project_type_name: string;
+  project_type_description: string;
+  status: string;
+}
+
+export interface GetProjectTypeApiResponse extends CommonApiResponse {
+  data: {
+    projectType: ProjectTypeItem[];
+  };
 }

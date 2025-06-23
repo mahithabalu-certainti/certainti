@@ -118,16 +118,14 @@ export const transformFormData = (
     program_name: formData.program_name || '',
     project_startdate: formData.project_startdate || null,
     project_enddate: formData.project_enddate || null,
-    project_type: formData.project_type,
+    project_type_rid: formData.project_type || '',
     project_classification_rid: formData.project_classification_rid || null,
     project_classification_other: formData.classification_name || null,
     // uuid: formData.project_classification_rid || null,
     project_client_group: formData.project_client_group || '',
     project_group: formData.project_group || '',
     project_description: formData.project_description || '',
-    project_status: formData.project_status
-      ? (capitalize(formData.project_status) as Status)
-      : ('Active' as Status),
+    status_rid: formData.project_status || '',
     fiscal_year: formData.fiscal_year,
     country_rid: formData.country,
     region_rid: formData.region,

@@ -7,6 +7,7 @@ import {
   Layout,
   OnChange,
   useGetAllCountries,
+  useGetStatus,
 } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
@@ -40,7 +41,6 @@ import {
 import {
   checkPermission,
   formatDateToYYYYMMDDWithTime,
-  STATUS_OPTIONS,
 } from '../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../../store/store';
@@ -86,7 +86,7 @@ export const AccountForm: React.FC = () => {
   const { accountid } = useParams();
   const dispatch = useAppDispatch();
 
-  // Permission Mangement
+  // Permission Management
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
@@ -141,6 +141,7 @@ export const AccountForm: React.FC = () => {
           ...transformKeyContactsFromAPI(
             account?.accountDetails?.keyContacts || []
           ),
+          status: account?.accountDetails?.status_rid,
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
           created_on: formatDateToYYYYMMDDWithTime(
@@ -158,8 +159,8 @@ export const AccountForm: React.FC = () => {
     }),
     [account]
   );
-  const defaultActiveValue = STATUS_OPTIONS[0].value;
 
+  const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
   const keyContactRoles = useKeyContactRoles('Account');
@@ -193,6 +194,22 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
+
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const defaultActiveValue = useMemo(() => {
+    const activeOption = memoizedStatus.find(
+      (option) => option.label.toLowerCase() === 'active'
+    );
+    return activeOption?.value || '';
+  }, [memoizedStatus]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -375,6 +392,7 @@ export const AccountForm: React.FC = () => {
   };
 
   const formConfig = AccFormData(
+    memoizedStatus,
     memoizedContry,
     memoizedParentAccounts,
     memoizedCurrency,
@@ -395,6 +413,7 @@ export const AccountForm: React.FC = () => {
     parentAccount.isLoading ||
     currency.isLoading ||
     industry.isLoading ||
+    statusOptions.isLoading ||
     keyContactRoles.isLoading;
 
   if (

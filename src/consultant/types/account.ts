@@ -191,6 +191,7 @@ export interface KeyContacts {
 
 export interface AccountFieldsTypes {
   rid: string;
+  status_rid: string;
   primary_contact_email: string;
   primary_contact_number: string;
   finance_poc_name: string;
