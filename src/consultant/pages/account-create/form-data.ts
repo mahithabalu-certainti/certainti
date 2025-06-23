@@ -89,7 +89,7 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
   createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
-    required: false,
+    required: true,
   }),
   createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,

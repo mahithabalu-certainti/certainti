@@ -223,6 +223,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         <KeyContactSection
           title='Key Contacts List'
           data={keyContactsList || []}
+          ccAvailable={true}
         />
       )}
 

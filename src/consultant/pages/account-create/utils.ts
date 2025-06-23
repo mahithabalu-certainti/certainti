@@ -73,15 +73,9 @@ export const keyContactsTransformPayload = (
         key_contact_role: role || null,
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
-          formData[`include_in_communication_${index}`] === 'yes'
-            ? true
-            : formData[`include_in_communication_${index}`] === 'no'
-              ? false
-              : null,
+          formData[`include_in_communication_${index}`] === 'yes',
         interaction_cc_recipient:
-          formData[`interaction_cc_recipient_${index}`] === 'yes'
-            ? true
-            : false,
+          formData[`interaction_cc_recipient_${index}`] === 'yes',
         status: formData[`key_contact_status_${index}`]
           ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
           : ('Active' as Status),

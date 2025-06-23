@@ -51,12 +51,12 @@ export const renderRows = ({
   selectedRows,
   handleRowClick,
   handleSelectRow,
-  // handleEdit,
-  // handleDelete,
+  handleEdit,
+  handleDelete,
   renderChildRows,
   handleAccountNameClick,
-  // isAccountEditEnable,
-  // isAccountDeleteEnable,
+  isAccountEditEnable,
+  isAccountDeleteEnable,
 }: RenderRowsProps) => {
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
@@ -333,18 +333,6 @@ export const renderRows = ({
               {account.accountNumber || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell
-            sx={{
-              width: '60px',
-              minWidth: '60px',
-              maxWidth: '60px',
-              padding: '0px !important',
-              textAlign: 'center',
-            }}
-          >
-            -
-          </TableCell>
-          {/* Edit option removed for parent account temporary 
           {(isAccountEditEnable || isAccountDeleteEnable) && (
             <TableCell
               sx={{
@@ -365,7 +353,7 @@ export const renderRows = ({
                 }}
               />
             </TableCell>
-          )} */}
+          )}
         </TableRow>
         <Suspense fallback={null}>
           {openRows.has(account.accountId) &&
@@ -910,13 +898,24 @@ export const renderChildRows = ({
                       minWidth: '60px',
                       maxWidth: '60px',
                       padding: '0px !important',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  {/* <TableCell
+                    sx={{
+                      width: '60px',
+                      minWidth: '60px',
+                      maxWidth: '60px',
+                      padding: '0px !important',
                     }}
                   >
                     <ActionButton
                       onEdit={() => handleEdit(account)}
                       onDelete={() => handleDelete(account)}
                     />
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))}
             </>

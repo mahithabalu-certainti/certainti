@@ -20,10 +20,11 @@ interface KeyContact {
   keyContactStatus?: string;
 }
 
-const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
-  title,
-  data,
-}) => (
+const KeyContactSection: React.FC<{
+  title: string;
+  data: KeyContact[];
+  ccAvailable?: boolean;
+}> = ({ title, data, ccAvailable = false }) => (
   <div>
     <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
       {title}
@@ -49,7 +50,11 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
               { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
               { label: 'Interaction Recipient?', fixedWidth: 200 },
-              { label: 'Interaction CC Recipient?', fixedWidth: 200 },
+              {
+                label: 'Interaction CC Recipient?',
+                fixedWidth: 200,
+                hide: !ccAvailable,
+              },
               { label: 'Key Contact Status', fixedWidth: 160 },
             ].map((col, i) => (
               <TableCell
@@ -62,6 +67,7 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                   width: col.fixedWidth || 160,
                   minWidth: col.fixedWidth || 160,
                   maxWidth: col.fixedWidth || 160,
+                  display: col.hide ? 'none' : 'table-cell',
                 }}
               >
                 {col.label}
@@ -83,7 +89,10 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
         >
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} sx={{ textAlign: 'center', py: 1 }}>
+              <TableCell
+                colSpan={ccAvailable ? 9 : 8}
+                sx={{ textAlign: 'center', py: 1 }}
+              >
                 Key contact information is not available
               </TableCell>
             </TableRow>
@@ -169,21 +178,23 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                       ? 'No'
                       : '-'}
                 </TableCell>
-                <TableCell
-                  sx={{
-                    height: '28px',
-                    padding: '0px 8px',
-                    width: '200px',
-                    minWidth: '200px',
-                    maxWidth: '200px',
-                  }}
-                >
-                  {field.interactionccRecipient === true
-                    ? 'Yes'
-                    : field.interactionccRecipient === false
-                      ? 'No'
-                      : '-'}
-                </TableCell>
+                {ccAvailable && (
+                  <TableCell
+                    sx={{
+                      height: '28px',
+                      padding: '0px 8px',
+                      width: '200px',
+                      minWidth: '200px',
+                      maxWidth: '200px',
+                    }}
+                  >
+                    {field.interactionccRecipient === true
+                      ? 'Yes'
+                      : field.interactionccRecipient === false
+                        ? 'No'
+                        : '-'}
+                  </TableCell>
+                )}
                 <TableCell
                   sx={{
                     height: '28px',

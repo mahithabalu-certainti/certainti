@@ -412,6 +412,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const newIncludeValue = value === 'yes';
         const statusField = `key_contact_status_${currentIndex}`;
         const currentStatus = constructFormData[statusField];
+        const ccRecipientField = `interaction_cc_recipient_${currentIndex}`;
+        const isCCRecipient = constructFormData[ccRecipientField] === 'yes';
 
         // Skip validation if the contact is inactive
         if (currentStatus === 'inactive') {
@@ -419,7 +421,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           return;
         }
 
-        // Check if another active contact already has Include In Communications set to yes
+        // Check if another active contact already has 'include_in_communication' set to 'yes'
         const otherIncludeExists = Object.keys(constructFormData).some(
           (key) => {
             if (
@@ -429,8 +431,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               const otherIndex = parseInt(key.split('_').pop() || '0', 10);
               const otherStatusField = `key_contact_status_${otherIndex}`;
               const otherStatus = constructFormData[otherStatusField];
-
-              // Only consider active contacts
               return (
                 constructFormData[key] === 'yes' && otherStatus === 'active'
               );
@@ -439,49 +439,59 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
         );
 
-        if (newIncludeValue && otherIncludeExists) {
-          setConfirmationState({
-            isOpen: true,
-            message:
-              'Only one active contact can be set as Interaction Recipient. Would you like to proceed?',
-            onConfirm: () => {
-              // Set all other active include_in_communication fields to 'no'
-              Object.keys(newData).forEach((key) => {
-                if (
-                  key.startsWith('include_in_communication_') &&
-                  key !== field.name
-                ) {
-                  const otherIndex = parseInt(key.split('_').pop() || '0', 10);
-                  const otherStatusField = `key_contact_status_${otherIndex}`;
-                  const otherStatus = constructFormData[otherStatusField];
+        // Build confirmation based on conflicts
+        if (newIncludeValue && (isCCRecipient || otherIncludeExists)) {
+          let message = '';
+          const updatedData = { ...constructFormData };
 
-                  if (otherStatus === 'active') {
-                    newData[key] = 'no';
-                  }
+          if (isCCRecipient && otherIncludeExists) {
+            message =
+              "This contact is already marked as 'Interaction CC Recipient', and another active contact is already marked as 'Interaction Recipient'. This contact will be marked as the only 'Interaction Recipient' and CC Recipient will be removed. Do you want to continue?";
+            updatedData[ccRecipientField] = 'no';
+
+            // Clear others' Interaction Recipient
+            Object.keys(updatedData).forEach((key) => {
+              if (
+                key.startsWith('include_in_communication_') &&
+                key !== field.name
+              ) {
+                const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                const otherStatusField = `key_contact_status_${otherIndex}`;
+                const otherStatus = constructFormData[otherStatusField];
+                if (otherStatus === 'active') {
+                  updatedData[key] = 'no';
                 }
-              });
+              }
+            });
+          } else if (isCCRecipient) {
+            message =
+              "This contact is already marked as 'Interaction CC Recipient'. A contact cannot be both Interaction Recipient and CC Recipient. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
+            updatedData[ccRecipientField] = 'no';
+          } else if (otherIncludeExists) {
+            message =
+              'Only one active contact can be set as Interaction Recipient. Would you like to proceed?';
 
-              // Update the form data with the new values
-              setConstructFormData(newData);
-            },
-          });
-          return;
-        }
+            Object.keys(updatedData).forEach((key) => {
+              if (
+                key.startsWith('include_in_communication_') &&
+                key !== field.name
+              ) {
+                const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                const otherStatusField = `key_contact_status_${otherIndex}`;
+                const otherStatus = constructFormData[otherStatusField];
+                if (otherStatus === 'active') {
+                  updatedData[key] = 'no';
+                }
+              }
+            });
+          }
 
-        const ccRecipientField = `interaction_cc_recipient_${currentIndex}`;
-        const isCCRecipient = constructFormData[ccRecipientField] === 'yes';
+          updatedData[field.name] = 'yes'; // finally mark this contact as recipient
 
-        if (value === 'yes' && isCCRecipient) {
           setConfirmationState({
             isOpen: true,
-            message:
-              "A contact marked as 'Interaction Recipient' cannot also be marked as 'Interaction CC Recipient'. This field will be set to 'No'. Do you want to continue?",
+            message,
             onConfirm: () => {
-              const updatedData = {
-                ...constructFormData,
-                [field.name]: 'yes',
-                [ccRecipientField]: 'no',
-              };
               setConstructFormData(updatedData);
             },
           });
@@ -496,8 +506,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       ) {
         const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
         const interactionRecipientField = `include_in_communication_${currentIndex}`;
+        const statusField = `key_contact_status_${currentIndex}`;
+        const currentStatus = constructFormData[statusField];
         const isRecipient =
           constructFormData[interactionRecipientField] === 'yes';
+
+        if (currentStatus === 'inactive') {
+          setConstructFormData(newData);
+          return;
+        }
 
         if (isRecipient) {
           setConfirmationState({
@@ -671,12 +688,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const isPrimary = constructFormData[isPrimaryField] === 'yes';
         const commFieldName = `include_in_communication_${currentIndex}`;
         const currentCommValue = constructFormData[commFieldName] === 'yes';
+        const ccField = `interaction_cc_recipient_${currentIndex}`;
+        const currentCCValue = constructFormData[ccField] === 'yes';
 
-        // Only proceed if changing from inactive to active
         if (previousStatus === 'inactive' && newStatus === 'active') {
           newData[statusField] = 'active';
 
-          // Check for both conditions that might require confirmation
           const primaryConflict =
             isPrimary &&
             currentRole &&
@@ -714,9 +731,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               return false;
             });
 
-          // Prepare combined message if both conflicts exist
+          const ccConflict = currentCommValue && currentCCValue;
+
+          // Build final message
           let combinedMessage = '';
-          if (primaryConflict && commConflict) {
+          if (primaryConflict && commConflict && ccConflict) {
+            combinedMessage =
+              "This contact is marked as both 'Interaction Recipient' and 'Interaction CC Recipient', and also a Primary Contact with the same role exists. Only one of each is allowed. 'Interaction CC Recipient' will be reset to 'No'. Do you want to proceed?";
+          } else if (ccConflict) {
+            combinedMessage =
+              "This contact is already marked as both 'Interaction Recipient' and 'Interaction CC Recipient'. A contact cannot be both. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
+          } else if (primaryConflict && commConflict) {
             combinedMessage =
               'A Primary Contact with the same role and an active Interaction Recipient already exists. Would you like to proceed?';
           } else if (primaryConflict) {
@@ -727,12 +752,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               'Only one active contact can be set as Interaction Recipient. Would you like to proceed?';
           }
 
-          if (primaryConflict || commConflict) {
+          if (primaryConflict || commConflict || ccConflict) {
             setConfirmationState({
               isOpen: true,
               message: combinedMessage,
               onConfirm: () => {
-                // Handle primary contact conflicts
+                // Reset CC Recipient if there's a CC conflict
+                if (ccConflict) {
+                  newData[ccField] = 'no';
+                }
+
+                // Resolve primary contact conflict
                 if (primaryConflict) {
                   Object.keys(newData).forEach((key) => {
                     if (
@@ -746,7 +776,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       );
                       const otherRoleKey = `key_contact_role_${otherIndex}`;
                       const otherStatusKey = `key_contact_status_${otherIndex}`;
-
                       if (
                         constructFormData[otherRoleKey] === currentRole &&
                         constructFormData[otherStatusKey] === 'active'
@@ -757,7 +786,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   });
                 }
 
-                // Handle communication inclusion conflicts
+                // Resolve interaction recipient conflict
                 if (commConflict) {
                   Object.keys(newData).forEach((key) => {
                     if (
@@ -776,13 +805,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   });
                 }
 
-                // Ensure this contact is properly set
-                if (isPrimary) {
-                  newData[isPrimaryField] = 'yes';
-                }
-                if (currentCommValue) {
-                  newData[commFieldName] = 'yes';
-                }
+                // Set the current contact as active + selected values
+                newData[statusField] = 'active';
+                if (isPrimary) newData[isPrimaryField] = 'yes';
+                if (currentCommValue) newData[commFieldName] = 'yes';
 
                 setConstructFormData(newData);
               },
@@ -790,10 +816,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             return;
           }
 
-          // If no conflicts, just update the status
+          // No conflicts — just update
           setConstructFormData(newData);
         } else {
-          // For other status changes (not inactive→active), just update
           newData[statusField] = newStatus;
           setConstructFormData(newData);
         }
@@ -2346,7 +2371,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               <TableBody>
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     align='center'
                     sx={{ height: '32px', padding: '0px', color: '#7d98b6' }}
                   >
