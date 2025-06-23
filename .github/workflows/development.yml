@@ -114,7 +114,7 @@ jobs:
           LOGIN_URL=https://thinkrd365-development.certainti.ai
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
-          NODE_ENV=DEV
+          NODE_ENV=DEVELOPMENT
 
           NODE_ENV_DB_PREFIX="D001-"
           EOF
@@ -228,7 +228,7 @@ jobs:
           ORGDB_USERNAME=org-db-admin-username
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=DEV
+          NODE_ENV=DEVELOPMENT
 
           NODE_ENV_DB_PREFIX="D001-"
           EOF
@@ -339,7 +339,7 @@ jobs:
           ORGDB_USERNAME=org-db-admin-username
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=DEV
+          NODE_ENV=DEVELOPMENT
 
           NODE_ENV_DB_PREFIX="D001-"
           EOF
