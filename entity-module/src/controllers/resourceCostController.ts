@@ -9,6 +9,7 @@ import {
   handleSuccessResponse,
   handleErrorResponse,
   generateExcelBase64,
+  handlePromptResponse,
 } from "../utils/helpers";
 import {
   resourceCostSchema,
@@ -205,15 +206,22 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    if(value.user_preference === "reject"){
+      return;
+    }
+
     const resourceCost = await resourceCostService.createResourceCost(
       value,
-      userId
+      userId,
+      value.user_preference
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, resourceCost.data);
       return;
+    } else if(resourceCost.statusCode === HttpStatus.PROMPT) {
+      handlePromptResponse(res, HttpStatus.PROMPT, resourceCost.message, resourceCost.data);
     } else {
       errorLog(methodName, resourceCost.errorMessage);
       handleErrorResponse(
@@ -271,15 +279,22 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    if(value.user_preference === "reject"){
+      return;
+    }
+
     const resourceCost = await resourceCostService.updateResourceCost(
       value,
-      userId
+      userId,
+      value.user_preference,
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, resourceCost.data);
       return;
+    } else if(resourceCost.statusCode === HttpStatus.PROMPT){
+      handlePromptResponse(res, HttpStatus.PROMPT, resourceCost.message, resourceCost.data);
     } else {
       errorLog(methodName, resourceCost.errorMessage);
       handleErrorResponse(

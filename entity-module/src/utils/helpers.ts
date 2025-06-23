@@ -91,6 +91,21 @@ export function handleErrorResponse(
 ): void {
   errorResponse(res, statusCode, statusCodeValue, message);
 }
+
+export function handlePromptResponse(
+  res: Response,
+  statusCode: number,
+  statusMessage: string,
+  data: any
+): void {
+    res.status(statusCode).json({
+      statusCode: statusCode,
+      statusCodeValue: HttpStatus.PROMPT_MESSAGE,
+      statusMessage: statusMessage,
+      data: data,
+    });
+}
+
 export async function generateExcelBase64(
   data: any,
   sheetName: string
