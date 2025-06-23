@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import {
-  accountSettingsIcon,
-  actionIcon,
-  newFilterIcon,
-  projectDetailsIcon,
-  refreshIcon,
+  AccountSettingsIcon,
+  ActionIcon,
+  NewFilterIcon,
+  ProjectDetailsIcon,
+  RefreshIcon,
 } from '../../../../assets';
 import { ActionsDropdown } from '../../../../components';
 import { getAllProjectFilterFields } from './helpers';
@@ -19,8 +19,10 @@ import { AllModules, AllPermissions } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { exportProjectData } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
+import { Switch } from '@mui/material';
 
 export const Projects: React.FC = () => {
+  const [toggleEnabled, setToggleEnabled] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -30,12 +32,11 @@ export const Projects: React.FC = () => {
     sortBy: 'project_code',
     sortOrder: 'ASC',
     fiscalYear: 0,
-    globalFilters: {},
   });
-  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
-    Date.now()
-  );
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] =
+    useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now()); // unique on every click
@@ -99,6 +100,8 @@ export const Projects: React.FC = () => {
       filters: appliedFilters,
       fiscalYear: tableParams.fiscalYear,
       globalFilters: tableParams.globalFilters,
+      timezone: systemTimezone,
+      bothParentAndChild: toggleEnabled,
     };
     exportProjectData('projectall', projectParams);
   };
@@ -130,6 +133,11 @@ export const Projects: React.FC = () => {
       value: item.value,
     }))
   );
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (setToggleEnabled) {
+      setToggleEnabled(event.target.checked);
+    }
+  };
 
   if (!projectIsEnable) return <AccessRestricted />;
 
@@ -138,8 +146,7 @@ export const Projects: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <img
-              src={projectDetailsIcon}
+            <ProjectDetailsIcon
               alt='menu-icon'
               className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
             />
@@ -148,7 +155,7 @@ export const Projects: React.FC = () => {
                 Projects
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
-                {`All Projects • ${totalCount} items`}
+                {`${totalCount} items`}
               </div>
             </div>
           </div>
@@ -159,17 +166,26 @@ export const Projects: React.FC = () => {
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
             onClick={onRefreshClick}
           >
-            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+            <RefreshIcon alt='refresh-icon' className='h-4' />
           </div>
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <img src={actionIcon} alt='menu-icon' className='h-4' />
+            <ActionIcon alt='menu-icon' className='h-4' />
           </div>
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
+            <AccountSettingsIcon alt='menu-icon' className='h-4' />
           </div>
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
+        <div className='flex items-center gap-2'>
+          <span className='text-sm text-gray-700'>Include Aggregation</span>
+          <Switch
+            checked={toggleEnabled}
+            onChange={handleToggleChange}
+            size='small'
+            color='success'
+          />
+        </div>
         <div className='relative'>
           <button
             aria-describedby={filterId}
@@ -177,7 +193,7 @@ export const Projects: React.FC = () => {
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >
-            <img src={newFilterIcon} alt='filter-icon' />
+            <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
             sortFilterCount > 0 ? (
@@ -190,18 +206,20 @@ export const Projects: React.FC = () => {
               </div>
             ) : null}
           </button>
-          <Filter
-            value={'allProjects'}
-            isOpen={isFilterOpen}
-            filterAnchorEl={anchorEl}
-            filterId={filterId}
-            filterMenu={projectFilterFields}
-            setAppliedFilters={setAppliedFilters}
-            handleCloseFilter={handleCloseFilter}
-            setCurrentPage={setPage}
-            mode={'date'}
-            handleSorting={handleSorting}
-          />
+          <Suspense fallback={null}>
+            <Filter
+              value={'allProjects'}
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
+              filterMenu={projectFilterFields}
+              setAppliedFilters={setAppliedFilters}
+              handleCloseFilter={handleCloseFilter}
+              setCurrentPage={setPage}
+              mode={'date'}
+              handleSorting={handleSorting}
+            />
+          </Suspense>
         </div>
       </div>
 
@@ -209,13 +227,19 @@ export const Projects: React.FC = () => {
         <ProjectTable
           appliedFilters={appliedFilters}
           tableParams={tableParams}
-          setTableParams={setTableParams}
+          setTableParams={(data) => {
+            setTableParams(data);
+            onRefreshClick();
+          }}
           setTotalCount={setTotalCount}
           isProjectEditEnable={isProjectEditEnable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
+          toggleEnabled={toggleEnabled}
         />
       </div>
     </div>
   );
 };
+
+export default Projects;

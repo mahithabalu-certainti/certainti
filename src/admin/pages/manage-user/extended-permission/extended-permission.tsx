@@ -8,7 +8,7 @@ import {
 import { ProfileHeaderDetail, ProfilePermissions } from '../../manage-profile';
 import { Skeleton } from '@mui/material';
 import { Privilege } from '../../../types';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 
@@ -33,7 +33,7 @@ export const ExtendedPermission: React.FC = () => {
   const handlePrivilegesChange = (updatedPrivileges: Privilege[]) => {
     setPrivileges(updatedPrivileges);
   };
- 
+
   const handleSaveProfile = () => {
     const payload = {
       user_id: data?.data.user_id,
@@ -56,11 +56,7 @@ export const ExtendedPermission: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[50px] h-[50px] px-4 flex items-center justify-between border-b-1 border-[#CBD6E2]'>
           <div className='flex items-center gap-2'>
-            <img
-              src={ManageUserIcon}
-              alt='manage user'
-              className='w-8 h-8 rounded'
-            />
+            <ManageUserIcon alt='manage user' className='w-8 h-8 rounded' />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
                 Admin Permission
@@ -101,13 +97,16 @@ export const ExtendedPermission: React.FC = () => {
               ))}
             </div>
           ) : (
-            <ProfilePermissions
-              createProfilePermissionsData={data?.data.permissions}
-              onPrivilegesChange={handlePrivilegesChange}
-            />
+            <Suspense fallback={null}>
+              <ProfilePermissions
+                createProfilePermissionsData={data?.data.permissions}
+                onPrivilegesChange={handlePrivilegesChange}
+              />
+            </Suspense>
           )}
         </div>
       </div>
     </>
   );
 };
+export default ExtendedPermission;

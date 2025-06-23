@@ -2,7 +2,7 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import * as React from 'react';
-import { actionIcon } from '../../../../assets';
+import { ActionIcon } from '../../../../assets';
 import { ListItemText } from '@mui/material';
 import { ActionsDropdownItem } from '../../../../common-utils';
 
@@ -62,7 +62,7 @@ export default function ActionButton({
         <div
           className={`${open ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
         >
-          <img src={actionIcon} alt='menu-icon' className='h-[13px]' />
+          <ActionIcon alt='menu-icon' className='h-[13px]' />
         </div>
       </IconButton>
       <Menu

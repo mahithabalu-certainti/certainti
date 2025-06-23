@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { accountHomeIcon, editIcon } from '../../../assets';
+import { AccountHomeIcon, EditIcon } from '../../../assets';
 import {
   AllModules,
   AllPermissions,
@@ -23,11 +23,17 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
-import { FormData, newKeyContactFields } from './form-data';
+import {
+  AccountFormData,
+  FieldType,
+  KeyContactHeader,
+  OthersEnum,
+  SelectOption,
+  YesNo,
+} from '../../types';
+import { AccFormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
-  othersIndustryId,
   transformFormData,
   transformKeyContactsFromAPI,
 } from './utils';
@@ -37,13 +43,39 @@ import {
   STATUS_OPTIONS,
 } from '../../../common-utils';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { RootState, useAppDispatch } from '../../../store/store';
 import { AccessRestricted } from '../../../components/account-restricted';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
+import { setRefetchGlobalAccounts } from '../../../store/slices';
+
+const defaultKeyContactHeaders: KeyContactHeader[] = [
+  { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
+  { name: 'key_contact_role', label: 'Key Contact Role', width: '180px' },
+  { name: 'key_contact_email', label: 'Key Contact Email', width: '180px' },
+  // { name: 'key_contact_rid', label: 'Key Contact ID', width: '120px' },
+  { name: 'is_primary_contact', label: 'Is Primary Contact?', width: '140px' },
+  {
+    name: 'include_in_communication',
+    label: 'Interaction Recipient?',
+    width: '200px',
+  },
+  // {
+  //   name: 'interaction_cc_recipient',
+  //   label: 'Interaction CC Recipient?',
+  //   width: '200px',
+  // },
+  {
+    name: 'key_contact_status',
+    label: 'Key Contact Status',
+    width: '140px',
+  },
+  { name: 'button', label: '', width: '35px' },
+];
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
+  const [logo, setLogo] = useState<File | null>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
@@ -52,6 +84,7 @@ export const AccountForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
+  const dispatch = useAppDispatch();
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -69,6 +102,30 @@ export const AccountForm: React.FC = () => {
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
+  const logoUrl = account?.accountById?.logo_url;
+  const logoName = logoUrl
+    ? decodeURIComponent(logoUrl.substring(logoUrl.lastIndexOf('/') + 1))
+    : '';
+  const getMimeTypeFromExtension = (fileName: string): string => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg'; // browser treats .jpg as image/jpeg
+      case 'png':
+        return 'image/png';
+      case 'svg':
+        return 'image/svg+xml';
+      default:
+        return '';
+    }
+  };
+  useEffect(() => {
+    if (logoUrl && logoName) {
+      const fileType = getMimeTypeFromExtension(logoName);
+      setLogo({ name: logoName, type: fileType } as File);
+    }
+  }, [account, logoName]);
   // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
@@ -89,11 +146,13 @@ export const AccountForm: React.FC = () => {
           created_on: formatDateToYYYYMMDDWithTime(
             account?.accountById?.created_datetime
           ),
-          updated_on: formatDateToYYYYMMDDWithTime(
-            account?.accountById?.modified_datetime
-          ),
+          updated_on: account?.accountById?.modified_datetime
+            ? formatDateToYYYYMMDDWithTime(
+                account?.accountById?.modified_datetime || '-'
+              )
+            : '-',
           created_by: account?.accountDetails?.created_by,
-          updated_by: account?.accountDetails?.modified_by,
+          updated_by: account?.accountDetails?.modified_by || '-',
           website: account?.accountDetails?.website || '',
         }),
     }),
@@ -122,6 +181,9 @@ export const AccountForm: React.FC = () => {
           : 'Account created successfully'
       );
       goBack();
+      if (!isEditView) {
+        dispatch(setRefetchGlobalAccounts(true));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -131,12 +193,6 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
-
-  useEffect(() => {
-    if (accountData.industry_rid === othersIndustryId) {
-      setShowOthersField(true);
-    }
-  }, [accountData.industry_rid]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -193,8 +249,18 @@ export const AccountForm: React.FC = () => {
   );
 
   useEffect(() => {
+    const selectedIndustry = memoizedIndustry.find(
+      (option) => String(option.value) === String(accountData.industry_rid)
+    );
+
+    setShowOthersField(
+      selectedIndustry?.label.toLowerCase() === OthersEnum.Other
+    );
+  }, [accountData.industry_rid, memoizedIndustry]);
+
+  useEffect(() => {
     const existingContacts = account?.accountDetails?.keyContacts || [];
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
 
     let fields: FieldType[] = [];
 
@@ -202,8 +268,6 @@ export const AccountForm: React.FC = () => {
       existingContacts.forEach(() => {
         fields = [...fields, ...newKeyData];
       });
-    } else {
-      fields = [...newKeyData];
     }
 
     setKeyContacts(fields);
@@ -222,31 +286,46 @@ export const AccountForm: React.FC = () => {
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
-      const newEmptyContact = newKeyContactFields(memoizedRole, false);
-      contactsArr.splice(0, groupSize, ...newEmptyContact);
+      setKeyContacts([]);
     } else {
       contactsArr.splice(startIndex, groupSize);
+      setKeyContacts(contactsArr);
     }
-
-    setKeyContacts(contactsArr);
   };
 
   const addKeyContactInfo = () => {
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
-
   const submitData = (formValues: Partial<AccountFormData>) => {
+    let logoAction: 'update' | 'delete' | '' = '';
+
+    if (isEditView) {
+      if (!logo && logoUrl) {
+        // Logo existed before, but now it's null — user deleted it
+        logoAction = 'delete';
+      } else if (logo instanceof File) {
+        // New image uploaded
+        logoAction = 'update';
+      } else {
+        // No change to logo
+        logoAction = '';
+      }
+    }
     const transformData = transformFormData(
       formValues,
       isEditView,
       accountData?.rid,
-      account?.accountDetails?.keyContacts
+      account?.accountDetails?.keyContacts,
+      logoAction
     );
+    const formData = new FormData();
+    formData.append('logo', logo as Blob);
+    formData.append('data', JSON.stringify(transformData));
     if (isEditView) {
-      updateAccount.mutate(transformData);
+      updateAccount.mutate(formData);
     } else {
-      createAccount.mutate(transformData);
+      createAccount.mutate(formData);
     }
   };
 
@@ -273,10 +352,21 @@ export const AccountForm: React.FC = () => {
     }
     // show others field if industry is selected as Others
     if (data.fieldName === 'industry_rid') {
-      // others id
-      setShowOthersField(
-        data.fieldValue === othersIndustryId // others id
+      const selectedIndustry = memoizedIndustry.find(
+        (option) => String(option.value) === String(data.fieldValue)
       );
+
+      setShowOthersField(
+        selectedIndustry?.label.toLowerCase() === OthersEnum.Other
+      );
+    }
+    if (data.fieldName === 'logo') {
+      const selectedFile = data.fieldValue as File | null;
+      if (selectedFile) {
+        setLogo(selectedFile);
+      } else {
+        setLogo(null);
+      }
     }
   };
 
@@ -284,7 +374,7 @@ export const AccountForm: React.FC = () => {
     window.history.back();
   };
 
-  const formConfig = FormData(
+  const formConfig = AccFormData(
     memoizedContry,
     memoizedParentAccounts,
     memoizedCurrency,
@@ -315,13 +405,13 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <img
-            src={isEditView ? editIcon : accountHomeIcon}
-            alt='menu-icon'
-            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
-          />
+          {isEditView ? (
+            <EditIcon className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded' />
+          ) : (
+            <AccountHomeIcon className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded' />
+          )}
           <div className='w-[90%]'>
             {isEditView && (
               <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -373,7 +463,7 @@ export const AccountForm: React.FC = () => {
                   ? {
                       // Set default values in Create Account
                       status: defaultActiveValue,
-                      autosend_interaction: YesNo.Yes,
+                      autosend_interaction: YesNo.No,
                       auto_access_rd: YesNo.Yes,
                     }
                   : {}
@@ -382,9 +472,13 @@ export const AccountForm: React.FC = () => {
             formRef={formRef}
             onChange={onChangeField}
             layout={Layout.TYPE_1}
+            logo={logo}
+            keyContactHeaders={defaultKeyContactHeaders}
           />
         )}
       </div>
     </>
   );
 };
+
+export default AccountForm;

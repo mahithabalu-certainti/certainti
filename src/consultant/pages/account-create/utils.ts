@@ -28,14 +28,8 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`is_primary_contact_${index}`] = contact.is_primary_contact
       ? 'yes'
       : 'no';
-    formData[`include_in_communication_${index}`] = formData[
-      `include_in_communication_${index}`
-    ] =
-      contact.include_in_communication === true
-        ? 'yes'
-        : contact.include_in_communication === false
-          ? 'no'
-          : null;
+    formData[`include_in_communication_${index}`] =
+      contact.include_in_communication ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
       contact.status?.toLowerCase() || 'active';
   });
@@ -77,11 +71,7 @@ export const keyContactsTransformPayload = (
         key_contact_role: role || null,
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
-          formData[`include_in_communication_${index}`] === 'yes'
-            ? true
-            : formData[`include_in_communication_${index}`] === 'no'
-              ? false
-              : null,
+          formData[`include_in_communication_${index}`] === 'yes',
         status: formData[`key_contact_status_${index}`]
           ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
           : ('Active' as Status),
@@ -117,7 +107,8 @@ export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
   account_rid?: string,
-  keyContactsList?: KeyContacts[]
+  keyContactsList?: KeyContacts[],
+  logoAction?: 'update' | 'delete' | ''
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
@@ -126,9 +117,9 @@ export const transformFormData = (
     status: formData.status,
     is_parent: formData.is_parent === 'yes',
     parent_account_rid: formData.parent_account_rid || null,
-    account_currency_rid: formData.currency_rid || null,
-    account_country_rid: formData.country_rid || null,
-    account_country_region_rid: formData.region || null,
+    currency_rid: formData.currency_rid || null,
+    country_rid: formData.country_rid || null,
+    region_rid: formData.region_rid || null,
     max_ai_interactions: Number(formData.max_ai_interactions),
     autosend_interaction: formData.autosend_interaction === 'yes',
     auto_access_rd: formData.auto_access_rd === 'yes',
@@ -154,10 +145,14 @@ export const transformFormData = (
     business_details: formData.business_details,
     key_contacts:
       keyContactsTransformPayload(formData, isEdit, keyContactsList) || [],
+    organisation_name: formData.organisation_name,
   };
   if (isEdit) {
     data.account_rid = account_rid;
     data.r_number = account_rid;
+  }
+  if (isEdit && logoAction !== undefined) {
+    (data as any).logo_action = logoAction;
   }
   return data;
 };

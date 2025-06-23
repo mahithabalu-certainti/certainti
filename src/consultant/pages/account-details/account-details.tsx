@@ -1,12 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
   useParams,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-import { accountDetailsIcon } from '../../../assets';
+import {
+  AccountDetailsIcon,
+  ActivitiesIcon,
+  AttachmentsSideIcon,
+  CasesIcon,
+  ChecklistIcon,
+  DetailsIcon,
+  FinancialIcon,
+  ImportsIcon,
+  NotesSideIcon,
+  ProjectsSideIcon,
+  ResourcesIcon,
+  TimeSheetIcon,
+} from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
@@ -50,6 +63,7 @@ export const AccountDetails = () => {
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -69,11 +83,21 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_EXPORT
   );
+  const isResourcesExportEnable = checkPermission(
+    permission,
+    AllPermissions.RESOURCES_DOWNLOAD
+  );
+  const isProjectExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+  );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
+  const [toggleEnabled, setToggleEnabled] = useState(false);
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -81,6 +105,7 @@ export const AccountDetails = () => {
     fiscalYear: String(convertedFiscalYear),
     rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
     resourceRid: '',
+    filter: {},
   });
   const [projectParams, setProjectParams] = useState<ProjectListParams>({
     sortBy: 'created_datetime',
@@ -103,12 +128,14 @@ export const AccountDetails = () => {
     }
 
     //"resource" | "cost" | "skill"
-    const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder } = tableParams;
+    const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder, filter } =
+      tableParams;
 
     const commonPayload = {
       rNumber,
       sortBy,
       sortOrder,
+      filter,
     };
 
     const exportPayload = {
@@ -118,7 +145,11 @@ export const AccountDetails = () => {
     };
 
     if (exportType === 'project') {
-      exportProjectData(exportType, projectParams);
+      exportProjectData(exportType, {
+        ...projectParams,
+        timezone,
+        bothParentAndChild: toggleEnabled,
+      });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -164,6 +195,16 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
+  const checkExport = () => {
+    if (searchParams.get('list') === 'resources') {
+      return !isResourcesExportEnable;
+    } else if (searchParams.get('list') === 'projects') {
+      return !isProjectExportEnable;
+    } else {
+      return !isAccountExportEnable;
+    }
+  };
+
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
@@ -172,7 +213,7 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
-      hide: !isAccountExportEnable,
+      hide: checkExport(),
     },
   ];
 
@@ -229,6 +270,8 @@ export const AccountDetails = () => {
             accountDetails={{ ...data, activeKey: 'Projects' }}
             setExportType={setExportType}
             setProjectParams={setProjectParams}
+            toggleEnabled={toggleEnabled}
+            setToggleEnabled={setToggleEnabled}
           />
         );
       case 'cases':
@@ -244,7 +287,11 @@ export const AccountDetails = () => {
       case 'imports':
         return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
       default:
-        return <div className='p-6'>Page Not Found</div>;
+        return (
+          <div className='flex items-center justify-center h-full'>
+            Page Not Found
+          </div>
+        );
     }
   };
 
@@ -253,60 +300,81 @@ export const AccountDetails = () => {
   const sideMenuItems = useMemo<MenuItem[]>(
     () => [
       {
-        name: 'Financial Highlights',
-        key: 'financial',
-        id: AllModules.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-      },
-      {
         name: 'Details',
         key: 'details',
         id: AllModules.DETAILS,
         disabled: false,
+        icon: DetailsIcon,
       },
       {
         name: 'Resources',
         key: 'resources',
         id: AllModules.RESOURCES,
         disabled: disable,
+        icon: ResourcesIcon,
       },
       {
         name: 'Projects',
         key: 'projects',
         id: AllModules.PROJECTS,
         disabled: disable,
+        icon: ProjectsSideIcon,
       },
-      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: disable },
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'Cases',
+        key: 'cases',
+        id: AllModules.CASES,
+        disabled: disable,
+        icon: CasesIcon,
+      },
       {
         name: 'Activities',
         key: 'activities',
         id: AllModules.ACTIVITIES,
         disabled: disable,
+        icon: ActivitiesIcon,
       },
-      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: disable },
+      {
+        name: 'Notes',
+        key: 'notes',
+        id: AllModules.NOTES,
+        disabled: disable,
+        icon: NotesSideIcon,
+      },
       {
         name: 'Attachments',
         key: 'attachments',
         id: AllModules.ATTACHMENTS,
         disabled: disable,
+        icon: AttachmentsSideIcon,
       },
       {
         name: 'Checklist',
         key: 'checklist',
         id: AllModules.CHECKLISTS,
         disabled: disable,
+        icon: ChecklistIcon,
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
         id: AllModules.TIMESHEETS,
         disabled: disable,
+        icon: TimeSheetIcon,
       },
       {
         name: 'Imports',
         key: 'imports',
         id: AllModules.IMPORTS,
         disabled: disable,
+        icon: ImportsIcon,
       },
     ],
     [disable]
@@ -320,9 +388,12 @@ export const AccountDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Account Name'
-          icon={accountDetailsIcon}
-          iconBackgroundColor='#4B9BFF'
-          iconClasses='h-6 w-6 rounded'
+          icon={
+            <AccountDetailsIcon
+              className='h-6 w-6 rounded'
+              style={{ backgroundColor: '#4B9BFF' }}
+            />
+          }
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
@@ -347,22 +418,33 @@ export const AccountDetails = () => {
         singleLineView={true}
       />
       <div className='flex flex-1 flex-row w-full'>
-        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
+        <div
+          className={`flex transition-all duration-300 ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px]'
+              : 'w-[220px] min-w-[220px] max-w-[220px]'
+          }`}
+        >
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey}
             onSelect={setActiveKey}
             headerTitle='Related List'
             showBackIcon={true}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
           />
         </div>
-        <div className='flex-1 overflow-hidden'>
+        <div
+          className='flex-1'
+          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+        >
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />
             </div>
           ) : (
-            <>{renderContent()}</>
+            <Suspense fallback={null}>{renderContent()}</Suspense>
           )}
         </div>
       </div>

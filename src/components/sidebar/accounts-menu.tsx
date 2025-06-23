@@ -1,14 +1,14 @@
 import {
-  accountsIcon,
-  attachmentIcon,
-  caseIcon,
-  dashboardIcon,
-  helpIcon,
-  notesIcon,
-  projectsIcon,
-  settingsIcon,
-  surveyIcon,
-  timesheetIcon,
+  AccountsIcon,
+  AttachmentIcon,
+  CaseIcon,
+  DashboardIcon,
+  HelpIcon,
+  NotesIcon,
+  ProjectsIcon,
+  SettingsIcon,
+  SurveyIcon,
+  TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { INavItem } from '../../consultant/types';
@@ -17,15 +17,16 @@ import { ACCOUNT, MAIN_ROUTE, NOT_FOUND, PROJECT } from '../../routes';
 export const accountNavItems: INavItem[] = [
   {
     id: MenuOption.DASHBOARD,
-    icon: dashboardIcon,
+    icon: DashboardIcon,
     name: 'Dashboard',
     link: MAIN_ROUTE,
     type: 'link',
     matchLink: MAIN_ROUTE,
+    noRedirect: true,
   },
   {
     id: MenuOption.ACCOUNTS,
-    icon: accountsIcon,
+    icon: AccountsIcon,
     name: 'Accounts',
     link: ACCOUNT,
     type: 'link',
@@ -33,7 +34,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.PROJECTS,
-    icon: projectsIcon,
+    icon: ProjectsIcon,
     name: 'Projects',
     link: PROJECT,
     type: 'link',
@@ -41,7 +42,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.TIMESHEET,
-    icon: timesheetIcon,
+    icon: TimeLineIcon,
     name: 'Timeline',
     link: NOT_FOUND,
     type: 'link',
@@ -49,7 +50,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.CASES,
-    icon: caseIcon,
+    icon: CaseIcon,
     name: 'Cases',
     link: NOT_FOUND,
     type: 'link',
@@ -57,7 +58,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.SURVEY,
-    icon: surveyIcon,
+    icon: SurveyIcon,
     name: 'Survey',
     link: NOT_FOUND,
     type: 'link',
@@ -65,7 +66,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.NOTES,
-    icon: notesIcon,
+    icon: NotesIcon,
     name: 'Notes',
     link: NOT_FOUND,
     type: 'link',
@@ -73,7 +74,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.ATTACHMENTS,
-    icon: attachmentIcon,
+    icon: AttachmentIcon,
     name: 'Attachments',
     link: NOT_FOUND,
     type: 'link',
@@ -89,7 +90,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.HELP,
-    icon: helpIcon,
+    icon: HelpIcon,
     name: 'Help',
     link: NOT_FOUND,
     type: 'link',
@@ -97,7 +98,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.SETTINGS,
-    icon: settingsIcon,
+    icon: SettingsIcon,
     name: 'Settings',
     link: NOT_FOUND,
     type: 'link',

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  accountHomeIcon,
-  accountSettingsIcon,
-  actionIcon,
-  newFilterIcon,
-  refreshIcon,
+  AccountHomeIcon,
+  AccountSettingsIcon,
+  ActionIcon,
+  NewFilterIcon,
+  RefreshIcon,
 } from '../../../assets';
 import { FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
@@ -50,9 +50,7 @@ export const Accounts: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>(
-    Date.now()
-  );
+  const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>();
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -187,11 +185,10 @@ export const Accounts: React.FC = () => {
 
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+      <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <img
-              src={accountHomeIcon}
+            <AccountHomeIcon
               alt='menu-icon'
               className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
             />
@@ -200,13 +197,19 @@ export const Accounts: React.FC = () => {
                 Accounts
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
-                {`All Accounts • ${totalCount} items`}
+                {`${totalCount} items`}
               </div>
             </div>
           </div>
         </div>
-        <div className='flex gap-3 justify-center items-center'>
+        <div className='flex items-center justify-center gap-3'>
           <ActionsDropdown actions={menuItems} />
+          <div
+            className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
+            onClick={onRefreshClick}
+          >
+            <RefreshIcon alt='refresh-icon' className='h-4' />
+          </div>
           {isAccountCreateEnable && (
             <TextButton
               label='Create Account'
@@ -219,17 +222,12 @@ export const Accounts: React.FC = () => {
               }}
             />
           )}
-          <div
-            className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
-            onClick={onRefreshClick}
-          >
-            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
-          </div>
+
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <img src={actionIcon} alt='menu-icon' className='h-4' />
+            <ActionIcon alt='menu-icon' className='h-4' />
           </div>
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
+            <AccountSettingsIcon alt='menu-icon' className='h-4' />
           </div>
         </div>
       </div>
@@ -242,7 +240,7 @@ export const Accounts: React.FC = () => {
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >
-            <img src={newFilterIcon} alt='filter-icon' />
+            <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
             sortFilterCount > 0 ? (
@@ -255,16 +253,18 @@ export const Accounts: React.FC = () => {
               </div>
             ) : null}
           </button>
-          <FilterModal
-            isOpen={isFilterOpen}
-            filterAnchorEl={anchorEl}
-            filterId={filterId}
-            filterFields={accountFilterFields}
-            setAppliedFilters={setAppliedFilters}
-            setPage={setPage}
-            handleCloseFilter={handleCloseFilter}
-            handleSorting={handleSorting}
-          />
+          <Suspense fallback={null}>
+            <FilterModal
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
+              filterFields={accountFilterFields}
+              setAppliedFilters={setAppliedFilters}
+              setPage={setPage}
+              handleCloseFilter={handleCloseFilter}
+              handleSorting={handleSorting}
+            />
+          </Suspense>
         </div>
       </div>
       <div className='flex-1'>
@@ -285,3 +285,5 @@ export const Accounts: React.FC = () => {
     </div>
   );
 };
+
+export default Accounts;

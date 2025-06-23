@@ -34,6 +34,7 @@ export const ExportResourcelUrl = ({
   sortOrder,
   fiscalYear,
   rNumber,
+  filter,
 }: ExportModule): string => {
   const baseUrl = `entityService/api/resources/export/${rNumber}/`;
   const searchParams = new URLSearchParams();
@@ -41,6 +42,7 @@ export const ExportResourcelUrl = ({
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
   if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
+  if (filter !== undefined) searchParams.set('filters', JSON.stringify(filter));
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

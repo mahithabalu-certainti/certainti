@@ -201,3 +201,101 @@ export const clearFilters = () => {
     console.error('Error clearing filters from localStorage');
   }
 };
+
+export const validateFilters = (
+  filters: Record<string, FilterState>
+): boolean => {
+  let hasInvalid = false;
+
+  for (const key in filters) {
+    const state = filters[key];
+
+    if (state.date) {
+      const { option, value } = state.date;
+      const isEmptyCheck = formatString(option) === 'Is Empty';
+      const isFromEmpty = !value.from?.trim();
+      const isToEmpty = option.toLowerCase() === 'between' && !value.to?.trim();
+      if (!isEmptyCheck) {
+        if (isFromEmpty || isToEmpty) {
+          hasInvalid = true;
+        }
+      }
+    }
+
+    if (state.text) {
+      const { option, value } = state.text;
+      const isEmptyCheck = option === 'is_empty';
+
+      if (!isEmptyCheck) {
+        const isEmpty = !value.trim();
+        if (isEmpty) hasInvalid = true;
+      }
+    }
+
+    if (state.number) {
+      const { option, value } = state.number;
+      let hasError = false;
+
+      if (option !== 'is_empty') {
+        if (option === 'between') {
+          hasError = !Array.isArray(value) || value.some((v) => !v.trim());
+        } else {
+          hasError = !value || (typeof value === 'string' && !value.trim());
+        }
+      }
+
+      state.number.error = hasError;
+      if (hasError) hasInvalid = true;
+    }
+
+    if (state.enumSelect) {
+      const { option, value } = state.enumSelect;
+      const requiresValue = formatString(option) !== 'Is Empty';
+      const isEmptyArray = !value || value.length === 0;
+
+      if (requiresValue && isEmptyArray) {
+        hasInvalid = true;
+      }
+    }
+
+    if (state.status) {
+      const isEmpty = !state.status.value.trim();
+      if (isEmpty) hasInvalid = true;
+    }
+
+    if (state.boolean) {
+      const isInvalid = typeof state.boolean.value !== 'boolean';
+      if (isInvalid) hasInvalid = true;
+    }
+
+    if (state.multiSelect) {
+      const isEmpty =
+        !Array.isArray(state.multiSelect.values) ||
+        state.multiSelect.values.length === 0;
+      if (isEmpty) hasInvalid = true;
+    }
+
+    // Add validation for keyContact field
+    if (state.keyContact) {
+      const { role, name } = state.keyContact;
+
+      // Validate role
+      if (role.option !== 'is_empty' && !role.value?.trim()) {
+        hasInvalid = true;
+        state.keyContact.role.error = true;
+      } else {
+        state.keyContact.role.error = false;
+      }
+
+      // Validate name (only if name operator is not 'is_empty')
+      if (name.option !== 'is_empty' && !name.value?.trim()) {
+        hasInvalid = true;
+        state.keyContact.name.error = true;
+      } else {
+        state.keyContact.name.error = false;
+      }
+    }
+  }
+
+  return hasInvalid;
+};

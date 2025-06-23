@@ -34,6 +34,7 @@ const ListTable = <T extends RowData>({
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
   actionMenuItems = [],
+  conditionMenuItems,
   // State
   loading = false,
   error,
@@ -176,6 +177,7 @@ const ListTable = <T extends RowData>({
                       maxWidth: column.width || 160,
                       ...(column.sx || {}),
                       left: selectable ? '32px' : 0,
+                      textAlign: 'left',
                     }}
                   />
                 ) : (
@@ -187,11 +189,24 @@ const ListTable = <T extends RowData>({
                       maxWidth: column.width || 160,
                       ...(column.sx || {}),
                       left: selectable ? '32px' : 0,
+                      textAlign: 'left',
                     }}
                   >
                     {column.label}
                   </TableCell>
                 )
+              )}
+              {typeof conditionMenuItems === 'function' && (
+                <TableCell
+                  sx={{
+                    padding: '0px 8px',
+                    width: 280,
+                    minWidth: 110,
+                    maxWidth: 280,
+                  }}
+                >
+                  Status Action
+                </TableCell>
               )}
 
               {actionMenuItems?.length > 0 && isAvailableAction && (
@@ -200,6 +215,7 @@ const ListTable = <T extends RowData>({
                     width: actionWidth,
                     minWidth: actionWidth,
                     maxWidth: actionWidth,
+                    textAlign: 'center',
                   }}
                 >
                   Action
@@ -229,7 +245,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={rowsPerPage > 15 ? 15 : rowsPerPage}
-                columnsCount={columns.length}
+                columnsCount={columns.length + (conditionMenuItems ? 1 : 0)}
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}
                 stickyColumnsCount={stickyColumnsCount}
@@ -243,7 +259,8 @@ const ListTable = <T extends RowData>({
                   colSpan={
                     columns.length +
                     (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0)
+                    (actionMenuItems?.length > 0 ? 1 : 0) +
+                    (conditionMenuItems ? 1 : 0)
                   }
                   align='center'
                 >
@@ -259,7 +276,8 @@ const ListTable = <T extends RowData>({
                   colSpan={
                     columns.length +
                     (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0)
+                    (actionMenuItems?.length > 0 ? 1 : 0) +
+                    (conditionMenuItems ? 1 : 0)
                   }
                   align='center'
                 >
@@ -271,11 +289,12 @@ const ListTable = <T extends RowData>({
             {/* Data rows */}
             {!loading &&
               !error &&
-              paginatedData?.map((row) => {
+              paginatedData?.map((row, i) => {
                 const rowId = getRowId(row);
+                const conditionItems = conditionMenuItems?.(row);
                 return (
                   <TableRow
-                    key={rowId}
+                    key={i}
                     hover
                     selected={selectedRows.has(rowId)}
                     className={`${hoverHighlight ? 'group' : ''}`}
@@ -326,7 +345,6 @@ const ListTable = <T extends RowData>({
                         </Box>
                       </TableCell>
                     )}
-
                     {/* Data cells */}
                     {columns.map((column) => {
                       const isStatus = column.id === 'status';
@@ -369,6 +387,59 @@ const ListTable = <T extends RowData>({
                       );
                     })}
 
+                    {Array.isArray(conditionItems) && (
+                      <TableCell
+                        sx={{
+                          padding: '0px 8px',
+                          width: 280,
+                          minWidth: 110,
+                          maxWidth: 280,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {conditionItems.length > 0 ? (
+                          <Box className='w-full inline-flex items-center  gap-2'>
+                            {conditionItems.map((item, index) => {
+                              if (item.hide) return null;
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => item.onClick(row)}
+                                  disabled={item.disabled}
+                                  className={item.className}
+                                >
+                                  {item.icon && (
+                                    <item.icon
+                                      alt='actionIcon'
+                                      style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        ...item.iconStyle,
+                                      }}
+                                    />
+                                  )}
+
+                                  {item.label}
+                                </button>
+                              );
+                            })}
+                          </Box>
+                        ) : (
+                          <Typography
+                            component='span'
+                            sx={{
+                              color: '#6b7280',
+                              display: 'inline-block',
+                              width: '100%',
+                              textAlign: 'center',
+                            }}
+                          >
+                            -
+                          </Typography>
+                        )}
+                      </TableCell>
+                    )}
+
                     {/* Action buttons */}
                     {actionMenuItems &&
                       actionMenuItems.length > 0 &&
@@ -408,12 +479,13 @@ const ListTable = <T extends RowData>({
                                       size='small'
                                       onClick={() => item.onClick(row)}
                                     >
-                                      <img
-                                        src={item.icon?.toString()}
-                                        alt='actionIcon'
-                                        className='w-4 h-4'
-                                        style={item.iconStyle}
-                                      />
+                                      {item.icon && (
+                                        <item.icon
+                                          alt='actionIcon'
+                                          className='w-4 h-4'
+                                          style={item.iconStyle}
+                                        />
+                                      )}
                                     </IconButton>
                                   </Tooltip>
                                 );
@@ -442,7 +514,8 @@ const ListTable = <T extends RowData>({
                   colSpan={
                     columns.length +
                     (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0)
+                    (actionMenuItems?.length > 0 ? 1 : 0) +
+                    (conditionMenuItems ? 1 : 0)
                   }
                   sx={{ height: '10px !important' }}
                 ></TableCell>

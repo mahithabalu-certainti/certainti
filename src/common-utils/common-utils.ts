@@ -139,6 +139,9 @@ export const createRadioField = (
     defaultValue?: string;
     disabled?: boolean;
     onChange?: boolean;
+    resetDependsFields?: string[];
+    dependantLabel?: string;
+    clearValue?: Record<string, string>;
     defaultSelect?: {
       key: string;
       matchedValue: YesNo.Yes;
@@ -157,6 +160,9 @@ export const createRadioField = (
   onChange: options.onChange,
   defaultSelect: options.defaultSelect,
   defaultValue: options.defaultValue,
+  resetDependsFields: options.resetDependsFields,
+  dependantLabel: options.dependantLabel,
+  clearValue: options.clearValue,
 });
 
 export const createSelectField = (
@@ -171,8 +177,11 @@ export const createSelectField = (
     clearValue?: Record<string, string>;
     onChange?: boolean;
     isLoading?: boolean;
+    hide?: boolean;
     resetDependsFields?: string[];
     defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
   }
 ): FieldType => ({
   type: 'select',
@@ -186,15 +195,18 @@ export const createSelectField = (
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
+  hide: others.hide,
   defaultValue: others.defaultValue,
   resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
 });
 
 export const createButton = (
   name: string,
   label: string,
   others: {
-    iconUrl?: string;
+    iconUrl?: React.ElementType | string;
     onClick?: () => void;
   }
 ): FieldType => ({
@@ -218,7 +230,7 @@ export const createEmptyField = (
 
 export const createImgButton = (
   name: string,
-  iconUrl: string,
+  iconUrl: React.ElementType | string,
   others?: {
     width?: string;
     onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
@@ -323,7 +335,7 @@ export const REGEX_PATTERNS = {
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
-    /([Hh][Tt][Tt][Pp][Ss]?:\/\/|[Ww][Ww][Ww]\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:]*)?/,
+    /^(https?:\/\/|www\.)[a-zA-Z0-9-.]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
@@ -343,13 +355,14 @@ export const REGEX_PATTERNS = {
   MAX_ANNUAL_REVENUE: /^.{1,15}$/,
   MAX_COST_REVENUE: /^.{1,15}$/,
   COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
-  NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  NAME_REGEX: /^[A-Za-z' -]+$/,
   USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
+  MAX_125: /^.{0,125}$/,
   MAX_150: /^.{0,150}$/,
   MAX_200: /^.{0,200}$/,
   MAX_1000: /^.{0,1000}$/,
@@ -365,7 +378,7 @@ export const REGEX_PATTERNS = {
   MANAGER_REGEX: /^[A-Za-z\s.'-]*$/,
   MIN_NAME_REGEX: /^.{2,}$/,
   MAX_NAME_REGEX: /^.{0,128}$/,
-  MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
+  MIN_ACCOUNT_NAME_REGEX: /^.{3,}$/,
   MAX_ACCOUNT_NAME_REGEX: /^.{0,125}$/,
   MAX_EMAIL_REGEX: /^.{0,254}$/,
   MAX_POSTAL_REGEX: /^.{1,20}$/,
@@ -398,6 +411,9 @@ export const REGEX_PATTERNS = {
   MAX_EFFORT_IN_HOURS: /^.{1,18}$/,
   KEY_CONTACT_NO_CONSECUTIVE: /^(?!.*[-'\s]{2,})/,
   KEY_CONTACT_NO_TRAILING: /^[A-Za-z].*[A-Za-z]$/,
+  ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
+  MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
+  MIN_ORG_NAME_LEGNTH: /^.{7,}/,
 };
 
 /**

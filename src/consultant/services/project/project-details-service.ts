@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ProjectDetailUrl } from '../urls';
-import {  resourceServiceApi } from '../../../api/api';
+import { resourceServiceApi } from '../../../api/api';
 
 /**
  * Fetches detailed information for a specific project

@@ -1,1 +1,1 @@
-export * from "./manage-profile-service";
+export * from './manage-profile-service';

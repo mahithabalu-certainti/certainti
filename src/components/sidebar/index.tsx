@@ -2,7 +2,6 @@ import {
   Box,
   Collapse,
   Drawer,
-  Link,
   List,
   ListItem,
   ListItemButton,
@@ -10,30 +9,35 @@ import {
   ListItemText,
   Tooltip,
 } from '@mui/material';
-import { useState, useEffect, Fragment, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  Fragment,
+  useCallback,
+  Suspense,
+  useMemo,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  adminChevronDownIcon,
-  adminChevronUpIcon,
-  administrationIcon,
-  adminPermissionIcon,
-  adminSubmenuActiveIcon,
-  adminTemplateIcon,
-  configureSettingIcon,
-  logo,
-  logoSmall,
-  checklistTemplateIcon,
-  emailTemplateIcon,
-  importTemplateIcon,
-  interactionTemplateIcon,
-  manageGeoIcon,
-  manageGroupIcon,
-  manageProfileIcon,
-  manageSettingsIcon,
-  manageUserAccessIcon,
-  managerUserIcon,
-  surveyTemplateIcon,
-  taskTemplateIcon,
+  AdminChevronDownIcon,
+  AdminChevronUpIcon,
+  AdministrationIcon,
+  AdminPermissionIcon,
+  AdminSubmenuActiveIcon,
+  ManagerUserIcon,
+  ManageProfileIcon,
+  ManageGroupIcon,
+  ManageUserAccessIcon,
+  ConfigureSettingIcon,
+  ManageSettingsIcon,
+  ManageGeoIcon,
+  AdminTemplateIcon,
+  ImportTemplateIcon,
+  InteractionTemplateIcon,
+  ChecklistTemplateIcon,
+  TaskTemplateIcon,
+  SurveyTemplateIcon,
+  EmailTemplateIcon,
 } from '../../assets';
 import {
   AdminNavItem,
@@ -59,38 +63,40 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuOption } from '../../common-service';
 import { accountNavItems } from './accounts-menu';
+import LogoSmall from '../../assets/icons/logo-small.svg?react';
+import Logo from '../../assets/icons/logo.svg?react';
 
 const sideNavAdminItems: AdminNavItem[] = [
   {
     title: 'Admin Permission',
-    icon: adminPermissionIcon,
+    icon: AdminPermissionIcon,
     openStatus: false,
     subItemTitle: [
       {
         id: MenuOption.MANAGE_USER,
         name: 'Manage User',
-        icon: managerUserIcon,
+        icon: ManagerUserIcon,
         link: ADMIN_MANAGE_USER,
         matchLink: ADMIN_MANAGE_USER,
       },
       {
         id: MenuOption.MANAGE_PROFILE,
         name: 'Manage Profile',
-        icon: manageProfileIcon,
+        icon: ManageProfileIcon,
         link: MANAGE_PROFILE,
         matchLink: MANAGE_PROFILE,
       },
       {
         id: MenuOption.MANAGE_USER_GROUP,
         name: 'Manage User Group',
-        icon: manageGroupIcon,
+        icon: ManageGroupIcon,
         link: MANAGE_USER_GROUP,
         matchLink: MANAGE_USER_GROUP,
       },
       {
         id: MenuOption.MANAGE_USER_ACCESS,
         name: 'Manage User Access',
-        icon: manageUserAccessIcon,
+        icon: ManageUserAccessIcon,
         link: MANAGE_USER_ACCESS,
         matchLink: MANAGE_USER_ACCESS,
       },
@@ -98,20 +104,20 @@ const sideNavAdminItems: AdminNavItem[] = [
   },
   {
     title: 'Configure Settings',
-    icon: configureSettingIcon,
+    icon: ConfigureSettingIcon,
     openStatus: false,
     subItemTitle: [
       {
         id: MenuOption.MANAGE_SETTINGS,
         name: 'Manage Settings',
-        icon: manageSettingsIcon,
+        icon: ManageSettingsIcon,
         link: MANAGE_SETTINGS,
         matchLink: MANAGE_SETTINGS,
       },
       {
         id: MenuOption.MANAGE_GEO_BASED_RULE,
         name: 'Manage Geo-Based Rule',
-        icon: manageGeoIcon,
+        icon: ManageGeoIcon,
         link: MANAGE_GEO_BASED_RULE,
         matchLink: MANAGE_GEO_BASED_RULE,
       },
@@ -119,48 +125,48 @@ const sideNavAdminItems: AdminNavItem[] = [
   },
   {
     title: 'Admin Template',
-    icon: adminTemplateIcon,
+    icon: AdminTemplateIcon,
     openStatus: false,
     subItemTitle: [
       {
         id: MenuOption.IMPORT_TEMPLATE,
         name: 'Import templates',
-        icon: importTemplateIcon,
+        icon: ImportTemplateIcon,
         link: IMPORT_TEMPLATES,
         matchLink: IMPORT_TEMPLATES,
       },
       {
         id: MenuOption.INTERACTION_TEMPLATE,
         name: 'Interaction templates',
-        icon: interactionTemplateIcon,
+        icon: InteractionTemplateIcon,
         link: INTERACTION_TEMPLATES,
         matchLink: INTERACTION_TEMPLATES,
       },
       {
         id: MenuOption.EMAIL_TEMPLATE,
         name: 'Email templates',
-        icon: emailTemplateIcon,
+        icon: EmailTemplateIcon,
         link: EMAIL_TEMPLATES,
         matchLink: EMAIL_TEMPLATES,
       },
       {
         id: MenuOption.SURVEY_TEMPLATE,
         name: 'Survey templates',
-        icon: surveyTemplateIcon,
+        icon: SurveyTemplateIcon,
         link: SURVEY_TEMPLATES,
         matchLink: SURVEY_TEMPLATES,
       },
       {
         id: MenuOption.TASK_TEMPLATE,
         name: 'Task templates',
-        icon: taskTemplateIcon,
+        icon: TaskTemplateIcon,
         link: TASK_TEMPLATES,
         matchLink: TASK_TEMPLATES,
       },
       {
         id: MenuOption.CHECKLIST_TEMPLATE,
         name: 'Checklist templates',
-        icon: checklistTemplateIcon,
+        icon: ChecklistTemplateIcon,
         link: CHECKLIST_TEMPLATES,
         matchLink: CHECKLIST_TEMPLATES,
       },
@@ -187,25 +193,19 @@ export const Sidebar: React.FC<SideBarProps> = ({
   );
   const { logout } = useAuthHook();
 
-  const [accountMenus, setAccountMenus] = useState(accountNavItems);
-  const [adminNavItems, setAdminNavItems] =
-    useState<AdminNavItem[]>(sideNavAdminItems);
   // Permission Mangement
   const { menus } = useSelector((state: RootState) => state.permission);
-
-  useEffect(() => {
-    const updatedItems = accountNavItems.map((item) => {
+  const accountMenus = useMemo(() => {
+    return accountNavItems.map((item) => {
       const menu = menus.find((menu) => menu.name === item.id);
       return {
         ...item,
         hide: menu && !menu.is_enabled,
       };
     });
-    setAccountMenus(updatedItems);
   }, [menus]);
-
-  useEffect(() => {
-    const updatedItems = sideNavAdminItems.map((item) => ({
+  const memoizedAdminNavItems = useMemo(() => {
+    return sideNavAdminItems.map((item) => ({
       ...item,
       subItemTitle: item.subItemTitle.map((subItem) => {
         const menu = menus.find((menu) => menu.name === subItem.id);
@@ -218,14 +218,15 @@ export const Sidebar: React.FC<SideBarProps> = ({
         matchCheck(subItem, trimmedPathname(2))
       ),
     }));
-    setAdminNavItems(updatedItems);
   }, [menus, trimmedPathname]);
+  const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(
+    memoizedAdminNavItems
+  );
+  useEffect(() => {
+    setAdminNavItems(memoizedAdminNavItems);
+  }, [memoizedAdminNavItems]);
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  const handleToggle = (index: number) => {
+  const handleToggle = useCallback((index: number) => {
     setAdminNavItems((prevItems) =>
       prevItems.map((item, idx) =>
         idx === index
@@ -233,7 +234,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
           : { ...item, openStatus: false }
       )
     );
-  };
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
 
   const noItemsOpen = adminNavItems.every((item) => !item.openStatus);
 
@@ -245,234 +250,159 @@ export const Sidebar: React.FC<SideBarProps> = ({
       // onClose={handleBackdropClick}
       classes={{
         paper: `transform transition-all ease-in-out ${
-          sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
+          // Adjusted duration
+          sidebarExpand ? 'w-[200px] duration-500' : 'w-[65px] duration-300'
         }`,
       }}
       sx={{
         '& .MuiDrawer-paper': {
           backgroundColor: 'primary.main',
-          color: 'white', // Set text color to white
+          color: 'white',
           border: 'none !important',
           transition: (theme) =>
-            theme.transitions.create(['width', 'background-color'], {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.standard,
+            theme.transitions.create(['width'], {
+              easing: theme.transitions.easing.easeInOut,
+              duration: sidebarExpand ? 500 : 300,
             }),
+          overflow: 'hidden',
         },
       }}
     >
-      <div className='flex items-center justify-center h-[40px]'>
-        <Link aria-label='logo'>
-          <img
-            src={sidebarExpand ? logo : logoSmall}
-            alt='logo'
-            className={sidebarExpand ? 'h-[16px]' : 'h-[18px]'}
-          />
-        </Link>
-      </div>
+      <React.Suspense fallback={null}>
+        <div className='flex items-center justify-center h-[40px] relative'>
+          <div
+            className={`
+                absolute inset-0 flex items-center justify-start pl-3
+                transition-opacity ease-in-out 
+                ${sidebarExpand ? 'opacity-100 duration-650 delay-200' : 'opacity-0 duration-300'}
+              `}
+          >
+            <Logo alt='logo' className='h-[16px]' />
+          </div>
+          {/* Collapsed Logo */}
+          <div
+            className={`
+                absolute inset-0 flex items-center justify-start pl-6
+                transition-opacity ease-in-out
+                ${!sidebarExpand ? 'opacity-100 duration-650 delay-200' : 'opacity-0 duration-300'}
+              `}
+          >
+            <LogoSmall alt='logo' className='h-[18px]' />
+          </div>
+        </div>
+        <List
+          sx={{
+            mt: 0.5,
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            px: 1,
+          }}
+        >
+          {!showAdminSidebar &&
+            accountMenus.map((item, i) => {
+              if (item.hide) return null;
+              if (item.type === 'divider') {
+                return <Fragment key={i} />;
+              }
+              const isAfterDivider =
+                i > 0 && accountNavItems[i - 1]?.type === 'divider';
 
-      <List
-        sx={{
-          mx: !sidebarExpand ? 'auto' : 'none',
-          mt: 0.5,
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-        }}
-      >
-        {!showAdminSidebar &&
-          accountMenus.map((item, i) => {
-            if (item.hide) return null;
-            if (item.type === 'divider') {
-              return <Fragment key={i} />;
-            }
-            const isAfterDivider =
-              i > 0 && accountNavItems[i - 1]?.type === 'divider';
-
-            return (
-              <ListItem
-                key={i}
-                disablePadding
-                sx={{
-                  maxWidth: '170px',
-                  mx: 'auto',
-                  ...(isAfterDivider && { mt: 'auto' }),
-                }}
-              >
-                <ListItemButton
+              return (
+                <ListItem
+                  key={i}
+                  disablePadding
                   sx={{
-                    justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 32,
-                    width: !sidebarExpand ? '32px' : '100%',
-                    height: !sidebarExpand ? '32px' : '32px',
-                    px: '4px',
-                    py: 0,
-                    mt: '4px',
-                    gap: '4px',
-                    borderRadius: '2px',
-                    backgroundColor:
-                      item.matchLink === trimmedPathname(1) ? '#FFFFFF33' : '',
-                    '&:hover': {
-                      backgroundColor: '#FFFFFF33',
-                    },
-                    transition: 'all 0.3s ease-in-out',
-                  }}
-                  onClick={() => {
-                    if (item.name === 'Logout') {
-                      handleLogout();
-                    } else {
-                      navigate(item.link);
-                    }
+                    width: '100%',
+                    ...(isAfterDivider && { mt: 'auto' }),
                   }}
                 >
-                  <Tooltip
-                    title={item.name}
-                    placement='right-end'
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          backgroundColor: '#fff',
-                          color: 'rgba(0, 0, 0, 0.87)',
-                          boxShadow: 2,
-                          borderRadius: '4px',
-                        },
+                  <ListItemButton
+                    sx={{
+                      minHeight: 32,
+                      width: !sidebarExpand ? '32px' : '100%',
+                      height: !sidebarExpand ? '32px' : '32px',
+                      px: '4px',
+                      py: 0,
+                      mt: '4px',
+                      pl: 1,
+                      gap: '4px',
+                      borderRadius: '2px',
+                      backgroundColor:
+                        item.matchLink === trimmedPathname(1)
+                          ? 'rgba(255, 255, 255, 0.2)'
+                          : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       },
-                      popper: {
-                        modifiers: [
-                          {
-                            name: 'offset',
-                            options: {
-                              offset: [30, -40],
-                            },
-                          },
-                        ],
-                      },
+                      transition: 'all 0.3s ease-in-out',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-start',
+                    }}
+                    onClick={() => {
+                      if (item.name === 'Logout') {
+                        handleLogout();
+                      } else {
+                        navigate(item.link);
+                      }
                     }}
                   >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: '32px',
-                        height: '26px',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                    <Tooltip
+                      title={!sidebarExpand ? item.name : ''}
+                      placement='right'
+                      arrow
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#fff',
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            boxShadow: 2,
+                            borderRadius: '2px',
+                          },
+                        },
                       }}
                     >
-                      <img
-                        src={item.icon}
-                        alt='menu-icon'
-                        className='h-[16px]'
-                      />
-                    </ListItemIcon>
-                  </Tooltip>
-                  {sidebarExpand && (
-                    <ListItemText
-                      sx={{
-                        '& .MuiTypography-root': {
-                          fontWeight: 600,
-                          fontSize: '13px',
-                        },
-                      }}
-                      primary={item.name}
-                    />
-                  )}
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
-        {showAdminSidebar && (
-          <ListItem disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
-            <ListItemButton
-              sx={{
-                justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                minHeight: 32,
-                width: !sidebarExpand ? '32px' : '100%',
-                height: !sidebarExpand ? '32px' : '32px',
-                px: '4px',
-                py: 0,
-                mt: 0,
-                gap: '4px',
-                borderRadius: '2px',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                },
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  minWidth: '26px',
-                  height: '26px',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <img
-                  src={administrationIcon}
-                  alt='menu-icon'
-                  className='h-[16px]'
-                />
-              </ListItemIcon>
-              {sidebarExpand && (
-                <ListItemText
-                  sx={{
-                    '& .MuiTypography-root': {
-                      fontWeight: 600,
-                      fontSize: '13px',
-                    },
-                  }}
-                  primary='Administration'
-                />
-              )}
-            </ListItemButton>
-          </ListItem>
-        )}
-        {showAdminSidebar &&
-          adminNavItems.map((item, index) => (
-            <div key={index}>
-              <ListItem
-                key={index}
-                disablePadding
-                sx={{ maxWidth: '170px', mx: 'auto', mt: '4px' }}
-              >
-                <ListItemButton
-                  sx={{
-                    display:
-                      !sidebarExpand && !noItemsOpen && !item.openStatus
-                        ? 'none'
-                        : 'flex',
-                    justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 32,
-                    width: !sidebarExpand ? '32px' : '100%',
-                    height: !sidebarExpand ? '32px' : '32px',
-                    px: '4px',
-                    py: 0,
-                    mt: 0,
-                    gap: '4px',
-                    borderRadius: '2px',
-                    backgroundColor: item.openStatus ? '#FFFFFF33' : '',
-                    '&:hover': {
-                      backgroundColor: '#FFFFFF33',
-                    },
-                    transition: 'all 0.3s ease-in-out',
-                  }}
-                  onClick={() => handleToggle(index)}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: '26px',
-                      height: '26px',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <img src={item.icon} alt='menu-icon' className='h-[16px]' />
-                  </ListItemIcon>
-                  {sidebarExpand && (
+                      <ListItemIcon
+                        sx={{
+                          minWidth: '32px', // Reference style
+                          height: '26px', // Reference style
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          opacity: 1,
+                          transition: sidebarExpand
+                            ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                            : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                          transform: 'scale(1)',
+                        }}
+                      >
+                        <item.icon
+                          alt='menu-icon'
+                          className='h-[16px] w-[16px]'
+                          style={{
+                            transition: sidebarExpand
+                              ? 'all 400ms ease-in-out'
+                              : 'all 250ms ease-in-out',
+                          }}
+                        />
+                      </ListItemIcon>
+                    </Tooltip>
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
+                        opacity: sidebarExpand ? 1 : 0,
+                        transition: sidebarExpand
+                          ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                          : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                        transitionDelay: sidebarExpand ? '100ms' : '0ms',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        width: sidebarExpand ? 'auto' : 0,
+                        transform: sidebarExpand
+                          ? 'translateX(0)'
+                          : 'translateX(-10px)',
                       }}
                     >
                       <ListItemText
@@ -482,129 +412,397 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             fontSize: '13px',
                           },
                         }}
+                        primary={item.name}
+                      />
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          {showAdminSidebar && (
+            <ListItem disablePadding sx={{ width: '100%' }}>
+              <ListItemButton
+                sx={{
+                  minHeight: 32,
+                  width: !sidebarExpand ? '32px' : '100%',
+                  height: !sidebarExpand ? '32px' : '32px',
+                  px: '4px',
+                  py: 0,
+                  mt: '4px',
+                  pl: 1,
+                  gap: '4px',
+                  borderRadius: '2px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                  transition: 'all 0.3s ease-in-out',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                }}
+              >
+                <Tooltip
+                  title={!sidebarExpand ? 'Administration' : ''}
+                  placement='right'
+                  arrow
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        backgroundColor: '#fff',
+                        color: 'rgba(0, 0, 0, 0.87)',
+                        boxShadow: 2,
+                        borderRadius: '2px',
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: '32px', // Reference style
+                      height: '26px', // Reference style
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      opacity: 1,
+                      transition: sidebarExpand
+                        ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                        : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                      transform: 'scale(1)',
+                    }}
+                  >
+                    <AdministrationIcon
+                      alt='menu-icon'
+                      className='h-[16px] w-[16px]'
+                      style={{
+                        transition: sidebarExpand
+                          ? 'all 400ms ease-in-out'
+                          : 'all 250ms ease-in-out',
+                      }}
+                    />
+                  </ListItemIcon>
+                </Tooltip>
+                <Box
+                  sx={{
+                    opacity: sidebarExpand ? 1 : 0,
+                    transition: sidebarExpand
+                      ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                      : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                    transitionDelay: sidebarExpand ? '100ms' : '0ms',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    width: sidebarExpand ? 'auto' : 0,
+                    transform: sidebarExpand
+                      ? 'translateX(0)'
+                      : 'translateX(-10px)',
+                  }}
+                >
+                  <ListItemText
+                    sx={{
+                      '& .MuiTypography-root': {
+                        fontWeight: 600,
+                        fontSize: '13px',
+                      },
+                    }}
+                    primary='Administration'
+                  />
+                </Box>
+              </ListItemButton>
+            </ListItem>
+          )}
+          {showAdminSidebar &&
+            adminNavItems.map((item, index) => (
+              <div key={index}>
+                <ListItem
+                  disablePadding
+                  sx={{
+                    width: '100%',
+                    mt: '4px',
+                    display:
+                      !sidebarExpand && !noItemsOpen && !item.openStatus
+                        ? 'none'
+                        : 'flex',
+                  }}
+                >
+                  <ListItemButton
+                    sx={{
+                      minHeight: 32,
+                      width: !sidebarExpand ? '32px' : '100%',
+                      height: !sidebarExpand ? '32px' : '32px',
+                      px: '4px',
+                      py: 0,
+                      mt: '4px',
+                      pl: 1,
+                      gap: '4px',
+                      borderRadius: '2px',
+                      backgroundColor: item.openStatus
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      },
+                      transition: 'all 0.3s ease-in-out',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-start',
+                    }}
+                    onClick={() => handleToggle(index)}
+                  >
+                    <Tooltip
+                      title={!sidebarExpand ? item.title : ''}
+                      placement='right'
+                      arrow
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#fff',
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            boxShadow: 2,
+                            borderRadius: '2px',
+                          },
+                        },
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: '32px', // Reference style
+                          height: '26px', // Reference style
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          opacity: 1,
+                          transition: sidebarExpand
+                            ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                            : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                          transform: 'scale(1)',
+                        }}
+                      >
+                        <item.icon
+                          alt='menu-icon'
+                          className='h-[16px] w-[16px]'
+                          style={{
+                            transition: sidebarExpand
+                              ? 'all 400ms ease-in-out'
+                              : 'all 250ms ease-in-out',
+                          }}
+                        />
+                      </ListItemIcon>
+                    </Tooltip>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        opacity: sidebarExpand ? 1 : 0,
+                        transition: sidebarExpand
+                          ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                          : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                        transitionDelay: sidebarExpand ? '100ms' : '0ms',
+                        overflow: 'hidden',
+                        transform: sidebarExpand
+                          ? 'translateX(0)'
+                          : 'translateX(-10px)',
+                      }}
+                    >
+                      <ListItemText
+                        sx={{
+                          flex: 1,
+                          '& .MuiTypography-root': {
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap',
+                          },
+                        }}
                         primary={item.title}
                       />
-                      {item.subItemTitle.length > 0 &&
-                        (item.openStatus ? (
-                          <img
-                            src={adminChevronUpIcon}
-                            alt='up'
-                            className='h-[16px] mr-0.5'
-                          />
-                        ) : (
-                          <img
-                            src={adminChevronDownIcon}
-                            alt='down'
-                            className='h-[16px] mr-0.5'
-                          />
-                        ))}
-                    </Box>
-                  )}
-                </ListItemButton>
-              </ListItem>
-              <Collapse in={item.openStatus} timeout='auto' unmountOnExit>
-                {item.subItemTitle &&
-                  item.subItemTitle.map((subItem, subIndex) => {
-                    if (subItem.hide) return null;
-                    return (
-                      <List
-                        key={subIndex}
-                        component='div'
-                        sx={{
-                          fontWeight: 300,
-                          fontSize: '13px',
-                          maxWidth: '170px',
-                          mx: 'auto',
-                          mt: '4px',
-                        }}
-                        disablePadding
-                      >
-                        <ListItemButton
+                      {item.subItemTitle.length > 0 && (
+                        <Box
                           sx={{
-                            justifyContent: !sidebarExpand
-                              ? 'center'
-                              : 'flex-start',
-                            mt: 1,
-                            minHeight: 40,
-                            height: '40px',
-                            width: !sidebarExpand ? '40px' : '100%',
-                            px: '3px',
-                            borderRadius: '2px',
-                            '&:hover': {
-                              backgroundColor: '#FFFFFF33',
-                            },
+                            ml: 'auto',
+                            display: 'flex',
+                            alignItems: 'center',
+                            opacity: 1,
+                            transition: sidebarExpand
+                              ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                              : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                            transform: 'scale(1)',
                           }}
-                          onClick={() => navigate(subItem.link)}
                         >
-                          <ListItemIcon
+                          <Suspense fallback={null}>
+                            {item.openStatus ? (
+                              <AdminChevronUpIcon
+                                alt='up'
+                                className='h-[16px] w-[16px]'
+                                style={{
+                                  transition: sidebarExpand
+                                    ? 'all 400ms ease-in-out'
+                                    : 'all 250ms ease-in-out',
+                                }}
+                              />
+                            ) : (
+                              <AdminChevronDownIcon
+                                alt='down'
+                                className='h-[16px] w-[16px]'
+                                style={{
+                                  transition: sidebarExpand
+                                    ? 'all 400ms ease-in-out'
+                                    : 'all 250ms ease-in-out',
+                                }}
+                              />
+                            )}
+                          </Suspense>
+                        </Box>
+                      )}
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
+                <Collapse in={item.openStatus} timeout={400}>
+                  {item.subItemTitle &&
+                    item.subItemTitle.map((subItem, subIndex) => {
+                      if (subItem.hide) return null;
+                      const isActive = matchCheck(subItem, trimmedPathname(2));
+                      return (
+                        <ListItem
+                          key={subIndex}
+                          disablePadding
+                          sx={{
+                            width: '100%',
+                            mt: '4px',
+                          }}
+                        >
+                          <ListItemButton
                             sx={{
-                              minWidth: '26px',
-                              height: '26px',
+                              minHeight: 32,
+                              width: !sidebarExpand ? '32px' : '100%',
+                              height: !sidebarExpand ? '32px' : '32px',
+                              px: '4px',
+                              py: 0,
+                              mt: '4px',
+                              pl: 1,
+                              gap: '4px',
+                              borderRadius: '2px',
+                              backgroundColor: isActive
+                                ? 'rgba(255, 255, 255, 0.2)'
+                                : 'transparent',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                              },
+                              transition: 'all 0.3s ease-in-out',
+                              display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
+                              justifyContent: 'flex-start',
                             }}
+                            onClick={() => navigate(subItem.link)}
                           >
-                            <img
-                              src={subItem.icon}
-                              alt='menu-icon'
-                              className='h-[16px]'
-                              style={{
-                                filter:
-                                  !sidebarExpand &&
-                                  matchCheck(subItem, trimmedPathname(2))
-                                    ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
-                                    : 'none',
+                            <Tooltip
+                              title={!sidebarExpand ? subItem.name : ''}
+                              placement='right'
+                              arrow
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    backgroundColor: '#fff',
+                                    color: 'rgba(0, 0, 0, 0.87)',
+                                    boxShadow: 2,
+                                    borderRadius: '2px',
+                                  },
+                                },
                               }}
-                            />
-                          </ListItemIcon>
-                          {sidebarExpand && (
+                            >
+                              <ListItemIcon
+                                sx={{
+                                  minWidth: '32px', // Reference style
+                                  height: '26px', // Reference style
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                  opacity: 1,
+                                  transition: sidebarExpand
+                                    ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                    : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                                  transform: 'scale(1)',
+                                }}
+                              >
+                                <subItem.icon
+                                  alt='menu-icon'
+                                  className='h-[16px] w-[16px]'
+                                  style={{
+                                    filter:
+                                      !sidebarExpand && isActive
+                                        ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
+                                        : 'none',
+                                    transition: sidebarExpand
+                                      ? 'all 400ms ease-in-out'
+                                      : 'all 250ms ease-in-out',
+                                  }}
+                                />
+                              </ListItemIcon>
+                            </Tooltip>
                             <Box
                               sx={{
                                 display: 'flex',
-                                justifyContent: 'flex-start',
-                                gap: 1,
                                 alignItems: 'center',
                                 width: '100%',
+                                opacity: sidebarExpand ? 1 : 0,
+                                transition: sidebarExpand
+                                  ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                  : 'opacity 200ms ease-in-out, transform 200ms ease-in-out',
+                                transitionDelay: sidebarExpand
+                                  ? '100ms'
+                                  : '0ms',
+                                overflow: 'hidden',
+                                transform: sidebarExpand
+                                  ? 'translateX(0)'
+                                  : 'translateX(-10px)',
                               }}
                             >
                               <ListItemText
                                 sx={{
-                                  flex: 'unset',
+                                  flex: 1,
                                   '& .MuiTypography-root': {
-                                    fontWeight: matchCheck(
-                                      subItem,
-                                      trimmedPathname(2)
-                                    )
-                                      ? 400
-                                      : 300,
+                                    fontWeight: isActive ? 400 : 300,
                                     fontSize: '13px',
-                                    color: matchCheck(
-                                      subItem,
-                                      trimmedPathname(2)
-                                    )
-                                      ? '#F16137'
-                                      : '#FFFFFF',
+                                    color: isActive ? '#F16137' : '#FFFFFF',
+                                    whiteSpace: 'nowrap',
                                   },
                                 }}
                                 primary={subItem.name}
                               />
-                              {matchCheck(subItem, trimmedPathname(2)) && (
-                                <img
-                                  src={adminSubmenuActiveIcon}
-                                  alt='menu-icon'
-                                  className='h-[16px] w-[16px] mr-0.5'
-                                />
+                              {isActive && (
+                                <Box
+                                  sx={{
+                                    ml: 'auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    opacity: 1,
+                                    transition: sidebarExpand
+                                      ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
+                                      : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
+                                    transform: 'scale(1)',
+                                  }}
+                                >
+                                  <AdminSubmenuActiveIcon
+                                    className='h-[16px] w-[16px]'
+                                    style={{
+                                      transition: sidebarExpand
+                                        ? 'all 400ms ease-in-out'
+                                        : 'all 250ms ease-in-out',
+                                    }}
+                                  />
+                                </Box>
                               )}
                             </Box>
-                          )}
-                        </ListItemButton>
-                      </List>
-                    );
-                  })}
-              </Collapse>
-            </div>
-          ))}
-      </List>
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                </Collapse>
+              </div>
+            ))}
+        </List>
+      </React.Suspense>
     </Drawer>
   );
 };

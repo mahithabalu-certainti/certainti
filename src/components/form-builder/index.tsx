@@ -20,17 +20,17 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
-import React, { useEffect } from 'react';
+import React, { ChangeEvent, useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {
-  calendarIcon,
-  closeIcon,
-  keyContactRemoveIcon,
-  keyContactAddIcon,
-  searchBlackIcon,
-  verticalSeparatorIcon,
-  errorInfoIcon,
+  CalendarIcon,
+  CloseIcon,
+  KeyContactRemoveIcon,
+  KeyContactAddIcon,
+  SearchBlackIcon,
+  VerticalSeparatorIcon,
+  ErrorInfoIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
@@ -40,9 +40,11 @@ import {
   FormType,
   FormTypeFields,
   GroupFields,
+  KeyContactHeader,
   SelectOption,
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
+import TextButton from '../button/text-button';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -56,6 +58,8 @@ interface FormBuilderProps {
   keyEnd?: string;
   newContactLength?: number;
   admin?: boolean;
+  logo?: File | null;
+  keyContactHeaders?: KeyContactHeader[];
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -69,6 +73,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   keyStart,
   keyEnd,
   admin = false,
+  logo,
+  keyContactHeaders = [],
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -99,8 +105,77 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [constructFormData, formData]);
 
   useEffect(() => {
+    setFormData((prevFormData = []) => {
+      return data.map((newSection) => {
+        const oldSection = prevFormData.find(
+          (s) => s.sectionName === newSection.sectionName
+        );
+
+        return {
+          ...newSection,
+          fields: newSection.fields.map((newField) => {
+            const oldField = oldSection?.fields.find(
+              (f) => f.name === newField.name
+            );
+
+            return {
+              ...newField,
+              error: oldField?.error ?? newField.error,
+              value: oldField?.value ?? newField.value,
+            };
+          }),
+        };
+      });
+    });
+
+    // Only set initial form data if constructFormData is empty
+    if (Object.values(constructFormData).every((value) => !value)) {
+      let constructFormData = {};
+      data.forEach((section) => {
+        section.fields.forEach((field) => {
+          constructFormData = {
+            ...constructFormData,
+            [field.name]: values?.[field.name] || '',
+          };
+        });
+      });
+
+      setConstructFormData(constructFormData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, values, state]);
+
+  useEffect(() => {
+    // updated default value into constuctFormData
+    formData?.forEach((section) => {
+      section.fields.forEach((field) => {
+        if (
+          field.assignDefaultValue &&
+          field.defaultValue &&
+          field.clearValue
+        ) {
+          const { key, matchedValue } = field.clearValue;
+          if (constructFormData[key] === matchedValue) {
+            setConstructFormData((prev) => ({
+              ...prev,
+              [field.name]: field.defaultValue || '',
+            }));
+          } else {
+            setConstructFormData((prev) => ({
+              ...prev,
+              [field.name]: '',
+            }));
+          }
+        }
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]);
+
+  useEffect(() => {
+    if (Object.keys(constructFormData).length === 0) return;
     const keyContactSection = formData?.find(
-      (section) => section.sectionName === 'Key Contacts List'
+      (section) => section.sectionName === 'key_contacts_list'
     );
 
     if (!keyContactSection) return;
@@ -128,57 +203,45 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       )
         continue;
 
-      // if (!constructFormData[statusField.name]) {
-      //   setConstructFormData((prev) => ({
-      //     ...prev,
-      //     [statusField.name]: 'active', // Default status
-      //   }));
-      //   continue;
-      // }
-
-      const hasNameOrEmail =
-        (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
-        (constructFormData[emailField.name]?.toString().trim() || '') !== '';
-
+      const includeInCommValue =
+        constructFormData[includeInCommField.name] === 'yes';
+      const nameValue =
+        constructFormData[nameField.name]?.toString().trim() || '';
+      const emailValue =
+        constructFormData[emailField.name]?.toString().trim() || '';
       const isPrimary = constructFormData[primaryField.name] === 'yes';
-      const isActive = constructFormData[statusField.name] === 'active';
 
-      const shouldUpdateRole = roleField.required !== hasNameOrEmail;
-      const shouldUpdatePrimary = primaryField.required !== hasNameOrEmail;
-      const shouldUpdateEmail = emailField.required !== (isPrimary && isActive);
-      const shouldUpdateIncludeInComm =
-        includeInCommField.disabled !== (isPrimary && isActive);
+      // Name and Email requirements:
+      // - If Include In Communications is Yes: Both are required
+      // - If Include In Communications is No: At least one is required (either name or email)
+      const nameRequired =
+        includeInCommValue || (!includeInCommValue && !emailValue);
+      const emailRequired =
+        includeInCommValue || (!includeInCommValue && !nameValue);
 
-      if (
-        shouldUpdateRole ||
-        shouldUpdatePrimary ||
-        shouldUpdateEmail ||
-        shouldUpdateIncludeInComm
-      ) {
+      // Role is required when is Primary is true
+      const roleRequired = isPrimary;
+
+      // Check if we need to update any fields
+      const shouldUpdateName = nameField.required !== nameRequired;
+      const shouldUpdateEmail = emailField.required !== emailRequired;
+      const shouldUpdateRole = roleField.required !== roleRequired;
+
+      if (shouldUpdateName || shouldUpdateEmail || shouldUpdateRole) {
         setFormData((prevFormData) =>
           prevFormData?.map((section) => {
-            if (section.sectionName === 'Key Contacts List') {
+            if (section.sectionName === 'key_contacts_list') {
               return {
                 ...section,
                 fields: section.fields.map((field) => {
-                  if (field.name === roleField.name && shouldUpdateRole) {
-                    return { ...field, required: hasNameOrEmail };
-                  }
-                  if (field.name === primaryField.name && shouldUpdatePrimary) {
-                    return { ...field, required: hasNameOrEmail };
+                  if (field.name === nameField.name && shouldUpdateName) {
+                    return { ...field, required: nameRequired };
                   }
                   if (field.name === emailField.name && shouldUpdateEmail) {
-                    return { ...field, required: isPrimary && isActive };
+                    return { ...field, required: emailRequired };
                   }
-                  if (
-                    field.name === includeInCommField.name &&
-                    shouldUpdateIncludeInComm
-                  ) {
-                    return {
-                      ...field,
-                      disabled: isPrimary && isActive,
-                      value: isPrimary && isActive ? 'yes' : field.value,
-                    };
+                  if (field.name === roleField.name && shouldUpdateRole) {
+                    return { ...field, required: roleRequired };
                   }
                   return field;
                 }),
@@ -191,50 +254,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     }
   }, [constructFormData, formData]);
 
-  useEffect(() => {
-    setFormData((prevFormData = []) => {
-      return data.map((newSection) => {
-        const oldSection = prevFormData.find(
-          (s) => s.sectionName === newSection.sectionName
-        );
-
-        return {
-          ...newSection,
-          fields: newSection.fields.map((newField) => {
-            const oldField = oldSection?.fields.find(
-              (f) => f.name === newField.name
-            );
-
-            return {
-              ...newField,
-              error: oldField?.error ?? newField.error,
-              value: oldField?.value ?? newField.value,
-              ...(newField.name.startsWith('include_in_communication_')
-                ? { disabled: oldField?.disabled ?? newField.disabled }
-                : {}),
-            };
-          }),
-        };
-      });
-    });
-
-    // Only set initial form data if constructFormData is empty
-    if (Object.values(constructFormData).every((value) => !value)) {
-      let constructFormData = {};
-      data.forEach((section) => {
-        section.fields.forEach((field) => {
-          constructFormData = {
-            ...constructFormData,
-            [field.name]: values?.[field.name] || '',
-          };
-        });
-      });
-
-      setConstructFormData(constructFormData);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, values, state]);
-
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
     const fieldsPerRow = 8;
 
@@ -242,14 +261,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       if (!prevFormData) return prevFormData;
 
       const keyContactSection = prevFormData.find(
-        (section) => section.sectionName === 'Key Contacts List'
+        (section) => section.sectionName === 'key_contacts_list'
       );
       if (!keyContactSection) return prevFormData;
 
       const startIndex = rowIndexToRemove * fieldsPerRow;
       const newFields = [...keyContactSection.fields];
+
+      // Remove group
       newFields.splice(startIndex, fieldsPerRow);
 
+      // If nothing remains, clear section
+      if (newFields.length === 0) {
+        return prevFormData.map((section) =>
+          section.sectionName === 'key_contacts_list'
+            ? { ...section, fields: [] }
+            : section
+        );
+      }
+
+      // Re-index remaining
       const reindexedFields = newFields.map((field, idx) => {
         const newRowIndex = Math.floor(idx / fieldsPerRow);
         const baseName = field.name.replace(/_\d+$/, '');
@@ -261,7 +292,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       });
 
       return prevFormData.map((section) => {
-        if (section.sectionName === 'Key Contacts List') {
+        if (section.sectionName === 'key_contacts_list') {
           return {
             ...section,
             fields: reindexedFields,
@@ -295,6 +326,30 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     });
   };
 
+  const handleAddKeyContact = () => {
+    const fieldsPerRow = 8;
+    // Update constructFormData with default values for the new row
+    setConstructFormData((prevData) => {
+      if (!prevData) return prevData;
+      const newRowIndex = Math.floor(
+        (formData?.find((s) => s.sectionName === 'key_contacts_list')?.fields
+          .length || 0) / fieldsPerRow
+      );
+
+      const newData = { ...prevData };
+      newData[`key_contact_name_${newRowIndex}`] = '';
+      newData[`key_contact_role_${newRowIndex}`] = '';
+      newData[`key_contact_email_${newRowIndex}`] = '';
+      newData[`key_contact_rid_${newRowIndex}`] = '';
+      newData[`is_primary_contact_${newRowIndex}`] = 'no';
+      newData[`include_in_communication_${newRowIndex}`] = 'no';
+      newData[`key_contact_status_${newRowIndex}`] = 'active';
+      newData[`button_${newRowIndex}`] = '';
+
+      return newData;
+    });
+  };
+
   const getFields = (field: FormTypeFields) => {
     const isError = field.error
       ? 'border-red-500 bg-[#FEF2F2]'
@@ -304,15 +359,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
-      if (
-        field.name.startsWith('include_in_communication_') &&
-        formData?.some((section) =>
-          section.fields.some((f) => f.name === field.name && f.disabled)
-        )
-      ) {
-        return; // Prevent changes if disabled
-      }
-
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -320,6 +366,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           [`${field.name}_countryCode`]: countryCode,
         }),
       };
+
+      if (field.dependantLabel) {
+        setConstructFormData((prev) => {
+          const newState = { ...prev, [field.name]: value };
+
+          // Clear dependent field when is_consultant_firm is changed to No
+          if (field.name === 'is_consultant_firm' && value === 'no') {
+            newState[field.dependantLabel as string] = ''; // clear org_id
+          }
+
+          return newState;
+        });
+      }
 
       if (field.resetDependsFields?.length) {
         field.resetDependsFields.forEach((fieldEntry) => {
@@ -339,6 +398,69 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         } else {
           newData[field.defaultSelect.key] =
             field.defaultSelect.ifNotMatchValue;
+        }
+      }
+
+      // Handle Include In Communications changes
+      if (field.name.startsWith('include_in_communication_')) {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const newIncludeValue = value === 'yes';
+        const statusField = `key_contact_status_${currentIndex}`;
+        const currentStatus = constructFormData[statusField];
+
+        // Skip validation if the contact is inactive
+        if (currentStatus === 'inactive') {
+          setConstructFormData(newData);
+          return;
+        }
+
+        // Check if another active contact already has Include In Communications set to yes
+        const otherIncludeExists = Object.keys(constructFormData).some(
+          (key) => {
+            if (
+              key.startsWith('include_in_communication_') &&
+              key !== field.name
+            ) {
+              const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+              const otherStatusField = `key_contact_status_${otherIndex}`;
+              const otherStatus = constructFormData[otherStatusField];
+
+              // Only consider active contacts
+              return (
+                constructFormData[key] === 'yes' && otherStatus === 'active'
+              );
+            }
+            return false;
+          }
+        );
+
+        if (newIncludeValue && otherIncludeExists) {
+          setConfirmationState({
+            isOpen: true,
+            message:
+              'Only one active contact can be set as Interaction Recipient. Would you like to proceed?',
+            onConfirm: () => {
+              // Set all other active include_in_communication fields to 'no'
+              Object.keys(newData).forEach((key) => {
+                if (
+                  key.startsWith('include_in_communication_') &&
+                  key !== field.name
+                ) {
+                  const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                  const otherStatusField = `key_contact_status_${otherIndex}`;
+                  const otherStatus = constructFormData[otherStatusField];
+
+                  if (otherStatus === 'active') {
+                    newData[key] = 'no';
+                  }
+                }
+              });
+
+              // Update the form data with the new values
+              setConstructFormData(newData);
+            },
+          });
+          return;
         }
       }
 
@@ -395,33 +517,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       otherStatus === 'active'
                     ) {
                       newData[key] = 'no';
-
-                      const otherCommKey = `include_in_communication_${otherIndex}`;
-                      const otherEmailKey = `key_contact_email_${otherIndex}`;
-                      newData[otherCommKey] = 'no';
-
-                      setFormData((prevFormData) =>
-                        prevFormData?.map((section) => ({
-                          ...section,
-                          fields: section.fields.map((f) => {
-                            if (f.name === otherCommKey)
-                              return { ...f, disabled: false };
-                            if (f.name === otherEmailKey)
-                              return { ...f, required: false, error: '' };
-                            return f;
-                          }),
-                        }))
-                      );
                     }
                   }
                 });
 
                 newData[isPrimaryField] = 'yes';
-                const commFieldName = `include_in_communication_${currentIndex}`;
-                const emailFieldName = `key_contact_email_${currentIndex}`;
-                newData[commFieldName] = 'yes';
-                const otherStatusKey = `key_contact_status_${currentIndex}`;
-                const otherStatus = constructFormData[otherStatusKey];
 
                 setFormData((prevFormData) =>
                   prevFormData?.map((section) => ({
@@ -429,16 +529,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     fields: section.fields.map((f) => {
                       if (f.name === isPrimaryField)
                         return { ...f, value: 'yes' };
-                      if (f.name === commFieldName)
-                        return {
-                          ...f,
-                          disabled: otherStatus === 'active' ? true : false,
-                        };
-                      if (f.name === emailFieldName)
-                        return {
-                          ...f,
-                          required: otherStatus === 'active' ? true : false,
-                        };
                       return f;
                     }),
                   }))
@@ -506,42 +596,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       otherStatus === 'active'
                     ) {
                       newData[key] = 'no';
-                      const otherCommKey = `include_in_communication_${otherIndex}`;
-                      const otherEmailKey = `key_contact_email_${otherIndex}`;
-                      newData[otherCommKey] = 'no';
-
-                      setFormData((prevFormData) =>
-                        prevFormData?.map((section) => ({
-                          ...section,
-                          fields: section.fields.map((f) => {
-                            if (f.name === otherCommKey)
-                              return { ...f, disabled: false };
-                            if (f.name === otherEmailKey)
-                              return { ...f, required: false, error: '' };
-                            return f;
-                          }),
-                        }))
-                      );
                     }
                   }
                 });
-
-                const commFieldName = `include_in_communication_${currentIndex}`;
-                const emailFieldName = `key_contact_email_${currentIndex}`;
-                newData[commFieldName] = 'yes';
-
-                setFormData((prevFormData) =>
-                  prevFormData?.map((section) => ({
-                    ...section,
-                    fields: section.fields.map((f) => {
-                      if (f.name === commFieldName)
-                        return { ...f, disabled: true };
-                      if (f.name === emailFieldName)
-                        return { ...f, required: true };
-                      return f;
-                    }),
-                  }))
-                );
 
                 setConstructFormData(newData);
               },
@@ -549,76 +606,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             return;
           }
         }
-        // No conflict — proceed
-        const commFieldName = `include_in_communication_${currentIndex}`;
-        const emailFieldName = `key_contact_email_${currentIndex}`;
-
-        newData[commFieldName] = 'yes';
-
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => ({
-            ...section,
-            fields: section.fields.map((f) => {
-              if (f.name === commFieldName) return { ...f, disabled: true };
-              if (f.name === emailFieldName) return { ...f, required: true };
-              return f;
-            }),
-          }))
-        );
-      }
-
-      // Handle is_primary_contact = no
-      if (field.name.startsWith('is_primary_contact_') && value === 'no') {
-        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
-        const commFieldName = `include_in_communication_${currentIndex}`;
-        const emailFieldName = `key_contact_email_${currentIndex}`;
-
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => ({
-            ...section,
-            fields: section.fields.map((f) => {
-              if (f.name === commFieldName) return { ...f, disabled: false };
-              if (f.name === emailFieldName)
-                return { ...f, required: false, error: '' };
-              return f;
-            }),
-          }))
-        );
-      }
-
-      // Set required for role/primary if name or email is filled
-      if (
-        field.name.startsWith('key_contact_name_') ||
-        field.name.startsWith('key_contact_email_')
-      ) {
-        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
-        const hasName =
-          (newData[`key_contact_name_${currentIndex}`]?.toString().trim() ||
-            '') !== '';
-        const hasEmail =
-          (newData[`key_contact_email_${currentIndex}`]?.toString().trim() ||
-            '') !== '';
-        const requiredFlag = hasName || hasEmail;
-
-        const roleFieldName = `key_contact_role_${currentIndex}`;
-        const primaryFieldName = `is_primary_contact_${currentIndex}`;
-
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => {
-            if (section.sectionName === 'Key Contacts List') {
-              return {
-                ...section,
-                fields: section.fields.map((f) => {
-                  if (f.name === roleFieldName || f.name === primaryFieldName) {
-                    return { ...f, required: requiredFlag };
-                  }
-                  return f;
-                }),
-              };
-            }
-            return section;
-          })
-        );
       }
 
       if (field.name.startsWith('key_contact_status_')) {
@@ -631,97 +618,133 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const roleField = `key_contact_role_${currentIndex}`;
         const currentRole = constructFormData[roleField];
         const isPrimary = constructFormData[isPrimaryField] === 'yes';
+        const commFieldName = `include_in_communication_${currentIndex}`;
+        const currentCommValue = constructFormData[commFieldName] === 'yes';
 
-        // Check if the popup needs to be shown
-        const shouldShowPopup =
-          previousStatus === 'inactive' &&
-          newStatus === 'active' &&
-          isPrimary &&
-          Object.keys(constructFormData).some((key) => {
-            if (
-              key.startsWith('is_primary_contact_') &&
-              key !== isPrimaryField &&
-              constructFormData[key] === 'yes'
-            ) {
-              const index = parseInt(key.split('_').pop() || '0', 10);
-              const roleKey = `key_contact_role_${index}`;
-              const statusKey = `key_contact_status_${index}`;
+        // Only proceed if changing from inactive to active
+        if (previousStatus === 'inactive' && newStatus === 'active') {
+          newData[statusField] = 'active';
 
-              return (
-                constructFormData[roleKey] === currentRole &&
-                constructFormData[statusKey] === 'active'
-              );
-            }
-            return false;
-          });
+          // Check for both conditions that might require confirmation
+          const primaryConflict =
+            isPrimary &&
+            currentRole &&
+            Object.keys(constructFormData).some((key) => {
+              if (
+                key.startsWith('is_primary_contact_') &&
+                key !== isPrimaryField &&
+                constructFormData[key] === 'yes'
+              ) {
+                const index = parseInt(key.split('_').pop() || '0', 10);
+                const roleKey = `key_contact_role_${index}`;
+                const statusKey = `key_contact_status_${index}`;
+                return (
+                  constructFormData[roleKey] === currentRole &&
+                  constructFormData[statusKey] === 'active'
+                );
+              }
+              return false;
+            });
 
-        if (shouldShowPopup) {
-          setConfirmationState({
-            isOpen: true,
-            message:
-              'Primary Contact with the same role already exists. Would you like to proceed?',
-            onConfirm: () => {
-              const commFieldName = `include_in_communication_${currentIndex}`;
-              const emailFieldName = `key_contact_email_${currentIndex}`;
-              newData[statusField] = 'active';
-              newData[commFieldName] = 'yes';
+          const commConflict =
+            currentCommValue &&
+            Object.keys(constructFormData).some((key) => {
+              if (
+                key.startsWith('include_in_communication_') &&
+                key !== commFieldName
+              ) {
+                const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                const otherStatusField = `key_contact_status_${otherIndex}`;
+                return (
+                  constructFormData[key] === 'yes' &&
+                  constructFormData[otherStatusField] === 'active'
+                );
+              }
+              return false;
+            });
 
-              // Deactivate other primary contacts with same role
-              Object.keys(constructFormData).forEach((key) => {
-                if (
-                  key.startsWith('is_primary_contact_') &&
-                  key !== isPrimaryField &&
-                  constructFormData[key] === 'yes'
-                ) {
-                  const otherIndex = parseInt(key.split('_').pop() || '0', 10);
-                  const otherRoleKey = `key_contact_role_${otherIndex}`;
-                  const otherStatusKey = `key_contact_status_${otherIndex}`;
-                  const otherCommKey = `include_in_communication_${otherIndex}`;
-                  const otherEmailKey = `key_contact_email_${otherIndex}`;
+          // Prepare combined message if both conflicts exist
+          let combinedMessage = '';
+          if (primaryConflict && commConflict) {
+            combinedMessage =
+              'A Primary Contact with the same role and an active Interaction Recipient already exists. Would you like to proceed?';
+          } else if (primaryConflict) {
+            combinedMessage =
+              'Primary Contact with the same role already exists. Would you like to proceed?';
+          } else if (commConflict) {
+            combinedMessage =
+              'Only one active contact can be set as Interaction Recipient. Would you like to proceed?';
+          }
 
-                  if (
-                    constructFormData[otherRoleKey] === currentRole &&
-                    constructFormData[otherStatusKey] === 'active'
-                  ) {
-                    newData[key] = 'no';
-                    newData[otherCommKey] = 'no';
+          if (primaryConflict || commConflict) {
+            setConfirmationState({
+              isOpen: true,
+              message: combinedMessage,
+              onConfirm: () => {
+                // Handle primary contact conflicts
+                if (primaryConflict) {
+                  Object.keys(newData).forEach((key) => {
+                    if (
+                      key.startsWith('is_primary_contact_') &&
+                      key !== isPrimaryField &&
+                      constructFormData[key] === 'yes'
+                    ) {
+                      const otherIndex = parseInt(
+                        key.split('_').pop() || '0',
+                        10
+                      );
+                      const otherRoleKey = `key_contact_role_${otherIndex}`;
+                      const otherStatusKey = `key_contact_status_${otherIndex}`;
 
-                    setFormData((prev) =>
-                      prev?.map((section) => ({
-                        ...section,
-                        fields: section.fields.map((f) => {
-                          if (f.name === otherCommKey)
-                            return { ...f, disabled: false };
-                          if (f.name === otherEmailKey)
-                            return { ...f, required: false, error: '' };
-                          return f;
-                        }),
-                      }))
-                    );
-                  }
+                      if (
+                        constructFormData[otherRoleKey] === currentRole &&
+                        constructFormData[otherStatusKey] === 'active'
+                      ) {
+                        newData[key] = 'no';
+                      }
+                    }
+                  });
                 }
-              });
 
-              setFormData((prev) =>
-                prev?.map((section) => ({
-                  ...section,
-                  fields: section.fields.map((f) => {
-                    if (f.name === statusField)
-                      return { ...f, value: 'active' };
-                    if (f.name === commFieldName)
-                      return { ...f, disabled: true };
-                    if (f.name === emailFieldName)
-                      return { ...f, required: true };
-                    return f;
-                  }),
-                }))
-              );
+                // Handle communication inclusion conflicts
+                if (commConflict) {
+                  Object.keys(newData).forEach((key) => {
+                    if (
+                      key.startsWith('include_in_communication_') &&
+                      key !== commFieldName
+                    ) {
+                      const otherIndex = parseInt(
+                        key.split('_').pop() || '0',
+                        10
+                      );
+                      const otherStatusField = `key_contact_status_${otherIndex}`;
+                      if (constructFormData[otherStatusField] === 'active') {
+                        newData[key] = 'no';
+                      }
+                    }
+                  });
+                }
 
-              setConstructFormData(newData);
-            },
-          });
+                // Ensure this contact is properly set
+                if (isPrimary) {
+                  newData[isPrimaryField] = 'yes';
+                }
+                if (currentCommValue) {
+                  newData[commFieldName] = 'yes';
+                }
 
-          return;
+                setConstructFormData(newData);
+              },
+            });
+            return;
+          }
+
+          // If no conflicts, just update the status
+          setConstructFormData(newData);
+        } else {
+          // For other status changes (not inactive→active), just update
+          newData[statusField] = newStatus;
+          setConstructFormData(newData);
         }
       }
 
@@ -769,6 +792,34 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f.name] = '';
               updatedField.error = '';
             }
+            // Handle name/email error clearing when Include In Communications is No
+            if (
+              field.name.startsWith('key_contact_name_') ||
+              field.name.startsWith('key_contact_email_')
+            ) {
+              const currentIndex = parseInt(
+                field.name.split('_').pop() || '0',
+                10
+              );
+              const includeInCommField = `include_in_communication_${currentIndex}`;
+              const includeInCommValue =
+                constructFormData[includeInCommField] === 'yes';
+
+              if (!includeInCommValue) {
+                const nameField = `key_contact_name_${currentIndex}`;
+                const emailField = `key_contact_email_${currentIndex}`;
+
+                // If either name or email is being changed and has a value, clear errors for both
+                if (
+                  (field.name === nameField && value) ||
+                  (field.name === emailField && value)
+                ) {
+                  if (f.name === nameField || f.name === emailField) {
+                    updatedField.error = '';
+                  }
+                }
+              }
+            }
 
             return updatedField;
           }),
@@ -776,6 +827,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       });
 
       setConstructFormData(newData);
+    };
+
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+      // Update the parent's state (if `handleChange` expects the file object)
+      // or just the filename for display
+      if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        if (field.onChange && onChange) {
+          onChange({ fieldName: field.name, fieldValue: file }); // Update local state for display
+        }
+      }
     };
 
     if (field.isLoading) {
@@ -799,6 +861,61 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(e) => handleChange(e.target.value)}
             value={fieldValue || field.defaultValue || ''}
           />
+        );
+      case 'file':
+        return (
+          <div className='w-full flex items-center justify-between gap-2'>
+            <input
+              id='upload-logo'
+              type={field.type}
+              name={field.name}
+              autoComplete='off'
+              className='hidden'
+              disabled={field.disabled}
+              onChange={handleFileChange}
+            />
+
+            <div className='flex items-center  justify-between w-[74%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs overflow-hidden'>
+              <span
+                className={`${logo && logo.name ? 'text-[#000000]' : 'text-[#7D98B6]'} truncate`}
+              >
+                {logo ? logo.name : 'No file selected'}
+              </span>
+              {logo && (
+                <CloseIcon
+                  alt='close-icon'
+                  className='w-2.5 h-2.5 ml-2 cursor-pointer hover:brightness-90'
+                  onClick={() => {
+                    const fileInput = document.getElementById(
+                      'upload-logo'
+                    ) as HTMLInputElement;
+                    if (fileInput) fileInput.value = '';
+
+                    if (field.name === 'logo') {
+                      onChange?.({ fieldName: 'logo', fieldValue: null });
+                    }
+                  }}
+                />
+              )}
+            </div>
+
+            <TextButton
+              label='Browse'
+              sx={{
+                height: '32px !important',
+                minWidth: '26%',
+                maxWidth: '26%',
+                fontSize: '13px',
+                fontWeight: '400',
+              }}
+              onClick={() => {
+                const logoFileInput = document.getElementById(
+                  'upload-logo'
+                ) as HTMLInputElement;
+                logoFileInput?.click();
+              }}
+            />
+          </div>
         );
       case 'website':
         return (
@@ -890,16 +1007,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
               }}
             >
-              <MenuItem
-                value=''
-                sx={{
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                }}
-              >
-                {field.placeholder}
-              </MenuItem>
+              {field.placeholder && (
+                <MenuItem
+                  value=''
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                >
+                  {field.placeholder}
+                </MenuItem>
+              )}
               {field?.options?.map((option, i) => (
                 <MenuItem
                   sx={{
@@ -937,8 +1056,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
-            <img
-              src={searchBlackIcon}
+            <SearchBlackIcon
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
             />
@@ -1122,14 +1240,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
+                  <CalendarIcon alt='calendar' className='w-4 h-4' />
                 ),
                 clearIcon: () => (
-                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                  <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
                 ),
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
+                clearButton: {
+                  tabIndex: -1, // disable tab focus for clear button
+                },
+                openPickerButton: {
+                  tabIndex: -1, // prevent focus on calendar icon
+                },
                 day: {
                   sx: {
                     '&.MuiPickersDay-today': {
@@ -1206,21 +1330,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 isError +
                 fieldDisabled
               }
-              value={dayjs(fieldValue, 'DD/MM')}
+              value={dayjs(fieldValue, 'MM/DD')}
               disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
               open={false}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM'));
+                handleChange(dayjs(newValue).format('MM/DD'));
               }}
               slots={{
                 clearIcon: () => (
-                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                  <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
                 ),
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
+                clearButton: {
+                  tabIndex: -1, // disable tab focus for clear button
+                },
                 textField: {
                   fullWidth: true,
                   size: 'small',
@@ -1292,10 +1419,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <button
             className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
             type='button'
-            onClick={field.onClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              field.onClick?.(e);
+              handleAddKeyContact();
+            }}
           >
             <span>
-              <img src={keyContactAddIcon} alt='add-btn' className='w-5 h-5' />
+              <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
             </span>
             {field.name}
           </button>
@@ -1360,7 +1491,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
       });
     });
-
     const dataValidation = formData?.map((section) => {
       if (section.hide) return section;
       return {
@@ -1381,6 +1511,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (field.required && !hasValue) {
             hasError = true;
             return { ...field, error: 'Field is required' };
+          }
+
+          if (field.type === 'file' && logo) {
+            const allowedMimeTypes = [
+              'image/png',
+              'image/svg+xml',
+              'image/jpeg',
+            ];
+            const allowedExtensions = ['.png', '.svg', '.jpg'];
+            const maxFileSize = 1 * 1024 * 1024; // 1 MB
+
+            const fileName = logo.name.toLowerCase();
+            const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+
+            const isExtensionValid = allowedExtensions.includes(fileExtension);
+            const isMimeTypeValid = allowedMimeTypes.includes(logo.type);
+
+            // Reject if MIME type is not valid or if the extension is not exactly .jpg
+            if (
+              !isMimeTypeValid ||
+              !isExtensionValid ||
+              fileExtension === '.jpeg'
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Only PNG, SVG, and JPG  files are allowed.',
+              };
+            }
+
+            if (logo.size >= maxFileSize) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'File size must be less than 1 MB.',
+              };
+            }
           }
 
           if (field.type === 'phone') {
@@ -1406,7 +1573,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Date validation
           if (field.type === 'fiscalDate' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
-            if (!isValidDate(dateValue, 'DD/MM')) {
+            if (!isValidDate(dateValue, 'MM/DD')) {
               hasError = true;
               return {
                 ...field,
@@ -1890,7 +2057,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
     });
     setFormData(dataValidation);
-
     if (!hasError) {
       //If there is no error then only submit the data
       const cleanedData = Object.fromEntries(
@@ -1925,7 +2091,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const visibleFields = section.fields.filter(
       (field) => !field.name.startsWith('key_contact_rid_')
     );
-    const headerFields = visibleFields.slice(0, 7);
+    const hasFields = visibleFields.length > 0;
+    // const headerFields = visibleFields.slice(0, 7);
+    const headerFields = keyContactHeaders.slice(0, 7);
     const fieldRows = chunkFields(visibleFields, 7);
     return (
       <div className='px-10'>
@@ -1961,156 +2129,180 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 })}
               </TableRow>
             </TableHead>
-            <TableBody
-              sx={{
-                '& .MuiTableCell-root': {
-                  padding: '0px',
-                  '& input': {
-                    border: 'none',
-                    outline: 'none',
-                    boxShadow: 'none',
-                    background: 'transparent',
+            {hasFields ? (
+              <TableBody
+                sx={{
+                  '& .MuiTableCell-root': {
+                    padding: '0px',
+                    '& input': {
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      background: 'transparent',
+                    },
+                    '& radio': {
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    },
                   },
-                  '& radio': {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  },
-                },
-              }}
-            >
-              {fieldRows.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {row.map((field, colIndex) => {
-                    const isLastColumn = colIndex === row.length - 1;
-                    const isRequired = field.required;
-                    return (
-                      <TableCell
-                        sx={{
-                          position: 'relative',
-                          height: '32px !important',
-                          width: `${field.width}`,
-                          minWidth: `${field.width}`,
-                          maxWidth: `${field.width}`,
-                          paddingLeft:
-                            `${field.type}` === 'iconButton' ||
-                            `${field.type}` === 'radio'
-                              ? '10px !important'
-                              : 'none',
-                          verticalAlign:
-                            `${field.type}` === 'iconButton'
-                              ? 'middle !important'
-                              : 'top',
-                          '& input': {
-                            border: field.error
-                              ? '1px solid #fb2c36 !important'
-                              : 'none',
-                            '&:focus': {
+                }}
+              >
+                {fieldRows.map((row, rowIndex) => (
+                  <TableRow key={rowIndex}>
+                    {row.map((field, colIndex) => {
+                      const isLastColumn = colIndex === row.length - 1;
+                      const isRequired = field.required;
+                      return (
+                        <TableCell
+                          sx={{
+                            position: 'relative',
+                            height: '32px !important',
+                            width: `${field.width}`,
+                            minWidth: `${field.width}`,
+                            maxWidth: `${field.width}`,
+                            paddingLeft:
+                              `${field.type}` === 'iconButton' ||
+                              `${field.type}` === 'radio'
+                                ? '10px !important'
+                                : 'none',
+                            verticalAlign:
+                              `${field.type}` === 'iconButton'
+                                ? 'middle !important'
+                                : 'top',
+                            '& input': {
                               border: field.error
-                                ? '1px solid #fb2c36'
-                                : '1px solid #60A5FA',
+                                ? '1px solid #fb2c36 !important'
+                                : 'none',
+                              '&:focus': {
+                                border: field.error
+                                  ? '1px solid #fb2c36'
+                                  : '1px solid #60A5FA',
+                              },
                             },
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            border: 'none !important',
-                          },
-                          '& .MuiOutlinedInput-root': {
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #60A5FA !important',
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              border: field.error
+                                ? '1px solid #ef4444'
+                                : 'none !important',
                             },
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            border: 'none',
-                          },
-                        }}
-                        key={colIndex}
-                        style={{
-                          verticalAlign: 'top',
-                          height: '32px !important',
-                          backgroundColor: field.error
-                            ? '#FEF2F2'
-                            : 'transparent',
-                        }}
-                      >
-                        {field.type === 'iconButton' && isLastColumn ? (
-                          <Tooltip
-                            title={'Remove contact'}
-                            arrow
-                            placement='top'
-                          >
-                            <button
-                              type='button'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                field.onClick?.(e);
-                                handleRemoveKeyContactRow(rowIndex);
-                              }}
-                              style={{
-                                cursor: 'pointer',
-                                background: 'transparent',
-                                border: 'none',
-                                padding: 0,
-                                marginTop: '6px',
-                              }}
-                              aria-label='Remove contact'
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              border: field.error
+                                ? '1px solid #ef4444'
+                                : 'none !important',
+                            },
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                {
+                                  border: '1px solid #60A5FA !important',
+                                },
+                            },
+                          }}
+                          key={colIndex}
+                          style={{
+                            verticalAlign: 'top',
+                            height: '32px !important',
+                            backgroundColor: field.error
+                              ? '#FEF2F2'
+                              : 'transparent',
+                          }}
+                        >
+                          {field.type === 'iconButton' && isLastColumn ? (
+                            <Tooltip
+                              title={'Remove contact'}
+                              arrow
+                              placement='top'
                             >
-                              <img
-                                src={field.iconUrl || keyContactRemoveIcon}
-                                alt='Remove'
-                                style={{ width: 20, height: 20 }}
-                              />
-                            </button>
-                          </Tooltip>
-                        ) : field.type === 'text' ? (
-                          <div
-                            className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
-                          >
-                            {getFields(field)}
-                            {field.error && (
-                              <Tooltip
-                                title={field.error}
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
-                                    },
-                                  },
+                              <button
+                                type='button'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  field.onClick?.(e);
+                                  handleRemoveKeyContactRow(rowIndex);
                                 }}
+                                style={{
+                                  cursor: 'pointer',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  padding: 0,
+                                  marginTop: '6px',
+                                }}
+                                aria-label='Remove contact'
                               >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <img
-                                    src={errorInfoIcon}
-                                    alt='error'
-                                    className='w-5 h-3.5'
+                                {field.iconUrl ? (
+                                  <field.iconUrl
+                                    alt='Icon'
+                                    style={{ width: 20, height: 20 }}
                                   />
+                                ) : (
+                                  <KeyContactRemoveIcon
+                                    alt='Remove'
+                                    style={{ width: 20, height: 20 }}
+                                  />
+                                )}
+                              </button>
+                            </Tooltip>
+                          ) : field.type === 'text' ? (
+                            <div
+                              className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                            >
+                              {getFields(field)}
+                              {field.error && (
+                                <Tooltip
+                                  title={field.error}
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <ErrorInfoIcon
+                                      alt='error'
+                                      className='w-5 h-3.5'
+                                    />
+                                  </span>
+                                </Tooltip>
+                              )}
+                              {isRequired && !field.error && (
+                                <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                  *
                                 </span>
-                              </Tooltip>
-                            )}
-                            {isRequired && !field.error && (
-                              <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                *
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <>
-                            {getFields(field)}
-                            {isRequired && (
-                              <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                *
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </TableCell>
-                    );
-                  })}
+                              )}
+                            </div>
+                          ) : (
+                            <>
+                              {getFields(field)}
+                              {isRequired && (
+                                <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                  *
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            ) : (
+              <TableBody>
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    align='center'
+                    sx={{ height: '32px', padding: '0px', color: '#7d98b6' }}
+                  >
+                    No key contacts added
+                  </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
+              </TableBody>
+            )}
           </Table>
         </TableContainer>
       </div>
@@ -2149,7 +2341,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       <span className='pl-[10px] text-[13px] text-[#425A76]'>
                         https://
                       </span>
-                      <img src={verticalSeparatorIcon} alt-='separtor' />
+                      <VerticalSeparatorIcon alt-='separtor' />
                       {getFields(field)}
                     </div>
                   </div>
@@ -2211,15 +2403,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <div key={i}>
               {section.sectionName && (
                 <h4
-                  className={`${i === 0 ? 'border-b' : 'border'} h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                  className={`${i === 0 ? 'border-b' : 'border'} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
-                  {section.sectionName}
+                  {section.sectionName.replace(/_/g, ' ')}
                 </h4>
               )}
               <>
                 {!section.sectionName
                   ? loadSectionsWithoutTitle(section)
-                  : section.sectionName === 'Key Contacts List'
+                  : section.sectionName === 'key_contacts_list'
                     ? loadKeyContactSection(section)
                     : loadDefaultSections(section, isHalf, i)}
               </>

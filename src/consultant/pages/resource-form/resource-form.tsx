@@ -1,8 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { createresourceIcon, editIcon } from '../../../assets';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { CreateResourceIcon, EditIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
@@ -36,9 +41,7 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
-import {
-  formatDateToYYYYMMDDWithTime
-} from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -79,6 +82,14 @@ const ResourceForm: React.FC = () => {
     resource_lastname: '',
   });
   const [disableOrgname, setDisableOrgname] = useState<string>('');
+  const [, setResourceFinancials] = useState({
+    salary: '',
+    bonus: '',
+    insurance: '',
+    resource_cost: '',
+    deductions: '',
+  });
+  const [autoCalculatedValue, setAutoCalculatedValue] = useState<number>(0);
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -106,7 +117,29 @@ const ResourceForm: React.FC = () => {
       accountNumber: accountNumber,
       id: state?.costInfo?.costRid,
     });
+  const [isSalaryRequired, setIsSalaryRequired] = useState(true);
+  const calculateAutoValue = ({
+    salary = '0',
+    bonus = '0',
+    insurance = '0',
+    resource_cost = '0',
+    deductions = '0',
+  }: {
+    salary?: string;
+    bonus?: string;
+    insurance?: string;
+    resource_cost?: string;
+    deductions?: string;
+  }) => {
+    const s = parseFloat(salary) || 0;
+    const b = parseFloat(bonus) || 0;
+    const i = parseFloat(insurance) || 0;
+    const r = parseFloat(resource_cost) || 0;
+    const d = parseFloat(deductions) || 0;
+    return s + b + i + r - d;
+  };
 
+  const isresourceType = resourceDetails?.resource_type === 'Full-Time';
   const costInfo =
     (costDetails as { resourceCostById?: Record<string, any> })
       ?.resourceCostById || {};
@@ -116,11 +149,13 @@ const ResourceForm: React.FC = () => {
   const { data: resource, isSuccess } = useResourceDetail(
     resourcesid || resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber || accNumber
+      accountNumber ||
+      accNumber
   );
-
+  const accountName = location?.state?.data?.accountById?.account_name;
   useEffect(() => {
-    const resourceDetailsData = resource?.data?.resourceDetails;
+    const resourceDetailsData =
+      resource?.data?.resourceDetails || state?.resource;
     const finalResourceDetails = {
       ...resourceDetailsData,
       country: resourceDetailsData?.resource_country,
@@ -134,20 +169,26 @@ const ResourceForm: React.FC = () => {
       Resource_id: resourceDetailsData?.r_number,
       resource_startdate: resourceDetailsData?.resource_startdate,
       resource_enddate: resourceDetailsData?.resource_enddate,
-      Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
+      Created_On: formatDateToYYYYMMDDWithTime(
+        resourceDetailsData?.created_datetime
+      ),
       Created_By: resourceDetailsData?.created_by,
-      Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
-      Updated_By: resourceDetailsData?.modified_by,
+      Updated_On: resourceDetailsData?.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(
+            resourceDetailsData?.modified_datetime || '-'
+          )
+        : '-',
+      Updated_By: resourceDetailsData?.modified_by || '-',
       resource_name:
         resourceDetailsData?.resource_firstname &&
-          resourceDetailsData?.resource_lastname
+        resourceDetailsData?.resource_lastname
           ? ''
           : !resourceDetailsData?.resource_firstname &&
-            !resourceDetailsData?.resource_lastname
+              !resourceDetailsData?.resource_lastname
             ? resourceDetailsData?.resource_name
             : resourceDetailsData?.resource_firstname ||
-            resourceDetailsData?.resource_lastname ||
-            '',
+              resourceDetailsData?.resource_lastname ||
+              '',
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -177,23 +218,56 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
+
     if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
-        financial_start_date: costInfo?.effective_date || '',
+        financial_start_date: costInfo?.effective_from || '',
         financial_end_date: costInfo?.end_date || '',
         effort_in_hrs: costInfo?.effort_in_hrs || '',
         currency: costInfo?.currency_rid || null,
-        annual_cost: costInfo?.annual_cost || '',
-        monthly_cost: costInfo?.monthly_cost || '',
-        weekly_cost: costInfo?.weekly_cost || '',
-        bi_weekly_cost: costInfo?.bi_weekly_cost || '',
-        daily_cost: costInfo?.daily_cost || '',
-        hourly_cost: costInfo?.hourly_cost || '',
+        salary: costInfo?.salary || '',
+        bonus: costInfo?.bonus || '',
+        insurance: costInfo?.insurance || '',
+        deductions: costInfo?.deductions || '',
+        resource_cost: costInfo?.resource_cost || '',
+        resource_status: costInfo?.status || '',
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
+        Record_id: costInfo?.rid,
+        Resource_id: costInfo?.resource_number,
+        Created_On: formatDateToYYYYMMDDWithTime(costInfo?.created_datetime),
+        Created_By: costInfo?.created_by,
+        Updated_On: costInfo?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(costInfo.modified_datetime)
+          : '-',
+        Updated_By:
+          costInfo?.modified_by !== null &&
+          costInfo.modified_by !== undefined &&
+          costInfo.modified_by !== ''
+            ? costInfo.modified_by
+            : '-',
       };
       setFormValues(costValues);
+      setIsSalaryRequired(
+        costInfo?.salary === null ||
+          costInfo?.salary === undefined ||
+          costInfo?.salary === ''
+      );
+      // Calculate and set auto value
+      // Update resource financials state
+      const financials = {
+        salary: costInfo?.salary || '',
+        bonus: costInfo?.bonus || '',
+        insurance: costInfo?.insurance || '',
+        resource_cost: costInfo?.resource_cost || '',
+        deductions: costInfo?.deductions || '',
+      };
+      setResourceFinancials(financials);
+
+      // Calculate and set auto value
+      const total = calculateAutoValue(financials);
+      setAutoCalculatedValue(total);
     } else if (state?.skill && isSuccess && skillInfo && isEditView) {
       const skillValues = {
         ...formValues,
@@ -201,21 +275,33 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date: skillInfo?.startDate as string || '',
+        skill_start_date: (skillInfo?.startDate as string) || '',
         skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
         comments: skillInfo?.comments || '',
+        Record_id: skillInfo?.skillRId,
+        Resource_id: skillInfo?.resourceNumber,
+        Created_On: formatDateToYYYYMMDDWithTime(skillInfo?.Created_On),
+        Created_By: skillInfo?.Created_By,
+        Updated_On: skillInfo?.Updated_On
+          ? formatDateToYYYYMMDDWithTime(skillInfo.Updated_On)
+          : '-',
+        Updated_By:
+          skillInfo?.Updated_By !== null &&
+          skillInfo.Updated_By !== undefined &&
+          skillInfo.Updated_By !== ''
+            ? skillInfo.Updated_By
+            : '-',
       };
       setFormValues(skillValues);
     } else if (formValues && !isEditView && state?.cost) {
       const values = {
         ...formValues,
         currency: costAndSKillAccountInfo?.currency_rid || null,
-      }
+      };
       setFormValues(values);
     } else if (formValues && !isEditView) {
-      // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
@@ -368,7 +454,7 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
-        resource_rid: resourceId,
+        resource_rid: resource?.data.resourceDetails.rid,
         resource_number: resource?.data.resourceDetails.r_number,
         cost_rid: state?.costInfo?.costRid,
         resource_code: resource?.data.resourceDetails.resource_code,
@@ -435,7 +521,6 @@ const ResourceForm: React.FC = () => {
       replace: true,
     });
   };
-
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'country') {
       setCurrentCountry({
@@ -489,10 +574,39 @@ const ResourceForm: React.FC = () => {
     if (fieldName === 'resource_type') {
       setDisableOrgname(String(fieldValue));
     }
-  };
+    if (
+      ['salary', 'bonus', 'insurance', 'resource_cost', 'deductions'].includes(
+        fieldName
+      )
+    ) {
+      setResourceFinancials((prev) => {
+        const updated = {
+          ...prev,
+          [fieldName]: fieldValue as string,
+        };
 
-  //disable orgname in the formdata if the user select resource type as full-time
-  // const disableOrgname = resourceDetails?.resource_type === 'full-time';
+        const salary = parseFloat(updated.salary) || 0;
+        const bonus = parseFloat(updated.bonus) || 0;
+        const insurance = parseFloat(updated.insurance) || 0;
+        const resourceCost = parseFloat(updated.resource_cost) || 0;
+        const deductions = parseFloat(updated.deductions) || 0;
+
+        const total = salary + bonus + insurance + resourceCost - deductions;
+        setAutoCalculatedValue(total);
+
+        return updated;
+      });
+
+      // Salary-specific validation
+      if (
+        fieldName === 'salary' &&
+        resourceDetails?.resource_type === 'Full-Time'
+      ) {
+        const salaryValue = (fieldValue as string).trim();
+        setIsSalaryRequired(salaryValue === '');
+      }
+    }
+  };
 
   // Form configuration
   const formConfig = ResourceFormData(
@@ -506,7 +620,6 @@ const ResourceForm: React.FC = () => {
     city.isLoading,
     currency.isLoading,
     skillSubTypeLoading,
-    isEditView,
     state?.cost || state?.skill,
     disableOrgname,
     currentSkillType.skill_type,
@@ -516,18 +629,26 @@ const ResourceForm: React.FC = () => {
     state?.resourceCreate,
     isResourceFullNameEmpty,
     isAnyResourceNameFilled,
-    currentResource
+    isresourceType,
+    isSalaryRequired,
+    isEditView,
+    currentResource,
+    autoCalculatedValue,
+    accountName
   );
 
   return (
     <div className='resource-form-container'>
-      <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
+      <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center'>
-          <img
-            src={isEditView ? editIcon : createresourceIcon}
-            alt='menu-icon'
-            className={`${isEditView ? 'bg-[#7D98B6] p-1.5' : ''} h-6 w-6 rounded`}
-          />
+          {isEditView ? (
+            <EditIcon
+              alt='menu-icon'
+              className='bg-[#7D98B6] p-1.5 h-6 w-6 rounded'
+            />
+          ) : (
+            <CreateResourceIcon alt='menu-icon' className='h-6 w-6 rounded' />
+          )}
           <div>
             {/* {isEditView && !state?.skill && !state?.cost && (
               <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
@@ -588,41 +709,43 @@ const ResourceForm: React.FC = () => {
           />
         </div>
       </div>
-      <FormBuilder
-        data={formConfig}
-        loading={allCountries.isLoading}
-        values={
-          isEditView &&
+      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        <FormBuilder
+          data={formConfig}
+          loading={allCountries.isLoading}
+          values={
+            isEditView &&
             !state?.cost &&
             !state?.skill &&
             (resourceDetails as unknown as Record<
               string,
               string | number | boolean | string[] | null
             >)
-            ? (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
-              : undefined
-        }
-        // values={
-        //   resource.data?.data?.resource as unknown as Record<
-        //     string,
-        //     string | number | boolean | string[] | null
-        //   >
-        // }
-        outData={handleSubmit}
-        formRef={formRef}
-        onChange={onChangeField}
-        layout={Layout.TYPE_1}
-        keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
-        keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
-      />
+              ? (resourceDetails as unknown as Record<
+                  string,
+                  string | number | boolean | string[] | null
+                >)
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
+                    string,
+                    string | number | boolean | string[] | null
+                  >)
+                : undefined
+          }
+          // values={
+          //   resource.data?.data?.resource as unknown as Record<
+          //     string,
+          //     string | number | boolean | string[] | null
+          //   >
+          // }
+          outData={handleSubmit}
+          formRef={formRef}
+          onChange={onChangeField}
+          layout={Layout.TYPE_1}
+          keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
+          keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
+        />
+      </div>
     </div>
   );
 };

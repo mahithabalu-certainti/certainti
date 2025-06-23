@@ -15,6 +15,12 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'Active' },
   { label: 'In-Active', value: 'Inactive' },
 ];
+export const RESOURCE_STATUS_COST: SelectOption[] = [
+  { label: 'Active', value: 'Active' },
+  { label: 'Inactive', value: 'Inactive' },
+  { label: 'Anomaly', value: 'Anomaly' },
+  { label: 'Duplicate', value: 'Duplicate' },
+];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
   { label: 'Full-Time', value: 'Full-Time' },
@@ -107,9 +113,9 @@ export function transformPayloadforUpdateResource(
     role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
-    resource_country: rawData.country || existingResource?.country || '',
-    resource_region: rawData.state || existingResource?.state || '',
-    resource_city: rawData.city || existingResource?.city || '',
+    country_rid: rawData.country || existingResource?.country || '',
+    region_rid: rawData.state || existingResource?.state || '',
+    city_rid: rawData.city || existingResource?.city || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
       rawData.resource_startdate || existingResource?.resource_startdate || '',
@@ -143,9 +149,9 @@ export const transformPayloadforCreateResource = (
     name: fullName || formData.resource_name,
     org_name: formData.resource_orgname,
     role: formData.resource_role,
-    resource_country: formData.country,
-    resource_region: formData.state,
-    resource_city: formData.city,
+    country_rid: formData.country,
+    region_rid: formData.state,
+    city_rid: formData.city,
     effective_from_date: formData.resource_startdate,
     effective_end_date: formData.resource_enddate,
     resource_designation: formData.designation,
@@ -164,17 +170,16 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formData.financial_start_date
+    effective_from: formData.financial_start_date
       ? formData.financial_start_date
       : '',
     end_date: formData.financial_end_date ? formData.financial_end_date : '',
     effort_in_hrs: formData.effort_in_hrs || '',
-    annual_cost: formData.annual_cost || '',
-    monthly_cost: formData.monthly_cost || '',
-    weekly_cost: formData.weekly_cost || '',
-    bi_weekly_cost: formData.bi_weekly_cost || '',
-    daily_cost: formData.daily_cost || '',
-    hourly_cost: formData.hourly_cost || '',
+    salary: formData.salary || '',
+    bonus: formData.bonus || '',
+    insurance: formData.insurance || '',
+    deductions: formData.deductions || '',
+    resource_cost: formData.resource_cost || '',
     fiscal_year: formData.fiscal_year,
     resource_type: formData.resource_type,
     resource_code: formData.resource_code,
@@ -190,7 +195,6 @@ export const transformCostData = (
     data.rid = formData.cost_rid;
 
     delete data.account_rid;
-    delete data.resource_rid;
     delete data.resource_type;
     delete data.resource_ref_id;
     delete data.resource_number;

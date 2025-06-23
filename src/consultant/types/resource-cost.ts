@@ -26,16 +26,14 @@ export type ResourceCostList = {
   resource_type?: string;
   resource_rid?: string;
   resource_ref_id?: string;
-  effective_date?: string;
+  effective_from?: string;
   effort_in_hrs?: string;
   end_date?: string;
-  annual_cost?: string | null;
-  semi_annual_cost?: string | null;
-  monthly_cost?: string | null;
-  weekly_cost?: string | null;
-  bi_weekly_cost?: string | null;
-  daily_cost?: string | null;
-  hourly_cost?: string | null;
+  salary?: string;
+  bonus?: string;
+  insurance?: string;
+  deductions?: string;
+  resource_cost?: string;
   cost: string | null;
   cost_frequency?: string | null;
   currency_rid?: string;
@@ -65,6 +63,11 @@ export interface ResourceCostApiResponse extends CommonApiResponse {
     count: number;
   };
 }
+export interface ResourceCostStatusApiResponse extends CommonApiResponse {
+  data: {
+    updateStatus: number[];
+  };
+}
 
 export type ResourceCostSkillFormData = {
   accountNumber?: string;
@@ -92,12 +95,11 @@ export type ResourceCostSkillFormData = {
   financial_start_date?: string;
   financial_end_date?: string;
   effort_in_hrs?: string;
-  annual_cost?: string;
-  monthly_cost?: string;
-  weekly_cost?: string;
-  bi_weekly_cost?: string;
-  daily_cost?: string;
-  hourly_cost?: string;
+  salary?: string;
+  bonus?: string;
+  insurance?: string;
+  deductions?: string;
+  resource_cost?: string;
   resource_effective_from?: string;
   resource_end_date?: string;
   designation?: string;
@@ -127,18 +129,24 @@ export type ResourceCostPayload = {
   resource_rid: string;
   resource_ref_id: string;
   resource_code?: string;
-  effective_date?: string;
+  effective_from?: string;
   end_date?: string;
   effort_in_hrs?: string;
-  annual_cost?: string;
-  monthly_cost?: string;
-  weekly_cost?: string;
-  bi_weekly_cost?: string;
-  daily_cost?: string;
-  hourly_cost?: string;
+  salary?: string;
+  bonus?: string;
+  insurance?: string;
+  deductions?: string;
+  resource_cost?: string;
   fiscal_year?: string;
   currency_rid?: string | null;
   accountNumber?: string;
   status?: string;
   comments?: string;
+};
+
+export type ResourceStatusPayload = {
+  rid: string;
+  accountNumber: string;
+  action: string;
+  type: string;
 };

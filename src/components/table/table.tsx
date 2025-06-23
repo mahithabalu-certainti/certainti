@@ -18,11 +18,11 @@ import React, { useState } from 'react';
 import { RowData, SortDirection, TableProps } from './types';
 import TablePagination from './pagination';
 import {
-  arrowDownIcon,
-  arrowUpIcon,
-  editIcon,
-  eyeIcon,
-  deleteIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  EditIcon,
+  EyeIcon,
+  DeleteIcon,
 } from '../../assets';
 
 const Table = <T extends RowData>({
@@ -210,29 +210,25 @@ const Table = <T extends RowData>({
                             >
                               {sortOrder === 'ASC' ? (
                                 <div className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'>
-                                  <img
-                                    src={arrowUpIcon}
+                                  <ArrowUpIcon
                                     alt='sort-up-active'
                                     className='w-4 h-4'
                                     style={{
                                       filter: 'brightness(0) saturate(100%)',
                                     }}
                                   />
-                                  <img
-                                    src={arrowDownIcon}
+                                  <ArrowDownIcon
                                     alt='sort-down-inactive'
                                     className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
                                   />
                                 </div>
                               ) : (
                                 <div className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'>
-                                  <img
-                                    src={arrowUpIcon}
+                                  <ArrowUpIcon
                                     alt='sort-up-inactive'
                                     className='w-4 h-4 filter grayscale brightness-0 opacity-50'
                                   />
-                                  <img
-                                    src={arrowDownIcon}
+                                  <ArrowDownIcon
                                     alt='sort-down-active'
                                     className='w-4 h-4 mt-[-9px]'
                                     style={{
@@ -253,13 +249,11 @@ const Table = <T extends RowData>({
                                 }
                               }}
                             >
-                              <img
-                                src={arrowUpIcon}
+                              <ArrowUpIcon
                                 alt='sort-up'
                                 className='w-4 h-4 filter grayscale brightness-0 opacity-50'
                               />
-                              <img
-                                src={arrowDownIcon}
+                              <ArrowDownIcon
                                 alt='sort-down'
                                 className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
                               />
@@ -472,11 +466,7 @@ const Table = <T extends RowData>({
                                   sx={{ mr: 1.5 }}
                                   onClick={() => onView(row)}
                                 >
-                                  <img
-                                    src={eyeIcon}
-                                    alt='viewIcon'
-                                    className='w-5 h-5'
-                                  />
+                                  <EyeIcon alt='viewIcon' className='w-5 h-5' />
                                 </IconButton>
                               </Tooltip>
                             )}
@@ -499,8 +489,7 @@ const Table = <T extends RowData>({
                                   size='small'
                                   onClick={() => onEdit(row)}
                                 >
-                                  <img
-                                    src={editIcon}
+                                  <EditIcon
                                     alt='editIcon'
                                     style={{
                                       filter:
@@ -556,8 +545,7 @@ const Table = <T extends RowData>({
                                   size='small'
                                   onClick={() => onDeleteIcon(row)}
                                 >
-                                  <img
-                                    src={deleteIcon}
+                                  <DeleteIcon
                                     alt='deleteIcon'
                                     style={{
                                       filter:
