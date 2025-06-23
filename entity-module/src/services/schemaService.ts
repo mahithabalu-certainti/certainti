@@ -2319,7 +2319,7 @@ class SchemaService {
         "fiscal_year",
         "account_name",
         "industry_name_other",
-        "project_type",
+        "project_type_name",
         "project_client_group",
         "project_group",
         "classification_name",

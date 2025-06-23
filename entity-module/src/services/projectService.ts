@@ -888,7 +888,7 @@ export class ProjectService {
           "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
+          "Project Type": project.project_type_name || "-",
           "Account Name": project.account_name || "-",
           "Fiscal Year": "-",
           "Project Classification": project.classification_name || "-",

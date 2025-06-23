@@ -1113,6 +1113,7 @@ class ProjectIngestionService {
     const parentLevelFields = [
       "project_name",
       "industry_name",
+      "project_type_rid",
       "classification_name",
       "technical_point_of_contact",
       "financial_consultant",
@@ -1150,7 +1151,7 @@ class ProjectIngestionService {
       project_group: "project_group",
       project_client_group: "project_client_group",
       fiscal_year: "fiscal_year",
-      project_type: "project_type",
+      project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code"
     };
@@ -1230,7 +1231,7 @@ class ProjectIngestionService {
             "fiscal_year",
             "project_name",
             "program_name",
-            "project_type",
+            "project_type_rid",
             "project_classification_rid",
             "project_classification_other",
             "project_client_group",
@@ -1314,7 +1315,7 @@ class ProjectIngestionService {
       const baseRow = {
         "Project Code": project.project_code || "-",
         "Name": project.project_name || "-",
-        "Project Type": project.project_type || "-",
+        "Project Type": project.project_type_name || "-",
         "Account Name": project.account_name || "-",
         "Fiscal Year": project.fiscal_year || "-",
         "Project Classification": project.classification_name || "-",
@@ -1344,7 +1345,7 @@ class ProjectIngestionService {
       const fiscalRows = fiscalSummaries.map((fiscal: any) => ({
         "Project Code": fiscal.project_code || "-",
         "Name": fiscal.project_name || "-",
-        "Project Type": fiscal.project_type || "-",
+        "Project Type": fiscal.project_type_name || "-",
         "Account Name": project.account_name || "-",
         "Fiscal Year": fiscal.fiscal_year || "-",
         "Project Classification": fiscal.classification_name || "-",
