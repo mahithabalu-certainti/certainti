@@ -271,7 +271,7 @@ const Projects: React.FC<ProjectsProps> = ({
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
-    <div className='w-full py-2 pl-2 pr-4'>
+    <div className='w-full pt-2 pl-2 pr-4'>
       <TabPanel
         value='projects'
         appliedFilters={appliedFilters}
@@ -304,6 +304,11 @@ const Projects: React.FC<ProjectsProps> = ({
               columns={projectColumns}
               getRowId={getRowId}
               hoverHighlight={false}
+              tableStyle={{
+                height: '100%',
+                maxHeight: 'calc(100vh - 278px)',
+                overflow: 'auto',
+              }}
               stickyHeader={true}
               stickyColumnsCount={1}
               actionWidth={60}
@@ -320,7 +325,6 @@ const Projects: React.FC<ProjectsProps> = ({
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
-              tableStyle={{ overflowY: 'hidden' }}
               selectable={true}
               onSelectionChange={(selectedIds) =>
                 console.log('Selected:', selectedIds)

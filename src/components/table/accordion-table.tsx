@@ -27,7 +27,7 @@ const AccordionTable = <T extends RowData>({
   columns,
   getRowId,
   hoverHighlight = false,
-  // tableStyle,
+  tableStyle,
   stickyHeader = false,
   stickyColumnsCount = 0,
   // Selection
@@ -121,13 +121,7 @@ const AccordionTable = <T extends RowData>({
 
   return (
     <>
-      <TableContainer
-        sx={{
-          height: '100%',
-          maxHeight: 'calc(100vh - 130px)',
-          overflow: 'auto',
-        }}
-      >
+      <TableContainer sx={tableStyle}>
         <MuiTable
           stickyHeader={stickyHeader}
           sx={{

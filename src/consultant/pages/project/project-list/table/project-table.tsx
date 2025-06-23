@@ -146,7 +146,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       columns={projectColumns}
       getRowId={getRowId}
       hoverHighlight={false}
-      // tableStyle={{ overflowY: 'hidden' }}
+      tableStyle={{
+        height: '100%',
+        maxHeight: 'calc(100vh - 178px)',
+        overflow: 'auto',
+      }}
       stickyHeader={true}
       stickyColumnsCount={2}
       selectable={true}

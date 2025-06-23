@@ -903,19 +903,6 @@ export const renderChildRows = ({
                   >
                     {'-'}
                   </TableCell>
-                  {/* <TableCell
-                    sx={{
-                      width: '60px',
-                      minWidth: '60px',
-                      maxWidth: '60px',
-                      padding: '0px !important',
-                    }}
-                  >
-                    <ActionButton
-                      onEdit={() => handleEdit(account)}
-                      onDelete={() => handleDelete(account)}
-                    />
-                  </TableCell> */}
                 </TableRow>
               ))}
             </>
