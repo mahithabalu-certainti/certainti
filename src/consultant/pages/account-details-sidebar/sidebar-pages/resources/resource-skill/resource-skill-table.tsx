@@ -116,6 +116,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         hoverHighlight={false}
         stickyHeader={false}
         stickyColumnsCount={1}
+        tableStyle={{
+          borderBottom: '1px solid #CBD6E2',
+          height: '100%',
+          maxHeight: 'calc(100vh - 410px)',
+          overflow: 'auto',
+        }}
         selectable={false}
         actionWidth={80}
         actionDisplayMode='dropdown'

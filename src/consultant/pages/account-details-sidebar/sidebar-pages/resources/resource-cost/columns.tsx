@@ -157,7 +157,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
           className={`${
             row.status === 'Active'
               ? 'text-[#199806]'
-              : row.status === 'Inactive'
+              : row.status === 'In-Active'
                 ? 'text-[#f44336] '
                 : ''
           }`}

@@ -592,7 +592,6 @@ const AccordionTable = <T extends RowData>({
                           {columns.map((column, colIndex) => {
                             const isStatus = column.id === 'status';
                             const statusValue = row[column.id];
-                            const columnId = column.id;
                             const cellValue = column.render
                               ? column.render(summary as any)
                               : (summary as any)[column.id];

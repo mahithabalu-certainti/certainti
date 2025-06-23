@@ -593,6 +593,8 @@ const Resource: React.FC<ResourceProps> = ({
                 hoverHighlight={false}
                 tableStyle={{
                   borderBottom: '1px solid #CBD6E2',
+                  height: '100%',
+                  maxHeight: 'calc(100vh - 290px)',
                   overflow: 'auto',
                 }}
                 stickyHeader={false}

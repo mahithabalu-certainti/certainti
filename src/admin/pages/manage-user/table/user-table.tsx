@@ -141,7 +141,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
       getRowId={getRowId}
       hoverHighlight={true}
       tableStyle={{
-        maxHeight: 'calc(95vh - 200px)',
+        height: '100%',
+        maxHeight: 'calc(100vh - 195px)',
         overflow: 'auto',
       }}
       stickyHeader={true}
