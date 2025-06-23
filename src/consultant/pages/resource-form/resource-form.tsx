@@ -226,7 +226,6 @@ const ResourceForm: React.FC = () => {
     const formValues = resource?.data?.resourceDetails;
 
     if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
-      console.log('costInfo', costInfo);
       const costValues = {
         ...formValues,
         financial_start_date: costInfo?.effective_from || '',
@@ -341,7 +340,6 @@ const ResourceForm: React.FC = () => {
     }
   }, [skillTypeId, skillSubTypeId]);
 
-  // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
   const states = useFetchState(currentCountry.country);
@@ -361,8 +359,6 @@ const ResourceForm: React.FC = () => {
   const [costResourceForceSuccess, setCostResourceForceSuccess] =
     useState(false);
   const costSkillSuccess =
-    // createResourceCost.isSuccess ||
-    // updateResourceCost.isSuccess ||
     costResourceForceSuccess ||
     createResourceSkill.isSuccess ||
     updateResourceSkill.isSuccess;
@@ -724,9 +720,6 @@ const ResourceForm: React.FC = () => {
             <CreateResourceIcon alt='menu-icon' className='h-6 w-6 rounded' />
           )}
           <div>
-            {/* {isEditView && !state?.skill && !state?.cost && (
-              <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
-            )} */}
             <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
                 ? `Account > ${accountData?.account_name}`
@@ -806,12 +799,6 @@ const ResourceForm: React.FC = () => {
                   >)
                 : undefined
           }
-          // values={
-          //   resource.data?.data?.resource as unknown as Record<
-          //     string,
-          //     string | number | boolean | string[] | null
-          //   >
-          // }
           outData={handleSubmit}
           formRef={formRef}
           onChange={onChangeField}
