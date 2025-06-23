@@ -46,13 +46,13 @@ const InfoSection: React.FC<InfoSectionProps> = ({
     return value;
   };
 
-  const loadingRows = 1;
+  const loadingRows = singleLineView ? 1 : 2;
   const totalColumns = 3;
 
   if (error) {
     return (
       <Box
-        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] text-red-500 ${className}`}
+        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white max-h-[80px]  text-red-500 ${className}`}
       >
         Failed to load details
       </Box>
@@ -62,7 +62,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
   if (loading) {
     return (
       <Box
-        className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
+        className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px]   ${className}`}
       >
         {[...Array(loadingRows)].map((_, rowIndex) => (
           <Box
@@ -101,7 +101,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
 
   return (
     <Box
-      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
+      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[80px]   ${className}`}
     >
       {[...Array(rowCount)].map((_, rowIndex) => (
         <React.Fragment key={rowIndex}>

@@ -88,7 +88,9 @@ const ProjectForm: React.FC = () => {
           ? getDateFormat(account.project_startdate)
           : '',
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
-        updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),
+        updated_on: account?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(account?.modified_datetime || '-')
+          : '-',
         ...transformKeyContactsFromAPI(account?.keyContact || []),
         region: account?.region,
         project_status: account?.project_status.toLowerCase(),

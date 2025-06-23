@@ -202,10 +202,7 @@ const Overview: React.FC<OverviewProps> = ({
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[50px] px-4 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <ImportIcon
-            alt='Import Icon'
-            className='w-[24px] h-[24px]'
-          />
+          <ImportIcon alt='Import Icon' className='w-[24px] h-[24px]' />
           <span className='font-normal text-[14px] text-[#000000] '>
             Import
           </span>
@@ -266,10 +263,7 @@ const Overview: React.FC<OverviewProps> = ({
               : 'border-[#0176D3] cursor-pointer'
           }`}
         >
-          <UploadIcon
-            alt='Upload Icon'
-            className='w-[36px] h-[24px]'
-          />
+          <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
           <div className='text-[14px] text-[#0B0B0B]'>
             Drag your file(s) or{' '}
             <span

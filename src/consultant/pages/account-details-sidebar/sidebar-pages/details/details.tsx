@@ -158,10 +158,7 @@ const Details: React.FC<DetailsProps> = ({
             <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
               <Box className='flex items-center gap-2'>
                 <Box>
-                  <RealatedListDetailsIcon
-                    alt='details'
-                    className='w-6 h-6'
-                  />
+                  <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
                 </Box>
                 <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
                   Details

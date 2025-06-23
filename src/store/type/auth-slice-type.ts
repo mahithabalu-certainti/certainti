@@ -1,4 +1,4 @@
-import { UserRoles } from "../../common-service";
+import { UserRoles } from '../../common-service';
 
 export interface IAuthDetails {
   isAuthenticated: boolean | null;

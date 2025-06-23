@@ -71,38 +71,39 @@ export default function TableActionButton({ actions }: ActionButtonProps) {
         }}
       >
         {actions.map((item) => {
-          if(item.hide) return null;
-          return(
-          <MenuItem
-            key={item.label}
-            onClick={() => {
-              item.onClick();
-              handleClose();
-            }}
-            disabled={item.disabled}
-            sx={{
-              display: 'flex',
-              borderBottom: '1px solid',
-              borderColor: '#CBD6E2',
-              backgroundColor: '#fff',
-              '&:last-child': {
-                borderBottom: 'none',
-              },
-            }}
-          >
-            <ListItemText
+          if (item.hide) return null;
+          return (
+            <MenuItem
+              key={item.label}
+              onClick={() => {
+                item.onClick();
+                handleClose();
+              }}
+              disabled={item.disabled}
               sx={{
-                span: {
-                  fontSize: '14px',
-                  fontWeight: 400,
-                  color: '#2D3E4F',
+                display: 'flex',
+                borderBottom: '1px solid',
+                borderColor: '#CBD6E2',
+                backgroundColor: '#fff',
+                '&:last-child': {
+                  borderBottom: 'none',
                 },
               }}
             >
-              {item.label}
-            </ListItemText>
-          </MenuItem>
-        )})}
+              <ListItemText
+                sx={{
+                  span: {
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    color: '#2D3E4F',
+                  },
+                }}
+              >
+                {item.label}
+              </ListItemText>
+            </MenuItem>
+          );
+        })}
       </Menu>
     </div>
   );

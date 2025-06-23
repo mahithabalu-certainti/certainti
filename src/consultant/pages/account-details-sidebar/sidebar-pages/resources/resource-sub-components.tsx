@@ -41,6 +41,7 @@ interface SubcomponentProps {
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
   refreshCostTrigger?: number;
   refreshSkillTrigger?: number;
+  setCount?: (count: number) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -68,6 +69,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
 
   refreshCostTrigger,
   refreshSkillTrigger,
+  setCount,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -115,7 +117,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         <InfoSection
           columns={resourceDetails}
           loading={isLoading}
-          singleLineView={true}
+          singleLineView={false}
         />
       </Box>
       <Box className='max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
@@ -161,7 +163,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
             <ResourceDetails
               resource={resource?.data || null}
               isLoading={isLoading}
-              error={error}
+              error={error?.message || null}
             />
           </Box>
         )}
@@ -182,6 +184,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceCostEditEnable={isResourceCostEditEnable}
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
               refreshCostTrigger={refreshCostTrigger}
+              setCount={setCount}
             />
           </Box>
         )}
@@ -202,6 +205,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceSkillEditEnable={isResourceSkillEditEnable}
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
               refreshSkillTrigger={refreshSkillTrigger}
+              setCount={setCount}
             />
           </Box>
         )}

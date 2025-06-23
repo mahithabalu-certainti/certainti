@@ -117,7 +117,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         ) || '-',
     },
     { label: 'Status', value: accountById?.status?.toString() || '-' },
-    { label: 'Org Name', value: accountById?.organisation_name?.toString() || '-' },
+    {
+      label: 'Org Name',
+      value: accountById?.organisation_name?.toString() || '-',
+    },
   ];
   const businessInfo: DetailItem[] = [
     {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResourceCostList } from '../../../../../types/resource-cost';
@@ -28,6 +28,7 @@ interface ResourceCostTableProps {
   isResourceCostDeleteEnable?: boolean;
   isResourceCostEditEnable?: boolean;
   refreshCostTrigger?: number;
+  setCount?: (count: number) => void;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -44,6 +45,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   isResourceCostDeleteEnable,
   isResourceCostEditEnable,
   refreshCostTrigger,
+  setCount,
 }) => {
   const navigate = useNavigate();
   const { successToast } = useToast();
@@ -70,6 +72,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     undefined,
     refreshCostTrigger
   );
+  useEffect(() => {
+    if (setCount) {
+      setCount(costList?.count || 0);
+    }
+  }, [costList, setCount]);
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);

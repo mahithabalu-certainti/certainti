@@ -50,9 +50,7 @@ export const Accounts: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>(
-    Date.now()
-  );
+  const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>();
 
   const { fiscalYear, filters } = useSelector<
     RootState,

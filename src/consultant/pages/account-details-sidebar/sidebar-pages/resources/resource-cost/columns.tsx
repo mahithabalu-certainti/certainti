@@ -152,6 +152,19 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Status',
       width: 130,
       sortable: true,
+      render: (row: ResourceCostList) => (
+        <span
+          className={`${
+            row.status === 'Active'
+              ? 'text-[#199806]'
+              : row.status === 'Inactive'
+                ? 'text-[#f44336] '
+                : ''
+          }`}
+        >
+          {row.status}
+        </span>
+      ),
     },
     {
       id: 'r_number',

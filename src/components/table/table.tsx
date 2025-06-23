@@ -466,10 +466,7 @@ const Table = <T extends RowData>({
                                   sx={{ mr: 1.5 }}
                                   onClick={() => onView(row)}
                                 >
-                                  <EyeIcon
-                                    alt='viewIcon'
-                                    className='w-5 h-5'
-                                  />
+                                  <EyeIcon alt='viewIcon' className='w-5 h-5' />
                                 </IconButton>
                               </Tooltip>
                             )}

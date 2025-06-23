@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
@@ -23,6 +23,7 @@ interface ResourceSkillTableProps {
   isResourceSkillEditEnable?: boolean;
   isResourceSkillDeleteEnable?: boolean;
   refreshSkillTrigger?: number;
+  setCount?: (count: number) => void;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -37,6 +38,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   isResourceSkillEditEnable,
   isResourceSkillDeleteEnable,
   refreshSkillTrigger,
+  setCount,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
@@ -60,10 +62,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     undefined,
     refreshSkillTrigger
   );
-
-  // useEffect(() => {
-  //   setResourceSkillList(convertResourceSkill(skillList?.resourceSkill || []));
-  // }, [skillList]);
+  useEffect(() => {
+    if (setCount) {
+      setCount(skillList?.count || 0);
+    }
+  }, [skillList, setCount]);
 
   const handleEdit = (skill: ResourceSkillList) => {
     const data = convertResourceSkill(skill);
