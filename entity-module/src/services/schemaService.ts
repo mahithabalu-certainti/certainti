@@ -1154,7 +1154,6 @@ class SchemaService {
 
       return resource;
     } catch (err) {
-      console.log(err)
       throw new Error(
         "Error fetching resource details : " + (err as Error).message
       );

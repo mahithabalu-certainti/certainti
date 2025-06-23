@@ -144,7 +144,7 @@ const accountSchema = Joi.object({
         key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
-        status: Joi.string().valid('Active', 'Inactive').required(),
+        status_id: Joi.string().required(),
         interaction_cc_recipient: Joi.boolean()
         .required()
         .messages({
@@ -281,7 +281,7 @@ const updateAccountSchema = Joi.object({
         key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
-        status: Joi.string().valid('Active', 'Inactive').required(),
+        status_id: Joi.string().required(),
         interaction_cc_recipient: Joi.boolean()
         .required()
         .messages({

@@ -811,7 +811,7 @@ processAlphanumericFilter(key: string, value: any): string {
 processEnumFilter(key: string, value: any) {
   let condition = "";
   let tableAlias = "rs";
-console.log("Enum filter",key)
+
   // Check if the field is a UUID type
   const isUuidField = key.toLowerCase().includes('rid');
   if (value.equals !== undefined) {

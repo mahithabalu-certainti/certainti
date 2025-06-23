@@ -421,7 +421,7 @@ class SchemaService {
         resource_role VARCHAR(100),
         total_hours_pro_res DOUBLE PRECISION,
         total_cost_pro_res NUMERIC(18, 2),
-        status_id VARCHAR(30),
+        status_id VARCHAR(50),
         account_rid varchar(50),
         currency_rid varchar(50),
         description TEXT,

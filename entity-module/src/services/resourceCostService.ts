@@ -422,7 +422,6 @@ class ResourceCostService {
           }
         }
       } catch (error) {
-        console.log(error)
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
       }
@@ -456,7 +455,6 @@ class ResourceCostService {
         },
       };
     } catch (err) {
-      console.log(err)
       return this.throwServiceError(err as Error);
     }
   }
@@ -913,15 +911,15 @@ class ResourceCostService {
           },
         ],
       });
-// 1. Fetch ResourceCost with Resource (from DB1)
-const resourceCost = await ResourceCost.findOne({
-  where: { rid: id },
-  include: [{
-    model: Resources,
-    as: "Resource",
-    required: true,
-  }],
-});
+      // 1. Fetch ResourceCost with Resource (from DB1)
+      const resourceCost = await ResourceCost.findOne({
+        where: { rid: id },
+        include: [{
+          model: Resources,
+          as: "Resource",
+          required: true,
+        }],
+      });
 
 
       let currencyName = "";
