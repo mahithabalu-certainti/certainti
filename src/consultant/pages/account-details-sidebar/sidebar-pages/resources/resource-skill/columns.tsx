@@ -15,11 +15,14 @@ export interface ResourceSkillTableColumn<T> {
 export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[] =
   [
     {
-      id: 'resource_code',
-      sortId: 'resource_code',
-      label: 'Resource Code',
+      id: 'start_date',
+      sortId: 'start_date',
+      label: 'Effective From',
       width: 130,
       sortable: true,
+      render: (row: ResourceSkillList) => (
+        <span>{dateFormatToYYYYMMDD(row.start_date as string) || '-'}</span>
+      ),
       sticky: true,
       sx: {
         position: 'sticky',
@@ -29,30 +32,6 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
       },
-    },
-    {
-      id: 'resource_name',
-      sortId: 'resource_name',
-      label: 'Name',
-      width: 160,
-      sortable: false,
-    },
-    {
-      id: 'resource_type',
-      sortId: 'resource_type',
-      label: 'Resource Type',
-      width: 130,
-      sortable: true,
-    },
-    {
-      id: 'start_date',
-      sortId: 'start_date',
-      label: 'Effective From',
-      width: 130,
-      sortable: true,
-      render: (row: ResourceSkillList) => (
-        <span>{dateFormatToYYYYMMDD(row.start_date as string) || '-'}</span>
-      ),
     },
     {
       id: 'skill_type_name',
@@ -81,37 +60,6 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
       label: 'Skill Details',
       width: 180,
       sortable: true,
-    },
-    {
-      id: 'resource_orgname',
-      sortId: 'resource_orgname',
-      label: 'Org Name',
-      width: 130,
-      sortable: true,
-    },
-    {
-      id: 'resource_designation',
-      sortId: 'resource_designation',
-      label: 'Designation',
-      width: 130,
-      sortable: true,
-    },
-    {
-      id: 'resource_role',
-      sortId: 'resource_role',
-      label: 'Role',
-      width: 130,
-      sortable: true,
-    },
-    {
-      id: 'years_of_experience',
-      sortId: 'resource_total_experience',
-      label: 'Years of Experience',
-      width: 160,
-      sortable: true,
-      sx: {
-        textAlign: 'right',
-      },
     },
     {
       id: 'r_number',

@@ -61,7 +61,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       fiscalYear,
     },
-    undefined,
     refreshAccountTrigger
   );
   const colorCodes = useFetchColorCodes();
@@ -84,6 +83,19 @@ const AccountTable: React.FC<Record<string, any>> = ({
       setAccounts(convertedData);
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
+
+      // Expand only those accounts which have children
+      const parentAccountNames = new Set(
+        convertedData.map((acc) => acc.parentAccount).filter(Boolean)
+      );
+      const expandableAccounts = convertedData.filter((acc) =>
+        parentAccountNames.has(acc.accountName)
+      );
+      const openRowsSet = new Set<string>(
+        expandableAccounts.map((acc) => acc.accountId)
+      );
+
+      setOpenRows(openRowsSet);
     } else {
       setIsDataLoaded(false);
     }
@@ -111,12 +123,12 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };
 
   // Toggle expand/collapse state for a row
-  const handleRowClick = (accountName: string) => {
+  const handleRowClick = (accountId: string) => {
     const newOpenRows = new Set(openRows);
-    if (newOpenRows.has(accountName)) {
-      newOpenRows.delete(accountName);
+    if (newOpenRows.has(accountId)) {
+      newOpenRows.delete(accountId);
     } else {
-      newOpenRows.add(accountName);
+      newOpenRows.add(accountId);
     }
     setOpenRows(newOpenRows);
   };
@@ -271,11 +283,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
         <TableContainer
           sx={{
             height: '100%',
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': {
-              display: 'none',
-            },
+            maxHeight: 'calc(100vh - 130px)',
+            overflow: 'auto',
           }}
         >
           <Table stickyHeader>

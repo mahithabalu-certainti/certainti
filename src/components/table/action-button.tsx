@@ -3,7 +3,7 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { ListItemText } from '@mui/material';
-import { actionIcon } from '../../assets';
+import { ActionIcon } from '../../assets';
 
 interface ActionItem {
   label: string;
@@ -43,7 +43,7 @@ export default function TableActionButton({ actions }: ActionButtonProps) {
         <div
           className={`${open ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] cursor-pointer w-5 h-5 flex items-center justify-center`}
         >
-          <img src={actionIcon} alt='menu-icon' className='h-[13px]' />
+          <ActionIcon alt='menu-icon' className='h-[13px]' />
         </div>
       </IconButton>
 
@@ -71,38 +71,39 @@ export default function TableActionButton({ actions }: ActionButtonProps) {
         }}
       >
         {actions.map((item) => {
-          if(item.hide) return null;
-          return(
-          <MenuItem
-            key={item.label}
-            onClick={() => {
-              item.onClick();
-              handleClose();
-            }}
-            disabled={item.disabled}
-            sx={{
-              display: 'flex',
-              borderBottom: '1px solid',
-              borderColor: '#CBD6E2',
-              backgroundColor: '#fff',
-              '&:last-child': {
-                borderBottom: 'none',
-              },
-            }}
-          >
-            <ListItemText
+          if (item.hide) return null;
+          return (
+            <MenuItem
+              key={item.label}
+              onClick={() => {
+                item.onClick();
+                handleClose();
+              }}
+              disabled={item.disabled}
               sx={{
-                span: {
-                  fontSize: '14px',
-                  fontWeight: 400,
-                  color: '#2D3E4F',
+                display: 'flex',
+                borderBottom: '1px solid',
+                borderColor: '#CBD6E2',
+                backgroundColor: '#fff',
+                '&:last-child': {
+                  borderBottom: 'none',
                 },
               }}
             >
-              {item.label}
-            </ListItemText>
-          </MenuItem>
-        )})}
+              <ListItemText
+                sx={{
+                  span: {
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    color: '#2D3E4F',
+                  },
+                }}
+              >
+                {item.label}
+              </ListItemText>
+            </MenuItem>
+          );
+        })}
       </Menu>
     </div>
   );

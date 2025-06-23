@@ -1,6 +1,6 @@
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import React, { MouseEvent, useState } from 'react';
-import { arrowDownIcon } from '../../assets';
+import { ArrowDownIcon } from '../../assets';
 
 const SortByDropdown: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -24,7 +24,7 @@ const SortByDropdown: React.FC = () => {
       {/* Styled Sort Button */}
       <Button
         variant='outlined'
-        endIcon={<img src={arrowDownIcon} alt='arrowDown'></img>}
+        endIcon={<ArrowDownIcon alt='arrowDown' />}
         onClick={handleOpen}
         sx={{
           color: '#1A3D6F', // Text color

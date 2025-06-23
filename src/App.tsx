@@ -1,30 +1,8 @@
 import { MsalProvider } from '@azure/msal-react';
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, Route, Routes } from 'react-router-dom';
-import {
-  CreateUser,
-  ManageUserDetails,
-  ProfileList,
-  CreateProfile,
-  UserList,
-  ExtendedPermission,
-} from './admin/pages';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout, Toast } from './components';
-import {
-  AccountDetails,
-  AccountForm,
-  Accounts,
-  HomePage,
-  Login,
-  NotFound,
-  Profile,
-  ProjectDetails,
-  ProjectForm,
-  Projects,
-  ResourceForm,
-} from './consultant/pages';
-import Resource from './consultant/pages/account-details-sidebar/sidebar-pages/resources/resources';
 import { IApp } from './consultant/types';
 import { useToast } from './hooks';
 import { useAuthHook } from './hooks/use-auth';
@@ -60,15 +38,67 @@ import {
   USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState } from './store/store';
-import { ViewProfile } from './admin/pages/manage-profile/view-profile';
 
-/**
- * App component serves as the root component of the application.
- * It sets up the MSAL provider and defines the routes for the application.
- *
- * @param {IApp} props - The props for the component.
- * @param {object} props.instance - The MSAL instance for authentication.
- */
+// Lazy load all page components
+const ExtendedPermission = lazy(
+  () =>
+    import('./admin/pages/manage-user/extended-permission/extended-permission')
+);
+const Resource = lazy(
+  () =>
+    import(
+      './consultant/pages/account-details-sidebar/sidebar-pages/resources/resources'
+    )
+);
+const Login = lazy(() => import('./consultant/pages/login/login'));
+const Profile = lazy(() => import('./consultant/pages/profile/profile'));
+const ViewProfile = lazy(
+  () => import('./admin/pages/manage-profile/view-profile/view-profile')
+);
+const HomePage = lazy(() => import('./consultant/pages/home/Home'));
+const NotFound = lazy(() => import('./consultant/pages/not-found/NotFound'));
+const Accounts = lazy(() => import('./consultant/pages/account-list/accounts'));
+const AccountForm = lazy(
+  () => import('./consultant/pages/account-create/account-create')
+);
+const AccountDetails = lazy(
+  () => import('./consultant/pages/account-details/account-details')
+);
+const Projects = lazy(
+  () => import('./consultant/pages/project/project-list/projects')
+);
+const ProjectDetails = lazy(
+  () => import('./consultant/pages/project/project-details/project-details')
+);
+const ProjectForm = lazy(
+  () => import('./consultant/pages/project-form/project-form')
+);
+const ResourceForm = lazy(
+  () => import('./consultant/pages/resource-form/resource-form')
+);
+const UserList = lazy(
+  () => import('./admin/pages/manage-user/user-list/user-list')
+);
+const ManageUserDetails = lazy(
+  () => import('./admin/pages/manage-user-detail/manage-user-detail')
+);
+const CreateUser = lazy(
+  () => import('./admin/pages/manage-user/create-user/create-user')
+);
+const ProfileList = lazy(
+  () => import('./admin/pages/manage-profile/profile-list/profile-list')
+);
+const CreateProfile = lazy(
+  () => import('./admin/pages/manage-profile/create-profile/create-profile')
+);
+
+// Loading component for Suspense fallback
+const Loading = () => (
+  <div className='flex h-screen w-full items-center justify-center'>
+    Loading...
+  </div>
+);
+
 export const App: React.FC<IApp> = ({ instance }) => {
   const { isAuthenticated } = useAuthHook();
   const _isAuthenticated = isAuthenticated();
@@ -77,60 +107,71 @@ export const App: React.FC<IApp> = ({ instance }) => {
 
   return (
     <MsalProvider instance={instance}>
-      <Routes>
-        <Route
-          path={LOGIN}
-          element={
-            _isAuthenticated ? <Navigate to={MAIN_ROUTE} replace /> : <Login />
-          }
-        />
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route index element={<HomePage />} />
-            <Route index path={ACCOUNT} element={<Accounts />} />
-            <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
-            <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
-            <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
-            <Route path={PROJECT} element={<Projects />} />
-            <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
-            <Route path={PROJECT_CREATE} element={<ProjectForm />} />
-            <Route path={PROJECT_EDIT} element={<ProjectForm />} />
-            <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
-            <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
-            <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
-            <Route path={RESOURCESKILL_CREATE} element={<ResourceForm />} />
-            <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
-            <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
-            <Route path={RESOURCE} element={<Resource />} />
-            <Route path={PROFILE} element={<Profile />} />
-            {/* Page not found */}
-            <Route path={NOT_MATCH} element={<NotFound />} />
-          </Route>
-        </Route>
+      <Suspense fallback={<Loading />}>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path={LOGIN}
+              element={
+                _isAuthenticated ? (
+                  <Navigate to={MAIN_ROUTE} replace />
+                ) : (
+                  <Login />
+                )
+              }
+            />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route index element={<HomePage />} />
+                <Route index path={ACCOUNT} element={<Accounts />} />
+                <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
+                <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
+                <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
+                <Route path={PROJECT} element={<Projects />} />
+                <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
+                <Route path={PROJECT_CREATE} element={<ProjectForm />} />
+                <Route path={PROJECT_EDIT} element={<ProjectForm />} />
+                <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+                <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
+                <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
+                <Route path={RESOURCESKILL_CREATE} element={<ResourceForm />} />
+                <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
+                <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
+                <Route path={RESOURCE} element={<Resource />} />
+                <Route path={PROFILE} element={<Profile />} />
+                {/* Page not found */}
+                <Route path={NOT_MATCH} element={<NotFound />} />
+              </Route>
+            </Route>
 
-        {/* Admin protected routes */}
-        <Route element={<ProtectedRoute requireAdmin />}>
-          <Route element={<AppLayout />}>
-            <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
-            <Route
-              path={ADMIN_MANAGE_USER_DETAILS}
-              element={<ManageUserDetails />}
-            />
-            <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
-            <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
-            <Route
-              path={USER_EXTENDED_PERMISSION}
-              element={<ExtendedPermission />}
-            />
-            <Route path={MANAGE_PROFILE} element={<ProfileList />} />
-            <Route path={MANAGE_PROFILE_CREATE} element={<CreateProfile />} />
-            <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
-            <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
-          </Route>
-          {/* Page not found */}
-          <Route path={NOT_MATCH} element={<NotFound />} />
-        </Route>
-      </Routes>
+            {/* Admin protected routes */}
+            <Route element={<ProtectedRoute requireAdmin />}>
+              <Route element={<AppLayout />}>
+                <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
+                <Route
+                  path={ADMIN_MANAGE_USER_DETAILS}
+                  element={<ManageUserDetails />}
+                />
+                <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
+                <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
+                <Route
+                  path={USER_EXTENDED_PERMISSION}
+                  element={<ExtendedPermission />}
+                />
+                <Route path={MANAGE_PROFILE} element={<ProfileList />} />
+                <Route
+                  path={MANAGE_PROFILE_CREATE}
+                  element={<CreateProfile />}
+                />
+                <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
+                <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
+              </Route>
+              {/* Page not found */}
+              <Route path={NOT_MATCH} element={<NotFound />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </Suspense>
       <Toast onClose={hideToast} {...toastProps} />
     </MsalProvider>
   );

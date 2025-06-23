@@ -1,13 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
-import { arrowIcon, checkedIcon, closeIcon } from '../../assets';
+import { ArrowIcon, CheckedIcon, CloseIcon } from '../../assets';
 import {
   Menu,
   MenuItem,
   Popover,
   Select,
   SelectChangeEvent,
+  Tooltip,
 } from '@mui/material';
 import {
   DateOptions,
@@ -27,6 +28,7 @@ import {
   clearFilters,
   storeFilters,
   getStoredFilters,
+  validateFilters,
 } from './utils';
 import {
   NewTextFilterControl,
@@ -63,6 +65,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     []
   );
   const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [isApplyDisabled, setIsApplyDisabled] = useState(true);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -126,6 +129,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
       });
     }
   }, [filterFields]);
+
+  useEffect(() => {
+    const hasInvalid = validateFilters(filterStates);
+    setIsApplyDisabled(hasInvalid);
+  }, [filterStates]);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -486,93 +494,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleApplyFilters = () => {
-    setPage(1);
     const updatedStates = { ...filterStates };
-    let hasInvalid = false;
-
-    for (const key in updatedStates) {
-      const state = updatedStates[key];
-
-      // if (state.date) {
-      //   const isValueEmpty = !state.date.value?.trim();
-      //   const isToValueEmpty =
-      //     state.date.option === 'between' && !state.date.toValue?.trim();
-
-      //   if (isValueEmpty || isToValueEmpty) {
-      //     hasInvalid = true;
-      //   }
-      // }
-
-      if (state.text) {
-        const { option, value } = state.text;
-        const isEmptyCheck = option === 'is_empty';
-
-        if (!isEmptyCheck) {
-          const isEmpty = !value.trim();
-          if (isEmpty) hasInvalid = true;
-        }
-      }
-
-      if (state.number) {
-        const { option, value } = state.number;
-        let hasError = false;
-
-        if (option !== 'is_empty') {
-          if (option === 'between') {
-            hasError = !Array.isArray(value) || value.some((v) => !v.trim());
-          } else {
-            hasError = !value || (typeof value === 'string' && !value.trim());
-          }
-        }
-
-        state.number.error = hasError;
-        if (hasError) hasInvalid = true;
-      }
-
-      if (state.status) {
-        const isEmpty = !state.status.value.trim();
-        if (isEmpty) hasInvalid = true;
-      }
-
-      if (state.boolean) {
-        const isInvalid = typeof state.boolean.value !== 'boolean';
-        if (isInvalid) hasInvalid = true;
-      }
-
-      if (state.multiSelect) {
-        const isEmpty =
-          !Array.isArray(state.multiSelect.values) ||
-          state.multiSelect.values.length === 0;
-        if (isEmpty) hasInvalid = true;
-      }
-
-      // Add validation for keyContact field
-      if (state.keyContact) {
-        const { role, name } = state.keyContact;
-
-        // Validate role
-        if (role.option !== 'is_empty' && !role.value?.trim()) {
-          hasInvalid = true;
-          state.keyContact.role.error = true;
-        } else {
-          state.keyContact.role.error = false;
-        }
-
-        // Validate name (only if name operator is not 'is_empty')
-        if (name.option !== 'is_empty' && !name.value?.trim()) {
-          hasInvalid = true;
-          state.keyContact.name.error = true;
-        } else {
-          state.keyContact.name.error = false;
-        }
-      }
-    }
+    const hasInvalid = validateFilters(updatedStates);
 
     if (hasInvalid) {
       setFilterStates(updatedStates);
+      setIsApplyDisabled(true);
       return;
     }
 
+    setPage(1);
     setAppliedFilters(formatFilterForApi(filterStates));
     storeFilters(filterStates);
   };
@@ -718,12 +649,24 @@ const FilterModal: React.FC<FilterModalProps> = ({
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
-            <button
-              onClick={handleApplyFilters}
-              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
+            <Tooltip
+              title={
+                isApplyDisabled ? 'Fill all added filter fields to apply' : ''
+              }
+              disableHoverListener={!isApplyDisabled}
+              placement='top'
+              arrow
             >
-              Apply
-            </button>
+              <span className='text-[12px] font-medium text-[#425A76]'>
+                <button
+                  onClick={handleApplyFilters}
+                  disabled={isApplyDisabled}
+                  className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20] disabled:opacity-45'
+                >
+                  Apply
+                </button>
+              </span>
+            </Tooltip>
             <button
               onClick={handleResetFilters}
               className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
@@ -755,8 +698,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         handleSystemFilter('system_filter', field.value)
                       }
                     >
-                      <img
-                        src={checkedIcon}
+                      <CheckedIcon
                         alt='checked-icon'
                         className='w-3 h-3 mt-[0.3px]'
                         style={{
@@ -784,8 +726,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       }`}
                       onClick={() => handleSortingSelection(field.value)}
                     >
-                      <img
-                        src={checkedIcon}
+                      <CheckedIcon
                         alt='checked-icon'
                         className='w-3 h-3 mt-[0.3px]'
                         style={{
@@ -823,7 +764,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                             value={fieldName}
                             className='min-w-[173px] max-w-[173px] h-[28px]'
                             IconComponent={(props) => (
-                              <img src={arrowIcon} alt='arrowIcon' {...props} />
+                              <ArrowIcon alt='arrowIcon' {...props} />
                             )}
                             onChange={(e) => {
                               const newFieldName = e.target.value;
@@ -865,11 +806,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               );
                               return (
                                 <div className='flex items-center gap-1'>
-                                  <img
-                                    src={checkedIcon}
-                                    alt='checked'
-                                    className='w-3'
-                                  />
+                                  <CheckedIcon alt='checked' className='w-3' />
                                   <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.label || selected}
                                   </span>
@@ -894,12 +831,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '4px',
+                                  overflow: 'hidden',
                                 }}
                               >
-                                <img
-                                  src={checkedIcon}
+                                <CheckedIcon
                                   alt='checked'
                                   className='w-4 h-4'
+                                  style={{ flexShrink: 0 }}
                                 />
                                 {field.label}
                               </MenuItem>
@@ -913,8 +851,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               <div className='mt-1 rounded-[2px] min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
                                 <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
                                   <div className='flex items-center gap-1'>
-                                    <img
-                                      src={checkedIcon}
+                                    <CheckedIcon
                                       alt='checked'
                                       className='w-3'
                                     />
@@ -945,8 +882,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         }}
                         className='cursor-pointer pl-1'
                       >
-                        <img
-                          src={closeIcon}
+                        <CloseIcon
                           alt='closeIcon'
                           className='w-[12px] h-[12px]'
                         />
@@ -967,28 +903,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
           >
             <span className='font-normal text-[16px]'>+</span> Add Filter By
             Fields
-            <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
+            <ArrowIcon alt='arrowIcon' className='mt-0.5' />
           </button>
-          {/* <div className='flex justify-end gap-2'>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleCloseFilter}
-            >
-              Close
-            </button>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleApplyFilters}
-            >
-              Apply
-            </button>
-          </div> */}
         </div>
       </div>
       <Menu
@@ -1034,9 +950,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   lineHeight: '30px',
                   color: '#425A76',
                   py: '1px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
+                <CheckedIcon
+                  alt='checked'
+                  className='w-4 h-4 mr-1'
+                  style={{ flexShrink: 0 }}
+                />
                 {field.label}
               </MenuItem>
             ))

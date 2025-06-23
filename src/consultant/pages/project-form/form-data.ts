@@ -16,20 +16,17 @@ import {
 } from '../../../common-utils';
 import { FieldType, FormType, SelectOption } from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
-import { closeIcon } from '../../../assets';
+import { CloseIcon } from '../../../assets';
 const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
 } as const;
 
-export const newKeyContactFields = (
-  roles: SelectOption[],
-  isPrimaryContactRequired: boolean
-) => [
-  createTextField('key_contact_name', 'Contact Name', {
+export const newKeyContactFields = (roles: SelectOption[]) => [
+  createTextField('key_contact_name', 'Key Contact Name', {
     required: false,
     width: '190px',
-    placeholder: 'Enter Contact Name',
+    placeholder: 'Enter Key Contact Name',
     onChange: true,
     errorHandling: [
       {
@@ -57,17 +54,17 @@ export const newKeyContactFields = (
       },
     ],
   }),
-  createSelectField('key_contact_role', 'Role', {
+  createSelectField('key_contact_role', 'Key Contact Role', {
     options: roles,
     width: '180px',
     required: false,
-    placeholder: 'Choose Role',
+    placeholder: 'Choose Key Contact Role',
     onChange: true,
   }),
-  createTextField('key_contact_email', 'Email', {
+  createTextField('key_contact_email', 'Key Contact Email', {
     required: false,
     width: '180px',
-    placeholder: 'Enter Email',
+    placeholder: 'Enter Key Contact Email',
     onChange: true,
     errorHandling: [
       {
@@ -88,23 +85,25 @@ export const newKeyContactFields = (
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
-    required: isPrimaryContactRequired,
-    onChange: true,
+    required: true,
   }),
-  createRadioField('include_in_communication', 'Include In Communications?', {
+  createRadioField('include_in_communication', 'Interaction Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
-    required: false,
-    // defaultValue: YesNo.No,
+    required: true,
   }),
-  createSelectField('key_contact_status', 'Status', {
+  // createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
+  //   radioOptions: YES_NO_OPTIONS,
+  //   width: '200px',
+  //   required: true,
+  //   defaultValue: YesNo.No,
+  // }),
+  createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
-    placeholder: 'Choose Status',
-    defaultValue: STATUS_OPTIONS[0].value,
   }),
-  createImgButton('button', closeIcon, {
+  createImgButton('button', CloseIcon, {
     width: '30px',
   }),
 ];
@@ -245,7 +244,7 @@ export const FormData = (
             options: PROJECT_TYPE,
             placeholder: 'Choose Project Type',
           }),
-          createDateField('project_startdate', 'Start Date', {
+          createDateField('project_startdate', 'Effective From', {
             required: false,
             minDate: new Date('2000-01-01'),
             maxDate: currentDate,
@@ -417,8 +416,9 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Key Contacts List',
+        sectionName: 'key_contacts_list',
         fillType: 'half',
+        from: 'project',
         fields: [
           ...keyContacts
             .map((contacts, index) => [
@@ -431,7 +431,7 @@ export const FormData = (
         sectionName: '',
         fillType: 'full',
         fields: [
-          createButton('Add another key contact', '', {
+          createButton('Add Key Contact', '', {
             iconUrl: '',
             onClick: addNewKeyContact,
           }),
@@ -447,7 +447,7 @@ export const FormData = (
               'Total FTE Count Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE Count',
           }),
-          createTextField('total_sub_con', 'Total Sub Con Count', {
+          createTextField('total_subcon', 'Total Sub Con Count', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
               'Total Sub Con Count must be a positive integer with up to 9 digits',
@@ -459,37 +459,46 @@ export const FormData = (
             type: '',
             required: false,
           }),
-          createTextField('total_fte_effort', 'Total FTE Effort', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+          createTextField('total_effort_fte', 'Total FTE Effort', {
+            // regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regexErrorMessage:
+            //   'Total FTE Effort must be a positive integer with up to 16 digits',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Total FTE Effort must be a positive integer with up to 16 digits',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Effort',
           }),
-          createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+          createTextField('total_effort_subcon', 'Total Sub Con Effort', {
+            // regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regexErrorMessage:
+            //   'Total Sub Con Effort must be a positive integer with up to 16 digits',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Total Sub Con Effort must be a positive integer with up to 16 digits',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Effort',
           }),
           createTextField('total_effort', 'Total Effort In Hrs', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regexErrorMessage:
+            //   'Effort In Hrs must be a positive integer with up to 16 digits',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Effort In Hrs must be a positive integer with up to 16 digits',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Effort In Hrs',
           }),
-          createTextField('total_fte_cost', 'Total FTE Cost', {
+          createTextField('total_cost_fte', 'Total FTE Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
           }),
-          createTextField('total_sub_con_cost', 'Total Sub Con Cost', {
+          createTextField('total_cost_subcon', 'Total Sub Con Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Total Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
           }),
-          createTextField('total_non_labor_cost', 'Total Non Labor Cost', {
+          createTextField('total_cost_nonlabor', 'Total Non Labor Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
@@ -514,7 +523,7 @@ export const FormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
           }),
-          createTextField('blended_rate_sub_con', 'Blended Rate - SubCon', {
+          createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             placeholder: 'Enter Blended Rate - SubCon',
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
@@ -603,14 +612,18 @@ export const FormData = (
       },
     ],
     [
+      classification,
+      showClassifyOthersField,
+      industry,
+      showOthersField,
       country,
       state,
-      disableFields,
-      currency,
-      showOthersField,
-      showClassifyOthersField,
       stateLoading,
+      currency,
       keyContacts,
+      addNewKeyContact,
+      disableFields,
+      removeKeyContact,
     ]
   );
 };

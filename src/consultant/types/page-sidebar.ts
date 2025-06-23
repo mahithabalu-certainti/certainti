@@ -1,4 +1,4 @@
-import { AllModules } from "../../common-service";
+import { AllModules } from '../../common-service';
 
 export type MenuItem = {
   name: string;
@@ -6,6 +6,7 @@ export type MenuItem = {
   id: AllModules;
   hide?: boolean;
   disabled?: boolean;
+  icon?: React.ElementType;
 };
 
 export type SidebarProps = {

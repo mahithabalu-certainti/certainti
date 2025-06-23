@@ -2,7 +2,10 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Navbar, Sidebar } from '../';
-import { MAIN_ROUTE } from '../../routes';
+import { ADMIN_MANAGE_USER, MAIN_ROUTE } from '../../routes';
+import { accountNavItems } from '../sidebar/accounts-menu';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +15,7 @@ export const AppLayout: React.FC = () => {
     return saved ? JSON.parse(saved) : true;
   });
   const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(false);
+  const { menus } = useSelector((state: RootState) => state.permission);
 
   useEffect(() => {
     const showAdminSidebarLocalStorage =
@@ -34,16 +38,29 @@ export const AppLayout: React.FC = () => {
     };
   }, []);
 
-  const switchSideBarMenus = () => {
+  const switchSideBarMenus = React.useCallback(() => {
     setShowAdminSidebar((prev) => !prev);
     localStorage.setItem('showAdminSidebar', JSON.stringify(!showAdminSidebar));
-    navigate(MAIN_ROUTE);
+    const intendedRoute = showAdminSidebar
+      ? checkConsultantRoute()?.link
+      : ADMIN_MANAGE_USER;
+    navigate(intendedRoute || MAIN_ROUTE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAdminSidebar]);
+
+  const checkConsultantRoute = () => {
+    return accountNavItems.find(
+      (menu) =>
+        !menu.noRedirect &&
+        menus.find((item) => item.name === menu.id)?.is_enabled
+    );
   };
-  const handleSidebarToggle = () => {
+
+  const handleSidebarToggle = React.useCallback(() => {
     const newState = !sidebarExpand;
     setSidebarExpand(newState);
     localStorage.setItem('sidebarExpand', JSON.stringify(newState));
-  };
+  }, [sidebarExpand]);
 
   return (
     <div className='flex h-screen overflow-x-hidden'>
@@ -73,12 +90,13 @@ export const AppLayout: React.FC = () => {
 
       {/* Body Content */}
       <div
-        className={`flex flex-col flex-1 transition-all ease-in-out ${!mobileView && sidebarExpand
+        className={`flex flex-col flex-1 transition-all ease-in-out ${
+          !mobileView && sidebarExpand
             ? 'ml-[200px] duration-500'
             : !mobileView
               ? 'ml-[65px] duration-300'
               : 'ml-0'
-          }`}
+        }`}
       >
         <Navbar
           handleSidebarToggle={handleSidebarToggle}
@@ -86,10 +104,11 @@ export const AppLayout: React.FC = () => {
           showAdminSidebar={showAdminSidebar}
         />
         <div
-          className={`flex-1 overflow-y-auto transition-all ease-in-out ${sidebarExpand
+          className={`flex-1 overflow-y-auto transition-all ease-in-out ${
+            sidebarExpand
               ? 'max-w-[calc(100vw-200px)] duration-500'
               : 'max-w-[calc(100vw-65px)] duration-300'
-            }`}
+          }`}
         >
           <Outlet />
         </div>

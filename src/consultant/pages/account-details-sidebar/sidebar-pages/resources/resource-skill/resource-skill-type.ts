@@ -27,6 +27,11 @@ export interface ResourceSkillType {
   skillTypeOthers?: string;
   skillSubTypeOthers?: string;
   comments?: string;
+  Created_On?: string;
+  Created_By?: string | null;
+  Updated_On?: string;
+  Updated_By?: string | null;
+  resourceNumber?: string;
 }
 
 export function convertResourceSkill(
@@ -46,6 +51,11 @@ export function convertResourceSkill(
     skillTypeOthers: resourceSkill.skill_type_others,
     skillSubTypeOthers: resourceSkill.skill_subtype_others,
     comments: resourceSkill.comments,
+    Created_On: resourceSkill?.created_datetime,
+    Created_By: resourceSkill?.created_by,
+    Updated_On: resourceSkill?.modified_datetime,
+    Updated_By: resourceSkill?.modified_by,
+    resourceNumber: resourceSkill?.r_number,
   };
 
   return convertedSkill;

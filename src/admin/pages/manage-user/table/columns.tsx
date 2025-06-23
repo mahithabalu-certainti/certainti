@@ -1,3 +1,4 @@
+import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { ManageUser, UserTableColumn } from '../../../types/manage-user';
 
 export const getUserColumns = (
@@ -7,7 +8,7 @@ export const getUserColumns = (
     id: 'username',
     sortId: 'first_name',
     label: 'Username',
-    width: 320,
+    width: 200,
     sortable: true,
     sticky: true,
     sx: {
@@ -34,15 +35,44 @@ export const getUserColumns = (
     id: 'email',
     sortId: 'email',
     label: 'Email',
-    width: 380,
+    width: 200,
     sortable: true,
   },
   {
     id: 'profile',
     sortId: 'profile',
     label: 'Profile',
-    width: 380,
+    width: 200,
     sortable: true,
+  },
+  {
+    id: 'role',
+    sortId: 'business_teams',
+    label: 'Role',
+    width: 200,
+    sortable: true,
+  },
+  {
+    id: 'created_datetime',
+    sortId: 'created_datetime',
+    label: 'Created On',
+    width: 190,
+    sortable: true,
+    render: (row: ManageUser) =>
+      row.created_datetime
+        ? formatDateToYYYYMMDDWithTime(row.created_datetime)
+        : '-',
+  },
+  {
+    id: 'modified_datetime',
+    sortId: 'modified_datetime',
+    label: 'Updated On',
+    width: 190,
+    sortable: true,
+    render: (row: ManageUser) =>
+      row.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
+        : '-',
   },
   {
     id: 'status',

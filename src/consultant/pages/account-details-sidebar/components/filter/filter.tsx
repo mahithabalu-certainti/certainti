@@ -6,9 +6,9 @@ import {
   Popover,
   Select,
   SelectChangeEvent,
+  Tooltip,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import { arrowIcon, checkedIcon, closeIcon } from '../../../../../assets';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
 import {
   DateFilterOption,
@@ -40,12 +40,14 @@ import {
   getStoredFilters,
   resetFilter,
   storeFilters,
+  validateFilters,
 } from './utils';
 import {
   MENU_PROPS,
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
 import { useLocation } from 'react-router-dom';
+import { ArrowIcon, CheckedIcon, CloseIcon } from '../../../../../assets';
 
 const Filter: React.FC<FilterComponentProps> = ({
   value,
@@ -73,6 +75,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     []
   );
   const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [isApplyDisabled, setIsApplyDisabled] = useState(false);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -190,6 +193,11 @@ const Filter: React.FC<FilterComponentProps> = ({
     return unListen;
   }, [location.pathname]);
 
+  useEffect(() => {
+    const hasInvalid = validateFilters(filterStates);
+    setIsApplyDisabled(hasInvalid);
+  }, [filterStates]);
+
   const handleFilterSelect = (field: string) => {
     const fieldConfig = filterMenu.find((f) => f.value === field);
     if (fieldConfig) {
@@ -203,6 +211,14 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   const handleApplyFilters = () => {
+    const updatedStates = { ...filterStates };
+    const hasInvalid = validateFilters(updatedStates);
+
+    if (hasInvalid) {
+      setFilterStates(updatedStates);
+      setIsApplyDisabled(true);
+      return;
+    }
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
     setCurrentPage(0);
@@ -603,6 +619,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         return null;
     }
   };
+
   return (
     <Popover
       id={filterId}
@@ -631,12 +648,24 @@ const Filter: React.FC<FilterComponentProps> = ({
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
-            <button
-              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
-              onClick={handleApplyFilters}
+            <Tooltip
+              title={
+                isApplyDisabled ? 'Fill all added filter fields to apply' : ''
+              }
+              disableHoverListener={!isApplyDisabled}
+              placement='top'
+              arrow
             >
-              Apply
-            </button>
+              <span className='text-[12px] font-medium text-[#425A76]'>
+                <button
+                  onClick={handleApplyFilters}
+                  disabled={isApplyDisabled}
+                  className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20] disabled:opacity-45'
+                >
+                  Apply
+                </button>
+              </span>
+            </Tooltip>
             <button
               onClick={handleResetFilter}
               className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
@@ -651,67 +680,67 @@ const Filter: React.FC<FilterComponentProps> = ({
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               System Define filters
             </h3>
-            <div className='flex gap-2 flex-wrap'>
-              {/* Render system filters */}
-              {systemFilters
-                .filter((filter) => filter.type === 'system')
-                .flatMap((systemFilter) =>
-                  systemFilter.options?.map((field: any) => (
-                    <button
-                      key={field.value}
-                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                        selectedSystemFilters.includes(field.value)
-                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
-                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                      }`}
-                      onClick={() =>
-                        handleSystemFilter('system_filter', field.value)
-                      }
-                    >
-                      <img
-                        src={checkedIcon}
-                        alt='checked-icon'
-                        className='w-3 h-3 mt-[0.3px]'
-                        style={{
-                          filter: selectedSystemFilters.includes(field.value)
-                            ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
-                            : 'none',
-                        }}
-                      />
-                      {field.option}
-                    </button>
-                  ))
-                )}
-
-              {/* Render sort options */}
-              {systemFilters
-                .filter((filter) => filter.type === 'system-sort')
-                .flatMap((sortFilter) =>
-                  sortFilter.options?.map((field: any) => (
-                    <button
-                      key={field.value}
-                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                        currentSort === field.value
-                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
-                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                      }`}
-                      onClick={() => handleSortingSelection(field.value)}
-                    >
-                      <img
-                        src={checkedIcon}
-                        alt='checked-icon'
-                        className='w-3 h-3 mt-[0.3px]'
-                        style={{
-                          filter:
-                            currentSort === field.value
+            <div className='flex justify-between gap-2 flex-wrap'>
+              <div className='flex gap-2 flex-wrap'>
+                {/* Render system filters */}
+                {systemFilters
+                  .filter((filter) => filter.type === 'system')
+                  .flatMap((systemFilter) =>
+                    systemFilter.options?.map((field: any) => (
+                      <button
+                        key={field.value}
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                          selectedSystemFilters.includes(field.value)
+                            ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                            : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                        }`}
+                        onClick={() =>
+                          handleSystemFilter('system_filter', field.value)
+                        }
+                      >
+                        <CheckedIcon
+                          alt='checked-icon'
+                          className='w-3 h-3 mt-[0.3px]'
+                          style={{
+                            filter: selectedSystemFilters.includes(field.value)
                               ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
                               : 'none',
-                        }}
-                      />
-                      {field.option}
-                    </button>
-                  ))
-                )}
+                          }}
+                        />
+                        {field.option}
+                      </button>
+                    ))
+                  )}
+
+                {/* Render sort options */}
+                {systemFilters
+                  .filter((filter) => filter.type === 'system-sort')
+                  .flatMap((sortFilter) =>
+                    sortFilter.options?.map((field: any) => (
+                      <button
+                        key={field.value}
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                          currentSort === field.value
+                            ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                            : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleSortingSelection(field.value)}
+                      >
+                        <CheckedIcon
+                          alt='checked-icon'
+                          className='w-3 h-3 mt-[0.3px]'
+                          style={{
+                            filter:
+                              currentSort === field.value
+                                ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                                : 'none',
+                          }}
+                        />
+                        {field.option}
+                      </button>
+                    ))
+                  )}
+              </div>
             </div>
           </div>
         )}
@@ -736,7 +765,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                             value={fieldValue}
                             className='min-w-[173px] max-w-[173px] h-[28px]'
                             IconComponent={(props) => (
-                              <img src={arrowIcon} alt='arrowIcon' {...props} />
+                              <ArrowIcon alt='arrowIcon' {...props} />
                             )}
                             onChange={(e) => {
                               const newFieldValue = e.target.value;
@@ -778,11 +807,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                               );
                               return (
                                 <div className='flex items-center gap-1'>
-                                  <img
-                                    src={checkedIcon}
-                                    alt='checked'
-                                    className='w-3'
-                                  />
+                                  <CheckedIcon alt='checked' className='w-3' />
                                   <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.name || selected}
                                   </span>
@@ -807,12 +832,13 @@ const Filter: React.FC<FilterComponentProps> = ({
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '4px',
+                                  overflow: 'hidden',
                                 }}
                               >
-                                <img
-                                  src={checkedIcon}
+                                <CheckedIcon
                                   alt='checked'
                                   className='w-4 h-4'
+                                  style={{ flexShrink: 0 }}
                                 />
                                 {field.name}
                               </MenuItem>
@@ -852,8 +878,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                         }}
                         className='cursor-pointer pl-1'
                       >
-                        <img
-                          src={closeIcon}
+                        <CloseIcon
                           alt='closeIcon'
                           className='w-[12px] h-[12px]'
                         />
@@ -874,7 +899,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           >
             <span className='font-normal text-[16px]'>+</span> Add Filter By
             Fields
-            <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
+            <ArrowIcon alt='arrowIcon' className='mt-0.5' />
           </button>
         </div>
       </div>
@@ -923,9 +948,16 @@ const Filter: React.FC<FilterComponentProps> = ({
                   lineHeight: '30px',
                   color: '#425A76',
                   py: '1px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
+                <CheckedIcon
+                  alt='checked'
+                  className='w-4 h-4 mr-1'
+                  style={{ flexShrink: 0 }}
+                />
                 {field.name}
               </MenuItem>
             ))

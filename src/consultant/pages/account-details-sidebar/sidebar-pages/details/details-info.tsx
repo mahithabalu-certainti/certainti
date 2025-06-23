@@ -117,6 +117,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         ) || '-',
     },
     { label: 'Status', value: accountById?.status?.toString() || '-' },
+    {
+      label: 'Org Name',
+      value: accountById?.organisation_name?.toString() || '-',
+    },
   ];
   const businessInfo: DetailItem[] = [
     {
@@ -179,12 +183,12 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: accountDetails?.account_rid },
+    { label: 'Account ID', value: accountById?.r_number },
     {
       label: 'Created On',
       value: formatDateToYYYYMMDDWithTime(accountById?.created_datetime),
     },
     { label: 'Created By', value: accountById?.created_by },
-    { label: 'Account ID', value: accountById?.r_number },
     {
       label: 'Updated On',
       value: formatDateToYYYYMMDDWithTime(accountById?.modified_datetime),
@@ -222,7 +226,11 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
       <DetailsSection title='Account Settings' data={accountSettings} />
       <DetailsSection title='Comments' data={description} fullColumn={true} />
-      <DetailsSection title='Audit Information' data={auditInfo} />
+      <DetailsSection
+        title='Audit Information'
+        data={auditInfo}
+        isAudit={true}
+      />
     </Fragment>
   );
 };

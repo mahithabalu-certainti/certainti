@@ -6,6 +6,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
   statusMessage: '',
   data: {
     accountById: {
+      logo_url: 'https://example.com/logo.png',
       r_number: 'ACC0010',
       account_name: 'Wipro-Global',
       comments: 'This is a description of the account.',

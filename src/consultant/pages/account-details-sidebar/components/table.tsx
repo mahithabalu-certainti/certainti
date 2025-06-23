@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
-import { actionIcon, arrowDownIcon, arrowUpIcon } from '../../../../assets';
+import { ActionIcon, ArrowDownIcon, ArrowUpIcon } from '../../../../assets';
 import { TablePagination } from '../../../../components/table';
 
 interface TableColumn {
@@ -182,8 +182,7 @@ const DataTable: React.FC<DataTableProps> = ({
         className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
         onClick={handleClick}
       >
-        <img
-          src={arrowUpIcon}
+        <ArrowUpIcon
           alt={
             isActive && sortOrder === 'asc'
               ? 'sort-up-active'
@@ -197,8 +196,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 : 'grayscale(100%) brightness(0) opacity(50%)',
           }}
         />
-        <img
-          src={arrowDownIcon}
+        <ArrowDownIcon
           alt={
             isActive && sortOrder === 'desc'
               ? 'sort-down-active'
@@ -228,7 +226,6 @@ const DataTable: React.FC<DataTableProps> = ({
   //     </div>
   //   );
   // }
-  
 
   if (error) {
     return (
@@ -353,11 +350,7 @@ const DataTable: React.FC<DataTableProps> = ({
                   )}
                 </TableCell>
               ))}
-              {actionMenuItems.length > 0 && (
-                <TableCell>
-                  Action
-                </TableCell>
-              )}
+              {actionMenuItems.length > 0 && <TableCell>Action</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody
@@ -443,11 +436,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           <div
                             className={`${isMenuOpen && selectedRowData === row ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
                           >
-                            <img
-                              src={actionIcon}
-                              alt='menu-icon'
-                              className='h-[13px]'
-                            />
+                            <ActionIcon alt='menu-icon' className='h-[13px]' />
                           </div>
                         </IconButton>
                       </div>
@@ -456,7 +445,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableRow>
               ))
             ) : (
-              <TableRow style={{ height: isLoading ? '300px' : "auto" }}>
+              <TableRow style={{ height: isLoading ? '300px' : 'auto' }}>
                 <TableCell
                   colSpan={columns.length}
                   align='center'

@@ -4,15 +4,16 @@ export interface INavItem {
   id: MenuOption | '';
   type: 'link' | 'divider';
   name: string;
-  icon: string;
+  icon: React.ElementType | string;
   link: string;
   matchLink: string;
   hide?: boolean;
+  noRedirect?: boolean;
 }
 
 export interface AdminNavItem {
   title: string;
-  icon: string;
+  icon: React.ElementType;
   openStatus: boolean;
   hide?: boolean;
   subItemTitle: SubItemTitle[];
@@ -21,7 +22,7 @@ export interface AdminNavItem {
 export interface SubItemTitle {
   id: MenuOption;
   name: string;
-  icon: string;
+  icon: React.ElementType;
   link: string;
   matchLink: string;
   hide?: boolean;

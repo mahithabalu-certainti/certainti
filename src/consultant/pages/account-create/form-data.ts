@@ -14,16 +14,13 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
-import { closeIcon } from '../../../assets';
+import { CloseIcon } from '../../../assets';
 
-export const newKeyContactFields = (
-  roles: SelectOption[],
-  isPrimaryContactRequired: boolean
-) => [
-  createTextField('key_contact_name', 'Contact Name', {
+export const newKeyContactFields = (roles: SelectOption[]) => [
+  createTextField('key_contact_name', 'Key Contact Name', {
     required: false,
     width: '190px',
-    placeholder: 'Enter Contact Name',
+    placeholder: 'Enter Key Contact Name',
     onChange: true,
     errorHandling: [
       {
@@ -51,17 +48,17 @@ export const newKeyContactFields = (
       },
     ],
   }),
-  createSelectField('key_contact_role', 'Role', {
+  createSelectField('key_contact_role', 'Key Contact Role', {
     options: roles,
     width: '180px',
     required: false,
-    placeholder: 'Choose Role',
+    placeholder: 'Choose Key Contact Role',
     onChange: true,
   }),
-  createTextField('key_contact_email', 'Email', {
+  createTextField('key_contact_email', 'Key Contact Email', {
     required: false,
     width: '180px',
-    placeholder: 'Enter Email',
+    placeholder: 'Enter Key Contact Email',
     onChange: true,
     errorHandling: [
       {
@@ -82,23 +79,25 @@ export const newKeyContactFields = (
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
-    required: isPrimaryContactRequired,
-    onChange: true,
+    required: true,
   }),
-  createRadioField('include_in_communication', 'Include In Communications?', {
+  createRadioField('include_in_communication', 'Interaction Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
-    required: false,
-    // defaultValue: YesNo.No,
+    required: true,
   }),
-  createSelectField('key_contact_status', 'Status', {
+  // createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
+  //   radioOptions: YES_NO_OPTIONS,
+  //   width: '200px',
+  //   required: true,
+  //   defaultValue: YesNo.No,
+  // }),
+  createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
-    placeholder: 'Choose Status',
-    defaultValue: STATUS_OPTIONS[0].value,
   }),
-  createImgButton('button', closeIcon, {
+  createImgButton('button', CloseIcon, {
     width: '30px',
   }),
 ];
@@ -152,7 +151,7 @@ const createDynamicField = (
   return fieldsArr;
 };
 
-export const FormData = (
+export const AccFormData = (
   country: SelectOption[],
   parentAccount: SelectOption[],
   currency: SelectOption[],
@@ -179,7 +178,7 @@ export const FormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
-                errorMessage: 'Name must be more than 6 characters long',
+                errorMessage: 'Name must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,
@@ -244,8 +243,6 @@ export const FormData = (
           createTextField('website', 'Website', {
             type: 'text',
             required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
             placeholder: 'Enter Website',
             errorHandling: [
               {
@@ -255,6 +252,10 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MAX_WEBSITE,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.WEBSITE,
+                errorMessage: 'Enter a valid website URL',
               },
             ],
           }),
@@ -276,29 +277,31 @@ export const FormData = (
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
           }),
-          // createTextField('project_manager', 'Delivery Manager', {
-          //   required: false,
-          //   regex: REGEX_PATTERNS.MANAGER_REGEX,
-          //   regexErrorMessage:
-          //     "Only letters, spaces, apostrophes (') and hyphens (-) are allowed",
-          //   placeholder: 'Enter Delivery Manager Name',
-          //   errorHandling: [
-          //     {
-          //       regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-          //       errorMessage:
-          //         'Delivery Manager Name must be more than 1 characters long',
-          //     },
-          //     {
-          //       regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-          //       errorMessage: 'Max length exceeded',
-          //     },
-          //     {
-          //       regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-          //       errorMessage:
-          //         'Cannot start or end with a space, apostrophe, or hyphens',
-          //     },
-          //   ],
-          // }),
+          createTextField('organisation_name', 'Org Name', {
+            required: true,
+            placeholder: 'Enter Org Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
+                errorMessage: 'Org Name must be more than 6 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_125,
+                errorMessage: 'Maximum length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.ACCOUNT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes (') and commas (,)",
+              },
+            ],
+          }),
+          createTextField('logo', 'Org Logo', {
+            type: 'file',
+            onChange: true,
+            required: false,
+            placeholder: 'Browse Image',
+          }),
         ],
       },
       {
@@ -323,9 +326,9 @@ export const FormData = (
             placeholder: 'Choose Country',
             required: false,
             onChange: true,
-            resetDependsFields: ['region'],
+            resetDependsFields: ['region_rid'],
           }),
-          createSelectField('region', 'Region', {
+          createSelectField('region_rid', 'Region', {
             options: state,
             placeholder: 'Choose Region',
             required: false,
@@ -339,8 +342,9 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Key Contacts List',
+        sectionName: 'key_contacts_list',
         fillType: 'half',
+        from: 'account',
         fields: [
           ...keyContacts
             .map((contacts, index) => [
@@ -353,7 +357,7 @@ export const FormData = (
         sectionName: '',
         fillType: 'full',
         fields: [
-          createButton('Add another key contact', '', {
+          createButton('Add Key Contact', '', {
             iconUrl: '',
             onClick: addNewKeyContact,
           }),
@@ -410,12 +414,12 @@ export const FormData = (
             radioOptions: YES_NO_OPTIONS,
             required: true,
           }),
-          createTextField('max_ai_interactions', 'Max Interaction follow up', {
+          createTextField('max_ai_interactions', 'Max Interaction Follow Up', {
             required: true,
             regex: REGEX_PATTERNS.MAX_AI_INTERACTIONS,
             regexErrorMessage:
-              'Max interaction Follow up must be between 1 and 10',
-            placeholder: 'Enter Max interaction Follow up',
+              'Max Interaction Follow Up must be between 1 and 10',
+            placeholder: 'Enter Max Interaction Follow Up',
           }),
           createRadioField('data_storage', 'Data Residency', {
             required: true,

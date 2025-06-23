@@ -1,5 +1,5 @@
 {
-  "name": "platform2.0-frontend",
+  "name": "thinkrd365",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,10 +8,14 @@
     "start:uat": "vite --mode uat",
     "start:preprod": "vite --mode preprod",
     "start:prod": "vite --mode prod",
+    "start:development": "vite --mode development",
+    "start:qa": "vite --mode qa",
     "build:dev": "tsc -b && vite build --mode dev",
     "build:uat": "tsc -b && vite build --mode uat",
     "build:preprod": "tsc -b && vite build --mode preprod",
     "build:prod": "tsc -b && vite build --mode prod",
+    "build:development": "tsc -b && vite build --mode development",
+    "build:qa": "tsc -b && vite build --mode qa",
     "preview": "vite preview --port 3000",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -42,7 +46,8 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.5",
     "redux-persist": "^6.0.0",
-    "tailwindcss": "^4.0.6"
+    "tailwindcss": "^4.0.6",
+    "vite-plugin-compression": "^0.5.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
@@ -58,7 +63,8 @@
     "prettier": "^3.5.1",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.22.0",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vite-plugin-svgr": "^4.3.0"
   },
   "overrides": {
     "esbuild": "^0.25.0"

@@ -1,5 +1,4 @@
-
-import { ResourceDetailsApiResponse } from "../types";
+import { ResourceDetailsApiResponse } from '../types';
 
 export const mockResourceDetails: ResourceDetailsApiResponse = {
   statusCode: 200,
@@ -42,7 +41,7 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       city: '',
       resource_total_experience: 0,
       resource_total_experience_organization: 0,
-      comments: ''
+      comments: '',
     },
   },
 };

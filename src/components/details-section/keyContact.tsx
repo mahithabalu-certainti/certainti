@@ -7,6 +7,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface KeyContact {
   keyContactId?: string;
@@ -43,10 +44,10 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
           <TableRow>
             {[
               { label: 'Key Contact Name', fixedWidth: 200 },
-              { label: 'Key Contact Role', fixedWidth: 200 },
+              { label: 'Key Contact Role', fixedWidth: 250 },
               { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
-              { label: 'Include In Communications?', fixedWidth: 200 },
+              { label: 'Interaction Recipient?', fixedWidth: 200 },
               { label: 'Key Contact Status', fixedWidth: 160 },
             ].map((col, i) => (
               <TableCell
@@ -97,18 +98,28 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                     maxWidth: '200px',
                   }}
                 >
-                  {field.keyContactName || '-'}
+                  <TruncateWithTooltip
+                    text={String(field.keyContactName)}
+                    maxWidth={190}
+                  >
+                    {field.keyContactName || '-'}
+                  </TruncateWithTooltip>
                 </TableCell>
                 <TableCell
                   sx={{
                     height: '28px',
                     padding: '0px 8px',
-                    width: '200px',
-                    minWidth: '200px',
-                    maxWidth: '200px',
+                    width: '250px',
+                    minWidth: '250px',
+                    maxWidth: '250px',
                   }}
                 >
-                  {field.keyContactRole || '-'}
+                  <TruncateWithTooltip
+                    text={String(field.keyContactRole)}
+                    maxWidth={240}
+                  >
+                    {field.keyContactRole || '-'}
+                  </TruncateWithTooltip>
                 </TableCell>
                 <TableCell
                   sx={{
@@ -123,7 +134,12 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                     maxWidth: '200px',
                   }}
                 >
-                  {field.keyContactEmail || '-'}
+                  <TruncateWithTooltip
+                    text={String(field.keyContactEmail)}
+                    maxWidth={190}
+                  >
+                    {field.keyContactEmail || '-'}
+                  </TruncateWithTooltip>
                 </TableCell>
                 <TableCell
                   sx={{

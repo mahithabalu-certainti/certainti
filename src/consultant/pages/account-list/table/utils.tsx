@@ -1,6 +1,6 @@
 import { Box, Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
-import React, { Fragment } from 'react';
-import { arrowDownIcon, childAccountIcon } from '../../../../assets';
+import React, { Fragment, Suspense } from 'react';
+import { ArrowDownIcon, ChildAccountIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
@@ -20,7 +20,7 @@ interface RenderRowsProps {
   accounts: ConvertedAccount[];
   openRows: Set<string>;
   selectedRows: Set<number>;
-  handleRowClick: (accountName: string) => void;
+  handleRowClick: (accountId: string) => void;
   handleSelectRow: (index: number) => void;
   handleEdit: (account: Account) => void;
   handleDelete: (account: Account) => void;
@@ -82,7 +82,7 @@ export const renderRows = ({
       <React.Fragment key={account.accountName}>
         <TableRow
           hover
-          className={`${openRows.has(account.accountName) ? 'bg-[#F2F2F2]' : ''} group`}
+          className={`${openRows.has(account.accountId) ? 'bg-[#ECECEC]' : ''} group`}
           selected={selectedRows.has(globalIndex as number)}
           sx={{
             '&:hover td': {
@@ -96,7 +96,7 @@ export const renderRows = ({
             },
             '& .MuiTableCell-root': {
               border: 'none',
-              borderBottom: openRows.has(account.accountName)
+              borderBottom: openRows.has(account.accountId)
                 ? '1px solid #CBD6E2 !important'
                 : 'none',
             },
@@ -106,9 +106,7 @@ export const renderRows = ({
             sx={{
               position: 'sticky',
               left: 0,
-              background: openRows.has(account.accountName)
-                ? '#F2F2F2'
-                : '#fff',
+              background: openRows.has(account.accountId) ? '#ECECEC' : '#fff',
               zIndex: 7,
               width: '32px',
               maxWidth: '32px',
@@ -138,9 +136,7 @@ export const renderRows = ({
             sx={{
               position: 'sticky',
               left: '32px',
-              background: openRows.has(account.accountName)
-                ? '#F2F2F2'
-                : '#fff',
+              background: openRows.has(account.accountId) ? '#ECECEC' : '#fff',
               zIndex: 6,
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
@@ -155,11 +151,10 @@ export const renderRows = ({
                 size='small'
                 disableRipple
                 className='!p-0 !pr-1'
-                onClick={() => handleRowClick(account.accountName)}
+                onClick={() => handleRowClick(account.accountId)}
               >
-                {openRows.has(account.accountName) ? (
-                  <img
-                    src={arrowDownIcon}
+                {openRows.has(account.accountId) ? (
+                  <ArrowDownIcon
                     alt='arrowUp'
                     style={{
                       filter:
@@ -168,8 +163,7 @@ export const renderRows = ({
                     className='h-[18px] w-[18px] mb-1'
                   />
                 ) : (
-                  <img
-                    src={arrowDownIcon}
+                  <ArrowDownIcon
                     alt='arrowDown'
                     style={{
                       transform: 'rotate(-90deg)',
@@ -219,7 +213,12 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.totalProjects}
+            <TruncateWithTooltip
+              text={String(account.totalProjects)}
+              maxWidth={150}
+            >
+              {account.totalProjects}
+            </TruncateWithTooltip>
           </TableCell>
 
           <TableCell
@@ -230,7 +229,12 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.totalProjectHours}
+            <TruncateWithTooltip
+              text={String(account.totalProjectHours)}
+              maxWidth={180}
+            >
+              {account.totalProjectHours}
+            </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{
@@ -291,18 +295,33 @@ export const renderRows = ({
           <TableCell
             sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
           >
-            {account.financeExecutive || '-'}
+            <TruncateWithTooltip
+              text={String(account.financeExecutive)}
+              maxWidth={200}
+            >
+              {account.financeExecutive || '-'}
+            </TruncateWithTooltip>
           </TableCell>
 
           <TableCell
             sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
           >
-            {account.financeHead || '-'}
+            <TruncateWithTooltip
+              text={String(account.financeHead)}
+              maxWidth={160}
+            >
+              {account.financeHead || '-'}
+            </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '250px', maxWidth: '250px', minWidth: '240px' }}
           >
-            {account.professionalConsultant || '-'}
+            <TruncateWithTooltip
+              text={String(account.professionalConsultant)}
+              maxWidth={250}
+            >
+              {account.professionalConsultant || '-'}
+            </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
@@ -336,8 +355,10 @@ export const renderRows = ({
             </TableCell>
           )}
         </TableRow>
-        {openRows.has(account.accountName) &&
-          renderChildRows(account.accountName)}
+        <Suspense fallback={null}>
+          {openRows.has(account.accountId) &&
+            renderChildRows(account.accountName)}
+        </Suspense>
         <TableRow
           sx={{
             '& .MuiTableCell-root': {
@@ -368,7 +389,6 @@ export const renderChildRows = ({
   isAccountEditEnable,
   isAccountDeleteEnable,
 }: RenderChildRowsProps) => {
-  console.log(accounts, 'accounts');
   return accounts
     ?.filter((account) => account.parentAccount === parentAccount)
     ?.map((account) => {
@@ -448,8 +468,7 @@ export const renderChildRows = ({
                     onClick={() => handleChildRowClick(account.accountId)}
                   >
                     {openChildRows.has(account.accountId) ? (
-                      <img
-                        src={arrowDownIcon}
+                      <ArrowDownIcon
                         alt='arrowUp'
                         style={{
                           filter:
@@ -458,8 +477,7 @@ export const renderChildRows = ({
                         className='h-[18px] w-[18px]'
                       />
                     ) : (
-                      <img
-                        src={arrowDownIcon}
+                      <ArrowDownIcon
                         alt='arrowDown'
                         style={{
                           transform: 'rotate(-90deg)',
@@ -474,15 +492,14 @@ export const renderChildRows = ({
                   <div className='w-[18px] h-[18px]'></div>
                 )}
                 <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
-                  <img
-                    src={childAccountIcon}
+                  <ChildAccountIcon
                     alt='childAccountIcon'
                     className='w-[9px] h-[10px]'
                   />
                 </div>
                 <TruncateWithTooltip
                   text={String(account.accountName)}
-                  maxWidth={200}
+                  maxWidth={155}
                   className={`text-[13px] font-semibold cursor-pointer underline text-[#1755E7]`}
                 >
                   <span onClick={() => handleAccountNameClick(account)}>
@@ -519,7 +536,12 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.totalProjects}
+              <TruncateWithTooltip
+                text={String(account.totalProjects)}
+                maxWidth={150}
+              >
+                {account.totalProjects}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{
@@ -529,7 +551,12 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.totalProjectHours}
+              <TruncateWithTooltip
+                text={String(account.totalProjectHours)}
+                maxWidth={180}
+              >
+                {account.totalProjectHours}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{
@@ -590,17 +617,32 @@ export const renderChildRows = ({
             <TableCell
               sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
             >
-              {account.financeExecutive || '-'}
+              <TruncateWithTooltip
+                text={String(account.financeExecutive)}
+                maxWidth={200}
+              >
+                {account.financeExecutive || '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
             >
-              {account.financeHead || '-'}
+              <TruncateWithTooltip
+                text={String(account.financeHead)}
+                maxWidth={160}
+              >
+                {account.financeHead || '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{ width: '250px', maxWidth: '250px', minWidth: '250px' }}
             >
-              {account.professionalConsultant || '-'}
+              <TruncateWithTooltip
+                text={String(account.professionalConsultant)}
+                maxWidth={250}
+              >
+                {account.professionalConsultant || '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
@@ -696,8 +738,7 @@ export const renderChildRows = ({
                   >
                     <Box className='inline-flex items-center gap-1 ml-[55px]'>
                       <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
-                        <img
-                          src={childAccountIcon}
+                        <ChildAccountIcon
                           alt='childAccountIcon'
                           className='w-[9px] h-[10px]'
                         />

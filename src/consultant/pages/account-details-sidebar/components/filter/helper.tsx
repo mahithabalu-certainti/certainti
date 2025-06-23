@@ -12,7 +12,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
-import { arrowIcon, calendarIcon } from '../../../../../assets';
+import { ArrowIcon, CalendarIcon } from '../../../../../assets';
 import { FilterState } from './filterType';
 import {
   MENU_PROPS,
@@ -54,9 +54,7 @@ export const TextFilterControl: React.FC<{
         value={state.text?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[10px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -138,9 +136,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
         value={state.textCostAndSkill?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -221,9 +217,7 @@ export const NumberFilterControl: React.FC<{
         value={state.number?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -378,9 +372,7 @@ export const DateFilterControl: React.FC<{
         value={state.date?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -412,7 +404,7 @@ export const DateFilterControl: React.FC<{
                 displayEmpty
                 inputProps={{ 'aria-label': 'Select Year' }}
                 IconComponent={(props) => (
-                  <img src={arrowIcon} alt='arrowIcon' {...props} />
+                  <ArrowIcon alt='arrowIcon' {...props} />
                 )}
                 sx={SELECT_STYLES}
                 MenuProps={MENU_PROPS}
@@ -461,11 +453,7 @@ export const DateFilterControl: React.FC<{
                 }
                 slots={{
                   openPickerIcon: () => (
-                    <img
-                      src={calendarIcon}
-                      alt='calendar'
-                      className='w-4 h-4'
-                    />
+                    <CalendarIcon alt='calendar' className='w-4 h-4' />
                   ),
                 }}
                 slotProps={{
@@ -496,7 +484,7 @@ export const DateFilterControl: React.FC<{
                       '& .MuiInputBase-input': {
                         fontSize: '12px',
                         color: '#425A76',
-                        width: isBetween ? '50%' : '140px',
+                        width: isBetween ? '50%' : '125px',
                       },
                     },
                     placeholder: 'YYYY-MM-DD',
@@ -525,7 +513,7 @@ export const DateFilterControl: React.FC<{
               shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
+                  <CalendarIcon alt='calendar' className='w-4 h-4' />
                 ),
               }}
               slotProps={{
@@ -556,7 +544,7 @@ export const DateFilterControl: React.FC<{
                     '& .MuiInputBase-input': {
                       fontSize: '12px',
                       color: '#425A76',
-                      width: isBetween ? '50%' : '140px',
+                      width: isBetween ? '50%' : '125px',
                     },
                   },
                   placeholder: 'YYYY-MM-DD',
@@ -600,9 +588,7 @@ export const CurrencySelectFilterControl: React.FC<{
         value={state?.currencySelect?.option?.toLowerCase() ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
         name='option'
@@ -648,9 +634,7 @@ export const CurrencySelectFilterControl: React.FC<{
               }
             }}
             className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
-            IconComponent={(props) => (
-              <img src={arrowIcon} alt='arrowIcon' {...props} />
-            )}
+            IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
             sx={SELECT_STYLES}
             MenuProps={{
               ...MENU_PROPS,
@@ -735,9 +719,7 @@ export const EnumFilterControl: React.FC<{
         value={state?.enum?.option ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
         disabled={disabled}
@@ -765,9 +747,7 @@ export const EnumFilterControl: React.FC<{
           value={state.enum?.value || []}
           name='value'
           className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
-          IconComponent={(props) => (
-            <img src={arrowIcon} alt='arrowIcon' {...props} />
-          )}
+          IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
           onChange={(e) => onChange(fieldName, e.target.value as string[])}
           sx={SELECT_STYLES}
           MenuProps={{
@@ -956,9 +936,7 @@ export const StatusFilterControl: React.FC<{
       displayEmpty
       onChange={(e) => onOptionChange(fieldName, e)}
       className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
-      IconComponent={(props) => (
-        <img src={arrowIcon} alt='arrowIcon' {...props} />
-      )}
+      IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
       sx={SELECT_STYLES}
       MenuProps={MENU_PROPS}
     >
