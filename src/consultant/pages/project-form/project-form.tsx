@@ -77,6 +77,35 @@ const ProjectForm: React.FC = () => {
 
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
+
+  const statusOptions = useGetStatus();
+  const projectTypeOptions = useGetProjectType();
+  const allCountries = useGetAllCountries();
+  const currency = useFetchCurrency();
+  const industry = useFetchIndustrys();
+  const Classification = useFetchClassification();
+  const keyContactRoles = useKeyContactRoles('Project');
+  const states = useFetchState(currentCountry);
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+        desc: status.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const defaultActiveValue = useMemo(() => {
+    const activeOption = memoizedStatus.find(
+      (option) => option.label.toLowerCase() === 'active'
+    );
+    return activeOption?.value || '';
+  }, [memoizedStatus]);
+
   // need to change this
   const projectData = useMemo(
     () => ({
@@ -96,27 +125,17 @@ const ProjectForm: React.FC = () => {
         updated_on: account?.modified_datetime
           ? formatDateToYYYYMMDDWithTime(account?.modified_datetime || '-')
           : '-',
-        ...transformKeyContactsFromAPI(account?.keyContact || []),
+        ...transformKeyContactsFromAPI(
+          account?.keyContact || [],
+          memoizedStatus
+        ),
         region: account?.region,
         project_status: account?.status_rid,
         project_type: account?.project_type_rid,
       }),
     }),
-    [account]
+    [account, memoizedStatus]
   );
-  // const account = useMemo(() => getProjectData.data?.data?.project, [
-  //   getProjectData.data?.data?.project,
-  // ]);
-  const statusOptions = useGetStatus();
-  const projectTypeOptions = useGetProjectType();
-  const allCountries = useGetAllCountries();
-  const currency = useFetchCurrency();
-  const industry = useFetchIndustrys();
-  const Classification = useFetchClassification();
-  const keyContactRoles = useKeyContactRoles('Project');
-  const states = useFetchState(currentCountry);
-  const createProject = useCreateProject();
-  const updateProject = useUpdateProject();
 
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {
@@ -130,22 +149,6 @@ const ProjectForm: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
-
-  const memoizedStatus: SelectOption[] = useMemo(
-    () =>
-      statusOptions?.data?.data?.status.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-      })) || [],
-    [statusOptions?.data?.data?.status]
-  );
-
-  const defaultActiveValue = useMemo(() => {
-    const activeOption = memoizedStatus.find(
-      (option) => option.label.toLowerCase() === 'active'
-    );
-    return activeOption?.value || '';
-  }, [memoizedStatus]);
 
   const memoizedProjectTypes: SelectOption[] = useMemo(
     () =>
@@ -221,11 +224,14 @@ const ProjectForm: React.FC = () => {
 
     setKeyContacts(fields);
     setIsKeyContactsReady(
-      !getProjectData.isPending && !keyContactRoles.isPending
+      !getProjectData.isPending &&
+        !keyContactRoles.isPending &&
+        !statusOptions.isPending
     );
   }, [
     getProjectData.isPending,
     keyContactRoles.isPending,
+    statusOptions.isPending,
     memoizedRole,
     account?.keyContact,
     isEditView,
@@ -256,6 +262,8 @@ const ProjectForm: React.FC = () => {
         project_id: projectID,
       },
       isEditView,
+      memoizedStatus,
+      defaultActiveValue,
       account?.keyContact
     );
 

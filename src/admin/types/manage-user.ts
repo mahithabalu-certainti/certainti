@@ -7,7 +7,7 @@ export type ManageUser = {
   fullName: string;
   email: string;
   profile: string;
-  status: 'Active' | 'Inactive';
+  status: string;
   created_datetime: string;
   modified_datetime: string;
   role: string;
@@ -57,11 +57,16 @@ export interface BusinessTeams {
   business_teams: string;
 }
 
+export interface Status {
+  status_description: string;
+  status_name: string;
+}
+
 // Individual User Type
 export interface User {
   rid: string;
   email: string;
-  status: string;
+  status: Status;
   full_name: string;
   first_name: string;
   profile: UserProfile;

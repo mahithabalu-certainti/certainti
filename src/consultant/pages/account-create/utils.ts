@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { capitalize } from '@mui/material';
 import {
   AccountFormData,
   KeyContacts,
   KeyContactsUpdate,
   NewAccountData,
   SelectOption,
-  Status,
 } from '../../types';
 
 export const DATA_STORAGE_OPTIONS: SelectOption[] = [
@@ -17,8 +15,16 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
 export const othersIndustryId = '107e689d-35d8-49e5-a444-08db0c59167b';
 export const othersClassificationId = 'a6b7b3e5-1d4f-4e28-b15f-2fa49b91e5a8';
 
-export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
+export const transformKeyContactsFromAPI = (
+  keyContacts: KeyContacts[],
+  memoizedStatus: SelectOption[]
+) => {
   const formData = {} as any;
+
+  // ID → Label
+  const getStatusLabelById = (id: string): string => {
+    return memoizedStatus.find((option) => option.value === id)?.desc || '';
+  };
 
   keyContacts.forEach((contact: any, index: number) => {
     formData[`key_contact_name_${index}`] = contact.key_contact_name || '';
@@ -31,7 +37,7 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`include_in_communication_${index}`] =
       contact.include_in_communication ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
-      contact.status?.toLowerCase() || 'active';
+      getStatusLabelById(contact.status) || 'active';
   });
   return formData;
 };
@@ -39,9 +45,20 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
 export const keyContactsTransformPayload = (
   formData: Partial<Record<string, any>>,
   isEdit: boolean = false,
-  keyContactsList: KeyContacts[] = []
+  keyContactsList: KeyContacts[] = [],
+  memoizedStatus: SelectOption[],
+  defaultActiveValue: string
 ): KeyContacts[] => {
   const keyContacts: KeyContacts[] = [];
+
+  // Label → ID
+  const getStatusIdByLabel = (label: string): string => {
+    return (
+      memoizedStatus.find(
+        (option) => option?.desc?.toLowerCase() === label.toLowerCase()
+      )?.value || ''
+    );
+  };
 
   const indices = Array.from(
     new Set(
@@ -72,9 +89,9 @@ export const keyContactsTransformPayload = (
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
           formData[`include_in_communication_${index}`] === 'yes',
-        status: formData[`key_contact_status_${index}`]
-          ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
-          : ('Active' as Status),
+        status:
+          getStatusIdByLabel(formData[`key_contact_status_${index}`]) ||
+          defaultActiveValue,
         action_type:
           isEdit && rid ? KeyContactsUpdate.Edit : KeyContactsUpdate.Add,
         ...(isEdit && rid && { rid }),
@@ -106,6 +123,8 @@ export const keyContactsTransformPayload = (
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
+  memoizedStatus: SelectOption[],
+  defaultActiveValue: string,
   account_rid?: string,
   keyContactsList?: KeyContacts[],
   logoAction?: 'update' | 'delete' | ''
@@ -144,7 +163,13 @@ export const transformFormData = (
     data_storage: formData.data_storage,
     business_details: formData.business_details,
     key_contacts:
-      keyContactsTransformPayload(formData, isEdit, keyContactsList) || [],
+      keyContactsTransformPayload(
+        formData,
+        isEdit,
+        keyContactsList,
+        memoizedStatus,
+        defaultActiveValue
+      ) || [],
     organisation_name: formData.organisation_name,
   };
   if (isEdit) {

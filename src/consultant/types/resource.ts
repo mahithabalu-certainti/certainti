@@ -19,7 +19,7 @@ export type ResourceList = {
   resource_ref_id: string;
   resource_fullname: string;
   resource_type: string;
-  resource_status: string;
+  status_name: string;
 };
 
 export type ResourcesData = {

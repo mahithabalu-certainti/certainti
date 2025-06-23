@@ -116,7 +116,7 @@ export function transformPayloadforUpdateResource(
     last_name: rawData.resource_lastname || '',
     org_name: rawData.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
-    status_rid: rawData.resource_status || existingResource?.resource_status,
+    status_rid: rawData.resource_status || existingResource?.status_rid,
     country_rid: rawData.country || existingResource?.country || '',
     region_rid: rawData.state || existingResource?.state || '',
     city_rid: rawData.city || existingResource?.city || '',

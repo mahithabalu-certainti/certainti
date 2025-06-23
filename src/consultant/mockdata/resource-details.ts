@@ -21,7 +21,6 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       resource_startdate: '2025-04-09T18:30:00.000Z',
       resource_enddate: '2025-04-10T18:30:00.000Z',
       designation: 'Senior Developer',
-      resource_status: 'Active',
       created_datetime: '2025-04-10T07:08:11.091Z',
       modified_datetime: '2025-04-10T07:08:11.092Z',
       created_by: 'f15143ee-4796-4abd-a984-fa559a624f18',
@@ -42,6 +41,11 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       resource_total_experience: 0,
       resource_total_experience_organization: 0,
       comments: '',
+      status_rid: '',
+      resource_type_rid: '',
+      status: {
+        status_name: '',
+      },
     },
   },
 };

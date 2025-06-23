@@ -168,7 +168,7 @@ const ResourceForm: React.FC = () => {
       resource?.data?.resourceDetails || state?.resource;
     const finalResourceDetails = {
       ...resourceDetailsData,
-      status_rid: resourceDetailsData?.status_rid,
+      resource_status: resourceDetailsData?.status_rid,
       resource_type: resourceDetailsData?.resource_type_rid,
       country: resourceDetailsData?.resource_country,
       state: resourceDetailsData?.resource_region,

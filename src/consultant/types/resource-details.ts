@@ -28,7 +28,9 @@ export interface ResourceDetailsTypes {
   designation: string;
   resource_total_experience: number;
   resource_total_experience_organization: number;
-  resource_status: string;
+  status: {
+    status_name: string;
+  };
   created_datetime: string; // ISO date string
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format

@@ -17,7 +17,7 @@ export type ResourceCostList = {
   resource_code?: string;
   id?: string;
   rid?: string;
-  status?: string;
+  status_name?: string;
   created_datetime?: string;
   modified_datetime?: string;
   resource_fullname?: string;

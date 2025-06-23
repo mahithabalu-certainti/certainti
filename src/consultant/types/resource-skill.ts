@@ -30,7 +30,8 @@ export type ResourceSkillList = {
   skill_rid: string;
   start_date: string;
   skill_description?: string;
-  skill_level: skillLevel;
+  skill_level_name: string;
+  skill_level_rid: string;
   fiscal_year: string;
   years_of_experience: string;
   resource_ref_id: string;

@@ -3,7 +3,9 @@ export interface AccountData {
     rid: string;
     r_number: string;
     account_name: string;
-    status: string;
+    status: {
+      status_name: string;
+    };
     is_parent: boolean;
     country: {
       country_name: string;
@@ -15,9 +17,7 @@ export interface AccountData {
     parent_account: {
       account_name: string;
     };
-    industry: {
-      industry_name: string;
-    };
+    industry_rid_name: string;
     primary_contact_name: string;
     parent_account_name: string;
   };
@@ -31,7 +31,9 @@ export interface ResourceData {
       resource_role: string;
       resource_designation: string;
       resource_orgname: string;
-      resource_status: string;
+      status: {
+        status_name: string;
+      };
     };
   };
 }
@@ -99,7 +101,7 @@ const getValueOrDefault = (
 
 export const transformAccountData = (data: AccountData): DisplayColumn[] => {
   const account = data?.accountById;
-  const status = account?.status?.toLowerCase();
+  const status = account?.status?.status_name?.toLowerCase();
 
   return [
     {
@@ -139,7 +141,7 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
       items: [
         {
           label: 'Industry',
-          value: getValueOrDefault(account?.industry?.industry_name),
+          value: getValueOrDefault(account?.industry_rid_name),
         },
       ],
     },
@@ -149,7 +151,7 @@ export const transformResourceData = (
   resource: ResourceData
 ): DisplayColumn[] => {
   const resourceData = resource?.data?.resourceDetails;
-  const status = resourceData?.resource_status;
+  const status = resourceData?.status?.status_name;
   return [
     {
       items: [

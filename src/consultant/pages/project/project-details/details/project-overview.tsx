@@ -178,7 +178,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       label: 'Industry',
       value: projectDetails?.industry_name || projectDetails?.industry_rid_name,
     },
-    { label: 'Status', value: projectDetails?.project_status },
+    { label: 'Status', value: projectDetails?.status?.status_name },
   ];
 
   const locationInfo: DetailItem[] = [

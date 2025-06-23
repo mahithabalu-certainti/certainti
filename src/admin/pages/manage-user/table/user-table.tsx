@@ -50,18 +50,13 @@ export const UserTable: React.FC<IUserTableProps> = ({
     if (!data) return [];
 
     return data.map((item) => {
-      // Convert status to match the expected type
-      const originalStatus = item.status?.toLowerCase();
-      const convertedStatus =
-        originalStatus === 'active' ? 'Active' : 'Inactive';
-
       return {
         id: item.rid,
         username: item.first_name,
         fullName: item.full_name,
         email: item.email,
         profile: item.profile.profile_name,
-        status: convertedStatus,
+        status: item.status?.status_name,
         role: item.business_teams.business_teams,
         created_datetime: item.created_datetime,
         modified_datetime: item.modified_datetime,

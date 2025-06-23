@@ -23,6 +23,7 @@ export const mockUserDetails: ManageUserDetailApiResponse = {
       role_rid: '2d219324-a763-45e3-83ed-53d5b40b890f',
       profile_rid: '1a94f781-e3ef-41e9-874f-1742c2e86d91',
       status: 'active',
+      status_rid: '1a94f781-e3ef-41e9-874f-1742c2gfgfgd91',
       created_by: 'Admin',
       modified_by: 'Admin',
       created_datetime: '2025-04-08T12:42:50.970Z',

@@ -130,7 +130,9 @@ export interface NewProjectData {
   client_group?: string | null;
   account_rid?: string;
   description?: string | null;
-  status?: string;
+  status?: {
+    status_name: string;
+  };
   currency_name?: string;
   currency_symbol?: string;
   region_name?: string;

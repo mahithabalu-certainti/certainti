@@ -27,6 +27,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
     },
     accountDetails: {
       rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
+      status_rid: '9dcfda7e-32a7-490a-aa18-e6e6f8fdfdbce9',
       modified_by: 'user123',
       created_by: 'admin456',
       max_ai_interactions: 3,

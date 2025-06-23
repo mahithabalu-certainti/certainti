@@ -120,12 +120,45 @@ export const AccountForm: React.FC = () => {
         return '';
     }
   };
+
   useEffect(() => {
     if (logoUrl && logoName) {
       const fileType = getMimeTypeFromExtension(logoName);
       setLogo({ name: logoName, type: fileType } as File);
     }
   }, [account, logoName]);
+
+  const statusOptions = useGetStatus();
+  const allCountries = useGetAllCountries();
+  const industry = useFetchIndustrys();
+  const keyContactRoles = useKeyContactRoles('Account');
+  const parentAccount = useFetchParentAccounts();
+  const currency = useFetchCurrency();
+  const states = useFetchState(currentCountry);
+  const createAccount = useCreateAccount();
+  const updateAccount = useUpdateAccount();
+
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+
+  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
+
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+        desc: status.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const defaultActiveValue = useMemo(() => {
+    const activeOption = memoizedStatus.find(
+      (option) => option.label.toLowerCase() === 'active'
+    );
+    return activeOption?.value || '';
+  }, [memoizedStatus]);
+
   // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
@@ -139,7 +172,8 @@ export const AccountForm: React.FC = () => {
             : 'no',
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
           ...transformKeyContactsFromAPI(
-            account?.accountDetails?.keyContacts || []
+            account?.accountDetails?.keyContacts || [],
+            memoizedStatus
           ),
           status: account?.accountDetails?.status_rid,
           record_id: account?.accountDetails?.rid,
@@ -157,22 +191,8 @@ export const AccountForm: React.FC = () => {
           website: account?.accountDetails?.website || '',
         }),
     }),
-    [account]
+    [account, memoizedStatus]
   );
-
-  const statusOptions = useGetStatus();
-  const allCountries = useGetAllCountries();
-  const industry = useFetchIndustrys();
-  const keyContactRoles = useKeyContactRoles('Account');
-  const parentAccount = useFetchParentAccounts();
-  const currency = useFetchCurrency();
-  const states = useFetchState(currentCountry);
-  const createAccount = useCreateAccount();
-  const updateAccount = useUpdateAccount();
-
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
-  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
 
   useEffect(() => {
     if (commonSuccess) {
@@ -194,22 +214,6 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
-
-  const memoizedStatus: SelectOption[] = useMemo(
-    () =>
-      statusOptions?.data?.data?.status.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-      })) || [],
-    [statusOptions?.data?.data?.status]
-  );
-
-  const defaultActiveValue = useMemo(() => {
-    const activeOption = memoizedStatus.find(
-      (option) => option.label.toLowerCase() === 'active'
-    );
-    return activeOption?.value || '';
-  }, [memoizedStatus]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -288,10 +292,15 @@ export const AccountForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-    setIsKeyContactsReady(!getAccount.isPending && !keyContactRoles.isPending);
+    setIsKeyContactsReady(
+      !getAccount.isPending &&
+        !keyContactRoles.isPending &&
+        !statusOptions.isPending
+    );
   }, [
     getAccount.isPending,
     keyContactRoles.isPending,
+    statusOptions.isPending,
     memoizedRole,
     account?.accountDetails?.keyContacts,
     isEditView,
@@ -332,6 +341,8 @@ export const AccountForm: React.FC = () => {
     const transformData = transformFormData(
       formValues,
       isEditView,
+      memoizedStatus,
+      defaultActiveValue,
       accountData?.rid,
       account?.accountDetails?.keyContacts,
       logoAction

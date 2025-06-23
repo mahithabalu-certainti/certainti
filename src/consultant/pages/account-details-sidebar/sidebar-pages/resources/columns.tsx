@@ -111,18 +111,18 @@ export const getResourceColumns = (
     },
   },
   {
-    id: 'resource_status',
-    sortId: 'resource_status',
+    id: 'status_name',
+    sortId: 'status_name',
     label: 'Status',
     width: 150,
     sortable: true,
     render: (row: ResourceList) => (
       <span
         className={`${
-          row.resource_status === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
+          row.status_name === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
         }`}
       >
-        {row.resource_status === 'Active' ? 'Active' : 'In-Active'}
+        {row.status_name || '-'}
       </span>
     ),
   },
