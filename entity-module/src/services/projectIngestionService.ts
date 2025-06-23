@@ -65,10 +65,12 @@ class ProjectIngestionService {
   }
 
   private async getModels(accountNumber: string) {
+    this.logger.info(`Before account number transfer | ${accountNumber}`)
     const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
-    if (this.modelCache.has(schemaName)) {
-      return this.modelCache.get(schemaName)!;
-    }
+    this.logger.info(`After account number transferr | ${schemaName}`);
+    // if (this.modelCache.has(schemaName)) {
+    //   return this.modelCache.get(schemaName)!;
+    // }
 
     const sequelize = await this.getSequelize();
     const mainDbSequelize = await this.getMainSequelize();
