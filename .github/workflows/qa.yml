@@ -10,7 +10,7 @@ on:
       - entity-module/**
 
 env:
-  ENVIRONMENT: QA
+  ENVIRONMENT: qa
 
 jobs:
   # JOB to run change detection
