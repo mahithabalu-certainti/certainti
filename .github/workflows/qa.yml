@@ -66,7 +66,7 @@ jobs:
           echo "VITE_POST_LOGOUT_REDIRECT_URL=https://thinkrd365-qa.certainti.ai/login" >> $ENV_FILE
           echo "VITE_PASSWORD_CHANGE_REDIRECT_URL=https://thinkrd365-qa.certainti.ai" >> $ENV_FILE
           echo "$ENV_FILE file created successfully!"
-
+          
           echo "STATIC_WEB_APP_API_KEY=$STATIC_WEB_APP_API_KEY" >> $GITHUB_ENV
       - name: Install dependencies
         run: npm ci
@@ -76,8 +76,8 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ env.STATIC_WEB_APP_API_KEY }}
-          action: 'upload'
-          app_location: '/'
-          api_location: ''
-          output_location: 'dist'
-          app_build_command: 'npm run build:${{ env.ENVIRONMENT }}'
+          action: "upload"
+          app_location: "/"
+          api_location: ""
+          output_location: "dist"
+          app_build_command: "npm run build:${{ env.ENVIRONMENT }}"
