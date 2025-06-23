@@ -73,41 +73,65 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   };
 
   return (
-    <div className='w-full h-full bg-white border-r border-[#CBD6E2] py-2'>
+    <div
+      className='w-full h-full bg-white border-r border-[#CBD6E2] py-2 overflow-hidden'
+      style={{
+        transition: 'width 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionDuration: isCollapsed ? '300ms' : '500ms',
+      }}
+    >
       {/* Header */}
       <div
-        className={`relative h-[30px] flex items-center ${isCollapsed ? 'justify-end' : 'justify-between'} gap-1.5 mb-1`}
+        className={`flex items-center h-[30px] mb-1  ${
+          isCollapsed ? 'justify-center' : ''
+        } ${isCollapsed ? 'px-3 ml-4' : 'px-7 pr-3'}`}
       >
-        <div className={`relative h-[20px] w-full`}>
-          {/* Full header title */}
-          <span
-            className={`absolute left-0 -top-0.5 text-[15px] text-[#2D3E4F] font-bold transition-opacity duration-300 ${
-              isCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible pl-6.5'
-            }`}
-          >
-            {headerTitle}
-          </span>
-
-          {/* Short name */}
-          <span
-            className={`absolute -right-1 -top-0.5 text-[15px] text-[#2D3E4F] font-bold transition-opacity duration-300 ${
-              isCollapsed ? 'opacity-100 visible' : 'opacity-0 invisible'
-            }`}
-          >
-            {getShortName(headerTitle)}
-          </span>
-        </div>
-
-        {showBackIcon && (
-          <div
-            className={`w-[18px] h-[18px] cursor-pointer transform transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-            onClick={onToggleCollapse}
-          >
-            <BackIcon alt='Back' className='w-[18px] h-[18px]' />
+        <div
+          className={`flex items-center ${
+            !isCollapsed ? 'justify-between w-full' : 'gap-0'
+          }`}
+        >
+          <div className='flex items-center'>
+            <span
+              className='text-[15px] text-[#2D3E4F] font-bold whitespace-nowrap'
+              style={{
+                opacity: isCollapsed ? 0 : 1,
+                transform: isCollapsed ? 'translateX(-10px)' : 'translateX(0)',
+                transition:
+                  'opacity 300ms ease-in-out, transform 300ms ease-in-out, max-width 400ms ease-in-out',
+                transitionDelay: isCollapsed ? '0ms' : '100ms',
+                maxWidth: isCollapsed ? 0 : '150px',
+                overflow: 'hidden',
+              }}
+            >
+              {headerTitle}
+            </span>
+            <span
+              className='text-[15px] text-[#2D3E4F] font-bold whitespace-nowrap'
+              style={{
+                marginLeft: isCollapsed ? '5px' : '0',
+                opacity: isCollapsed ? 1 : 0,
+                maxWidth: isCollapsed ? '150px' : 0,
+                overflow: 'hidden',
+              }}
+            >
+              {getShortName(headerTitle)}
+            </span>
           </div>
-        )}
+          {showBackIcon && (
+            <div
+              className='w-[18px] h-[18px] cursor-pointer flex-shrink-0'
+              style={{
+                transform: `rotate(${isCollapsed ? 180 : 0}deg)`,
+                transition: 'transform 300ms ease-in-out',
+              }}
+              onClick={onToggleCollapse}
+            >
+              <BackIcon alt='Back' className='w-[18px] h-[18px]' />
+            </div>
+          )}
+        </div>
       </div>
-
       {/* List */}
       <ul className='space-y-2'>
         {accountMenus.map((item) => {
@@ -121,7 +145,12 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   activeKey === item.key ? 'bg-[#0BBFB726] !font-bold' : ''
                 } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left hover:bg-[#0BBFB726] ${
                   item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                } ${isCollapsed ? 'px-2 py-1.5 justify-center' : 'pl-6 py-1.5 pr-3 justify-start'}`}
+                } ${isCollapsed ? 'pl-[19px] py-1.5' : 'pl-6 py-1.5 pr-3'} justify-start`}
+                style={{
+                  transition: `background-color 0.3s ease-in-out, padding-left ${
+                    isCollapsed ? '300ms' : '500ms'
+                  } ease-in-out`,
+                }}
               >
                 <Tooltip
                   title={isCollapsed ? item.name : ''}
@@ -130,7 +159,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   disableHoverListener={!isCollapsed}
                 >
                   <span
-                    className={`flex items-center justify-center ${isCollapsed ? 'pl-1.5' : ''} w-[22px] h-[22px]`}
+                    className={`flex items-center justify-center w-[22px] h-[22px] flex-shrink-0`}
                   >
                     {item.icon ? (
                       <span className='flex items-center justify-center w-4 h-4'>
@@ -143,11 +172,25 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                     )}
                   </span>
                 </Tooltip>
-                {/* Show text only in expanded view */}
+                {/* Show text only in expanded view - Same transition as Sidebar */}
                 <span
-                  className={`truncate transition-opacity duration-300 ${
-                    isCollapsed ? 'opacity-0 w-0' : 'flex-1 opacity-100 w-auto'
-                  }`}
+                  className={`truncate flex-1`}
+                  style={{
+                    opacity: isCollapsed ? 0 : 1,
+                    maxWidth: isCollapsed ? 0 : '100%',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    transform: isCollapsed
+                      ? 'translateX(-10px)'
+                      : 'translateX(0)',
+                    transition: `opacity ${
+                      isCollapsed ? '200ms' : '400ms'
+                    } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${
+                      isCollapsed ? '200ms' : '400ms'
+                    } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${
+                      isCollapsed ? '300ms' : '500ms'
+                    } ease-in-out`,
+                  }}
                 >
                   {item.name}
                 </span>
@@ -155,11 +198,16 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 {!isCollapsed && (
                   <AdminSubmenuActiveIcon
                     alt='active'
-                    className={`w-[12px] h-[12px] transition-opacity duration-150 ${
+                    className={`w-[12px] h-[12px] flex-shrink-0 ${
                       activeKey === item.key
                         ? 'opacity-100'
                         : 'opacity-0 group-hover:opacity-100'
                     }`}
+                    style={{
+                      transition: `opacity ${
+                        isCollapsed ? '250ms ease-in-out' : '400ms ease-in-out'
+                      }`,
+                    }}
                   />
                 )}
               </button>

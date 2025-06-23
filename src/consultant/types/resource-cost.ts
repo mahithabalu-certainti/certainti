@@ -118,6 +118,7 @@ export type ResourceCostSkillFormData = {
   comments?: string;
   skill_type_others?: string;
   skill_subtype_others?: string;
+  user_preference?: string;
 };
 
 export type ResourceCostPayload = {
@@ -142,6 +143,7 @@ export type ResourceCostPayload = {
   accountNumber?: string;
   status?: string;
   comments?: string;
+  user_preference?: string;
 };
 
 export type ResourceStatusPayload = {

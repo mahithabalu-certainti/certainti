@@ -42,6 +42,7 @@ import {
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import ConfirmationPopup from '../../../common-utils/confirmation-popup.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -90,6 +91,11 @@ const ResourceForm: React.FC = () => {
     deductions: '',
   });
   const [autoCalculatedValue, setAutoCalculatedValue] = useState<number>(0);
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -334,7 +340,6 @@ const ResourceForm: React.FC = () => {
     }
   }, [skillTypeId, skillSubTypeId]);
 
-  // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
   const states = useFetchState(currentCountry.country);
@@ -351,10 +356,10 @@ const ResourceForm: React.FC = () => {
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill();
   const updateResourceSkill = useUpdateResourceSkill();
-
+  const [costResourceForceSuccess, setCostResourceForceSuccess] =
+    useState(false);
   const costSkillSuccess =
-    createResourceCost.isSuccess ||
-    updateResourceCost.isSuccess ||
+    costResourceForceSuccess ||
     createResourceSkill.isSuccess ||
     updateResourceSkill.isSuccess;
   const commonSuccess =
@@ -458,12 +463,77 @@ const ResourceForm: React.FC = () => {
         resource_number: resource?.data.resourceDetails.r_number,
         cost_rid: state?.costInfo?.costRid,
         resource_code: resource?.data.resourceDetails.resource_code,
+        user_preference: confirmationState.message ? 'accept' : '',
       };
       const costData = transformCostData(updateFormValues, isEditView);
       if (isEditView) {
-        updateResourceCost.mutate(costData);
+        updateResourceCost.mutate(costData, {
+          onSuccess: (response) => {
+            if (response?.statusCode === 210) {
+              setConfirmationState({
+                isOpen: true,
+                message:
+                  response.statusMessage ||
+                  'Compensation details already exists for the resource',
+                onConfirm: () => {
+                  const updatedFormValues = {
+                    ...costData,
+                    user_preference: 'accept',
+                  };
+                  updateResourceCost.mutate(updatedFormValues, {
+                    onSuccess: () => {
+                      setCostResourceForceSuccess(true);
+                    },
+                  });
+                  setConfirmationState((prev) => ({
+                    ...prev,
+                    isOpen: false,
+                    message: '',
+                  }));
+                },
+              });
+            } else if (response?.statusCode === 200) {
+              setCostResourceForceSuccess(true);
+            }
+          },
+          onError: (error) => {
+            console.error('Update failed:', error);
+          },
+        });
       } else {
-        createResourceCost.mutate(costData);
+        createResourceCost.mutate(costData, {
+          onSuccess: (response) => {
+            if (response?.statusCode === 210) {
+              setConfirmationState({
+                isOpen: true,
+                message:
+                  response.statusMessage ||
+                  'Compensation details already exists for the resource',
+                onConfirm: () => {
+                  const updatedFormValues = {
+                    ...costData,
+                    user_preference: 'accept',
+                  };
+                  createResourceCost.mutate(updatedFormValues, {
+                    onSuccess: () => {
+                      setCostResourceForceSuccess(true);
+                    },
+                  });
+                  setConfirmationState((prev) => ({
+                    ...prev,
+                    isOpen: false,
+                    message: '',
+                  }));
+                },
+              });
+            } else if (response?.statusCode === 200) {
+              setCostResourceForceSuccess(true);
+            }
+          },
+          onError: (error) => {
+            console.error('Update failed:', error);
+          },
+        });
       }
     }
     if (state?.skill) {
@@ -650,9 +720,6 @@ const ResourceForm: React.FC = () => {
             <CreateResourceIcon alt='menu-icon' className='h-6 w-6 rounded' />
           )}
           <div>
-            {/* {isEditView && !state?.skill && !state?.cost && (
-              <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
-            )} */}
             <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
                 ? `Account > ${accountData?.account_name}`
@@ -732,12 +799,6 @@ const ResourceForm: React.FC = () => {
                   >)
                 : undefined
           }
-          // values={
-          //   resource.data?.data?.resource as unknown as Record<
-          //     string,
-          //     string | number | boolean | string[] | null
-          //   >
-          // }
           outData={handleSubmit}
           formRef={formRef}
           onChange={onChangeField}
@@ -746,6 +807,25 @@ const ResourceForm: React.FC = () => {
           keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
         />
       </div>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </div>
   );
 };

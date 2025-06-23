@@ -910,6 +910,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       // or just the filename for display
       if (e.target.files && e.target.files.length > 0) {
         const file = e.target.files[0];
+        setFormData((prevFormData) => {
+          return prevFormData?.map((section) => ({
+            ...section,
+            fields: section.fields.map((f) => {
+              const updatedField = { ...f };
+
+              // clear error message when change field
+              if (f.name === field.name) {
+                updatedField.error = '';
+              }
+
+              return updatedField;
+            }),
+          }));
+        });
         if (field.onChange && onChange) {
           onChange({ fieldName: field.name, fieldValue: file }); // Update local state for display
         }

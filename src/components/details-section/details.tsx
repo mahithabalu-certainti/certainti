@@ -130,8 +130,14 @@ const DetailsSection: React.FC<{
                             <TruncateWithTooltip
                               text={String(item.value)}
                               maxWidth={'100%'}
-                              className='truncate max-w-full'
-                              alwaysShowTooltip={item.value ? true : false}
+                              className='truncate inline-block max-w-full'
+                              alwaysShowTooltip={
+                                item.value &&
+                                item.value !== 'empty' &&
+                                item.value !== '-'
+                                  ? true
+                                  : false
+                              }
                             >
                               {renderValue(item.value, item.label)}
                             </TruncateWithTooltip>
