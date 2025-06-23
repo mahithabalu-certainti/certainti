@@ -66,19 +66,33 @@ export async function initSequelize() {
     if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
       throw new Error("One or more required database secrets are missing.");
     }
-     sequelize = new Sequelize("postgres", "postgres", "postgres", {
-  host: "localhost",
-  port: 5432,
-  dialect: 'postgres',
-  logging: console.log,
-  dialectOptions: { ssl: false },
-});
     
+    sequelize = new Sequelize(
+      DB_NAME,
+      DB_USER,
+      DB_PASSWORD,
+      {
+        host: DB_HOST,
+        dialect: "postgres",
+        port: 5432,
+        logging: env !== "production",
+        define: {
+          freezeTableName: true,
+          timestamps: false,
+        },
+        dialectOptions: {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        },
+      },
+    );
     await sequelize.authenticate();
     console.log("Database connection established successfully.");
     return sequelize;
   } catch (error) {
-    console.error("Unable to connect to the database main:", error);
+    console.error("Unable to connect to the database:", error);
     process.exit(1);
   }
 }
