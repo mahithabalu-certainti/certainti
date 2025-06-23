@@ -42,8 +42,12 @@ export class KeyContactService {
       const keyContactIds = [
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
+      const statusIds = [
+        ...new Set(keyContacts.map((r: any) => r.status_id)),
+      ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let statusMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
@@ -58,10 +62,24 @@ export class KeyContactService {
           keyContactRows.map((c: any) => [c.rid, c.role_name])
         );
       }
+      if (statusIds.length > 0) {
+        const statusRows = await mainDbSequlize.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          statusRows.map((s: any) => [s.rid, s.status_name])
+        );
+      }
 
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
+        status_name: statusMap[kc.status_id] || null,
       }));
 
       const technicalContact = enrichedKeyContacts.find(

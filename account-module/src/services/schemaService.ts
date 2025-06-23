@@ -188,14 +188,14 @@ class SchemaService {
       project_startdate TIMESTAMP,
       project_enddate TIMESTAMP,
 
-      project_type VARCHAR(20) NOT NULL CHECK (project_type IN ('Fixed', 'Time & Material')),
+      project_type_rid VARCHAR(50) NOT NULL,
       project_classification_rid VARCHAR(50),
       project_classification_other VARCHAR(300),
 
       project_client_group VARCHAR(255),
       project_group VARCHAR(255),
 
-      project_status VARCHAR(10) NOT NULL CHECK (project_status IN ('Active', 'Inactive')),
+      status_id VARCHAR(50) NOT NULL,
 
       country_rid VARCHAR(50),
       region_rid VARCHAR(50),
@@ -275,7 +275,7 @@ class SchemaService {
       fiscal_year INTEGER NOT NULL,
       project_name VARCHAR(200),
       program_name TEXT,
-      project_type VARCHAR(20) NOT NULL CHECK (project_type IN ('Fixed', 'Time & Material')),
+      project_type_rid VARCHAR(50) NOT NULL,
       project_classification_rid VARCHAR(50),
       project_classification_other TEXT,
       project_client_group TEXT,
@@ -288,7 +288,7 @@ class SchemaService {
       max_ai_interaction INTEGER NOT NULL,
       expiry_duration INTEGER,
       auto_access_rd BOOLEAN,
-      project_status TEXT NOT NULL,
+      status_id VARCHAR(50) NOT NULL,
       project_startdate TIMESTAMP,
       project_enddate TIMESTAMP,
 
@@ -421,7 +421,7 @@ class SchemaService {
         resource_role VARCHAR(100),
         total_hours_pro_res DOUBLE PRECISION,
         total_cost_pro_res NUMERIC(18, 2),
-        status VARCHAR(30),
+        status_id VARCHAR(30),
         account_rid varchar(50),
         currency_rid varchar(50),
         description TEXT,
@@ -681,7 +681,7 @@ class SchemaService {
       modified_datetime timestamp with time zone  NULL,
       account_rid varchar(50) NOT NULL,
       resource_code character varying(50) NOT NULL,
-      resource_type VARCHAR(50) CHECK (resource_type IN ('Full-Time','Sub Con','Non-Labor')),
+      resource_type_rid VARCHAR(50),
       resource_name character varying(200),
       resource_firstname character varying(100),
       resource_lastname character varying(100),
@@ -695,7 +695,7 @@ class SchemaService {
       resource_designation character varying(100),
       resource_total_experience numeric(4,2),
       resource_total_experience_organization numeric(4,2),
-      resource_status VARCHAR(50) CHECK (resource_status IN ('Active','Inactive')),
+      status_id VARCHAR(50),
       comments text,
       CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
      `);
@@ -815,7 +815,7 @@ class SchemaService {
 	       created_datetime timestamp with time zone,
          modified_datetime timestamp with time zone,
          account_rid varchar(50) NOT NULL,
-         resource_type character varying(255) NOT NULL,
+         resource_type_rid character varying(50) NOT NULL,
          resource_rid varchar(50),
          resource_code character varying(255) NOT NULL,
          resource_number character varying(255) NOT NULL,
@@ -824,7 +824,7 @@ class SchemaService {
          end_date date,
          effort_in_hrs numeric(18,2),
          currency_rid varchar(50),
-         status varchar(255) DEFAULT 'active'::character varying,
+         status_id varchar(50),
          comments text,
          deductions numeric(18,2),
          insurance numeric(18,2),
@@ -912,16 +912,16 @@ class SchemaService {
     created_datetime timestamptz,
     modified_datetime timestamptz,
     account_rid varchar(50) NOT NULL,
-    resource_type varchar(255) NOT NULL,
+    resource_type_rid varchar(50) NOT NULL,
     resource_rid varchar(50) NOT NULL,
     resource_number varchar(255) NOT NULL,
     start_date DATE,
     skill_description varchar(255),
-    skill_level varchar(255) DEFAULT 'Beginner',
+    skill_level_rid varchar(50),
     skill_type_others varchar(255),
     skill_subtype_others varchar(255),
     resource_code varchar(255) NOT NULL,
-    status varchar(255) DEFAULT 'active',
+    status_id varchar(50),
     skill_type_rid varchar(255) NOT NULL,
     skill_subtype_rid varchar(255) NOT NULL,
     skill_details text,
@@ -1279,8 +1279,12 @@ class SchemaService {
       const keyContactIds = [
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
+      const statusIds = [
+        ...new Set(keyContacts.map((r: any) => r.status_id)),
+      ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let statusMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainSequelize.query(
@@ -1295,10 +1299,24 @@ class SchemaService {
           keyContactRows.map((c: any) => [c.rid, c.role_name])
         );
       }
+      if (statusIds.length > 0) {
+        const statusRows = await mainSequelize.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          statusRows.map((s: any) => [s.rid, s.status_name])
+        );
+      }
 
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
+        status_name: statusMap[kc.status_id] || null,
       }));
 
       return enrichedKeyContacts;

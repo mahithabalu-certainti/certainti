@@ -1557,7 +1557,7 @@ class ProjectIngestionService {
       "classification_name",
       "industry_name",
       "name",
-      "project_type",
+      "project_type_rid"
     ];
 
     const enumFields = [
@@ -1565,7 +1565,7 @@ class ProjectIngestionService {
       "currency_rid",
       "region_rid",
       "classification_name",
-      "project_type",
+      "project_type_rid",
     ];
 
     const hasValidFilters = filterableClientFields.some((key) => {

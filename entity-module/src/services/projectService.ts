@@ -1371,8 +1371,6 @@ export class ProjectService {
   ): Record<string, any> {
     const castToTextFields = [
       "rid",
-      "project_type",
-      "status_id",
       "project_startdate",
       "project_enddate",
       "total_effort",
@@ -1399,7 +1397,7 @@ export class ProjectService {
       "project_enddate",
       "modified_datetime",
     ];
-    const enumFields = ["status_id", "project_type", "fiscal_year", "ProjectFiscal.project_type"];
+    const enumFields = ["status_id", "project_type_rid", "fiscal_year", "ProjectFiscal.project_type_rid"];
     const booleanFields = ["is_rd_qualified"];
 
     const filterFields = this.getFilterFields(isAllProject, isParent);
@@ -1671,6 +1669,7 @@ export class ProjectService {
       { clientField: "total_effort", dbField: "total_effort"},
       { clientField: "total_cost", dbField: "total_cost" },
       { clientField: "status_id", dbField: "status_id" },
+      { clientField: "project_type_rid", dbField: "project_type_rid" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "project_client_group", dbField: "project_client_group" },
