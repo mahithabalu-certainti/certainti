@@ -369,6 +369,7 @@ const AccordionTable = <T extends RowData>({
                       {columns.map((column, colIndex) => {
                         const isStatus = column.id === 'status';
                         const statusValue = row[column.id];
+                        const columnId = column.id;
                         const cellValue = column.render
                           ? column.render(row)
                           : row[column.id];
@@ -398,7 +399,20 @@ const AccordionTable = <T extends RowData>({
                                 : 'group-hover:!text-blue-600 group-hover:underline')
                             } cursor-context-menu`}
                           >
-                            <div className='inline-flex items-center'>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent:
+                                  columnId === 'total_effort' ||
+                                  columnId === 'total_cost' ||
+                                  columnId === 'total_cost_fte' ||
+                                  columnId === 'total_cost_subcon' ||
+                                  columnId === 'total_cost_nonlabor'
+                                    ? 'flex-end'
+                                    : 'flex-start',
+                              }}
+                            >
                               {colIndex === 0 &&
                                 (Array.isArray(row.ProjectFiscal) &&
                                 row.ProjectFiscal.length > 0 ? (
@@ -592,9 +606,12 @@ const AccordionTable = <T extends RowData>({
                               <TableCell
                                 key={`${rowId}-summary-${column.id}`}
                                 sx={{
-                                  width: column.width || 160,
-                                  minWidth: column.width || 160,
-                                  maxWidth: column.width || 160,
+                                  width:
+                                    `${(column.width as number) - 50}` || 160,
+                                  minWidth:
+                                    `${(column.width as number) - 50}` || 160,
+                                  maxWidth:
+                                    `${(column.width as number) - 50}` || 160,
                                   ...(column.sx || {}),
                                   zIndex: column.sticky ? 6 : 'auto',
                                   left: selectable ? '32px' : 0,
@@ -606,13 +623,7 @@ const AccordionTable = <T extends RowData>({
                                     : 'group-hover:!text-blue-600 group-hover:underline')
                                 } cursor-context-menu`}
                               >
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'start',
-                                  }}
-                                >
+                                <div style={{ display: 'inline-flex' }}>
                                   {colIndex === 0 && (
                                     <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] ml-[32px] mr-[5px] rounded-[4px]'>
                                       <ChildAccountIcon

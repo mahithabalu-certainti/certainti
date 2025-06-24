@@ -86,12 +86,11 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
     width: '200px',
     required: true,
   }),
-  // createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
-  //   radioOptions: YES_NO_OPTIONS,
-  //   width: '200px',
-  //   required: true,
-  //   defaultValue: YesNo.No,
-  // }),
+  createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
+    radioOptions: YES_NO_OPTIONS,
+    width: '200px',
+    required: true,
+  }),
   createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,
     width: '140px',
@@ -108,7 +107,7 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 8);
+  const groupIndex = Math.floor(index / 9);
   const { name, label, ...rest } = contacts;
   const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {

@@ -16,7 +16,7 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 export const RESOURCE_STATUS_COST: SelectOption[] = [
   { label: 'Active', value: 'Active' },
-  { label: 'Inactive', value: 'Inactive' },
+  { label: 'In-Active', value: 'In-Active' },
   { label: 'Anomaly', value: 'Anomaly' },
   { label: 'Duplicate', value: 'Duplicate' },
 ];
@@ -193,6 +193,7 @@ export const transformCostData = (
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,
     comments: formData.comments,
+    user_preference: formData.user_preference,
   };
 
   if (isEdit) {

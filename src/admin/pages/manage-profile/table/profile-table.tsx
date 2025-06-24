@@ -132,7 +132,11 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       columns={profileColumns}
       getRowId={getRowId}
       hoverHighlight={false}
-      tableStyle={{ overflowY: 'hidden' }}
+      tableStyle={{
+        height: '100%',
+        maxHeight: 'calc(100vh - 195px)',
+        overflow: 'auto',
+      }}
       stickyHeader={false}
       stickyColumnsCount={2}
       selectable={true}

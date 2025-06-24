@@ -285,6 +285,7 @@ export interface KeyContactProps {
   key_contact_email?: string;
   is_primary_contact?: boolean;
   include_in_communication?: boolean;
+  interaction_cc_recipient?: boolean;
   status?: string;
 }
 
