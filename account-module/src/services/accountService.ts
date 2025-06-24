@@ -258,7 +258,7 @@ private buildChildIncludes() {
     {
       model: Status,
       as: 'status',
-      attributes: ['status_name'], // ✅ correct: [field, alias]
+      attributes: ['status_name'],
       required: true,
   }
   ];
