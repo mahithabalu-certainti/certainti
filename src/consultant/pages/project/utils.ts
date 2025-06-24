@@ -8,7 +8,7 @@ interface DisplayColumn {
 }
 export const transformProjectData = (data: any): DisplayColumn[] => {
   const project = data?.project;
-  const status = project?.status?.status_name.toLowerCase();
+  const status = project?.status_name.toLowerCase();
   return [
     {
       items: [

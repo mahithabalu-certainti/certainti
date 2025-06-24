@@ -42,9 +42,7 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       comments: '',
       status_rid: '',
       resource_type_rid: '',
-      status: {
-        status_name: '',
-      },
+      status_name: '',
       resource_type_name: '',
     },
   },

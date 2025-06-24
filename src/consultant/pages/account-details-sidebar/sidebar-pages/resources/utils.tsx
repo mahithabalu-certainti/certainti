@@ -2,7 +2,6 @@
 // import { FieldConfig, FilterState } from "../../../components/filter/filterType";
 
 import {
-  enumValueOptions,
   FieldConfig,
   FilterState,
   fiscalYears,
@@ -134,8 +133,7 @@ export const getSkillFilterFields = (
       name: 'Skill Level',
       value: 'skill_level_rid',
       type: 'enum',
-      filterOptions: skillLevelsOptions,
-      options: enumValueOptions,
+      options: skillLevelsOptions,
     },
     {
       name: 'Skill Details',

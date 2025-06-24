@@ -32,9 +32,7 @@ export interface ResourceData {
       resource_role: string;
       resource_designation: string;
       resource_orgname: string;
-      status: {
-        status_name: string;
-      };
+      status_name: string;
     };
   };
 }
@@ -152,7 +150,7 @@ export const transformResourceData = (
   resource: ResourceData
 ): DisplayColumn[] => {
   const resourceData = resource?.data?.resourceDetails;
-  const status = resourceData?.status?.status_name;
+  const status = resourceData?.status_name;
   return [
     {
       items: [
