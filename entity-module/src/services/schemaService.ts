@@ -1308,13 +1308,11 @@ class SchemaService {
   }
 
   async sortGeoData(resources: any[], order: string[][] = []): Promise<any[]> {
-    console.log("sortGeoData",order)
-     console.log(order)
+
     // Apply sorting if specified
     if (order && order.length > 0) {
       const [sortField, sortDirection] = order[0];
       const isAsc = sortDirection.toUpperCase() === "ASC";
-      console.log("sort field",sortField)
       resources = resources.sort((a, b) => {
         let compareValueA, compareValueB;
 
