@@ -69,7 +69,6 @@ const ProjectForm: React.FC = () => {
   const breadcrumbs = location.state.breadcrumbs || [];
   const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
   // need to change this
@@ -222,6 +221,7 @@ const ProjectForm: React.FC = () => {
         ...formValues,
         account_id: accountID,
         project_id: projectID,
+        showOthersField,
       },
       isEditView,
       account?.keyContact

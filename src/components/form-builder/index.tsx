@@ -468,7 +468,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           } else if (isCCRecipient) {
             message =
               "'Interaction CC Recipient' must be 'No' when a contact is marked as 'Interaction Recipient'.";
-            // "This contact is already marked as 'Interaction CC Recipient'. A contact cannot be both Interaction Recipient and CC Recipient. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
             updatedData[ccRecipientField] = 'no';
           } else if (otherIncludeExists) {
             message =
@@ -745,7 +744,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           } else if (ccConflict) {
             combinedMessage =
               "'Interaction CC Recipient' must be 'No' when a contact is marked as 'Interaction Recipient'.";
-            // "This contact is already marked as both 'Interaction Recipient' and 'Interaction CC Recipient'. A contact cannot be both. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
           } else if (primaryConflict && commConflict) {
             combinedMessage =
               'A Primary Contact with the same role and an active Interaction Recipient already exists. Would you like to proceed?';

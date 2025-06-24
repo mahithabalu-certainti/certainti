@@ -115,6 +115,7 @@ export interface KeyContacts {
   role_name?: string;
 }
 export interface NewProjectData {
+  showOthersField?: boolean;
   account_id?: string;
   name?: string;
   r_number?: string;

@@ -317,7 +317,8 @@ export const AccountForm: React.FC = () => {
       isEditView,
       accountData?.rid,
       account?.accountDetails?.keyContacts,
-      logoAction
+      logoAction,
+      showOthersField
     );
     const formData = new FormData();
     formData.append('logo', logo as Blob);
