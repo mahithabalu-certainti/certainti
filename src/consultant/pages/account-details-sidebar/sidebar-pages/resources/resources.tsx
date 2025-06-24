@@ -210,11 +210,14 @@ const Resource: React.FC<ResourceProps> = ({
 
   useEffect(() => {
     if (searchParams.get('res_id') && ResourceList) {
-      const refId = searchParams.get('res_id') as string;
-      const resourceNumber = ResourceList?.resource?.find(
-        (resource: ResourceList) => resource.rid === refId
-      )?.r_number;
-      setResourceNumber(resourceNumber ?? '');
+      const resId = searchParams.get('res_id');
+      const currentResource = ResourceList?.resource?.find(
+        (resource: ResourceList) => resource.rid === resId
+      );
+      if (currentResource) {
+        setResourceData(currentResource);
+        setResourceNumber(currentResource.r_number ?? '');
+      }
     } else {
       setResourceNumber(null);
     }
@@ -372,7 +375,14 @@ const Resource: React.FC<ResourceProps> = ({
       RESOURCE +
         '/edit/' +
         resourceId +
-        `?account_id=${accountid}&acc_number=${accNumber}`
+        `?account_id=${accountid}&acc_number=${accNumber}`,
+      {
+        state: {
+          resource: resourceData,
+          accountDetails: accountDetails,
+          resources: true,
+        },
+      }
     );
   };
 

@@ -484,11 +484,15 @@ const Filter: React.FC<FilterComponentProps> = ({
     fieldState: FilterState
   ) => {
     const fieldValue = filterStates[filterFieldName]?.enum?.value;
-    const enabled = !!fieldValue && !!fieldValue[0]; // Only enable if skill type is selected
+    const enabled = !!fieldValue && !!fieldValue[0];
     return (
       <EnumFilterControl
         filterStates={filterStates}
-        menuOption={enumOptions}
+        menuOption={
+          field?.required
+            ? (field?.filterOptions ?? enumOptions)
+            : (field.operatorOption ?? enumOptions)
+        }
         valueOptions={field.options as { option: string; value: string }[]}
         fieldName={field.value}
         state={fieldState}

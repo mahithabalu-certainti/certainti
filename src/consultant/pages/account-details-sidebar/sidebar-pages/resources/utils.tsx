@@ -6,11 +6,7 @@ import {
   FilterState,
   fiscalYears,
 } from '../../components/filter/filterType';
-import {
-  effortNumberOptions,
-  fiscalOptions,
-  textOptions,
-} from '../projects/utils';
+import { effortNumberOptions, fiscalOptions } from '../projects/utils';
 
 const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -90,7 +86,8 @@ export const getCostFilterFields = (
     name: 'Cost ID',
     value: 'r_number',
     type: 'textCostAndSkill',
-    operatorOption: textOptions,
+    required: true,
+    filterOptions: requiredFieldFilterOptionsForText,
   },
   {
     name: 'Sort Options',
@@ -127,7 +124,7 @@ export const getSkillFilterFields = (
       required: true,
       options: skillSubTypeOptions,
       filterOptions: requiredFieldFilterOptionsForEnum,
-      dependsOn: 'skill_type_rid', // This indicates it depends on skill_type
+      dependsOn: 'skill_type_rid',
     },
     {
       name: 'Skill Level',
