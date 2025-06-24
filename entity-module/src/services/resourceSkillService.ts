@@ -338,7 +338,7 @@ class ResourceSkillService {
         skill_details,
         comments,
         modified_by,
-        status,
+        status_rid,
         accountNumber,
       } = resourceSkillData;
 
@@ -440,7 +440,7 @@ class ResourceSkillService {
             skill_subtype_others,
             comments,
             skill_details: skill_details || undefined,
-            status,
+            status_rid,
             modified_by: userId,
             modified_datetime: new Date(),
           },

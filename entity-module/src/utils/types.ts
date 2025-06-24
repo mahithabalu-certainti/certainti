@@ -75,7 +75,7 @@ export interface IResourceCost {
   comments?: string;
   created_by?: string | null;
   modified_by?: string | null;
-  status?: "Active" | "Inactive" | "Duplicate" | "Anomaly";
+  status_rid?: string; //"Active" | "Inactive" | "Duplicate" | "Anomaly";
   accountNumber: string;
   resource_number: string;
   user_preference?: string | null;
@@ -129,7 +129,7 @@ export interface IResourceSkill {
    skill_subtype_others: string;
    skill_details?: string;
    comments?: string;
-   status?: string;
+   status_rid?: string;
    created_by?: string | null;
    modified_by?: string | null;
    accountNumber: string;
@@ -142,7 +142,7 @@ export interface IUpdateResourceSkill {
   effective_from?: string | null;
   skill_description?: string;
   skill_level_rid?: string;
-  status?: string;
+  status_rid?: string;
   modified_by?: string | null;
   skill_type_rid: string;
   skill_subtype_rid: string;

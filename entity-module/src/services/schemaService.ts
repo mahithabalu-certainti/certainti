@@ -1327,7 +1327,7 @@ class SchemaService {
             compareValueA = a.region_name || null;
             compareValueB = b.region_name || null;
             break;
-          case "resource_type":
+          case "resource_type_rid":
             compareValueA = a.resource_type_name || null;
             compareValueB = b.resource_type_name || null;
             break;
@@ -2256,7 +2256,7 @@ class SchemaService {
       project_classification_rid: `${tablePrefix}.project_classification_rid`,
       project_classification_other: `${tablePrefix}.project_classification_other`,
       status_rid: `${tablePrefix}.status_rid`,
-      project_type: `pt.project_type_name`,
+      project_type_rid: `${tablePrefix}.project_type_rid`,
       project_name: `${tablePrefix}.project_name`,
       project_startdate: `${tablePrefix}.project_startdate`,
       project_enddate: `${tablePrefix}.project_enddate`,

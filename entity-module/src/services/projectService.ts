@@ -923,7 +923,7 @@ export class ProjectService {
               "Project Group": fiscal?.project_group || "-",
               "Project Code": fiscal.project_code || "-",
               "Project Name": fiscal.project_name || "-",
-              "Project Type": fiscal.project_type || "-",
+              "Project Type": fiscal.project_type_name || "-",
               "Account Name": fiscal.account_name || "-",
               "Fiscal Year": fiscal.fiscal_year || "-",
               "Project Classification": fiscal.classification_name || "-",
@@ -1295,6 +1295,7 @@ export class ProjectService {
       "project_point_of_contact",
       "classification_name",
       "industry_name",
+      "project_type_name",
       "project_type"
     ];
 
@@ -1401,7 +1402,7 @@ export class ProjectService {
       "project_enddate",
       "modified_datetime",
     ];
-    const enumFields = ["status_rid", "project_type", "fiscal_year", "ProjectFiscal.project_type"];
+    const enumFields = ["status_rid", "project_type_rid", "fiscal_year", "ProjectFiscal.project_type_rid"];
     const booleanFields = ["is_rd_qualified"];
 
     const filterFields = this.getFilterFields(isAllProject, isParent);

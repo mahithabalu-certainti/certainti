@@ -12,7 +12,7 @@ interface ResourceSkillAttributes  {
  resource_rid: string,
  resource_number: string,
  resource_code: string,
- status?: string, 
+ status_rid?: string, 
  skill_type_rid: string,
  skill_subtype_rid: string,
  skill_type_name?: string,
@@ -43,7 +43,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   resource_rid!: string;
   resource_number!: string;
   resource_code!: string;
-  status?: string;
+  status_rid?: string;
   skill_type_rid!: string;
   skill_subtype_rid!: string;
   skill_details?: string;
@@ -136,10 +136,9 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.STRING(255),
         allowNull: false,
        },
-       status: {
+       status_rid: {
         type: DataTypes.STRING(255),
-        allowNull: true,
-        defaultValue: "active",
+        allowNull: true
        },
        skill_type_rid: {
         type: DataTypes.STRING(255),

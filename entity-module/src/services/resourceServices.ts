@@ -417,7 +417,7 @@ export class ResourceService {
       "r_number",
       "resource_code",
       "resource_name",
-      "resource_type",
+      "resource_type_rid",
       "status_rid",
       "resource_role",
       // "resource_mobile",
@@ -696,24 +696,34 @@ export class ResourceService {
     }
   }
 
-processGeoDataSort(
-    sortBy: string, 
-    sortOrder: string
+ processGeoDataSort(
+  sortBy: string,
+  sortOrder: string
 ) {
-    const geoDataSort: string[][] = [];
-    const geoFields = ["country_rid", "region_rid", "city_rid","resource_type"];
+  const geoDataSort: string[][] = [];
 
-    if (geoFields.includes(sortBy)) {
-        geoDataSort.push([
-           sortBy?.includes("resource_type") ? "resource_type_rid" : sortBy,
-           sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"
-        ]);
-    }
+  // Mapping incoming field names to actual DB column names
+  const fieldMapping: Record<string, string> = {
+    resource_country: "country_rid",
+    resource_region: "region_rid",
+    resource_city: "city_rid",
+    resource_type: "resource_type_rid",
+  };
 
-    return {
-        geoDataSort,
-    };
+  const mappedField = fieldMapping[sortBy];
+
+  if (mappedField) {
+    geoDataSort.push([
+      mappedField,
+      sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
+    ]);
+  }
+
+  return {
+    geoDataSort,
+  };
 }
+
 
   /**
    * Formats an error response to be returned from service methods.
