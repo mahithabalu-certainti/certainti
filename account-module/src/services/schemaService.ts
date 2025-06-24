@@ -716,7 +716,7 @@ class SchemaService {
       resource_total_experience_organization numeric(4,2),
       status_rid VARCHAR(50),
       comments text,
-      CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
+      CONSTRAINT resource_code_account_key_unique UNIQUE (resource_code,account_rid))
      `);
   }
 

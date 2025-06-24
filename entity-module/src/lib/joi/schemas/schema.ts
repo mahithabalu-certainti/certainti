@@ -365,8 +365,10 @@ const createResourcesSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  status_rid: Joi.string().optional(),
-  created_by: Joi.string()
+    status_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
+      'any.required': 'status_rid is required'
+    }),
+    created_by: Joi.string()
     .pattern(uuidRegex, "valid UUID")
     .optional(),
   comments: Joi.string().optional().allow("").allow(null),
@@ -558,7 +560,9 @@ const updateResourceSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  status_rid: Joi.string().optional(),
+  status_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
+    'any.required': 'status_rid is required'
+  }),
   comments: Joi.string().optional().allow("").allow(null),
 });
 

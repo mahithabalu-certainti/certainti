@@ -400,6 +400,7 @@ class SchemaService {
           resource_code: {
             [Op.iLike]: resourceData.resource_code,
           },
+          account_rid: resourceData.account_id,
         },
       });
 

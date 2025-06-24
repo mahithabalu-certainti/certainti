@@ -882,7 +882,7 @@ class ResourceCostService {
         "currency_rid",
         "fiscal_year",
         "comments",
-        "status",
+        "status_rid",
       ];
 
       // Track changes for each attribute individually to better isolate errors
@@ -1198,7 +1198,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     }
      const updateStatus = await ResourceCost.update(
       {
-        status_rid: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("Inactive"),
+        status_rid: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("In-Active"),
       },
       {
         where: {
