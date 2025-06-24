@@ -44,6 +44,9 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       resource_type_rid: '',
       status_name: '',
       resource_type_name: '',
+      country_rid: '',
+      region_rid: '',
+      city_rid: '',
     },
   },
 };

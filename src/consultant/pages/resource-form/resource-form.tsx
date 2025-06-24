@@ -219,46 +219,48 @@ const ResourceForm: React.FC = () => {
       accNumber
   );
   const accountName = location?.state?.data?.accountById?.account_name;
+
   useEffect(() => {
-    const resourceDetailsData =
-      resource?.data?.resourceDetails || state?.resource;
-    const finalResourceDetails = {
-      ...resourceDetailsData,
-      resource_status: resourceDetailsData?.status_rid,
-      resource_type: resourceDetailsData?.resource_type_rid,
-      country: resourceDetailsData?.resource_country,
-      state: resourceDetailsData?.resource_region,
-      city: resourceDetailsData?.resource_city,
-      designation: resourceDetailsData?.resource_designation,
-      total_years_experience: resourceDetailsData?.resource_total_experience,
-      total_years_in_org:
-        resourceDetailsData?.resource_total_experience_organization,
-      Record_id: resourceDetailsData?.rid,
-      Resource_id: resourceDetailsData?.r_number,
-      resource_startdate: resourceDetailsData?.resource_startdate,
-      resource_enddate: resourceDetailsData?.resource_enddate,
-      Created_On: formatDateToYYYYMMDDWithTime(
-        resourceDetailsData?.created_datetime
-      ),
-      Created_By: resourceDetailsData?.created_by,
-      Updated_On: resourceDetailsData?.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(
-            resourceDetailsData?.modified_datetime || '-'
-          )
-        : '-',
-      Updated_By: resourceDetailsData?.modified_by || '-',
-      resource_name:
-        resourceDetailsData?.resource_firstname &&
-        resourceDetailsData?.resource_lastname
-          ? ''
-          : !resourceDetailsData?.resource_firstname &&
-              !resourceDetailsData?.resource_lastname
-            ? resourceDetailsData?.resource_name
-            : resourceDetailsData?.resource_firstname ||
-              resourceDetailsData?.resource_lastname ||
-              '',
-    };
-    setResourceDetails(finalResourceDetails || null);
+    const resourceDetailsData = resource?.data?.resourceDetails;
+    if (resourceDetailsData) {
+      const finalResourceDetails = {
+        ...resourceDetailsData,
+        resource_status: resourceDetailsData?.status_rid,
+        resource_type: resourceDetailsData?.resource_type_rid,
+        country: resourceDetailsData?.country_rid,
+        state: resourceDetailsData?.region_rid,
+        city: resourceDetailsData?.city_rid,
+        designation: resourceDetailsData?.resource_designation,
+        total_years_experience: resourceDetailsData?.resource_total_experience,
+        total_years_in_org:
+          resourceDetailsData?.resource_total_experience_organization,
+        Record_id: resourceDetailsData?.rid,
+        Resource_id: resourceDetailsData?.r_number,
+        resource_startdate: resourceDetailsData?.resource_startdate,
+        resource_enddate: resourceDetailsData?.resource_enddate,
+        Created_On: formatDateToYYYYMMDDWithTime(
+          resourceDetailsData?.created_datetime
+        ),
+        Created_By: resourceDetailsData?.created_by,
+        Updated_On: resourceDetailsData?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(
+              resourceDetailsData?.modified_datetime || '-'
+            )
+          : '-',
+        Updated_By: resourceDetailsData?.modified_by || '-',
+        resource_name:
+          resourceDetailsData?.resource_firstname &&
+          resourceDetailsData?.resource_lastname
+            ? ''
+            : !resourceDetailsData?.resource_firstname &&
+                !resourceDetailsData?.resource_lastname
+              ? resourceDetailsData?.resource_name
+              : resourceDetailsData?.resource_firstname ||
+                resourceDetailsData?.resource_lastname ||
+                '',
+      };
+      setResourceDetails(finalResourceDetails || null);
+    }
   }, [resource]);
 
   useEffect(() => {
@@ -373,6 +375,13 @@ const ResourceForm: React.FC = () => {
       const values = {
         ...formValues,
         currency: costAndSKillAccountInfo?.currency_rid || null,
+        resource_type: formValues?.resource_type_rid,
+      };
+      setFormValues(values);
+    } else if (formValues && !isEditView && state?.skill) {
+      const values = {
+        ...formValues,
+        resource_type: formValues?.resource_type_rid,
       };
       setFormValues(values);
     } else if (formValues && !isEditView) {
@@ -380,8 +389,8 @@ const ResourceForm: React.FC = () => {
     }
   }, [state, costDetails, resource]);
 
-  const countryId = resource?.data?.resourceDetails.resource_country;
-  const stateId = resource?.data?.resourceDetails.resource_region;
+  const countryId = resource?.data?.resourceDetails.country_rid;
+  const stateId = resource?.data?.resourceDetails.region_rid;
   useEffect(() => {
     if (countryId) {
       setCurrentCountry((prev) => ({ ...prev, country: countryId }));
@@ -775,7 +784,6 @@ const ResourceForm: React.FC = () => {
     currentSkillType.skill_sub_type || currentSkillType.skillSubType,
     state?.skill,
     state?.cost,
-    state?.resourceCreate,
     isResourceFullNameEmpty,
     isAnyResourceNameFilled,
     isresourceType,
@@ -865,6 +873,7 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading}
           values={
             isEditView &&
+            isSuccess &&
             !state?.cost &&
             !state?.skill &&
             (resourceDetails as unknown as Record<

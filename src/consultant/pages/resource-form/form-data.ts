@@ -77,7 +77,6 @@ export const ResourceFormData = (
   currentskillSubType?: string[],
   disableSkill?: boolean,
   disableCost?: boolean,
-  createResource?: boolean,
   isResourceFullNameEmpty?: boolean,
   isAnyResourceNameFilled?: boolean,
   isresourceType?: boolean,
@@ -614,13 +613,13 @@ export const ResourceFormData = (
           ),
           createTextField(
             'total_years_in_org',
-            'Total Years in the Organisation',
+            'Total Years in the Organization',
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
               regexErrorMessage:
                 'Please enter a valid number between 0 and 99 with up to 2 decimals',
-              placeholder: 'Enter Total Years In The Organisation',
+              placeholder: 'Enter Total Years In The Organization',
               disabled: disableCostAndSkill,
             }
           ),
@@ -706,7 +705,6 @@ export const ResourceFormData = (
       skillSubTypeLoading,
       currentskillSubType,
       skillLevelOptions,
-      createResource,
     ]
   );
 };

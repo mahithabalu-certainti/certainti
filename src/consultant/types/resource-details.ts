@@ -37,6 +37,9 @@ export interface ResourceDetailsTypes {
   resource_number?: string;
   country?: string;
   state?: string;
+  country_rid: string;
+  region_rid: string;
+  city_rid: string;
 }
 
 export interface ResourceDetailsForPayload {
