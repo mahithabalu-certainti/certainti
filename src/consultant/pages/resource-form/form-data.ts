@@ -8,13 +8,7 @@ import {
   REGEX_PATTERNS,
   RESOURCE_REGEX,
 } from '../../../common-utils';
-import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
-import {
-  RESOURCE_STATUS_COST,
-  RESOURCE_STATUS_OPTIONS,
-  RESOURCE_TYPE_OPTIONS,
-} from './utils.tsx';
 
 // 1. Extract date constants
 const minYear = 2000;
@@ -63,6 +57,10 @@ const { currentDate, previousDate, minDate } = getDateConstraints(
 );
 
 export const ResourceFormData = (
+  statusOptions: SelectOption[],
+  resourceTypeOptions: SelectOption[],
+  skillLevelOptions: SelectOption[],
+  resourceStatusOptions: SelectOption[],
   country: SelectOption[],
   states: SelectOption[],
   city: SelectOption[],
@@ -74,12 +72,11 @@ export const ResourceFormData = (
   currencyLoading?: boolean,
   skillSubTypeLoading?: boolean,
   disableCostAndSkill?: boolean,
-  disableOrgname?: string,
+  disableOrgname?: boolean,
   currentSkillType?: string[],
   currentskillSubType?: string[],
   disableSkill?: boolean,
   disableCost?: boolean,
-  createResource?: boolean,
   isResourceFullNameEmpty?: boolean,
   isAnyResourceNameFilled?: boolean,
   isresourceType?: boolean,
@@ -123,7 +120,7 @@ export const ResourceFormData = (
             onChange: true,
           }),
           createSelectField('resource_type', 'Resource Type', {
-            options: RESOURCE_TYPE_OPTIONS,
+            options: resourceTypeOptions,
             placeholder: 'Choose Resource Type',
             required: true,
             disabled: disableCostAndSkill,
@@ -131,8 +128,7 @@ export const ResourceFormData = (
             resetDependsFields: ['resource_orgname'],
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
-            required:
-              disableOrgname && disableOrgname !== 'Full-Time' ? true : false,
+            required: !disableOrgname,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -155,8 +151,7 @@ export const ResourceFormData = (
               },
             ],
             placeholder: 'Enter Resource Org Name',
-            disabled:
-              disableOrgname && disableOrgname === 'Full-Time' ? true : false,
+            disabled: disableOrgname,
             clearValue: {
               key: 'resource_type',
               matchedValue: 'Full-Time',
@@ -283,7 +278,7 @@ export const ResourceFormData = (
             ],
           }),
           createSelectField('resource_status', 'Status', {
-            options: RESOURCE_STATUS_OPTIONS,
+            options: statusOptions,
             placeholder: 'Choose Status',
             required: true,
             disabled: disableCostAndSkill,
@@ -339,7 +334,7 @@ export const ResourceFormData = (
             onChange: true,
           }),
           createSelectField('resource_type', 'Resource Type', {
-            options: RESOURCE_TYPE_OPTIONS,
+            options: resourceTypeOptions,
             placeholder: 'Choose Resource Type',
             required: false,
             disabled: true,
@@ -439,7 +434,7 @@ export const ResourceFormData = (
               : '0',
           }),
           createSelectField('resource_status', 'Status', {
-            options: RESOURCE_STATUS_COST,
+            options: resourceStatusOptions,
             placeholder: 'Choose Status',
             required: false,
             disabled: true,
@@ -532,7 +527,7 @@ export const ResourceFormData = (
                 : true,
           }),
           createSelectField('skill_level', 'Skill Level', {
-            options: mockSkillLevelOptions,
+            options: skillLevelOptions,
             placeholder: 'Choose Skill Level',
             required: false,
           }),
@@ -618,13 +613,13 @@ export const ResourceFormData = (
           ),
           createTextField(
             'total_years_in_org',
-            'Total Years in the Organisation',
+            'Total Years in the Organization',
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
               regexErrorMessage:
                 'Please enter a valid number between 0 and 99 with up to 2 decimals',
-              placeholder: 'Enter Total Years In The Organisation',
+              placeholder: 'Enter Total Years In The Organization',
               disabled: disableCostAndSkill,
             }
           ),
@@ -682,22 +677,26 @@ export const ResourceFormData = (
     ],
     [
       disableCostAndSkill,
+      resourceTypeOptions,
       disableOrgname,
       isAnyResourceNameFilled,
       currentResource?.resource_firstname,
       currentResource?.resource_lastname,
       isResourceFullNameEmpty,
+      statusOptions,
       country,
       states,
       stateLoading,
       city,
       cityLoading,
+      accountName,
       disableCost,
       currency,
       currencyLoading,
       isresourceType,
       isSalaryRequired,
       autoCalculatedValue,
+      resourceStatusOptions,
       isEditView,
       disableSkill,
       skillTypeOptions,
@@ -705,7 +704,7 @@ export const ResourceFormData = (
       skillSubTypeOptions,
       skillSubTypeLoading,
       currentskillSubType,
-      createResource,
+      skillLevelOptions,
     ]
   );
 };

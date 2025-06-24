@@ -166,6 +166,7 @@ export interface AccountById {
   currency_rid: string | null;
   status: Status;
   primary_contact_name: string;
+  status_rid: string;
   is_parent: boolean;
   comments: string | null;
   annual_revenue: number;
@@ -185,13 +186,15 @@ export interface KeyContacts {
   is_primary_contact: boolean;
   include_in_communication: boolean;
   interaction_cc_recipient?: boolean;
-  status: Status;
+  status_name?: string;
+  status_rid: string;
   action_type?: string;
   rid?: string;
 }
 
 export interface AccountFieldsTypes {
   rid: string;
+  status_rid: string;
   primary_contact_email: string;
   primary_contact_number: string;
   finance_poc_name: string;

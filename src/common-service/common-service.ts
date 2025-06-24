@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { accountServiceApi, userServiceApi } from '../api/api';
-import { GetAllCountriesApiResponse, GetCurrentUserRoleApiResponse } from './';
+import {
+  GetAllCountriesApiResponse,
+  GetCurrentUserRoleApiResponse,
+  GetStatusApiResponse,
+} from './';
 
 export const getAllCountriesUrl = (): string => {
   return `/api/accounts/country`;
@@ -67,4 +71,31 @@ export const fetchCurrentUserRole = async (
     console.error('Error fetching user details:', error);
     throw error;
   }
+};
+
+export const getStatusUrl = (): string => {
+  return `/api/accounts/status`;
+};
+
+export const fetchStatus = async (): Promise<GetStatusApiResponse> => {
+  try {
+    const { data } =
+      await accountServiceApi.get<GetStatusApiResponse>(getStatusUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching status list:', error);
+    throw error;
+  }
+};
+
+export const useGetStatus = () => {
+  return useQuery<GetStatusApiResponse, Error>({
+    queryKey: ['getStatus'],
+    queryFn: () => fetchStatus(),
+    retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
+  });
 };

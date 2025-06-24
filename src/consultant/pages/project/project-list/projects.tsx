@@ -15,9 +15,16 @@ import Filter from '../../account-details-sidebar/components/filter/filter';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
-import { AllModules, AllPermissions } from '../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  useGetStatus,
+} from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
-import { exportProjectData } from '../../../services/project';
+import {
+  exportProjectData,
+  useGetProjectType,
+} from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
 import { Switch } from '@mui/material';
 
@@ -118,6 +125,9 @@ export const Projects: React.FC = () => {
   ];
 
   const Classification = useFetchClassification();
+  const statusOptions = useGetStatus();
+  const projectTypeOptions = useGetProjectType();
+
   const memoizedClassification = useMemo(
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
@@ -127,11 +137,31 @@ export const Projects: React.FC = () => {
     [Classification.data?.data.projectClassifications]
   );
 
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        option: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
+
   const projectFilterFields = getAllProjectFilterFields(
     memoizedClassification.map((item) => ({
       label: item.option,
       value: item.value,
-    }))
+    })),
+    memoizedProjectTypes,
+    memoizedStatus
   );
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (setToggleEnabled) {
@@ -143,7 +173,7 @@ export const Projects: React.FC = () => {
 
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+      <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
             <ProjectDetailsIcon

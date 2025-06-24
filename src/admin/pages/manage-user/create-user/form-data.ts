@@ -6,11 +6,11 @@ import {
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
-  STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../../common-utils';
 
 export const FormData = (
+  statusOptions: SelectOption[],
   country: SelectOption[],
   profile: SelectOption[],
   role: SelectOption[],
@@ -131,7 +131,7 @@ export const FormData = (
           }),
           createSelectField('status', 'Status', {
             required: true,
-            options: STATUS_OPTIONS,
+            options: statusOptions,
             placeholder: 'Choose Status',
             disabled: disabledStatus,
           }),
@@ -198,6 +198,7 @@ export const FormData = (
       },
     ],
     [
+      statusOptions,
       country,
       profile,
       role,
