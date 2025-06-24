@@ -297,19 +297,23 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
       disabled: accountInActive || !isResourceDeleteEnable,
-      hide: !isResourceDeleteEnable,
+      // hide: !isResourceDeleteEnable,
+      hide: true,
     },
     {
       label: 'View Summary',
       onClick: (row: any) => console.log('Summary', row),
+      hide: true,
     },
     {
       label: 'View Activities',
       onClick: (row: any) => console.log('Activities', row),
+      hide: true,
     },
     {
       label: 'View Notes',
       onClick: (row: any) => console.log('Notes', row),
+      hide: true,
     },
   ];
 
