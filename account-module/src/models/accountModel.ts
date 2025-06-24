@@ -40,7 +40,9 @@ interface AccountAttributes {
   total_projects_rd_credits?:number;
   logo_url?:string;
   organisation_name:string;
-
+  professional_services_consultant?:string;
+  finance_executive?: string;
+  finance_lead?: string;
 }
 
 interface AccountCreationAttributes
@@ -82,6 +84,9 @@ export class Account
   public total_projects_rd_credits?:number;
   public logo_url?:string;
   public organisation_name!:string;
+  public professional_services_consultant?: string;
+  public finance_executive?: string;
+  public finance_lead?: string;
 
   static initialize(sequelize: Sequelize) {
     Account.init(
@@ -199,6 +204,18 @@ export class Account
             model: "account_file_drop_config",
             key: "rid"
           }
+        },
+        professional_services_consultant: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
+        finance_executive: {
+          type: DataTypes.STRING(255),
+          allowNull: true
+        },
+        finance_lead: {
+          type: DataTypes.STRING(255),
+          allowNull: true
         },
         total_projects: DataTypes.DECIMAL(18, 2),
         total_project_cost: DataTypes.DECIMAL(18, 2),

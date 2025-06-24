@@ -142,7 +142,6 @@ export class ResourceService {
         sortBy,
         sortOrder
       );
-      console.log("geoDataSort",geoDataSort)
 
       const resources = await this.schemaService.fetchResources(
         accountRNumber,
@@ -707,7 +706,8 @@ export class ResourceService {
     resource_country: "country_rid",
     resource_region: "region_rid",
     resource_city: "city_rid",
-    resource_type: "resource_type_rid",
+    resource_type_rid: "resource_type_rid",
+    status_name: "status_name",
   };
 
   const mappedField = fieldMapping[sortBy];

@@ -1331,6 +1331,10 @@ class SchemaService {
             compareValueA = a.resource_type_name || null;
             compareValueB = b.resource_type_name || null;
             break;
+          case "status_name":
+            compareValueA = a.status_name || null;
+            compareValueB = b.status_name || null;
+            break;
           default:
             return 0;
         }
@@ -2320,7 +2324,7 @@ class SchemaService {
         "fiscal_year",
         "account_name",
         "industry_name_other",
-        "project_type_name",
+        "project_type_rid",
         "project_client_group",
         "project_group",
         "classification_name",

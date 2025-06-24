@@ -1296,7 +1296,7 @@ export class ProjectService {
       "classification_name",
       "industry_name",
       "project_type_name",
-      "project_type"
+      "project_type_rid"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1624,13 +1624,11 @@ export class ProjectService {
       "classification_name",
       "modified_datetime",
       "assessment_status",
-      "project_type_name",
-    ];
-
+      "project_type_rid",
+    ];   
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
-
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
   }

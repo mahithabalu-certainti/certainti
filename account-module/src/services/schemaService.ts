@@ -12,6 +12,25 @@ import {
 } from "../utils/types";
 import Decimal from "decimal.js";
 class SchemaService {
+  async getKeyContactRoleById(key_contact_role: string): Promise<any> {
+  try {
+    const sequelize = await initSequelize();
+    const result = await sequelize.query(`
+      SELECT *
+      FROM "public".key_contact_role 
+      WHERE rid = :key_contact_role
+      AND LOWER(role_status) = 'active'
+    `, {
+      replacements: { key_contact_role },
+      type: QueryTypes.SELECT
+    });
+    
+    return result[0];
+  } catch (error) {
+    console.error('Error fetching key contact role:', error);
+    throw new Error('Failed to fetch key contact role');
+    }
+  }
   async createNewSchema(account_number: string) {
     try {
       const sequelize = await initOrgSequelize();
@@ -718,7 +737,7 @@ class SchemaService {
     modified_datetime timestamp with time zone,
     account_rid varchar(50) NOT NULL,
     resource_rid varchar(50) NOT NULL,
-    resource_type VARCHAR(50) CHECK (resource_type IN ('Full-Time','Sub Con','Non-Labor')),
+    resource_type_rid VARCHAR(50),
     fiscal_year integer,
     country_rid varchar(50),
     country_region_rid varchar(50),
@@ -1812,6 +1831,108 @@ class SchemaService {
   catch(err)
   {
       throw new Error("Error updating key contacts.");
+  }
+}
+async insertFiscalInfoOnly(
+  accountData: any,
+  filters?: any,
+  limit?: number,
+  offset?: number,
+  sortBy?: string,
+  sortOrder?: string,
+  type?: string
+) {
+  try {
+    const orgDbSequelize = await initOrgSequelize();
+
+    // 1. Prepare schema mappings
+    const parentRidToRNumber = new Map<string, string>();
+    const allAccounts: any[] = [];
+
+    accountData.forEach((account: { dataValues: any }) => {
+      const parent = account.dataValues;
+      parentRidToRNumber.set(parent.rid, parent.r_number);
+      allAccounts.push(
+        parent,
+        ...(parent.child_accounts?.map((c: any) => c.dataValues) || [])
+      );
+    });
+
+    const schemaToAccountRids = new Map<string, string[]>();
+
+    for (const acc of allAccounts) {
+      const schema =
+        acc.storage_type === "store_in_parent"
+          ? parentRidToRNumber.get(acc.parent_account_rid)
+          : acc.r_number;
+
+      if (!schema) continue;
+
+      const accountRids = schemaToAccountRids.get(schema) || [];
+      accountRids.push(acc.rid);
+      schemaToAccountRids.set(schema, accountRids);
+    }
+
+    // 2. Fetch fiscal data in parallel
+    const fiscalResults = await (async () => {
+      const queries = Array.from(schemaToAccountRids).map(
+        async ([schema, accountRids]) => {
+          try {
+            const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
+            return await orgDbSequelize.query(
+              `SELECT fiscal_year, account_rid,
+                SUM(total_projects::NUMERIC) AS total_projects,
+                SUM(total_project_hours::NUMERIC) AS total_project_hours,
+                SUM(total_project_cost::NUMERIC) AS total_project_cost,
+                SUM(qualifying_project_hours_fed::NUMERIC) AS qualifying_project_hours_fed,
+                SUM(qualifying_project_qre_fed::NUMERIC) AS qualifying_project_qre_fed,
+                SUM(qualifying_project_rd_credits_fed::NUMERIC) AS qualifying_project_rd_credits_fed,
+                SUM(total_projects_rd_credits::NUMERIC) AS total_projects_rd_credits
+              FROM "${schemaName}".account_fiscal
+              WHERE account_rid IN (:accountRids)
+              GROUP BY account_rid, fiscal_year`,
+              { replacements: { accountRids }, type: "SELECT" }
+            );
+          } catch (error) {
+            console.warn(`Fiscal data skipped for schema ${schema}:`, error);
+            return [];
+          }
+        }
+      );
+      return (await Promise.all(queries)).flat();
+    })();
+
+    // 3. Map fiscal data to account RID
+    const accountFiscalMap = new Map<string, any[]>();
+    fiscalResults.forEach((f: any) => {
+      const fiscalData = accountFiscalMap.get(f.account_rid) || [];
+      fiscalData.push(f);
+      accountFiscalMap.set(f.account_rid, fiscalData);
+    });
+
+    // 4. Enrich accounts with fiscal data
+    const enrichAccount = (account: any, isChild: boolean) => {
+      return {
+        ...account,
+        ...(isChild && {
+          projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [],
+        }),
+      };
+    };
+
+    const enrichedAccounts = accountData.map((account: any) => {
+      const parent = enrichAccount(account.dataValues, false);
+      const children = (account.dataValues?.child_accounts || []).map(
+        (c: any) => enrichAccount(c.dataValues, true)
+      );
+
+      parent.child_accounts = children;
+      return parent;
+    });
+
+    return { data: enrichedAccounts, total: enrichedAccounts.length };
+  } catch (err) {
+    throw new Error("Error fetching fiscal data.");
   }
 }
 
