@@ -551,9 +551,8 @@ class ResourceCostService {
         rid,
         fiscal_year,
         comments,
-        status_rid,
+        status_rid:status,
       } = resourceCostData;
-
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
@@ -675,7 +674,12 @@ class ResourceCostService {
             .minus(deductions || 0)
         );
 
-        let resourceCostStatus = "Active";
+       const statusNameMap = new Map<string, string>();
+        statusMap?.forEach((value, key) => {
+          statusNameMap.set(value, key);
+        });
+
+      let resourceCostStatus = statusNameMap.get(status?.toString() || '') || 'Active';
         
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
