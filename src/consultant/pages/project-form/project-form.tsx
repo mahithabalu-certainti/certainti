@@ -144,6 +144,7 @@ const ProjectForm: React.FC = () => {
           ? 'Project updated successfully'
           : 'Project created successfully'
       );
+      setShowOthersField(false);
       goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -259,12 +260,12 @@ const ProjectForm: React.FC = () => {
         ...formValues,
         account_id: accountID,
         project_id: projectID,
-        showOthersField,
       },
       isEditView,
       memoizedStatus,
       defaultActiveValue,
-      account?.keyContact
+      account?.keyContact,
+      showOthersField
     );
 
     if (isEditView) {
