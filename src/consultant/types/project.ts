@@ -15,6 +15,7 @@ export type ProjectList = {
   project_startdate: string;
   project_enddate: string;
   project_type: string;
+  project_type_name: string;
   project_classification: string;
   project_client_group: string;
   project_group: string;
@@ -111,7 +112,8 @@ export interface KeyContacts {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: Status;
+  status_name?: string;
+  status_rid: string;
   action_type?: string;
   key_contact_status?: Status;
   role_name?: string;
@@ -165,6 +167,7 @@ export interface NewProjectData {
   project_startdate?: string | null;
   project_enddate?: string | null;
   project_type?: string;
+  project_type_name?: string;
   project_type_rid?: string;
   project_classification_rid?: string | null;
   project_classification_name?: string;

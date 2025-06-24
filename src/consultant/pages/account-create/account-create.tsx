@@ -175,7 +175,7 @@ export const AccountForm: React.FC = () => {
             account?.accountDetails?.keyContacts || [],
             memoizedStatus
           ),
-          status: account?.accountDetails?.status_rid,
+          status: account?.accountById?.status_rid,
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
           created_on: formatDateToYYYYMMDDWithTime(

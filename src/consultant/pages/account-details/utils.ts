@@ -27,7 +27,8 @@ export interface ResourceData {
     resourceDetails: {
       resource_name: string;
       resource_code: string;
-      resource_type: string;
+      resource_type_rid: string;
+      resource_type_name: string;
       resource_role: string;
       resource_designation: string;
       resource_orgname: string;
@@ -182,7 +183,7 @@ export const transformResourceData = (
       items: [
         {
           label: 'Resource Type',
-          value: getValueOrDefault(resourceData?.resource_type),
+          value: getValueOrDefault(resourceData?.resource_type_name),
         },
         {
           label: 'Resource Org Name',
@@ -236,7 +237,9 @@ export interface accountByIdProps {
   parent_account: {
     account_name: string;
   };
-  status: string;
+  status: {
+    status_name: string;
+  };
   annual_revenue: string;
   country: {
     country_name: string;
@@ -287,6 +290,7 @@ export interface KeyContactProps {
   include_in_communication?: boolean;
   interaction_cc_recipient?: boolean;
   status?: string;
+  status_name?: string;
 }
 
 export interface accountDetailsProps {

@@ -24,6 +24,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       business_details: 'something about the account',
       modified_datetime: '2024-03-19T10:30:00Z',
       created_datetime: '2024-03-18T15:45:00Z',
+      status_rid: '',
     },
     accountDetails: {
       rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
@@ -54,7 +55,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
           key_contact_role: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
           is_primary_contact: false,
           include_in_communication: true,
-          status: Status.Active,
+          status_rid: 'nfdisbfibe33244343-343u48',
         },
       ],
     },

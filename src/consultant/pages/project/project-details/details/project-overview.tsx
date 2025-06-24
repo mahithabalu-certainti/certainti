@@ -155,7 +155,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     { label: 'Project Code', value: projectDetails?.project_code },
     { label: 'Fiscal Year', value: projectDetails?.fiscal_year },
     { label: 'Name', value: projectDetails?.project_name },
-    { label: 'Project Type', value: projectDetails?.project_type },
+    { label: 'Project Type', value: projectDetails?.project_type_name },
     {
       label: 'Effective From',
       value: getDateFormat(projectDetails?.project_startdate ?? undefined),
@@ -195,7 +195,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       keyContactEmail: contact.key_contact_email,
       isPrimaryContact: contact.is_primary_contact,
       includeInCommnunications: contact.include_in_communication,
-      keyContactStatus: contact.status,
+      keyContactStatus: contact.status_name,
     }));
   const financialInfo: DetailItem[] = [
     { label: 'Total FTE Count', value: projectDetails?.total_fte },

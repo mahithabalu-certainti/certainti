@@ -156,6 +156,56 @@ const ResourceForm: React.FC = () => {
     return s + b + i + r - d;
   };
 
+  const currency = useFetchCurrency();
+  const statusOptions = useGetStatus();
+  const resourceStatusOptions = useGetResourceStatus();
+  const resourceTypeOptions = useGetResourceType();
+  const skillLevelOptions = useGetSkillLevel();
+
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedResourceStatus: SelectOption[] = useMemo(
+    () =>
+      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
+        label: item.resource_status_name,
+        value: item.rid,
+      })) || [],
+    [resourceStatusOptions?.data?.data?.resourceStatus]
+  );
+
+  const memoizedResourceType: SelectOption[] = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedSkillLevels: SelectOption[] = useMemo(
+    () =>
+      skillLevelOptions?.data?.data?.skillLevel.map((item) => ({
+        label: item.skill_level_name,
+        value: item.rid,
+      })) || [],
+    [skillLevelOptions?.data?.data?.skillLevel]
+  );
+
+  const resourceTypeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    resourceTypeOptions?.data?.data?.resouceType.forEach((item) => {
+      map[item.rid] = item.resource_type_name.toLowerCase();
+    });
+    return map;
+  }, [resourceTypeOptions?.data?.data?.resouceType]);
+
   const costInfo =
     (costDetails as { resourceCostById?: Record<string, any> })
       ?.resourceCostById || {};
@@ -364,11 +414,6 @@ const ResourceForm: React.FC = () => {
   const { data: skillSubType, isLoading: skillSubTypeLoading } =
     useFetchResourceSkillSubType(currentSkillType.skill_type);
 
-  const currency = useFetchCurrency();
-  const statusOptions = useGetStatus();
-  const resourceStatusOptions = useGetResourceStatus();
-  const resourceTypeOptions = useGetResourceType();
-  const skillLevelOptions = useGetSkillLevel();
   // Mutations
   const createResource = useCreateResource(accountId as string);
   const updateResource = useUpdateResource(accountId as string);
@@ -386,50 +431,6 @@ const ResourceForm: React.FC = () => {
     createResource.isSuccess || updateResource.isSuccess || costSkillSuccess;
 
   // Memoized data transformations
-  const memoizedStatus: SelectOption[] = useMemo(
-    () =>
-      statusOptions?.data?.data?.status.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-      })) || [],
-    [statusOptions?.data?.data?.status]
-  );
-
-  const memoizedResourceStatus: SelectOption[] = useMemo(
-    () =>
-      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
-        label: item.resource_status_name,
-        value: item.rid,
-      })) || [],
-    [resourceStatusOptions?.data?.data?.resourceStatus]
-  );
-
-  const memoizedResourceType: SelectOption[] = useMemo(
-    () =>
-      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-        label: item.resource_type_name,
-        value: item.rid,
-      })) || [],
-    [resourceTypeOptions?.data?.data?.resouceType]
-  );
-
-  const memoizedSkillLevels: SelectOption[] = useMemo(
-    () =>
-      skillLevelOptions?.data?.data?.skillLevel.map((item) => ({
-        label: item.skill_level_name,
-        value: item.rid,
-      })) || [],
-    [skillLevelOptions?.data?.data?.skillLevel]
-  );
-
-  const resourceTypeMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    resourceTypeOptions?.data?.data?.resouceType.forEach((item) => {
-      map[item.rid] = item.resource_type_name.toLowerCase();
-    });
-    return map;
-  }, [resourceTypeOptions?.data?.data?.resouceType]);
-
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries

@@ -9,7 +9,7 @@ export interface ResourceDetailsTypes {
   resource_region: string;
   resource_designation: string;
   resource_city: string;
-  resource_type: string;
+  resource_type_name: string;
   resource_type_rid: string;
   resource_name: string;
   resource_firstname: string;

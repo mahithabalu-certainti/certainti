@@ -49,8 +49,8 @@ export const getResourceColumns = (
     sortable: true,
   },
   {
-    id: 'resource_type',
-    sortId: 'resource_type',
+    id: 'resource_type_name',
+    sortId: 'resource_type_rid',
     label: 'Resource Type',
     width: 140,
     sortable: true,
@@ -78,14 +78,14 @@ export const getResourceColumns = (
   },
   {
     id: 'region_name',
-    sortId: 'resource_region',
+    sortId: 'region_rid',
     label: 'Region',
     width: 150,
     sortable: true,
   },
   {
     id: 'country_name',
-    sortId: 'resource_country',
+    sortId: 'country_rid',
     label: 'Country',
     width: 160,
     sortable: true,

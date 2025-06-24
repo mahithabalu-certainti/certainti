@@ -39,7 +39,7 @@ export const transformKeyContactsFromAPI = (
     formData[`interaction_cc_recipient_${index}`] =
       contact.interaction_cc_recipient ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
-      getStatusLabelById(contact.status) || 'active';
+      getStatusLabelById(contact.status_rid) || 'active';
   });
   return formData;
 };
@@ -93,7 +93,7 @@ export const keyContactsTransformPayload = (
           formData[`include_in_communication_${index}`] === 'yes',
         interaction_cc_recipient:
           formData[`interaction_cc_recipient_${index}`] === 'yes',
-        status:
+        status_rid:
           getStatusIdByLabel(formData[`key_contact_status_${index}`]) ||
           defaultActiveValue,
         action_type:
@@ -111,7 +111,7 @@ export const keyContactsTransformPayload = (
           rid: contact.rid,
           include_in_communication: contact.include_in_communication,
           interaction_cc_recipient: contact.interaction_cc_recipient,
-          status: contact.status,
+          status_rid: contact.status_rid,
           is_primary_contact: contact.is_primary_contact,
           key_contact_name: contact.key_contact_name,
           key_contact_email: contact.key_contact_email,

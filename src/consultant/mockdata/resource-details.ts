@@ -11,7 +11,6 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       account_id: '431cfe96-3a5a-4044-8022-086adee1a292',
       account_number: 'ACC0001',
       eid: null,
-      resource_type: 'FullTime',
       resource_firstname: '',
       resource_lastname: 'miller',
       resource_orgname: 'Some Organization',
@@ -46,6 +45,7 @@ export const mockResourceDetails: ResourceDetailsApiResponse = {
       status: {
         status_name: '',
       },
+      resource_type_name: '',
     },
   },
 };
