@@ -656,7 +656,7 @@ async accountList(
         industry_name_other,
         region_rid,
         data_storage,
-        status_id,
+        status_rid,
         annual_revenue,
         key_contacts,
         organisation_name
@@ -723,7 +723,7 @@ async accountList(
         currency_rid:currency_rid,
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
-        status_id,
+        status_rid,
         created_by: userId,
         annual_revenue: annual_revenue  || null,
         organisation_name
@@ -840,7 +840,7 @@ async insertClientTemplateDetails(
         account_rid,
         account_name,
         comments,
-        status_id,
+        status_rid,
         annual_revenue,
         region_rid,
         data_storage,
@@ -901,7 +901,7 @@ async insertClientTemplateDetails(
         {
           account_name,
           comments: comments || "",
-          status_id,
+          status_rid,
           region_rid: region_rid,
           country_rid: country_rid,
           currency_rid: currency_rid,

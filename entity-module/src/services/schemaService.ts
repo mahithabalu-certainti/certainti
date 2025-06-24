@@ -272,7 +272,7 @@ class SchemaService {
           "Resources.resource_orgname",
           "Resources.comments",
           "Resources.resource_type_rid",
-          "Resources.status_id",
+          "Resources.status_rid",
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
@@ -294,7 +294,7 @@ class SchemaService {
           "resource_firstname",
           "resource_lastname",
           "resource_type_rid",
-          "status_id",
+          "status_rid",
           "resource_role",
           "resource_designation",
           "resource_orgname",
@@ -413,7 +413,7 @@ class SchemaService {
         resource_name: resourceData.name || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
-        status_id: resourceData.status_id || null,
+        status_rid: resourceData.status_rid || null,
         resource_orgname: resourceData.org_name || null,
         resource_startdate: moment(startDate).isValid()
           ? moment(startDate).toDate()
@@ -563,7 +563,7 @@ class SchemaService {
           "Resources.resource_orgname",
           "Resources.comments",
           "Resources.resource_type_rid",
-          "Resources.status_id",
+          "Resources.status_rid",
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
@@ -585,7 +585,7 @@ class SchemaService {
           "resource_firstname",
           "resource_lastname",
           "resource_type_rid",
-          "status_id",
+          "status_rid",
           "resource_role",
           "resource_designation",
           "resource_orgname",
@@ -638,7 +638,7 @@ class SchemaService {
           "Resources.resource_orgname",
           "Resources.comments",
           "Resources.resource_type_rid",
-          "Resources.status_id",
+          "Resources.status_rid",
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
@@ -834,7 +834,7 @@ class SchemaService {
         resource_orgname: resourceData.org_name || null,
         resource_role: resourceData.role || null,
         resource_type_rid: resourceData.resource_type_rid || "",
-        status_id: resourceData.status_id,
+        status_rid: resourceData.status_rid,
         country_rid: resourceData.country_rid || null,
         region_rid: resourceData.region_rid || null,
         city_rid: resourceData.city_rid || null,
@@ -1127,7 +1127,7 @@ class SchemaService {
         const [status]: any[] = await mainDbSequelize.query(
           `SELECT status_name from status  WHERE rid = :rid`,
           {
-            replacements: { rid: resource.status_id },
+            replacements: { rid: resource.status_rid },
             type: "SELECT",
           }
         );
@@ -1211,7 +1211,7 @@ class SchemaService {
         ...new Set(resources.map((r: any) => r.resource_type_rid)),
       ].filter(Boolean);
       const statusRids = [
-        ...new Set(resources.map((r: any) => r.status_id)),
+        ...new Set(resources.map((r: any) => r.status_rid)),
       ].filter(Boolean);
 
 
@@ -1298,7 +1298,7 @@ class SchemaService {
         region_name: regionMap[res.region_rid]?.state_name || null,
         city_name: cityMap[res.city_rid]?.city_name || null,
         resource_type_name: resourceTypeMap[res.resource_type_rid]?.resource_type_name || null,
-        status_name: statusMap[res.status_id]?.status_name || null,
+        status_name: statusMap[res.status_rid]?.status_name || null,
       }));
 
       return updatedResources;
@@ -1308,11 +1308,13 @@ class SchemaService {
   }
 
   async sortGeoData(resources: any[], order: string[][] = []): Promise<any[]> {
+    console.log("sortGeoData",order)
+     console.log(order)
     // Apply sorting if specified
     if (order && order.length > 0) {
       const [sortField, sortDirection] = order[0];
       const isAsc = sortDirection.toUpperCase() === "ASC";
-
+      console.log("sort field",sortField)
       resources = resources.sort((a, b) => {
         let compareValueA, compareValueB;
 
@@ -1325,7 +1327,7 @@ class SchemaService {
             compareValueA = a.region_name || null;
             compareValueB = b.region_name || null;
             break;
-          case "resource_type_rid":
+          case "resource_type":
             compareValueA = a.resource_type_name || null;
             compareValueB = b.resource_type_name || null;
             break;
@@ -1449,7 +1451,7 @@ class SchemaService {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
         `SELECT account.*, status.status_description AS status  FROM account
-          LEFT JOIN status ON account.status_id = status.rid
+          LEFT JOIN status ON account.status_rid = status.rid
           WHERE account.rid = :rid`,
         {
           replacements: { rid: accountId },
@@ -1567,7 +1569,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_rid,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1584,7 +1586,7 @@ class SchemaService {
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
         LEFT JOIN project_type pt on pc.rid = ps.type_rid 
-        LEFT JOIN status s on s.rid = ps.status_id 
+        LEFT JOIN status s on s.rid = ps.status_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1592,7 +1594,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,  pt.project_type_name,
-        ps.status_id,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_rid,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1612,7 +1614,7 @@ class SchemaService {
           LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid 
-           LEFT JOIN status s on s.rid = ps.status_id 
+           LEFT JOIN status s on s.rid = ps.status_rid 
           WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1689,7 +1691,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_rid, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1711,7 +1713,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.status_id, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_rid, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1853,7 +1855,7 @@ class SchemaService {
         pt.project_type_name,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_rid,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1869,7 +1871,7 @@ class SchemaService {
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
         LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_id 
+        LEFT JOIN status s on s.rid = ps.status_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1877,7 +1879,7 @@ class SchemaService {
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.status_id,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_rid,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -1896,7 +1898,7 @@ class SchemaService {
           LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
-          LEFT JOIN status s on s.rid = ps.status_id 
+          LEFT JOIN status s on s.rid = ps.status_rid 
           WHERE acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1967,7 +1969,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_id,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
+        ps.status_rid,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1983,13 +1985,13 @@ class SchemaService {
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
         LEFT JOIN project_type pt on pt.rid = ps.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_id  
+        LEFT JOIN status s on s.rid = ps.status_rid  
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid,pt.project_type_name, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.status_id,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.status_rid,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
         ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
@@ -2117,7 +2119,7 @@ class SchemaService {
           key_contact_name: keyContactDetails.key_contact_name || null,
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
-          status_id: keyContactDetails.status_id || "Active",
+          status_rid: keyContactDetails.status_rid || "Active",
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -2152,7 +2154,7 @@ class SchemaService {
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
-        status_id: keyContactDetails.status_id|| null,
+        status_rid: keyContactDetails.status_rid|| null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,
@@ -2253,8 +2255,8 @@ class SchemaService {
       project_client_group: `${tablePrefix}.project_client_group`,
       project_classification_rid: `${tablePrefix}.project_classification_rid`,
       project_classification_other: `${tablePrefix}.project_classification_other`,
-      status_id: `${tablePrefix}.status_id`,
-      project_type_rid: `${tablePrefix}.project_type_rid`,
+      status_rid: `${tablePrefix}.status_rid`,
+      project_type: `pt.project_type_name`,
       project_name: `${tablePrefix}.project_name`,
       project_startdate: `${tablePrefix}.project_startdate`,
       project_enddate: `${tablePrefix}.project_enddate`,
@@ -2290,7 +2292,7 @@ class SchemaService {
       "modified_datetime",
     ];
     const enumFields = [
-      "status_id",
+      "status_rid",
       `${tablePrefix}.project_type_rid`,
       // "fiscal_year",
       "st.rid",
@@ -2322,7 +2324,7 @@ class SchemaService {
         "project_client_group",
         "project_group",
         "classification_name",
-        "status_id",
+        "status_rid",
         "project_point_of_contact",
         "technical_point_of_contact",
         "r_number",
@@ -2353,7 +2355,7 @@ class SchemaService {
         comments: `${tablePrefix}.comments`,
         region_name: "st.state_name",
         industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
-        status_id: `CAST(${tablePrefix}.status_id AS TEXT)`,
+        status_rid: `CAST(${tablePrefix}.status_rid AS TEXT)`,
         project_type_name: `CAST(pt.project_type_name AS TEXT)`,
         fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
         is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
@@ -2888,11 +2890,11 @@ class SchemaService {
 
   async insertProjectTypeAndStatus(project: any, mainDdSequilze: Sequelize) {
     try {
-      if (project.status_id) {
+      if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
           `SELECT status_name FROM status WHERE rid = :id`,
           {
-            replacements: { id: project.status_id },
+            replacements: { id: project.status_rid },
             type: "SELECT",
           }
         );

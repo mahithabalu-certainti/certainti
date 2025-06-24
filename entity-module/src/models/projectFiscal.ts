@@ -30,7 +30,7 @@ export interface ProjectFiscalAttributes {
   expiry_duration?: number | null;
   auto_access_rd?: boolean;
 
-  status_id?: string;
+  status_rid?: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
 
@@ -169,7 +169,7 @@ export class ProjectFiscal
   public expiry_duration?: number | null;
   public auto_access_rd?: boolean;
 
-  public status_id?: string;
+  public status_rid?: string;
   public project_startdate?: Date | null;
   public project_enddate?: Date | null;
 
@@ -366,7 +366,7 @@ export class ProjectFiscal
           type: DataTypes.BOOLEAN,
           allowNull: true,
         },
-        status_id: {
+        status_rid: {
           type: DataTypes.STRING,
           allowNull: false,
         },

@@ -31,7 +31,7 @@ interface ResourceCostAttributes {
   resource_cost?: number;
   currency_rid?: string;
   fiscal_year: number;
-  status_id?: string;
+  status_rid?: string;
   comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -74,7 +74,7 @@ export class ResourceCost
   net_resource_cost!: number;
   resource_cost?: number;
   currency_rid?: string;
-  status_id?: string;
+  status_rid?: string;
   comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -245,7 +245,7 @@ export class ResourceCost
           type: DataTypes.STRING(50),
           allowNull: true,
         },
-        status_id: {
+        status_rid: {
           type: DataTypes.STRING(255),
           defaultValue: "active",
         },

@@ -1250,7 +1250,7 @@ class ProjectIngestionService {
             "max_ai_interaction",
             "expiry_duration",
             "auto_access_rd",
-            "status_id",
+            "status_rid",
             "project_startdate",
             "project_enddate",
             "qre_final",
@@ -1430,8 +1430,8 @@ class ProjectIngestionService {
         if (project.project_type_rid) {
           allProjectTypeIds.add(project.project_type_rid);
         }
-        if (project.status_id) {
-          allStatusIds.add(project.status_id);
+        if (project.status_rid) {
+          allStatusIds.add(project.status_rid);
         }
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1442,8 +1442,8 @@ class ProjectIngestionService {
             if (child.project_type_rid) {
               allProjectTypeIds.add(child.project_type_rid);
             }
-            if (child.status_id) {
-              allStatusIds.add(child.status_id);
+            if (child.status_rid) {
+              allStatusIds.add(child.status_rid);
             }
           }
         }
@@ -1517,7 +1517,7 @@ class ProjectIngestionService {
                 ?.classification_name || null,
           is_other_classification: !!project.project_classification_other,
           project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
-          status_name:statusMap[project.status_id]?.status_name
+          status_name:statusMap[project.status_rid]?.status_name
         };
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1530,7 +1530,7 @@ class ProjectIngestionService {
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
               project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
-              status_name:statusMap[project.status_id]?.status_name
+              status_name:statusMap[project.status_rid]?.status_name
             })
           );
         }

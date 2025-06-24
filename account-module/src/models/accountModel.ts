@@ -22,7 +22,7 @@ interface AccountAttributes {
   currency_rid?: string;
   industry_rid: string;
   industry_name_other?: string;
-  status_id: string;
+  status_rid: string;
   annual_revenue?: number | null;
   is_file_drop_enabled?: boolean;
   file_drop_medium?: string;
@@ -64,7 +64,7 @@ export class Account
   public currency_rid?: string;
   public industry_rid!: string;
   public industry_name_other?: string;
-  public status_id!: string;
+  public status_rid!: string;
   public annual_revenue?: number | null;
   public is_file_drop_enabled?: boolean;
   public file_drop_medium?: string;
@@ -127,7 +127,7 @@ export class Account
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
-        status_id: {
+        status_rid: {
           type: DataTypes.STRING(20),
           references: {
             model: "status",
@@ -256,7 +256,7 @@ export class Account
       as: "region_details",
     });
     Account.belongsTo(Status, {
-      foreignKey: "status_id",
+      foreignKey: "status_rid",
       as: "status",
     });
 

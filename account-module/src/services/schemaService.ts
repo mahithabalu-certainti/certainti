@@ -195,7 +195,7 @@ class SchemaService {
       project_client_group VARCHAR(255),
       project_group VARCHAR(255),
 
-      status_id VARCHAR(50) NOT NULL,
+      status_rid VARCHAR(50) NOT NULL,
 
       country_rid VARCHAR(50),
       region_rid VARCHAR(50),
@@ -288,7 +288,7 @@ class SchemaService {
       max_ai_interaction INTEGER NOT NULL,
       expiry_duration INTEGER,
       auto_access_rd BOOLEAN,
-      status_id VARCHAR(50) NOT NULL,
+      status_rid VARCHAR(50) NOT NULL,
       project_startdate TIMESTAMP,
       project_enddate TIMESTAMP,
 
@@ -421,7 +421,7 @@ class SchemaService {
         resource_role VARCHAR(100),
         total_hours_pro_res DOUBLE PRECISION,
         total_cost_pro_res NUMERIC(18, 2),
-        status_id VARCHAR(50),
+        status_rid VARCHAR(50),
         account_rid varchar(50),
         currency_rid varchar(50),
         description TEXT,
@@ -695,7 +695,7 @@ class SchemaService {
       resource_designation character varying(100),
       resource_total_experience numeric(4,2),
       resource_total_experience_organization numeric(4,2),
-      status_id VARCHAR(50),
+      status_rid VARCHAR(50),
       comments text,
       CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
      `);
@@ -824,7 +824,7 @@ class SchemaService {
          end_date date,
          effort_in_hrs numeric(18,2),
          currency_rid varchar(50),
-         status_id varchar(50),
+         status_rid varchar(50),
          comments text,
          deductions numeric(18,2),
          insurance numeric(18,2),
@@ -921,7 +921,7 @@ class SchemaService {
     skill_type_others varchar(255),
     skill_subtype_others varchar(255),
     resource_code varchar(255) NOT NULL,
-    status_id varchar(50),
+    status_rid varchar(50),
     skill_type_rid varchar(255) NOT NULL,
     skill_subtype_rid varchar(255) NOT NULL,
     skill_details text,
@@ -1280,7 +1280,7 @@ class SchemaService {
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
       const statusIds = [
-        ...new Set(keyContacts.map((r: any) => r.status_id)),
+        ...new Set(keyContacts.map((r: any) => r.status_rid)),
       ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
@@ -1316,7 +1316,7 @@ class SchemaService {
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
-        status_name: statusMap[kc.status_id] || null,
+        status_name: statusMap[kc.status_rid] || null,
       }));
 
       return enrichedKeyContacts;
@@ -1358,7 +1358,7 @@ class SchemaService {
               key_contact_name = :key_contact_name,
               key_contact_email = :key_contact_email,
               key_contact_role = :key_contact_role_rid,
-              status_id = :status_id,
+              status_rid = :status_rid,
               is_primary_contact = :is_primary_contact,
               include_in_communication = :include_in_communication,
               interaction_cc_recipient = :interaction_cc_recipient,
@@ -1374,7 +1374,7 @@ class SchemaService {
             key_contact_name: keyContactDetails.key_contact_name,
             key_contact_email: keyContactDetails.key_contact_email,
             key_contact_role_rid: keyContactDetails.key_contact_role,
-            status_id: keyContactDetails.status_id,
+            status_rid: keyContactDetails.status_rid,
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
@@ -1401,12 +1401,12 @@ class SchemaService {
       await sequelize.query(
         `INSERT INTO "${schemaName}"."key_contact_details" (
          entity_rid, key_contact_name, 
-          key_contact_email, key_contact_role, status_id, 
+          key_contact_email, key_contact_role, status_rid, 
           is_primary_contact, include_in_communication, interaction_cc_recipient,
           created_by, modified_by, entity_type
         ) VALUES (
           :account_rid, :key_contact_name, 
-          :key_contact_email, :key_contact_role_rid, :status_id, 
+          :key_contact_email, :key_contact_role_rid, :status_rid, 
           :is_primary_contact, :include_in_communication, :interaction_cc_recipient,
           :created_by, :modified_by, 'Account'
         );`,
@@ -1416,7 +1416,7 @@ class SchemaService {
             key_contact_name: keyContactDetails.key_contact_name,
             key_contact_email: keyContactDetails.key_contact_email,
             key_contact_role_rid: keyContactDetails.key_contact_role,
-            status_id: keyContactDetails.status_id,
+            status_rid: keyContactDetails.status_rid,
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
@@ -1450,7 +1450,7 @@ class SchemaService {
           is_primary_contact BOOLEAN,
           include_in_communication BOOLEAN,
           interaction_cc_recipient BOOLEAN,
-          status_id VARCHAR(50)
+          status_rid VARCHAR(50)
         );
       `);
     } catch (err) {

@@ -23,7 +23,7 @@ interface UserAttributes {
   profile_rid?: string;
   last_login_datetime?: Date;
   login_attempt_failure_count?: number;
-  status_id?: string;
+  status_rid?: string;
   phone?: string;
   created_by?: string;
   modified_by?: string;
@@ -59,7 +59,7 @@ export class User
   public profile_rid?: string;
   public last_login_datetime?: Date;
   public login_attempt_failure_count?: number;
-  public status_id?: string;
+  public status_rid?: string;
   public phone?: string;
   public created_by?: string;
   public modified_by?: string;
@@ -177,7 +177,7 @@ export class User
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        status_id: {
+        status_rid: {
           type: DataTypes.STRING,
            references: {
             model: "status",
@@ -215,7 +215,7 @@ export class User
       as: "business_teams",
     });
      User.belongsTo(Status, {
-      foreignKey: "status_id",
+      foreignKey: "status_rid",
       as: "status",
     });
     

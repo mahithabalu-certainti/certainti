@@ -15,7 +15,7 @@ export interface ICreateResource {
   resource_designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  status_id?: string | null;
+  status_rid?: string | null;
   created_by?: string | null;
   modified_by?: string | null;
   account_id: string;
@@ -40,7 +40,7 @@ export interface IUpdateResource {
   resource_designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  status_id?: string;
+  status_rid?: string;
   modified_by ?: string | null;
   comments?: string;
 }
@@ -108,7 +108,7 @@ export interface IUpdateResourceCost {
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
-  status_id?: string;
+  status_rid?: string;
  // status_id?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
   accountNumber: string;
   user_preference?: string | null;
@@ -170,7 +170,7 @@ export interface ICreateProject {
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  status_id: string;
+  status_rid: string;
   fiscal_year: number;
   country_rid?: string | null;
   region_rid?: string | null;
@@ -228,7 +228,7 @@ export interface IUpdateProject {
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  status_id: string;
+  status_rid: string;
   fiscal_year: number;
   country_rid?: string | null;
   region_rid?: string | null;
@@ -273,7 +273,7 @@ export interface IKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status_id: string;
+  status_rid: string;
 }
 
 export interface IUpdateKeyContactDetail {
@@ -283,5 +283,5 @@ export interface IUpdateKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status_id: string;
+  status_rid: string;
 }

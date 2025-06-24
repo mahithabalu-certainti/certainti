@@ -364,7 +364,7 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-           status_id: { 
+           status_rid: { 
             [Op.in]: [
               statusMap?.get('Active'), 
               statusMap?.get('Anomaly'), 
@@ -394,7 +394,7 @@ class ResourceCostService {
         ) {
           status = "Anomaly";
         }
-        const status_id = statusMap?.get(status);
+        const status_rid = statusMap?.get(status);
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
@@ -412,7 +412,7 @@ class ResourceCostService {
           currency_rid: currency_rid || undefined,
           fiscal_year,
           comments,
-          status_id,
+          status_rid,
           created_datetime: new Date(),
           created_by: userId
         });
@@ -551,7 +551,7 @@ class ResourceCostService {
         rid,
         fiscal_year,
         comments,
-        status_id,
+        status_rid,
       } = resourceCostData;
 
       let { accountNumber: accountNumberFetched, accountId } =
@@ -594,7 +594,7 @@ class ResourceCostService {
         };
       }
 
-      if(originalResourceCost.status_id === statusMap?.get("Duplicate")){
+      if(originalResourceCost.status_rid === statusMap?.get("Duplicate")){
          return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -618,7 +618,7 @@ class ResourceCostService {
           fiscal_year: originalResourceCost.fiscal_year,
           comments: originalResourceCost.comments,
           currency_rid: originalResourceCost.currency_rid,
-          status_id: statusMap?.get("Duplicate")
+          status_rid: statusMap?.get("Duplicate")
         }
       });
 
@@ -687,7 +687,7 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-            status_id: { 
+            status_rid: { 
             [Op.in]: [
               statusMap?.get('Active'), 
               statusMap?.get('Anomaly'), 
@@ -715,7 +715,7 @@ class ResourceCostService {
         ) {
           resourceCostStatus = "Anomaly";
         }
-        const status_id = statusMap?.get(resourceCostStatus);
+        const status_rid = statusMap?.get(resourceCostStatus);
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
@@ -730,7 +730,7 @@ class ResourceCostService {
             fiscal_year,
             comments,
             rid,
-            status_id,
+            status_rid,
             modified_datetime: new Date(),
             modified_by: userId,
           },
@@ -1008,9 +1008,9 @@ class ResourceCostService {
         );
 
          const [statusResult] = await sequelize.query(
-          `SELECT resource_status_name as status_name FROM public.resource_status WHERE rid = :status_id`,
+          `SELECT resource_status_name as status_name FROM public.resource_status WHERE rid = :status_rid`,
           {
-            replacements: { status_id: costData.status_id },
+            replacements: { status_rid: costData.status_rid },
             type: "SELECT",
           }
         );
@@ -1082,12 +1082,12 @@ class ResourceCostService {
           resourceInfo.resource_enddate = moment(
             resourceInfo.resource_enddate
           ).format("YYYY-MM-DD") as any;
-           if (resourceInfo.status_id) {
+           if (resourceInfo.status_rid) {
              const sequelize = await this.getMainDbSequelize();
             const status = await sequelize.query(
               `SELECT status_name FROM status WHERE rid = :rid`,
               {
-                replacements: { rid: resourceInfo.status_id },
+                replacements: { rid: resourceInfo.status_rid },
                 type: "SELECT",
                 plain: true,
               }
@@ -1193,7 +1193,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     }
      const updateStatus = await ResourceCost.update(
       {
-        status_id: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("Inactive"),
+        status_rid: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("Inactive"),
       },
       {
         where: {

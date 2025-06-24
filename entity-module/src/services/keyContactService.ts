@@ -43,7 +43,7 @@ export class KeyContactService {
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
       const statusIds = [
-        ...new Set(keyContacts.map((r: any) => r.status_id)),
+        ...new Set(keyContacts.map((r: any) => r.status_rid)),
       ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
@@ -79,7 +79,7 @@ export class KeyContactService {
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
-        status_name: statusMap[kc.status_id] || null,
+        status_name: statusMap[kc.status_rid] || null,
       }));
 
       const technicalContact = enrichedKeyContacts.find(
@@ -140,7 +140,7 @@ export class KeyContactService {
           key_contact_name: keyContactDetails.key_contact_name || null,
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
-          status_id: keyContactDetails.status_id,
+          status_rid: keyContactDetails.status_rid,
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -175,7 +175,7 @@ export class KeyContactService {
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
-        status_id: keyContactDetails.status_id || null,
+        status_rid: keyContactDetails.status_rid || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,

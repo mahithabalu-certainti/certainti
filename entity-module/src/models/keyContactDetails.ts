@@ -12,7 +12,7 @@ export interface KeyContactDetailsAttributes {
   key_contact_role: string | null;
   is_primary_contact: boolean;
   include_in_communication?: boolean | null;
-  status_id: string;
+  status_rid: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -38,7 +38,7 @@ export class KeyContact
   public key_contact_role!: string | null;
   public is_primary_contact!: boolean;
   public include_in_communication?: boolean | null;
-  public status_id!:string;
+  public status_rid!:string;
   public created_by?: string;
   public modified_by?: string;
   public created_datetime?: Date;
@@ -103,7 +103,7 @@ export class KeyContact
           type: DataTypes.BOOLEAN,
           allowNull: true,
         },
-        status_id: {
+        status_rid: {
           type: DataTypes.STRING(50),
           allowNull: true
         },

@@ -365,7 +365,7 @@ const createResourcesSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  status_id: Joi.string().optional(),
+  status_rid: Joi.string().optional(),
   created_by: Joi.string()
     .pattern(uuidRegex, "valid UUID")
     .optional(),
@@ -558,7 +558,7 @@ const updateResourceSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  status_id: Joi.string().optional(),
+  status_rid: Joi.string().optional(),
   comments: Joi.string().optional().allow("").allow(null),
 });
 
@@ -790,7 +790,7 @@ const updateResourceSkillSchema = Joi.object({
   }),
   skill_details: Joi.string().optional().allow(null).allow(""),
   comments: Joi.string().optional().allow(null).allow(""),
-  status_id: Joi.string().max(255).optional(),
+  status_rid: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -914,7 +914,7 @@ const updateResourceCostSchema = Joi.object({
   .optional()
   .allow(null)
   .allow(""),
-  status_id: Joi.string().max(255).optional(),
+  status_rid: Joi.string().max(255).optional(),
   user_preference: Joi.string().optional().allow(null).allow(""),
   fiscal_year: Joi.number()
    .integer()
@@ -1099,7 +1099,7 @@ const resourceCostSchema = Joi.object({
        "any.required": "Fiscal year is required",
     }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  status_id: Joi.string().max(255),
+  status_rid: Joi.string().max(255),
   comments: Joi.string().optional().allow(null).allow(""),
   user_preference: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
@@ -1171,7 +1171,7 @@ const createProjectSchema = Joi.object({
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
-  status_id: Joi.string().required(),
+  status_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1409,7 +1409,7 @@ const createProjectSchema = Joi.object({
       key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
       include_in_communication: Joi.boolean().optional().allow(null),
-      status_id: Joi.string().optional().allow(null),
+      status_rid: Joi.string().optional().allow(null),
       action_type: Joi.string().valid('add').required()
     })
   )
@@ -1456,7 +1456,7 @@ const updateProjectSchema = Joi.object({
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
-  status_id: Joi.string().required(),
+  status_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1698,7 +1698,7 @@ const updateProjectSchema = Joi.object({
         key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
         include_in_communication: Joi.boolean().optional().allow(null),
-        status_id: Joi.string().optional().allow(null)
+        status_rid: Joi.string().optional().allow(null)
       })
     )
     .optional(),

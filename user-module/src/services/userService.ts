@@ -68,7 +68,7 @@ class UserService {
         last_name,
         email,
         profile_id,
-        status_id,
+        status_rid,
         street,
         city_rid,
         region_rid,
@@ -91,7 +91,7 @@ class UserService {
         last_name,
         email,
         profile_rid: profile_id,
-        status_id,
+        status_rid,
         street,
         city_rid,
         region_rid,
@@ -149,7 +149,7 @@ class UserService {
         first_name,
         last_name,
         profile_id,
-        status_id,
+        status_rid,
         street,
         city_rid,
         region_rid,
@@ -180,7 +180,7 @@ class UserService {
           first_name,
           last_name,
           profile_rid: profile_id,
-          status_id,
+          status_rid,
           street,
           city_rid,
           region_rid,
@@ -977,7 +977,7 @@ async getAllUserPermission(userId: string, profileId: string) {
    
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status_id", "first_name","created_datetime","modified_datetime"],
+      attributes: ["rid", "email", "status_rid", "first_name","created_datetime","modified_datetime"],
       limit,
       offset,
       order,
@@ -1193,9 +1193,9 @@ async getAllUserPermission(userId: string, profileId: string) {
    
 
       if (filters.status) {
-       whereClause["$status$"] = this.getMultiValueFilter(filters.status, 'status');
+       whereClause["$status.status_name$"] = this.getMultiValueFilter(filters.status, 'status.status_name');
       if (Array.isArray(filters.profile)) {
-        whereClause["$status$"] = {
+        whereClause["$status.status_name$"] = {
           [Op.in]: filters.status
         };
       }
@@ -1484,7 +1484,7 @@ const rawResult = users || [];
           ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Status": basicUserInfo.status_name,
+          "Status": basicUserInfo.status?.status_name,
         };
       });
 
@@ -1518,13 +1518,19 @@ const rawResult = users || [];
           [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
           ["first_name", "asc"]
         );
-    } else {
+     } else if (sortBy === "$status.status_name$") {
+        order.push(
+          [{ model: Status, as: "status" }, "status_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } 
+    else {
         order.push([sortBy, sortOrder]);
     }
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status_id", "first_name","created_datetime","modified_datetime"],
+      attributes: ["rid", "email", "status_rid", "first_name","created_datetime","modified_datetime"],
       order,
       include: [
         {

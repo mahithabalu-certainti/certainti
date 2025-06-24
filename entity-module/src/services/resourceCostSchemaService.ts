@@ -416,14 +416,7 @@ class ResourceCostSchemaService {
         }));
      
       // Handle sorting by status name
-        if (sortBy === "status_id") {
-            // Add status name to each result
-            results.forEach((rc: any) => {
-                rc.status_name = rc.status_id 
-                    ? statusMap.get(rc.status_id) 
-                    : "";
-            });
-
+        if (sortBy === "status_name") {
             // Sort in memory
             results.sort((a: any, b: any) => {
                 const aStatus = a.status_name || "";
@@ -628,7 +621,7 @@ class ResourceCostSchemaService {
         }));
      
       // Handle sorting by status name
-        if (sortBy === "status_id") {
+        if (sortBy === "status_name") {
             // Sort in memory
             results.sort((a: any, b: any) => {
                 const aStatus = a.status_name || "";
@@ -925,7 +918,7 @@ class ResourceCostSchemaService {
       "resource_orgname",
       "resource_role",
       "resource_designation",
-      "status_id",
+      "status_name",
       "comments",
     ];
     if (!validSortColumns.includes(sortBy)) {
@@ -947,7 +940,7 @@ class ResourceCostSchemaService {
 
     // Define field types for proper filter handling
     const alphanumericFields = ["resource_code"];
-    const multiValueFields = ["status_id"]
+    const multiValueFields = ["status_rid"]
     const numericFields = [
       // "annual",
       // "monthly",
@@ -1321,8 +1314,8 @@ async assignResourceStatusandType(
   statusMap: Map<string, string>,
   resourceTypeMap: Map<string, string>,
 ): Promise<void> {
-  if (result.status_id) {
-    result.status_name = statusMap.get(result.status_id) || "Unknown";
+  if (result.status_rid) {
+    result.status_name = statusMap.get(result.status_rid) || "Unknown";
   }
   if (result.resource_type_rid) {
     result.resource_type_name = resourceTypeMap.get(result.resource_type_rid) || "Unknown";

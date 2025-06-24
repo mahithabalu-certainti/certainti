@@ -30,7 +30,7 @@ export interface ProjectAttributes {
   project_client_group?: string | null;
   project_group?: string | null;
 
-  status_id: string;
+  status_rid: string;
 
   country_rid?: string | null;
   region_rid?: string | null;
@@ -100,7 +100,7 @@ export class Project
   public project_client_group?: string | null;
   public project_group?: string | null;
 
-  public status_id!:string;
+  public status_rid!:string;
 
   public country_rid?: string | null;
   public region_rid?: string | null;
@@ -212,7 +212,7 @@ export class Project
           type: DataTypes.STRING(255),
           allowNull: true,
         },
-        status_id: {
+        status_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },
