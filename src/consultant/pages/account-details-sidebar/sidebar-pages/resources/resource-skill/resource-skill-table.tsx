@@ -36,7 +36,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   skillOrderBy,
   setSkillOrderBy,
   isResourceSkillEditEnable,
-  isResourceSkillDeleteEnable,
   refreshSkillTrigger,
   setCount,
 }) => {
@@ -101,7 +100,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      hide: !isResourceSkillDeleteEnable,
+      // hide: !isResourceSkillDeleteEnable,
+      hide: true,
     },
   ];
 

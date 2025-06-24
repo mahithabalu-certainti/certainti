@@ -77,20 +77,6 @@ const ListTable = <T extends RowData>({
     }
   };
 
-  function extractTextFromReactNode(node: React.ReactNode): string {
-    if (typeof node === 'string' || typeof node === 'number') {
-      return String(node);
-    }
-    if (React.isValidElement(node)) {
-      // If the element has children, recursively extract text
-      return extractTextFromReactNode(node.props.children);
-    }
-    if (Array.isArray(node)) {
-      return node.map(extractTextFromReactNode).join('');
-    }
-    return '-';
-  }
-
   const handleSortChange = (property: string, direction: SortOrder) => {
     onSort?.(property, direction);
   };
@@ -373,27 +359,6 @@ const ListTable = <T extends RowData>({
                           ? cellValue
                           : '-';
 
-                      // Ensure text is always a string for copy
-                      let stringValue: string;
-                      if (
-                        typeof displayValue === 'string' ||
-                        typeof displayValue === 'number'
-                      ) {
-                        stringValue = String(displayValue);
-                      } else if (
-                        React.isValidElement(displayValue) ||
-                        Array.isArray(displayValue)
-                      ) {
-                        stringValue = extractTextFromReactNode(displayValue);
-                      } else if (typeof displayValue === 'object') {
-                        try {
-                          stringValue = JSON.stringify(displayValue);
-                        } catch {
-                          stringValue = '[object]';
-                        }
-                      } else {
-                        stringValue = String(displayValue);
-                      }
                       return (
                         <TableCell
                           key={`${rowId}-${column.id}`}
@@ -412,10 +377,7 @@ const ListTable = <T extends RowData>({
                               : 'group-hover:!text-[#1755E7]')
                           } cursor-context-menu`}
                         >
-                          <TruncateWithTooltip
-                            text={stringValue}
-                            maxWidth={Number(column.width)}
-                          >
+                          <TruncateWithTooltip maxWidth={Number(column.width)}>
                             {displayValue as React.ReactNode}
                           </TruncateWithTooltip>
                         </TableCell>

@@ -42,7 +42,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   setCostOrder,
   costorderBy,
   setCostorderBy,
-  isResourceCostDeleteEnable,
   isResourceCostEditEnable,
   refreshCostTrigger,
   setCount,
@@ -111,7 +110,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      hide: !isResourceCostDeleteEnable,
+      // hide: !isResourceCostDeleteEnable,
+      hide: true,
     },
   ];
 

@@ -809,8 +809,8 @@ const ResourceForm: React.FC = () => {
           <div>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
-                ? `Account > ${accountData?.account_name}`
-                : `Account > ${costAndSKillAccountInfo?.account_name} > ${resource?.data?.resourceDetails?.r_number || ''}`}
+                ? `Account > ${accountData?.account_name}  ${state?.resource?.r_number ? `> ${state?.resource?.r_number}` : ''}`
+                : `Account > ${costAndSKillAccountInfo?.account_name} > ${resource?.data?.resourceDetails?.r_number || ''}  ${state?.costInfo?.resourceCostNumber ? `> ${state?.costInfo?.resourceCostNumber}` : ''} ${state?.skillInfo?.resourceNumber ? `>${state?.skillInfo?.resourceNumber}` : ''}`}
             </div>
             {!isEditView && (
               <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
