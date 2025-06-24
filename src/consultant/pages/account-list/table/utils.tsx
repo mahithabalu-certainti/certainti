@@ -6,16 +6,18 @@ import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
 import { costDisplay } from '../../../../common-utils';
 
-// const formatNumberWithCommas = (num: number | string): string => {
-//   if (num) {
-//     if (typeof num === 'string') {
-//       num = parseFloat(num);
-//     }
-//     return num.toLocaleString('en-US');
-//   }
-//   return '-';
-// };
-
+const formatNumberWithCommas = (num: number | string): string => {
+  if (num !== null && num !== undefined && num !== '') {
+    const parsed = typeof num === 'string' ? parseFloat(num) : num;
+    if (!isNaN(parsed)) {
+      return parsed.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+  }
+  return '-';
+};
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
   openRows: Set<string>;
@@ -230,10 +232,10 @@ export const renderRows = ({
             }}
           >
             <TruncateWithTooltip
-              text={String(account.totalProjectHours)}
+              text={formatNumberWithCommas(account.totalProjectHours)}
               maxWidth={180}
             >
-              {account.totalProjectHours}
+              {formatNumberWithCommas(account.totalProjectHours)}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
@@ -552,10 +554,10 @@ export const renderChildRows = ({
               }}
             >
               <TruncateWithTooltip
-                text={String(account.totalProjectHours)}
+                text={formatNumberWithCommas(account.totalProjectHours)}
                 maxWidth={180}
               >
-                {account.totalProjectHours}
+                {formatNumberWithCommas(account.totalProjectHours)}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell
@@ -784,7 +786,7 @@ export const renderChildRows = ({
                       textAlign: 'right',
                     }}
                   >
-                    {project.total_project_hours || '-'}
+                    {formatNumberWithCommas(project.total_project_hours)}
                   </TableCell>
                   <TableCell
                     sx={{

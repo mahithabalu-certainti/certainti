@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { KeyContacts, KeyContactsUpdate, SelectOption } from '../../types';
 import { NewProjectData } from '../../types/project';
-import { othersIndustryId } from '../account-create/utils';
 const parseNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return isNaN(parsed) || value === '' ? null : parsed;
@@ -125,7 +124,8 @@ export const transformFormData = (
   isEdit: boolean,
   memoizedStatus: SelectOption[],
   defaultActiveValue: string,
-  keyContactsList?: KeyContacts[]
+  keyContactsList?: KeyContacts[],
+  showOthersField?: boolean
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
     account_id: formData.account_id,
@@ -133,8 +133,7 @@ export const transformFormData = (
     project_code: formData.project_code,
     project_name: formData.project_name,
     industry_rid: formData.industry_rid || null,
-    industry_name:
-      othersIndustryId === formData.industry_rid ? formData.industry_name : '',
+    industry_name: showOthersField ? formData.industry_name : '',
     program_name: formData.program_name || '',
     project_startdate: formData.project_startdate || null,
     project_enddate: formData.project_enddate || null,

@@ -236,6 +236,7 @@ export interface NewAccountData extends AccountFieldsTypes, AccountById {
   key_contact_status: Status;
   key_contacts: KeyContacts[];
   organisation_name: string;
+  showOthersField?: boolean;
 }
 
 export interface updatedAccountFormData {
