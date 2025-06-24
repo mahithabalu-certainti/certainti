@@ -21,7 +21,7 @@ const dbPort = process.env.MAIN_PG_DB_PORT
   ? parseInt(process.env.MAIN_PG_DB_PORT)
   : 5432;
 const env = process.env.NODE_ENV || NODE_ENV.DEV;
-console.log(env)
+
 const sslOptions =
   env === NODE_ENV.PROD
     ? {
@@ -42,7 +42,7 @@ async function getAzureSecrets() {
       getSecret(process.env.MAINDB_PASSWORD as string),
       getSecret(process.env.MAINDB_ENDPOINT as string),
     ]);
-    console.log("DB_NAME",secrets[0])
+
     return {
       DB_NAME: secrets[0],
       DB_USER: secrets[1],
@@ -57,13 +57,12 @@ async function getAzureSecrets() {
 }
 
 export async function initSequelize() {
-  console.log("init seq called")
   try {
     if (sequelize) {
       return sequelize;
     }
     const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
-    console.log(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
+
     if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
       throw new Error("One or more required database secrets are missing.");
     }

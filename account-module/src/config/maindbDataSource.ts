@@ -92,7 +92,7 @@ export async function initSequelize() {
     console.log("Database connection established successfully.");
     return sequelize;
   } catch (error) {
-    console.error("Unable to connect to the database main:", error);
+    console.error("Unable to connect to the database:", error);
     process.exit(1);
   }
 }
