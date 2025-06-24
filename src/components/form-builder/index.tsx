@@ -87,7 +87,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     isOpen: boolean;
     message: string;
     onConfirm: () => void;
-  }>({ isOpen: false, message: '', onConfirm: () => {} });
+    confirmLabel?: string;
+  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -446,7 +447,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           if (isCCRecipient && otherIncludeExists) {
             message =
-              "This contact is already marked as 'Interaction CC Recipient', and another active contact is already marked as 'Interaction Recipient'. This contact will be marked as the only 'Interaction Recipient' and CC Recipient will be removed. Do you want to continue?";
+              'Only one active contact can be set as Interaction Recipient. Would you like to proceed?';
+            // "This contact is already marked as 'Interaction CC Recipient', and another active contact is already marked as 'Interaction Recipient'. This contact will be marked as the only 'Interaction Recipient' and CC Recipient will be removed. Do you want to continue?";
             updatedData[ccRecipientField] = 'no';
 
             // Clear others' Interaction Recipient
@@ -465,7 +467,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             });
           } else if (isCCRecipient) {
             message =
-              "This contact is already marked as 'Interaction CC Recipient'. A contact cannot be both Interaction Recipient and CC Recipient. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
+              "'Interaction CC Recipient' must be 'No' when a contact is marked as 'Interaction Recipient'.";
+            // "This contact is already marked as 'Interaction CC Recipient'. A contact cannot be both Interaction Recipient and CC Recipient. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
             updatedData[ccRecipientField] = 'no';
           } else if (otherIncludeExists) {
             message =
@@ -527,6 +530,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 [field.name]: 'no',
               }));
             },
+            confirmLabel: 'Okay',
           });
           return; // Prevent changing to 'yes'
         }
@@ -740,7 +744,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               "This contact is marked as both 'Interaction Recipient' and 'Interaction CC Recipient', and also a Primary Contact with the same role exists. Only one of each is allowed. 'Interaction CC Recipient' will be reset to 'No'. Do you want to proceed?";
           } else if (ccConflict) {
             combinedMessage =
-              "This contact is already marked as both 'Interaction Recipient' and 'Interaction CC Recipient'. A contact cannot be both. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
+              "'Interaction CC Recipient' must be 'No' when a contact is marked as 'Interaction Recipient'.";
+            // "This contact is already marked as both 'Interaction Recipient' and 'Interaction CC Recipient'. A contact cannot be both. 'Interaction CC Recipient' will be set to 'No'. Do you want to continue?";
           } else if (primaryConflict && commConflict) {
             combinedMessage =
               'A Primary Contact with the same role and an active Interaction Recipient already exists. Would you like to proceed?';
@@ -2521,6 +2526,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         onCancel={() =>
           setConfirmationState((prev) => ({ ...prev, isOpen: false }))
         }
+        confirmLabel={confirmationState.confirmLabel}
       />
     </>
   );

@@ -14,7 +14,7 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Store in Parent', value: 'store_in_parent' },
 ];
 
-export const othersIndustryId = '107e689d-35d8-49e5-a444-08db0c59167b';
+export const othersIndustryId = 'D001-1bcec035-e59f-4f49-b1e3-3f17b0768665';
 export const othersClassificationId = 'a6b7b3e5-1d4f-4e28-b15f-2fa49b91e5a8';
 
 export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
@@ -113,7 +113,7 @@ export const transformFormData = (
   isEdit: boolean,
   account_rid?: string,
   keyContactsList?: KeyContacts[],
-  logoAction?: 'update' | 'delete' | ''
+  logoAction?: 'upload' | 'delete' | ''
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,

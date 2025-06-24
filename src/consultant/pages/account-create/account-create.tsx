@@ -298,7 +298,7 @@ export const AccountForm: React.FC = () => {
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
   const submitData = (formValues: Partial<AccountFormData>) => {
-    let logoAction: 'update' | 'delete' | '' = '';
+    let logoAction: 'upload' | 'delete' | '' = '';
 
     if (isEditView) {
       if (!logo && logoUrl) {
@@ -306,7 +306,7 @@ export const AccountForm: React.FC = () => {
         logoAction = 'delete';
       } else if (logo instanceof File) {
         // New image uploaded
-        logoAction = 'update';
+        logoAction = 'upload';
       } else {
         // No change to logo
         logoAction = '';
