@@ -6,6 +6,7 @@ interface ConfirmationPopupProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
 }
 
 const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
@@ -13,6 +14,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
   message,
   onConfirm,
   onCancel,
+  confirmLabel,
 }) => {
   if (!isOpen) return null;
 
@@ -38,7 +40,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             }}
           />
           <TextButton
-            label='Confirm'
+            label={confirmLabel ? confirmLabel : 'Confirm'}
             color='inherit'
             onClick={onConfirm}
             sx={{

@@ -324,7 +324,7 @@ export const AccountForm: React.FC = () => {
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
   const submitData = (formValues: Partial<AccountFormData>) => {
-    let logoAction: 'update' | 'delete' | '' = '';
+    let logoAction: 'upload' | 'delete' | '' = '';
 
     if (isEditView) {
       if (!logo && logoUrl) {
@@ -332,7 +332,7 @@ export const AccountForm: React.FC = () => {
         logoAction = 'delete';
       } else if (logo instanceof File) {
         // New image uploaded
-        logoAction = 'update';
+        logoAction = 'upload';
       } else {
         // No change to logo
         logoAction = '';
@@ -345,7 +345,8 @@ export const AccountForm: React.FC = () => {
       defaultActiveValue,
       accountData?.rid,
       account?.accountDetails?.keyContacts,
-      logoAction
+      logoAction,
+      showOthersField
     );
     const formData = new FormData();
     formData.append('logo', logo as Blob);

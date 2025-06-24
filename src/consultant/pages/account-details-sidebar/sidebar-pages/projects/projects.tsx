@@ -154,12 +154,18 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
+  const accountNameLabel =
+    accountDetails?.data?.accountById?.account_name || '';
   const handleEdit = (account: any) => {
     navigate(`/Project/edit/${account?.project_fiscal_rid}`, {
       state: {
         accountID: account?.account_rid,
         projectID: account?.project_fiscal_rid,
-        breadcrumbs: [{ label: 'Account' }, { label: account?.account_name }],
+        breadcrumbs: [
+          { label: 'Account' },
+          { label: accountNameLabel },
+          { label: account?.project_code },
+        ],
       },
     });
   };

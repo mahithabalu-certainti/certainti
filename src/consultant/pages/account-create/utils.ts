@@ -12,9 +12,6 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Store in Parent', value: 'store_in_parent' },
 ];
 
-export const othersIndustryId = '107e689d-35d8-49e5-a444-08db0c59167b';
-export const othersClassificationId = 'a6b7b3e5-1d4f-4e28-b15f-2fa49b91e5a8';
-
 export const transformKeyContactsFromAPI = (
   keyContacts: KeyContacts[],
   memoizedStatus: SelectOption[]
@@ -132,7 +129,8 @@ export const transformFormData = (
   defaultActiveValue: string,
   account_rid?: string,
   keyContactsList?: KeyContacts[],
-  logoAction?: 'update' | 'delete' | ''
+  logoAction?: 'upload' | 'delete' | '',
+  showOthersField?: boolean
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
@@ -158,10 +156,7 @@ export const transformFormData = (
     finance_poc_email: formData.finance_poc_email,
     finance_poc_number: formData.finanace_poc_number,
     industry_rid: formData.industry_rid,
-    industry_name_other:
-      othersIndustryId === formData.industry_rid
-        ? formData.industry_name_other
-        : '', //clear others industry name if industry is not others
+    industry_name_other: showOthersField ? formData.industry_name_other : '', //clear others industry name if industry is not others
     website: formData.website || null,
     project_manager: formData.project_manager,
     annual_revenue: formData.annual_revenue,

@@ -74,7 +74,6 @@ const ProjectForm: React.FC = () => {
   const breadcrumbs = location.state.breadcrumbs || [];
   const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
 
@@ -145,6 +144,7 @@ const ProjectForm: React.FC = () => {
           ? 'Project updated successfully'
           : 'Project created successfully'
       );
+      setShowOthersField(false);
       goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -264,7 +264,8 @@ const ProjectForm: React.FC = () => {
       isEditView,
       memoizedStatus,
       defaultActiveValue,
-      account?.keyContact
+      account?.keyContact,
+      showOthersField
     );
 
     if (isEditView) {
