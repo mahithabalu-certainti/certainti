@@ -32,6 +32,7 @@ import {
 } from "../models/accountFiscal";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
+import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -152,6 +153,8 @@ export class ProjectService {
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
       await AccountFiscalModel.sync({ force: false });
+      await ProjectSummaryModel.sync({ force: false });
+      await ProjectFiscalSummaryModel.sync({ force: false })
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
