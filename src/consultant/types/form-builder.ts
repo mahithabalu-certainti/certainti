@@ -72,6 +72,7 @@ export type InputType =
 export interface SelectOption {
   label: string;
   value: string;
+  desc?: string;
 }
 
 export interface ErrorHandling {

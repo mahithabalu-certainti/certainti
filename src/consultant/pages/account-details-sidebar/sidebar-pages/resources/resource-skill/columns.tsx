@@ -48,8 +48,8 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
       sortable: true,
     },
     {
-      id: 'skill_level',
-      sortId: 'skill_level',
+      id: 'skill_level_name',
+      sortId: 'skill_level_name',
       label: 'Skill Level',
       width: 140,
       sortable: true,

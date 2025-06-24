@@ -76,12 +76,9 @@ export const getUserColumns = (
   },
   {
     id: 'status',
-    sortId: 'status',
+    sortId: 'status_name',
     label: 'Status',
     width: 100,
     sortable: true,
-    render: (row: ManageUser) => (
-      <span>{row.status === 'Active' ? 'Active' : 'In-Active'}</span>
-    ),
   },
 ];

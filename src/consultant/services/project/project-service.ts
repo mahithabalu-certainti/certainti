@@ -1,10 +1,11 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
+  GetProjectTypeApiResponse,
   // ProjectList,
   ProjectListParams,
   // ProjectListResponse,
 } from '../../types/project';
-import { resourceServiceApi } from '../../../api/api';
+import { accountServiceApi, resourceServiceApi } from '../../../api/api';
 import { ProjectExportListURL, ProjectListURL } from '../urls';
 import {
   ProjectAccordionResponse,
@@ -98,4 +99,34 @@ export const exportProjectData = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+export const getProjectTypeUrl = (): string => {
+  return `/api/accounts/projectType`;
+};
+
+export const fetchProjectType =
+  async (): Promise<GetProjectTypeApiResponse> => {
+    try {
+      const { data } =
+        await accountServiceApi.get<GetProjectTypeApiResponse>(
+          getProjectTypeUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching project types:', error);
+      throw error;
+    }
+  };
+
+export const useGetProjectType = () => {
+  return useQuery<GetProjectTypeApiResponse, Error>({
+    queryKey: ['getProjectType'],
+    queryFn: () => fetchProjectType(),
+    retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
+  });
 };

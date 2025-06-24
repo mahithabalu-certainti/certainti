@@ -13,6 +13,10 @@ type BusinessTeams = {
   business_teams: string;
 };
 
+type Status = {
+  status_name: string;
+};
+
 // Main User type
 export type User = {
   rid: string;
@@ -38,7 +42,7 @@ export type User = {
   profile_rid: string;
   last_login_datetime: string | null;
   login_attempt_failure_count: number | null;
-  status: 'active' | 'inactive' | 'suspended';
+  status: Status;
   created_by: string;
   modified_by: string | null;
   createdAt: string;

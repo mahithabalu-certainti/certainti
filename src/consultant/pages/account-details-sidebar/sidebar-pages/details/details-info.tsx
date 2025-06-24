@@ -117,7 +117,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
           accountById?.currency?.currency_symbol
         ) || '-',
     },
-    { label: 'Status', value: accountById?.status?.toString() || '-' },
+    {
+      label: 'Status',
+      value: accountById?.status?.status_name || '-',
+    },
     {
       label: 'Org Name',
       value: accountById?.organisation_name?.toString() || '-',
@@ -143,7 +146,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       isPrimaryContact: contact.is_primary_contact,
       includeInCommnunications: contact.include_in_communication,
       interactionccRecipient: contact.interaction_cc_recipient,
-      keyContactStatus: contact.status,
+      keyContactStatus: contact?.status_name,
     }));
 
   const accountSettings: DetailItem[] = [

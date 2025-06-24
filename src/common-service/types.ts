@@ -243,3 +243,16 @@ export interface UploadImportPayload {
 export enum Layout {
   TYPE_1 = 1,
 }
+
+export interface StatusItem {
+  rid: string;
+  status_name: string;
+  status_description: string;
+  status: string;
+}
+
+export interface GetStatusApiResponse extends CommonApiResponse {
+  data: {
+    status: StatusItem[];
+  };
+}

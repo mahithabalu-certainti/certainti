@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { capitalize } from '@mui/material';
 import {
   AccountFormData,
   KeyContacts,
   KeyContactsUpdate,
   NewAccountData,
   SelectOption,
-  Status,
 } from '../../types';
 
 export const DATA_STORAGE_OPTIONS: SelectOption[] = [
@@ -14,8 +12,16 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Store in Parent', value: 'store_in_parent' },
 ];
 
-export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
+export const transformKeyContactsFromAPI = (
+  keyContacts: KeyContacts[],
+  memoizedStatus: SelectOption[]
+) => {
   const formData = {} as any;
+
+  // ID → Label
+  const getStatusLabelById = (id: string): string => {
+    return memoizedStatus.find((option) => option.value === id)?.desc || '';
+  };
 
   keyContacts.forEach((contact: any, index: number) => {
     formData[`key_contact_name_${index}`] = contact.key_contact_name || '';
@@ -30,7 +36,7 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`interaction_cc_recipient_${index}`] =
       contact.interaction_cc_recipient ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
-      contact.status?.toLowerCase() || 'active';
+      getStatusLabelById(contact.status_rid) || 'active';
   });
   return formData;
 };
@@ -38,9 +44,20 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
 export const keyContactsTransformPayload = (
   formData: Partial<Record<string, any>>,
   isEdit: boolean = false,
-  keyContactsList: KeyContacts[] = []
+  keyContactsList: KeyContacts[] = [],
+  memoizedStatus: SelectOption[],
+  defaultActiveValue: string
 ): KeyContacts[] => {
   const keyContacts: KeyContacts[] = [];
+
+  // Label → ID
+  const getStatusIdByLabel = (label: string): string => {
+    return (
+      memoizedStatus.find(
+        (option) => option?.desc?.toLowerCase() === label.toLowerCase()
+      )?.value || ''
+    );
+  };
 
   const indices = Array.from(
     new Set(
@@ -73,9 +90,9 @@ export const keyContactsTransformPayload = (
           formData[`include_in_communication_${index}`] === 'yes',
         interaction_cc_recipient:
           formData[`interaction_cc_recipient_${index}`] === 'yes',
-        status: formData[`key_contact_status_${index}`]
-          ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
-          : ('Active' as Status),
+        status_rid:
+          getStatusIdByLabel(formData[`key_contact_status_${index}`]) ||
+          defaultActiveValue,
         action_type:
           isEdit && rid ? KeyContactsUpdate.Edit : KeyContactsUpdate.Add,
         ...(isEdit && rid && { rid }),
@@ -91,7 +108,7 @@ export const keyContactsTransformPayload = (
           rid: contact.rid,
           include_in_communication: contact.include_in_communication,
           interaction_cc_recipient: contact.interaction_cc_recipient,
-          status: contact.status,
+          status_rid: contact.status_rid,
           is_primary_contact: contact.is_primary_contact,
           key_contact_name: contact.key_contact_name,
           key_contact_email: contact.key_contact_email,
@@ -108,6 +125,8 @@ export const keyContactsTransformPayload = (
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
+  memoizedStatus: SelectOption[],
+  defaultActiveValue: string,
   account_rid?: string,
   keyContactsList?: KeyContacts[],
   logoAction?: 'upload' | 'delete' | '',
@@ -117,7 +136,7 @@ export const transformFormData = (
     account_id: account_rid,
     account_name: formData.account_name,
     comments: formData.comments || null,
-    status: formData.status,
+    status_rid: formData.status,
     is_parent: formData.is_parent === 'yes',
     parent_account_rid: formData.parent_account_rid || null,
     currency_rid: formData.currency_rid || null,
@@ -144,7 +163,13 @@ export const transformFormData = (
     data_storage: formData.data_storage,
     business_details: formData.business_details,
     key_contacts:
-      keyContactsTransformPayload(formData, isEdit, keyContactsList) || [],
+      keyContactsTransformPayload(
+        formData,
+        isEdit,
+        keyContactsList,
+        memoizedStatus,
+        defaultActiveValue
+      ) || [],
     organisation_name: formData.organisation_name,
   };
   if (isEdit) {
