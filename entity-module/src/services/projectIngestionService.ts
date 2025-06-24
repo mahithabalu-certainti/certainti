@@ -1,4 +1,4 @@
-import { Op, Order, Sequelize } from "sequelize";
+import { Op, Order, Sequelize, col, fn, where } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project } from "../models/project";
 import { ProjectFiscal } from "../models/projectFiscal";
@@ -128,8 +128,10 @@ class ProjectIngestionService {
 
     const project = await Project.findOne({
       where: {
-        project_code: projectData.project_code,
-        account_rid: accountData.rid,
+        [Op.and]: [
+          where(fn('LOWER', col('project_code')), fn('LOWER', projectData.project_code)),
+          { account_rid: accountData.rid }
+        ]
       },
     });
 
@@ -153,9 +155,11 @@ class ProjectIngestionService {
 
     const fiscal = await ProjectFiscal.findOne({
       where: {
-        project_code: projectData.project_code,
-        account_rid: accountId,
-        fiscal_year: projectData.fiscal_year,
+        [Op.and]: [
+          where(fn('LOWER', col('project_code')), fn('LOWER', projectData.project_code)),
+          { account_rid: accountId },
+          { fiscal_year: projectData.fiscal_year }
+        ]
       },
     });
 
@@ -172,12 +176,12 @@ class ProjectIngestionService {
 
     const fiscal = await ProjectFiscal.findOne({
       where: {
-        project_code: projectData.project_code,
-        account_rid: accountId,
-        fiscal_year: projectData.fiscal_year,
-        rid: {
-          [Op.ne]: projectFiscalId,
-        },
+        [Op.and]: [
+          where(fn('LOWER', col('project_code')), fn('LOWER', projectData.project_code)),
+          { account_rid: accountId },
+          { fiscal_year: projectData.fiscal_year },
+          { rid: { [Op.ne]: projectFiscalId } },
+        ]
       },
     });
 
@@ -1017,27 +1021,29 @@ class ProjectIngestionService {
     const fullOrder: any[] = [];
 
     for (const [field, direction] of order) {
+      const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
+      const nullsHandled = `${sortDirection} NULLS LAST`;
+    
       if (bothParentAndChild) {
         if (parentLevelFields.includes(field)) {
-          fullOrder.push([field, direction]);
+          fullOrder.push([Sequelize.literal(`"Project"."${field}" ${nullsHandled}`)]);
         }
       } else {
-        fullOrder.push(["created_datetime", "DESC"]);
+        fullOrder.push([Sequelize.literal(`"Project"."created_datetime" DESC NULLS LAST`)]);
       }
-
+    
       const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
-
+    
       fullOrder.push([
-        { model: ProjectFiscal, as: "ProjectFiscal" },
-        aliasFilter,
-        direction,
+        Sequelize.literal(`"ProjectFiscal"."${aliasFilter}" ${nullsHandled}`)
       ]);
-    };
-
+    }
+    
     let { rows: projects, count } = await Project.findAndCountAll({
       where: whereProject,
       offset,
       limit,
+      subQuery: false,
       order: fullOrder,
       attributes: {
         include: [
@@ -1069,8 +1075,6 @@ class ProjectIngestionService {
       ],
     });
 
-    this.logger.info(`After project retrieve | Total count: ${count}`);
-
     if (this.mainDbSequelize) {
 
       let projectData = await this.enrichKeyContactsManually(
@@ -1082,6 +1086,8 @@ class ProjectIngestionService {
         projectData,
         this.mainDbSequelize
       );
+
+      projectData = await this.insertCurrencyDetails(projectData);
 
       projectData = await this.insertProjectClassification(
         projectData,
@@ -1096,6 +1102,10 @@ class ProjectIngestionService {
         rawFilters
       );
       projects = projectData;
+
+      if(projects && projects.length > 0){
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      }
     }
 
     return {
@@ -1566,7 +1576,8 @@ class ProjectIngestionService {
       "classification_name",
       "industry_name",
       "name",
-      "project_type_rid"
+      "project_type_rid",
+      "project_type_name"
     ];
 
     const enumFields = [
@@ -1726,23 +1737,129 @@ class ProjectIngestionService {
       return filteredProjects;
     }
 
-    const sortedList = filteredProjects.sort((a, b) => {
-      const valA = a[sortBy] ?? a.ProjectFiscal?.[0]?.[sortBy];
-      const valB = b[sortBy] ?? b.ProjectFiscal?.[0]?.[sortBy];
-
-      if (valA == null) return sortOrder === "ASC" ? 1 : -1;
-      if (valB == null) return sortOrder === "ASC" ? -1 : 1;
-
-      if (typeof valA === "string" && typeof valB === "string") {
-        return sortOrder === "ASC"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
+    function extractSortableValue(project: any, sortBy: string): any {
+      if (isBoth) {
+        const topLevelValue = project[sortBy];
+        if (
+          topLevelValue !== null &&
+          topLevelValue !== undefined &&
+          (typeof topLevelValue !== "string" || topLevelValue.trim() !== "")
+        ) {
+          return topLevelValue;
+        }
+    
+        for (const fiscal of project.ProjectFiscal || []) {
+          const val = fiscal?.[sortBy];
+          if (
+            val !== null &&
+            val !== undefined &&
+            (typeof val !== "string" || val.trim() !== "")
+          ) {
+            return val;
+          }
+        }
+    
+        return null;
+      } else {
+        // Extract first non-null child-level value only
+        for (const fiscal of project.ProjectFiscal || []) {
+          const val = fiscal?.[sortBy];
+          if (
+            val !== null &&
+            val !== undefined &&
+            (typeof val !== "string" || val.trim() !== "")
+          ) {
+            return val;
+          }
+        }
+    
+        return null; // All children are null/missing for this field
       }
+    }    
 
-      return sortOrder === "ASC" ? valA - valB : valB - valA;
+    const sortByField = (
+      arr: any,
+      key: string,
+      asc: string
+    ) => {
+      return arr.sort((a: any, b: any) => {
+        const valA = a[key];
+        const valB = b[key];
+    
+        // Handle nulls last
+        if (valA === null && valB !== null) return 1;
+        if (valA !== null && valB === null) return -1;
+        if (valA === null && valB === null) return 0;
+    
+        // Handle number or string
+        if (typeof valA === "number" && typeof valB === "number") {
+          return asc === "ASC" ? valA - valB : valB - valA;
+        }
+    
+        if (typeof valA === "string" && typeof valB === "string") {
+          return asc === "ASC" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+    
+        return 0; // fallback
+      });
+    };
+
+    const sortedData = filteredProjects.map(item => {
+      if (isBoth || (!isBoth && item.ProjectFiscal)) {
+        return {
+          ...item,
+          ProjectFiscal: item.ProjectFiscal
+            ? sortByField(item.ProjectFiscal, sortBy, sortOrder)
+            : undefined
+        };
+      }
+      return item;
     });
+    
+    const finalData = isBoth
+      ? sortByField(sortedData, sortBy, sortOrder)
+      : sortedData;
 
-    return sortedList;
+    // const sortByProject = (arr: any, asc: boolean, field: string) => {
+    //   return arr.sort((a, b) => {
+    //     if (a.field === null && b.field !== null) return 1;
+    //     if (a.field !== null && b.field === null) return -1;
+    //     if (a.field === null && b.field === null) return 0;
+    
+    //     return asc
+    //       ? a.project.localeCompare(b.project)
+    //       : b.project.localeCompare(a.project);
+    //   });
+    // };
+  
+    // const sortedList = filteredProjects.sort((a, b) => {
+    //   const valA = extractSortableValue(a, sortBy);
+    //   const valB = extractSortableValue(b, sortBy);
+    
+    //   const aIsNull = valA === null || valA === undefined || valA === "";
+    //   const bIsNull = valB === null || valB === undefined || valB === "";
+    
+    //   // Always push nulls to bottom
+    //   if (aIsNull && !bIsNull) return 1;
+    //   if (!aIsNull && bIsNull) return -1;
+    //   if (aIsNull && bIsNull) return 0;
+    
+    //   // String comparison
+    //   if (typeof valA === "string" && typeof valB === "string") {
+    //     return sortOrder.toUpperCase() === "ASC"
+    //       ? valA.localeCompare(valB)
+    //       : valB.localeCompare(valA);
+    //   }
+    
+    //   // Number/date fallback
+    //   const numA = typeof valA === "number" ? valA : new Date(valA).getTime();
+    //   const numB = typeof valB === "number" ? valB : new Date(valB).getTime();
+    
+    //   return sortOrder.toUpperCase() === "ASC" ? numA - numB : numB - numA;
+    // });
+    
+
+    return finalData;
   }
 
   async enrichKeyContactsManually(projects: any[], accountNumber: string) {
@@ -1823,6 +1940,79 @@ class ProjectIngestionService {
   
     return enrichedProject;
   }  
+
+  async insertCurrencyDetails(project: any) {
+    try {
+      if(project && project.length === 0) return project;
+      if (!this.mainDbSequelize) throw new Error("Database not initialized");
+  
+      // Step 1: Collect all unique currency_rids
+      const currencyRidSet = new Set<string>();
+  
+      for (const item of project) {
+        if (item.currency_rid) currencyRidSet.add(item.currency_rid);
+        if (item.projectFiscal) {
+          for (const fiscal of item.projectFiscal) {
+            if (fiscal.currency_rid) currencyRidSet.add(fiscal.currency_rid);
+          }
+        }
+      }
+  
+      const currencyRids = Array.from(currencyRidSet);
+      if (currencyRids.length === 0) return;
+  
+      // Step 2: Fetch currency details in one query
+      const placeholders = currencyRids.map(() => '?').join(', ');
+      const query = `
+        SELECT rid, currency_code, currency_symbol 
+        FROM currency 
+        WHERE rid IN (${placeholders})
+      `;
+  
+      const results: any = await this.mainDbSequelize.query(query, {
+        replacements: currencyRids,
+        type: 'SELECT',
+      });
+  
+      // Step 3: Map rid -> currency data
+      const currencyMap: any = new Map<string, { currency_code: string; currency_symbol: string }>();
+      for (const row of results) {
+        currencyMap.set(row.rid, {
+          currency_code: row.currency_code,
+          currency_symbol: row.currency_symbol,
+        });
+      }
+  
+      // Step 4: Assign back the currency data to project and projectFiscal items
+      for (const item of project) {
+        const currency = currencyMap.get(item.currency_rid);
+        if (currency) {
+          item.currency_code = currency.currency_code;
+          item.currency_symbol = currency.currency_symbol;
+        }else{
+          item.currency_code = null;
+          item.currency_symbol = null;
+        }
+  
+        if (item.ProjectFiscal) {
+          for (const fiscal of item.ProjectFiscal) {
+            const currency = currencyMap.get(fiscal.currency_rid);
+            if (currency) {
+              fiscal.currency_code = currency.currency_code;
+              fiscal.currency_symbol = currency.currency_symbol;
+            }else{
+              fiscal.currency_code = null;
+              fiscal.currency_symbol = null;
+            }
+          }
+        }
+      }
+
+      return project;
+    } catch (err) {
+      console.error("Error in insertCurrencyDetails:", err);
+    }
+  }
 }
 
 export default ProjectIngestionService;

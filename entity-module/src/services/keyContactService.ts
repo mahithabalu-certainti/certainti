@@ -146,9 +146,9 @@ export class KeyContactService {
               ? null
               : keyContactDetails.is_primary_contact,
           include_in_communication:
-            keyContactDetails.is_primary_contact === null
+            keyContactDetails.include_in_communication === null
               ? null
-              : keyContactDetails.is_primary_contact,
+              : keyContactDetails.include_in_communication,
           modified_by: userId,
         },
         {
@@ -178,7 +178,7 @@ export class KeyContactService {
         status_rid: keyContactDetails.status_rid || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
-          keyContactDetails.include_in_communication || null,
+          keyContactDetails.include_in_communication === null ? null : keyContactDetails.include_in_communication,
         entity_rid: project_rid,
         created_by: userId,
         entity_type: "Project",

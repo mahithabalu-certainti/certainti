@@ -9,7 +9,7 @@ export interface ProjectFiscalAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by: string;
-  modified_by?: string;
+  modified_by?: string | null;
 
   project_code: string;
 
@@ -139,7 +139,7 @@ export class ProjectFiscal
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
-  public modified_by?: string;
+  public modified_by?: string | null;
 
   public project_code!: string;
 

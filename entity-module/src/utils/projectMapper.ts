@@ -63,7 +63,7 @@ export class ProjectMapper {
 
       created_datetime: new Date(),
       created_by: userId,
-      modified_by: userId,
+      modified_by: null,
 
       project_code: data.project_code,
       industry_rid: data.industry_rid || null,
@@ -180,7 +180,7 @@ export class ProjectMapper {
       created_datetime: new Date(),
       modified_datetime: new Date(),
       created_by: projectData.created_by,
-      modified_by: projectData.modified_by || null,
+      modified_by: null,
 
       account_rid: projectData.account_id,
 
