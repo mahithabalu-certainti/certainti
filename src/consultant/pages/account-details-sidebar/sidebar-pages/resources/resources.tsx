@@ -107,10 +107,10 @@ const Resource: React.FC<ResourceProps> = ({
   const [sortField, setSortField] = useState<string>('resource_code');
   const [costOrder, setCostOrder] = useState<'asc' | 'desc'>('asc');
   const [costorderBy, setCostOrderBy] =
-    useState<keyof ResourceCostList>('resource_code');
+    useState<keyof ResourceCostList>('fiscal_year');
   const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('asc');
   const [skillOrderBy, setSkillOrderBy] =
-    useState<keyof ResourceSkillList>('resource_code');
+    useState<keyof ResourceSkillList>('start_date');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [count, setCount] = useState(0);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -515,7 +515,12 @@ const Resource: React.FC<ResourceProps> = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'resource_code';
+    const defaultSortField =
+      value === 'cost'
+        ? 'fiscal_year'
+        : value === 'skill'
+          ? 'start_date'
+          : 'resource_code';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     const apiSortBy = sortBy || defaultSortField;
     const isSortByEmpty = !sortBy;

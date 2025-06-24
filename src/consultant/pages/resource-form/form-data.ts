@@ -611,18 +611,14 @@ export const ResourceFormData = (
               disabled: disableCostAndSkill,
             }
           ),
-          createTextField(
-            'total_years_in_org',
-            'Total Years in the Organization',
-            {
-              required: false,
-              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage:
-                'Please enter a valid number between 0 and 99 with up to 2 decimals',
-              placeholder: 'Enter Total Years In The Organization',
-              disabled: disableCostAndSkill,
-            }
-          ),
+          createTextField('total_years_in_org', 'Total Years In Organization', {
+            required: false,
+            regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+            regexErrorMessage:
+              'Please enter a valid number between 0 and 99 with up to 2 decimals',
+            placeholder: 'Enter Total Years In Organization',
+            disabled: disableCostAndSkill,
+          }),
         ],
       },
       {
