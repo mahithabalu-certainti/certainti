@@ -17,14 +17,14 @@ export class ProjectMapper {
       project_name: projectData.project_name || null,
       project_startdate: startDate?.toDate() || null,
       project_enddate: endDate?.toDate() || null,
-      project_type: projectData.project_type,
+      project_type_rid: projectData.project_type_rid,
       project_classification_rid:
         projectData.project_classification_rid || null,
       project_classification_other:
         projectData.project_classification_other || null,
       project_client_group: projectData.project_client_group || null,
       project_group: projectData.project_group || null,
-      project_status: projectData.project_status,
+      status_rid: projectData.status_rid,
       fiscal_year: projectData.fiscal_year,
       country_rid: projectData.country_rid || null,
       region_rid: projectData.region_rid || null,
@@ -81,10 +81,10 @@ export class ProjectMapper {
       expiry_duration: null,
       auto_access_rd: data.auto_access_rd ?? false,
 
-      project_status: data.project_status || null,
+      status_rid: data.status_rid,
       project_startdate: startDate?.toDate() || null,
       project_enddate: endDate?.toDate() || null,
-      project_type: data.project_type,
+      project_type_rid: data.project_type_rid,
 
       project_client_group: data.project_client_group || null,
       project_group: data.project_group || null,
@@ -196,7 +196,7 @@ export class ProjectMapper {
       region_rid: projectData.region_rid || null,
       currency_rid: projectData.currency_rid || null,
 
-      project_type: projectData.project_type,
+      project_type_rid: projectData.project_type_rid,
       project_classification_rid:
         projectData.project_classification_rid || null,
       project_classification_other:
@@ -204,7 +204,7 @@ export class ProjectMapper {
 
       project_client_group: projectData.project_client_group || null,
       project_group: projectData.project_group || null,
-      project_status: projectData.project_status || null,
+      status_rid: projectData.status_rid,
 
       total_effort: projectData.total_effort || null,
       total_cost: projectData.total_cost || null,
@@ -266,11 +266,11 @@ export class ProjectMapper {
       expiry_duration: null,
       auto_access_rd: projectData.auto_access_rd ?? false,
 
-      project_status: projectData.project_status || null,
+      status_rid: projectData.status_rid,
       project_startdate: startDate?.toDate() || null,
       project_enddate: endDate?.toDate() || null,
 
-      project_type: projectData.project_type,
+      project_type_rid: projectData.project_type_rid,
       project_client_group: projectData.project_client_group || null,
       project_group: projectData.project_group || null,
       project_classification_rid:
@@ -428,12 +428,12 @@ export class ProjectMapper {
       fiscal_year: data.fiscal_year,
       project_startdate: startDate?.toDate() || null,
       project_enddate: endDate?.toDate() || null,
-      project_type: data.project_type,
+      project_type_rid: data.project_type_rid,
       project_classification_rid: data.project_classification_rid || null,
       project_classification_other: data.project_classification_other || null,
       project_client_group: data.project_client_group || null,
       project_group: data.project_group || null,
-      project_status: data.project_status || null,
+      status_rid: data.status_rid,
       region_rid: data.region_rid || null,
       comments_rid: data.comments || "",
       currency_rid: data.currency_rid || null,
@@ -479,14 +479,14 @@ export class ProjectMapper {
       fiscal_year: projectData.fiscal_year,
       project_startdate: startDate?.toDate() || null,
       project_enddate: endDate?.toDate() || null,
-      project_type: projectData.project_type,
+      project_type_rid: projectData.project_type_rid,
       project_classification_rid:
         projectData.project_classification_rid || null,
       project_classification_other:
         projectData.project_classification_other || null,
       project_client_group: projectData.project_client_group || null,
       project_group: projectData.project_group || null,
-      project_status: projectData.project_status || null,
+      status_rid: projectData.status_rid,
       country_rid: projectData.country_rid || null,
       region_rid: projectData.region_rid || null,
       currency_rid: projectData.currency_rid || null,

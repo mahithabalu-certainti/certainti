@@ -7,6 +7,7 @@ import { models } from "../models";
 import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
+import { Status } from "../models/statusModel";
 
 const { Account, Country, Currency,Industry } = models;
 
@@ -221,6 +222,12 @@ private buildBaseIncludes() {
       as: "industry",
       attributes: ["rid", "industry_name"],
       required: false,
+    },
+    {
+      model: Status,
+      as: 'status',
+      attributes: [['status_description','status_name']],
+      required: false,
     }
   ];
 }
@@ -247,7 +254,13 @@ private buildChildIncludes() {
       as: "industry",
       attributes: ["rid", "industry_name"],
       required: false,
-    }
+    },
+    {
+      model: Status,
+      as: 'status',
+      attributes: ['status_name'],
+      required: true,
+  }
   ];
 }
 
@@ -424,6 +437,12 @@ private async getOptimizedCount(repository: any, whereClause: any) {
               attributes: ["rid", "industry_name"],
               required: false,
             },
+            {
+              model: Status,
+              as: 'status',
+              attributes: [['status_description','status_name']],
+              required: false,
+            }
           ],
         });
   
@@ -453,6 +472,12 @@ private async getOptimizedCount(repository: any, whereClause: any) {
                 model: Industry,
                 as: "industry",
                 attributes: ["rid", "industry_name"],
+              },
+              {
+                model: Status,
+                as: 'status',
+                attributes: [['status_description','status_name']],
+                required: false,
               },
               {
                 model: Account,
@@ -640,7 +665,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         industry_name_other,
         region_rid,
         data_storage,
-        status,
+        status_rid,
         annual_revenue,
         key_contacts,
         organisation_name
@@ -730,7 +755,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         currency_rid:currency_rid,
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
-        status,
+        status_rid,
         created_by: userId,
         annual_revenue: annual_revenue  || null,
         organisation_name,
@@ -850,7 +875,7 @@ async insertClientTemplateDetails(
         account_rid,
         account_name,
         comments,
-        status,
+        status_rid,
         annual_revenue,
         region_rid,
         data_storage,
@@ -935,7 +960,7 @@ async insertClientTemplateDetails(
         {
           account_name,
           comments: comments || "",
-          status,
+          status_rid,
           region_rid: region_rid,
           country_rid: country_rid,
           currency_rid: currency_rid,
@@ -1112,7 +1137,13 @@ async insertClientTemplateDetails(
             as: "industry",
             attributes: ["rid", "industry_name"],
             required: false,
-          }
+          },
+          {
+            model: Status,
+            as: 'status',
+            attributes: [['status_description','status_name']],
+            required: false,
+        }
         ],
       });
 
@@ -1246,15 +1277,26 @@ async insertClientTemplateDetails(
     try {
       const repository = await this.getAccountRepository();
       const accountData = await repository.findAll({
-         where: {
-          status: 'active',
-           organisation_name: {
-          [Op.ne]: '',
-        },    
+        where: {
+          organisation_name: {
+            [Op.ne]: '',
+          },
         },
-        attributes: ["rid", "account_name","organisation_name"],
-        order: [['organisation_name', 'ASC']]
+        include: [
+          {
+            model: Status,
+            as: 'status',
+            where: {
+              status_description: 'active',
+            },
+            attributes: [],
+            required: true,
+          },
+        ],
+        attributes: ['rid', 'account_name', 'organisation_name'],
+        order: [['organisation_name', 'ASC']],
       });
+
       const orgData = await this.schemaService.getOrgInfo();
       return {
         statusCode: HttpStatus.SUCCESS,

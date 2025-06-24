@@ -944,6 +944,7 @@ class ProjectIngestionService {
       "project_name",
       "industry_name",
       "classification_name",
+      "project_type_rid",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
@@ -980,7 +981,7 @@ class ProjectIngestionService {
       project_group: "project_group",
       project_client_group: "project_client_group",
       fiscal_year: "fiscal_year",
-      project_type: "project_type",
+      project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code"
     };
@@ -1120,6 +1121,7 @@ class ProjectIngestionService {
     const parentLevelFields = [
       "project_name",
       "industry_name",
+      "project_type_rid",
       "classification_name",
       "technical_point_of_contact",
       "financial_consultant",
@@ -1157,7 +1159,7 @@ class ProjectIngestionService {
       project_group: "project_group",
       project_client_group: "project_client_group",
       fiscal_year: "fiscal_year",
-      project_type: "project_type",
+      project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code"
     };
@@ -1237,7 +1239,7 @@ class ProjectIngestionService {
             "fiscal_year",
             "project_name",
             "program_name",
-            "project_type",
+            "project_type_rid",
             "project_classification_rid",
             "project_classification_other",
             "project_client_group",
@@ -1250,7 +1252,7 @@ class ProjectIngestionService {
             "max_ai_interaction",
             "expiry_duration",
             "auto_access_rd",
-            "project_status",
+            "status_rid",
             "project_startdate",
             "project_enddate",
             "qre_final",
@@ -1321,7 +1323,7 @@ class ProjectIngestionService {
       const baseRow = {
         "Project Code": project.project_code || "-",
         "Name": project.project_name || "-",
-        "Project Type": project.project_type || "-",
+        "Project Type": project.project_type_name || "-",
         "Account Name": project.account_name || "-",
         "Fiscal Year": project.fiscal_year || "-",
         "Project Classification": project.classification_name || "-",
@@ -1351,7 +1353,7 @@ class ProjectIngestionService {
       const fiscalRows = fiscalSummaries.map((fiscal: any) => ({
         "Project Code": fiscal.project_code || "-",
         "Name": fiscal.project_name || "-",
-        "Project Type": fiscal.project_type || "-",
+        "Project Type": fiscal.project_type_name || "-",
         "Account Name": project.account_name || "-",
         "Fiscal Year": fiscal.fiscal_year || "-",
         "Project Classification": fiscal.classification_name || "-",
@@ -1420,10 +1422,18 @@ class ProjectIngestionService {
   ) {
     try {
       const allClassificationIds = new Set<string>();
+      const allProjectTypeIds = new Set<string>();
+      const allStatusIds = new Set<string>();
 
       for (const project of projects) {
         if (project.project_classification_rid) {
           allClassificationIds.add(project.project_classification_rid);
+        }
+        if (project.project_type_rid) {
+          allProjectTypeIds.add(project.project_type_rid);
+        }
+        if (project.status_rid) {
+          allStatusIds.add(project.status_rid);
         }
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1431,13 +1441,23 @@ class ProjectIngestionService {
             if (child.project_classification_rid) {
               allClassificationIds.add(child.project_classification_rid);
             }
+            if (child.project_type_rid) {
+              allProjectTypeIds.add(child.project_type_rid);
+            }
+            if (child.status_rid) {
+              allStatusIds.add(child.status_rid);
+            }
           }
         }
       }
 
       const classificationIds = [...allClassificationIds];
+      const projectTypeIds = [...allProjectTypeIds];
+      const statusTypeIds = [...allStatusIds];
 
       let classificationMap: Record<string, any> = {};
+      let projectTypeMap: Record<string, any> = {};
+      let statusMap: Record<string, any> = {};
 
       if (classificationIds.length > 0) {
         const classificationRows = await mainDbSequelize.query(
@@ -1454,6 +1474,39 @@ class ProjectIngestionService {
           )
         );
       }
+      if (projectTypeIds.length > 0) {
+        const projectTypeList = await mainDbSequelize.query(
+          `SELECT rid, project_type_name FROM project_type WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: projectTypeIds },
+            type: "SELECT",
+          }
+        );
+
+        projectTypeMap = Object.fromEntries(
+          (Array.isArray(projectTypeList) ? projectTypeList : []).map(
+            (c: any) => [c.rid, c]
+          )
+        );
+      }
+
+      if (statusTypeIds.length > 0) {
+        const statusTypeList = await mainDbSequelize.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusTypeIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          (Array.isArray(statusTypeList) ? statusTypeList : []).map(
+            (c: any) => [c.rid, c]
+          )
+        );
+      }
+
+
 
       const updatedProjects = projects.map((project) => {
         const updatedProject: any = {
@@ -1465,6 +1518,8 @@ class ProjectIngestionService {
             : classificationMap[project.project_classification_rid]
                 ?.classification_name || null,
           is_other_classification: !!project.project_classification_other,
+          project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
+          status_name:statusMap[project.status_rid]?.status_name
         };
 
         if (Array.isArray(project.ProjectFiscal)) {
@@ -1476,6 +1531,8 @@ class ProjectIngestionService {
                 : classificationMap[child.project_classification_rid]
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
+              project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
+              status_name:statusMap[project.status_rid]?.status_name
             })
           );
         }
@@ -1509,7 +1566,7 @@ class ProjectIngestionService {
       "classification_name",
       "industry_name",
       "name",
-      "project_type",
+      "project_type_rid"
     ];
 
     const enumFields = [
@@ -1517,7 +1574,7 @@ class ProjectIngestionService {
       "currency_rid",
       "region_rid",
       "classification_name",
-      "project_type",
+      "project_type_rid",
     ];
 
     const hasValidFilters = filterableClientFields.some((key) => {

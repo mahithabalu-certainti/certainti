@@ -5,7 +5,7 @@ import { Profile, setupProfileSequence} from "./profileModel";
 import { FunctionGroup } from "./functionGroupModel";
 import { ProfileModuleAccess } from "./profileModuleAccessModel";
 import { UserDetails } from "./userDetailsModel";
-import { User, setupUserSequence } from "./userModel";
+import { User } from "./userModel";
 
 import { ProfileMenuAccess } from "./profileMenuAccessModel";
 import { ProfilePermissionAccess } from "./profilePermissionAccessModel";
@@ -32,6 +32,7 @@ import { UserPermissionAccessHistory } from "./userPermissionAccessHistoryModel"
 import { UserFieldsAccessHistory } from "./userFieldsAccessHistoryModel";
 import { ProfileHistory } from "./profileHistoryModel";
 import { OrganizationLicenses } from "./organisationLicense";
+import { Status } from "./statusModel";
 
 
 export const models: {
@@ -66,6 +67,7 @@ export const models: {
   ProfileHistory: typeof ProfileHistory;
   UserExtendedPermissionTimeline: typeof UserExtendedPermissionTimeline;
   OrganizationLicenses:typeof OrganizationLicenses;
+  Status:typeof Status
 
 } = {
   BusinessTeams: BusinessTeams,
@@ -98,7 +100,8 @@ export const models: {
   UserFieldsAccessHistory: UserFieldsAccessHistory,
   ProfileHistory: ProfileHistory,
   UserExtendedPermissionTimeline:UserExtendedPermissionTimeline,
-  OrganizationLicenses:OrganizationLicenses
+  OrganizationLicenses:OrganizationLicenses,
+  Status:Status
 };
 
 export async function initModels() {
@@ -107,6 +110,7 @@ export async function initModels() {
     BusinessTeams.initialize(sequelize);
     Department.initialize(sequelize);
     Profile.initialize(sequelize);
+    Status.initialize(sequelize);
     FunctionGroup.initialize(sequelize);
     Menu.initialize(sequelize);
     MenuModule.initialize(sequelize);
@@ -135,6 +139,7 @@ export async function initModels() {
     ProfileHistory.initialize(sequelize);
     UserExtendedPermissionTimeline.initialize(sequelize)
     OrganizationLicenses.initialize(sequelize)
+  
     Object.values(models).forEach((model: any) => { 
       if (model.associate) { 
         model.associate(models); 

@@ -42,8 +42,12 @@ export class KeyContactService {
       const keyContactIds = [
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
+      const statusIds = [
+        ...new Set(keyContacts.map((r: any) => r.status_rid)),
+      ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let statusMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
@@ -58,10 +62,24 @@ export class KeyContactService {
           keyContactRows.map((c: any) => [c.rid, c.role_name])
         );
       }
+      if (statusIds.length > 0) {
+        const statusRows = await mainDbSequlize.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          statusRows.map((s: any) => [s.rid, s.status_name])
+        );
+      }
 
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
+        status_name: statusMap[kc.status_rid] || null,
       }));
 
       const technicalContact = enrichedKeyContacts.find(
@@ -122,7 +140,7 @@ export class KeyContactService {
           key_contact_name: keyContactDetails.key_contact_name || null,
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
-          status: keyContactDetails.status || "Active",
+          status_rid: keyContactDetails.status_rid,
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -157,7 +175,7 @@ export class KeyContactService {
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
-        status: keyContactDetails.status || null,
+        status_rid: keyContactDetails.status_rid || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,

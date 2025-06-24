@@ -6,6 +6,7 @@ import { Industry } from "./industryModel";
 import { ENV_PREFIX} from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { States } from "./stateModel";
+import { Status } from "./statusModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -21,7 +22,7 @@ interface AccountAttributes {
   currency_rid?: string;
   industry_rid: string;
   industry_name_other?: string;
-  status: string;
+  status_rid: string;
   annual_revenue?: number | null;
   is_file_drop_enabled?: boolean;
   file_drop_medium?: string;
@@ -65,7 +66,7 @@ export class Account
   public currency_rid?: string;
   public industry_rid!: string;
   public industry_name_other?: string;
-  public status!: string;
+  public status_rid!: string;
   public annual_revenue?: number | null;
   public is_file_drop_enabled?: boolean;
   public file_drop_medium?: string;
@@ -131,11 +132,11 @@ export class Account
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
-        status: {
+        status_rid: {
           type: DataTypes.STRING(20),
-          allowNull: false,
-          validate: {
-            isIn: [["active", "inactive"]],
+          references: {
+            model: "status",
+            key: "rid",
           },
         },
         is_parent: {
@@ -270,6 +271,10 @@ export class Account
     Account.belongsTo(States, {
       foreignKey: "region_rid",
       as: "region_details",
+    });
+    Account.belongsTo(Status, {
+      foreignKey: "status_rid",
+      as: "status",
     });
 
     Account.belongsTo(AccountFileDropConfig, {

@@ -2,6 +2,7 @@ import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { BusinessTeams } from "./businessTeamModel";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { Status } from "./statusModel";
 interface UserAttributes {
   rid: string;
   r_number?: string;
@@ -22,7 +23,7 @@ interface UserAttributes {
   profile_rid?: string;
   last_login_datetime?: Date;
   login_attempt_failure_count?: number;
-  status?: string;
+  status_rid?: string;
   phone?: string;
   created_by?: string;
   modified_by?: string;
@@ -58,7 +59,7 @@ export class User
   public profile_rid?: string;
   public last_login_datetime?: Date;
   public login_attempt_failure_count?: number;
-  public status?: string;
+  public status_rid?: string;
   public phone?: string;
   public created_by?: string;
   public modified_by?: string;
@@ -70,7 +71,7 @@ export class User
   public readonly modified_datetime!: Date;
 
   static initialize(sequelize: Sequelize) {
-   sequelize.query(`CREATE SEQUENCE IF NOT EXISTS usr_r_number_seq START 1;`);
+   //sequelize.query(`CREATE SEQUENCE IF NOT EXISTS usr_r_number_seq START 1;`);
     User.init(
       {
         rid: {
@@ -176,8 +177,12 @@ export class User
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        status: {
+        status_rid: {
           type: DataTypes.STRING,
+           references: {
+            model: "status",
+            key: "rid",
+          },
         },
          is_consultant_firm: {
           type: DataTypes.BOOLEAN,
@@ -209,6 +214,10 @@ export class User
       foreignKey: "role_rid",
       as: "business_teams",
     });
+     User.belongsTo(Status, {
+      foreignKey: "status_rid",
+      as: "status",
+    });
     
     User.hasMany(Profile, {
       foreignKey: 'created_by',
@@ -225,19 +234,19 @@ export class User
 }
 
 
-export async function setupUserSequence(sequelize: Sequelize) {
-  try {
-    // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS user_seq START 1');
+// export async function setupUserSequence(sequelize: Sequelize) {
+//   try {
+//     // Step 1: Create the sequence if it doesn't exist
+//     await sequelize.query('CREATE SEQUENCE IF NOT EXISTS user_seq START 1');
     
-    // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE public."user"
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER}-' || LPAD(nextval('user_seq')::text, 10, '0')`);
+//     // Step 2: Set the default value for r_number to use the sequence
+//     await sequelize.query(`ALTER TABLE public."user"
+//       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER}-' || LPAD(nextval('user_seq')::text, 10, '0')`);
     
-    console.log('User sequence setup complete');
-  } catch (error) {
-    console.error('Error setting up User sequence:', error);
-    // Don't throw the error to allow the application to continue starting up
-    // The sequence setup can be handled separately if needed
-  }
-}
+//     console.log('User sequence setup complete');
+//   } catch (error) {
+//     console.error('Error setting up User sequence:', error);
+//     // Don't throw the error to allow the application to continue starting up
+//     // The sequence setup can be handled separately if needed
+//   }
+// }

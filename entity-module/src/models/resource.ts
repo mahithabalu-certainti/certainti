@@ -6,7 +6,7 @@ export interface ResourcesAttributes {
   eid?: string;
   r_number?: string;
   resource_code: string;
-  resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
+  resource_type_rid: string;
   account_rid: string;
   resource_name?: string | null;
   resource_firstname?: string | null;
@@ -21,7 +21,7 @@ export interface ResourcesAttributes {
   resource_designation?: string | null;
   resource_total_experience?: number | null;
   resource_total_experience_organization?: number | null;
-  resource_status?: "Active" | "Inactive";
+  status_rid?: string | null;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string | null;
@@ -40,7 +40,7 @@ export class Resources
   public eid?: string;
   public r_number?: string;
   public resource_code!: string;
-  public resource_type!: "Full-Time" | "Sub Con" | "Non-Labor";
+  public resource_type_rid!: string;
   public resource_name?: string | null;
   public resource_firstname?: string | null;
   public resource_lastname?: string | null;
@@ -54,7 +54,7 @@ export class Resources
   public resource_designation?: string | null;
   public resource_total_experience?: number;
   public resource_total_experience_organization?: number;
-  public resource_status?: "Active" | "Inactive";
+  public status_rid?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by?: string;
@@ -106,8 +106,8 @@ export class Resources
           allowNull: false,
           unique: true,
         },
-        resource_type: {
-          type: DataTypes.ENUM("Full-Time", "Sub Con", "Non-Labor"),
+        resource_type_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_name: {
@@ -186,9 +186,9 @@ export class Resources
             min: 0,
           },
         },
-        resource_status: {
-          type: DataTypes.ENUM("Active", "Inactive"),
-          allowNull: true,
+        status_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
         },
         comments: {
           type: DataTypes.TEXT,

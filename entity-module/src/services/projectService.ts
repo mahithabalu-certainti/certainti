@@ -535,6 +535,10 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+        projectData = await this.schemaService.insertProjectTypeAndStatus(
+          projectData,
+          mainDbInit
+        );
         projectData = await this.schemaService.projectKeyContactData(
           projectData,
           mainDbInit
@@ -887,7 +891,7 @@ export class ProjectService {
           "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
+          "Project Type": project.project_type_name || "-",
           "Account Name": project.account_name || "-",
           "Fiscal Year": "-",
           "Project Classification": project.classification_name || "-",
@@ -919,7 +923,7 @@ export class ProjectService {
               "Project Group": fiscal?.project_group || "-",
               "Project Code": fiscal.project_code || "-",
               "Project Name": fiscal.project_name || "-",
-              "Project Type": fiscal.project_type || "-",
+              "Project Type": fiscal.project_type_name || "-",
               "Account Name": fiscal.account_name || "-",
               "Fiscal Year": fiscal.fiscal_year || "-",
               "Project Classification": fiscal.classification_name || "-",
@@ -1015,7 +1019,7 @@ export class ProjectService {
         expiry_duration: null,
 
         autosend_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_status: projectData.project_status as "Active" | "Inactive",
+        status_rid: projectData.status_rid,
         project_startdate: projectData.project_startdate || null,
         project_enddate: projectData.project_enddate || null,
 
@@ -1078,7 +1082,7 @@ export class ProjectService {
         interaction_cc_list: projectData.project_cc_list || null,
         modified_by: projectData.modified_by,
         modified_datetime: new Date(),
-        project_status: projectData.project_status as "Active" | "Inactive",
+        status_rid: projectData.status_rid,
 
         total_fte_prj: projectData.total_fte || null,
         total_subcon_prj: projectData.total_sub_con || null,
@@ -1241,11 +1245,12 @@ export class ProjectService {
       "project_name",
       "program_name",
       "project_enddate",
+      "project_type_rid",
       "project_type",
       "project_classification_rid",
       "project_client_group",
       "project_group",
-      "project_status",
+      "status_rid",
       "account_rid",
       "rid",
       "total_cost",
@@ -1290,6 +1295,8 @@ export class ProjectService {
       "project_point_of_contact",
       "classification_name",
       "industry_name",
+      "project_type_name",
+      "project_type_rid"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1342,7 +1349,7 @@ export class ProjectService {
         { project_code: { [Op.iLike]: `%${search}%` } },
         { project_name: { [Op.iLike]: `%${search}%` } },
         { project_description: { [Op.iLike]: `%${search}%` } },
-        { project_status: { [Op.iLike]: `%${search}%` } },
+        { status_rid: { [Op.iLike]: `%${search}%` } },
         ...(isNaN(parseInt(search))
           ? []
           : [
@@ -1369,8 +1376,6 @@ export class ProjectService {
   ): Record<string, any> {
     const castToTextFields = [
       "rid",
-      "project_type",
-      "project_status",
       "project_startdate",
       "project_enddate",
       "total_effort",
@@ -1397,7 +1402,7 @@ export class ProjectService {
       "project_enddate",
       "modified_datetime",
     ];
-    const enumFields = ["project_status", "project_type", "fiscal_year", "ProjectFiscal.project_type"];
+    const enumFields = ["status_rid", "project_type_rid", "fiscal_year", "ProjectFiscal.project_type_rid"];
     const booleanFields = ["is_rd_qualified"];
 
     const filterFields = this.getFilterFields(isAllProject, isParent);
@@ -1594,7 +1599,7 @@ export class ProjectService {
       "project_name",
       "total_effort",
       "total_cost",
-      "project_status",
+      "status_rid",
       "fiscal_year",
       "account_name",
       "program_name",
@@ -1619,13 +1624,11 @@ export class ProjectService {
       "classification_name",
       "modified_datetime",
       "assessment_status",
-      "project_type",
-    ];
-
+      "project_type_rid",
+    ];   
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
-
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
   }
@@ -1668,7 +1671,8 @@ export class ProjectService {
       { clientField: "fiscal_year", dbField: "fiscal_year" },
       { clientField: "total_effort", dbField: "total_effort"},
       { clientField: "total_cost", dbField: "total_cost" },
-      { clientField: "project_status", dbField: "project_status" },
+      { clientField: "status_rid", dbField: "status_rid" },
+      { clientField: "project_type_rid", dbField: "project_type_rid" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "project_client_group", dbField: "project_client_group" },
