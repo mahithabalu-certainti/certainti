@@ -675,7 +675,7 @@ class ResourceCostService {
             .minus(deductions || 0)
         );
 
-        let resourceCostStatus = status;
+        let resourceCostStatus = "Active";
         
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
@@ -795,6 +795,7 @@ class ResourceCostService {
           },
         };
       } catch (err) {
+        console.log(err)
         // Log the failed update to timeline
         try {
           await this.createResourceCostTimeline(
