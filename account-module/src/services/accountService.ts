@@ -82,8 +82,8 @@ async accountList(
     const order = this.buildOrderClause(
       finalSortBy, 
       finalSortOrder, 
-      ['country', 'currency', 'industry', 'professional_services_consultant', 'finance_executive', 'finance_lead'],
-      ["total_projects", "total_project_cost", "total_project_hours", "qualifying_project_hours_fed", "qualifying_project_qre_fed", "qualifying_project_rd_credits_fed", "total_projects_rd_credits",'professional_services_consultant', 'finance_lead', 'finance_executive']
+      ['country', 'currency', 'industry'],
+      ["total_projects", "total_project_cost", "total_project_hours", "qualifying_project_hours_fed", "qualifying_project_qre_fed", "qualifying_project_rd_credits_fed", "total_projects_rd_credits"]
     );
 
     // Determine base where clause
@@ -182,24 +182,50 @@ async accountList(
 
 // Helper methods
 private buildOrderClause(
-  sortBy: string,
-  sortOrder: string,
+  finalSortBy: string,
+  finalSortOrder: string,
   excludedFields: string[],
   numericFields: string[]
 ): any[] {
   const order: any[] = [];
   
-  if (!sortBy || excludedFields.includes(sortBy)) return order;
-
-  if (numericFields.includes(sortBy)) {
-    order.push([
-      Sequelize.cast(Sequelize.col(sortBy), 'DECIMAL'),
-      sortOrder
-    ]);
-  } else {
-    order.push([sortBy, sortOrder]);
-  }
-
+      if (finalSortBy && !excludedFields.includes(finalSortBy)) {
+        if (numericFields.includes(finalSortBy)) {
+        order.push([
+          Sequelize.cast(Sequelize.col(finalSortBy), 'DECIMAL'),
+          finalSortOrder
+        ]);
+      } else {
+        order.push([finalSortBy, finalSortOrder]);
+      }
+      }
+  
+        if (finalSortBy === "country") {
+          order.push([
+            { model: Country, as: "country" },
+            "country_name",
+            finalSortOrder,
+          ]);
+        }
+  
+        if (finalSortBy === "currency") {
+          order.push([
+            { model: Currency, as: "currency" },
+            "currency_code",
+            finalSortOrder,
+          ]);
+        }
+        
+        if (finalSortBy === "industry") {
+          order.push([
+            { model: Industry, as: "industry" },
+            "industry_name",
+            finalSortOrder,
+          ]);
+        }
+        if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
   return order;
 }
 
@@ -621,10 +647,10 @@ private async getOptimizedCount(repository: any, whereClause: any) {
                       "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, child_currency_symbol) || "-",
                       "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
                       "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
-                      "Finance Executive":child?.finance_executive || '-',
-                      "Finance Lead":child?.finance_lead || '-',
-                      "Professional Services Consultant":child?.professional_services_consultant || '-',
-                      "Account ID": child?.r_number || "-"        
+                      "Finance Executive": '-',
+                      "Finance Lead": '-',
+                      "Professional Services Consultant": '-',
+                      "Account ID": '-'        
                      });  
                   });
                 }
