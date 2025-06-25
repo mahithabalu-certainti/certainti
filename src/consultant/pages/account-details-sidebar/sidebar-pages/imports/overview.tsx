@@ -200,10 +200,10 @@ const Overview: React.FC<OverviewProps> = ({
   };
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
-      <div className='h-[50px] px-4 border-b border-[#CBD6E2] flex items-center justify-between'>
+      <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <ImportIcon alt='Import Icon' className='w-[24px] h-[24px]' />
-          <span className='font-normal text-[14px] text-[#000000] '>
+          <ImportIcon alt='Import Icon' className='w-6 h-6' />
+          <span className='text-[13px] text-[#2D3E4F] font-semibold'>
             Import
           </span>
         </div>
@@ -232,7 +232,7 @@ const Overview: React.FC<OverviewProps> = ({
           />
         </div>
       </div>
-      <div className='h-[50px] px-4 border-b border-[#CBD6E2] flex items-center gap-6'>
+      <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center gap-6'>
         <div className='flex items-center gap-2'>
           <label className='font-normal text-[14px] text-[#2D3E4F]'>
             Entity Type

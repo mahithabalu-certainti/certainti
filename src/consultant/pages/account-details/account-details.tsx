@@ -195,6 +195,9 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
+  const accountInActive =
+    data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -221,7 +224,7 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
-      hide: checkExport(),
+      hide: accountInActive || checkExport(),
     },
   ];
 

@@ -52,7 +52,7 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
   ];
 
   return (
-    <div className='w-full py-1.5 pl-2 pr-4'>
+    <div className='w-full pt-0.5 pl-2 pr-4'>
       <div className='flex items-center justify-between w-full h-12'>
         <div className='bg-white border border-[#CBD6E27D] p-1 flex gap-2'>
           <button
