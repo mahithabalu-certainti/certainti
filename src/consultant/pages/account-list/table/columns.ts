@@ -115,7 +115,7 @@ export const accountColumns: AccountColumn[] = [
     id: 'r_number',
     sortId: 'r_number',
     label: 'Account ID',
-    width: '160px',
+    width: '120px',
     sortable: true,
   },
 ];

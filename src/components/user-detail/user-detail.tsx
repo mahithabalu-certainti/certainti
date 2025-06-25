@@ -76,7 +76,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Status',
-      value: data?.status,
+      value: data?.status?.status_name,
     },
   ];
 

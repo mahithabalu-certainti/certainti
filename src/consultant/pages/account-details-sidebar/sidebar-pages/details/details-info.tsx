@@ -30,6 +30,7 @@ interface trasnformedKeyContacts {
   keyContactEmail?: string | undefined;
   isPrimaryContact?: boolean | undefined;
   includeInCommnunications?: boolean | undefined;
+  interactionccRecipient?: boolean | undefined;
   keyContactStatus?: string | undefined;
 }
 
@@ -116,7 +117,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
           accountById?.currency?.currency_symbol
         ) || '-',
     },
-    { label: 'Status', value: accountById?.status?.toString() || '-' },
+    {
+      label: 'Status',
+      value: accountById?.status?.status_name || '-',
+    },
     {
       label: 'Org Name',
       value: accountById?.organisation_name?.toString() || '-',
@@ -141,7 +145,8 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       keyContactEmail: contact.key_contact_email,
       isPrimaryContact: contact.is_primary_contact,
       includeInCommnunications: contact.include_in_communication,
-      keyContactStatus: contact.status,
+      interactionccRecipient: contact.interaction_cc_recipient,
+      keyContactStatus: contact?.status_name,
     }));
 
   const accountSettings: DetailItem[] = [
@@ -221,6 +226,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         <KeyContactSection
           title='Key Contacts List'
           data={keyContactsList || []}
+          ccAvailable={true}
         />
       )}
 

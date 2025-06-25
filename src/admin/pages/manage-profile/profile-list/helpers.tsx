@@ -11,7 +11,6 @@ const dateOptions: { label: string; value: string }[] = [
   { label: 'Before', value: 'before' },
   { label: 'After', value: 'after' },
   { label: 'Between', value: 'between' },
-  { label: 'Is Empty', value: 'is_empty' },
 ];
 
 export const getManageProfileFilterfields = (): FieldConfig[] => [

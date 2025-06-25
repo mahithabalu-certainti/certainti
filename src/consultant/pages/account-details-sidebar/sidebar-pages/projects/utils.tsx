@@ -72,7 +72,9 @@ export const dateOptions: { option: string; value: string }[] = [
 ];
 
 export const projectFilterFields = (
-  classificationOption: FilterSelectOption[]
+  classificationOption: FilterSelectOption[],
+  projectTypeOptions: { option: string; value: string }[],
+  statusOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
   // {
   //   name: 'Account Name',
@@ -94,9 +96,9 @@ export const projectFilterFields = (
   },
   {
     name: 'Project Type',
-    value: 'project_type',
+    value: 'project_type_rid',
     type: 'enum',
-    options: projectTypeOption,
+    options: projectTypeOptions,
     operatorOption: fiscalOptions,
   },
   {
@@ -160,7 +162,7 @@ export const projectFilterFields = (
   },
   {
     name: 'Assessment Status',
-    value: 'assessment_status',
+    value: 'status_rid',
     type: 'enum',
     options: statusOptions,
     operatorOption: enumOptions,

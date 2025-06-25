@@ -12,7 +12,7 @@ export const transFormPayload = (
     last_name: data.last_name,
     is_consultant_firm: isConsultantFirm === YesNo.Yes ? true : false,
     org_id: data.org_id || '',
-    status: data.status || '',
+    status_rid: data.status || '',
     street: data.street || '',
     zip_code: data.zip_code || '',
     role: data.role_rid || '',

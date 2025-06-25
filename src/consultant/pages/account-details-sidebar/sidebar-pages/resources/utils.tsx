@@ -2,19 +2,11 @@
 // import { FieldConfig, FilterState } from "../../../components/filter/filterType";
 
 import {
-  costStatusOptions,
-  enumValueOptions,
   FieldConfig,
   FilterState,
   fiscalYears,
-  resourceTypeOptions,
-  statusOptions,
 } from '../../components/filter/filterType';
-import {
-  effortNumberOptions,
-  fiscalOptions,
-  textOptions,
-} from '../projects/utils';
+import { effortNumberOptions, fiscalOptions } from '../projects/utils';
 
 const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -29,7 +21,8 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 ];
 
 export const getCostFilterFields = (
-  currencyOptions: { option: string; value: string }[]
+  currencyOptions: { option: string; value: string }[],
+  costStatusOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
   // { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
   {
@@ -84,7 +77,7 @@ export const getCostFilterFields = (
   { name: 'Comments', value: 'comments', type: 'textCostAndSkill' },
   {
     name: 'Status',
-    value: 'status',
+    value: 'status_rid',
     type: 'enum',
     options: costStatusOptions,
     operatorOption: fiscalOptions,
@@ -93,7 +86,8 @@ export const getCostFilterFields = (
     name: 'Cost ID',
     value: 'r_number',
     type: 'textCostAndSkill',
-    operatorOption: textOptions,
+    required: true,
+    filterOptions: requiredFieldFilterOptionsForText,
   },
   {
     name: 'Sort Options',
@@ -104,7 +98,8 @@ export const getCostFilterFields = (
 ];
 export const getSkillFilterFields = (
   skillTypeOptions: any[],
-  skillSubTypeOptions: any[]
+  skillSubTypeOptions: any[],
+  skillLevelsOptions: { value: string; option: string }[]
 ): FieldConfig[] => {
   return [
     {
@@ -129,13 +124,13 @@ export const getSkillFilterFields = (
       required: true,
       options: skillSubTypeOptions,
       filterOptions: requiredFieldFilterOptionsForEnum,
-      dependsOn: 'skill_type_rid', // This indicates it depends on skill_type
+      dependsOn: 'skill_type_rid',
     },
     {
       name: 'Skill Level',
-      value: 'skill_level',
+      value: 'skill_level_rid',
       type: 'enum',
-      options: enumValueOptions,
+      options: skillLevelsOptions,
     },
     {
       name: 'Skill Details',
@@ -161,7 +156,9 @@ export const getSkillFilterFields = (
 };
 export const resourceFilterFields = (
   country: { option: string; value: string }[],
-  region: { option: string; value: string }[]
+  region: { option: string; value: string }[],
+  memoizedStatus: { option: string; value: string }[],
+  resourceTypeOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -173,7 +170,7 @@ export const resourceFilterFields = (
   { name: 'Name', value: 'resource_name', type: 'text' },
   {
     name: 'Resource Type',
-    value: 'resource_type',
+    value: 'resource_type_rid',
     type: 'enum',
     required: true,
     options: resourceTypeOptions,
@@ -184,14 +181,14 @@ export const resourceFilterFields = (
   { name: 'Role', value: 'resource_role', type: 'text' },
   {
     name: 'Region',
-    value: 'resource_region',
+    value: 'region_rid',
     type: 'enum',
     options: region,
-    dependsOn: 'resource_country',
+    dependsOn: 'country_rid',
   },
   {
     name: 'Country',
-    value: 'resource_country',
+    value: 'country_rid',
     type: 'enum',
     options: country,
   },
@@ -199,10 +196,10 @@ export const resourceFilterFields = (
   { name: 'Estimated R&D Hours', value: 'estimated_rd_hours', type: 'number' },
   {
     name: 'Status',
-    value: 'resource_status',
+    value: 'status_rid',
     type: 'enum',
     required: true,
-    options: statusOptions,
+    options: memoizedStatus,
     filterOptions: requiredFieldFilterOptionsForEnum,
   },
   { name: 'Comments', value: 'comments', type: 'text' },

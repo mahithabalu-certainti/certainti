@@ -3,21 +3,20 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LeftPane, RightPane } from '.';
-import { fetchCurrentUserRole } from '../../../common-service/common-service';
-import { useAuthHook, useToast } from '../../../hooks';
-import { useAppTranslation } from '../../../hooks/use-app-translation';
-import { useAppDispatch } from '../../../store/store';
-import { IAuthDetails } from '../../../store/type';
+import { InteractionStatus } from '@azure/msal-browser';
+import { useAppTranslation } from '../../hooks/use-app-translation';
+import { useAuthHook, useToast } from '../../hooks';
+import { IAuthDetails } from '../../store/type';
+import { accountNavItems } from '../../components/sidebar/accounts-menu';
+import { checkPermission, reShapePermissionData } from '../../common-utils';
+import { useAppDispatch } from '../../store/store';
 import {
   setUserId,
   UpdateOrgLogo,
   updatePermissions,
-} from '../../../store/slices';
-import { checkPermission, reShapePermissionData } from '../../../common-utils';
-import { AllModules } from '../../../common-service';
-import { NOT_FOUND } from '../../../routes';
-import { accountNavItems } from '../../../components/sidebar/accounts-menu';
-import { InteractionStatus } from '@azure/msal-browser';
+} from '../../store/slices';
+import { AllModules, fetchCurrentUserRole } from '../../common-service';
+import { NOT_FOUND } from '../../routes';
 
 /**
  * Login component handles the user authentication process.

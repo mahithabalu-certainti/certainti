@@ -508,15 +508,17 @@ const FilterModal: React.FC<FilterModalProps> = ({
     storeFilters(filterStates);
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = (clearSort: boolean = false) => {
     if (!Object.keys(filterStates).length) return null;
     handleCloseFilter();
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});
     setSelectedSystemFilters([]);
-    setCurrentSort(null);
-    handleSorting?.('', 'desc');
+    if (clearSort) {
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
+    }
     clearFilters();
   };
 
@@ -668,7 +670,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               </span>
             </Tooltip>
             <button
-              onClick={handleResetFilters}
+              onClick={() => handleResetFilters(true)}
               className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
             >
               Clear

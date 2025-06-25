@@ -7,6 +7,7 @@ import {
   Layout,
   OnChange,
   useGetAllCountries,
+  useGetStatus,
 } from '../../../../common-service';
 import { FormBuilder } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
@@ -60,6 +61,7 @@ export const CreateUser: React.FC = () => {
   const userFullName =
     `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim();
 
+  const statusOptions = useGetStatus();
   const userProfiles = useManageUserProfile();
   const allCountries = useGetAllCountries();
   const userRoles = useManageUserRole();
@@ -174,6 +176,15 @@ export const CreateUser: React.FC = () => {
     return orgNameOptions;
   }, [isConsultantFirm.isConsultantFirm, orgName.data?.data]);
 
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
   const memoizeRole: SelectOption[] = useMemo(
     () =>
       userRoles.data?.data.roles.map((role) => ({
@@ -237,6 +248,7 @@ export const CreateUser: React.FC = () => {
   };
 
   const formConfig = FormData(
+    memoizedStatus,
     memoizedCountry,
     memoizeProfiles,
     memoizeRole,
@@ -255,6 +267,7 @@ export const CreateUser: React.FC = () => {
     userDetails.isLoading ||
     userProfiles.isLoading ||
     allCountries.isLoading ||
+    statusOptions.isLoading ||
     userRoles.isLoading;
 
   if (!userIsEnable || (isEditView ? !isUserEditEnable : !isUserCreateEnable))
@@ -269,8 +282,8 @@ export const CreateUser: React.FC = () => {
           <div className='w-[90%]'>
             <div className={HEADER_STYLES.adminPermission}>
               {isEditView
-                ? `Admin Permission > ${userData?.full_name ?? userFullName}`
-                : 'Admin Permission'}
+                ? `Admin Permission > Manage User${(userData?.full_name ?? userFullName) ? ` > ${userData?.full_name ?? userFullName}` : ''}`
+                : 'Admin Permission > Manage User'}
             </div>
             <div className={HEADER_STYLES.manageUser}>
               {isEditView ? 'Edit User' : 'Create User'}
@@ -313,6 +326,7 @@ export const CreateUser: React.FC = () => {
               isEditView && userData
                 ? {
                     ...userData,
+                    status: userData?.status_rid,
                     is_consultant_firm:
                       userData?.is_consultant_firm === true
                         ? YesNo.Yes

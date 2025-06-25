@@ -56,8 +56,7 @@ export const fetchResourceCost = async (
 };
 
 export const useFetchResourceCostById = (
-  params: ResourceCostListParams,
-  options?: UseQueryOptions
+  params: ResourceCostListParams
 ): UseQueryResult => {
   return useQuery({
     queryKey: ['resource-cost-byId', params],
@@ -66,7 +65,10 @@ export const useFetchResourceCostById = (
       return res.data;
     },
     enabled: !!params.id,
-    ...options,
+    retry: 0,
+    refetchOnWindowFocus: false,
+    gcTime: 0,
+    staleTime: 0,
   });
 };
 

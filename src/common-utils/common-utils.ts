@@ -578,30 +578,28 @@ export const formatDateToYYYYMMDDWithTime = (
 export const costDisplay = (
   cost: string | number | null | undefined,
   symbol: string = '$'
-) => {
+): string => {
   if (cost === null || cost === undefined) return '-';
 
-  const numberCost = Number(cost);
-  const hasDecimal = !Number.isInteger(numberCost);
-
-  const formattedCost = numberCost.toLocaleString('en-US', {
-    minimumFractionDigits: hasDecimal ? 2 : 0,
-    maximumFractionDigits: hasDecimal ? 2 : 0,
-  });
+  const costStr = String(cost);
+  const [whole, decimal] = costStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formattedCost =
+    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
 
   return symbol ? `${symbol} ${formattedCost}` : formattedCost;
 };
 
-export const valueDisplay = (value: string | number | null | undefined) => {
+export const valueDisplay = (
+  value: string | number | null | undefined
+): string => {
   if (value === null || value === undefined) return '-';
 
-  const numberCost = Number(value);
-  const hasDecimal = !Number.isInteger(numberCost);
+  const valueStr = String(value);
+  const [whole, decimal] = valueStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formattedValue =
+    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
 
-  const formattedCost = numberCost.toLocaleString('en-US', {
-    minimumFractionDigits: hasDecimal ? 2 : 0,
-    maximumFractionDigits: hasDecimal ? 2 : 0,
-  });
-
-  return formattedCost;
+  return formattedValue;
 };

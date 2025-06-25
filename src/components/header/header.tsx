@@ -43,6 +43,7 @@ interface HeaderProps {
   onActionsClick?: () => void;
   onSettingsClick?: () => void;
   variant?: 'main' | 'sub'; // To distinguish between main page and sub-page headers
+  goBack?: () => void
 }
 
 export const PageHeader: React.FC<HeaderProps> = ({
@@ -65,6 +66,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
   onActionsClick,
   onSettingsClick,
   variant = 'main', // Default to main variant
+  goBack,
 }) => {
   return (
     <div
@@ -176,6 +178,15 @@ export const PageHeader: React.FC<HeaderProps> = ({
               <AccountSettingsIcon alt='menu-icon' className='h-4' />
             </button>
           )}
+
+          {goBack && <TextButton
+            label='Back'
+            onClick={goBack}
+            sx={{
+              fontSize: '12px',
+              fontWeight: 400,
+            }}
+          />}
         </div>
       </div>
     </div>

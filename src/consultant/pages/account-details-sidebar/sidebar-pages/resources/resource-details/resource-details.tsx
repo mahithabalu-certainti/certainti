@@ -172,7 +172,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       value: resourceData?.resource_total_experience,
     },
     {
-      label: 'Total Years in Organization',
+      label: 'Total Years in the Organisation',
       value: resourceData?.resource_total_experience_organization,
     },
   ];

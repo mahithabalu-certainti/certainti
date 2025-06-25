@@ -36,14 +36,14 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   skillOrderBy,
   setSkillOrderBy,
   isResourceSkillEditEnable,
-  isResourceSkillDeleteEnable,
   refreshSkillTrigger,
   setCount,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
   const {
     data: skillList,
@@ -101,7 +101,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      hide: !isResourceSkillDeleteEnable,
+      // hide: !isResourceSkillDeleteEnable,
+      hide: true,
     },
   ];
 
@@ -116,6 +117,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         hoverHighlight={false}
         stickyHeader={false}
         stickyColumnsCount={1}
+        tableStyle={{
+          borderBottom: '1px solid #CBD6E2',
+          height: '100%',
+          maxHeight: 'calc(100vh - 410px)',
+          overflow: 'auto',
+        }}
         selectable={false}
         actionWidth={80}
         actionDisplayMode='dropdown'
