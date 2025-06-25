@@ -131,15 +131,15 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
 
     if (setCurrentCountry) {
-      const country = Array.isArray(filterStates?.resource_country?.enum?.value)
-        ? filterStates?.resource_country?.enum?.value
-        : [filterStates?.resource_country?.enum?.value];
+      const country = Array.isArray(filterStates?.country_rid?.enum?.value)
+        ? filterStates?.country_rid?.enum?.value
+        : [filterStates?.country_rid?.enum?.value];
 
       setCurrentCountry(country as string[]);
     }
   }, [
     filterStates?.skill_type_rid?.enum?.value,
-    filterStates?.resource_country?.enum?.value,
+    filterStates?.country_rid?.enum?.value,
     filterStates?.skill_sub_type?.enum?.value,
   ]);
 
@@ -484,11 +484,15 @@ const Filter: React.FC<FilterComponentProps> = ({
     fieldState: FilterState
   ) => {
     const fieldValue = filterStates[filterFieldName]?.enum?.value;
-    const enabled = !!fieldValue && !!fieldValue[0]; // Only enable if skill type is selected
+    const enabled = !!fieldValue && !!fieldValue[0];
     return (
       <EnumFilterControl
         filterStates={filterStates}
-        menuOption={enumOptions}
+        menuOption={
+          field?.required
+            ? (field?.filterOptions ?? enumOptions)
+            : (field.operatorOption ?? enumOptions)
+        }
         valueOptions={field.options as { option: string; value: string }[]}
         fieldName={field.value}
         state={fieldState}
@@ -511,12 +515,8 @@ const Filter: React.FC<FilterComponentProps> = ({
       return disableDependantFilterFields('skill_type_rid', field, fieldState);
     }
 
-    if (field.value === 'resource_region') {
-      return disableDependantFilterFields(
-        'resource_country',
-        field,
-        fieldState
-      );
+    if (field.value === 'region_rid') {
+      return disableDependantFilterFields('country_rid', field, fieldState);
     }
 
     switch (field.type) {

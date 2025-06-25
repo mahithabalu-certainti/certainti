@@ -79,10 +79,10 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_EDIT
   );
-  const isAccountExportEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EXPORT
-  );
+  // const isAccountExportEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EXPORT
+  // );
   const isResourcesExportEnable = checkPermission(
     permission,
     AllPermissions.RESOURCES_DOWNLOAD
@@ -201,7 +201,8 @@ export const AccountDetails = () => {
     } else if (searchParams.get('list') === 'projects') {
       return !isProjectExportEnable;
     } else {
-      return !isAccountExportEnable;
+      // return !isAccountExportEnable;
+      return true;
     }
   };
 

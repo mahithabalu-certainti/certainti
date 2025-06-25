@@ -36,14 +36,13 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   skillOrderBy,
   setSkillOrderBy,
   isResourceSkillEditEnable,
-  isResourceSkillDeleteEnable,
   refreshSkillTrigger,
   setCount,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name !== 'active';
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
   const {
     data: skillList,
@@ -101,7 +100,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      hide: !isResourceSkillDeleteEnable,
+      // hide: !isResourceSkillDeleteEnable,
+      hide: true,
     },
   ];
 

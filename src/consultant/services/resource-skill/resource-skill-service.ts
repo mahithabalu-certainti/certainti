@@ -12,7 +12,7 @@ import {
   ResourceSkillListParams,
   ResourceSkillPayload,
 } from '../../types/resource-skill';
-import { api } from '../../../api/api';
+import { accountServiceApi, api } from '../../../api/api';
 import {
   baseUrl,
   fetchResourceSkillByIdUrl,
@@ -20,6 +20,7 @@ import {
 } from '../urls/resource-cost-skill-urls';
 import { SkillSubTypeUrl, SKILLTYPEURL } from '../urls';
 import {
+  GetSkillLevelApiResponse,
   SKillSubTypeApiResponse,
   SkillTypeApiResponse,
 } from '../../types/resource';
@@ -174,5 +175,32 @@ export const useFetchResourceSkillSubType = (
     },
     enabled: !!params && params.length > 0,
     retry: 0,
+  });
+};
+
+export const getSkillLevelUrl = (): string => {
+  return `/api/accounts/skillLevel`;
+};
+
+export const fetchSkillLevel = async (): Promise<GetSkillLevelApiResponse> => {
+  try {
+    const { data } =
+      await accountServiceApi.get<GetSkillLevelApiResponse>(getSkillLevelUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching skill levels:', error);
+    throw error;
+  }
+};
+
+export const useGetSkillLevel = () => {
+  return useQuery<GetSkillLevelApiResponse, Error>({
+    queryKey: ['getSkillLevel'],
+    queryFn: () => fetchSkillLevel(),
+    retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };

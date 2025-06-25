@@ -17,13 +17,19 @@ import {
 import {
   useFetchResourceSkillSubType,
   useFetchResourceSkillType,
+  useGetSkillLevel,
 } from '../../../services/resource-skill/resource-skill-service';
 import { SkillSubtype, SkillType } from '../../../types/resource';
 import { ResourceTabs } from '../sidebar-pages/resources/resources';
 import { clearFilters } from './filter/utils';
 import { projectFilterFields } from '../sidebar-pages/projects/utils';
-import { useGetAllCountries } from '../../../../common-service';
+import { useGetAllCountries, useGetStatus } from '../../../../common-service';
 import { useLocation } from 'react-router-dom';
+import {
+  useGetResourceStatus,
+  useGetResourceType,
+} from '../../../services/resource-list';
+import { useGetProjectType } from '../../../services/project';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -93,6 +99,11 @@ const TabPanel: React.FC<TabProps> = ({
   const allCountries = useGetAllCountries();
   const Regions = useFetchState(currentCountry);
   const Classification = useFetchClassification();
+  const statusOptions = useGetStatus();
+  const resourceTypeOptions = useGetResourceType();
+  const resourceStatusOptions = useGetResourceStatus();
+  const skillLevelOptions = useGetSkillLevel();
+  const projectTypeOptions = useGetProjectType();
 
   const { data: skillType } = useFetchResourceSkillType(value === "skill");
   const { data: skillSubType } = useFetchResourceSkillSubType(
@@ -132,6 +143,51 @@ const TabPanel: React.FC<TabProps> = ({
         value: data.classification_name,
       })) || [],
     [Classification.data?.data.projectClassifications]
+  );
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedResourceStatus = useMemo(
+    () =>
+      resourceStatusOptions?.data?.data?.resourceStatus.map((item) => ({
+        option: item.resource_status_name,
+        value: item.rid,
+      })) || [],
+    [resourceStatusOptions?.data?.data?.resourceStatus]
+  );
+
+  const memoizedSkillLevels = useMemo(
+    () =>
+      skillLevelOptions?.data?.data?.skillLevel.map((item) => ({
+        option: item.skill_level_name,
+        value: item.rid,
+      })) || [],
+    [skillLevelOptions?.data?.data?.skillLevel]
+  );
+
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        option: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
   );
 
   // useEffect(() => {
@@ -226,25 +282,42 @@ const TabPanel: React.FC<TabProps> = ({
   // };
 
   const filterFields = useMemo(() => {
-    if (!value) return resourceFilterFields(memoizedCountry, regionData);
+    if (!value)
+      return resourceFilterFields(
+        memoizedCountry,
+        regionData,
+        memoizedStatus,
+        memoizedResourceType
+      );
     if (value === 'projects')
       return projectFilterFields(
         memoizedClassification.map((item) => ({
           label: item.option,
           value: item.value,
-        }))
+        })),
+        memoizedProjectTypes,
+        memoizedStatus
       );
     return value === 'cost'
-      ? getCostFilterFields(memoizedCurrency)
-      : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
+      ? getCostFilterFields(memoizedCurrency, memoizedResourceStatus)
+      : getSkillFilterFields(
+          memoizedSkillType,
+          skillSubTypeData,
+          memoizedSkillLevels
+        );
   }, [
     value,
     memoizedCountry,
     regionData,
+    memoizedStatus,
+    memoizedResourceType,
     memoizedClassification,
+    memoizedProjectTypes,
     memoizedCurrency,
+    memoizedResourceStatus,
     memoizedSkillType,
     skillSubTypeData,
+    memoizedSkillLevels,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =

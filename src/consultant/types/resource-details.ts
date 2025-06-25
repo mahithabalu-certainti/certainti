@@ -3,12 +3,14 @@ export interface ResourceDetailsTypes {
   account_number: string;
   rid: string;
   r_number: string;
+  status_rid: string;
   eid: string | null;
   resource_code: string;
   resource_region: string;
   resource_designation: string;
   resource_city: string;
-  resource_type: string;
+  resource_type_name: string;
+  resource_type_rid: string;
   resource_name: string;
   resource_firstname: string;
   resource_lastname: string;
@@ -26,7 +28,7 @@ export interface ResourceDetailsTypes {
   designation: string;
   resource_total_experience: number;
   resource_total_experience_organization: number;
-  resource_status: string;
+  status_name: string;
   created_datetime: string; // ISO date string
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format
@@ -35,6 +37,9 @@ export interface ResourceDetailsTypes {
   resource_number?: string;
   country?: string;
   state?: string;
+  country_rid: string;
+  region_rid: string;
+  city_rid: string;
 }
 
 export interface ResourceDetailsForPayload {

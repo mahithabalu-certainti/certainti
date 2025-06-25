@@ -94,7 +94,8 @@ const DetailsSection: React.FC<{
                   <TruncateWithTooltip
                     text={String(item.value)}
                     maxWidth={'100%'}
-                    className='truncate max-w-full'
+                    className='truncate inline-block max-w-full'
+                    alwaysShowTooltip={true}
                   >
                     {renderValue(item.value)}
                   </TruncateWithTooltip>

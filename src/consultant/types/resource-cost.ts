@@ -17,7 +17,7 @@ export type ResourceCostList = {
   resource_code?: string;
   id?: string;
   rid?: string;
-  status?: string;
+  status_name?: string;
   created_datetime?: string;
   modified_datetime?: string;
   resource_fullname?: string;
@@ -125,7 +125,7 @@ export type ResourceCostPayload = {
   eid?: string;
   rid?: string;
   account_rid?: string;
-  resource_type?: string;
+  resource_type_rid?: string;
   resource_number?: string;
   resource_rid: string;
   resource_ref_id: string;

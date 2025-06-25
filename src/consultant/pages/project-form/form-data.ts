@@ -8,7 +8,6 @@ import {
   createSelectField,
   createTextAreaField,
   createTextField,
-  PROJECT_TYPE,
   PROJECT_YES_NO_OPTIONS,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
@@ -169,6 +168,8 @@ const getDateConstraints = (yearsBack: number) => {
 const { currentDate, minDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
 
 export const FormData = (
+  statusOptions: SelectOption[],
+  projectTypeOptions: SelectOption[],
   country: SelectOption[],
   currency: SelectOption[],
   state: SelectOption[],
@@ -241,7 +242,7 @@ export const FormData = (
           }),
           createSelectField('project_type', 'Project Type', {
             required: true,
-            options: PROJECT_TYPE,
+            options: projectTypeOptions,
             placeholder: 'Choose Project Type',
           }),
           createDateField('project_startdate', 'Effective From', {
@@ -371,7 +372,7 @@ export const FormData = (
           }),
           createSelectField('project_status', 'Status', {
             required: true,
-            options: STATUS_OPTIONS,
+            options: statusOptions,
             placeholder: 'Choose Status',
           }),
         ],
@@ -612,6 +613,8 @@ export const FormData = (
       },
     ],
     [
+      statusOptions,
+      projectTypeOptions,
       classification,
       showClassifyOthersField,
       industry,
