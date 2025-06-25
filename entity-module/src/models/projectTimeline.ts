@@ -85,7 +85,7 @@ export class ProjectTimeline
       },
       {
         sequelize,
-        schema: `${MAIN_SCHEMA_NAME}`,
+        schema: schemaName,
         tableName: "project_timeline",
         timestamps: false,
         underscored: true,
