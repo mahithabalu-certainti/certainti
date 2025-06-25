@@ -391,6 +391,10 @@ export const AccountDetails = () => {
     [disable]
   ); // Only recalculate when 'disable' changes
 
+  const goBack = () => {
+    window.history.back();
+  };
+
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
 
   return (
@@ -420,6 +424,7 @@ export const AccountDetails = () => {
           onSettingsClick={handleSettingsClick}
           showActions={false}
           showSettings={false}
+          goBack={goBack}
         />
       </div>
       <InfoSection

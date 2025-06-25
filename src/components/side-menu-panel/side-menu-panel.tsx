@@ -59,7 +59,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     } else {
       searchParams.set('list', key);
     }
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     onSelect(key);
   };
 

@@ -24,6 +24,13 @@ const dateOptions: { label: string; value: string }[] = [
   { label: 'Is Empty', value: 'is_empty' },
 ];
 
+const requiredDateOptions: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Before', value: 'before' },
+  { label: 'After', value: 'after' },
+  { label: 'Between', value: 'between' },
+];
+
 export const getUserFilterFields = (
   userProfiles: FilterSelectOption[],
   roleOptions: FilterSelectOption[]
@@ -58,7 +65,7 @@ export const getUserFilterFields = (
     label: 'Created On',
     name: 'created_datetime',
     type: 'date',
-    operatorOption: dateOptions,
+    operatorOption: requiredDateOptions,
   },
   {
     label: 'Updated On',

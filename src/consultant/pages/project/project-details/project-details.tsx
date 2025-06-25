@@ -257,6 +257,10 @@ export const ProjectDetails = () => {
     }
   };
 
+  const goBack = () => {
+    window.history.back();
+  };
+
   if (!projectIsEnable) return <AccessRestricted />;
   return (
     <div className='flex flex-col h-full'>
@@ -287,6 +291,7 @@ export const ProjectDetails = () => {
           onSettingsClick={handleSettingsClick}
           showActions={false}
           showSettings={false}
+          goBack={goBack}
         />
       </div>
       <InfoSection
