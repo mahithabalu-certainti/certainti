@@ -139,7 +139,7 @@ export const fetchSkillType = async (): Promise<SkillTypeApiResponse> => {
   return data;
 };
 
-export const useFetchResourceSkillType = (): UseQueryResult => {
+export const useFetchResourceSkillType = (enabled: boolean): UseQueryResult => {
   return useQuery({
     queryKey: ['resource-skill-Type'],
     queryFn: async () => {
@@ -147,6 +147,11 @@ export const useFetchResourceSkillType = (): UseQueryResult => {
       return res.data;
     },
     retry: 0,
+    enabled,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 

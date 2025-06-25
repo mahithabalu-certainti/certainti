@@ -97,7 +97,7 @@ const TabPanel: React.FC<TabProps> = ({
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
-  const Regions = useFetchState(currentCountry);
+  const Regions = useFetchState(currentCountry?.toString() || '');
   const Classification = useFetchClassification();
   const statusOptions = useGetStatus();
   const resourceTypeOptions = useGetResourceType();
@@ -105,7 +105,7 @@ const TabPanel: React.FC<TabProps> = ({
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
 
-  const { data: skillType } = useFetchResourceSkillType();
+  const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
