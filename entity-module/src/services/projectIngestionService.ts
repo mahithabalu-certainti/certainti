@@ -1131,8 +1131,8 @@ class ProjectIngestionService {
     const parentLevelFields = [
       "project_name",
       "industry_name",
-      "project_type_rid",
       "classification_name",
+      "project_type_rid",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
@@ -1205,22 +1205,23 @@ class ProjectIngestionService {
     const fullOrder: any[] = [];
 
     for (const [field, direction] of order) {
+      const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
+      const nullsHandled = `${sortDirection} NULLS LAST`;
+    
       if (bothParentAndChild) {
         if (parentLevelFields.includes(field)) {
-          fullOrder.push([field, direction]);
+          fullOrder.push([Sequelize.literal(`"Project"."${field}" ${nullsHandled}`)]);
         }
       } else {
-        fullOrder.push(["created_datetime", "DESC"]);
+        fullOrder.push([Sequelize.literal(`"Project"."created_datetime" DESC NULLS LAST`)]);
       }
-
+    
       const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
-
+    
       fullOrder.push([
-        { model: ProjectFiscal, as: "ProjectFiscal" },
-        aliasFilter,
-        direction,
+        Sequelize.literal(`"ProjectFiscal"."${aliasFilter}" ${nullsHandled}`)
       ]);
-    };
+    }
 
     let { rows: projects, count } = await Project.findAndCountAll({
       where: whereProject,
@@ -1299,6 +1300,8 @@ class ProjectIngestionService {
         this.mainDbSequelize
       );
 
+      projectData = await this.insertCurrencyDetails(projectData);
+
       projectData = await this.insertProjectClassification(
         projectData,
         this.mainDbSequelize
@@ -1312,6 +1315,10 @@ class ProjectIngestionService {
         rawFilters
       );
       projects = projectData;
+
+      if(projects && projects.length > 0){
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      }
     }
 
     const formatNumberForExport = (value: any, currency_symbol: string): string => {
@@ -1369,11 +1376,11 @@ class ProjectIngestionService {
         "Project Classification": fiscal.classification_name || "-",
         "Customer Group": fiscal.project_client_group || "-",
         "Project Group": fiscal?.project_group || "-",
-        "Project Effort (Hours)": fiscal.total_effort_prj || "-",
-        "Project Cost": formatNumberForExport(fiscal.total_cost_prj, project.currency_symbol) || "-",
-        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte_prj, project.currency_symbol) || "-",
-        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon_prj, project.currency_symbol) || "-",
-        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor_prj, project.currency_symbol) || "-",
+        "Project Effort (Hours)": fiscal.total_effort || "-",
+        "Project Cost": formatNumberForExport(fiscal.total_cost, fiscal.currency_symbol) || "-",
+        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, fiscal.currency_symbol) || "-",
+        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, fiscal.currency_symbol) || "-",
+        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, fiscal.currency_symbol) || "-",
         "Assessment Status": fiscal.assessment_status || "-",
         "QRE %": "-", // Only base project has QRE %
         "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
@@ -1541,7 +1548,7 @@ class ProjectIngestionService {
                 : classificationMap[child.project_classification_rid]
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
-              project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
+              project_type_name: projectTypeMap[child.project_type_rid]?.project_type_name || null,
               status_name:statusMap[project.status_rid]?.status_name
             })
           );
@@ -1951,8 +1958,8 @@ class ProjectIngestionService {
   
       for (const item of project) {
         if (item.currency_rid) currencyRidSet.add(item.currency_rid);
-        if (item.projectFiscal) {
-          for (const fiscal of item.projectFiscal) {
+        if (item.ProjectFiscal) {
+          for (const fiscal of item.ProjectFiscal) {
             if (fiscal.currency_rid) currencyRidSet.add(fiscal.currency_rid);
           }
         }
