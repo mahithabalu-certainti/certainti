@@ -142,7 +142,7 @@ async accountList(
       }
       childAccountsByParent.get(child.parent_account_rid).push(child);
     });
-    if(parsedFilters.length > 0)
+    if(Object.keys(parsedFilters).length > 0)
     {
     parentAccounts = parentAccounts.filter((parent: any) => {
       // Keep parent if it has children that match filters
@@ -448,9 +448,9 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           }
           childAccountsByParent.get(child.parent_account_rid).push(child);
         });
-        if(parsedFilters.length > 0)
-      {
-        parentAccounts = parentAccounts.filter((parent: any) => {
+         if(Object.keys(parsedFilters).length > 0)
+        {
+          parentAccounts = parentAccounts.filter((parent: any) => {
           // Keep parent if it has children that match filters
           if (childAccountsByParent.has(parent.rid)) {
             return true;
