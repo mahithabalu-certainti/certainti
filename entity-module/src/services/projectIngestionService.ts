@@ -1029,7 +1029,7 @@ class ProjectIngestionService {
           fullOrder.push([Sequelize.literal(`"Project"."${field}" ${nullsHandled}`)]);
         }
       } else {
-        fullOrder.push([Sequelize.literal(`"Project"."created_datetime" DESC NULLS LAST`)]);
+        fullOrder.push([Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`)]);
       }
     
       const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
