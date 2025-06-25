@@ -94,7 +94,7 @@ const TabPanel: React.FC<TabProps> = ({
   const Regions = useFetchState(currentCountry);
   const Classification = useFetchClassification();
 
-  const { data: skillType } = useFetchResourceSkillType();
+  const { data: skillType } = useFetchResourceSkillType(value === "skill");
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );

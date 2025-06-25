@@ -1,8 +1,8 @@
 import { Box } from '@mui/material';
 import React from 'react';
-import { certaintiLogo, loginBg } from '../../../assets';
-import { Image, Text } from '../../../components';
-import { useAppTranslation } from '../../../hooks/use-app-translation';
+import { certaintiLogo, loginBg } from '../assets';
+import { Image, Text } from '../components';
+import { useAppTranslation } from '../hooks/use-app-translation';
 
 /**
  * RightPane component displays the right side of the login page.

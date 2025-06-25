@@ -153,7 +153,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
             localStorage.removeItem('auth');
             localStorage.removeItem('showAdminSidebar');
             localStorage.removeItem('resetPassword');
-            window.location.href = LOGIN;
+            if (window.location.pathname !== LOGIN) {
+              window.location.href = LOGIN;
+            }
           }, 3000);
           return Promise.reject(refreshError);
         }

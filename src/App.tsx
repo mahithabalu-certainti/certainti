@@ -50,13 +50,13 @@ const Resource = lazy(
       './consultant/pages/account-details-sidebar/sidebar-pages/resources/resources'
     )
 );
-const Login = lazy(() => import('./consultant/pages/login/login'));
+const Login = lazy(() => import('./login/login'));
 const Profile = lazy(() => import('./consultant/pages/profile/profile'));
 const ViewProfile = lazy(
   () => import('./admin/pages/manage-profile/view-profile/view-profile')
 );
 const HomePage = lazy(() => import('./consultant/pages/home/Home'));
-const NotFound = lazy(() => import('./consultant/pages/not-found/NotFound'));
+const NotFound = lazy(() => import('./not-found/NotFound'));
 const Accounts = lazy(() => import('./consultant/pages/account-list/accounts'));
 const AccountForm = lazy(
   () => import('./consultant/pages/account-create/account-create')

@@ -344,7 +344,7 @@ const ResourceForm: React.FC = () => {
   const allCountries = useGetAllCountries();
   const states = useFetchState(currentCountry.country);
   const city = useFetchCity(currentCountry.state);
-  const { data: skillType } = useFetchResourceSkillType();
+  const { data: skillType } = useFetchResourceSkillType(true);
   const { data: skillSubType, isLoading: skillSubTypeLoading } =
     useFetchResourceSkillSubType(currentSkillType.skill_type);
 
