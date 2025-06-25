@@ -23,13 +23,19 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       sortable: true,
       sticky: true,
       sx: {
-        textAlign: 'right',
+        textAlign: 'left',
         position: 'sticky',
         left: 0,
         background: '#fff',
         zIndex: 10,
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
+      },
+      render: (row: ResourceCostList) => {
+        if (typeof row.fiscal_year === 'number') {
+          return `FY-${row.fiscal_year}`;
+        }
+        return '-';
       },
     },
     {
@@ -147,22 +153,22 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       sortable: true,
     },
     {
-      id: 'status',
-      sortId: 'status',
+      id: 'status_name',
+      sortId: 'status_name',
       label: 'Status',
       width: 130,
       sortable: true,
       render: (row: ResourceCostList) => (
         <span
           className={`${
-            row.status === 'Active'
+            row.status_name === 'Active'
               ? 'text-[#199806]'
-              : row.status === 'Inactive'
+              : row.status_name === 'In-Active'
                 ? 'text-[#f44336] '
                 : ''
           }`}
         >
-          {row.status}
+          {row.status_name || '-'}
         </span>
       ),
     },

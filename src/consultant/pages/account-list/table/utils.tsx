@@ -6,16 +6,18 @@ import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
 import { costDisplay } from '../../../../common-utils';
 
-// const formatNumberWithCommas = (num: number | string): string => {
-//   if (num) {
-//     if (typeof num === 'string') {
-//       num = parseFloat(num);
-//     }
-//     return num.toLocaleString('en-US');
-//   }
-//   return '-';
-// };
-
+const formatNumberWithCommas = (num: number | string): string => {
+  if (num !== null && num !== undefined && num !== '') {
+    const parsed = typeof num === 'string' ? parseFloat(num) : num;
+    if (!isNaN(parsed)) {
+      return parsed.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+  }
+  return '-';
+};
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
   openRows: Set<string>;
@@ -230,10 +232,10 @@ export const renderRows = ({
             }}
           >
             <TruncateWithTooltip
-              text={String(account.totalProjectHours)}
+              text={formatNumberWithCommas(account.totalProjectHours)}
               maxWidth={180}
             >
-              {account.totalProjectHours}
+              {formatNumberWithCommas(account.totalProjectHours)}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
@@ -324,7 +326,7 @@ export const renderRows = ({
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
-            sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+            sx={{ width: '120px', maxWidth: '120px', minWidth: '120px' }}
           >
             <TruncateWithTooltip
               text={String(account.accountNumber)}
@@ -552,10 +554,10 @@ export const renderChildRows = ({
               }}
             >
               <TruncateWithTooltip
-                text={String(account.totalProjectHours)}
+                text={formatNumberWithCommas(account.totalProjectHours)}
                 maxWidth={180}
               >
-                {account.totalProjectHours}
+                {formatNumberWithCommas(account.totalProjectHours)}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell
@@ -645,7 +647,7 @@ export const renderChildRows = ({
               </TruncateWithTooltip>
             </TableCell>
             <TableCell
-              sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+              sx={{ width: '120px', maxWidth: '120px', minWidth: '120px' }}
             >
               <TruncateWithTooltip
                 text={String(account.accountNumber)}
@@ -784,7 +786,7 @@ export const renderChildRows = ({
                       textAlign: 'right',
                     }}
                   >
-                    {project.total_project_hours || '-'}
+                    {formatNumberWithCommas(project.total_project_hours)}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -885,9 +887,9 @@ export const renderChildRows = ({
                   </TableCell>
                   <TableCell
                     sx={{
-                      width: '160px',
-                      maxWidth: '160px',
-                      minWidth: '160px',
+                      width: '120px',
+                      maxWidth: '120px',
+                      minWidth: '120px',
                     }}
                   >
                     {'-'}
@@ -898,12 +900,10 @@ export const renderChildRows = ({
                       minWidth: '60px',
                       maxWidth: '60px',
                       padding: '0px !important',
+                      textAlign: 'center',
                     }}
                   >
-                    <ActionButton
-                      onEdit={() => handleEdit(account)}
-                      onDelete={() => handleDelete(account)}
-                    />
+                    {'-'}
                   </TableCell>
                 </TableRow>
               ))}

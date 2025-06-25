@@ -42,7 +42,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   setCostOrder,
   costorderBy,
   setCostorderBy,
-  isResourceCostDeleteEnable,
   isResourceCostEditEnable,
   refreshCostTrigger,
   setCount,
@@ -51,7 +50,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const { successToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const {
     data: costList,
@@ -111,7 +111,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      hide: !isResourceCostDeleteEnable,
+      // hide: !isResourceCostDeleteEnable,
+      hide: true,
     },
   ];
 
@@ -120,7 +121,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       rid: row?.rid,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       action: 'accept',
-      type: row?.status,
+      type: row?.status_name,
     };
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
@@ -135,7 +136,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       rid: row?.rid,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       action: 'reject',
-      type: row?.status,
+      type: row?.status_name,
     };
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
@@ -146,7 +147,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   };
   const getConditionMenuItems = (row: ResourceCostList) => {
     let statusLabel = '';
-    switch (row.status) {
+    switch (row.status_name) {
       case 'Duplicate':
         statusLabel = 'Duplicate';
         break;
@@ -185,7 +186,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         columns={resourceCostColumns}
         getRowId={getRowId}
         hoverHighlight={false}
-        tableStyle={{ borderBottom: '1px solid #CBD6E2', overflow: 'auto' }}
+        tableStyle={{
+          borderBottom: '1px solid #CBD6E2',
+          height: '100%',
+          maxHeight: 'calc(100vh - 410px)',
+          overflow: 'auto',
+        }}
         stickyHeader={false}
         stickyColumnsCount={1}
         selectable={false}

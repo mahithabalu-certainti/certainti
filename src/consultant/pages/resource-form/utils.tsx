@@ -8,7 +8,6 @@ import {
   ResourceCostSkillFormData,
 } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
-import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
@@ -17,7 +16,7 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 export const RESOURCE_STATUS_COST: SelectOption[] = [
   { label: 'Active', value: 'Active' },
-  { label: 'Inactive', value: 'Inactive' },
+  { label: 'In-Active', value: 'In-Active' },
   { label: 'Anomaly', value: 'Anomaly' },
   { label: 'Duplicate', value: 'Duplicate' },
 ];
@@ -37,6 +36,12 @@ export const FREQUENCY_OPTIONS: SelectOption[] = [
   { label: 'Daily', value: 'daily' },
   { label: 'Hourly', value: 'hourly' },
 ];
+
+export enum ResourceTypeEnum {
+  FULL_TIME = 'full-time',
+  NON_LABOR = 'non-labor',
+  SUB_CON = 'sub con',
+}
 
 // Type definitions
 interface RawResourceData {
@@ -104,15 +109,14 @@ export function transformPayloadforUpdateResource(
     account_number: options.account_number || '',
     resource_code:
       rawData.resource_code || existingResource?.resource_code || '',
-    resource_type: rawData.resource_type || '',
+    resource_type_rid: rawData.resource_type || '',
 
     name: fullName || rawData.resource_name || '',
     first_name: rawData.resource_firstname || '',
     last_name: rawData.resource_lastname || '',
     org_name: rawData.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
-    resource_status:
-      rawData.resource_status || existingResource?.resource_status,
+    status_rid: rawData.resource_status || existingResource?.status_rid,
     country_rid: rawData.country || existingResource?.country || '',
     region_rid: rawData.state || existingResource?.state || '',
     city_rid: rawData.city || existingResource?.city || '',
@@ -143,7 +147,7 @@ export const transformPayloadforCreateResource = (
     account_id: formData.account_id,
     account_number: formData.account_number,
     resource_code: formData.resource_code,
-    resource_type: formData.resource_type,
+    resource_type_rid: formData.resource_type,
     first_name: formData.resource_firstname,
     last_name: formData.resource_lastname,
     name: fullName || formData.resource_name,
@@ -157,7 +161,7 @@ export const transformPayloadforCreateResource = (
     resource_designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
-    resource_status: formData.resource_status,
+    status_rid: formData.resource_status,
     comments: formData.comments,
     created_by: formData.created_by,
   };
@@ -181,7 +185,7 @@ export const transformCostData = (
     deductions: formData.deductions || '',
     resource_cost: formData.resource_cost || '',
     fiscal_year: formData.fiscal_year,
-    resource_type: formData.resource_type,
+    resource_type_rid: formData.resource_type,
     resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,
@@ -189,13 +193,14 @@ export const transformCostData = (
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,
     comments: formData.comments,
+    user_preference: formData.user_preference,
   };
 
   if (isEdit) {
     data.rid = formData.cost_rid;
 
     delete data.account_rid;
-    delete data.resource_type;
+    delete data.resource_type_rid;
     delete data.resource_ref_id;
     delete data.resource_number;
     delete data.resource_code;
@@ -206,21 +211,27 @@ export const transformCostData = (
 
 export const transformSkillData = (
   formData: Partial<ResourceCostSkillFormData>,
-  isEdit: boolean
+  isEdit: boolean,
+  isOthersSkillTypeSelected: boolean,
+  isOthersSubTypeSelected: boolean
 ) => {
   const data: Partial<ResourceSkillPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    resource_type: formData.resource_type,
+    resource_type_rid: formData.resource_type,
     resource_rid: formData.resource_rid,
     resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
     effective_from: formData.skill_start_date ? formData.skill_start_date : '',
-    skill_level: formData.skill_level as skillLevel,
+    skill_level_rid: formData.skill_level || '',
     skill_type_rid: formData.skill_type,
     skill_subtype_rid: formData.skill_sub_type,
-    skill_type_others: formData.skill_type_others || '',
-    skill_subtype_others: formData.skill_subtype_others || '',
+    skill_type_others: isOthersSkillTypeSelected
+      ? formData.skill_type_others
+      : '',
+    skill_subtype_others: isOthersSubTypeSelected
+      ? formData.skill_subtype_others
+      : '',
     skill_details: formData.skill_details,
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,
@@ -230,7 +241,7 @@ export const transformSkillData = (
   if (isEdit) {
     delete data.resource_rid;
     delete data.account_rid;
-    delete data.resource_type;
+    delete data.resource_type_rid;
     delete data.resource_ref_id;
     delete data.resource_desc;
     delete data.resource_number;

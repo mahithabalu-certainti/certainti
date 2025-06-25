@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { capitalize } from '@mui/material';
-import { KeyContacts, KeyContactsUpdate, Status } from '../../types';
+import { KeyContacts, KeyContactsUpdate, SelectOption } from '../../types';
 import { NewProjectData } from '../../types/project';
-import { othersIndustryId } from '../account-create/utils';
 const parseNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return isNaN(parsed) || value === '' ? null : parsed;
@@ -16,8 +14,16 @@ export const formatSlashDateToDash = (
   const [year, month, day] = parts;
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 };
-export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
+export const transformKeyContactsFromAPI = (
+  keyContacts: KeyContacts[],
+  memoizedStatus: SelectOption[]
+) => {
   const formData = {} as any;
+
+  // ID → Label
+  const getStatusLabelById = (id: string): string => {
+    return memoizedStatus.find((option) => option.value === id)?.desc || '';
+  };
 
   keyContacts.forEach((contact: any, index: number) => {
     formData[`key_contact_name_${index}`] = contact.key_contact_name || '';
@@ -30,7 +36,7 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`include_in_communication_${index}`] =
       contact.include_in_communication ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
-      contact.status?.toLowerCase() || 'active';
+      getStatusLabelById(contact.status_rid) || 'active';
   });
   return formData;
 };
@@ -38,9 +44,20 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
 export const keyContactsTransformPayload = (
   formData: Partial<Record<string, any>>,
   isEdit: boolean = false,
-  keyContactsList: KeyContacts[] = []
+  keyContactsList: KeyContacts[] = [],
+  memoizedStatus: SelectOption[],
+  defaultActiveValue: string
 ): KeyContacts[] => {
   const keyContacts: KeyContacts[] = [];
+
+  // Label → ID
+  const getStatusIdByLabel = (label: string): string => {
+    return (
+      memoizedStatus.find(
+        (option) => option?.desc?.toLowerCase() === label.toLowerCase()
+      )?.value || ''
+    );
+  };
 
   const indices = Array.from(
     new Set(
@@ -71,9 +88,9 @@ export const keyContactsTransformPayload = (
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
           formData[`include_in_communication_${index}`] === 'yes',
-        status: formData[`key_contact_status_${index}`]
-          ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
-          : ('Active' as Status),
+        status_rid:
+          getStatusIdByLabel(formData[`key_contact_status_${index}`]) ||
+          defaultActiveValue,
         action_type:
           isEdit && rid ? KeyContactsUpdate.Edit : KeyContactsUpdate.Add,
         ...(isEdit && rid && { rid }),
@@ -88,7 +105,7 @@ export const keyContactsTransformPayload = (
         keyContacts.push({
           rid: contact.rid,
           include_in_communication: contact.include_in_communication,
-          status: contact.status,
+          status_rid: contact.status_rid,
           is_primary_contact: contact.is_primary_contact,
           key_contact_name: contact.key_contact_name,
           key_contact_email: contact.key_contact_email,
@@ -105,7 +122,11 @@ export const keyContactsTransformPayload = (
 export const transformFormData = (
   formData: Partial<NewProjectData>,
   isEdit: boolean,
-  keyContactsList?: KeyContacts[]
+  memoizedStatus: SelectOption[],
+  defaultActiveValue: string,
+  keyContactsList?: KeyContacts[],
+  showOthersField?: boolean,
+  showClassifyOthersField?: boolean
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
     account_id: formData.account_id,
@@ -113,21 +134,20 @@ export const transformFormData = (
     project_code: formData.project_code,
     project_name: formData.project_name,
     industry_rid: formData.industry_rid || null,
-    industry_name:
-      othersIndustryId === formData.industry_rid ? formData.industry_name : '',
+    industry_name: showOthersField ? formData.industry_name : '',
     program_name: formData.program_name || '',
     project_startdate: formData.project_startdate || null,
     project_enddate: formData.project_enddate || null,
-    project_type: formData.project_type,
+    project_type_rid: formData.project_type || '',
     project_classification_rid: formData.project_classification_rid || null,
-    project_classification_other: formData.classification_name || null,
+    project_classification_other: showClassifyOthersField
+      ? formData.classification_name
+      : null,
     // uuid: formData.project_classification_rid || null,
     project_client_group: formData.project_client_group || '',
     project_group: formData.project_group || '',
     project_description: formData.project_description || '',
-    project_status: formData.project_status
-      ? (capitalize(formData.project_status) as Status)
-      : ('Active' as Status),
+    status_rid: formData.project_status || '',
     fiscal_year: formData.fiscal_year,
     country_rid: formData.country,
     region_rid: formData.region,
@@ -154,7 +174,13 @@ export const transformFormData = (
       : null,
     comments: formData.comments || '',
     key_contacts:
-      keyContactsTransformPayload(formData, isEdit, keyContactsList) || [],
+      keyContactsTransformPayload(
+        formData,
+        isEdit,
+        keyContactsList,
+        memoizedStatus,
+        defaultActiveValue
+      ) || [],
   };
 
   if (isEdit && formData.rid) {

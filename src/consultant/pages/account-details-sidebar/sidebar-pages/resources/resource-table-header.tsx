@@ -52,7 +52,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             </div>
           )}
           <div>
-            <div className='flex mt-1'>
+            <div className='flex'>
               <h1 className='text-[13px]  font-semibold text-[#2D3E4F]'>
                 {title}
               </h1>
@@ -64,7 +64,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               </div>
             </div>
             {value !== 'details' && (
-              <h1 className='text-[12px] -mt-1 font-medium text-[#7D98B6] '>{`${(count ?? 0) > 0 ? count : 0} items`}</h1>
+              <h1 className='text-[12px] -mt-1.5 font-medium text-[#7D98B6] '>{`${(count ?? 0) > 0 ? count : 0} items`}</h1>
             )}
           </div>
         </div>

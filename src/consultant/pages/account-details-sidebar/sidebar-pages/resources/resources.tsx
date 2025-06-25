@@ -47,6 +47,7 @@ export interface ResourceTabs {
   id: AllPermissions;
   name: string;
   hide: boolean;
+  disable?: boolean;
 }
 
 export interface TabMenus {
@@ -62,6 +63,7 @@ const resourceTabs: ResourceTabs[] = [
     id: AllPermissions.RESOURCE_VIEW_TIMELINE,
     name: 'Timeline',
     hide: false,
+    disable: true,
   },
 ];
 
@@ -107,10 +109,10 @@ const Resource: React.FC<ResourceProps> = ({
   const [sortField, setSortField] = useState<string>('resource_code');
   const [costOrder, setCostOrder] = useState<'asc' | 'desc'>('asc');
   const [costorderBy, setCostOrderBy] =
-    useState<keyof ResourceCostList>('resource_code');
+    useState<keyof ResourceCostList>('fiscal_year');
   const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('asc');
   const [skillOrderBy, setSkillOrderBy] =
-    useState<keyof ResourceSkillList>('resource_code');
+    useState<keyof ResourceSkillList>('start_date');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [count, setCount] = useState(0);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -119,7 +121,8 @@ const Resource: React.FC<ResourceProps> = ({
   const [resourceNumber, setResourceNumber] = useState<string | null>(null);
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [refreshCostTrigger, setRefreshCostTrigger] = useState<number>(
     Date.now()
@@ -210,11 +213,14 @@ const Resource: React.FC<ResourceProps> = ({
 
   useEffect(() => {
     if (searchParams.get('res_id') && ResourceList) {
-      const refId = searchParams.get('res_id') as string;
-      const resourceNumber = ResourceList?.resource?.find(
-        (resource: ResourceList) => resource.rid === refId
-      )?.r_number;
-      setResourceNumber(resourceNumber ?? '');
+      const resId = searchParams.get('res_id');
+      const currentResource = ResourceList?.resource?.find(
+        (resource: ResourceList) => resource.rid === resId
+      );
+      if (currentResource) {
+        setResourceData(currentResource);
+        setResourceNumber(currentResource.r_number ?? '');
+      }
     } else {
       setResourceNumber(null);
     }
@@ -237,7 +243,7 @@ const Resource: React.FC<ResourceProps> = ({
     clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
 
@@ -260,7 +266,7 @@ const Resource: React.FC<ResourceProps> = ({
     if (!viewResourceList && resourceData.rid) {
       searchParams.set('res_id', resourceData.rid);
       searchParams.set('tab', value);
-      navigate({ search: searchParams.toString() });
+      navigate({ search: searchParams.toString() }, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceData.rid, viewResourceList, value]);
@@ -297,19 +303,23 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
       disabled: accountInActive || !isResourceDeleteEnable,
-      hide: !isResourceDeleteEnable,
+      // hide: !isResourceDeleteEnable,
+      hide: true,
     },
     {
       label: 'View Summary',
       onClick: (row: any) => console.log('Summary', row),
+      hide: true,
     },
     {
       label: 'View Activities',
       onClick: (row: any) => console.log('Activities', row),
+      hide: true,
     },
     {
       label: 'View Notes',
       onClick: (row: any) => console.log('Notes', row),
+      hide: true,
     },
   ];
 
@@ -368,7 +378,14 @@ const Resource: React.FC<ResourceProps> = ({
       RESOURCE +
         '/edit/' +
         resourceId +
-        `?account_id=${accountid}&acc_number=${accNumber}`
+        `?account_id=${accountid}&acc_number=${accNumber}`,
+      {
+        state: {
+          resource: resourceData,
+          accountDetails: accountDetails,
+          resources: true,
+        },
+      }
     );
   };
 
@@ -501,7 +518,12 @@ const Resource: React.FC<ResourceProps> = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'resource_code';
+    const defaultSortField =
+      value === 'cost'
+        ? 'fiscal_year'
+        : value === 'skill'
+          ? 'start_date'
+          : 'resource_code';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     const apiSortBy = sortBy || defaultSortField;
     const isSortByEmpty = !sortBy;
@@ -593,6 +615,8 @@ const Resource: React.FC<ResourceProps> = ({
                 hoverHighlight={false}
                 tableStyle={{
                   borderBottom: '1px solid #CBD6E2',
+                  height: '100%',
+                  maxHeight: 'calc(100vh - 290px)',
                   overflow: 'auto',
                 }}
                 stickyHeader={false}

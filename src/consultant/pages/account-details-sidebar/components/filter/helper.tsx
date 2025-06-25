@@ -851,16 +851,16 @@ export const formatFilterForApi = (
     } else if (state.number) {
       const choosenOption = state.number.option;
       const boolOptions = formatString(choosenOption) === 'Is Empty';
-      // || formatString(choosenOption) === 'Is Empty';
       const value = state.number.value;
-      if (!boolOptions || value?.from || value?.to) {
+
+      if (boolOptions || value?.from || value?.to) {
         formattedFilters[fieldKey] = {
           [choosenOption]:
             formatString(choosenOption) === 'Between'
-              ? [Number(value?.from), Number(value?.to)]
+              ? [value?.from, value?.to]
               : boolOptions
                 ? true
-                : Number(value?.from),
+                : value?.from,
         };
       }
     } else if (state.enum && state.enum.option) {

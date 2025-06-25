@@ -26,7 +26,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   tableParams,
   // isProfileViewEnable,
   isProfileEditEnable,
-  isProfileDeleteEnable,
+  // isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
   refreshProfileTrigger,
@@ -122,7 +122,8 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       label: 'Delete',
       onClick: (row: ManageProfileList) => handleDelete(row),
       icon: DeleteIcon,
-      hide: !isProfileDeleteEnable,
+      // hide: !isProfileDeleteEnable,
+      hide: true,
     },
   ];
 
@@ -132,7 +133,11 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       columns={profileColumns}
       getRowId={getRowId}
       hoverHighlight={false}
-      tableStyle={{ overflowY: 'hidden' }}
+      tableStyle={{
+        height: '100%',
+        maxHeight: 'calc(100vh - 195px)',
+        overflow: 'auto',
+      }}
       stickyHeader={false}
       stickyColumnsCount={2}
       selectable={true}

@@ -2,8 +2,21 @@ import { IconButton, Tooltip, TooltipProps } from '@mui/material';
 import React, { ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { CopyIcon, TickIcon } from '../../assets';
 
+function extractTextFromReactNode(node: React.ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node);
+  }
+  if (React.isValidElement(node) && node.props.children) {
+    return extractTextFromReactNode(node.props.children);
+  }
+  if (Array.isArray(node)) {
+    return node.map(extractTextFromReactNode).join('');
+  }
+  return '';
+}
+
 interface TruncateWithTooltipProps {
-  text: string;
+  text?: string;
   maxWidth?: number | string;
   className?: string;
   children?: ReactNode;
@@ -11,6 +24,7 @@ interface TruncateWithTooltipProps {
   placement?: TooltipProps['placement'];
   enableCopy?: boolean;
   alwaysShowTooltip?: boolean;
+  tooltipMaxWidth?: number | string;
 }
 
 const TruncateWithTooltip = ({
@@ -22,10 +36,15 @@ const TruncateWithTooltip = ({
   placement = 'top',
   enableCopy = true,
   alwaysShowTooltip = false,
+  tooltipMaxWidth = '50vw',
 }: TruncateWithTooltipProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState<boolean>(false);
+
+  const contentToRender = children ?? text;
+  const textForTooltipAndCopy =
+    text ?? extractTextFromReactNode(contentToRender);
 
   const handleCopy = (valueToCopy: string) => {
     navigator.clipboard.writeText(valueToCopy);
@@ -49,7 +68,7 @@ const TruncateWithTooltip = ({
     // Add resize listener to recheck on window resize
     window.addEventListener('resize', checkOverflow);
     return () => window.removeEventListener('resize', checkOverflow);
-  }, [text]);
+  }, [contentToRender]);
 
   const contentStyle = {
     overflow: 'hidden',
@@ -62,12 +81,12 @@ const TruncateWithTooltip = ({
 
   const tooltipContent = enableCopy ? (
     <div className='flex items-center gap-1'>
-      <span className='break-all max-w-[200px]'>{text}</span>
+      <span className='break-all'>{textForTooltipAndCopy}</span>
       <IconButton
         size='small'
         onClick={(e) => {
           e.stopPropagation();
-          handleCopy(text);
+          handleCopy(textForTooltipAndCopy);
         }}
       >
         {copied ? (
@@ -78,12 +97,12 @@ const TruncateWithTooltip = ({
       </IconButton>
     </div>
   ) : (
-    text
+    textForTooltipAndCopy
   );
 
   const content = (
     <div ref={textRef} style={contentStyle} className={className}>
-      {children || text}
+      {contentToRender}
     </div>
   );
 
@@ -92,13 +111,18 @@ const TruncateWithTooltip = ({
       title={<Suspense fallback={null}>{tooltipContent}</Suspense>}
       arrow
       placement={placement}
+      componentsProps={{
+        tooltip: {
+          sx: {
+            maxWidth: tooltipMaxWidth,
+          },
+        },
+      }}
     >
       {content}
     </Tooltip>
   ) : (
-    <div ref={textRef} style={contentStyle} className={className}>
-      {children || text}
-    </div>
+    content
   );
 };
 

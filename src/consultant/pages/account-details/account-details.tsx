@@ -79,10 +79,10 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_EDIT
   );
-  const isAccountExportEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EXPORT
-  );
+  // const isAccountExportEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EXPORT
+  // );
   const isResourcesExportEnable = checkPermission(
     permission,
     AllPermissions.RESOURCES_DOWNLOAD
@@ -195,13 +195,23 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
+  const accountInActive =
+    data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';
+
   const checkExport = () => {
-    if (searchParams.get('list') === 'resources') {
+    const list = searchParams.get('list');
+    const tab = searchParams.get('tab');
+    if (tab === 'details') {
+      return true;
+    }
+
+    if (list === 'resources') {
       return !isResourcesExportEnable;
-    } else if (searchParams.get('list') === 'projects') {
+    } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else {
-      return !isAccountExportEnable;
+      // return !isAccountExportEnable;
+      return true;
     }
   };
 
@@ -209,11 +219,12 @@ export const AccountDetails = () => {
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
+      hide: true,
     },
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
-      hide: checkExport(),
+      hide: accountInActive || checkExport(),
     },
   ];
 
@@ -380,6 +391,10 @@ export const AccountDetails = () => {
     [disable]
   ); // Only recalculate when 'disable' changes
 
+  const goBack = () => {
+    window.history.back();
+  };
+
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
 
   return (
@@ -409,6 +424,7 @@ export const AccountDetails = () => {
           onSettingsClick={handleSettingsClick}
           showActions={false}
           showSettings={false}
+          goBack={goBack}
         />
       </div>
       <InfoSection
@@ -419,10 +435,10 @@ export const AccountDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
+          className={`flex transition-all ease-in-out ${
             isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
           }`}
         >
           <SideMenuPanel

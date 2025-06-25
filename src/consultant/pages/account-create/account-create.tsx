@@ -7,6 +7,7 @@ import {
   Layout,
   OnChange,
   useGetAllCountries,
+  useGetStatus,
 } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
@@ -40,7 +41,6 @@ import {
 import {
   checkPermission,
   formatDateToYYYYMMDDWithTime,
-  STATUS_OPTIONS,
 } from '../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../../store/store';
@@ -59,11 +59,11 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
     label: 'Interaction Recipient?',
     width: '200px',
   },
-  // {
-  //   name: 'interaction_cc_recipient',
-  //   label: 'Interaction CC Recipient?',
-  //   width: '200px',
-  // },
+  {
+    name: 'interaction_cc_recipient',
+    label: 'Interaction CC Recipient?',
+    width: '200px',
+  },
   {
     name: 'key_contact_status',
     label: 'Key Contact Status',
@@ -86,7 +86,7 @@ export const AccountForm: React.FC = () => {
   const { accountid } = useParams();
   const dispatch = useAppDispatch();
 
-  // Permission Mangement
+  // Permission Management
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
@@ -120,12 +120,45 @@ export const AccountForm: React.FC = () => {
         return '';
     }
   };
+
   useEffect(() => {
     if (logoUrl && logoName) {
       const fileType = getMimeTypeFromExtension(logoName);
       setLogo({ name: logoName, type: fileType } as File);
     }
   }, [account, logoName]);
+
+  const statusOptions = useGetStatus();
+  const allCountries = useGetAllCountries();
+  const industry = useFetchIndustrys();
+  const keyContactRoles = useKeyContactRoles('Account');
+  const parentAccount = useFetchParentAccounts();
+  const currency = useFetchCurrency();
+  const states = useFetchState(currentCountry);
+  const createAccount = useCreateAccount();
+  const updateAccount = useUpdateAccount();
+
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+
+  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
+
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+        desc: status.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const defaultActiveValue = useMemo(() => {
+    const activeOption = memoizedStatus.find(
+      (option) => option.label.toLowerCase() === 'active'
+    );
+    return activeOption?.value || '';
+  }, [memoizedStatus]);
+
   // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
@@ -139,8 +172,10 @@ export const AccountForm: React.FC = () => {
             : 'no',
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
           ...transformKeyContactsFromAPI(
-            account?.accountDetails?.keyContacts || []
+            account?.accountDetails?.keyContacts || [],
+            memoizedStatus
           ),
+          status: account?.accountById?.status_rid,
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
           created_on: formatDateToYYYYMMDDWithTime(
@@ -156,22 +191,8 @@ export const AccountForm: React.FC = () => {
           website: account?.accountDetails?.website || '',
         }),
     }),
-    [account]
+    [account, memoizedStatus]
   );
-  const defaultActiveValue = STATUS_OPTIONS[0].value;
-
-  const allCountries = useGetAllCountries();
-  const industry = useFetchIndustrys();
-  const keyContactRoles = useKeyContactRoles('Account');
-  const parentAccount = useFetchParentAccounts();
-  const currency = useFetchCurrency();
-  const states = useFetchState(currentCountry);
-  const createAccount = useCreateAccount();
-  const updateAccount = useUpdateAccount();
-
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
-  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
 
   useEffect(() => {
     if (commonSuccess) {
@@ -271,10 +292,15 @@ export const AccountForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-    setIsKeyContactsReady(!getAccount.isPending && !keyContactRoles.isPending);
+    setIsKeyContactsReady(
+      !getAccount.isPending &&
+        !keyContactRoles.isPending &&
+        !statusOptions.isPending
+    );
   }, [
     getAccount.isPending,
     keyContactRoles.isPending,
+    statusOptions.isPending,
     memoizedRole,
     account?.accountDetails?.keyContacts,
     isEditView,
@@ -282,7 +308,7 @@ export const AccountForm: React.FC = () => {
 
   const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
-    const groupSize = 8;
+    const groupSize = 9;
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
@@ -298,7 +324,7 @@ export const AccountForm: React.FC = () => {
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
   const submitData = (formValues: Partial<AccountFormData>) => {
-    let logoAction: 'update' | 'delete' | '' = '';
+    let logoAction: 'upload' | 'delete' | '' = '';
 
     if (isEditView) {
       if (!logo && logoUrl) {
@@ -306,7 +332,7 @@ export const AccountForm: React.FC = () => {
         logoAction = 'delete';
       } else if (logo instanceof File) {
         // New image uploaded
-        logoAction = 'update';
+        logoAction = 'upload';
       } else {
         // No change to logo
         logoAction = '';
@@ -315,9 +341,12 @@ export const AccountForm: React.FC = () => {
     const transformData = transformFormData(
       formValues,
       isEditView,
+      memoizedStatus,
+      defaultActiveValue,
       accountData?.rid,
       account?.accountDetails?.keyContacts,
-      logoAction
+      logoAction,
+      showOthersField
     );
     const formData = new FormData();
     formData.append('logo', logo as Blob);
@@ -375,6 +404,7 @@ export const AccountForm: React.FC = () => {
   };
 
   const formConfig = AccFormData(
+    memoizedStatus,
     memoizedContry,
     memoizedParentAccounts,
     memoizedCurrency,
@@ -395,6 +425,7 @@ export const AccountForm: React.FC = () => {
     parentAccount.isLoading ||
     currency.isLoading ||
     industry.isLoading ||
+    statusOptions.isLoading ||
     keyContactRoles.isLoading;
 
   if (
@@ -474,6 +505,7 @@ export const AccountForm: React.FC = () => {
             layout={Layout.TYPE_1}
             logo={logo}
             keyContactHeaders={defaultKeyContactHeaders}
+            newContactLength={9}
           />
         )}
       </div>

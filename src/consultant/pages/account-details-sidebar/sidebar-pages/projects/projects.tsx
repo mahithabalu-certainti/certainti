@@ -43,6 +43,7 @@ const projectTabs: ResourceTabs[] = [
     id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
     name: 'Timeline',
     hide: false,
+    disable: true,
   },
 ];
 
@@ -70,7 +71,8 @@ const Projects: React.FC<ProjectsProps> = ({
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -94,10 +96,11 @@ const Projects: React.FC<ProjectsProps> = ({
     permission,
     AllPermissions.ACCOUNT_PROJECTS_EDIT
   );
-  const projectDeleteIsEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_PROJECTS_DELETE
-  );
+  // This functionality will be implemented later
+  // const projectDeleteIsEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_PROJECTS_DELETE
+  // );
   const projectOverviewIsEnable = !projectsTabs[0].hide;
 
   const { data, isLoading, error } = useAccountProjects(
@@ -154,12 +157,18 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
+  const accountNameLabel =
+    accountDetails?.data?.accountById?.account_name || '';
   const handleEdit = (account: any) => {
     navigate(`/Project/edit/${account?.project_fiscal_rid}`, {
       state: {
         accountID: account?.account_rid,
         projectID: account?.project_fiscal_rid,
-        breadcrumbs: [{ label: 'Account' }, { label: account?.account_name }],
+        breadcrumbs: [
+          { label: 'Account' },
+          { label: accountNameLabel },
+          { label: account?.project_code },
+        ],
       },
     });
   };
@@ -175,19 +184,23 @@ const Projects: React.FC<ProjectsProps> = ({
       label: 'Delete',
       disabled: accountInActive,
       onClick: (row: any) => console.log('Delete', row),
-      hide: !projectDeleteIsEnable,
+      // hide: !projectDeleteIsEnable,
+      hide: true,
     },
     {
       label: 'View Summary',
       onClick: (row: any) => console.log('Summary', row),
+      hide: true,
     },
     {
       label: 'View Activities',
       onClick: (row: any) => console.log('Activities', row),
+      hide: true,
     },
     {
       label: 'View Notes',
       onClick: (row: any) => console.log('Notes', row),
+      hide: true,
     },
   ];
 
@@ -271,7 +284,7 @@ const Projects: React.FC<ProjectsProps> = ({
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
-    <div className='w-full py-2 pl-2 pr-4'>
+    <div className='w-full pt-2 pl-2 pr-4'>
       <TabPanel
         value='projects'
         appliedFilters={appliedFilters}
@@ -304,6 +317,11 @@ const Projects: React.FC<ProjectsProps> = ({
               columns={projectColumns}
               getRowId={getRowId}
               hoverHighlight={false}
+              tableStyle={{
+                height: '100%',
+                maxHeight: 'calc(100vh - 290px)',
+                overflow: 'auto',
+              }}
               stickyHeader={true}
               stickyColumnsCount={1}
               actionWidth={60}
@@ -320,7 +338,6 @@ const Projects: React.FC<ProjectsProps> = ({
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
-              tableStyle={{ overflowY: 'hidden' }}
               selectable={true}
               onSelectionChange={(selectedIds) =>
                 console.log('Selected:', selectedIds)

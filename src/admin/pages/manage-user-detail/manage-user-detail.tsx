@@ -120,9 +120,9 @@ export const ManageUserDetails: React.FC = () => {
           <ManageUserIcon alt='manage user' className='h-7 w-7 rounded' />
           <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>
-              {`Admin Permission > ${userDetail?.full_name ?? userFullName}`}
+              {`Admin Permission > Manage User${(userDetail?.full_name ?? userFullName) ? ` > ${userDetail?.full_name ?? userFullName}` : ''}`}
             </div>
-            <div className={HEADER_STYLES.manageUser}>Manage User</div>
+            <div className={HEADER_STYLES.manageUser}>View User</div>
           </div>
         </div>
         <div className='flex gap-2 items-center'>

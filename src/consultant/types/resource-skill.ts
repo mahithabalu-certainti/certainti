@@ -30,7 +30,8 @@ export type ResourceSkillList = {
   skill_rid: string;
   start_date: string;
   skill_description?: string;
-  skill_level: skillLevel;
+  skill_level_name: string;
+  skill_level_rid: string;
   fiscal_year: string;
   years_of_experience: string;
   resource_ref_id: string;
@@ -83,7 +84,7 @@ export type ResourceSkillPayload = {
   eid?: string;
   account_rid?: string;
   resource_number: string;
-  resource_type?: string;
+  resource_type_rid?: string;
   resource_rid?: string;
   resource_code?: string;
   resource_ref_id?: string;
@@ -92,6 +93,7 @@ export type ResourceSkillPayload = {
   effective_from?: string;
   skill_description?: string;
   skill_level?: skillLevel;
+  skill_level_rid?: string;
   years_of_experience?: number | null;
   fiscal_year?: string;
   skill_type?: string;

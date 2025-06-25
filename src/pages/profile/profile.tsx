@@ -1,16 +1,13 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useManageUserDetail } from '../../../admin/service/manage-user-detail/manage-user-detail-service';
-import {
-  AccountHomeIcon,
-  RealatedListDetailsIcon,
-} from '../../../assets/icons';
-import TextButton from '../../../components/button/text-button';
-import { RootState } from '../../../store/store';
-import { UserDetailComponent } from '../../../components';
-import { AccessRestricted } from '../../../components/account-restricted';
-import { checkPermission } from '../../../common-utils';
-import { AllPermissions } from '../../../common-service';
+import { RootState } from '../../store/store';
+import { AllPermissions } from '../../common-service';
+import { checkPermission } from '../../common-utils';
+import { AccessRestricted } from '../../components/account-restricted';
+import { UserDetailComponent } from '../../components';
+import TextButton from '../../components/button/text-button';
+import { AccountHomeIcon, RealatedListDetailsIcon } from '../../assets';
+import { useManageUserDetail } from '../../admin/service/manage-user-detail/manage-user-detail-service';
 
 export const Profile: React.FC = () => {
   const { userId } = useSelector((state: RootState) => state.auth);

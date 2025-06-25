@@ -6,14 +6,14 @@ import {
   fiscalYearOption,
   numberOptions,
   textOptions,
-  statusOptions,
-  projectTypeOption,
   fiscalOptions,
   nonMadatoryOptions,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
 export const getAllProjectFilterFields = (
-  classificationOption: FilterSelectOption[]
+  classificationOption: FilterSelectOption[],
+  projectTypeOptions: { option: string; value: string }[],
+  statusOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
   // Text fields
 
@@ -31,9 +31,9 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project Type',
-    value: 'project_type',
+    value: 'project_type_rid',
     type: 'enum',
-    options: projectTypeOption,
+    options: projectTypeOptions,
     operatorOption: fiscalOptions,
   },
   {
@@ -103,7 +103,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Assessment Status',
-    value: 'assessment_status',
+    value: 'status_rid',
     type: 'enum',
     options: statusOptions,
     operatorOption: enumOptions,
