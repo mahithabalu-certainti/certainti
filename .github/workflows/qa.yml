@@ -28,7 +28,7 @@ jobs:
         id: fetch-secrets
         run: |
           KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
-          ENV_FILE=".env.QA"
+          ENV_FILE=".env.qa"
 
           # Ensure Azure CLI is authenticated
           az account show > /dev/null 2>&1
