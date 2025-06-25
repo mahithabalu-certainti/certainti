@@ -199,14 +199,17 @@ private buildOrderClause(
   
       if (finalSortBy && !excludedFields.includes(finalSortBy)) {
         if (numericFields.includes(finalSortBy)) {
-        order.push([
-          Sequelize.cast(Sequelize.col(finalSortBy), 'DECIMAL'),
+       order.push([
+          Sequelize.cast(Sequelize.literal(`"Account"."${finalSortBy}"`), 'DECIMAL'),
           finalSortOrder
         ]);
       } else {
-        order.push([finalSortBy, finalSortOrder]);
+        order.push([
+          Sequelize.literal(`"Account"."${finalSortBy}"`),
+          finalSortOrder
+        ]);
       }
-      }
+    }
   
         if (finalSortBy === "country") {
           order.push([
