@@ -1,4 +1,4 @@
-import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
+import { fn, col, where, Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
@@ -925,9 +925,11 @@ async insertClientTemplateDetails(
 
        // Check if organisation name already exists before update
       const existingOrgAccount = await repository.findOne({
-        where: {
-          organisation_name: { [Op.iLike]: organisation_name }, // Case insensitive comparison
-          rid: { [Op.ne]: account_rid } // Exclude current account
+      where: {
+        [Op.and]: [
+          where(fn('LOWER', col('organisation_name')), Op.eq, organisation_name.toLowerCase()),
+          { rid: { [Op.ne]: account_rid } }
+        ]
         }
       });
 
@@ -1793,19 +1795,13 @@ async insertClientTemplateDetails(
     return true;
   }
 
-   private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean> {
-    const response = await Account.findOne({
-      where: {
-        organisation_name: {
-          [Op.eq]: organisation_name,
-        },
-      },
-    });
-    if (response && response.organisation_name) {
-      return false;
-    }
-    return true;
-  }
+private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean> {
+  const response = await Account.findOne({
+    where: where(fn('LOWER', col('organisation_name')), Op.eq, organisation_name.toLowerCase())
+  });
+
+  return !response;
+}
   
 
   private throwServiceError(err: Error): {
