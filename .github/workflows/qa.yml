@@ -116,7 +116,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=QA
 
-          NODE_ENV_DB_PREFIX="D001-"
+          NODE_ENV_DB_PREFIX="U001-"
           EOF
           
           echo "$ENV_FILE file created successfully!"
@@ -230,7 +230,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=QA
 
-          NODE_ENV_DB_PREFIX="D001-"
+          NODE_ENV_DB_PREFIX="U001-"
           EOF
           
           echo "$ENV_FILE file created successfully!"
@@ -341,7 +341,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=QA
 
-          NODE_ENV_DB_PREFIX="D001-"
+          NODE_ENV_DB_PREFIX="U001-"
           EOF
           
           echo "$ENV_FILE file created successfully!"

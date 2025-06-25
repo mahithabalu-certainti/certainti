@@ -1586,7 +1586,7 @@ class SchemaService {
             try {
                 const schemaName = `trd365_${schema.replace(/\D/g, '')}`;
               return await orgDbSequelize.query(
-                `SELECT fiscal_year, account_rid,
+                `SELECT  CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
              SUM(total_projects::NUMERIC) AS total_projects,
              SUM(total_project_hours::NUMERIC) AS total_project_hours,
              SUM(total_project_cost::NUMERIC) AS total_project_cost,
@@ -1880,7 +1880,7 @@ async insertFiscalInfoOnly(
           try {
             const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
             return await orgDbSequelize.query(
-              `SELECT fiscal_year, account_rid,
+              `SELECT CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
                 SUM(total_projects::NUMERIC) AS total_projects,
                 SUM(total_project_hours::NUMERIC) AS total_project_hours,
                 SUM(total_project_cost::NUMERIC) AS total_project_cost,

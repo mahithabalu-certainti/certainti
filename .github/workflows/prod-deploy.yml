@@ -115,6 +115,8 @@ jobs:
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=PROD
+
+          NODE_ENV_DB_PREFIX="P001-"
           EOF
           
           echo "$ENV_FILE file created successfully!"
@@ -227,6 +229,8 @@ jobs:
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
           NODE_ENV=PROD
+
+          NODE_ENV_DB_PREFIX="P001-"
           EOF
           
           echo "$ENV_FILE file created successfully!"
@@ -336,6 +340,8 @@ jobs:
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
           NODE_ENV=PROD
+
+          NODE_ENV_DB_PREFIX="P001-"
           EOF
           
           echo "$ENV_FILE file created successfully!"
