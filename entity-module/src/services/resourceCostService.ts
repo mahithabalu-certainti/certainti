@@ -689,16 +689,19 @@ class ResourceCostService {
             end_date: endDate,
             ...costValues,
             fiscal_year,
-            comments,
+            comments, 
             currency_rid,
             status_rid: { 
-            [Op.in]: [
-              statusMap?.get('Active'), 
-              statusMap?.get('Anomaly'), 
-              statusMap?.get('Duplicate')
-            ].filter(Boolean) as string[] // Filter out undefined and assert as string[]
-          },
+              [Op.in]: [
+                statusMap?.get('Active'),
+                statusMap?.get('Anomaly'),
+                statusMap?.get('Duplicate') 
+              ].filter(Boolean) as string[]
+            },
             net_resource_cost: calculatedResourceCost,
+            rid: {
+              [Op.ne]: rid // Exclude the current record being updated
+            }
           },
         });
 
