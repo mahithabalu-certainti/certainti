@@ -1,4 +1,4 @@
-name: Deploy Platform 2.0 Pre Production Frontend Application
+name: Deploy thinkrd365 Pre Production Frontend Application
 
 on:
   push:
@@ -56,9 +56,9 @@ jobs:
           echo "VITE_AUTHORITY=$AUTHORITY" >> $ENV_FILE
           echo "VITE_KNOWN_AUTHORITIES=$KNOWN_AUTHORITIES" >> $ENV_FILE
           echo "VITE_RESET_PW_AUTHORITY=$PASSWORD_RESET_AUTHORITY" >> $ENV_FILE
-          echo "VITE_REDIRECT_URL=https://platform20-preprod.certainti.ai/" >> $ENV_FILE
-          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://platform20-preprod.certainti.ai/" >> $ENV_FILE
-          echo "VITE_BASE_URL=https://preprod-platform20-api-management.azure-api.net" >> $ENV_FILE
+          echo "VITE_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/" >> $ENV_FILE
+          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/" >> $ENV_FILE
+          echo "VITE_BASE_URL=https://preprod-thinkrd365-api-management.azure-api.net" >> $ENV_FILE
           echo "VITE_USER_URL=/userService" >> $ENV_FILE
           echo "VITE_ACCOUNT_URL=/accountService" >> $ENV_FILE
           echo "VITE_RESOURCE_URL=/entityService" >> $ENV_FILE 
