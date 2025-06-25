@@ -82,8 +82,8 @@ async accountList(
     const order = this.buildOrderClause(
       finalSortBy, 
       finalSortOrder, 
-      ['country', 'currency', 'industry', 'professional_services_consultant', 'finance_executive', 'finance_lead'],
-      ["total_projects", "total_project_cost", "total_project_hours", "qualifying_project_hours_fed", "qualifying_project_qre_fed", "qualifying_project_rd_credits_fed", "total_projects_rd_credits",'professional_services_consultant', 'finance_lead', 'finance_executive']
+      ['country', 'currency', 'industry'],
+      ["total_projects", "total_project_cost", "total_project_hours", "qualifying_project_hours_fed", "qualifying_project_qre_fed", "qualifying_project_rd_credits_fed", "total_projects_rd_credits"]
     );
 
     // Check for key contact filters
@@ -142,6 +142,8 @@ async accountList(
       }
       childAccountsByParent.get(child.parent_account_rid).push(child);
     });
+    if(parsedFilters.length > 0)
+    {
     parentAccounts = parentAccounts.filter((parent: any) => {
       // Keep parent if it has children that match filters
       if (childAccountsByParent.has(parent.rid)) {
@@ -153,6 +155,7 @@ async accountList(
       // });
       // return !hasChildren;
     });
+  }
     // Attach child accounts to parents
     parentAccounts.forEach((account: any) => {
       account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
@@ -445,6 +448,8 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           }
           childAccountsByParent.get(child.parent_account_rid).push(child);
         });
+        if(parsedFilters.length > 0)
+      {
         parentAccounts = parentAccounts.filter((parent: any) => {
           // Keep parent if it has children that match filters
           if (childAccountsByParent.has(parent.rid)) {
@@ -456,6 +461,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           // });
           // return !hasChildren;
         });
+      }
         // Attach child accounts to parents
         parentAccounts.forEach((account: any) => {
           account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
@@ -1656,7 +1662,7 @@ async insertClientTemplateDetails(
     }
     return whereClause;
   }
-  private applyAccountIDFilter(
+  private applyAccountIDFilter1(
     globalFilters: Record<string, string[]>,
     whereClause: Record<string, any>
     ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
@@ -1677,6 +1683,29 @@ async insertClientTemplateDetails(
   return {
     parentWhereClause: parentWhereClause,
     childWhereClause: childWhereClause
+  };
+}
+private applyAccountIDFilter(
+  globalFilters: Record<string, string[]>,
+  whereClause: Record<string, any>
+): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+  // Parent accounts only get global filters (no other whereClause filters)
+  let parentWhereClause: Record<string, any> = {
+    parent_account_rid: { [Op.is]: null } as any
+  };
+
+  // Child accounts get all original filters (whereClause)
+  let childWhereClause: Record<string, any> = { ...whereClause };
+
+  if (globalFilters && Object.keys(globalFilters).length > 0) {
+    // Apply global filters to parents only
+    const parentIds = Object.keys(globalFilters);
+    parentWhereClause.rid = { [Op.in]: parentIds };
+  }
+
+  return {
+    parentWhereClause: parentWhereClause,  // Only global filters + parent relationship
+    childWhereClause: childWhereClause     // All original filters
   };
 }
 
