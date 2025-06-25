@@ -55,12 +55,12 @@ class ResourceSkillService {
       const {
         eid,
         account_rid,
-        resource_type,
+        resource_type_rid,
         resource_rid,
         resource_code,
         effective_from,
         skill_description,
-        skill_level,
+        skill_level_rid,
         created_by,
         modified_by,
         skill_type_rid,
@@ -197,13 +197,13 @@ class ResourceSkillService {
         createdResourceSkill = await ResourceSkill.create({
           eid,
           account_rid,
-          resource_type,
+          resource_type_rid,
           resource_rid,
           resource_number,
           resource_code,
           start_date: startDate || null,
           skill_description,
-          skill_level: skill_level || "",
+          skill_level_rid: skill_level_rid || "",
           skill_type_rid,
           skill_subtype_rid,
           skill_type_others,
@@ -330,7 +330,7 @@ class ResourceSkillService {
         eid,
         effective_from,
         skill_description,
-        skill_level,
+        skill_level_rid,
         skill_type_rid,
         skill_subtype_rid,
         skill_type_others,
@@ -338,7 +338,7 @@ class ResourceSkillService {
         skill_details,
         comments,
         modified_by,
-        status,
+        status_rid,
         accountNumber,
       } = resourceSkillData;
 
@@ -433,14 +433,14 @@ class ResourceSkillService {
             eid,
             start_date: startDate || null,
             skill_description,
-            skill_level,
+            skill_level_rid,
             skill_type_rid,
             skill_subtype_rid,
             skill_type_others,
             skill_subtype_others,
             comments,
             skill_details: skill_details || undefined,
-            status,
+            status_rid,
             modified_by: userId,
             modified_datetime: new Date(),
           },
@@ -536,7 +536,7 @@ class ResourceSkillService {
         "eid",
         "start_date",
         "skill_description",
-        "skill_level",
+        "skill_level_rid",
         "skill_type_rid",
         "skill_subtype_rid",
         "skill_type_others",
@@ -685,7 +685,7 @@ class ResourceSkillService {
       );
 
       // Execute queries and return results using the schema service
-      return await resourceSkillSchemaService.executeQueries(
+      const results = await resourceSkillSchemaService.executeQueries(
         schemaName,
         filterConditions,
         searchCondition,
@@ -697,6 +697,27 @@ class ResourceSkillService {
         search,
         accountId
       );
+
+      if (results?.data?.resourceSkill?.length) {
+        // Fetch user names for each result row in parallel
+        const userNamesPromises = results.data.resourceSkill.map(async (row) => {
+          if (!row) return;
+          
+          const userNames = await this.fetchUserNames({
+            created_by: row.created_by,
+            modified_by: row.modified_by,
+          });
+
+          // Update the row with user names
+          row.created_by = userNames.created_by_name || row.created_by;
+          row.modified_by = userNames.modified_by_name || row.modified_by;
+        });
+
+        // Wait for all user name fetches to complete
+        await Promise.all(userNamesPromises);
+      }
+
+      return results;
     } catch (err) {
       console.log("Error ", err);
       return this.throwServiceError(err as Error);

@@ -9,6 +9,7 @@ import { HttpStatus } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
 import currency from "currency.js";
+import Decimal from "decimal.js";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -397,12 +398,46 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+      const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+      const query = `SELECT ${idField}, ${nameField} FROM ${table}`;
+      const items = await mainDbSequelize.query(query, { type: "SELECT" });
+      return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+    };
 
+    // Fetch all reference data in parallel
+    const [statusMap, resourceTypeMap] = await Promise.all([
+      fetchReferenceMap('resource_status', 'rid', 'resource_status_name'),
+      fetchReferenceMap('resource_type', 'rid', 'resource_type_name')
+    ]);
       // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
-      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+      await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
+     
+      // Handle sorting by status name
+        if (sortBy === "status_name") {
+            // Sort in memory, handling empty values to appear last
+            results.sort((a: any, b: any) => {
+                const aStatus = a.status_name;
+                const bStatus = b.status_name;
+                
+                // Handle null/undefined values
+                if (!aStatus && !bStatus) return 0;
+                if (!aStatus) return sortOrder === "ASC" ? 1 : -1;
+                if (!bStatus) return sortOrder === "ASC" ? -1 : 1;
+                
+                // Compare non-empty values
+                return sortOrder === "ASC" 
+                    ? aStatus.localeCompare(bStatus)
+                    : bStatus.localeCompare(aStatus);
+            });
 
+            // Apply pagination
+            results = results.slice(offset, offset + limit) as any;
+        }
       // If sorting by currency_code, we need to fetch currency info first
-      if (sortBy === "currency") {
+      else if (sortBy === "currency") {
         // Get all currency RIDs from results
         const currencyIds = [
           ...new Set(results.map((rc: any) => rc.currency_rid)),
@@ -444,7 +479,8 @@ class ResourceCostSchemaService {
               : bCode.localeCompare(aCode);
           });
         }
-      } else {
+      } 
+      else {
         if(sortBy === "account_name"){
           query += ` ORDER BY ad."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
         }
@@ -460,7 +496,10 @@ class ResourceCostSchemaService {
         });
 
         // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
-        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+       await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
       }
 
       // Apply pagination if sorting was done in memory
@@ -571,11 +610,52 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+      const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+        const query = `SELECT ${idField}, ${nameField} FROM ${table}`;
+        const items = await mainDbSequelize.query(query, { type: "SELECT" });
+        return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+      };
 
-      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+      // Fetch all reference data in parallel
+      const [statusMap, resourceTypeMap] = await Promise.all([
+        fetchReferenceMap('resource_status', 'rid', 'resource_status_name'),
+        fetchReferenceMap('resource_type', 'rid', 'resource_type_name')
+      ]);
+      // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
+      await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
+     
+      // Handle sorting by status name
+        if (sortBy === "status_name") {
+            // Sort in memory
+            results.sort((a: any, b: any) => {
+                const aStatus = a.status_name || "";
+                const bStatus = b.status_name || "";
 
+                // Handle null/undefined values
+                if (!aStatus && !bStatus) return 0;
+                if (!aStatus) return sortOrder === "ASC" ? 1 : -1;
+                if (!bStatus) return sortOrder === "ASC" ? -1 : 1;
+
+                return sortOrder === "ASC"
+                    ? aStatus.localeCompare(bStatus)
+                    : bStatus.localeCompare(aStatus);
+            });    
+        } 
+        else if (sortBy === "resource_type_rid") {
+            // Sort in memory
+            results.sort((a: any, b: any) => {
+                const aStatus = a.resource_type_name || "";
+                const bStatus = b.resource_type_name || "";
+                return sortOrder === "ASC"
+                    ? aStatus.localeCompare(bStatus)
+                    : bStatus.localeCompare(aStatus);
+            });    
+        } 
       // If sorting by currency_code, we need to fetch currency info first
-      if (sortBy === "currency") {
+      else if (sortBy === "currency") {
         // Get all currency RIDs from results
         const currencyIds = [
           ...new Set(results.map((rc: any) => rc.currency_rid)),
@@ -632,7 +712,10 @@ class ResourceCostSchemaService {
           type: "SELECT",
         });
 
-        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+       await Promise.all(results.map(result => 
+        {this.assignCurrencyRid(result, mainDbSequelize);
+          this.assignResourceStatusandType(result, statusMap,resourceTypeMap);
+        }));
       }
 
       const resourceCost = results;
@@ -675,17 +758,35 @@ class ResourceCostSchemaService {
 
       const formatNumberForExport = (value: any, currency_symbol: string): string => {
         if (value == null || value === '') return '-';
-        const num = Number(value);
-        if (isNaN(num)) return '-';
-        // Use currency.js to format the number with the provided currency symbol
-        return currency(num, {
-          symbol: currency_symbol? currency_symbol : '$',
-          precision: 2,
-          pattern: '! #',
-          separator: ',',
-          decimal: '.'
-        }).format();
+      
+        try {
+          const decimalValue = new Decimal(value.toString());
+          if (!decimalValue.isFinite()) return '-';
+      
+          // Extract just the formatted currency pattern using a dummy value
+          const pattern = currency(0, {
+            symbol: currency_symbol || '$',
+            precision: 2,
+            pattern: '! #',
+            separator: ',',
+            decimal: '.',
+          }).format(); // e.g., "$ 0.00"
+      
+          // Format actual value manually using Decimal
+          const [intPart, decPart] = decimalValue.toFixed().split('.');
+          const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      
+          const formattedNumber = decPart ? `${formattedInt}.${decPart}` : formattedInt;
+          // Replace "0.00" in pattern with our real number
+          return pattern.replace('0.00', formattedNumber);
+      
+        } catch (error) {
+          console.error('Error formatting number:', error);
+          return '-';
+        }
       };
+      
+
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
@@ -693,7 +794,7 @@ class ResourceCostSchemaService {
           "Resource Code": resource.resource_code || "-",
           "Fiscal Year": resource.fiscal_year || "-",
           "Name": resource.resource_name || "-",
-          "Resource Type": resource.resource_type || "-",
+          "Resource Type": resource.resource_type_name || "-",
           "Effective From": resource.effective_from || "-",
           "End Date": resource.end_date || "-",
           "Currency": resource.currency_code || "USD",
@@ -707,7 +808,7 @@ class ResourceCostSchemaService {
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
           "Comments": resource.comments || "-",
-          "Status": resource.status || "-",
+          "Status": resource.status_name || "-",
           "Cost ID": resource.r_number || "-",
           // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
           // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
@@ -825,12 +926,12 @@ class ResourceCostSchemaService {
       "account_name",
       "resource_name",
       "fiscal_year",
-      "resource_type",
+      "resource_type_rid",
       "resource_code",
       "resource_orgname",
       "resource_role",
       "resource_designation",
-      "status",
+      "status_name",
       "comments",
     ];
     if (!validSortColumns.includes(sortBy)) {
@@ -851,7 +952,8 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["status","resource_code"];
+    const alphanumericFields = ["resource_code"];
+    const multiValueFields = ["status_rid"]
     const numericFields = [
       // "annual",
       // "monthly",
@@ -887,6 +989,8 @@ class ResourceCostSchemaService {
           filterConditions += this.processNumericFilter(key, value);
         } else if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
+         } else if (multiValueFields.includes(key)) {
+          filterConditions += this.processDefaultFilter(key, value);
         } else {
           filterConditions += this.processDefaultFilter(key, value);
         }
@@ -1218,7 +1322,18 @@ class ResourceCostSchemaService {
       return null;
     }
   }
-
+async assignResourceStatusandType(
+  result: any,
+  statusMap: Map<string, string>,
+  resourceTypeMap: Map<string, string>,
+): Promise<void> {
+  if (result.status_rid) {
+    result.status_name = statusMap.get(result.status_rid) || "Unknown";
+  }
+  if (result.resource_type_rid) {
+    result.resource_type_name = resourceTypeMap.get(result.resource_type_rid) || "Unknown";
+  }
+}
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
     if (!result.currency_rid) {
       const currencyRid = await this.getCurrencyRidByAccountRidRaw(result.account_rid);

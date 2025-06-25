@@ -1,7 +1,7 @@
 export interface ICreateResource {
   account_number: string;
   resource_code: string;
-  resource_type: "Full-Time" | "Sub Con"| "Non-Labor";
+  resource_type_rid: string;
   name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -15,7 +15,7 @@ export interface ICreateResource {
   resource_designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  resource_status?: "Active" | "Inactive";
+  status_rid?: string | null;
   created_by?: string | null;
   modified_by?: string | null;
   account_id: string;
@@ -26,7 +26,7 @@ export interface IUpdateResource {
   resource_id: string;
   account_number: string;
   resource_code: string;
-  resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
+  resource_type_rid: string;
   name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -40,14 +40,14 @@ export interface IUpdateResource {
   resource_designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  resource_status?: "Active" | "Inactive";
+  status_rid?: string;
   modified_by ?: string | null;
   comments?: string;
 }
 export interface IResourceCost {
   eid: string;
   account_rid: string;
-  resource_type: string;
+  resource_type_rid: string;
   resource_rid: string;
   resource_code: string;
   effective_from?: string | null;
@@ -75,9 +75,10 @@ export interface IResourceCost {
   comments?: string;
   created_by?: string | null;
   modified_by?: string | null;
-  status?: "Active" | "Inactive" | "Duplicate" | "Anomaly";
+  status_rid?: string; //"Active" | "Inactive" | "Duplicate" | "Anomaly";
   accountNumber: string;
   resource_number: string;
+  user_preference?: string | null;
 }
 
 export interface IUpdateResourceCost {
@@ -107,26 +108,28 @@ export interface IUpdateResourceCost {
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
-  status?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
+  status_rid?: string;
+ // status_id?: "Active" | "Inactive"| "Duplicate" | "Anomaly";
   accountNumber: string;
+  user_preference?: string | null;
 }
 
 export interface IResourceSkill {
    eid?: string;
    account_rid: string;
-   resource_type: string;
+   resource_type_rid: string;
    resource_rid: string;
    resource_code: string,
    effective_from?: string | null;
    skill_description?: string;
-   skill_level?: string;
+   skill_level_rid?: string;
    skill_type_rid: string;
    skill_subtype_rid: string;
    skill_type_others: string;
    skill_subtype_others: string;
    skill_details?: string;
    comments?: string;
-   status?: string;
+   status_rid?: string;
    created_by?: string | null;
    modified_by?: string | null;
    accountNumber: string;
@@ -138,8 +141,8 @@ export interface IUpdateResourceSkill {
   eid?: string;
   effective_from?: string | null;
   skill_description?: string;
-  skill_level?: string;
-  status?: string;
+  skill_level_rid?: string;
+  status_rid?: string;
   modified_by?: string | null;
   skill_type_rid: string;
   skill_subtype_rid: string;
@@ -161,13 +164,13 @@ export interface ICreateProject {
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  project_status: "Active" | "Inactive";
+  status_rid: string;
   fiscal_year: number;
   country_rid?: string | null;
   region_rid?: string | null;
@@ -219,13 +222,13 @@ export interface IUpdateProject {
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  project_status: "Active" | "Inactive";
+  status_rid: string;
   fiscal_year: number;
   country_rid?: string | null;
   region_rid?: string | null;
@@ -270,7 +273,7 @@ export interface IKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: "active" | "inactive";
+  status_rid: string;
 }
 
 export interface IUpdateKeyContactDetail {
@@ -280,5 +283,5 @@ export interface IUpdateKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: "active" | "inactive";
+  status_rid: string;
 }

@@ -1,3 +1,4 @@
+import { Logger } from "winston";
 import {
   IProjectService,
   IResourceCostService,
@@ -18,19 +19,21 @@ class Services implements IServiceContainer {
   resourceCostServices: IResourceCostService;
   resourceSkillServices: IResourceSkillService;
   projectServices: IProjectService;
+  private logger: Logger;
 
   constructor(
+    logger: Logger,
     resourceService: IResourceService = new ResourceService(),
     resourceCostServices: IResourceCostService = new ResourceCostService(),
-    resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
-    projectServices: IProjectService = new ProjectService()
+    resourceSkillServices: IResourceSkillService = new ResourceSkillService()
   ) {
     try {
+      this.logger = logger;
       this.resourceCostServices = resourceCostServices;
       this.resourceService = resourceService;
       this.resourceCostServices = resourceCostServices;
       this.resourceSkillServices = resourceSkillServices;
-      this.projectServices = projectServices;
+      this.projectServices = new ProjectService(this.logger);
     } catch (error) {
       console.log("Error initializing service : ", error);
       throw new Error("Service Initialization failed!");

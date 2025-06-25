@@ -195,8 +195,7 @@ const createResourcesSchema = Joi.object({
       'string.max': 'Resource Code must not exceed 50 characters.',
       'any.required': 'Resource Code is a required field.'
     }),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
-    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+  resource_type_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
     'any.required': 'Resource type is required'
   }),
   name: Joi.string()
@@ -366,8 +365,10 @@ const createResourcesSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  resource_status: Joi.string().valid("Active", "Inactive").optional(),
-  created_by: Joi.string()
+    status_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
+      'any.required': 'status_rid is required'
+    }),
+    created_by: Joi.string()
     .pattern(uuidRegex, "valid UUID")
     .optional(),
   comments: Joi.string().optional().allow("").allow(null),
@@ -389,8 +390,7 @@ const updateResourceSchema = Joi.object({
       'string.max': 'Resource Code must not exceed 50 characters.',
       'any.required': 'Resource Code is a required field.'
     }),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
-    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+ resource_type_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
     'any.required': 'Resource type is required'
   }),
   name: Joi.string()
@@ -560,7 +560,9 @@ const updateResourceSchema = Joi.object({
       "number.max": "Total years in organization cannot exceed 99.99",
       "number.precision": "Total years in organization can only have up to 2 decimal places"
     }),
-  resource_status: Joi.string().valid("Active", "Inactive").optional(),
+  status_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
+    'any.required': 'status_rid is required'
+  }),
   comments: Joi.string().optional().allow("").allow(null),
 });
 
@@ -629,8 +631,7 @@ const exportResourceSchema = Joi.object({
 const createResourceSkillSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
-    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+  resource_type_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
     'any.required': 'Resource type is required'
   }),
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
@@ -678,8 +679,7 @@ const createResourceSkillSchema = Joi.object({
       "date.max": "Effective from  cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_level: Joi.string()
-    .valid("Beginner", "Intermediate", "Advanced")
+  skill_level_rid: Joi.string()
     .optional()
     .allow("")
     .allow(null),
@@ -761,8 +761,7 @@ const updateResourceSkillSchema = Joi.object({
       "date.max": "Effective from cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_level: Joi.string()
-    .valid("Beginner", "Intermediate", "Advanced", "-")
+  skill_level_rid: Joi.string()
     .optional()
     .allow("")
     .allow(null),
@@ -795,7 +794,7 @@ const updateResourceSkillSchema = Joi.object({
   }),
   skill_details: Joi.string().optional().allow(null).allow(""),
   comments: Joi.string().optional().allow(null).allow(""),
-  status: Joi.string().max(255).optional(),
+  status_rid: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -919,7 +918,8 @@ const updateResourceCostSchema = Joi.object({
   .optional()
   .allow(null)
   .allow(""),
-  status: Joi.string().max(255).default("Active").optional(),
+  status_rid: Joi.string().max(255).optional(),
+  user_preference: Joi.string().optional().allow(null).allow(""),
   fiscal_year: Joi.number()
    .integer()
    .min(1000)
@@ -1031,8 +1031,7 @@ const resourceCostSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
   resource_number: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
-    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+  resource_type_rid: Joi.string().pattern(uuidRegex, "valid UUID").required().messages({
     'any.required': 'Resource type is required'
   }),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
@@ -1104,8 +1103,9 @@ const resourceCostSchema = Joi.object({
        "any.required": "Fiscal year is required",
     }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  status: Joi.string().max(255).default("Active"),
+  status_rid: Joi.string().max(255),
   comments: Joi.string().optional().allow(null).allow(""),
+  user_preference: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -1170,12 +1170,12 @@ const createProjectSchema = Joi.object({
       "any.invalid": "Project end date must be after the start date.",
       "date.invalidFormat": "Invalid Project end date.",
     }),
-  project_type: Joi.string().valid("Fixed", "Time & Material").required(),
+  project_type_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   project_classification_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
-  project_status: Joi.string().valid("Active", "Inactive").required(),
+  status_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1413,7 +1413,7 @@ const createProjectSchema = Joi.object({
       key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
       include_in_communication: Joi.boolean().optional().allow(null),
-      status: Joi.string().valid("Active", "Inactive").optional().allow(null),
+      status_rid: Joi.string().optional().allow(null),
       action_type: Joi.string().valid('add').required()
     })
   )
@@ -1455,12 +1455,12 @@ const updateProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid Project end date.",
     }),
 
-  project_type: Joi.string().valid("Fixed", "Time & Material").required(),
+  project_type_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   project_classification_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
-  project_status: Joi.string().valid("Active", "Inactive").required(),
+  status_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1702,7 +1702,7 @@ const updateProjectSchema = Joi.object({
         key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
         include_in_communication: Joi.boolean().optional().allow(null),
-        status: Joi.string().valid("Active", "Inactive").optional().allow(null)
+        status_rid: Joi.string().optional().allow(null)
       })
     )
     .optional(),

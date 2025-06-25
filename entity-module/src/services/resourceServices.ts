@@ -231,7 +231,7 @@ export class ResourceService {
           "Account Name": resource.account_name || "-",
           "Resource Code":resource.resource_code || "-",
           "Name":resource.resource_name || "-",
-          "Resource Type": resource?.resource_type || "-",
+          "Resource Type": resource?.resource_type_name || "-",
           "Org Name": resource.resource_orgname || "-",
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
@@ -239,7 +239,7 @@ export class ResourceService {
           "Country": resource.country_name || "-",
           "Total Project Hours": resource.total_project_hours || "-",
           "Estimated R&D Hours": resource.estimated_rd_hours || "-",
-          "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
+          "Status": resource.status_name,
           "Comments": resource.comments || "-",
           "Resource ID": resource.r_number || "-"
         };
@@ -416,8 +416,8 @@ export class ResourceService {
       "r_number",
       "resource_code",
       "resource_name",
-      "resource_type",
-      "resource_status",
+      "resource_type_rid",
+      "status_rid",
       "resource_role",
       // "resource_mobile",
       // "resource_email",
@@ -505,15 +505,15 @@ export class ResourceService {
     whereClause: Record<string, any>,
     havingClause: Record<string, any>
   ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
-    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
+    const castToTextFields = ["resource_type_rid", "resource_name", "resource_designation", "r_number", "resource_code","status_rid","resource_orgname","resource_role","comments"];
     const uuidFields = ["country_rid","region_rid"];
 
     const filterFields = [
       { clientField: "resource_code", dbField: "Resources.resource_code" },
       { clientField: "r_number", dbField: "Resources.r_number" },
       { clientField: "resource_name", dbField: "Resources.resource_name" },
-      { clientField: "resource_type", dbField: "Resources.resource_type" },
-      { clientField: "resource_status", dbField: "Resources.resource_status" },
+      { clientField: "resource_type_rid", dbField: "Resources.resource_type_rid" },
+      { clientField: "status_rid", dbField: "Resources.status_rid" },
       { clientField: "resource_designation", dbField: "Resources.resource_designation" },
       { clientField: "country_rid", dbField: "Resources.country_rid" },
       { clientField: "region_rid", dbField: "Resources.region_rid" },
@@ -695,24 +695,35 @@ export class ResourceService {
     }
   }
 
-processGeoDataSort(
-    sortBy: string, 
-    sortOrder: string
+ processGeoDataSort(
+  sortBy: string,
+  sortOrder: string
 ) {
-    const geoDataSort: string[][] = [];
-    const geoFields = ["country_rid", "region_rid", "city_rid"];
+  const geoDataSort: string[][] = [];
 
-    if (geoFields.includes(sortBy)) {
-        geoDataSort.push([
-            sortBy,
-            sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"
-        ]);
-    }
+  // Mapping incoming field names to actual DB column names
+  const fieldMapping: Record<string, string> = {
+    country_rid: "country_rid",
+    region_rid: "region_rid",
+    city_rid: "city_rid",
+    resource_type_rid: "resource_type_rid",
+    status_name: "status_name",
+  };
 
-    return {
-        geoDataSort,
-    };
+  const mappedField = fieldMapping[sortBy];
+
+  if (mappedField) {
+    geoDataSort.push([
+      mappedField,
+      sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
+    ]);
+  }
+
+  return {
+    geoDataSort,
+  };
 }
+
 
   /**
    * Formats an error response to be returned from service methods.

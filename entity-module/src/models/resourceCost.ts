@@ -7,7 +7,7 @@ interface ResourceCostAttributes {
   r_number?: string;
   eid?: string;
   account_rid: string;
-  resource_type: string;
+  resource_type_rid: string;
   resource_rid: string;
   resource_number: string;
   resource_code: string;
@@ -31,7 +31,7 @@ interface ResourceCostAttributes {
   resource_cost?: number;
   currency_rid?: string;
   fiscal_year: number;
-  status?: string;
+  status_rid?: string;
   comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -50,7 +50,7 @@ export class ResourceCost
   r_number?: string;
   eid?: string;
   account_rid!: string;
-  resource_type!: string;
+  resource_type_rid!: string;
   resource_rid!: string;
   resource_number!: string;
   resource_code!: string;
@@ -74,7 +74,7 @@ export class ResourceCost
   net_resource_cost!: number;
   resource_cost?: number;
   currency_rid?: string;
-  status?: string;
+  status_rid?: string;
   comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -119,8 +119,8 @@ export class ResourceCost
           type: DataTypes.STRING(50),
           allowNull: false,
         },
-        resource_type: {
-          type: DataTypes.STRING(255),
+        resource_type_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_rid: {
@@ -245,7 +245,7 @@ export class ResourceCost
           type: DataTypes.STRING(50),
           allowNull: true,
         },
-        status: {
+        status_rid: {
           type: DataTypes.STRING(255),
           defaultValue: "active",
         },

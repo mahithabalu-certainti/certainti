@@ -4,8 +4,10 @@ export const HttpStatus = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   FAILED: 500,
+  PROMPT: 210, 
   UNAUTHORIZED: 401,
   SUCCESS_MESSAGE: "Success",
+  PROMPT_MESSAGE: "Prompt",
   BAD_REQUEST_MESSAGE: "BadRequest",
   NOT_FOUND_MESSAGE: "NotFound",
   FORBIDDEN_MESSAGE: "Forbidden",
@@ -20,7 +22,7 @@ export const NODE_ENV = {
 }
 
 export const constants = {
-  SQL_GET_USER: `SELECT status, rid, email, profile_rid FROM public."user" WHERE {whereClause} LIMIT 1`,
+  SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM public."user" as "user" ,public."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
   SQL_GET_PERMISSION: `SELECT rid FROM public."module_permission" WHERE permission_name = :permissionName LIMIT 1`,
   SQL_GET_PROFILE_ACCESS: `SELECT is_enabled FROM public."profile_permission_access" WHERE profile_id = :profileId AND module_permission_id = :permissionId LIMIT 1`,
   SQL_GET_USER_ACCESS: `SELECT is_enabled FROM public."user_permission_access" WHERE user_id = :userId AND module_permission_id = :permissionId LIMIT 1`,
