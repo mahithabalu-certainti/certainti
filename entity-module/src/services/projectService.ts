@@ -921,11 +921,11 @@ export class ProjectService {
           fiscalSummaries.forEach((fiscal: any) => {
             exportData.push({
               "Project Group": fiscal?.project_group || "-",
-              "Project Code": fiscal.project_code || "-",
+              "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
               "Account Name": fiscal.account_name || "-",
-              "Fiscal Year": fiscal.fiscal_year || "-",
+              "Fiscal Year":  `FY${fiscal.fiscal_year}` || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
               "Project Effort (Hours)": fiscal.total_effort_prj || "-",
