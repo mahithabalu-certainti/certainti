@@ -243,7 +243,7 @@ const Resource: React.FC<ResourceProps> = ({
     clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
 
