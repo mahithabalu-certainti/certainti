@@ -266,7 +266,7 @@ const Resource: React.FC<ResourceProps> = ({
     if (!viewResourceList && resourceData.rid) {
       searchParams.set('res_id', resourceData.rid);
       searchParams.set('tab', value);
-      navigate({ search: searchParams.toString() });
+      navigate({ search: searchParams.toString() }, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceData.rid, viewResourceList, value]);
