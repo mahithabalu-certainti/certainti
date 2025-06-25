@@ -551,9 +551,8 @@ class ResourceCostService {
         rid,
         fiscal_year,
         comments,
-        status_rid,
+        status_rid:status,
       } = resourceCostData;
-
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
@@ -675,7 +674,12 @@ class ResourceCostService {
             .minus(deductions || 0)
         );
 
-        let resourceCostStatus = "Active";
+       const statusNameMap = new Map<string, string>();
+        statusMap?.forEach((value, key) => {
+          statusNameMap.set(value, key);
+        });
+
+      let resourceCostStatus = statusNameMap.get(status?.toString() || '') || 'Active';
         
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
@@ -685,16 +689,19 @@ class ResourceCostService {
             end_date: endDate,
             ...costValues,
             fiscal_year,
-            comments,
+            comments, 
             currency_rid,
             status_rid: { 
-            [Op.in]: [
-              statusMap?.get('Active'), 
-              statusMap?.get('Anomaly'), 
-              statusMap?.get('Duplicate')
-            ].filter(Boolean) as string[] // Filter out undefined and assert as string[]
-          },
+              [Op.in]: [
+                statusMap?.get('Active'),
+                statusMap?.get('Anomaly'),
+                statusMap?.get('Duplicate') 
+              ].filter(Boolean) as string[]
+            },
             net_resource_cost: calculatedResourceCost,
+            rid: {
+              [Op.ne]: rid // Exclude the current record being updated
+            }
           },
         });
 
@@ -878,7 +885,7 @@ class ResourceCostService {
         "currency_rid",
         "fiscal_year",
         "comments",
-        "status",
+        "status_rid",
       ];
 
       // Track changes for each attribute individually to better isolate errors
@@ -1194,7 +1201,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     }
      const updateStatus = await ResourceCost.update(
       {
-        status_rid: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("Inactive"),
+        status_rid: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("In-Active"),
       },
       {
         where: {

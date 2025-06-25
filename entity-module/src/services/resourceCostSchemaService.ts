@@ -417,18 +417,25 @@ class ResourceCostSchemaService {
      
       // Handle sorting by status name
         if (sortBy === "status_name") {
-            // Sort in memory
+            // Sort in memory, handling empty values to appear last
             results.sort((a: any, b: any) => {
-                const aStatus = a.status_name || "";
-                const bStatus = b.status_name || "";
-                return sortOrder === "ASC"
+                const aStatus = a.status_name;
+                const bStatus = b.status_name;
+                
+                // Handle null/undefined values
+                if (!aStatus && !bStatus) return 0;
+                if (!aStatus) return sortOrder === "ASC" ? 1 : -1;
+                if (!bStatus) return sortOrder === "ASC" ? -1 : 1;
+                
+                // Compare non-empty values
+                return sortOrder === "ASC" 
                     ? aStatus.localeCompare(bStatus)
                     : bStatus.localeCompare(aStatus);
             });
 
             // Apply pagination
             results = results.slice(offset, offset + limit) as any;
-        } 
+        }
       // If sorting by currency_code, we need to fetch currency info first
       else if (sortBy === "currency") {
         // Get all currency RIDs from results
@@ -626,6 +633,12 @@ class ResourceCostSchemaService {
             results.sort((a: any, b: any) => {
                 const aStatus = a.status_name || "";
                 const bStatus = b.status_name || "";
+
+                // Handle null/undefined values
+                if (!aStatus && !bStatus) return 0;
+                if (!aStatus) return sortOrder === "ASC" ? 1 : -1;
+                if (!bStatus) return sortOrder === "ASC" ? -1 : 1;
+
                 return sortOrder === "ASC"
                     ? aStatus.localeCompare(bStatus)
                     : bStatus.localeCompare(aStatus);
