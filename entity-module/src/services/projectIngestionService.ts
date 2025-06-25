@@ -1361,11 +1361,11 @@ class ProjectIngestionService {
       const fiscalSummaries = project.ProjectFiscal || [];
 
       const fiscalRows = fiscalSummaries.map((fiscal: any) => ({
-        "Project Code": fiscal.project_code || "-",
+        "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
         "Name": fiscal.project_name || "-",
         "Project Type": fiscal.project_type_name || "-",
         "Account Name": project.account_name || "-",
-        "Fiscal Year": fiscal.fiscal_year || "-",
+        "Fiscal Year":  `FY${fiscal.fiscal_year}` || "-",
         "Project Classification": fiscal.classification_name || "-",
         "Customer Group": fiscal.project_client_group || "-",
         "Project Group": fiscal?.project_group || "-",
