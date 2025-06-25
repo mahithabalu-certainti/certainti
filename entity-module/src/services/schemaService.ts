@@ -42,6 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -89,7 +90,7 @@ class SchemaService {
       const mainDbSequelize = await initMainDbSequelize();
 
       const [account]: any[] = await mainDbSequelize.query(
-        `SELECT * FROM account WHERE rid = :rid and r_number = :r_number`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid and r_number = :r_number`,
         {
           replacements: { rid: accountId, r_number: accountNumber },
           type: "SELECT",
@@ -948,7 +949,7 @@ class SchemaService {
       const sequelize = await initMainDbSequelize();
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM account WHERE rid = :rid`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: parentAccountId },
           type: "SELECT",
@@ -975,7 +976,7 @@ class SchemaService {
       let accountRnumber = accountNumber;
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM account WHERE r_number = :r_number`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -984,7 +985,7 @@ class SchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await sequelize.query(
-          `SELECT * FROM account WHERE rid = :rid`,
+          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -1453,7 +1454,7 @@ class SchemaService {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
-        `SELECT account.*, status.status_description AS status  FROM account
+        `SELECT account.*, status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
           LEFT JOIN status ON account.status_rid = status.rid
           WHERE account.rid = :rid`,
         {
@@ -2212,7 +2213,7 @@ class SchemaService {
       const mainDbInstance = await initMainDbSequelize();
 
       let account: any[] = await mainDbInstance.query(
-        `SELECT rid, r_number, storage_type, parent_account_rid FROM account`,
+        `SELECT rid, r_number, storage_type, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account`,
         {
           replacements: { created_by: userId },
           type: "SELECT",

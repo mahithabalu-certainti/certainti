@@ -661,7 +661,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     } else {
       const mainDbSequelize = await initSequelize();
       const [account]: any[] = await mainDbSequelize.query(
-        `SELECT organisation_name, logo_url FROM account WHERE rid = :rid`,
+        `SELECT organisation_name, logo_url FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: roles.org_id },
           type: "SELECT",
@@ -1350,7 +1350,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       else
       {
         const [orgNameResult]: any[] = await mainDbSequelize.query(
-        `SELECT organisation_name FROM account WHERE rid = :rid`,
+        `SELECT organisation_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: orgId },
           type: "SELECT",
@@ -1362,7 +1362,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (countryId) {
       const [countryResult]: any[] = await mainDbSequelize.query(
-        `SELECT country_name FROM country WHERE rid = :rid`,
+        `SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
         {
           replacements: { rid: countryId },
           type: "SELECT",
@@ -1373,7 +1373,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (stateId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT state_name FROM state WHERE rid = :rid`,
+        `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
         {
           replacements: { rid: stateId },
           type: "SELECT",
@@ -1384,7 +1384,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (cityId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT city_name FROM city WHERE rid = :rid`,
+        `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
         {
           replacements: { rid: cityId },
           type: "SELECT",
