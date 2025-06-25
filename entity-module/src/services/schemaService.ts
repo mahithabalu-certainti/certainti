@@ -2934,7 +2934,12 @@ class SchemaService {
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
 
+       const statusIds = [
+        ...new Set(keyContacts.map((r: any) => r.status_rid)),
+      ].filter(Boolean);
+
       let keyContactMap: Record<string, string> = {};
+      let statusMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
@@ -2950,9 +2955,24 @@ class SchemaService {
         );
       }
 
+      if (statusIds.length > 0) {
+        const statusRows = await mainDdSequilze.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          statusRows.map((c: any) => [c.rid, c.status_name])
+        );
+      }
+
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
+        status_name: statusMap[kc.status_rid] || null,
       }));
 
       return {
