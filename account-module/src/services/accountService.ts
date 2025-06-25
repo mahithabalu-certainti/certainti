@@ -1662,29 +1662,7 @@ async insertClientTemplateDetails(
     }
     return whereClause;
   }
-  private applyAccountIDFilter1(
-    globalFilters: Record<string, string[]>,
-    whereClause: Record<string, any>
-    ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
-  // Start with empty conditions for parents (only parent/child relationship)
-    let parentWhereClause: Record<string, any> = {
-    parent_account_rid: { [Op.is]: null } as any
-  };
-
-  // Child accounts get all filters except the parent/child relationship
-  let childWhereClause: Record<string, any> = { ...whereClause };
-  delete childWhereClause.parent_account_rid; // Remove parent filter for children
-
-  if (globalFilters && Object.keys(globalFilters).length > 0) {
-    const childIds = Object.values(globalFilters).flat();
-    childWhereClause.rid = { [Op.in]: childIds };
-  }
-
-  return {
-    parentWhereClause: parentWhereClause,
-    childWhereClause: childWhereClause
-  };
-}
+ 
 private applyAccountIDFilter(
   globalFilters: Record<string, string[]>,
   whereClause: Record<string, any>
