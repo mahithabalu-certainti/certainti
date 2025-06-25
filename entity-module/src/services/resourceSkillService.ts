@@ -685,7 +685,7 @@ class ResourceSkillService {
       );
 
       // Execute queries and return results using the schema service
-      return await resourceSkillSchemaService.executeQueries(
+      const results = await resourceSkillSchemaService.executeQueries(
         schemaName,
         filterConditions,
         searchCondition,
@@ -697,6 +697,27 @@ class ResourceSkillService {
         search,
         accountId
       );
+
+      if (results?.data?.resourceSkill?.length) {
+        // Fetch user names for each result row in parallel
+        const userNamesPromises = results.data.resourceSkill.map(async (row) => {
+          if (!row) return;
+          
+          const userNames = await this.fetchUserNames({
+            created_by: row.created_by,
+            modified_by: row.modified_by,
+          });
+
+          // Update the row with user names
+          row.created_by = userNames.created_by_name || row.created_by;
+          row.modified_by = userNames.modified_by_name || row.modified_by;
+        });
+
+        // Wait for all user name fetches to complete
+        await Promise.all(userNamesPromises);
+      }
+
+      return results;
     } catch (err) {
       console.log("Error ", err);
       return this.throwServiceError(err as Error);
