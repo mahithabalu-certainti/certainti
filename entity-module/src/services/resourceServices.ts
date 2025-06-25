@@ -703,9 +703,9 @@ export class ResourceService {
 
   // Mapping incoming field names to actual DB column names
   const fieldMapping: Record<string, string> = {
-    resource_country: "country_rid",
-    resource_region: "region_rid",
-    resource_city: "city_rid",
+    country_rid: "country_rid",
+    region_rid: "region_rid",
+    city_rid: "city_rid",
     resource_type_rid: "resource_type_rid",
     status_name: "status_name",
   };
