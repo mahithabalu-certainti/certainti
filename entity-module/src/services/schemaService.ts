@@ -1099,35 +1099,35 @@ class SchemaService {
 
       if (resource) {
         const [country]: any[] = await mainDbSequelize.query(
-          `SELECT country_code,country_name FROM country WHERE rid = :rid`,
+          `SELECT country_code,country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
           {
             replacements: { rid: resource.country_rid },
             type: "SELECT",
           }
         );
         const [state]: any[] = await mainDbSequelize.query(
-          `SELECT state_name FROM state WHERE rid = :rid`,
+          `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
           {
             replacements: { rid: resource.region_rid },
             type: "SELECT",
           }
         );
         const [city]: any[] = await mainDbSequelize.query(
-          `SELECT city_name FROM city WHERE rid = :rid`,
+          `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
           {
             replacements: { rid: resource.city_rid },
             type: "SELECT",
           }
         );
          const [resource_type]: any[] = await mainDbSequelize.query(
-          `SELECT resource_type_name from resource_type  WHERE rid = :rid`,
+          `SELECT resource_type_name from ${MAIN_SCHEMA_NAME}.resource_type  WHERE rid = :rid`,
           {
             replacements: { rid: resource.resource_type_rid },
             type: "SELECT",
           }
         );
         const [status]: any[] = await mainDbSequelize.query(
-          `SELECT status_name from status  WHERE rid = :rid`,
+          `SELECT status_name from ${MAIN_SCHEMA_NAME}.status  WHERE rid = :rid`,
           {
             replacements: { rid: resource.status_rid },
             type: "SELECT",
@@ -1454,9 +1454,9 @@ class SchemaService {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
-        `SELECT account.*, status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
-          LEFT JOIN status ON account.status_rid = status.rid
-          WHERE account.rid = :rid`,
+        `SELECT ${MAIN_SCHEMA_NAME}.account.*, ${MAIN_SCHEMA_NAME}.status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.status ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
+          WHERE ${MAIN_SCHEMA_NAME}.account.rid = :rid`,
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -1553,10 +1553,10 @@ class SchemaService {
           CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
           pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, 
           pfs.project_rid, pfs.project_fiscal_rid, acc.rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
-          LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid
+          FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+          INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = pfs.project_classification_rid
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pt.rid = pfs.project_type_rid
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
@@ -1580,17 +1580,17 @@ class SchemaService {
         cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , 
         COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
         ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
-        LEFT JOIN project_type pt on pc.rid = ps.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_rid 
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pc.rid = ps.project_type_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s on s.rid = ps.status_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1610,15 +1610,15 @@ class SchemaService {
 
         const countQuery = `
           SELECT COUNT(*) AS total_count
-          FROM project_summary AS ps
-          INNER JOIN account acc ON acc.rid = ps.account_rid 
-          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country_rid 
-          LEFT JOIN state st ON st.rid = ps.region_rid 
-          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-          LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid 
-           LEFT JOIN status s on s.rid = ps.status_rid 
+          FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+          INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid 
+           LEFT JOIN ${MAIN_SCHEMA_NAME}.status s on s.rid = ps.status_rid 
           WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1675,10 +1675,10 @@ class SchemaService {
           CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
           CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status,
           pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, pfs.account_rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
-          LEFT JOIN project_type pt ON pt.rid = pfs.project_type_rid 
+          FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+          INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = pfs.project_classification_rid
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid 
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
@@ -1701,16 +1701,16 @@ class SchemaService {
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
         cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
         ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid
-        LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD' 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = ps.project_classification_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
         
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
@@ -1729,14 +1729,14 @@ class SchemaService {
 
         const countQuery = `
         SELECT COUNT(*) AS total_count
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid
-        LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
 
@@ -1839,10 +1839,10 @@ class SchemaService {
           COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,pt.project_type_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
           pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
           pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid,
-          LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid
+          FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+          INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = pfs.project_classification_rid,
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pt.rid = pfs.project_type_rid
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
@@ -1865,17 +1865,17 @@ class SchemaService {
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
         cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
         ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
-        LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_rid 
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD' 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pt.rid = pfs.project_type_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s on s.rid = ps.status_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1894,15 +1894,15 @@ class SchemaService {
 
         const countQuery = `
           SELECT COUNT(*) AS total_count
-          FROM project_summary AS ps
-          INNER JOIN account acc ON acc.rid = ps.account_rid 
-          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country_rid 
-          LEFT JOIN state st ON st.rid = ps.region_rid 
-          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-          LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
-          LEFT JOIN status s on s.rid = ps.status_rid 
+          FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+          INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pt.rid = pfs.project_type_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.status s on s.rid = ps.status_rid 
           WHERE acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1953,10 +1953,10 @@ class SchemaService {
           COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,pt.project_type_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
           pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
           pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
-          LEFT JOIN project_type pt on pt.rid = ps.project_type_rid  
+          FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+          INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = pfs.project_classification_rid
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pt.rid = ps.project_type_rid  
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
@@ -1979,17 +1979,17 @@ class SchemaService {
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
         cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
         ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
-        LEFT JOIN project_type pt on pt.rid = ps.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_rid  
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD' 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc on pc.rid = ps.project_classification_rid  
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt on pt.rid = ps.project_type_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s on s.rid = ps.status_rid  
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
@@ -2006,13 +2006,13 @@ class SchemaService {
 
         const countQuery = `
         SELECT COUNT(*) AS total_count
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid 
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
 
