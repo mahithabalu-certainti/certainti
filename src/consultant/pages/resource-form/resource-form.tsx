@@ -310,7 +310,7 @@ const ResourceForm: React.FC = () => {
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
         Record_id: costInfo?.rid,
-        Resource_id: costInfo?.resource_number,
+        Resource_id: costInfo?.r_number,
         Created_On: formatDateToYYYYMMDDWithTime(costInfo?.created_datetime),
         Created_By: costInfo?.created_by,
         Updated_On: costInfo?.modified_datetime

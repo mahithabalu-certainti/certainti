@@ -611,14 +611,18 @@ export const ResourceFormData = (
               disabled: disableCostAndSkill,
             }
           ),
-          createTextField('total_years_in_org', 'Total Years In Organization', {
-            required: false,
-            regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-            regexErrorMessage:
-              'Please enter a valid number between 0 and 99 with up to 2 decimals',
-            placeholder: 'Enter Total Years In Organization',
-            disabled: disableCostAndSkill,
-          }),
+          createTextField(
+            'total_years_in_org',
+            'Total Years in the Organisation',
+            {
+              required: false,
+              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+              regexErrorMessage:
+                'Please enter a valid number between 0 and 99 with up to 2 decimals',
+              placeholder: 'Enter Total Years in the Organisation',
+              disabled: disableCostAndSkill,
+            }
+          ),
         ],
       },
       {
@@ -653,11 +657,16 @@ export const ResourceFormData = (
             disabled: true,
             // hide: disableCostAndSkill,
           }),
-          createTextField('Resource_id', 'Resource ID', {
-            required: false,
-            disabled: true,
-            // hide: disableCostAndSkill,
-          }),
+          // hide: disableCostAndSkill,
+          createTextField(
+            'Resource_id',
+            `${disableCost ? 'Cost ID' : disableSkill ? 'Skill ID' : 'Resource ID'}`,
+            {
+              required: false,
+              disabled: true,
+              // hide: disableCostAndSkill,
+            }
+          ),
           createTextField('Updated_On', 'Updated On', {
             required: false,
             disabled: true,
