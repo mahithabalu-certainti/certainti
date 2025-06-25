@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { User } from "./userModel";
 import { MenuModule } from "./menuModuleModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface UserModuleAccessAttributes {
   rid: string;
@@ -47,10 +47,24 @@ export class UserModuleAccess
         user_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "user",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : `rid`
+          }
         },
         menu_module_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "menu_module",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : `rid`
+          }
         },
         is_enabled: {
           type: DataTypes.BOOLEAN,
@@ -63,6 +77,7 @@ export class UserModuleAccess
         modelName: "UserModuleAccess",
         tableName: "user_module_access",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (record) => {
             record.setDataValue("modified_datetime", new Date());

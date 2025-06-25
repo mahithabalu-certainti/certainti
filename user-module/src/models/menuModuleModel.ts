@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Menu } from "./menuModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface MenuModuleAttributes {
   rid: string;
@@ -68,7 +68,10 @@ export class MenuModule
           type: DataTypes.STRING(50),
           allowNull: false,
           references: {
-            model: "menu",
+            model: {
+              tableName : "menu",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
@@ -83,6 +86,7 @@ export class MenuModule
         modelName: "MenuModule",
         tableName: "menu_module",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (menuModule) => {
             menuModule.setDataValue("modified_datetime", new Date());

@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { User } from "./userModel";
 import { ModulePermission } from "./modulePermissionModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface UserPermissionAccessAttributes {
   rid: string;
@@ -47,10 +47,24 @@ export class UserPermissionAccess
         user_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "user",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : 'rid'
+          }
         },
         module_permission_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "module_permission",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : 'rid'
+          }
         },
         is_enabled: {
           type: DataTypes.BOOLEAN,
@@ -62,6 +76,7 @@ export class UserPermissionAccess
         modelName: "UserPermissionAccess",
         tableName: "user_permission_access",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (record) => {
             record.setDataValue("modified_datetime", new Date());

@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { MenuModule } from "./menuModuleModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ModulePermissionAttributes {
   rid: string;
@@ -70,7 +70,10 @@ export class ModulePermission
           type: DataTypes.STRING(50),
           allowNull: false,
           references: {
-            model: "menu_module",
+            model: {
+              tableName : "menu_module",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
@@ -90,6 +93,7 @@ export class ModulePermission
         modelName: "ModulePermission",
         tableName: "module_permission",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (permission) => {
             permission.setDataValue("modified_datetime", new Date());

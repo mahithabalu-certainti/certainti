@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Department } from "./departmentModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface FunctionGroupAttributes {
   function_group_id: string;
@@ -64,7 +64,10 @@ export class FunctionGroup
         department_id: {
           type: DataTypes.STRING(50),
           references: {
-            model: "departments",
+            model: {
+              tableName : "departments",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "department_id",
           },
           onDelete: "CASCADE",
@@ -77,6 +80,7 @@ export class FunctionGroup
         tableName: process.env.FUNCTION_GROUP_TABLE_NAME || "function_groups",
         freezeTableName: true,
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (functionGroup: FunctionGroup) => {
             functionGroup.modified_datetime = new Date();
