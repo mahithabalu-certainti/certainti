@@ -13,7 +13,7 @@ import {
 export interface IResourceService {
   createResource(
     resourceData: ICreateResource,
-    userId: string
+    userId: string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -100,7 +100,8 @@ export interface IResourceCostService {
 
   createResourceCost(
     resourceCostData: IResourceCost,
-    userId: string
+    userId: string,
+    userPreference: string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -110,7 +111,8 @@ export interface IResourceCostService {
 
   updateResourceCost(
     resourceCostData: IUpdateResourceCost,
-    userId: string
+    userId: string,
+    userPreference: string,
   ): Promise<{
     statusCode: number;
     message: string;

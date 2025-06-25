@@ -10,7 +10,7 @@ import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { Industry} from "./industryModel";
 import { ProjectSummary } from "./projectSummary";
 import { ColorCodes } from "./colorCodes";
-import { Status } from "./status";
+import { Status } from "./statusModel";
 import { ResourceStatus } from "./resourceStatus";
 import { ResourceType } from "./resourceType";
 import { ProjectType } from "./projectType";

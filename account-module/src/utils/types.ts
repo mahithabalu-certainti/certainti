@@ -3,7 +3,7 @@ export interface IAccount {
   account_number: string;
   account_name: string;
   comments?: string | null;
-  status: "active" | "inactive";
+  status_rid: string;
   eid: number;
   is_parent: boolean;
   region: number;
@@ -47,7 +47,7 @@ export interface IUpdateAccount {
   account_number: string;
   account_name: string;
   comments?: string | null;
-  status: "active" | "inactive";
+  status_rid: string;
   eid: number;
   is_parent: boolean;
   region: number;
@@ -93,7 +93,8 @@ export interface IKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: "active" | "inactive";
+  interaction_cc_recipient: boolean;
+  status_rid:string;
 }
 
 export interface IUpdateKeyContactDetail {
@@ -103,7 +104,8 @@ export interface IUpdateKeyContactDetail {
   key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
-  status: "active" | "inactive";
+  interaction_cc_recipient: boolean;
+  status_rid: string;
 }
 
 export type IColorCodeType = 'Active' | 'Inactive' | 'All';

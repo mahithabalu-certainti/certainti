@@ -2,11 +2,12 @@ import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op, Sequelize, IndexHints } from "sequelize";
+import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
 import ExcelJS from 'exceljs';
 import { OrganizationLicenses } from "../models/organisationLicense";
 import moment, { Moment } from "moment";
 import "moment-timezone"; 
+import { Status } from "../models/statusModel";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -67,7 +68,7 @@ class UserService {
         last_name,
         email,
         profile_id,
-        status,
+        status_rid,
         street,
         city_rid,
         region_rid,
@@ -90,7 +91,7 @@ class UserService {
         last_name,
         email,
         profile_rid: profile_id,
-        status,
+        status_rid,
         street,
         city_rid,
         region_rid,
@@ -148,7 +149,7 @@ class UserService {
         first_name,
         last_name,
         profile_id,
-        status,
+        status_rid,
         street,
         city_rid,
         region_rid,
@@ -179,7 +180,7 @@ class UserService {
           first_name,
           last_name,
           profile_rid: profile_id,
-          status,
+          status_rid,
           street,
           city_rid,
           region_rid,
@@ -503,6 +504,12 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
               attributes: ["business_teams"],
               required: true,
             },
+             {
+            model: Status,
+            as: 'status',
+            attributes: [['status_description','status_name']],
+            required: false,
+          },
           ],
         });
 
@@ -948,7 +955,6 @@ async getAllUserPermission(userId: string, profileId: string) {
     sortOrder: string
   ) {
     const order: any[] = [];
-
     if (sortBy === "$business_teams.business_teams$") {
         order.push(
           [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
@@ -959,13 +965,19 @@ async getAllUserPermission(userId: string, profileId: string) {
           [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
           ["first_name", "asc"]
         );
-    } else {
+    } else if (sortBy === "$status.status_name$") {
+        order.push(
+          [{ model: Status, as: "status" }, "status_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } 
+    else {
         order.push([sortBy, sortOrder]);
     }
-
+   
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
+      attributes: ["rid", "email", "status_rid", "first_name","created_datetime","modified_datetime"],
       limit,
       offset,
       order,
@@ -982,6 +994,12 @@ async getAllUserPermission(userId: string, profileId: string) {
           attributes: ["business_teams"],
           required: true,
         },
+        {
+        model: Status,
+        as: 'status',
+        attributes: ['status_description','status_name'],
+        required: false,
+      },
       ],
     });
     return {
@@ -1175,9 +1193,9 @@ async getAllUserPermission(userId: string, profileId: string) {
    
 
       if (filters.status) {
-       whereClause["$status$"] = this.getMultiValueFilter(filters.status, 'status');
+       whereClause["$status.status_name$"] = this.getMultiValueFilter(filters.status, 'status.status_name');
       if (Array.isArray(filters.profile)) {
-        whereClause["$status$"] = {
+        whereClause["$status.status_name$"] = {
           [Op.in]: filters.status
         };
       }
@@ -1286,7 +1304,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       "first_name",
       "last_name",
       "email",
-      "status",
+      "status_name",
       "created_datetime",
       "modified_datetime",
       "profile",
@@ -1303,6 +1321,9 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (sortBy === "business_teams") {
       sortBy = "$business_teams.business_teams$";
+    }
+    if (sortBy === "status_name") {
+      sortBy = "$status.status_name$";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
@@ -1463,7 +1484,7 @@ const rawResult = users || [];
           ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
+          "Status": basicUserInfo.status?.status_name,
         };
       });
 
@@ -1497,13 +1518,19 @@ const rawResult = users || [];
           [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
           ["first_name", "asc"]
         );
-    } else {
+     } else if (sortBy === "$status.status_name$") {
+        order.push(
+          [{ model: Status, as: "status" }, "status_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } 
+    else {
         order.push([sortBy, sortOrder]);
     }
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
+      attributes: ["rid", "email", "status_rid", "first_name","created_datetime","modified_datetime"],
       order,
       include: [
         {
@@ -1518,6 +1545,12 @@ const rawResult = users || [];
           attributes: ["business_teams"],
           required: true,
         },
+        {
+            model: Status,
+            as: 'status',
+            attributes: [['status_description','status_name']],
+            required: false,
+        }
       ],
     });
     return {

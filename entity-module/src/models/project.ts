@@ -23,14 +23,14 @@ export interface ProjectAttributes {
   project_startdate?: Date | null;
   project_enddate?: Date | null;
 
-  project_type: "Fixed" | "Time & Material";
+  project_type_rid: string;
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
 
   project_client_group?: string | null;
   project_group?: string | null;
 
-  project_status: "Active" | "Inactive";
+  status_rid: string;
 
   country_rid?: string | null;
   region_rid?: string | null;
@@ -93,14 +93,14 @@ export class Project
   public project_startdate?: Date | null;
   public project_enddate?: Date | null;
 
-  public project_type!: "Fixed" | "Time & Material";
+  public project_type_rid!: "Fixed" | "Time & Material";
   public project_classification_rid?: string | null;
   public project_classification_other?: string | null;
 
   public project_client_group?: string | null;
   public project_group?: string | null;
 
-  public project_status!: "Active" | "Inactive";
+  public status_rid!:string;
 
   public country_rid?: string | null;
   public region_rid?: string | null;
@@ -192,8 +192,8 @@ export class Project
         },
         project_startdate: DataTypes.DATE,
         project_enddate: DataTypes.DATE,
-        project_type: {
-          type: DataTypes.ENUM("Fixed", "Time & Material"),
+        project_type_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         project_classification_rid: {
@@ -212,8 +212,8 @@ export class Project
           type: DataTypes.STRING(255),
           allowNull: true,
         },
-        project_status: {
-          type: DataTypes.ENUM("Active", "Inactive"),
+        status_rid: {
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         country_rid: {

@@ -29,7 +29,7 @@ const accountSchema = Joi.object({
   account_id: Joi.string().max(255).allow(null).optional().label("Account ID"),
   account_name: Joi.string().min(3).max(125).required().label("Account Name"),
   comments: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
-  status: Joi.string().valid("active", "inactive").required().label("Status"),
+  status_rid: Joi.string().required().label("Status"),
   is_parent: Joi.boolean().required().label("Is Parent"),
   parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
   currency_rid: Joi.string().allow("").allow(null)
@@ -144,7 +144,13 @@ const accountSchema = Joi.object({
         key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
-        status: Joi.string().valid('Active', 'Inactive').required(),
+        status_rid: Joi.string().required(),
+        interaction_cc_recipient: Joi.boolean()
+        .required()
+        .messages({
+          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
+          'any.required': 'interaction_cc_recipient is required',
+        }),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
@@ -157,7 +163,7 @@ const updateAccountSchema = Joi.object({
   account_name: Joi.string().min(3).max(125).required().label("Account Name"),
   r_number: Joi.string().required().label("R number"),
   comments: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
-  status: Joi.string().valid("active", "inactive").required().label("Status"),
+  status_rid: Joi.string().required().label("Status"),
   is_parent: Joi.boolean().required().label("Is Parent"),
   parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
   currency_rid: Joi.string().allow("").allow(null)
@@ -275,7 +281,13 @@ const updateAccountSchema = Joi.object({
         key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().allow(null).optional(),
-        status: Joi.string().valid('Active', 'Inactive').required(),
+        status_rid: Joi.string().required(),
+        interaction_cc_recipient: Joi.boolean()
+        .required()
+        .messages({
+          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
+          'any.required': 'interaction_cc_recipient is required',
+        }),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
