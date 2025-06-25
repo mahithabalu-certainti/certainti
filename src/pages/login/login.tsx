@@ -4,15 +4,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LeftPane, RightPane } from '.';
 import { InteractionStatus } from '@azure/msal-browser';
-import { IAuthDetails } from '../store/type';
-import { accountNavItems } from '../components/sidebar/accounts-menu';
-import { checkPermission, reShapePermissionData } from '../common-utils';
-import { NOT_FOUND } from '../routes';
-import { AllModules, fetchCurrentUserRole } from '../common-service';
-import { setUserId, UpdateOrgLogo, updatePermissions } from '../store/slices';
-import { useAppDispatch } from '../store/store';
-import { useAppTranslation } from '../hooks/use-app-translation';
-import { useAuthHook, useToast } from '../hooks';
+import { useAppTranslation } from '../../hooks/use-app-translation';
+import { useAuthHook, useToast } from '../../hooks';
+import { IAuthDetails } from '../../store/type';
+import { accountNavItems } from '../../components/sidebar/accounts-menu';
+import { checkPermission, reShapePermissionData } from '../../common-utils';
+import { useAppDispatch } from '../../store/store';
+import {
+  setUserId,
+  UpdateOrgLogo,
+  updatePermissions,
+} from '../../store/slices';
+import { AllModules, fetchCurrentUserRole } from '../../common-service';
+import { NOT_FOUND } from '../../routes';
 
 /**
  * Login component handles the user authentication process.

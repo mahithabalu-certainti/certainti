@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import React from 'react';
-import { ComingSoon } from '../assets';
+import { ComingSoon } from '../../assets';
 
 export const NotFound: React.FC = () => {
   return (

@@ -1,9 +1,9 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import React from 'react';
-import { Text } from '../components';
-import { useAppTranslation } from '../hooks/use-app-translation';
-import { ILeftPane } from '../consultant/types';
+import { ILeftPane } from '../../consultant/types';
+import { useAppTranslation } from '../../hooks/use-app-translation';
+import { Text } from '../../components';
 
 /**
  * LeftPane component displays the left side of the login page.
