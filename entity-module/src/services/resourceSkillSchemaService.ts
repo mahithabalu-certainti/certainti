@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
 import { Skill } from "../models/skill";
@@ -317,21 +317,21 @@ async exportResoucreSkill(
     const skillLevelRids = [...new Set(resourceSkill.map(r => r.skill_level_rid))];
 
     // Fetch skill type names
-    const skillTypeQuery = `SELECT rid, skill_type_name FROM "public"."skill_type" WHERE rid IN (:skillTypeRids)`;
+    const skillTypeQuery = `SELECT rid, skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid IN (:skillTypeRids)`;
     const skillTypes = await mainDbSequelize.query(skillTypeQuery, {
       replacements: { skillTypeRids },
       type: "SELECT"
     });
 
     // Fetch skill subtype names
-    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM "public"."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
+    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
     const skillSubtypes = await mainDbSequelize.query(skillSubtypeQuery, {
       replacements: { skillSubtypeRids },
       type: "SELECT"
     });
 
      // Fetch skill level names
-    const skillLevelQuery = `SELECT rid, skill_level_name FROM "public"."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevelQuery = `SELECT rid, skill_level_name FROM ."skill_level" WHERE rid IN (:skillLevelRids)`;
     const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
       replacements: { skillLevelRids },
       type: "SELECT"
@@ -476,21 +476,21 @@ async executeQueries(
     const skillLevelRids = [...new Set(resourceSkill.map((r: any) => r.skill_level_rid))];
 
     // Fetch skill type names
-    const skillTypeQuery = `SELECT rid, skill_type_name FROM "public"."skill_type" WHERE rid IN (:skillTypeRids)`;
+    const skillTypeQuery = `SELECT rid, skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid IN (:skillTypeRids)`;
     const skillTypes = await mainDbSequelize.query(skillTypeQuery, {
       replacements: { skillTypeRids },
       type: "SELECT"
     });
 
     // Fetch skill subtype names
-    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM "public"."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
+    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
     const skillSubtypes = await mainDbSequelize.query(skillSubtypeQuery, {
       replacements: { skillSubtypeRids },
       type: "SELECT"
     });
 
     // Fetch skill level names
-    const skillLevelQuery = `SELECT rid, skill_level_name FROM "public"."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevelQuery = `SELECT rid, skill_level_name FROM ${MAIN_SCHEMA_NAME}."skill_level" WHERE rid IN (:skillLevelRids)`;
     const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
       replacements: { skillLevelRids },
       type: "SELECT"

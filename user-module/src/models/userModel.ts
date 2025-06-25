@@ -240,7 +240,7 @@ export class User
 //     await sequelize.query('CREATE SEQUENCE IF NOT EXISTS user_seq START 1');
     
 //     // Step 2: Set the default value for r_number to use the sequence
-//     await sequelize.query(`ALTER TABLE public."user"
+//     await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}."user"
 //       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER}-' || LPAD(nextval('user_seq')::text, 10, '0')`);
     
 //     console.log('User sequence setup complete');

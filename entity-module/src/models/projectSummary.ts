@@ -1,5 +1,5 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constants";
 export interface ProjectSummaryAttributes {
   rid?: string;
   r_number?: string;
@@ -266,7 +266,7 @@ export class ProjectSummary
       },
       {
         sequelize,
-        schema: schemaName ? schemaName : "public",
+        schema: schemaName ? schemaName : `${MAIN_SCHEMA_NAME}`,
         tableName: "project_summary",
         timestamps: false,
         underscored: true,

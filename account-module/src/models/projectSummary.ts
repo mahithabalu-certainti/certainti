@@ -4,7 +4,7 @@ import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { States } from "./stateModel";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 
 interface ProjectSummaryAttributes {
   rid: string;
@@ -274,7 +274,7 @@ export class ProjectSummary
       {
         sequelize,
         tableName: "project_summary",
-        schema: "public",
+        schema: `${MAIN_SCHEMA_NAME}`,
         timestamps: false,
       }
     );

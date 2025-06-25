@@ -852,7 +852,7 @@ class ResourceSkillService {
     const mainDbSequelize = await this.getMainDbSequelize();
 
     // Fetch skill type name
-    const skillTypeQuery = `SELECT skill_type_name FROM "public"."skill_type" WHERE rid = :skillTypeRid`;
+    const skillTypeQuery = `SELECT skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid = :skillTypeRid`;
     const skillType = await mainDbSequelize.query(skillTypeQuery, {
       replacements: { skillTypeRid: resourceSkillById?.skill_type_rid },
       type: "SELECT",
@@ -860,7 +860,7 @@ class ResourceSkillService {
     });
 
     // Fetch skill subtype name
-    const skillSubtypeQuery = `SELECT skill_subtype_name FROM "public"."skill_subtype" WHERE rid = :skillSubtypeRid`;
+    const skillSubtypeQuery = `SELECT skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid = :skillSubtypeRid`;
     const skillSubtype = await mainDbSequelize.query(skillSubtypeQuery, {
       replacements: { skillSubtypeRid: resourceSkillById?.skill_subtype_rid },
       type: "SELECT",

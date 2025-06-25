@@ -1013,7 +1013,7 @@ class ResourceCostService {
         );
 
          const [statusResult] = await sequelize.query(
-          `SELECT resource_status_name as status_name FROM public.resource_status WHERE rid = :status_rid`,
+          `SELECT resource_status_name as status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid = :status_rid`,
           {
             replacements: { status_rid: costData.status_rid },
             type: "SELECT",

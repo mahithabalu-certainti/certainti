@@ -17,7 +17,7 @@ class SchemaService {
     const sequelize = await initSequelize();
     const result = await sequelize.query(`
       SELECT *
-      FROM "public".key_contact_role 
+      FROM ${MAIN_SCHEMA_NAME}.key_contact_role 
       WHERE rid = :key_contact_role
       AND LOWER(role_status) = 'active'
     `, {
@@ -120,7 +120,7 @@ class SchemaService {
     const sequelize = await initSequelize();
     const result = await sequelize.query(`
       SELECT *
-      FROM "public".key_contact_role where entity_type = '${entity_type}' AND LOWER(role_status) = 'active'
+      FROM ${MAIN_SCHEMA_NAME}.key_contact_role where entity_type = '${entity_type}' AND LOWER(role_status) = 'active'
       ORDER BY role_name ASC;
     `);
     return result[0];
