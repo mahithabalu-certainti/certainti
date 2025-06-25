@@ -925,7 +925,7 @@ export class ProjectService {
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
               "Account Name": fiscal.account_name || "-",
-              "Fiscal Year":  `FY${fiscal.fiscal_year}` || "-",
+              "Fiscal Year":  `FY-${fiscal.fiscal_year}` || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
               "Project Effort (Hours)": fiscal.total_effort_prj || "-",
