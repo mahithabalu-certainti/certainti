@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
@@ -27,17 +28,25 @@ export const getAllProjectListColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: Project) =>
-      onClick ? (
+    render: (row: Project) => {
+      const data: any = row;
+      let displayCode = row.project_code;
+
+      if (typeof data.fiscal_year === 'number') {
+        displayCode = `${row.project_code} - FY${data.fiscal_year}`;
+      }
+
+      return onClick ? (
         <span
           onClick={() => onClick(row)}
           className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
         >
-          {row.project_code}
+          {displayCode}
         </span>
       ) : (
-        row.project_code
-      ),
+        displayCode
+      );
+    },
   },
   {
     id: 'project_name',
@@ -67,7 +76,14 @@ export const getAllProjectListColumns = (
     sortId: 'fiscal_year',
     width: 130,
     sx: {
-      textAlign: 'right',
+      textAlign: 'left',
+    },
+    render: (row: Project) => {
+      const data: any = row;
+      if (typeof data.fiscal_year === 'number') {
+        return `FY-${data.fiscal_year}`;
+      }
+      return '-';
     },
   },
   {

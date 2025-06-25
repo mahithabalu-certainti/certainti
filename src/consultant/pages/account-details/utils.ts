@@ -184,8 +184,20 @@ export const transformResourceData = (
           value: getValueOrDefault(resourceData?.resource_type_name),
         },
         {
+          label: '',
+          value: '',
+        },
+      ],
+    },
+    {
+      items: [
+        {
           label: 'Resource Org Name',
           value: getValueOrDefault(resourceData?.resource_orgname),
+        },
+        {
+          label: '',
+          value: '',
         },
       ],
     },

@@ -43,6 +43,7 @@ const projectTabs: ResourceTabs[] = [
     id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
     name: 'Timeline',
     hide: false,
+    disable: true,
   },
 ];
 
@@ -70,7 +71,8 @@ const Projects: React.FC<ProjectsProps> = ({
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -94,10 +96,11 @@ const Projects: React.FC<ProjectsProps> = ({
     permission,
     AllPermissions.ACCOUNT_PROJECTS_EDIT
   );
-  const projectDeleteIsEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_PROJECTS_DELETE
-  );
+  // This functionality will be implemented later
+  // const projectDeleteIsEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_PROJECTS_DELETE
+  // );
   const projectOverviewIsEnable = !projectsTabs[0].hide;
 
   const { data, isLoading, error } = useAccountProjects(
@@ -181,19 +184,23 @@ const Projects: React.FC<ProjectsProps> = ({
       label: 'Delete',
       disabled: accountInActive,
       onClick: (row: any) => console.log('Delete', row),
-      hide: !projectDeleteIsEnable,
+      // hide: !projectDeleteIsEnable,
+      hide: true,
     },
     {
       label: 'View Summary',
       onClick: (row: any) => console.log('Summary', row),
+      hide: true,
     },
     {
       label: 'View Activities',
       onClick: (row: any) => console.log('Activities', row),
+      hide: true,
     },
     {
       label: 'View Notes',
       onClick: (row: any) => console.log('Notes', row),
+      hide: true,
     },
   ];
 
@@ -312,7 +319,7 @@ const Projects: React.FC<ProjectsProps> = ({
               hoverHighlight={false}
               tableStyle={{
                 height: '100%',
-                maxHeight: 'calc(100vh - 278px)',
+                maxHeight: 'calc(100vh - 290px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

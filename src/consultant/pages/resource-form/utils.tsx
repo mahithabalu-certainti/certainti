@@ -211,7 +211,9 @@ export const transformCostData = (
 
 export const transformSkillData = (
   formData: Partial<ResourceCostSkillFormData>,
-  isEdit: boolean
+  isEdit: boolean,
+  isOthersSkillTypeSelected: boolean,
+  isOthersSubTypeSelected: boolean
 ) => {
   const data: Partial<ResourceSkillPayload> = {
     eid: '',
@@ -224,8 +226,12 @@ export const transformSkillData = (
     skill_level_rid: formData.skill_level || '',
     skill_type_rid: formData.skill_type,
     skill_subtype_rid: formData.skill_sub_type,
-    skill_type_others: formData.skill_type_others || '',
-    skill_subtype_others: formData.skill_subtype_others || '',
+    skill_type_others: isOthersSkillTypeSelected
+      ? formData.skill_type_others
+      : '',
+    skill_subtype_others: isOthersSubTypeSelected
+      ? formData.skill_subtype_others
+      : '',
     skill_details: formData.skill_details,
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,

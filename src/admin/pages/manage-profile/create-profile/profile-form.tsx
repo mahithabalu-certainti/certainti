@@ -130,7 +130,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           <ProfileIcon alt='manage-profile' className='h-6 w-6 rounded' />
           <div className='w-[90%]'>
             <div className='font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal'>
-              Admin Permission
+              {`Admin Permission > Manage Profile`}
             </div>
             <div className='text-[16px] font-bold text-[#2D3E4F] -mt-0.5'>
               Create Profile
@@ -170,7 +170,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           <div
             className={`border-b h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
           >
-            Create Profile
+            Profile Information
           </div>
           <form className='flex flex-row w-full items-end gap-4 px-10 py-1'>
             <div className='w-full flex flex-col gap-2'>

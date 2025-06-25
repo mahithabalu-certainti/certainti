@@ -23,13 +23,19 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       sortable: true,
       sticky: true,
       sx: {
-        textAlign: 'right',
+        textAlign: 'left',
         position: 'sticky',
         left: 0,
         background: '#fff',
         zIndex: 10,
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
+      },
+      render: (row: ResourceCostList) => {
+        if (typeof row.fiscal_year === 'number') {
+          return `FY-${row.fiscal_year}`;
+        }
+        return '-';
       },
     },
     {

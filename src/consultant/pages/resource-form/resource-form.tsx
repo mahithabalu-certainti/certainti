@@ -38,7 +38,7 @@ import {
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
-import { SelectOption } from '../../types';
+import { OthersEnum, SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
 import {
   ResourceTypeEnum,
@@ -64,9 +64,9 @@ const ResourceForm: React.FC = () => {
     state: '',
   });
   const [currentSkillType, setCurrentSkillType] = useState({
-    skillSubType: [] as string[],
-    skill_type: [] as string[],
-    skill_sub_type: [] as string[],
+    skillSubType: '',
+    skill_type: '',
+    skill_sub_type: '',
   });
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
@@ -310,7 +310,7 @@ const ResourceForm: React.FC = () => {
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
         Record_id: costInfo?.rid,
-        Resource_id: costInfo?.resource_number,
+        Resource_id: costInfo?.r_number,
         Created_On: formatDateToYYYYMMDDWithTime(costInfo?.created_datetime),
         Created_By: costInfo?.created_by,
         Updated_On: costInfo?.modified_datetime
@@ -406,13 +406,13 @@ const ResourceForm: React.FC = () => {
     if (skillTypeId) {
       setCurrentSkillType((prev) => ({
         ...prev,
-        skill_type: [skillInfo.skillTypeId],
+        skill_type: skillInfo.skillTypeId,
       }));
     }
     if (skillSubTypeId) {
       setCurrentSkillType((prev) => ({
         ...prev,
-        skillSubType: [skillInfo.skillSubTypeId],
+        skillSubType: skillInfo.skillSubTypeId,
       }));
     }
   }, [skillTypeId, skillSubTypeId]);
@@ -423,7 +423,11 @@ const ResourceForm: React.FC = () => {
   const city = useFetchCity(currentCountry.state);
   const { data: skillType } = useFetchResourceSkillType(true);
   const { data: skillSubType, isLoading: skillSubTypeLoading } =
-    useFetchResourceSkillSubType(currentSkillType.skill_type);
+    useFetchResourceSkillSubType(
+      currentSkillType.skill_type
+        ? ([currentSkillType.skill_type] as string[])
+        : []
+    );
 
   // Mutations
   const createResource = useCreateResource(accountId as string);
@@ -528,6 +532,33 @@ const ResourceForm: React.FC = () => {
     }
   }, [commonSuccess, isEditView, state?.cost, state?.skill]);
 
+  const othersSkillTypeId = useMemo(() => {
+    const data = skillType as SkillType[];
+    const others = data?.find(
+      (item) => item.skill_type_name.toLowerCase() === OthersEnum.Others
+    );
+    return others?.rid || null;
+  }, [skillType]);
+
+  const isOthersSkillTypeSelected = othersSkillTypeId
+    ? currentSkillType.skill_type === othersSkillTypeId
+    : false;
+
+  const othersSkillSubTypeId = useMemo(() => {
+    const data = skillSubType as SkillSubtype[];
+    const others = data?.find(
+      (item) => item.skill_subtype_name?.toLowerCase() === OthersEnum.Others
+    );
+    return others?.rid || null;
+  }, [skillSubType]);
+
+  const selectedSubType =
+    currentSkillType.skill_sub_type || currentSkillType.skillSubType;
+
+  const isOthersSubTypeSelected = selectedSubType
+    ? othersSkillSubTypeId === selectedSubType
+    : false;
+
   // Handlers
   const handleSubmit = (formValues: any) => {
     if (state?.cost) {
@@ -623,7 +654,12 @@ const ResourceForm: React.FC = () => {
         resource_desc: resource?.data.resourceDetails.resource_role,
         resource_code: resource?.data.resourceDetails.resource_code,
       };
-      const skillData = transformSkillData(updateFormValues, isEditView);
+      const skillData = transformSkillData(
+        updateFormValues,
+        isEditView,
+        isOthersSkillTypeSelected,
+        isOthersSubTypeSelected
+      );
       // Update or create skill based on isEditView valu
       if (isEditView) {
         updateResourceSkill.mutate(skillData);
@@ -684,14 +720,14 @@ const ResourceForm: React.FC = () => {
     if (fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
         ...prev,
-        skill_sub_type: [],
-        [fieldName]: [fieldValue] as string[],
+        skill_sub_type: '' as string,
+        [fieldName]: fieldValue as string,
       }));
     }
     if (fieldName === 'skill_sub_type') {
       setCurrentSkillType((prev) => ({
         ...prev,
-        [fieldName]: [fieldValue] as string[],
+        [fieldName]: fieldValue as string,
       }));
     }
 
@@ -780,8 +816,8 @@ const ResourceForm: React.FC = () => {
     skillSubTypeLoading,
     state?.cost || state?.skill,
     disableOrgname,
-    currentSkillType.skill_type,
-    currentSkillType.skill_sub_type || currentSkillType.skillSubType,
+    isOthersSkillTypeSelected,
+    isOthersSubTypeSelected,
     state?.skill,
     state?.cost,
     isResourceFullNameEmpty,

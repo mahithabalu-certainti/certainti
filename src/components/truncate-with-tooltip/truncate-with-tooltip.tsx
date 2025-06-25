@@ -24,6 +24,7 @@ interface TruncateWithTooltipProps {
   placement?: TooltipProps['placement'];
   enableCopy?: boolean;
   alwaysShowTooltip?: boolean;
+  tooltipMaxWidth?: number | string;
 }
 
 const TruncateWithTooltip = ({
@@ -35,6 +36,7 @@ const TruncateWithTooltip = ({
   placement = 'top',
   enableCopy = true,
   alwaysShowTooltip = false,
+  tooltipMaxWidth = '50vw',
 }: TruncateWithTooltipProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -79,7 +81,7 @@ const TruncateWithTooltip = ({
 
   const tooltipContent = enableCopy ? (
     <div className='flex items-center gap-1'>
-      <span className='break-all max-w-[200px]'>{textForTooltipAndCopy}</span>
+      <span className='break-all'>{textForTooltipAndCopy}</span>
       <IconButton
         size='small'
         onClick={(e) => {
@@ -109,6 +111,13 @@ const TruncateWithTooltip = ({
       title={<Suspense fallback={null}>{tooltipContent}</Suspense>}
       arrow
       placement={placement}
+      componentsProps={{
+        tooltip: {
+          sx: {
+            maxWidth: tooltipMaxWidth,
+          },
+        },
+      }}
     >
       {content}
     </Tooltip>

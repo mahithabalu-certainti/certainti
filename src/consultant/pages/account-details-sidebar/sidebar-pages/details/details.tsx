@@ -25,6 +25,7 @@ export interface DetailsTabs {
   id: AllPermissions;
   name: string;
   hide: boolean;
+  disable?: boolean;
 }
 
 const detailsTabs: DetailsTabs[] = [
@@ -37,6 +38,7 @@ const detailsTabs: DetailsTabs[] = [
     id: AllPermissions.ACCOUNT_DETAILS_TIMELINE,
     name: 'Timeline',
     hide: false,
+    disable: true,
   },
 ];
 

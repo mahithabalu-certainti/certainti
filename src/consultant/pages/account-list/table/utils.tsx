@@ -326,7 +326,7 @@ export const renderRows = ({
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
-            sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+            sx={{ width: '120px', maxWidth: '120px', minWidth: '120px' }}
           >
             <TruncateWithTooltip
               text={String(account.accountNumber)}
@@ -647,7 +647,7 @@ export const renderChildRows = ({
               </TruncateWithTooltip>
             </TableCell>
             <TableCell
-              sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+              sx={{ width: '120px', maxWidth: '120px', minWidth: '120px' }}
             >
               <TruncateWithTooltip
                 text={String(account.accountNumber)}
@@ -887,9 +887,9 @@ export const renderChildRows = ({
                   </TableCell>
                   <TableCell
                     sx={{
-                      width: '160px',
-                      maxWidth: '160px',
-                      minWidth: '160px',
+                      width: '120px',
+                      maxWidth: '120px',
+                      minWidth: '120px',
                     }}
                   >
                     {'-'}

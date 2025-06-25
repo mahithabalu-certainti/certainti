@@ -73,8 +73,10 @@ export const ResourceFormData = (
   skillSubTypeLoading?: boolean,
   disableCostAndSkill?: boolean,
   disableOrgname?: boolean,
-  currentSkillType?: string[],
-  currentskillSubType?: string[],
+  // currentSkillType?: string[],
+  // currentskillSubType?: string[],
+  isOthersSkillTypeSelected?: boolean,
+  isOthersSubTypeSelected?: boolean,
   disableSkill?: boolean,
   disableCost?: boolean,
   isResourceFullNameEmpty?: boolean,
@@ -305,6 +307,7 @@ export const ResourceFormData = (
             onChange: true,
             isLoading: stateLoading,
             disabled: disableCostAndSkill,
+            resetDependsFields: ['city'],
           }),
           createSelectField('city', 'City', {
             options: city,
@@ -484,10 +487,7 @@ export const ResourceFormData = (
                   "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
-            hide:
-              currentSkillType?.[0] === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
-                ? false
-                : true,
+            hide: !isOthersSkillTypeSelected,
           }),
           createSelectField('skill_sub_type', 'Skill SubType', {
             options: skillSubTypeOptions,
@@ -520,11 +520,7 @@ export const ResourceFormData = (
                   "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
-            hide:
-              currentskillSubType?.[0] ===
-              'b8894099-0385-4681-8237-21f89b0d1883'
-                ? false
-                : true,
+            hide: !isOthersSubTypeSelected,
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: skillLevelOptions,
@@ -611,14 +607,18 @@ export const ResourceFormData = (
               disabled: disableCostAndSkill,
             }
           ),
-          createTextField('total_years_in_org', 'Total Years In Organization', {
-            required: false,
-            regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-            regexErrorMessage:
-              'Please enter a valid number between 0 and 99 with up to 2 decimals',
-            placeholder: 'Enter Total Years In Organization',
-            disabled: disableCostAndSkill,
-          }),
+          createTextField(
+            'total_years_in_org',
+            'Total Years in the Organisation',
+            {
+              required: false,
+              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+              regexErrorMessage:
+                'Please enter a valid number between 0 and 99 with up to 2 decimals',
+              placeholder: 'Enter Total Years in the Organisation',
+              disabled: disableCostAndSkill,
+            }
+          ),
         ],
       },
       {
@@ -653,11 +653,16 @@ export const ResourceFormData = (
             disabled: true,
             // hide: disableCostAndSkill,
           }),
-          createTextField('Resource_id', 'Resource ID', {
-            required: false,
-            disabled: true,
-            // hide: disableCostAndSkill,
-          }),
+          // hide: disableCostAndSkill,
+          createTextField(
+            'Resource_id',
+            `${disableCost ? 'Cost ID' : disableSkill ? 'Skill ID' : 'Resource ID'}`,
+            {
+              required: false,
+              disabled: true,
+              // hide: disableCostAndSkill,
+            }
+          ),
           createTextField('Updated_On', 'Updated On', {
             required: false,
             disabled: true,
@@ -696,10 +701,10 @@ export const ResourceFormData = (
       isEditView,
       disableSkill,
       skillTypeOptions,
-      currentSkillType,
+      isOthersSkillTypeSelected,
       skillSubTypeOptions,
       skillSubTypeLoading,
-      currentskillSubType,
+      isOthersSubTypeSelected,
       skillLevelOptions,
     ]
   );

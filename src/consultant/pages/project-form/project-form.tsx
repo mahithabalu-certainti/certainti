@@ -265,7 +265,8 @@ const ProjectForm: React.FC = () => {
       memoizedStatus,
       defaultActiveValue,
       account?.keyContact,
-      showOthersField
+      showOthersField,
+      showClassifyOthersField
     );
 
     if (isEditView) {

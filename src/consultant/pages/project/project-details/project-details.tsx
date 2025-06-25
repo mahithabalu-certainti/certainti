@@ -128,10 +128,11 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECT_PROJECTS_DOWNLOAD
   );
-  const projectExportIsEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECT_PROJECTS_EXPORT
-  );
+  // Functionality will be implement later
+  // const projectExportIsEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECT_PROJECTS_EXPORT
+  // );
   const projectEditIsEnable = checkPermission(
     permission,
     AllPermissions.PROJECT_PROJECTS_EDIT
@@ -161,7 +162,8 @@ export const ProjectDetails = () => {
   }, [location.state]);
 
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
-  const accountInActive = data?.data?.project?.account_status === 'inactive';
+  const accountInActive =
+    data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
   useEffect(() => {
     if (data?.data) {
@@ -173,11 +175,13 @@ export const ProjectDetails = () => {
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
+      hide: true,
     },
     {
       label: 'Export',
       onClick: () => console.log('export clicked'),
-      hide: !projectExportIsEnable,
+      // hide: !projectExportIsEnable,
+      hide: true,
     },
   ];
 
