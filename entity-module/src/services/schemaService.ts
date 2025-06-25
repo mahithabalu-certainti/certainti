@@ -1588,7 +1588,7 @@ class SchemaService {
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
-        LEFT JOIN project_type pt on pc.rid = ps.type_rid 
+        LEFT JOIN project_type pt on pc.rid = ps.project_type_rid 
         LEFT JOIN status s on s.rid = ps.status_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""

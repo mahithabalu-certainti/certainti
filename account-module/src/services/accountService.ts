@@ -1541,13 +1541,7 @@ async insertClientTemplateDetails(
   } = revenueFilter;
 
   // Handle empty strings and invalid values by casting to NULL first
-   const column = Sequelize.literal(`
-    CAST(
-      NULLIF("${columnName}", '') 
-      AS DOUBLE PRECISION
-    )
-  `);
-
+   const column = Sequelize.col(columnName)
   if (is_empty !== undefined) {
     return {
       [Op.or]: [
@@ -1600,7 +1594,6 @@ async insertClientTemplateDetails(
   }
   return null;
 }
-
   private getMultiValueFilter(filter: any, fieldName: string): any {
   if (!filter) return null;
 
