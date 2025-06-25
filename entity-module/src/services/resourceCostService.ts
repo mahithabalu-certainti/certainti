@@ -1321,7 +1321,7 @@ async function getResourceStatuses(
   mainDbSequelize: Sequelize,
 ): Promise<Map<string, string> | null> {
   try {
-    const resourceStatus = `SELECT rid, resource_status_name FROM resource_status`;
+    const resourceStatus = `SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status`;
     const results = await mainDbSequelize.query(resourceStatus, {
       type: "SELECT"
     });

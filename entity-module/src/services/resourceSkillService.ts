@@ -979,7 +979,7 @@ class ResourceSkillService {
           modified_by,
           created_datetime,
           modified_datetime
-        FROM skill_type 
+        FROM ${MAIN_SCHEMA_NAME}.skill_type 
         WHERE status = 'active'
         ORDER BY skill_type_name ASC`,
         {
@@ -1019,7 +1019,7 @@ class ResourceSkillService {
           modified_by,
           created_datetime,
           modified_datetime
-        FROM skill_subtype
+        FROM ${MAIN_SCHEMA_NAME}.skill_subtype
         WHERE skill_type_rid IN (:skillTypeRids) AND status = 'active'
         ORDER BY skill_subtype_name ASC`,
         {

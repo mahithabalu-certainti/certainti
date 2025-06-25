@@ -1226,7 +1226,7 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
           {
             replacements: { ids: countryIds },
             type: "SELECT",
@@ -1236,7 +1236,7 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
           {
             replacements: { ids: regionIds },
             type: "SELECT",
@@ -1246,7 +1246,7 @@ class SchemaService {
 
       if (cityIds.length > 0) {
         cities = await mainDdSequilze.query(
-          `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
+          `SELECT rid, city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid IN (:ids)`,
           {
             replacements: { ids: cityIds },
             type: "SELECT",
@@ -1255,7 +1255,7 @@ class SchemaService {
       }
       if (resourceTypeRids.length > 0) {
         resourceType = await mainDdSequilze.query(
-          `SELECT rid, resource_type_name FROM resource_type WHERE rid IN (:ids)`,
+          `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
           {
             replacements: { ids: resourceTypeRids },
             type: "SELECT",
@@ -1264,7 +1264,7 @@ class SchemaService {
       }
       if (statusRids.length > 0) {
         status = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusRids },
             type: "SELECT",
@@ -1401,7 +1401,7 @@ class SchemaService {
 
       if (countryId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, country_name, country_code FROM country WHERE rid = :id`,
+          `SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :id`,
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -1413,7 +1413,7 @@ class SchemaService {
 
       if (regionId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid = :id`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :id`,
           {
             replacements: { id: regionId },
             type: "SELECT",
@@ -1425,7 +1425,7 @@ class SchemaService {
 
       if (currencyId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, currency_name, currency_code, currency_symbol FROM currency WHERE rid = :id`,
+          `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`,
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -2698,7 +2698,7 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
           {
             replacements: { ids: countryIds },
             type: "SELECT",
@@ -2708,7 +2708,7 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
           {
             replacements: { ids: regionIds },
             type: "SELECT",
@@ -2718,7 +2718,7 @@ class SchemaService {
 
       if (currencyIds.length > 0) {
         currencies = await mainDdSequilze.query(
-          `SELECT rid, currency_code, currency_symbol FROM currency WHERE rid IN (:ids)`,
+          `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
           {
             replacements: { ids: currencyIds },
             type: "SELECT",
@@ -2769,7 +2769,7 @@ class SchemaService {
 
       if (industryIds.length > 0) {
         IndustryRows = await mainDdSequilze.query(
-          `SELECT rid, industry_name FROM industry WHERE rid IN (:ids)`,
+          `SELECT rid, industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid IN (:ids)`,
           {
             replacements: { ids: industryIds },
             type: "SELECT",
@@ -2816,7 +2816,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2874,7 +2874,7 @@ class SchemaService {
     try {
       if (project.industry_rid && !project.industry_name) {
         const industryResult: any = await mainDdSequilze.query(
-          `SELECT industry_name FROM industry WHERE rid = :id`,
+          `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`,
           {
             replacements: { id: project.industry_rid },
             type: "SELECT",
@@ -2896,7 +2896,7 @@ class SchemaService {
     try {
       if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
-          `SELECT status_name FROM status WHERE rid = :id`,
+          `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
           {
             replacements: { id: project.status_rid },
             type: "SELECT",
@@ -2908,7 +2908,7 @@ class SchemaService {
       }
       if (project.project_type_rid) {
         const projectTypeResult: any = await mainDdSequilze.query(
-          `SELECT project_type_name FROM project_type WHERE rid = :id`,
+          `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid = :id`,
           {
             replacements: { id: project.project_type_rid },
             type: "SELECT",
@@ -2939,7 +2939,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2975,7 +2975,7 @@ class SchemaService {
         !project.project_classification_other
       ) {
         const [rows] = await mainDdSequilze.query(
-          `SELECT classification_name FROM project_classification WHERE rid = :rid`,
+          `SELECT classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid = :rid`,
           {
             replacements: { rid: project.project_classification_rid },
             type: mainDdSequilze.QueryTypes.SELECT,
@@ -3007,7 +3007,7 @@ class SchemaService {
 
       if (classificationIds.length > 0) {
         classificationRows = await mainDdSequilze.query(
-          `SELECT rid, classification_name FROM project_classification WHERE rid IN (:ids)`,
+          `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)`,
           {
             replacements: { ids: classificationIds },
             type: "SELECT",

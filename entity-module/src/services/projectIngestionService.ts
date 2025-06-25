@@ -20,6 +20,7 @@ import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -716,7 +717,7 @@ class ProjectIngestionService {
     });
 
     const query = `
-      UPDATE account
+      UPDATE ${MAIN_SCHEMA_NAME}.account
       SET total_projects = :total_projects,
           total_project_cost = :total_project_cost,
           total_project_hours = :total_project_hours
@@ -1471,7 +1472,7 @@ class ProjectIngestionService {
 
       if (classificationIds.length > 0) {
         const classificationRows = await mainDbSequelize.query(
-          `SELECT rid, classification_name FROM project_classification WHERE rid IN (:ids)`,
+          `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)`,
           {
             replacements: { ids: classificationIds },
             type: "SELECT",
@@ -1486,7 +1487,7 @@ class ProjectIngestionService {
       }
       if (projectTypeIds.length > 0) {
         const projectTypeList = await mainDbSequelize.query(
-          `SELECT rid, project_type_name FROM project_type WHERE rid IN (:ids)`,
+          `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (:ids)`,
           {
             replacements: { ids: projectTypeIds },
             type: "SELECT",
@@ -1502,7 +1503,7 @@ class ProjectIngestionService {
 
       if (statusTypeIds.length > 0) {
         const statusTypeList = await mainDbSequelize.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusTypeIds },
             type: "SELECT",
@@ -1965,7 +1966,7 @@ class ProjectIngestionService {
       const placeholders = currencyRids.map(() => '?').join(', ');
       const query = `
         SELECT rid, currency_code, currency_symbol 
-        FROM currency 
+        FROM ${MAIN_SCHEMA_NAME}.currency 
         WHERE rid IN (${placeholders})
       `;
   

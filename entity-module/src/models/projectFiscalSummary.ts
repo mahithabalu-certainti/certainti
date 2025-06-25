@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constants";
 import { ProjectSummary } from "./projectSummary";
 
 export interface ProjectFiscalSummaryAttributes {
@@ -495,7 +495,7 @@ export class ProjectFiscalSummary
       },
       {
         sequelize,
-        schema,
+        schema : `${MAIN_SCHEMA_NAME}`,
         tableName: "project_fiscal_summary",
         timestamps: false,
         underscored: true,

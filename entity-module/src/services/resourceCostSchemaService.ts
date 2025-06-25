@@ -399,7 +399,7 @@ class ResourceCostSchemaService {
 
       const mainDbSequelize = await initMainDbSequelize();
       const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
-      const query = `SELECT ${idField}, ${nameField} FROM ${table}`;
+      const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
       const items = await mainDbSequelize.query(query, { type: "SELECT" });
       return new Map(items.map((item: any) => [item[idField], item[nameField]]));
     };
@@ -611,7 +611,7 @@ class ResourceCostSchemaService {
 
       const mainDbSequelize = await initMainDbSequelize();
       const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
-        const query = `SELECT ${idField}, ${nameField} FROM ${table}`;
+        const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
         const items = await mainDbSequelize.query(query, { type: "SELECT" });
         return new Map(items.map((item: any) => [item[idField], item[nameField]]));
       };

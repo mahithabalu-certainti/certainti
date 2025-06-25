@@ -1187,7 +1187,7 @@ export class ProjectService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -1740,7 +1740,7 @@ export class ProjectService {
       const mainDbSequlize = await initMainDbSequelize();
       const projectClassifications = await mainDbSequlize.query(
         `SELECT rid, classification_name, classification_description, classification_status
-         FROM project_classification
+         FROM ${MAIN_SCHEMA_NAME}.project_classification
          WHERE classification_status = 'Active'
          ORDER BY classification_name ASC`,
         {

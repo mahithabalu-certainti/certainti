@@ -331,7 +331,7 @@ async exportResoucreSkill(
     });
 
      // Fetch skill level names
-    const skillLevelQuery = `SELECT rid, skill_level_name FROM ."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevelQuery = `SELECT rid, skill_level_name FROM ${MAIN_SCHEMA_NAME}."skill_level" WHERE rid IN (:skillLevelRids)`;
     const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
       replacements: { skillLevelRids },
       type: "SELECT"
