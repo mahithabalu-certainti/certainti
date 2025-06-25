@@ -27,7 +27,7 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
-import { NotFound } from '../../not-found';
+import { NotFound } from '../../../../pages';
 
 const sideMenuItems: MenuItem[] = [
   {
