@@ -26,7 +26,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   tableParams,
   // isProfileViewEnable,
   isProfileEditEnable,
-  isProfileDeleteEnable,
+  // isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
   refreshProfileTrigger,
@@ -122,7 +122,8 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       label: 'Delete',
       onClick: (row: ManageProfileList) => handleDelete(row),
       icon: DeleteIcon,
-      hide: !isProfileDeleteEnable,
+      // hide: !isProfileDeleteEnable,
+      hide: true,
     },
   ];
 

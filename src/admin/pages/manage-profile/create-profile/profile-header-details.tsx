@@ -52,7 +52,7 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
           <ProfileIcon alt='manage-profile' className='h-6 w-6 rounded' />
           <div className='w-[90%]'>
             <div className='font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal'>
-              Admin Permission
+              {`Admin Permission > Manage Profile ${editProfileName ? `> ${editProfileName}` : ''}`}
             </div>
             <div className='text-[16px] font-bold text-[#2D3E4F] -mt-0.5'>
               {extendedPermission

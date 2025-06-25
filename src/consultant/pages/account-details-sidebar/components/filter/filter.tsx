@@ -225,12 +225,14 @@ const Filter: React.FC<FilterComponentProps> = ({
     storeFilters(filterStates, value || 'resource');
   };
 
-  const handleResetFilter = () => {
+  const handleResetFilter = (clearSort: boolean = false) => {
     if (!Object.keys(filterStates).length) return null;
     clearFilters(value || 'resource');
     setSelectedSystemFilters([]);
-    setCurrentSort(null);
-    handleSorting?.('', 'desc');
+    if (clearSort) {
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
+    }
     resetFilter({
       setAppliedFilters,
       setFilterStates,
@@ -667,7 +669,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               </span>
             </Tooltip>
             <button
-              onClick={handleResetFilter}
+              onClick={() => handleResetFilter(true)}
               className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
             >
               Clear

@@ -106,7 +106,6 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
         PaperProps={{
           style: {
             maxHeight: '200px',
-            minHeight: '200px',
           },
         }}
       >

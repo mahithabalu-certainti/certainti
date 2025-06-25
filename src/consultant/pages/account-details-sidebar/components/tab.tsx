@@ -379,6 +379,7 @@ const TabPanel: React.FC<TabProps> = ({
                   key={i}
                   label={it.name}
                   value={it.id}
+                  disabled={it.disable}
                   sx={{
                     textTransform: 'none',
                     fontSize: '14px',
@@ -408,7 +409,9 @@ const TabPanel: React.FC<TabProps> = ({
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
           {tabValue === 'account_projects_view_overview' && (
             <div className='flex items-center gap-2'>
-              <span className='text-sm text-gray-700'>Enable Parent Scope</span>
+              <span className='font-semibold text-[13px] text-[#425A76]'>
+                Enable Parent Scope
+              </span>
               <Switch
                 checked={toggleEnabled}
                 onChange={handleToggleChange}

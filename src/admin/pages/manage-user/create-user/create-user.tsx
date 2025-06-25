@@ -282,7 +282,7 @@ export const CreateUser: React.FC = () => {
           <div className='w-[90%]'>
             <div className={HEADER_STYLES.adminPermission}>
               {isEditView
-                ? `Admin Permission > Manage User > ${userData?.full_name ?? userFullName}`
+                ? `Admin Permission > Manage User${(userData?.full_name ?? userFullName) ? ` > ${userData?.full_name ?? userFullName}` : ''}`
                 : 'Admin Permission > Manage User'}
             </div>
             <div className={HEADER_STYLES.manageUser}>

@@ -261,7 +261,7 @@ const AccordionTable = <T extends RowData>({
             {/* Loading state */}
             {loading && (
               <TableSkeleton
-                rowsPerPage={rowsPerPage > 15 ? 15 : rowsPerPage}
+                rowsPerPage={rowsPerPage > 20 ? 20 : rowsPerPage}
                 columnsCount={columns.length}
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}

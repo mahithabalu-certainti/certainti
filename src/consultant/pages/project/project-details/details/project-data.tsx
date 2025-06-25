@@ -33,6 +33,7 @@ export interface DetailsTabs {
   id: AllPermissions;
   name: string;
   hide: boolean;
+  disable?: boolean;
 }
 
 const detailsTabs: DetailsTabs[] = [
@@ -45,6 +46,7 @@ const detailsTabs: DetailsTabs[] = [
     id: AllPermissions.PROJECT_DETAILS_TIMELINE,
     name: 'Timeline',
     hide: false,
+    disable: true,
   },
 ];
 
@@ -135,7 +137,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             <span className='font-bold mr-1'>Contact Details </span> -{' '}
             <span className='ml-1 font-medium'>
               {' '}
-              {`Not added for ${projectDetails?.project_name || 'project'}`}
+              {`Not added for ${projectDetails?.project_name || projectDetails?.project_code}`}
             </span>
           </Box>
         </Box>

@@ -196,9 +196,15 @@ export const AccountDetails = () => {
   }, [data]);
 
   const checkExport = () => {
-    if (searchParams.get('list') === 'resources') {
+    const list = searchParams.get('list');
+    const tab = searchParams.get('tab');
+    if (tab === 'details') {
+      return true;
+    }
+
+    if (list === 'resources') {
       return !isResourcesExportEnable;
-    } else if (searchParams.get('list') === 'projects') {
+    } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else {
       // return !isAccountExportEnable;
@@ -210,6 +216,7 @@ export const AccountDetails = () => {
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
+      hide: true,
     },
     {
       label: 'Export',

@@ -73,8 +73,10 @@ export const ResourceFormData = (
   skillSubTypeLoading?: boolean,
   disableCostAndSkill?: boolean,
   disableOrgname?: boolean,
-  currentSkillType?: string[],
-  currentskillSubType?: string[],
+  // currentSkillType?: string[],
+  // currentskillSubType?: string[],
+  isOthersSkillTypeSelected?: boolean,
+  isOthersSubTypeSelected?: boolean,
   disableSkill?: boolean,
   disableCost?: boolean,
   isResourceFullNameEmpty?: boolean,
@@ -305,6 +307,7 @@ export const ResourceFormData = (
             onChange: true,
             isLoading: stateLoading,
             disabled: disableCostAndSkill,
+            resetDependsFields: ['city'],
           }),
           createSelectField('city', 'City', {
             options: city,
@@ -484,10 +487,7 @@ export const ResourceFormData = (
                   "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
-            hide:
-              currentSkillType?.[0] === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
-                ? false
-                : true,
+            hide: !isOthersSkillTypeSelected,
           }),
           createSelectField('skill_sub_type', 'Skill SubType', {
             options: skillSubTypeOptions,
@@ -520,11 +520,7 @@ export const ResourceFormData = (
                   "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
-            hide:
-              currentskillSubType?.[0] ===
-              'b8894099-0385-4681-8237-21f89b0d1883'
-                ? false
-                : true,
+            hide: !isOthersSubTypeSelected,
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: skillLevelOptions,
@@ -705,10 +701,10 @@ export const ResourceFormData = (
       isEditView,
       disableSkill,
       skillTypeOptions,
-      currentSkillType,
+      isOthersSkillTypeSelected,
       skillSubTypeOptions,
       skillSubTypeLoading,
-      currentskillSubType,
+      isOthersSubTypeSelected,
       skillLevelOptions,
     ]
   );

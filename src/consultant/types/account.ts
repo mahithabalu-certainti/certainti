@@ -142,6 +142,7 @@ export enum YesNo {
 
 export enum OthersEnum {
   Other = 'other',
+  Others = 'others',
 }
 
 export enum enumValue {

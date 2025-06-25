@@ -148,7 +148,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       hoverHighlight={false}
       tableStyle={{
         height: '100%',
-        maxHeight: 'calc(100vh - 178px)',
+        maxHeight: 'calc(100vh - 180px)',
         overflow: 'auto',
       }}
       stickyHeader={true}

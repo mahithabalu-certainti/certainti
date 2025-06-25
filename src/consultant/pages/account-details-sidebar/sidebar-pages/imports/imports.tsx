@@ -52,7 +52,7 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
   ];
 
   return (
-    <div className='w-full p-1'>
+    <div className='w-full py-1.5 pl-2 pr-4'>
       <div className='flex items-center justify-between w-full h-12'>
         <div className='bg-white border border-[#CBD6E27D] p-1 flex gap-2'>
           <button
@@ -70,7 +70,8 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
               isActive === 'TimeLine'
                 ? 'border-[#0BBFB7] bg-[#0BBFB70D] '
                 : 'border-transparent hover:text-[#0BBFB7]'
-            }`}
+            } disabled:hover:text-[#2D3E4F] disabled:opacity-50`}
+            disabled
             onClick={() => setIsActive('TimeLine')}
           >
             Timeline
@@ -89,6 +90,7 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
             variant={'filled'}
             actions={menuActivity}
             label='Add Activity'
+            sx={{ display: 'none' }}
           />
           {/* {isActive === 'overView' && (
             <ActionImportDropdown
@@ -99,13 +101,14 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
           )} */}
         </div>
       </div>
-      <div className='mt-4'>
+      <div className='mt-1'>
         {isActive === 'overView' && (
           <Overview
             accountNo={accountDetails?.data?.accountById.r_number}
             accountId={accountDetails?.data?.accountDetails?.account_rid}
             accountInActive={
-              accountDetails?.data?.accountById?.status === 'inactive'
+              accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+              'active'
             }
           />
         )}

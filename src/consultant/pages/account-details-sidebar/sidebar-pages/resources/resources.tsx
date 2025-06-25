@@ -47,6 +47,7 @@ export interface ResourceTabs {
   id: AllPermissions;
   name: string;
   hide: boolean;
+  disable?: boolean;
 }
 
 export interface TabMenus {
@@ -62,6 +63,7 @@ const resourceTabs: ResourceTabs[] = [
     id: AllPermissions.RESOURCE_VIEW_TIMELINE,
     name: 'Timeline',
     hide: false,
+    disable: true,
   },
 ];
 
@@ -119,7 +121,8 @@ const Resource: React.FC<ResourceProps> = ({
   const [resourceNumber, setResourceNumber] = useState<string | null>(null);
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const accountInActive =
-    accountDetails?.data?.accountById?.status === 'inactive';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [refreshCostTrigger, setRefreshCostTrigger] = useState<number>(
     Date.now()

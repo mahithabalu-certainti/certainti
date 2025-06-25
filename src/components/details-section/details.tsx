@@ -40,7 +40,7 @@ const DetailsSection: React.FC<{
       if (status === 'active')
         return <span className='text-[#199806]'>Active</span>;
 
-      if (status === 'inactive')
+      if (status === 'inactive' || status === 'in-active')
         return <span className='text-[#f44336]'>In-Active</span>;
 
       if (label?.toLowerCase() === 'website') {
@@ -96,6 +96,7 @@ const DetailsSection: React.FC<{
                     maxWidth={'100%'}
                     className='truncate inline-block max-w-full'
                     alwaysShowTooltip={true}
+                    tooltipMaxWidth={'50vw'}
                   >
                     {renderValue(item.value)}
                   </TruncateWithTooltip>

@@ -50,7 +50,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const { successToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
-    accountDetails?.data?.accountById?.status?.status_name !== 'active';
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const {
     data: costList,

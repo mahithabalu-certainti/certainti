@@ -87,6 +87,7 @@ const TabPanel: React.FC<TabProps> = ({
                   key={index}
                   label={tab.name}
                   value={tab.id}
+                  disabled={tab.disable}
                   sx={{
                     textTransform: 'none',
                     fontSize: '14px',

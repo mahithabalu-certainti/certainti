@@ -125,7 +125,8 @@ export const transformFormData = (
   memoizedStatus: SelectOption[],
   defaultActiveValue: string,
   keyContactsList?: KeyContacts[],
-  showOthersField?: boolean
+  showOthersField?: boolean,
+  showClassifyOthersField?: boolean
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
     account_id: formData.account_id,
@@ -139,7 +140,9 @@ export const transformFormData = (
     project_enddate: formData.project_enddate || null,
     project_type_rid: formData.project_type || '',
     project_classification_rid: formData.project_classification_rid || null,
-    project_classification_other: formData.classification_name || null,
+    project_classification_other: showClassifyOthersField
+      ? formData.classification_name
+      : null,
     // uuid: formData.project_classification_rid || null,
     project_client_group: formData.project_client_group || '',
     project_group: formData.project_group || '',

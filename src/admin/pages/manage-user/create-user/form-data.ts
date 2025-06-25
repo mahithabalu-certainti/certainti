@@ -167,6 +167,7 @@ export const FormData = (
             required: false,
             onChange: true,
             isLoading: stateLoading,
+            resetDependsFields: ['city'],
           }),
           createSelectField('city', 'City', {
             options: city,
