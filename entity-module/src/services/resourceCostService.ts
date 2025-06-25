@@ -1,7 +1,7 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
@@ -1005,7 +1005,7 @@ class ResourceCostService {
         await resourceCostSchemaService.assignCurrencyRid(costData, sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
-          `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
+          `SELECT currency_name,currency_code,currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
           {
             replacements: { currency_rid: costData.currency_rid },
             type: "SELECT",
@@ -1261,7 +1261,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -1276,7 +1276,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -1355,7 +1355,7 @@ async function getCurrencyThreshold(
   console.log("currency_rid :",currency_rid);
   if (currency_rid) {
     [currencyResult] = await mainDbSequelize.query(
-      `SELECT currency_threshold FROM public.currency WHERE rid = :currency_rid`,
+      `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
       {
         replacements: { currency_rid },
         type: "SELECT",
@@ -1363,7 +1363,7 @@ async function getCurrencyThreshold(
     );
   } else {
     [currencyResult] = await mainDbSequelize.query(
-      `SELECT currency_threshold FROM public.currency WHERE currency_code = 'USD'`,
+      `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE currency_code = 'USD'`,
       {
         type: "SELECT",
       }

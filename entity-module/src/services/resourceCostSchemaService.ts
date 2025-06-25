@@ -5,7 +5,7 @@ import { ResourceCostHistory } from "../models/resourceCostHistory";
 import { Resources } from "../models/resource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
 import currency from "currency.js";
@@ -448,7 +448,7 @@ class ResourceCostSchemaService {
           const currencies = await mainDbSequelize.query(
             `
             SELECT rid, currency_code 
-            FROM public.currency 
+            FROM ${MAIN_SCHEMA_NAME}.currency 
             WHERE rid IN (:currencyIds)
           `,
             {
@@ -519,7 +519,7 @@ class ResourceCostSchemaService {
         // Use raw query to fetch currency information
         const currencyQuery = `
             SELECT rid, currency_code, currency_name, currency_symbol 
-            FROM public.currency 
+            FROM ${MAIN_SCHEMA_NAME}.currency 
             WHERE rid IN (:currencyIds)
           `;
 
@@ -666,7 +666,7 @@ class ResourceCostSchemaService {
           const currencies = await mainDbSequelize.query(
             `
             SELECT rid, currency_code 
-            FROM public.currency 
+            FROM ${MAIN_SCHEMA_NAME}.currency 
             WHERE rid IN (:currencyIds)
           `,
             {
@@ -729,7 +729,7 @@ class ResourceCostSchemaService {
         // Use raw query to fetch currency information
         const currencyQuery = `
             SELECT rid, currency_code, currency_name, currency_symbol 
-            FROM public.currency 
+            FROM ${MAIN_SCHEMA_NAME}.currency 
             WHERE rid IN (:currencyIds)
           `;
 
@@ -1309,7 +1309,7 @@ class ResourceCostSchemaService {
   }
 
   async getCurrencyRidByAccountRidRaw(accountRid: string): Promise<string | null> {
-    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
@@ -1342,7 +1342,7 @@ async assignResourceStatusandType(
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
-            `SELECT c.rid FROM public.currency c WHERE c.currency_code = 'USD'`,
+            `SELECT c.rid FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'`,
             { type: 'SELECT' }
           );
           result.currency_rid = usdCurrencyId[0]?.rid;

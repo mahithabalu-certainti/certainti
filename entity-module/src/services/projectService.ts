@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -1782,7 +1782,7 @@ export class ProjectService {
   async getCurrencyDetailsByAccountRidRaw(
     accountRid: string
   ): Promise<string | null> {
-    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
@@ -1804,7 +1804,7 @@ export class ProjectService {
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
-            `SELECT c.* FROM public.currency c WHERE c.currency_code = 'USD'`,
+            `SELECT c.* FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'`,
             { type: "SELECT" }
           );
           result.currency = usdCurrencyId[0]?.rid;

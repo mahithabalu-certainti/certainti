@@ -1,6 +1,6 @@
 import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
-import { constants } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
 import ExcelJS from 'exceljs';
@@ -1622,7 +1622,7 @@ const rawResult = users || [];
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: 'SELECT'
@@ -1637,7 +1637,7 @@ const rawResult = users || [];
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: 'SELECT'
