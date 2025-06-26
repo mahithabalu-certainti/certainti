@@ -17,9 +17,9 @@ export const transFormPayload = (
     zip_code: data.zip_code || '',
     role: data.role_rid || '',
     profile_id: data.profile_rid || '',
-    country_rid: data.country || null,
-    city_rid: data.city || null,
-    region_rid: data.state || null,
+    country_rid: data.country_rid || null,
+    city_rid: data.city_rid || null,
+    region_rid: data.region_rid || null,
     phone: data.phone || null,
     organization: data.organization,
   };
