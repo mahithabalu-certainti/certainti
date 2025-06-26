@@ -1496,6 +1496,10 @@ class SchemaService {
         project_group: { parent: "project_group", child: "project_group" },
         project_client_group: { parent: "project_client_group", child: "project_client_group" },
         total_effort: { parent: "total_effort", child: "total_effort"},
+        total_cost: { parent: "total_cost", child: "total_cost"},
+        total_cost_fte: { parent: "total_cost_fte", child: "total_cost_fte"},
+        total_cost_subcon: { parent: "total_cost_subcon", child: "total_cost_subcon"},
+        total_cost_nonlabor: { parent: "total_cost_nonlabor", child: "total_cost_nonlabor"},
         classification_name: { parent: "classification_name", child: "classification_name" },
         status_name: { parent: "status_name", child: "status_name" },
         country_name: { parent: "country_name", child: "country_name" },
@@ -1504,9 +1508,13 @@ class SchemaService {
         project_enddate: { parent: "project_enddate", child: "project_enddate" },
         modified_datetime: { parent: "modified_datetime", child: "modified_datetime" },
         created_datetime: { parent: "created_datetime", child: "created_datetime" },
+        project_point_of_contact: {parent: "project_point_of_contact", child:"project_point_of_contact"},
+        technical_point_of_contact: {parent: "technical_point_of_contact", child:"technical_point_of_contact"},
         fiscal_year: { parent: "", child: "fiscal_year" }, // Only for child
         qre_final: { parent: "", child: "qre_final" }, // Only for child
-        qre: { parent: "qre", child: "qre" }
+        qre: { parent: "qre", child: "qre" },
+        assessment_status: { parent: "assessment_status", child: "assessment_status" },
+        comments: { parent: "comments", child: "comments" },
       };
 
       const sortConfig = sortColumnMap[sort.sortCol] || { parent: sort.sortCol, child: sort.sortCol };
@@ -1599,7 +1607,7 @@ class SchemaService {
         (
           SELECT json_agg(pfs_sub ${childSortClause})
           FROM (
-            SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, 
+            SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, pfs.project_type_rid, 
             pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
             COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
             CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
@@ -1724,8 +1732,8 @@ class SchemaService {
   
       // Enhanced sort configuration with proper column mappings using output aliases
       const sortColumnMap: Record<string, { parent: string; child: string }> = {
-        r_number: { parent: "r_number", child: "r_number" },
-        project_r_number: {parent: "project_r_number", child: "project_r_number" },
+        r_number: { parent: "r_number", child: "r_number"},
+        project_r_number: { parent: "project_r_number", child: "project_r_number" },
         project_name: { parent: "project_name", child: "project_name" },
         account_name: { parent: "account_name", child: "account_name" },
         industry_name: { parent: "industry_name_other", child: "industry_name" },
@@ -1734,6 +1742,10 @@ class SchemaService {
         project_group: { parent: "project_group", child: "project_group" },
         project_client_group: { parent: "project_client_group", child: "project_client_group" },
         total_effort: { parent: "total_effort", child: "total_effort"},
+        total_cost: { parent: "total_cost", child: "total_cost"},
+        total_cost_fte: { parent: "total_cost_fte", child: "total_cost_fte"},
+        total_cost_subcon: { parent: "total_cost_subcon", child: "total_cost_subcon"},
+        total_cost_nonlabor: { parent: "total_cost_nonlabor", child: "total_cost_nonlabor"},
         classification_name: { parent: "classification_name", child: "classification_name" },
         status_name: { parent: "status_name", child: "status_name" },
         country_name: { parent: "country_name", child: "country_name" },
@@ -1742,10 +1754,15 @@ class SchemaService {
         project_enddate: { parent: "project_enddate", child: "project_enddate" },
         modified_datetime: { parent: "modified_datetime", child: "modified_datetime" },
         created_datetime: { parent: "created_datetime", child: "created_datetime" },
+        project_point_of_contact: {parent: "project_point_of_contact", child:"project_point_of_contact"},
+        technical_point_of_contact: {parent: "technical_point_of_contact", child:"technical_point_of_contact"},
         fiscal_year: { parent: "", child: "fiscal_year" }, // Only for child
-        qre_final: { parent: "", child: "qre_final" },
-        qre: { parent: "qre", child: "qre" }
+        qre_final: { parent: "", child: "qre_final" }, // Only for child
+        qre: { parent: "qre", child: "qre" },
+        assessment_status: { parent: "assessment_status", child: "assessment_status" },
+        comments: { parent: "comments", child: "comments" },
       };
+
 
       const sortConfig = sortColumnMap[sort.sortCol] || { parent: sort.sortCol, child: sort.sortCol };
       const isChildOnlySort = sort.sortCol === 'fiscal_year' || sort.sortCol === 'qre_final';
@@ -1837,7 +1854,7 @@ class SchemaService {
         (
           SELECT json_agg(pfs_sub ${childSortClause})
           FROM (
-            SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, 
+            SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, pfs.project_type_rid,
             pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
             COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
             CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
@@ -2170,7 +2187,7 @@ class SchemaService {
       project_classification_rid: `${tablePrefix}.project_classification_rid`,
       project_classification_other: `${tablePrefix}.project_classification_other`,
       status_rid: `${tablePrefix}.status_rid`,
-      project_type_name: `pt.project_type_name`,
+      project_type_rid: `${tablePrefix}.project_type_rid`,
       project_name: `${tablePrefix}.project_name`,
       project_startdate: `${tablePrefix}.project_startdate`,
       project_enddate: `${tablePrefix}.project_enddate`,
@@ -2206,7 +2223,7 @@ class SchemaService {
     ];
     const enumFields = [
       "status_rid",
-      `${fieldAliasMap.project_type_name}`,
+      `${fieldAliasMap.project_type_rid}`,
       "fiscal_year",
       "st.rid",
       "curr.rid",
@@ -2867,7 +2884,7 @@ class SchemaService {
 
       if (statusIds.length > 0) {
         const statusRows = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusIds },
             type: "SELECT",

@@ -1941,7 +1941,7 @@ async insertFiscalInfoOnly(
       const mainDdSequilze = await initSequelize();
 
       const result: any = await mainDdSequilze.query(
-          `SELECT logo_url,firm_name FROM organization_licenses`,
+          `SELECT logo_url,firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
           {
             type: "SELECT",
           }
