@@ -179,7 +179,7 @@ export class ProjectMapper {
       project_r_number: project.r_number || "",
 
       created_datetime: new Date(),
-      modified_datetime: new Date(),
+      modified_datetime: null,
       created_by: projectData.created_by,
       modified_by: null,
 
@@ -410,7 +410,7 @@ export class ProjectMapper {
       qualifying_project_rd_credits_fed: null,
 
       created_datetime: new Date(),
-      modified_datetime: new Date(),
+      modified_datetime: null,
 
       created_by: fiscalData.created_by,
       modified_by: fiscalData.created_by,
