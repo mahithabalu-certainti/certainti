@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -1207,7 +1207,7 @@ export class ProjectService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -1613,6 +1613,7 @@ export class ProjectService {
   ): [string, string] {
     const validSortColumns = [
       "r_number",
+      "project_r_number",
       "project_code",
       "industry_name",
       "project_startdate",
@@ -1644,6 +1645,7 @@ export class ProjectService {
       "project_group",
       "classification_name",
       "modified_datetime",
+      "created_datetime",
       "assessment_status",
       "project_type_name",
     ];   
@@ -1760,7 +1762,7 @@ export class ProjectService {
       const mainDbSequlize = await initMainDbSequelize();
       const projectClassifications = await mainDbSequlize.query(
         `SELECT rid, classification_name, classification_description, classification_status
-         FROM project_classification
+         FROM ${MAIN_SCHEMA_NAME}.project_classification
          WHERE classification_status = 'Active'
          ORDER BY classification_name ASC`,
         {
@@ -1802,7 +1804,7 @@ export class ProjectService {
   async getCurrencyDetailsByAccountRidRaw(
     accountRid: string
   ): Promise<string | null> {
-    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
@@ -1824,7 +1826,7 @@ export class ProjectService {
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
-            `SELECT c.* FROM public.currency c WHERE c.currency_code = 'USD'`,
+            `SELECT c.* FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'`,
             { type: "SELECT" }
           );
           result.currency = usdCurrencyId[0]?.rid;

@@ -1,5 +1,5 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constants";
 export interface ProjectSummaryAttributes {
   rid?: string;
   r_number?: string;
@@ -272,7 +272,7 @@ export class ProjectSummary
       },
       {
         sequelize,
-        schema: schemaName ? schemaName : "public",
+        schema: schemaName ? schemaName : `${MAIN_SCHEMA_NAME}`,
         tableName: "project_summary",
         timestamps: false,
         underscored: true,
@@ -286,11 +286,11 @@ export class ProjectSummary
 export async function setupProjectSummarySequence(sequelize: Sequelize) {
   try {
     await sequelize.query(
-      "CREATE SEQUENCE IF NOT EXISTS project_summary_seq START 1"
+      `CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.project_summary_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE project_summary
-        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.project_summary
+        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.project_summary_seq')::text, 10, '0')`);
 
     console.log("Project summary sequence setup complete");
   } catch (error) {

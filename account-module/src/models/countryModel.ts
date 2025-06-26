@@ -1,6 +1,6 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Currency } from "./currencyModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface CountryAttributes {
   rid: string;
@@ -68,6 +68,13 @@ export class Country
         default_currency_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName : "currency",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
           validate: {
             async isCurrencyExist(value: string) {
               const currency = await Currency.findByPk(value);
@@ -83,6 +90,7 @@ export class Country
         modelName: "Country",
         tableName: "country",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
 

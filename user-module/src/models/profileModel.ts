@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize, Op } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 
 // Import User model
 // import { User } from "./userModel";
@@ -70,7 +70,10 @@ export class Profile
           type: DataTypes.STRING(50),
           allowNull: true,
           references: {
-            model: 'user',
+            model: {
+              tableName : 'user',
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: 'rid'
           }
         },
@@ -78,7 +81,10 @@ export class Profile
           type: DataTypes.STRING(50),
           allowNull: true,
           references: {
-            model: 'user',
+            model: {
+              tableName : 'user',
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: 'rid'
           }
         },
@@ -114,6 +120,7 @@ export class Profile
         modelName: "Profile",
         tableName: "profile",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
       // Set up the sequence and default value for r_number
@@ -138,11 +145,11 @@ export class Profile
 export async function setupProfileSequence(sequelize: Sequelize) {
   try {
     // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS profile_seq START 1');
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS  ${MAIN_SCHEMA_NAME}.profile_seq START 1`);
     
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE profile
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROFILE}-' || LPAD(nextval('profile_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.profile
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROFILE}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.profile_seq')::text, 10, '0')`);
     
     console.log('Profile sequence setup complete');
   } catch (error) {

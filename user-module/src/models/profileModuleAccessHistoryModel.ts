@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ProfileModuleAccess } from "./profileModuleAccessModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ProfileModuleAccessHistoryAttributes {
   rid: string;
@@ -59,7 +59,10 @@ export class ProfileModuleAccessHistory
         profile_module_access_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "profile_module_access", key: "rid" },
+          references: { model: {
+            tableName : "profile_module_access",
+            schema : `${MAIN_SCHEMA_NAME}`
+          }, key: "rid" },
         },
         attribute_name: { 
           type: DataTypes.STRING, 
@@ -80,6 +83,7 @@ export class ProfileModuleAccessHistory
         modelName: "ProfileModuleAccessHistory",
         tableName: "profile_module_access_history",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
 

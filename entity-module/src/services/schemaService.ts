@@ -42,6 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -89,7 +90,7 @@ class SchemaService {
       const mainDbSequelize = await initMainDbSequelize();
 
       const [account]: any[] = await mainDbSequelize.query(
-        `SELECT * FROM account WHERE rid = :rid and r_number = :r_number`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid and r_number = :r_number`,
         {
           replacements: { rid: accountId, r_number: accountNumber },
           type: "SELECT",
@@ -948,7 +949,7 @@ class SchemaService {
       const sequelize = await initMainDbSequelize();
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM account WHERE rid = :rid`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: parentAccountId },
           type: "SELECT",
@@ -975,7 +976,7 @@ class SchemaService {
       let accountRnumber = accountNumber;
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM account WHERE r_number = :r_number`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -984,7 +985,7 @@ class SchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await sequelize.query(
-          `SELECT * FROM account WHERE rid = :rid`,
+          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -1098,35 +1099,35 @@ class SchemaService {
 
       if (resource) {
         const [country]: any[] = await mainDbSequelize.query(
-          `SELECT country_code,country_name FROM country WHERE rid = :rid`,
+          `SELECT country_code,country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
           {
             replacements: { rid: resource.country_rid },
             type: "SELECT",
           }
         );
         const [state]: any[] = await mainDbSequelize.query(
-          `SELECT state_name FROM state WHERE rid = :rid`,
+          `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
           {
             replacements: { rid: resource.region_rid },
             type: "SELECT",
           }
         );
         const [city]: any[] = await mainDbSequelize.query(
-          `SELECT city_name FROM city WHERE rid = :rid`,
+          `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
           {
             replacements: { rid: resource.city_rid },
             type: "SELECT",
           }
         );
          const [resource_type]: any[] = await mainDbSequelize.query(
-          `SELECT resource_type_name from resource_type  WHERE rid = :rid`,
+          `SELECT resource_type_name from ${MAIN_SCHEMA_NAME}.resource_type  WHERE rid = :rid`,
           {
             replacements: { rid: resource.resource_type_rid },
             type: "SELECT",
           }
         );
         const [status]: any[] = await mainDbSequelize.query(
-          `SELECT status_name from status  WHERE rid = :rid`,
+          `SELECT status_name from ${MAIN_SCHEMA_NAME}.status  WHERE rid = :rid`,
           {
             replacements: { rid: resource.status_rid },
             type: "SELECT",
@@ -1225,7 +1226,7 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
           {
             replacements: { ids: countryIds },
             type: "SELECT",
@@ -1235,7 +1236,7 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
           {
             replacements: { ids: regionIds },
             type: "SELECT",
@@ -1245,7 +1246,7 @@ class SchemaService {
 
       if (cityIds.length > 0) {
         cities = await mainDdSequilze.query(
-          `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
+          `SELECT rid, city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid IN (:ids)`,
           {
             replacements: { ids: cityIds },
             type: "SELECT",
@@ -1254,7 +1255,7 @@ class SchemaService {
       }
       if (resourceTypeRids.length > 0) {
         resourceType = await mainDdSequilze.query(
-          `SELECT rid, resource_type_name FROM resource_type WHERE rid IN (:ids)`,
+          `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
           {
             replacements: { ids: resourceTypeRids },
             type: "SELECT",
@@ -1263,7 +1264,7 @@ class SchemaService {
       }
       if (statusRids.length > 0) {
         status = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusRids },
             type: "SELECT",
@@ -1400,7 +1401,7 @@ class SchemaService {
 
       if (countryId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, country_name, country_code FROM country WHERE rid = :id`,
+          `SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :id`,
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -1412,7 +1413,7 @@ class SchemaService {
 
       if (regionId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid = :id`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :id`,
           {
             replacements: { id: regionId },
             type: "SELECT",
@@ -1424,7 +1425,7 @@ class SchemaService {
 
       if (currencyId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, currency_name, currency_code, currency_symbol FROM currency WHERE rid = :id`,
+          `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`,
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -1453,9 +1454,9 @@ class SchemaService {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
-        `SELECT account.*, status.status_description AS status  FROM account
-          LEFT JOIN status ON account.status_rid = status.rid
-          WHERE account.rid = :rid`,
+        `SELECT ${MAIN_SCHEMA_NAME}.account.*, ${MAIN_SCHEMA_NAME}.status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.status ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
+          WHERE ${MAIN_SCHEMA_NAME}.account.rid = :rid`,
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -1566,17 +1567,17 @@ class SchemaService {
       `;
   
       const commonJoins = `
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid
-        LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid
-        LEFT JOIN status s ON s.rid = ps.status_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
       `;
   
       const commonGroupBy = `
@@ -1609,10 +1610,10 @@ class SchemaService {
             pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, 
             pfs.comments, pfs.modified_datetime, 
             pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.project_r_number
-            FROM project_fiscal_summary pfs
-            INNER JOIN account acc ON acc.rid = pfs.account_rid 
-            LEFT JOIN project_classification pc ON pc.rid = pfs.project_classification_rid
-            LEFT JOIN project_type pt ON pt.rid = pfs.project_type_rid
+            FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+            INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
             WHERE pfs.project_code = ps.project_code
               AND pfs.project_rid = ps.project_rid
               ${fiscalYearClause}
@@ -1635,7 +1636,7 @@ class SchemaService {
       const projectIdsQuery = `
         SELECT DISTINCT ps.project_rid
         ${commonJoins}
-        INNER JOIN project_fiscal_summary pfs ON pfs.project_code = ps.project_code 
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs ON pfs.project_code = ps.project_code 
           AND pfs.project_rid = ps.project_rid
           ${fiscalYearClause}
           ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
@@ -1804,17 +1805,17 @@ class SchemaService {
       `;
   
       const commonJoins = `
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid
-        LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid
-        LEFT JOIN status s ON s.rid = ps.status_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
       `;
   
       const commonGroupBy = `
@@ -1847,10 +1848,10 @@ class SchemaService {
             pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, 
             pfs.comments, pfs.modified_datetime, 
             pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.project_r_number
-            FROM project_fiscal_summary pfs
-            INNER JOIN account acc ON acc.rid = pfs.account_rid 
-            LEFT JOIN project_classification pc ON pc.rid = pfs.project_classification_rid
-            LEFT JOIN project_type pt ON pt.rid = pfs.project_type_rid
+            FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+            INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
             WHERE pfs.project_code = ps.project_code
               AND pfs.project_rid = ps.project_rid
               ${fiscalYearClause}
@@ -1873,7 +1874,7 @@ class SchemaService {
       const projectIdsQuery = `
         SELECT DISTINCT ps.project_rid
         ${commonJoins}
-        INNER JOIN project_fiscal_summary pfs ON pfs.project_code = ps.project_code 
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs ON pfs.project_code = ps.project_code 
           AND pfs.project_rid = ps.project_rid
           ${fiscalYearClause}
           ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
@@ -2121,7 +2122,7 @@ class SchemaService {
       const mainDbInstance = await initMainDbSequelize();
 
       let account: any[] = await mainDbInstance.query(
-        `SELECT rid, r_number, storage_type, parent_account_rid FROM account`,
+        `SELECT rid, r_number, storage_type, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account`,
         {
           replacements: { created_by: userId },
           type: "SELECT",
@@ -2190,7 +2191,6 @@ class SchemaService {
     const numberFields = [
       `${fieldAliasMap.total_effort}`,
       `${fieldAliasMap.total_cost}`,
-      "fiscal_year",
       "total_fte",
       `${fieldAliasMap.total_cost_fte}`,
       "total_subcon",
@@ -2207,7 +2207,7 @@ class SchemaService {
     const enumFields = [
       "status_rid",
       `${fieldAliasMap.project_type_name}`,
-      // "fiscal_year",
+      "fiscal_year",
       "st.rid",
       "curr.rid",
       "cou.rid",
@@ -2607,7 +2607,7 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
           {
             replacements: { ids: countryIds },
             type: "SELECT",
@@ -2617,7 +2617,7 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
           {
             replacements: { ids: regionIds },
             type: "SELECT",
@@ -2627,7 +2627,7 @@ class SchemaService {
 
       if (currencyIds.length > 0) {
         currencies = await mainDdSequilze.query(
-          `SELECT rid, currency_code, currency_symbol FROM currency WHERE rid IN (:ids)`,
+          `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
           {
             replacements: { ids: currencyIds },
             type: "SELECT",
@@ -2678,7 +2678,7 @@ class SchemaService {
 
       if (industryIds.length > 0) {
         IndustryRows = await mainDdSequilze.query(
-          `SELECT rid, industry_name FROM industry WHERE rid IN (:ids)`,
+          `SELECT rid, industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid IN (:ids)`,
           {
             replacements: { ids: industryIds },
             type: "SELECT",
@@ -2725,7 +2725,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2783,7 +2783,7 @@ class SchemaService {
     try {
       if (project.industry_rid && !project.industry_name) {
         const industryResult: any = await mainDdSequilze.query(
-          `SELECT industry_name FROM industry WHERE rid = :id`,
+          `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`,
           {
             replacements: { id: project.industry_rid },
             type: "SELECT",
@@ -2805,7 +2805,7 @@ class SchemaService {
     try {
       if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
-          `SELECT status_name FROM status WHERE rid = :id`,
+          `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
           {
             replacements: { id: project.status_rid },
             type: "SELECT",
@@ -2817,7 +2817,7 @@ class SchemaService {
       }
       if (project.project_type_rid) {
         const projectTypeResult: any = await mainDdSequilze.query(
-          `SELECT project_type_name FROM project_type WHERE rid = :id`,
+          `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid = :id`,
           {
             replacements: { id: project.project_type_rid },
             type: "SELECT",
@@ -2853,7 +2853,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2904,7 +2904,7 @@ class SchemaService {
         !project.project_classification_other
       ) {
         const [rows] = await mainDdSequilze.query(
-          `SELECT classification_name FROM project_classification WHERE rid = :rid`,
+          `SELECT classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid = :rid`,
           {
             replacements: { rid: project.project_classification_rid },
             type: mainDdSequilze.QueryTypes.SELECT,
@@ -2936,7 +2936,7 @@ class SchemaService {
 
       if (classificationIds.length > 0) {
         classificationRows = await mainDdSequilze.query(
-          `SELECT rid, classification_name FROM project_classification WHERE rid IN (:ids)`,
+          `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)`,
           {
             replacements: { ids: classificationIds },
             type: "SELECT",
@@ -3121,7 +3121,7 @@ class SchemaService {
         if (!userId) return null;
 
         const [results] = await mainDbInit.query(
-          `SELECT first_name, middle_name, last_name FROM "user" WHERE rid = :userId`,
+          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
           {
             replacements: { userId },
             type: "SELECT",
