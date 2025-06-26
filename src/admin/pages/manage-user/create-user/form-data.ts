@@ -154,22 +154,22 @@ export const FormData = (
               },
             ],
           }),
-          createSelectField('country', 'Country', {
+          createSelectField('country_rid', 'Country', {
             options: country,
             placeholder: 'Choose Country',
             required: false,
             onChange: true,
-            resetDependsFields: ['state, city'],
+            resetDependsFields: ['region_rid, city_rid'],
           }),
-          createSelectField('state', 'Region', {
+          createSelectField('region_rid', 'Region', {
             options: states,
             placeholder: 'Choose Region',
             required: false,
             onChange: true,
             isLoading: stateLoading,
-            resetDependsFields: ['city'],
+            resetDependsFields: ['city_rid'],
           }),
-          createSelectField('city', 'City', {
+          createSelectField('city_rid', 'City', {
             options: city,
             placeholder: 'Choose City',
             required: false,

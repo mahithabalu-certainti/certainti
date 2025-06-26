@@ -283,7 +283,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         <TableContainer
           sx={{
             height: '100%',
-            maxHeight: 'calc(100vh - 130px)',
+            maxHeight: 'calc(100vh - 132px)',
             overflow: 'auto',
           }}
         >
@@ -403,7 +403,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
             >
               {isSkeletonLoading ? (
                 <TableSkeleton
-                  rowsPerPage={15}
+                  rowsPerPage={20}
                   columnsCount={accountColumns.length}
                   selectable={true}
                   hasActions={true}

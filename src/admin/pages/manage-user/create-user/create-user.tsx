@@ -112,17 +112,18 @@ export const CreateUser: React.FC = () => {
         isConsultantFirm: userData?.is_consultant_firm ? YesNo.Yes : YesNo.No,
       }));
     }
-  }, [userData?.is_consultant_firm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditView, userData?.is_consultant_firm]);
 
   useEffect(() => {
-    if (userData?.country || userData?.state) {
+    if (userData?.country_rid || userData?.region_rid) {
       setCurrentCountry((prev) => ({
         ...prev,
-        country: userData?.country,
-        state: userData?.state,
+        country: userData?.country_rid || '',
+        state: userData?.region_rid || '',
       }));
     }
-  }, [userData?.country, userData?.state]);
+  }, [userData?.country_rid, userData?.region_rid]);
 
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
@@ -223,13 +224,13 @@ export const CreateUser: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if (fieldName === 'country') {
+    if (fieldName === 'country_rid') {
       setCurrentCountry({
         country: fieldValue as string,
         state: '',
       });
     }
-    if (fieldName === 'state') {
+    if (fieldName === 'region_rid') {
       setCurrentCountry((prev) => ({
         ...prev,
         state: fieldValue as string,

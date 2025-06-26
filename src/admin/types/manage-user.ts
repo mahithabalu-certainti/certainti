@@ -118,6 +118,9 @@ export interface UserDetail {
   created_datetime: string;
   modified_datetime: string;
   country_name?: string;
+  country_rid: string | null;
+  city_rid: string | null;
+  region_rid: string | null;
   state_name?: string;
   profile: {
     profile_name: string;
