@@ -1307,7 +1307,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainSequelize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
