@@ -44,7 +44,7 @@ export interface AccountFiscalAttributes {
   qualifying_project_rd_credits_subcon_fed?: number | null;
   qualifying_project_rd_credits_fed?: number | null;
   created_datetime: Date;
-  modified_datetime: Date;
+  modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
 }
@@ -110,7 +110,7 @@ export class AccountFiscal
   public qualifying_project_rd_credits_fed?: number | null;
 
   public created_datetime!: Date;
-  public modified_datetime!: Date;
+  public modified_datetime?: Date;
 
   public created_by?: string;
   public modified_by?: string;
@@ -148,7 +148,7 @@ export class AccountFiscal
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          allowNull: true,
+          // allowNull: true,
         },
         account_rid: {
           type: DataTypes.STRING(50),

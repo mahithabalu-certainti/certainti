@@ -114,7 +114,24 @@ class SchemaService {
         
       );
     `);
+
+  const fieldsToIndex = [
+    'account_name',
+    'fiscal_start_date', 
+    'fiscal_end_date',
+    'data_storage',
+    'business_details'
+  ];
+
+  for (const field of fieldsToIndex) {
+    const indexName = `${schemaName}_account_details_${field}_idx`;
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_details"("${field}");
+    `);
   }
+}
+
 
   async fetchKeyContactRoles(entity_type: string): Promise<any[]> {
     const sequelize = await initSequelize();
@@ -180,6 +197,25 @@ class SchemaService {
 );
 
     `);
+
+      // Fields to index (excluding rid and r_number)
+  const fieldsToIndex = [
+    'account_rid', 'fiscal_year',
+    'total_projects',
+    'total_project_hours',
+    'total_project_cost',
+    'total_projects_qre',
+    'total_projects_rd_credits',
+  ];
+
+  // Create indexes conditionally
+  for (const field of fieldsToIndex) {
+    const indexName = `${schemaName}_account_fiscal_${field}_idx`;
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_fiscal"("${field}");
+    `);
+  }
   }
 
   private async createProjectTable(schemaName: string, sequelize: any) {
@@ -250,6 +286,23 @@ class SchemaService {
     );
 
     `);
+
+      // Fields to index (excluding rid and r_number)
+  const fieldsToIndex = [
+    'project_code', 'industry_rid', 'account_rid', 'project_name',
+    'project_type_rid', 'project_classification_rid',
+    'project_client_group', 'project_group', 'status_rid',
+    'country_rid', 'region_rid', 'currency_rid', 'total_effort', 'total_cost', 'total_fte',
+  ];
+
+  // Create indexes conditionally
+  for (const field of fieldsToIndex) {
+    const indexName = `${schemaName}_project_${field}_idx`;
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project"("${field}");
+    `);
+  }
   }
 
   private async createProjectHistoryTable(schemaName: string, sequelize: any) {
@@ -388,6 +441,22 @@ class SchemaService {
     );
 
     `);
+      // Fields to index (excluding rid and r_number)
+  const fieldsToIndex = [
+    'project_rid', 'project_code','fiscal_year',
+    'project_name','project_type_rid', 'project_classification_rid',
+    'project_client_group', 'project_group',
+    'account_rid', 'country_rid','status_rid'
+  ];
+
+  // Create indexes conditionally
+  for (const field of fieldsToIndex) {
+    const indexName = `${schemaName}_project_fiscal_${field}_idx`;
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_fiscal"("${field}");
+    `);
+  }
   }
 
   private async createProjectTimelineTable(schemaName: string, sequelize: any) {
@@ -718,6 +787,26 @@ class SchemaService {
       comments text,
       CONSTRAINT resource_code_account_key_unique UNIQUE (resource_code,account_rid))
      `);
+     // List of columns to index (excluding rid and comments)
+  const fieldsToIndex = [
+    'account_rid',
+    'resource_code',
+    'resource_name',
+    'resource_firstname',
+    'resource_lastname',
+    'resource_orgname',
+    'resource_role',
+    'country_rid',
+    'region_rid',
+    'status_rid'
+  ];
+
+  for (const field of fieldsToIndex) {
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${schemaName}_resources_${field}_idx"
+      ON "${schemaName}".resources (${field});
+    `);
+  }
   }
 
   private async createResourceFiscalTable(schemaName: string, sequelize: any) {
@@ -765,6 +854,24 @@ class SchemaService {
     CONSTRAINT resource_fiscal_r_number_key UNIQUE (r_number)
 )
       `);
+       // Fields to index (excluding rid and r_number since it has a unique constraint)
+  const fieldsToIndex = [
+    'account_rid',
+    'resource_rid',
+    'fiscal_year',
+    'country_rid',
+    'country_region_rid',
+    'cost_type',
+    'total_cost_for_year_project',
+    'estimated_rd_hours'
+  ];
+
+  for (const field of fieldsToIndex) {
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${schemaName}_resource_fiscal_${field}_idx"
+      ON "${schemaName}".resource_fiscal (${field});
+    `);
+  }
   }
 
   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
@@ -858,6 +965,17 @@ class SchemaService {
         )
 
     `);
+    
+  const fieldsToIndex = [
+    'resource_code'
+  ];
+
+  for (const field of fieldsToIndex) {
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${schemaName}_resource_cost_${field}_idx"
+      ON "${schemaName}".resource_cost (${field});
+    `);
+  }
   }
 
   private async createResourceCostTimelineTable(
@@ -952,6 +1070,16 @@ class SchemaService {
 );
 
     `);
+      const fieldsToIndex = [
+    'resource_code'
+  ];
+
+  for (const field of fieldsToIndex) {
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${schemaName}_resource_skill_${field}_idx"
+      ON "${schemaName}".resource_skill (${field});
+    `);
+  }
   }
   private async createResourceSkillTimelineTable(
     schemaName: string,
