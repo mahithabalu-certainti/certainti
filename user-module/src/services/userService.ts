@@ -1548,7 +1548,7 @@ const rawResult = users || [];
         {
             model: Status,
             as: 'status',
-            attributes: [['status_description','status_name']],
+            attributes: ['status_name'],
             required: false,
         }
       ],
