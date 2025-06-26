@@ -863,9 +863,10 @@ export class ProjectService {
           sort,
           filters,
           fiscalYear,
-          appliedAccountNumber,
+          appliedAccountNumber,             
           userId,
           search,
+          accountDataSort,
           bothParentAndChild
         );
  
@@ -889,7 +890,6 @@ export class ProjectService {
       rawResult.forEach((project: any) => {
         // Always add base project data row first
         exportData.push({
-          "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type_name || "-",
@@ -897,6 +897,7 @@ export class ProjectService {
           "Fiscal Year": "-",
           "Project Classification": project.classification_name || "-",
           "Customer Group": project.project_client_group || "-",
+          "Project Group": project?.project_group || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
           "FTE Cost": formatNumberForExport(project.total_cost_fte, project.currency_symbol) || "-",
@@ -921,7 +922,6 @@ export class ProjectService {
         if (fiscalSummaries.length > 0) {
           fiscalSummaries.forEach((fiscal: any) => {
             exportData.push({
-              "Project Group": fiscal?.project_group || "-",
               "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
@@ -929,6 +929,7 @@ export class ProjectService {
               "Fiscal Year":  `FY-${fiscal.fiscal_year}` || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
+              "Project Group": fiscal?.project_group || "-",
               "Project Effort (Hours)": fiscal.total_effort_prj || "-",
               "Project Cost": formatNumberForExport(fiscal.total_cost_prj, project.currency_symbol) || "-",
               "FTE Cost": formatNumberForExport(fiscal.total_cost_fte_prj, project.currency_symbol) || "-",
@@ -1600,7 +1601,7 @@ export class ProjectService {
       "project_name",
       "total_effort",
       "total_cost",
-      "status_rid",
+      "status_name",
       "fiscal_year",
       "account_name",
       "program_name",
@@ -1625,7 +1626,7 @@ export class ProjectService {
       "classification_name",
       "modified_datetime",
       "assessment_status",
-      "project_type_rid",
+      "project_type_name",
     ];   
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
