@@ -1,4 +1,4 @@
-import { Op, Order, Sequelize, col, fn, where } from "sequelize";
+import { Op, Order, Sequelize, col, fn, literal, where } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project } from "../models/project";
 import { ProjectFiscal } from "../models/projectFiscal";
@@ -1045,7 +1045,7 @@ class ProjectIngestionService {
       ]);
     }
     
-    let { rows: projects, count } = await Project.findAndCountAll({
+    let projects = await Project.findAll({
       where: whereProject,
       offset,
       limit,
@@ -1061,7 +1061,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: false,
+          required: true,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
@@ -1079,6 +1079,22 @@ class ProjectIngestionService {
           }
         },
       ],
+    });
+    
+    const count = await Project.count({
+      where: whereProject,
+      include: [
+        {
+          model: ProjectFiscal,
+          as: "ProjectFiscal",
+          required: true, 
+          where: {
+            account_rid: accountData.rid,
+            ...whereFiscal,
+          }
+        }
+      ],
+      distinct: true,
     });
 
     if (this.mainDbSequelize) {

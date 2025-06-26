@@ -1093,7 +1093,7 @@ class ResourceCostService {
            if (resourceInfo.status_rid) {
              const sequelize = await this.getMainDbSequelize();
             const status = await sequelize.query(
-              `SELECT status_name FROM status WHERE rid = :rid`,
+              `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :rid`,
               {
                 replacements: { rid: resourceInfo.status_rid },
                 type: "SELECT",
