@@ -3121,7 +3121,7 @@ class SchemaService {
         if (!userId) return null;
 
         const [results] = await mainDbInit.query(
-          `SELECT first_name, middle_name, last_name FROM "user" WHERE rid = :userId`,
+          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
           {
             replacements: { userId },
             type: "SELECT",
