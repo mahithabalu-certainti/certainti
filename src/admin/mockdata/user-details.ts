@@ -38,6 +38,9 @@ export const mockUserDetails: ManageUserDetailApiResponse = {
       organization: '',
       profile_id: '',
       updated_by: UserRole.Admin,
+      country_rid: null,
+      city_rid: null,
+      region_rid: null,
     },
   },
 };

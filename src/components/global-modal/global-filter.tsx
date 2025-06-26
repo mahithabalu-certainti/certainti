@@ -134,6 +134,15 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
   }, [filters]);
 
   useEffect(() => {
+    if (!isOpen) {
+      // Reset to last applied filters when modal closes
+      setSelectedFilters(
+        filters.length ? filters : [{ account: '', child: [] }]
+      );
+    }
+  }, [isOpen, filters]);
+
+  useEffect(() => {
     if (!accounts || !isFilterApplied || !refetchGlobalAccounts) return;
     const prevAccounts = prevAccountsRef.current;
     prevAccountsRef.current = accounts;

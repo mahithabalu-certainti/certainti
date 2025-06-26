@@ -130,7 +130,7 @@ const DetailsSection: React.FC<{
                           </div>
                           <div className='font-medium text-[13px] truncate min-w-0'>
                             <TruncateWithTooltip
-                              text={String(item.value)}
+                              // text={String(item.value)}
                               maxWidth={'100%'}
                               className='truncate inline-block max-w-full'
                               alwaysShowTooltip={
