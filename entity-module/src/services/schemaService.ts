@@ -1503,7 +1503,8 @@ class SchemaService {
         modified_datetime: { parent: "modified_datetime", child: "modified_datetime" },
         created_datetime: { parent: "created_datetime", child: "created_datetime" },
         fiscal_year: { parent: "", child: "fiscal_year" }, // Only for child
-        qre_final: { parent: "", child: "qre_final" } // Only for child
+        qre_final: { parent: "", child: "qre_final" }, // Only for child
+        qre: { parent: "qre", child: "qre" }
       };
 
       const sortConfig = sortColumnMap[sort.sortCol] || { parent: sort.sortCol, child: sort.sortCol };
@@ -1739,7 +1740,8 @@ class SchemaService {
         modified_datetime: { parent: "modified_datetime", child: "modified_datetime" },
         created_datetime: { parent: "created_datetime", child: "created_datetime" },
         fiscal_year: { parent: "", child: "fiscal_year" }, // Only for child
-        qre_final: { parent: "", child: "qre_final" } // Only for child
+        qre_final: { parent: "", child: "qre_final" },
+        qre: { parent: "qre", child: "qre" }
       };
 
       const sortConfig = sortColumnMap[sort.sortCol] || { parent: sort.sortCol, child: sort.sortCol };
