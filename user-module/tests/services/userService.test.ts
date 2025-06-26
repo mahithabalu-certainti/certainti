@@ -139,7 +139,7 @@ describe("UserService", () => {
         first_name: "John",
         last_name: "Doe",
         profile_id: "profile-123",
-        organization: constants.PLATFORM_ONE,
+        organization: constants.ENV_EA,
         status: "active",
         street: "123 Main St",
         city: "Metropolis",
@@ -166,7 +166,7 @@ describe("UserService", () => {
         first_name: "Updated",
         last_name: "User",
         profile_id: "profile-456",
-        organization: constants.PLATFORM_ONE,
+        organization: constants.ENV_EA,
         status: "active",
         street: "456 Main St",
         city: "Metropolis",
@@ -202,21 +202,21 @@ describe("UserService", () => {
           count: 1
         });
 
-        const result = await userService.listUsers(1, 10, "search", {}, "email", "ASC", constants.PLATFORM_TWO);
+        const result = await userService.listUsers(1, 10, "search", {}, "email", "ASC", constants.ENV_TRD365);
         expect(result.data?.count).toBe(1);
       });
 
       it("should handle empty results", async () => {
         (User.findAndCountAll as jest.Mock).mockResolvedValue({ rows: [], count: 0 });
-        const result = await userService.listUsers(1, 10, "", {}, "email", "ASC", constants.PLATFORM_TWO);
+        const result = await userService.listUsers(1, 10, "", {}, "email", "ASC", constants.ENV_TRD365);
         expect(result.data?.count).toBe(0);
       });
     });
 
     describe("listUserById", () => {
-      it("should return user details for PLATFORM_ONE", async () => {
+      it("should return user details for ENV_EA", async () => {
         (UserDetails.findAll as jest.Mock).mockResolvedValue([{ user_id: "user-123" }]);
-        const result = await userService.listUserById("user-123", constants.PLATFORM_ONE);
+        const result = await userService.listUserById("user-123", constants.ENV_EA);
         expect(result.statusCode).toBe(constants.SUCCESS);
       });
     });
@@ -234,7 +234,7 @@ describe("UserService", () => {
         count: 1
       });
     
-      const result = await userService.exportUsers("search", {}, "email", "ASC", constants.PLATFORM_TWO);
+      const result = await userService.exportUsers("search", {}, "email", "ASC", constants.ENV_TRD365);
       expect(result.data?.users).toEqual([{
         "Username": "Test",
         "Full name": "Test User",
@@ -351,7 +351,7 @@ describe("UserService", () => {
 
     it("should handle database errors in listUsers", async () => {
       (User.findAndCountAll as jest.Mock).mockRejectedValue(new Error("DB Failure"));
-      const result = await userService.listUsers(1, 10, "", {}, "email", "ASC", constants.PLATFORM_TWO);
+      const result = await userService.listUsers(1, 10, "", {}, "email", "ASC", constants.ENV_TRD365);
       expect(result.statusCode).toBe(constants.FAILED);
     });
   });
