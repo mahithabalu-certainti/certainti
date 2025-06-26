@@ -236,10 +236,10 @@ export const getAllProjectListColumns = (
         : '-',
   },
   {
-    id: 'r_number',
+    id: 'project_r_number',
     label: 'Project ID',
     sortable: true,
-    sortId: 'r_number',
+    sortId: 'project_r_number',
     width: 140,
   },
 ];
