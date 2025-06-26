@@ -112,7 +112,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     });
     navigate(path, {
       state: {
-        accountID: project?.account_rid,
+        accountID: project?.rid,
         projectID: project?.project_fiscal_rid,
       },
     });

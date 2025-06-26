@@ -315,6 +315,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   disablePadding
                   sx={{
                     width: '100%',
+                    px: 1,
                     ...(isAfterDivider && { mt: 'auto' }),
                   }}
                 >
@@ -322,11 +323,10 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     sx={{
                       minHeight: 32,
                       width: !sidebarExpand ? '32px' : '100%',
-                      height: !sidebarExpand ? '32px' : '32px',
-                      px: '4px',
+                      height: '32px',
+                      px: '0px',
                       py: 0,
                       mt: '4px',
-                      pl: 1,
                       gap: '4px',
                       borderRadius: '2px',
                       backgroundColor:
@@ -420,16 +420,15 @@ export const Sidebar: React.FC<SideBarProps> = ({
               );
             })}
           {showAdminSidebar && (
-            <ListItem disablePadding sx={{ width: '100%' }}>
+            <ListItem disablePadding sx={{ width: '100%', px: 1 }}>
               <ListItemButton
                 sx={{
                   minHeight: 32,
                   width: !sidebarExpand ? '32px' : '100%',
-                  height: !sidebarExpand ? '32px' : '32px',
-                  px: '4px',
+                  height: '32px',
+                  px: '0px',
                   py: 0,
                   mt: '4px',
-                  pl: 1,
                   gap: '4px',
                   borderRadius: '2px',
                   '&:hover': {
@@ -517,6 +516,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   disablePadding
                   sx={{
                     width: '100%',
+                    px: 1,
                     mt: '4px',
                     display:
                       !sidebarExpand && !noItemsOpen && !item.openStatus
@@ -528,12 +528,10 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     sx={{
                       minHeight: 32,
                       width: !sidebarExpand ? '32px' : '100%',
-                      height: !sidebarExpand ? '32px' : '32px',
-                      px: '4px',
+                      height: '32px',
+                      px: '0px',
                       py: 0,
                       mt: '4px',
-                      pl: 1,
-                      gap: '4px',
                       borderRadius: '2px',
                       backgroundColor: item.openStatus
                         ? 'rgba(255, 255, 255, 0.2)'
@@ -623,6 +621,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             display: 'flex',
                             alignItems: 'center',
                             opacity: 1,
+                            pr: '6px',
                             transition: sidebarExpand
                               ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
                               : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
@@ -669,18 +668,17 @@ export const Sidebar: React.FC<SideBarProps> = ({
                           sx={{
                             width: '100%',
                             mt: '4px',
+                            px: 1,
                           }}
                         >
                           <ListItemButton
                             sx={{
                               minHeight: 32,
                               width: !sidebarExpand ? '32px' : '100%',
-                              height: !sidebarExpand ? '32px' : '32px',
-                              px: '4px',
+                              height: '32px',
+                              px: '0px',
                               py: 0,
                               mt: '4px',
-                              pl: 1,
-                              gap: '4px',
                               borderRadius: '2px',
                               backgroundColor: isActive
                                 ? 'rgba(255, 255, 255, 0.2)'
@@ -765,7 +763,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
                                     fontWeight: isActive ? 400 : 300,
                                     fontSize: '13px',
                                     color: isActive ? '#F16137' : '#FFFFFF',
-                                    whiteSpace: 'nowrap',
+                                    whiteSpace: 'wrap',
+                                    lineHeight: '16px',
                                   },
                                 }}
                                 primary={subItem.name}
@@ -777,6 +776,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                                     display: 'flex',
                                     alignItems: 'center',
                                     opacity: 1,
+                                    pr: '6px',
                                     transition: sidebarExpand
                                       ? 'opacity 400ms ease-in-out, transform 400ms ease-in-out'
                                       : 'opacity 250ms ease-in-out, transform 250ms ease-in-out',
