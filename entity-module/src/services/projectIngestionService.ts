@@ -883,7 +883,7 @@ class ProjectIngestionService {
 
     const { technicalConsultant, projectPointOfContact } =
       await this.keyContactService.calculateKeyContactDetails(
-        projectData.keyContacts,
+        projectData.key_contacts,
         this.mainDbSequelize
       );
 
