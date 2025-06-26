@@ -43,7 +43,7 @@ class UserService {
   /**
    * Creates a new user in the database using the provided user data.
    * The user data is processed and then inserted into the `User` model.
-   * If the organization is `PLATFORM_ONE`, additional user details are created.
+   * If the organization is `ENV_EA`, additional user details are created.
    *
    * @param {IUserData} userData - The data of the user to be created.
    * @param {string} azureId - The Azure ID associated with the user.
@@ -105,7 +105,7 @@ class UserService {
         org_id
       });
 
-      if (organization === constants.PLATFORM_ONE) {
+      if (organization === constants.ENV_EA) {
         this.createUserDetails(userData, user.rid);
       }
 
@@ -124,7 +124,7 @@ class UserService {
   /**
    * Updates an existing user in the database using the provided user data.
    * The user is searched by its `userId`, and if found, its data is updated
-   * with the new provided values. If the organization is `PLATFORM_ONE`,
+   * with the new provided values. If the organization is `ENV_EA`,
    * additional user details are updated.
    *
    * @param {IUpdateUserData} userData - The new data for the user to be updated.
@@ -201,7 +201,7 @@ class UserService {
         }
       );
 
-      if (organization === constants.PLATFORM_ONE) {
+      if (organization === constants.ENV_EA) {
         this.updateUserDetails(userData, userId);
       }
 
@@ -387,7 +387,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   /**
    * Retrieves a paginated list of users based on search and filter criteria,
    * as well as sorting parameters. The method fetches user data either
-   * from the `PLATFORM_TWO` organization or from the `PLATFORM_ONE` organization
+   * from the `ENV_TRD365` organization or from the `ENV_EA` organization
    * using different fetch strategies.
    *
    * @param {number} page - The page number for pagination.
@@ -430,7 +430,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
         sortOrder
       );
 
-      if (organization == constants.PLATFORM_TWO) {
+      if (organization == constants.ENV_TRD365) {
         const { rows, count:totalCount } = await this.fetchUser(
           whereClause,
           limit,
@@ -465,7 +465,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   /**
    * Retrieves a user's details by their user ID based on the organization type.
    * Depending on the organization, it fetches either basic user information from
-   * `PLATFORM_TWO` or detailed user information from `PLATFORM_ONE`,
+   * `ENV_TRD365` or detailed user information from `ENV_EA`,
    * including related data such as profile, business teams, department, and function group.
    *
    * @param {string} userId - The ID of the user to retrieve.
@@ -486,7 +486,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   }> {
     try {
       let users = null;
-      if (organization === constants.PLATFORM_TWO) {
+      if (organization === constants.ENV_TRD365) {
         users = await User.findOne({
           where: {
             rid: userId,
@@ -1404,7 +1404,7 @@ async getAllUserPermission(userId: string, profileId: string) {
   /**
    * Retrieves a  list of users based on search and filter criteria  for exporting the data with,
    *sorting parameters. The method fetches user data either
-   * from the `PLATFORM_TWO` organization or from the `PLATFORM_ONE` organization
+   * from the `ENV_TRD365` organization or from the `ENV_EA` organization
    * using different fetch strategies.
    *
    * @param {string} search - The search query to filter users by.
@@ -1443,7 +1443,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         sortOrder
       );
 
-      if (organization == constants.PLATFORM_TWO) {
+      if (organization == constants.ENV_TRD365) {
         const { rows, count:totalCount } = await this.fetchUserForExport(
           whereClause,
           finalSortBy,

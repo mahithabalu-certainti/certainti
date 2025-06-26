@@ -7,6 +7,7 @@ export interface ProjectSummaryAttributes {
 
   project_code: string;
   project_rid: string;
+  project_r_number: string;
 
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -71,6 +72,7 @@ export class ProjectSummary
   public eid?: string;
   public project_code!: string;
   public project_rid!: string;
+  public project_r_number!: string;
 
   public created_datetime?: Date;
   public modified_datetime?: Date;
@@ -162,6 +164,10 @@ export class ProjectSummary
           allowNull: false,
         },
         project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_r_number: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },

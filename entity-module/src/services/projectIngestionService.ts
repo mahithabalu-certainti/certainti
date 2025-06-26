@@ -504,6 +504,7 @@ class ProjectIngestionService {
   async addProjectFiscalSummary(
     accountNumber: string,
     projectData: any,
+    project: any,
     projectId: string,
     keyContacts: any[],
     projectFiscalId: string
@@ -525,6 +526,7 @@ class ProjectIngestionService {
 
     const summaryData = ProjectMapper.mapToProjectFiscalSummary(
       projectData,
+      project,
       projectId,
       startDate,
       endDate,
