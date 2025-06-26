@@ -267,7 +267,7 @@ export const Accounts: React.FC = () => {
           </Suspense>
         </div>
       </div>
-      <div className='flex-1'>
+      <div>
         <AccountTable
           appliedFilters={appliedFilters}
           setTotalCount={setTotalCount}
