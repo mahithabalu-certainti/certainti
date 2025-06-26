@@ -187,7 +187,7 @@ const Resource: React.FC<ResourceProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
     },
-    isResourceViewAllEnable,
+    isResourceViewAllEnable && value === '',
     refreshTrigger
   );
 

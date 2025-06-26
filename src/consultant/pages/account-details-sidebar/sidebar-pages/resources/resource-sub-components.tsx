@@ -118,6 +118,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           columns={resourceDetails}
           loading={isLoading}
           singleLineView={false}
+          className='!border-b-0'
         />
       </Box>
       <Box className='max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
