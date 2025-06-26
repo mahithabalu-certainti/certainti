@@ -208,7 +208,7 @@ export class ProjectService {
             await this.projectIngestion.addProjectFiscalSummary(
               accountNumber,
               projectData,
-              existingProject,
+              createdProjectFiscal,
               existingProject.rid,
               projectData.key_contacts,
               createdProjectFiscal.rid
