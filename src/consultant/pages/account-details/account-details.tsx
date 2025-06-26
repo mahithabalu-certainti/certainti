@@ -179,11 +179,7 @@ export const AccountDetails = () => {
 
   // getting user is inactive error, need to uncomment once details page UI is done
 
-  const {
-    data,
-    isLoading,
-    isError,
-  }: { data: any; isLoading: boolean; isError: boolean } = useAccountDetail(
+  const { data, isPending, isError } = useAccountDetail(
     accountid as string,
     isAccountDetailsEnable
   );
@@ -258,7 +254,7 @@ export const AccountDetails = () => {
         return (
           <Details
             accountDetails={{ ...data?.data }}
-            isLoading={isLoading}
+            isLoading={isPending}
             isError={isError}
             isAccountEditEnable={isAccountEditEnable}
             isAccountDetailsDownloadEnable={isAccountDetailsDownloadEnable}
@@ -429,7 +425,7 @@ export const AccountDetails = () => {
       </div>
       <InfoSection
         columns={accountDetails}
-        loading={isLoading}
+        loading={isPending}
         error={isError}
         singleLineView={true}
       />
@@ -455,7 +451,7 @@ export const AccountDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
         >
-          {isLoading ? (
+          {isPending ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />
             </div>
