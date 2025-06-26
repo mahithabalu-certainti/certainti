@@ -1613,6 +1613,7 @@ export class ProjectService {
   ): [string, string] {
     const validSortColumns = [
       "r_number",
+      "project_r_number",
       "project_code",
       "industry_name",
       "project_startdate",
@@ -1644,6 +1645,7 @@ export class ProjectService {
       "project_group",
       "classification_name",
       "modified_datetime",
+      "created_datetime",
       "assessment_status",
       "project_type_name",
     ];   
