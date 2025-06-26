@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 interface IndustryAttributes {
   rid: string; 
   r_number?: string;
@@ -81,6 +81,7 @@ export class Industry
         modelName: "Industry",
         tableName: "industry",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
     return Industry;
@@ -90,11 +91,11 @@ export class Industry
 export async function setupIndustrySequence(sequelize: Sequelize) {
   try {
     // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS industry_seq START 1');
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.industry_seq START 1`);
     
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE industry
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.INDUSTRY}-' || LPAD(nextval('industry_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.industry
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.INDUSTRY}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.industry_seq')::text, 10, '0')`);
     
     console.log('Industry sequence setup complete');
   } catch (error) {

@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { PermissionField } from "./permissionFieldModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ProfileFieldsAccessAttributes {
   rid: string;
@@ -49,10 +49,24 @@ export class ProfileFieldsAccess
         profile_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "profile",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : 'rid'
+          }
         },
         permission_field_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "permission_fields",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : 'rid'
+          }
         },
         read: {
           type: DataTypes.BOOLEAN,
@@ -69,6 +83,7 @@ export class ProfileFieldsAccess
         modelName: "ProfileFieldsAccess",
         tableName: "profile_fields_access",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (record) => {
             record.setDataValue("modified_datetime", new Date());

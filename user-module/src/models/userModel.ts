@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { BusinessTeams } from "./businessTeamModel";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 import { Status } from "./statusModel";
 interface UserAttributes {
   rid: string;
@@ -158,14 +158,20 @@ export class User
         role_rid: {
           type: DataTypes.STRING(50),
           references: {
-            model: "business_teams",
+            model: {
+              tableName : "business_teams",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
         profile_rid: {
           type: DataTypes.STRING(50),
           references: {
-            model: "profile",
+            model: {
+              tableName : "profile",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
@@ -180,7 +186,10 @@ export class User
         status_rid: {
           type: DataTypes.STRING,
            references: {
-            model: "status",
+            model: {
+              tableName : "status",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
@@ -198,6 +207,7 @@ export class User
         modelName: "User",
         tableName: "user",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
@@ -240,8 +250,8 @@ export class User
 //     await sequelize.query('CREATE SEQUENCE IF NOT EXISTS user_seq START 1');
     
 //     // Step 2: Set the default value for r_number to use the sequence
-//     await sequelize.query(`ALTER TABLE public."user"
-//       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER}-' || LPAD(nextval('user_seq')::text, 10, '0')`);
+//     await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}."user"
+//       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.user_seq')::text, 10, '0')`);
     
 //     console.log('User sequence setup complete');
 //   } catch (error) {

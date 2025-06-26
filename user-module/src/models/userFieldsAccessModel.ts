@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { User } from "./userModel";
 import { PermissionField } from "./permissionFieldModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface UserFieldsAccessAttributes {
   rid: string;
@@ -49,10 +49,24 @@ export class UserFieldsAccess
         user_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "user",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : 'rid'
+          }
         },
         permission_field_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references : {
+            model : {
+              tableName : "permission_field",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key : 'rid'
+          }
         },
         read: {
           type: DataTypes.BOOLEAN,
@@ -69,6 +83,7 @@ export class UserFieldsAccess
         modelName: "UserFieldsAccess",
         tableName: "user_fields_access",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (record) => {
             record.setDataValue("modified_datetime", new Date());

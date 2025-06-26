@@ -1,7 +1,7 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
@@ -1008,7 +1008,7 @@ class ResourceCostService {
         await resourceCostSchemaService.assignCurrencyRid(costData, sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
-          `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
+          `SELECT currency_name,currency_code,currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
           {
             replacements: { currency_rid: costData.currency_rid },
             type: "SELECT",
@@ -1016,7 +1016,7 @@ class ResourceCostService {
         );
 
          const [statusResult] = await sequelize.query(
-          `SELECT resource_status_name as status_name FROM public.resource_status WHERE rid = :status_rid`,
+          `SELECT resource_status_name as status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid = :status_rid`,
           {
             replacements: { status_rid: costData.status_rid },
             type: "SELECT",
@@ -1264,7 +1264,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -1279,7 +1279,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -1321,7 +1321,7 @@ async function getResourceStatuses(
   mainDbSequelize: Sequelize,
 ): Promise<Map<string, string> | null> {
   try {
-    const resourceStatus = `SELECT rid, resource_status_name FROM resource_status`;
+    const resourceStatus = `SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status`;
     const results = await mainDbSequelize.query(resourceStatus, {
       type: "SELECT"
     });
@@ -1358,7 +1358,7 @@ async function getCurrencyThreshold(
   console.log("currency_rid :",currency_rid);
   if (currency_rid) {
     [currencyResult] = await mainDbSequelize.query(
-      `SELECT currency_threshold FROM public.currency WHERE rid = :currency_rid`,
+      `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
       {
         replacements: { currency_rid },
         type: "SELECT",
@@ -1366,7 +1366,7 @@ async function getCurrencyThreshold(
     );
   } else {
     [currencyResult] = await mainDbSequelize.query(
-      `SELECT currency_threshold FROM public.currency WHERE currency_code = 'USD'`,
+      `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE currency_code = 'USD'`,
       {
         type: "SELECT",
       }

@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 interface AccountFileDropConfigAttributes {
   rid: string;
   account_id: string;
@@ -101,6 +101,7 @@ export class AccountFileDropConfig
         modelName: "AccountFileDropConfig",
         tableName: "account_file_drop_config",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
 

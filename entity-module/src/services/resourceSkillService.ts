@@ -1,6 +1,6 @@
 import { ResourceSkill } from "../models/resourceSkill";
 import { IResourceSkill, IUpdateResourceSkill } from "../utils/types";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { Skill } from "../models/skill";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
@@ -873,7 +873,7 @@ class ResourceSkillService {
     const mainDbSequelize = await this.getMainDbSequelize();
 
     // Fetch skill type name
-    const skillTypeQuery = `SELECT skill_type_name FROM "public"."skill_type" WHERE rid = :skillTypeRid`;
+    const skillTypeQuery = `SELECT skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid = :skillTypeRid`;
     const skillType = await mainDbSequelize.query(skillTypeQuery, {
       replacements: { skillTypeRid: resourceSkillById?.skill_type_rid },
       type: "SELECT",
@@ -881,7 +881,7 @@ class ResourceSkillService {
     });
 
     // Fetch skill subtype name
-    const skillSubtypeQuery = `SELECT skill_subtype_name FROM "public"."skill_subtype" WHERE rid = :skillSubtypeRid`;
+    const skillSubtypeQuery = `SELECT skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid = :skillSubtypeRid`;
     const skillSubtype = await mainDbSequelize.query(skillSubtypeQuery, {
       replacements: { skillSubtypeRid: resourceSkillById?.skill_subtype_rid },
       type: "SELECT",
@@ -932,7 +932,7 @@ class ResourceSkillService {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -947,7 +947,7 @@ class ResourceSkillService {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -1000,7 +1000,7 @@ class ResourceSkillService {
           modified_by,
           created_datetime,
           modified_datetime
-        FROM skill_type 
+        FROM ${MAIN_SCHEMA_NAME}.skill_type 
         WHERE status = 'active'
         ORDER BY skill_type_name ASC`,
         {
@@ -1040,7 +1040,7 @@ class ResourceSkillService {
           modified_by,
           created_datetime,
           modified_datetime
-        FROM skill_subtype
+        FROM ${MAIN_SCHEMA_NAME}.skill_subtype
         WHERE skill_type_rid IN (:skillTypeRids) AND status = 'active'
         ORDER BY skill_subtype_name ASC`,
         {

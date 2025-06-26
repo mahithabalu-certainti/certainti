@@ -2,11 +2,11 @@ import Joi from "joi";
 import { constants } from "../../../utils/constant";
 
 const userReqSchema = Joi.object({
-  organization: Joi.string().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE).max(255).required(),
+  organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
 })
 
 const createUserSchema = Joi.object({
-  organization: Joi.string().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE).max(255).required(),
+  organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
   first_name: Joi.string().min(3).max(64).required().label("First Name"),
   last_name: Joi.string().min(3).max(64).required().label("Last Name"),
   middle_name: Joi.string().min(3).max(64).optional(),
@@ -32,7 +32,7 @@ const createUserSchema = Joi.object({
 });
 
 const enterpriseUserSchema = Joi.object({
-  organization: Joi.string().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE).max(255).required(),
+  organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
   first_name: Joi.string().min(3).max(64).required().label("First Name"),
   last_name: Joi.string().min(3).max(64).required().label("Last Name"),
   middle_name: Joi.string().max(255).optional(),
@@ -59,7 +59,7 @@ const enterpriseUserSchema = Joi.object({
 })
 
 const updateUserSchema = Joi.object({
-  organization: Joi.string().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE).max(255).required(),
+  organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
   rid: Joi.string().max(255).required(),
   azure_id: Joi.string().max(255).required(),
   first_name: Joi.string().min(3).max(64).required().label("First Name"),
@@ -80,7 +80,7 @@ const updateUserSchema = Joi.object({
 });
 
 const userDetailsUpdateSchema = Joi.object({
-  organization: Joi.string().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE).max(255).required(),
+  organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
   rid: Joi.string().max(255).required(),
   azure_id: Joi.string().max(255).required(),
   first_name: Joi.string().min(3).max(64).required().label("First Name"),
@@ -107,7 +107,7 @@ const listUserSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
-  organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
+  organization: Joi.string().required().valid(constants.ENV_TRD365, constants.ENV_EA),
 });
 
 const listProfileSchema = Joi.object({
@@ -131,12 +131,12 @@ const exportUserSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
-  organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
+  organization: Joi.string().required().valid(constants.ENV_TRD365, constants.ENV_EA),
   timezone: Joi.string().optional(),
 });
 
 const listUserByIdSchema = Joi.object({
-  organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
+  organization: Joi.string().required().valid(constants.ENV_TRD365, constants.ENV_EA),
 });
 
 /**

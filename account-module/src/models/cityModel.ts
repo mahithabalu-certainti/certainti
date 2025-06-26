@@ -1,7 +1,7 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
 import { States } from "./stateModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface CityAttributes {
   rid: string;
@@ -66,10 +66,24 @@ export class City
         state_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "state",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         country_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "country",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         currency_code: {
           type: DataTypes.STRING(10),
@@ -81,6 +95,7 @@ export class City
         modelName: "City",
         tableName: "city",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
 

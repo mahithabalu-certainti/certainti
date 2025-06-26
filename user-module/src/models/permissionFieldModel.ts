@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ModulePermission } from "./modulePermissionModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface PermissionFieldAttributes {
   rid: string;
@@ -68,7 +68,10 @@ export class PermissionField
           type: DataTypes.STRING(50),
           allowNull: false,
           references: {
-            model: "module_permission",
+            model: {
+              tableName : "module_permission",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
@@ -83,6 +86,7 @@ export class PermissionField
         modelName: "PermissionField",
         tableName: "permission_fields",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (field) => {
             field.setDataValue("modified_datetime", new Date());

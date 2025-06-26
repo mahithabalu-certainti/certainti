@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -33,6 +33,7 @@ import {
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
+import Decimal from "decimal.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -207,6 +208,7 @@ export class ProjectService {
             await this.projectIngestion.addProjectFiscalSummary(
               accountNumber,
               projectData,
+              createdProjectFiscal,
               existingProject.rid,
               projectData.key_contacts,
               createdProjectFiscal.rid
@@ -285,6 +287,7 @@ export class ProjectService {
           await this.projectIngestion.addProjectFiscalSummary(
             accountNumber,
             projectData,
+            createdProject,
             createdProject.rid,
             projectData.key_contacts,
             createdProjectFiscal.rid || "",
@@ -863,33 +866,49 @@ export class ProjectService {
           sort,
           filters,
           fiscalYear,
-          appliedAccountNumber,
+          appliedAccountNumber,             
           userId,
           search,
+          accountDataSort,
           bothParentAndChild
         );
  
         const formatNumberForExport = (value: any, currency_symbol: string): string => {
           if (value == null || value === '') return '-';
-          const num = Number(value);
-          if (isNaN(num)) return '-';
-          // Use currency.js to format the number with the provided currency symbol
-          return currency(num, {
-            symbol: currency_symbol? currency_symbol : '$',
-            precision: 2,
-            pattern: '! #',
-            separator: ',',
-            decimal: '.'
-          }).format();
-        };  
- 
+        
+          try {
+            const decimalValue = new Decimal(value.toString());
+            if (!decimalValue.isFinite()) return '-';
+        
+            // Extract just the formatted currency pattern using a dummy value
+            const pattern = currency(0, {
+              symbol: currency_symbol || '$',
+              precision: 2,
+              pattern: '! #',
+              separator: ',',
+              decimal: '.',
+            }).format(); // e.g., "$ 0.00"
+        
+            // Format actual value manually using Decimal
+            const [intPart, decPart] = decimalValue.toFixed().split('.');
+            const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        
+            const formattedNumber = decPart ? `${formattedInt}.${decPart}` : formattedInt;
+            // Replace "0.00" in pattern with our real number
+            return pattern.replace('0.00', formattedNumber);
+        
+          } catch (error) {
+            console.error('Error formatting number:', error);
+            return '-';
+          }
+        };
+          
       const rawResult = allProjectList || [];
       let exportData: any[] = [];
  
       rawResult.forEach((project: any) => {
         // Always add base project data row first
         exportData.push({
-          "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type_name || "-",
@@ -897,6 +916,7 @@ export class ProjectService {
           "Fiscal Year": "-",
           "Project Classification": project.classification_name || "-",
           "Customer Group": project.project_client_group || "-",
+          "Project Group": project?.project_group || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
           "FTE Cost": formatNumberForExport(project.total_cost_fte, project.currency_symbol) || "-",
@@ -913,15 +933,14 @@ export class ProjectService {
           ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Project ID": project.r_number || "-",
+          "Project ID": project.project_r_number || "-",
         });
  
         // Add fiscal summary rows if they exist
-        const fiscalSummaries = project.project_fiscal_summary || [];
+        const fiscalSummaries = project.ProjectFiscal || [];
         if (fiscalSummaries.length > 0) {
           fiscalSummaries.forEach((fiscal: any) => {
             exportData.push({
-              "Project Group": fiscal?.project_group || "-",
               "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
@@ -929,6 +948,7 @@ export class ProjectService {
               "Fiscal Year":  `FY-${fiscal.fiscal_year}` || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
+              "Project Group": fiscal?.project_group || "-",
               "Project Effort (Hours)": fiscal.total_effort_prj || "-",
               "Project Cost": formatNumberForExport(fiscal.total_cost_prj, project.currency_symbol) || "-",
               "FTE Cost": formatNumberForExport(fiscal.total_cost_fte_prj, project.currency_symbol) || "-",
@@ -945,7 +965,7 @@ export class ProjectService {
               ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
               : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
               : '-',
-              "Project ID": fiscal.r_number || "-",
+              "Project ID": fiscal.project_r_number || "-",
             });
           });
         }
@@ -1187,7 +1207,7 @@ export class ProjectService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -1593,6 +1613,7 @@ export class ProjectService {
   ): [string, string] {
     const validSortColumns = [
       "r_number",
+      "project_r_number",
       "project_code",
       "industry_name",
       "project_startdate",
@@ -1600,7 +1621,7 @@ export class ProjectService {
       "project_name",
       "total_effort",
       "total_cost",
-      "status_rid",
+      "status_name",
       "fiscal_year",
       "account_name",
       "program_name",
@@ -1624,8 +1645,9 @@ export class ProjectService {
       "project_group",
       "classification_name",
       "modified_datetime",
+      "created_datetime",
       "assessment_status",
-      "project_type_rid",
+      "project_type_name",
     ];   
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
@@ -1740,7 +1762,7 @@ export class ProjectService {
       const mainDbSequlize = await initMainDbSequelize();
       const projectClassifications = await mainDbSequlize.query(
         `SELECT rid, classification_name, classification_description, classification_status
-         FROM project_classification
+         FROM ${MAIN_SCHEMA_NAME}.project_classification
          WHERE classification_status = 'Active'
          ORDER BY classification_name ASC`,
         {
@@ -1782,7 +1804,7 @@ export class ProjectService {
   async getCurrencyDetailsByAccountRidRaw(
     accountRid: string
   ): Promise<string | null> {
-    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
@@ -1804,7 +1826,7 @@ export class ProjectService {
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
-            `SELECT c.* FROM public.currency c WHERE c.currency_code = 'USD'`,
+            `SELECT c.* FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'`,
             { type: "SELECT" }
           );
           result.currency = usdCurrencyId[0]?.rid;

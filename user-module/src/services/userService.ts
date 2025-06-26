@@ -1,6 +1,6 @@
 import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
-import { constants } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
 import ExcelJS from 'exceljs';
@@ -43,7 +43,7 @@ class UserService {
   /**
    * Creates a new user in the database using the provided user data.
    * The user data is processed and then inserted into the `User` model.
-   * If the organization is `PLATFORM_ONE`, additional user details are created.
+   * If the organization is `ENV_EA`, additional user details are created.
    *
    * @param {IUserData} userData - The data of the user to be created.
    * @param {string} azureId - The Azure ID associated with the user.
@@ -105,7 +105,7 @@ class UserService {
         org_id
       });
 
-      if (organization === constants.PLATFORM_ONE) {
+      if (organization === constants.ENV_EA) {
         this.createUserDetails(userData, user.rid);
       }
 
@@ -124,7 +124,7 @@ class UserService {
   /**
    * Updates an existing user in the database using the provided user data.
    * The user is searched by its `userId`, and if found, its data is updated
-   * with the new provided values. If the organization is `PLATFORM_ONE`,
+   * with the new provided values. If the organization is `ENV_EA`,
    * additional user details are updated.
    *
    * @param {IUpdateUserData} userData - The new data for the user to be updated.
@@ -201,7 +201,7 @@ class UserService {
         }
       );
 
-      if (organization === constants.PLATFORM_ONE) {
+      if (organization === constants.ENV_EA) {
         this.updateUserDetails(userData, userId);
       }
 
@@ -387,7 +387,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   /**
    * Retrieves a paginated list of users based on search and filter criteria,
    * as well as sorting parameters. The method fetches user data either
-   * from the `PLATFORM_TWO` organization or from the `PLATFORM_ONE` organization
+   * from the `ENV_TRD365` organization or from the `ENV_EA` organization
    * using different fetch strategies.
    *
    * @param {number} page - The page number for pagination.
@@ -430,7 +430,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
         sortOrder
       );
 
-      if (organization == constants.PLATFORM_TWO) {
+      if (organization == constants.ENV_TRD365) {
         const { rows, count:totalCount } = await this.fetchUser(
           whereClause,
           limit,
@@ -465,7 +465,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   /**
    * Retrieves a user's details by their user ID based on the organization type.
    * Depending on the organization, it fetches either basic user information from
-   * `PLATFORM_TWO` or detailed user information from `PLATFORM_ONE`,
+   * `ENV_TRD365` or detailed user information from `ENV_EA`,
    * including related data such as profile, business teams, department, and function group.
    *
    * @param {string} userId - The ID of the user to retrieve.
@@ -486,7 +486,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   }> {
     try {
       let users = null;
-      if (organization === constants.PLATFORM_TWO) {
+      if (organization === constants.ENV_TRD365) {
         users = await User.findOne({
           where: {
             rid: userId,
@@ -661,7 +661,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     } else {
       const mainDbSequelize = await initSequelize();
       const [account]: any[] = await mainDbSequelize.query(
-        `SELECT organisation_name, logo_url FROM account WHERE rid = :rid`,
+        `SELECT organisation_name, logo_url FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: roles.org_id },
           type: "SELECT",
@@ -1350,7 +1350,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       else
       {
         const [orgNameResult]: any[] = await mainDbSequelize.query(
-        `SELECT organisation_name FROM account WHERE rid = :rid`,
+        `SELECT organisation_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: orgId },
           type: "SELECT",
@@ -1362,7 +1362,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (countryId) {
       const [countryResult]: any[] = await mainDbSequelize.query(
-        `SELECT country_name FROM country WHERE rid = :rid`,
+        `SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
         {
           replacements: { rid: countryId },
           type: "SELECT",
@@ -1373,7 +1373,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (stateId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT state_name FROM state WHERE rid = :rid`,
+        `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
         {
           replacements: { rid: stateId },
           type: "SELECT",
@@ -1384,7 +1384,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (cityId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT city_name FROM city WHERE rid = :rid`,
+        `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
         {
           replacements: { rid: cityId },
           type: "SELECT",
@@ -1404,7 +1404,7 @@ async getAllUserPermission(userId: string, profileId: string) {
   /**
    * Retrieves a  list of users based on search and filter criteria  for exporting the data with,
    *sorting parameters. The method fetches user data either
-   * from the `PLATFORM_TWO` organization or from the `PLATFORM_ONE` organization
+   * from the `ENV_TRD365` organization or from the `ENV_EA` organization
    * using different fetch strategies.
    *
    * @param {string} search - The search query to filter users by.
@@ -1443,7 +1443,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         sortOrder
       );
 
-      if (organization == constants.PLATFORM_TWO) {
+      if (organization == constants.ENV_TRD365) {
         const { rows, count:totalCount } = await this.fetchUserForExport(
           whereClause,
           finalSortBy,
@@ -1622,7 +1622,7 @@ const rawResult = users || [];
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: 'SELECT'
@@ -1637,7 +1637,7 @@ const rawResult = users || [];
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: 'SELECT'
