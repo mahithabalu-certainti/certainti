@@ -7,7 +7,7 @@ export interface IEmailMessage {
   toRecipients: { emailAddress: { address: string } }[];
 }
 
-type IOrganization = "EA" | "PF2.0";
+type IOrganization = "EA" | "TRD365";
 type IStatus = "active" | "inactive";
 
 export interface IUserData {
