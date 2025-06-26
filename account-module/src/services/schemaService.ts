@@ -1483,7 +1483,7 @@ class SchemaService {
 
       if (account.industry_rid) {
         const industryResult: any = await mainDdSequilze.query(
-          `SELECT industry_name FROM industry WHERE rid = :id`,
+          `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`,
           {
             replacements: { id: account.industry_rid },
             type: "SELECT",
