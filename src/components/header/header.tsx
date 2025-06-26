@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -111,9 +111,11 @@ export const PageHeader: React.FC<HeaderProps> = ({
           </div>
         </div>
         <div className='flex gap-2 justify-center items-center'>
-          {actionItems.length > 0 && (
-            <ActionsDropdown actions={actionItems} sx={{ fontWeight: 400 }} />
-          )}
+          <Suspense fallback={null}>
+            {actionItems.length > 0 && (
+              <ActionsDropdown actions={actionItems} sx={{ fontWeight: 400 }} />
+            )}
+          </Suspense>
 
           {primaryButton && (
             <TextButton
@@ -179,14 +181,16 @@ export const PageHeader: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {goBack && <TextButton
-            label='Back'
-            onClick={goBack}
-            sx={{
-              fontSize: '12px',
-              fontWeight: 400,
-            }}
-          />}
+          {goBack && (
+            <TextButton
+              label='Back'
+              onClick={goBack}
+              sx={{
+                fontSize: '12px',
+                fontWeight: 400,
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
