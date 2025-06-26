@@ -145,7 +145,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project ID',
-    value: 'r_number',
+    value: 'project_r_number',
     type: 'text',
     operatorOption: textOptions,
   },
@@ -153,6 +153,6 @@ export const getAllProjectFilterFields = (
     name: 'Sort Options',
     value: 'sort_options',
     type: 'system-sort',
-    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
+    options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
   },
 ];

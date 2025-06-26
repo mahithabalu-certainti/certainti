@@ -342,7 +342,7 @@ const ResourceForm: React.FC = () => {
 
       // Calculate and set auto value
       const total = calculateAutoValue(financials);
-      setAutoCalculatedValue(total);
+      setAutoCalculatedValue(parseFloat(total.toFixed(2)));
     } else if (state?.skill && isSuccess && skillInfo && isEditView) {
       const skillValues = {
         ...formValues,
@@ -777,7 +777,7 @@ const ResourceForm: React.FC = () => {
         const deductions = parseFloat(updated.deductions) || 0;
 
         const total = salary + bonus + insurance + resourceCost - deductions;
-        setAutoCalculatedValue(total);
+        setAutoCalculatedValue(parseFloat(total.toFixed(2)));
 
         return updated;
       });

@@ -163,6 +163,7 @@ export type Project = {
   created_datetime: string;
   rid?: string;
   account_rid?: string;
+  fiscal_year?: number;
   project_fiscal_rid?: string;
   ProjectFiscal: ProjectFiscalSummary[];
 };
