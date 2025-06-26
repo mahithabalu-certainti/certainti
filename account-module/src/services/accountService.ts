@@ -1666,29 +1666,36 @@ async insertClientTemplateDetails(
     return whereClause;
   }
  
-private applyAccountIDFilter(
-  globalFilters: Record<string, string[]>,
-  whereClause: Record<string, any>
-): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
-  // Parent accounts only get global filters (no other whereClause filters)
-  let parentWhereClause: Record<string, any> = {
-    parent_account_rid: { [Op.is]: null } as any
-  };
-
-  // Child accounts get all original filters (whereClause)
-  let childWhereClause: Record<string, any> = { ...whereClause };
-
-  if (globalFilters && Object.keys(globalFilters).length > 0) {
-    // Apply global filters to parents only
-    const parentIds = Object.keys(globalFilters);
-    parentWhereClause.rid = { [Op.in]: parentIds };
-  }
-
-  return {
-    parentWhereClause: parentWhereClause,  // Only global filters + parent relationship
-    childWhereClause: childWhereClause     // All original filters
-  };
-}
+  private applyAccountIDFilter(
+    globalFilters: Record<string, string[]>,
+    whereClause: Record<string, any>
+  ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+    // Parent: only get global filter and must have no parent_account
+    let parentWhereClause: Record<string, any> = {
+      parent_account_rid: { [Op.is]: null }
+    };
+  
+    // Child: inherit original filters
+    let childWhereClause: Record<string, any> = { ...whereClause };
+  
+    if (globalFilters && Object.keys(globalFilters).length > 0) {
+      const parentIds = Object.keys(globalFilters);
+      const childIds: string[] = Object.values(globalFilters).flat();
+  
+      // Parent account filtering
+      parentWhereClause.rid = { [Op.in]: parentIds };
+  
+      // Child account filtering (on account_rid)
+      if (childIds.length > 0) {
+        childWhereClause.rid = { [Op.in]: childIds };
+      }
+    }
+  
+    return {
+      parentWhereClause,
+      childWhereClause
+    };
+  }  
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
