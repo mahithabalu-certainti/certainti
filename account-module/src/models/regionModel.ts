@@ -1,6 +1,6 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 interface RegionAttributes {
   rid: string;
   r_number?: string;
@@ -58,6 +58,13 @@ export class Region
         country_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName : "country",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
         country_name: {
           type: DataTypes.STRING,
@@ -74,6 +81,7 @@ export class Region
         modelName: "Region",
         tableName: "regions",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
 
@@ -88,11 +96,11 @@ export class Region
 export async function setupRegionSequence(sequelize: Sequelize) {
   try {
     // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS region_seq START 1');
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.region_seq START 1`);
     
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE regions
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.REGION}-' || LPAD(nextval('region_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.regions
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.REGION}-' || LPAD(nextval('s${MAIN_SCHEMA_NAME}.region_seq')::text, 10, '0')`);
     
     console.log('Region sequence setup complete');
   } catch (error) {

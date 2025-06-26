@@ -2,7 +2,7 @@ import { QueryTypes } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 import { getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
@@ -17,7 +17,7 @@ class SchemaService {
     const sequelize = await initSequelize();
     const result = await sequelize.query(`
       SELECT *
-      FROM "public".key_contact_role 
+      FROM ${MAIN_SCHEMA_NAME}.key_contact_role 
       WHERE rid = :key_contact_role
       AND LOWER(role_status) = 'active'
     `, {
@@ -120,7 +120,7 @@ class SchemaService {
     const sequelize = await initSequelize();
     const result = await sequelize.query(`
       SELECT *
-      FROM "public".key_contact_role where entity_type = '${entity_type}' AND LOWER(role_status) = 'active'
+      FROM ${MAIN_SCHEMA_NAME}.key_contact_role where entity_type = '${entity_type}' AND LOWER(role_status) = 'active'
       ORDER BY role_name ASC;
     `);
     return result[0];
@@ -1272,7 +1272,7 @@ class SchemaService {
   async fetchUserNames(created_by: string) {
     const sequelize = await initSequelize();
     return await sequelize.query(
-      `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+      `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
       {
         replacements: { userId: created_by },
         type: "SELECT",
@@ -1483,7 +1483,7 @@ class SchemaService {
 
       if (account.industry_rid) {
         const industryResult: any = await mainDdSequilze.query(
-          `SELECT industry_name FROM industry WHERE rid = :id`,
+          `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`,
           {
             replacements: { id: account.industry_rid },
             type: "SELECT",
@@ -1516,7 +1516,7 @@ class SchemaService {
     const orgDbSequelize = await initOrgSequelize();
     const roleKeyMap: Record<string, string> = {};
     const dbRoleMap = await sequelize.query(
-      `SELECT role_map, role_name FROM key_contact_role WHERE role_map IS NOT NULL`,
+      `SELECT role_map, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_map IS NOT NULL`,
       { type: "SELECT" }
   );
 
@@ -1620,7 +1620,7 @@ class SchemaService {
       roleRids.length
         ? (
             await sequelize.query(
-              `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+              `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
               { replacements: { ids: roleRids }, type: "SELECT" }
             )
           ).map((r: any) => [r.rid, r.role_name])

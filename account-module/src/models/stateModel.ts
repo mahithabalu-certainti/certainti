@@ -1,6 +1,6 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 interface StateAttributes {
   rid: string;
   country_rid: string;
@@ -54,6 +54,13 @@ export class States
         country_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName : "country",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
         state_name: {
           type: DataTypes.STRING,
@@ -65,6 +72,7 @@ export class States
         modelName: "State",
         tableName: "state",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
 
@@ -79,11 +87,11 @@ export class States
 export async function setupStateSequence(sequelize: Sequelize) {
   try {
     // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS state_seq START 1');
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.state_seq START 1`);
     
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE state
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.STATE}-' || LPAD(nextval('state_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.state
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.STATE}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.state_seq')::text, 10, '0')`);
     
     console.log('State sequence setup complete');
   } catch (error) {
