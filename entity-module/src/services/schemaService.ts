@@ -2867,7 +2867,7 @@ class SchemaService {
 
       if (statusIds.length > 0) {
         const statusRows = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusIds },
             type: "SELECT",
