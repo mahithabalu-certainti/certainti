@@ -6,6 +6,7 @@ export interface ProjectFiscalSummaryAttributes {
   rid: string;
   r_number?: string;
   project_rid: string;
+  project_r_number: string;
   project_fiscal_rid: string;
   eid?: string;
 
@@ -142,6 +143,7 @@ export class ProjectFiscalSummary
   public rid!: string;
   public r_number?: string;
   public project_rid!: string;
+  public project_r_number!: string;
   public project_fiscal_rid!: string;
   public eid?: string;
 
@@ -295,6 +297,10 @@ export class ProjectFiscalSummary
           allowNull: true,
         },
         project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_r_number: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },

@@ -33,6 +33,7 @@ import {
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
+import Decimal from "decimal.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -207,6 +208,7 @@ export class ProjectService {
             await this.projectIngestion.addProjectFiscalSummary(
               accountNumber,
               projectData,
+              existingProject,
               existingProject.rid,
               projectData.key_contacts,
               createdProjectFiscal.rid
@@ -285,6 +287,7 @@ export class ProjectService {
           await this.projectIngestion.addProjectFiscalSummary(
             accountNumber,
             projectData,
+            createdProject,
             createdProject.rid,
             projectData.key_contacts,
             createdProjectFiscal.rid || "",
@@ -872,18 +875,34 @@ export class ProjectService {
  
         const formatNumberForExport = (value: any, currency_symbol: string): string => {
           if (value == null || value === '') return '-';
-          const num = Number(value);
-          if (isNaN(num)) return '-';
-          // Use currency.js to format the number with the provided currency symbol
-          return currency(num, {
-            symbol: currency_symbol? currency_symbol : '$',
-            precision: 2,
-            pattern: '! #',
-            separator: ',',
-            decimal: '.'
-          }).format();
-        };  
- 
+        
+          try {
+            const decimalValue = new Decimal(value.toString());
+            if (!decimalValue.isFinite()) return '-';
+        
+            // Extract just the formatted currency pattern using a dummy value
+            const pattern = currency(0, {
+              symbol: currency_symbol || '$',
+              precision: 2,
+              pattern: '! #',
+              separator: ',',
+              decimal: '.',
+            }).format(); // e.g., "$ 0.00"
+        
+            // Format actual value manually using Decimal
+            const [intPart, decPart] = decimalValue.toFixed().split('.');
+            const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        
+            const formattedNumber = decPart ? `${formattedInt}.${decPart}` : formattedInt;
+            // Replace "0.00" in pattern with our real number
+            return pattern.replace('0.00', formattedNumber);
+        
+          } catch (error) {
+            console.error('Error formatting number:', error);
+            return '-';
+          }
+        };
+          
       const rawResult = allProjectList || [];
       let exportData: any[] = [];
  
@@ -914,11 +933,11 @@ export class ProjectService {
           ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Project ID": project.r_number || "-",
+          "Project ID": project.project_r_number || "-",
         });
  
         // Add fiscal summary rows if they exist
-        const fiscalSummaries = project.project_fiscal_summary || [];
+        const fiscalSummaries = project.ProjectFiscal || [];
         if (fiscalSummaries.length > 0) {
           fiscalSummaries.forEach((fiscal: any) => {
             exportData.push({
@@ -946,7 +965,7 @@ export class ProjectService {
               ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
               : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
               : '-',
-              "Project ID": fiscal.r_number || "-",
+              "Project ID": fiscal.project_r_number || "-",
             });
           });
         }
