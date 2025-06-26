@@ -2190,7 +2190,6 @@ class SchemaService {
     const numberFields = [
       `${fieldAliasMap.total_effort}`,
       `${fieldAliasMap.total_cost}`,
-      "fiscal_year",
       "total_fte",
       `${fieldAliasMap.total_cost_fte}`,
       "total_subcon",
@@ -2207,7 +2206,7 @@ class SchemaService {
     const enumFields = [
       "status_rid",
       `${fieldAliasMap.project_type_name}`,
-      // "fiscal_year",
+      "fiscal_year",
       "st.rid",
       "curr.rid",
       "cou.rid",
