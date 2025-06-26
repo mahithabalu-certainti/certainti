@@ -62,7 +62,7 @@ jobs:
           echo "VITE_USER_URL=/userService" >> $ENV_FILE
           echo "VITE_ACCOUNT_URL=/accountService" >> $ENV_FILE
           echo "VITE_RESOURCE_URL=/entityService" >> $ENV_FILE 
-          echo "VITE_ORGANIZATION=PF2.0" >> $ENV_FILE
+          echo "VITE_ORGANIZATION=TRD365" >> $ENV_FILE
           echo "$ENV_FILE file created successfully!"
           
           echo "STATIC_WEB_APP_API_KEY=$STATIC_WEB_APP_API_KEY" >> $GITHUB_ENV
