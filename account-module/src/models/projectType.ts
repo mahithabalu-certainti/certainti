@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 interface ProjectTypeAttributes {
   rid: string;
   project_type_name: string;
@@ -77,6 +77,7 @@ export class ProjectType
         modelName: "ProjectType",
         tableName: "project_type",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
     return ProjectType;

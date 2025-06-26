@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { User } from "./userModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface UserExtendedPermissionTimelineAttributes {
   rid: string;
@@ -62,12 +62,18 @@ export class UserExtendedPermissionTimeline
         user_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "user", key: "rid" },
+          references: { model: {
+            tableName : "user",
+            schema : `${MAIN_SCHEMA_NAME}`
+          }, key: "rid" },
         },
         profile_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "profile", key: "rid" },
+          references: { model: {
+            tableName : "profile",
+            schema : `${MAIN_SCHEMA_NAME}`
+          }, key: "rid" },
         },
         event_name: { 
           type: DataTypes.STRING, 
@@ -88,6 +94,7 @@ export class UserExtendedPermissionTimeline
         modelName: "UserExtendedPermissionTimeline",
         tableName: "user_extended_permission_timeline",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
 

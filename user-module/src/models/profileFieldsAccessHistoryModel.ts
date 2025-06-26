@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ProfileFieldsAccess } from "./profileFieldsAccessModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ProfileFieldsAccessHistoryAttributes {
   rid: string;
@@ -58,7 +58,14 @@ export class ProfileFieldsAccessHistory
         profile_fields_access_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "profile_fields_access", key: "rid" },
+          references: 
+          { 
+            model: {
+              tableName : "profile_fields_access",
+              schema : `${MAIN_SCHEMA_NAME}`
+            }, 
+            key: "rid" 
+          },
         },
         attribute_name: { 
           type: DataTypes.STRING, 
@@ -79,6 +86,7 @@ export class ProfileFieldsAccessHistory
         modelName: "ProfileFieldsAccessHistory",
         tableName: "profile_fields_access_history",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
 

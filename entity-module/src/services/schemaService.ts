@@ -42,6 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -89,7 +90,7 @@ class SchemaService {
       const mainDbSequelize = await initMainDbSequelize();
 
       const [account]: any[] = await mainDbSequelize.query(
-        `SELECT * FROM account WHERE rid = :rid and r_number = :r_number`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid and r_number = :r_number`,
         {
           replacements: { rid: accountId, r_number: accountNumber },
           type: "SELECT",
@@ -948,7 +949,7 @@ class SchemaService {
       const sequelize = await initMainDbSequelize();
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM account WHERE rid = :rid`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
         {
           replacements: { rid: parentAccountId },
           type: "SELECT",
@@ -975,7 +976,7 @@ class SchemaService {
       let accountRnumber = accountNumber;
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM account WHERE r_number = :r_number`,
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -984,7 +985,7 @@ class SchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await sequelize.query(
-          `SELECT * FROM account WHERE rid = :rid`,
+          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -1098,35 +1099,35 @@ class SchemaService {
 
       if (resource) {
         const [country]: any[] = await mainDbSequelize.query(
-          `SELECT country_code,country_name FROM country WHERE rid = :rid`,
+          `SELECT country_code,country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
           {
             replacements: { rid: resource.country_rid },
             type: "SELECT",
           }
         );
         const [state]: any[] = await mainDbSequelize.query(
-          `SELECT state_name FROM state WHERE rid = :rid`,
+          `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
           {
             replacements: { rid: resource.region_rid },
             type: "SELECT",
           }
         );
         const [city]: any[] = await mainDbSequelize.query(
-          `SELECT city_name FROM city WHERE rid = :rid`,
+          `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
           {
             replacements: { rid: resource.city_rid },
             type: "SELECT",
           }
         );
          const [resource_type]: any[] = await mainDbSequelize.query(
-          `SELECT resource_type_name from resource_type  WHERE rid = :rid`,
+          `SELECT resource_type_name from ${MAIN_SCHEMA_NAME}.resource_type  WHERE rid = :rid`,
           {
             replacements: { rid: resource.resource_type_rid },
             type: "SELECT",
           }
         );
         const [status]: any[] = await mainDbSequelize.query(
-          `SELECT status_name from status  WHERE rid = :rid`,
+          `SELECT status_name from ${MAIN_SCHEMA_NAME}.status  WHERE rid = :rid`,
           {
             replacements: { rid: resource.status_rid },
             type: "SELECT",
@@ -1225,7 +1226,7 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
           {
             replacements: { ids: countryIds },
             type: "SELECT",
@@ -1235,7 +1236,7 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
           {
             replacements: { ids: regionIds },
             type: "SELECT",
@@ -1245,7 +1246,7 @@ class SchemaService {
 
       if (cityIds.length > 0) {
         cities = await mainDdSequilze.query(
-          `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
+          `SELECT rid, city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid IN (:ids)`,
           {
             replacements: { ids: cityIds },
             type: "SELECT",
@@ -1254,7 +1255,7 @@ class SchemaService {
       }
       if (resourceTypeRids.length > 0) {
         resourceType = await mainDdSequilze.query(
-          `SELECT rid, resource_type_name FROM resource_type WHERE rid IN (:ids)`,
+          `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
           {
             replacements: { ids: resourceTypeRids },
             type: "SELECT",
@@ -1263,7 +1264,7 @@ class SchemaService {
       }
       if (statusRids.length > 0) {
         status = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusRids },
             type: "SELECT",
@@ -1400,7 +1401,7 @@ class SchemaService {
 
       if (countryId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, country_name, country_code FROM country WHERE rid = :id`,
+          `SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :id`,
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -1412,7 +1413,7 @@ class SchemaService {
 
       if (regionId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid = :id`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :id`,
           {
             replacements: { id: regionId },
             type: "SELECT",
@@ -1424,7 +1425,7 @@ class SchemaService {
 
       if (currencyId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, currency_name, currency_code, currency_symbol FROM currency WHERE rid = :id`,
+          `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`,
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -1453,9 +1454,9 @@ class SchemaService {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
-        `SELECT account.*, status.status_description AS status  FROM account
-          LEFT JOIN status ON account.status_rid = status.rid
-          WHERE account.rid = :rid`,
+        `SELECT ${MAIN_SCHEMA_NAME}.account.*, ${MAIN_SCHEMA_NAME}.status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
+          LEFT JOIN ${MAIN_SCHEMA_NAME}.status ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
+          WHERE ${MAIN_SCHEMA_NAME}.account.rid = :rid`,
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -1470,10 +1471,7 @@ class SchemaService {
   async fetchAllProjects(
     offset: number,
     limit: number,
-    sort: {
-      sortCol: string;
-      sortOrder: string;
-    },
+    sort: { sortCol: string; sortOrder: string },
     whereClause: Record<string, any>,
     fiscalYear: number,
     accountMeta: string[],
@@ -1484,554 +1482,466 @@ class SchemaService {
   ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
-
-      let results: any[] = [];
       const replacements: any[] = [];
-      let countResult: any[] = [];
-
-      const sortColumnMap: Record<string, string> = {
-        industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+  
+      // Enhanced sort configuration with proper column mappings using output aliases
+      const sortColumnMap: Record<string, { parent: string; child: string }> = {
+        r_number: { parent: "r_number", child: "r_number"},
+        project_r_number: { parent: "project_r_number", child: "project_r_number" },
+        project_name: { parent: "project_name", child: "project_name" },
+        account_name: { parent: "account_name", child: "account_name" },
+        industry_name: { parent: "industry_name_other", child: "industry_name" },
+        project_type_name: { parent: "project_type_name", child: "project_type_name" },
+        project_code: { parent: "project_code", child: "project_code" },
+        project_group: { parent: "project_group", child: "project_group" },
+        project_client_group: { parent: "project_client_group", child: "project_client_group" },
+        total_effort: { parent: "total_effort", child: "total_effort"},
+        classification_name: { parent: "classification_name", child: "classification_name" },
+        status_name: { parent: "status_name", child: "status_name" },
+        country_name: { parent: "country_name", child: "country_name" },
+        region_name: { parent: "region_name", child: "region_name" },
+        project_startdate: { parent: "project_startdate", child: "project_startdate" },
+        project_enddate: { parent: "project_enddate", child: "project_enddate" },
+        modified_datetime: { parent: "modified_datetime", child: "modified_datetime" },
+        created_datetime: { parent: "created_datetime", child: "created_datetime" },
+        fiscal_year: { parent: "", child: "fiscal_year" }, // Only for child
+        qre_final: { parent: "", child: "qre_final" }, // Only for child
+        qre: { parent: "qre", child: "qre" }
       };
 
-      const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
-
-      const childLevelSortingFields = new Set([
-      "fiscal_year",
-      "qre_final",      
-        // Add more child-level fields here if needed
-      ]);
+      const sortConfig = sortColumnMap[sort.sortCol] || { parent: sort.sortCol, child: sort.sortCol };
+      const isChildOnlySort = sort.sortCol === 'fiscal_year' || sort.sortCol === 'qre_final';
   
-      const isAlwaysChildSort = childLevelSortingFields.has(sort.sortCol);
-      const applyChildSort = isAlwaysChildSort || !bothParentAndChild || bothParentAndChild;
-      const applyParentSort = !isAlwaysChildSort && bothParentAndChild;
-
-      // Check if whereClause contains fiscal_year or qre_final
+      // Determine if we should apply parent sort
+      const applyParentSort = bothParentAndChild;
+      const parentSortClause = applyParentSort && sortConfig.parent 
+        ? `ORDER BY ${sortConfig.parent} ${sort.sortOrder}` 
+        : '';
+  
+      // Determine if we should apply child sort
+      const applyChildSort = isChildOnlySort || bothParentAndChild || !bothParentAndChild;
+      const childSortClause = applyChildSort && sortConfig.child
+        ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}`
+        : '';
+  
+      // Check for child-only filters
       const hasChildOnlyFilters = whereClause && 
         (whereClause.fiscal_year !== undefined || whereClause.qre_final !== undefined);
-
-      if (accountMeta.length > 0) {
-        const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
-
-        const { 
-          whereSQL: filterWhereSQLParent, 
-          replacements: whereReplacementsParent 
-        } = (!hasChildOnlyFilters && bothParentAndChild === true)
-          ? this.buildRawWhereClause(whereClause, search, true) 
-          : { whereSQL: "", replacements: [] };
-        
-        const { 
-          whereSQL: filterWhereSQLChild, 
-          replacements: whereReplacementsChild 
-        } = this.buildRawWhereClause(whereClause, search, false);
-
-        const whereConditions: string[] = [];
-        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
-
-        let fiscalYearClause = "";
-        if (fiscalYear && fiscalYear !== 0) {
-           fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
-        }
-        
-        let fullWhereClause = filterWhereSQLParent;
-        if (whereConditions.length > 0) {
-          fullWhereClause += fullWhereClause
-            ? ` AND ${whereConditions.join(" AND ")}`
-            : `${whereConditions.join(" AND ")}`;
-        }
-
-        const childAggSQL = `
-      COALESCE((
-        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
-        FROM (
-          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
-          pt.project_type_name,
-          CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
-          CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
-          CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
-          CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, 
-          pfs.project_rid, pfs.project_fiscal_rid, acc.rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
-          LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid
-          WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_rid
-            ${fiscalYearClause}
-            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-        ) AS pfs_sub
-      ), '[]') AS "ProjectFiscal"
-    `;
-
-        const fullQuery = `
-        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
-        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
-        ps.project_type_rid, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid, 
-        pt.project_type_name, 
-        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate ,
-        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
-        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , 
-        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
-        ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
-        LEFT JOIN project_type pt on pc.rid = ps.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_rid 
-        WHERE acc.rid IN (${accountRids}) ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
-        GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,  pt.project_type_name,
-        ps.status_rid,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
-        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
-        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
-        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
-        st.state_name, ps.created_datetime
-        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}
-        LIMIT ? OFFSET ?
-      `;
-
-        const countQuery = `
-          SELECT COUNT(*) AS total_count
-          FROM project_summary AS ps
-          INNER JOIN account acc ON acc.rid = ps.account_rid 
-          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country_rid 
-          LEFT JOIN state st ON st.rid = ps.region_rid 
-          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-          LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid 
-           LEFT JOIN status s on s.rid = ps.status_rid 
-          WHERE acc.rid IN (${accountRids}) ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
-        `;
-
-        replacements.push(limit, offset);
-
-        results = await mainDbSequelize.query(fullQuery, {
-          replacements,
-          type: "SELECT",
-        });
-
-        countResult = await mainDbSequelize.query(countQuery, {
-          replacements,
-          type: "SELECT",
-        });
-      } else {
-        const { 
-          whereSQL: filterWhereSQLParent, 
-          replacements: whereReplacementsParent 
-        } = (!hasChildOnlyFilters && bothParentAndChild === true)
-          ? this.buildRawWhereClause(whereClause, search, true) 
-          : { whereSQL: "", replacements: [] };
-        
-        const { 
-          whereSQL: filterWhereSQLChild, 
-          replacements: whereReplacementsChild 
-        } = this.buildRawWhereClause(whereClause, search, false);
-
-        const whereConditions: string[] = [];
-        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
-
-        let fiscalYearClause = "";
-        if (fiscalYear && fiscalYear !== 0) {
-           fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
-        }
-
-        let fullWhereClause = filterWhereSQLParent;
-        if (whereConditions.length > 0) {
-          fullWhereClause += fullWhereClause
-            ? ` AND ${whereConditions.join(" AND ")}`
-            : `${whereConditions.join(" AND ")}`;
-        }
-
-        const childAggSQL = `
-      COALESCE((
-        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
-        FROM (
-          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type_rid, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
-          pt.project_type_name,
-          CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
-          CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
-          CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
-          CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, pfs.account_rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
-          LEFT JOIN project_type pt ON pt.rid = pfs.project_type_rid 
-          WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_rid
-            ${fiscalYearClause}
-            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-        ) AS pfs_sub
-      ), '[]') AS "ProjectFiscal"
-    `;
-
-        const fullQuery = `
-        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
+  
+      // Common where clause building
+      const { 
+        whereSQL: filterWhereSQLParent, 
+        replacements: whereReplacementsParent 
+      } = (!hasChildOnlyFilters && bothParentAndChild)
+        ? this.buildRawWhereClause(whereClause, search, true) 
+        : { whereSQL: "", replacements: [] };
+      
+      const { 
+        whereSQL: filterWhereSQLChild, 
+        replacements: whereReplacementsChild 
+      } = this.buildRawWhereClause(whereClause, search, false);
+  
+      replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
+  
+      // Fiscal year clause
+      const fiscalYearClause = fiscalYear && fiscalYear !== 0 
+        ? `AND pfs.fiscal_year = ${fiscalYear}` 
+        : "";
+  
+      // Common SQL fragments
+      const commonSelectFields = `
+        ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
         ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
-        ps.project_type_rid, ps.project_client_group , ps.project_group,
+        ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate ,
-        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
-        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
-        ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid
-        LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid
-        
-        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.project_r_number,
+        ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
+        ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
+        cou.country_name, COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
+        st.state_name as region_name, ps.created_datetime
+      `;
+  
+      const commonJoins = `
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
+      `;
+  
+      const commonGroupBy = `
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, 
+        ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.status_rid, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.project_r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
         st.state_name, ps.created_datetime
-        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}       
+      `;
+  
+      // Child aggregation SQL with proper sorting
+      const childAggSQL = `
+        (
+          SELECT json_agg(pfs_sub ${childSortClause})
+          FROM (
+            SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, 
+            pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+            COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
+            CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
+            CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
+            CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
+            CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, 
+            pfs.assessment_status, pfs.created_datetime,
+            pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, 
+            pfs.comments, pfs.modified_datetime, 
+            pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.project_r_number
+            FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+            INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
+            WHERE pfs.project_code = ps.project_code
+              AND pfs.project_rid = ps.project_rid
+              ${fiscalYearClause}
+              ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+          ) AS pfs_sub
+        ) AS "ProjectFiscal"
+      `;
+  
+      // Build the base query parts
+      const accountFilter = accountMeta.length > 0 
+        ? `WHERE acc.rid IN (${accountMeta.map(acc => `'${acc}'`).join(", ")})` 
+        : "";
+      
+      const whereClauseCombined = [
+        accountFilter,
+        filterWhereSQLParent ? (accountMeta.length > 0 ? "AND " + filterWhereSQLParent : "WHERE " + filterWhereSQLParent) : ""
+      ].filter(Boolean).join(" ");
+  
+      // First get all project IDs that have matching fiscal records (without pagination)
+      const projectIdsQuery = `
+        SELECT DISTINCT ps.project_rid
+        ${commonJoins}
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs ON pfs.project_code = ps.project_code 
+          AND pfs.project_rid = ps.project_rid
+          ${fiscalYearClause}
+          ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ${whereClauseCombined}
+      `;
+  
+      // Get the project IDs first
+      const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
+        replacements,
+        type: "SELECT",
+      });
+  
+      const projectIds = projectIdsResult.map((row: any) => row.project_rid);
+      const totalCount = projectIds.length;
+  
+      if (projectIds.length === 0) {
+        return {
+          finalResult: [],
+          totalCount: 0,
+        };
+      }
+  
+      // Now get the paginated results with full data - with proper sorting
+      const fullQuery = `
+        WITH base_projects AS (
+          SELECT ${commonSelectFields},
+          ${childAggSQL}
+          ${commonJoins}
+          WHERE ps.project_rid IN (${projectIds.map(id => `'${id}'`).join(", ")})
+          ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
+          ${commonGroupBy}
+        )
+        SELECT * FROM base_projects
+        ${parentSortClause}
         LIMIT ? OFFSET ?
       `;
-
-        const countQuery = `
-        SELECT COUNT(*) AS total_count
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid
-        LEFT JOIN project_type pt ON pt.rid = ps.project_type_rid
-        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
-      `;
-
-        replacements.push(limit, offset);
-
-        results = await mainDbSequelize.query(fullQuery, {
-          replacements,
-          type: "SELECT",
-        });
-
-        countResult = await mainDbSequelize.query(countQuery, {
-          replacements,
-          type: "SELECT",
-        });
-      }
-
+  
+      // Add limit and offset to replacements for the final query
+      const finalReplacements = [...replacements, limit, offset];
+  
+      // Debug logging
+      // console.log('Executing query with sorting:', {
+      //   sortCol: sort.sortCol,
+      //   sortOrder: sort.sortOrder,
+      //   applyParentSort,
+      //   applyChildSort,
+      //   parentSortClause,
+      //   childSortClause,
+      //   finalQuery: fullQuery.replace(/\s+/g, ' ').substring(0, 200) + '...'
+      // });
+  
+      const results = await mainDbSequelize.query(fullQuery, {
+        replacements: finalReplacements,
+        type: "SELECT",
+      });
+  
+      // Filter out any rows that might have empty ProjectFiscal (shouldn't happen due to our query)
+      const filteredResults = results.filter((row: any) => 
+        row.ProjectFiscal && row.ProjectFiscal.length > 0
+      );
+  
       return {
-        finalResult: results,
-        totalCount: parseInt(countResult?.[0]?.total_count) || 0,
+        finalResult: filteredResults,
+        totalCount,
       };
     } catch (err) {
-      throw new Error("Error fetching Accounts: " + (err as Error).message);
+      console.error('Error in fetchAllProjects:', err);
+      throw new Error("Error fetching Projects: " + (err as Error).message);
     }
   }
 
   async fetchAllProjectsForExport(
-    sort: {
-      sortCol: string;
-      sortOrder: string;
-    },
+    sort: { sortCol: string; sortOrder: string },
     whereClause: Record<string, any>,
     fiscalYear: number,
     accountMeta: string[],
     userId: string,
     search: string,
-    bothParentAndChild : boolean
+    accountDataSort: string[][],
+    bothParentAndChild: boolean
   ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
-
-      let results: any[] = [];
       const replacements: any[] = [];
-      let countResult: any[] = [];
-
-      const sortColumnMap: Record<string, string> = {
-        industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+  
+      // Enhanced sort configuration with proper column mappings using output aliases
+      const sortColumnMap: Record<string, { parent: string; child: string }> = {
+        r_number: { parent: "r_number", child: "r_number" },
+        project_r_number: {parent: "project_r_number", child: "project_r_number" },
+        project_name: { parent: "project_name", child: "project_name" },
+        account_name: { parent: "account_name", child: "account_name" },
+        industry_name: { parent: "industry_name_other", child: "industry_name" },
+        project_type_name: { parent: "project_type_name", child: "project_type_name" },
+        project_code: { parent: "project_code", child: "project_code" },
+        project_group: { parent: "project_group", child: "project_group" },
+        project_client_group: { parent: "project_client_group", child: "project_client_group" },
+        total_effort: { parent: "total_effort", child: "total_effort"},
+        classification_name: { parent: "classification_name", child: "classification_name" },
+        status_name: { parent: "status_name", child: "status_name" },
+        country_name: { parent: "country_name", child: "country_name" },
+        region_name: { parent: "region_name", child: "region_name" },
+        project_startdate: { parent: "project_startdate", child: "project_startdate" },
+        project_enddate: { parent: "project_enddate", child: "project_enddate" },
+        modified_datetime: { parent: "modified_datetime", child: "modified_datetime" },
+        created_datetime: { parent: "created_datetime", child: "created_datetime" },
+        fiscal_year: { parent: "", child: "fiscal_year" }, // Only for child
+        qre_final: { parent: "", child: "qre_final" },
+        qre: { parent: "qre", child: "qre" }
       };
 
-      const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
-
-      const childLevelSortingFields = new Set([
-        "fiscal_year",
-        "qre_final",
-        // Add more child-level fields here if needed
-      ]);
+      const sortConfig = sortColumnMap[sort.sortCol] || { parent: sort.sortCol, child: sort.sortCol };
+      const isChildOnlySort = sort.sortCol === 'fiscal_year' || sort.sortCol === 'qre_final';
   
-      const isAlwaysChildSort = childLevelSortingFields.has(sort.sortCol);
-      const applyChildSort = isAlwaysChildSort || !bothParentAndChild || bothParentAndChild;
-      const applyParentSort = !isAlwaysChildSort && bothParentAndChild;
-
-      // Check if whereClause contains fiscal_year or qre_final
+      // Determine if we should apply parent sort
+      const applyParentSort = bothParentAndChild;
+      const parentSortClause = applyParentSort && sortConfig.parent 
+        ? `ORDER BY ${sortConfig.parent} ${sort.sortOrder}` 
+        : '';
+  
+      // Determine if we should apply child sort
+      const applyChildSort = isChildOnlySort || bothParentAndChild || !bothParentAndChild;
+      const childSortClause = applyChildSort && sortConfig.child
+        ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}`
+        : '';
+  
+      // Check for child-only filters
       const hasChildOnlyFilters = whereClause && 
         (whereClause.fiscal_year !== undefined || whereClause.qre_final !== undefined);
-
-      if (accountMeta.length > 0) {
-        const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
-
-        const { 
-          whereSQL: filterWhereSQLParent, 
-          replacements: whereReplacementsParent 
-        } = (!hasChildOnlyFilters && bothParentAndChild === true)
-          ? this.buildRawWhereClause(whereClause, search, true) 
-          : { whereSQL: "", replacements: [] };
-        
-        const { 
-          whereSQL: filterWhereSQLChild, 
-          replacements: whereReplacementsChild 
-        } = this.buildRawWhereClause(whereClause, search, false);
-
-        const whereConditions: string[] = [];
-        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
-
-        let fiscalYearClause = "";
-        if (fiscalYear && fiscalYear !== 0) {
-          fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
-        }
-
-        let fullWhereClause = filterWhereSQLParent;
-        if (whereConditions.length > 0) {
-        fullWhereClause += fullWhereClause
-        ? ` AND ${whereConditions.join(" AND ")}`
-        : `${whereConditions.join(" AND ")}`;
-        }
-
-        const childAggSQL = `
-      COALESCE((
-        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
-        FROM (
-          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type_rid, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,pt.project_type_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
-          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid,
-          LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid
-          WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_rid
-            ${fiscalYearClause}
-            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-        ) AS pfs_sub
-      ), '[]') AS project_fiscal_summary
-    `;
-
-        const fullQuery = `
-        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
-        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
-        ps.project_type_rid, ps.project_client_group , ps.project_group,
-        pt.project_type_name,
-        ps.project_classification_rid, 
-        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate,
-        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
-        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
-        ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
-        LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_rid 
-        WHERE acc.rid IN (${accountRids}) ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
-        GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,pt.project_type_name,
-        ps.status_rid,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
-        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
-        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
-        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
-        st.state_name, ps.created_datetime
-        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}       
-      `;
-
-        const countQuery = `
-          SELECT COUNT(*) AS total_count
-          FROM project_summary AS ps
-          INNER JOIN account acc ON acc.rid = ps.account_rid 
-          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country_rid 
-          LEFT JOIN state st ON st.rid = ps.region_rid 
-          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-          LEFT JOIN project_type pt on pt.rid = pfs.project_type_rid 
-          LEFT JOIN status s on s.rid = ps.status_rid 
-          WHERE acc.rid in (${accountRids}) ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
-        `;
-
-        results = await mainDbSequelize.query(fullQuery, {
-          replacements,
-          type: "SELECT",
-        });
-
-        countResult = await mainDbSequelize.query(countQuery, {
-          replacements,
-          type: "SELECT",
-        });
-      } else {
-        const { 
-          whereSQL: filterWhereSQLParent, 
-          replacements: whereReplacementsParent 
-        } = (!hasChildOnlyFilters && bothParentAndChild === true) 
-          ? this.buildRawWhereClause(whereClause, search, true) 
-          : { whereSQL: "", replacements: [] };
-        
-        const { 
-          whereSQL: filterWhereSQLChild, 
-          replacements: whereReplacementsChild 
-        } = this.buildRawWhereClause(whereClause, search, false);
-
-        const whereConditions: string[] = [];
-        replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
-
-        let fiscalYearClause = "";
-        if (fiscalYear && fiscalYear !== 0) {
-          fiscalYearClause = `AND pfs.fiscal_year = ${fiscalYear}`;
-        }
-
-        let fullWhereClause = filterWhereSQLParent;
-        if (whereConditions.length > 0) {
-        fullWhereClause += fullWhereClause
-        ? ` AND ${whereConditions.join(" AND ")}`
-        : `${whereConditions.join(" AND ")}`;
-        }
-
-        const childAggSQL = `
-      COALESCE((
-        SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
-        FROM (
-          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type_rid, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,pt.project_type_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
-          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
-          FROM project_fiscal_summary pfs
-          INNER JOIN account acc ON acc.rid = pfs.account_rid 
-          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
-          LEFT JOIN project_type pt on pt.rid = ps.project_type_rid  
-          WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_rid
-            ${fiscalYearClause}
-            ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-        ) AS pfs_sub
-      ), '[]') AS project_fiscal_summary
-    `;
-
-        const fullQuery = `
-        SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
+  
+      // Common where clause building
+      const { 
+        whereSQL: filterWhereSQLParent, 
+        replacements: whereReplacementsParent 
+      } = (!hasChildOnlyFilters && bothParentAndChild)
+        ? this.buildRawWhereClause(whereClause, search, true) 
+        : { whereSQL: "", replacements: [] };
+      
+      const { 
+        whereSQL: filterWhereSQLChild, 
+        replacements: whereReplacementsChild 
+      } = this.buildRawWhereClause(whereClause, search, false);
+  
+      replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
+  
+      // Fiscal year clause
+      const fiscalYearClause = fiscalYear && fiscalYear !== 0 
+        ? `AND pfs.fiscal_year = ${fiscalYear}` 
+        : "";
+  
+      // Common SQL fragments
+      const commonSelectFields = `
+        ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
         ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
-        ps.project_type_rid, ps.project_client_group , ps.project_group,
+        ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid,s.status_name, ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
-        ps.program_name, ps.project_startdate , ps.project_enddate ,
-        ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
-        ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
-        ${childAggSQL}
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
-        LEFT JOIN project_type pt on pt.rid = ps.project_type_rid 
-        LEFT JOIN status s on s.rid = ps.status_rid  
-        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.project_r_number,
+        ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
+        ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
+        cou.country_name, COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
+        st.state_name as region_name, ps.created_datetime
+      `;
+  
+      const commonJoins = `
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
+      `;
+  
+      const commonGroupBy = `
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        ps.industry_name, ind.industry_name, ps.project_type_rid,pt.project_type_name, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.status_rid,s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, 
+        ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
+        ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.project_r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
         st.state_name, ps.created_datetime
-        ${applyParentSort ? `ORDER BY ${sortCol} ${sort.sortOrder}` : ""}       
       `;
-
-        const countQuery = `
-        SELECT COUNT(*) AS total_count
-        FROM project_summary AS ps
-        INNER JOIN account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN state st ON st.rid = ps.region_rid 
-        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
-        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
+  
+      // Child aggregation SQL with proper sorting
+      const childAggSQL = `
+        (
+          SELECT json_agg(pfs_sub ${childSortClause})
+          FROM (
+            SELECT pfs.project_code, pfs.project_group, pfs.project_name, pt.project_type_name, 
+            pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+            COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
+            CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
+            CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
+            CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
+            CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, 
+            pfs.assessment_status, pfs.created_datetime,
+            pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, 
+            pfs.comments, pfs.modified_datetime, 
+            pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.project_r_number
+            FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
+            INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
+            WHERE pfs.project_code = ps.project_code
+              AND pfs.project_rid = ps.project_rid
+              ${fiscalYearClause}
+              ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+          ) AS pfs_sub
+        ) AS "ProjectFiscal"
       `;
-
-        results = await mainDbSequelize.query(fullQuery, {
-          replacements,
-          type: "SELECT",
-        });
-
-        countResult = await mainDbSequelize.query(countQuery, {
-          replacements,
-          type: "SELECT",
-        });
+  
+      // Build the base query parts
+      const accountFilter = accountMeta.length > 0 
+        ? `WHERE acc.rid IN (${accountMeta.map(acc => `'${acc}'`).join(", ")})` 
+        : "";
+      
+      const whereClauseCombined = [
+        accountFilter,
+        filterWhereSQLParent ? (accountMeta.length > 0 ? "AND " + filterWhereSQLParent : "WHERE " + filterWhereSQLParent) : ""
+      ].filter(Boolean).join(" ");
+  
+      // First get all project IDs that have matching fiscal records (without pagination)
+      const projectIdsQuery = `
+        SELECT DISTINCT ps.project_rid
+        ${commonJoins}
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs ON pfs.project_code = ps.project_code 
+          AND pfs.project_rid = ps.project_rid
+          ${fiscalYearClause}
+          ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ${whereClauseCombined}
+      `;
+  
+      // Get the project IDs first
+      const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
+        replacements,
+        type: "SELECT",
+      });
+  
+      const projectIds = projectIdsResult.map((row: any) => row.project_rid);
+      const totalCount = projectIds.length;
+  
+      if (projectIds.length === 0) {
+        return {
+          finalResult: [],
+          totalCount: 0,
+        };
       }
-
+  
+      // Now get the paginated results with full data - with proper sorting
+      const fullQuery = `
+        WITH base_projects AS (
+          SELECT ${commonSelectFields},
+          ${childAggSQL}
+          ${commonJoins}
+          WHERE ps.project_rid IN (${projectIds.map(id => `'${id}'`).join(", ")})
+          ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
+          ${commonGroupBy}
+        )
+        SELECT * FROM base_projects
+        ${parentSortClause}
+      `;
+  
+      // Add limit and offset to replacements for the final query
+      const finalReplacements = [...replacements];
+  
+      // Debug logging
+      // console.log('Executing query with sorting:', {
+      //   sortCol: sort.sortCol,
+      //   sortOrder: sort.sortOrder,
+      //   applyParentSort,
+      //   applyChildSort,
+      //   parentSortClause,
+      //   childSortClause,
+      //   finalQuery: fullQuery.replace(/\s+/g, ' ').substring(0, 200) + '...'
+      // });
+  
+      const results = await mainDbSequelize.query(fullQuery, {
+        replacements: finalReplacements,
+        type: "SELECT",
+      });
+  
+      // Filter out any rows that might have empty ProjectFiscal (shouldn't happen due to our query)
+      const filteredResults = results.filter((row: any) => 
+        row.ProjectFiscal && row.ProjectFiscal.length > 0
+      );
+  
       return {
-        finalResult: results,
-        totalCount: parseInt(countResult?.[0]?.total_count) || 0,
+        finalResult: filteredResults,
+        totalCount,
       };
     } catch (err) {
-      throw new Error("Error fetching Accounts: " + (err as Error).message);
+      console.error('Error in fetchAllProjects:', err);
+      throw new Error("Error fetching Projects: " + (err as Error).message);
     }
   }
 
@@ -2212,7 +2122,7 @@ class SchemaService {
       const mainDbInstance = await initMainDbSequelize();
 
       let account: any[] = await mainDbInstance.query(
-        `SELECT rid, r_number, storage_type, parent_account_rid FROM account`,
+        `SELECT rid, r_number, storage_type, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account`,
         {
           replacements: { created_by: userId },
           type: "SELECT",
@@ -2244,13 +2154,14 @@ class SchemaService {
 
     const fieldAliasMap: Record<string, string> = {
       r_number: `${tablePrefix}.r_number`,
+      project_r_number: `${tablePrefix}.project_r_number`,
       comments: `${tablePrefix}.comments`,
       region_rid: "st.rid",
       currency_rid: "curr.rid",
       country_rid: "cou.rid",
       industry_name: `COALESCE(${tablePrefix}.industry_name, ind.industry_name)`,
       industry_name_other: `COALESCE(${tablePrefix}.industry_name, ind.industry_name)`,
-      // modified_datetime: `modified_datetime`,
+      modified_datetime: `${tablePrefix}.modified_datetime`,
       classification_name:
         `COALESCE(${tablePrefix}.project_classification_other, pc.classification_name)`,
       account_name: `acc.account_name`,
@@ -2259,17 +2170,17 @@ class SchemaService {
       project_classification_rid: `${tablePrefix}.project_classification_rid`,
       project_classification_other: `${tablePrefix}.project_classification_other`,
       status_rid: `${tablePrefix}.status_rid`,
-      project_type_rid: `${tablePrefix}.project_type_rid`,
+      project_type_name: `pt.project_type_name`,
       project_name: `${tablePrefix}.project_name`,
       project_startdate: `${tablePrefix}.project_startdate`,
       project_enddate: `${tablePrefix}.project_enddate`,
-      // total_effort: `total_effort`,
-      // total_cost: `${tablePrefix}.total_cost`,
+      total_effort: isParent? `${tablePrefix}.total_effort`:`${tablePrefix}.total_effort_prj`,
+      total_cost: isParent? `${tablePrefix}.total_cost`:`${tablePrefix}.total_cost_prj`,
       // total_fte: `${tablePrefix}.total_fte`,
-      // total_cost_fte: `${tablePrefix}.total_cost_fte`,
-      // total_cost_subcon: `${tablePrefix}.total_cost_subcon`,
+      total_cost_fte: isParent? `${tablePrefix}.total_cost_fte`:`${tablePrefix}.total_cost_fte_prj`,
+      total_cost_subcon: isParent? `${tablePrefix}.total_cost_subcon`:`${tablePrefix}.total_cost_subcon_prj`,
       // total_subcon: `${tablePrefix}.total_subcon`,
-      // total_cost_nonlabor: `${tablePrefix}.total_cost_nonlabor`,
+      total_cost_nonlabor: isParent? `${tablePrefix}.total_cost_nonlabor`:`${tablePrefix}.total_cost_nonlabor_prj`,
       project_code: `${tablePrefix}.project_code`,
       assessment_status: `${tablePrefix}.assessment_status`,
       project_point_of_contact: `${tablePrefix}.project_point_of_contact`,
@@ -2278,26 +2189,25 @@ class SchemaService {
     };
 
     const numberFields = [
-      `total_effort`,
-      `total_cost`,
-      "fiscal_year",
+      `${fieldAliasMap.total_effort}`,
+      `${fieldAliasMap.total_cost}`,
       "total_fte",
-      `total_cost_fte`,
+      `${fieldAliasMap.total_cost_fte}`,
       "total_subcon",
-      `total_cost_subcon`,
-      `total_cost_nonlabor`,
+      `${fieldAliasMap.total_cost_subcon}`,
+      `${fieldAliasMap.total_cost_nonlabor}`,
       "qre",
       "qre_final"
     ];
     const dateFields = [
       "project_startdate",
       "project_enddate",
-      "modified_datetime",
+      `${tablePrefix}.modified_datetime`,
     ];
     const enumFields = [
       "status_rid",
-      `${tablePrefix}.project_type_rid`,
-      // "fiscal_year",
+      `${fieldAliasMap.project_type_name}`,
+      "fiscal_year",
       "st.rid",
       "curr.rid",
       "cou.rid",
@@ -2697,7 +2607,7 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
           {
             replacements: { ids: countryIds },
             type: "SELECT",
@@ -2707,7 +2617,7 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
           {
             replacements: { ids: regionIds },
             type: "SELECT",
@@ -2717,7 +2627,7 @@ class SchemaService {
 
       if (currencyIds.length > 0) {
         currencies = await mainDdSequilze.query(
-          `SELECT rid, currency_code, currency_symbol FROM currency WHERE rid IN (:ids)`,
+          `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
           {
             replacements: { ids: currencyIds },
             type: "SELECT",
@@ -2768,7 +2678,7 @@ class SchemaService {
 
       if (industryIds.length > 0) {
         IndustryRows = await mainDdSequilze.query(
-          `SELECT rid, industry_name FROM industry WHERE rid IN (:ids)`,
+          `SELECT rid, industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid IN (:ids)`,
           {
             replacements: { ids: industryIds },
             type: "SELECT",
@@ -2815,7 +2725,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2873,7 +2783,7 @@ class SchemaService {
     try {
       if (project.industry_rid && !project.industry_name) {
         const industryResult: any = await mainDdSequilze.query(
-          `SELECT industry_name FROM industry WHERE rid = :id`,
+          `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`,
           {
             replacements: { id: project.industry_rid },
             type: "SELECT",
@@ -2895,7 +2805,7 @@ class SchemaService {
     try {
       if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
-          `SELECT status_name FROM status WHERE rid = :id`,
+          `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
           {
             replacements: { id: project.status_rid },
             type: "SELECT",
@@ -2907,7 +2817,7 @@ class SchemaService {
       }
       if (project.project_type_rid) {
         const projectTypeResult: any = await mainDdSequilze.query(
-          `SELECT project_type_name FROM project_type WHERE rid = :id`,
+          `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid = :id`,
           {
             replacements: { id: project.project_type_rid },
             type: "SELECT",
@@ -2934,11 +2844,16 @@ class SchemaService {
         ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
       ].filter(Boolean);
 
+       const statusIds = [
+        ...new Set(keyContacts.map((r: any) => r.status_rid)),
+      ].filter(Boolean);
+
       let keyContactMap: Record<string, string> = {};
+      let statusMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2950,9 +2865,24 @@ class SchemaService {
         );
       }
 
+      if (statusIds.length > 0) {
+        const statusRows = await mainDdSequilze.query(
+          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: statusIds },
+            type: "SELECT",
+          }
+        );
+
+        statusMap = Object.fromEntries(
+          statusRows.map((c: any) => [c.rid, c.status_name])
+        );
+      }
+
       const enrichedKeyContacts = keyContacts.map((kc: any) => ({
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
+        status_name: statusMap[kc.status_rid] || null,
       }));
 
       return {
@@ -2974,7 +2904,7 @@ class SchemaService {
         !project.project_classification_other
       ) {
         const [rows] = await mainDdSequilze.query(
-          `SELECT classification_name FROM project_classification WHERE rid = :rid`,
+          `SELECT classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid = :rid`,
           {
             replacements: { rid: project.project_classification_rid },
             type: mainDdSequilze.QueryTypes.SELECT,
@@ -3006,7 +2936,7 @@ class SchemaService {
 
       if (classificationIds.length > 0) {
         classificationRows = await mainDdSequilze.query(
-          `SELECT rid, classification_name FROM project_classification WHERE rid IN (:ids)`,
+          `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)`,
           {
             replacements: { ids: classificationIds },
             type: "SELECT",

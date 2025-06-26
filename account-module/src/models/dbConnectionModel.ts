@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 interface DatabaseConnectionAttributes {
   rid: string;
   r_number?: string;
@@ -75,6 +75,7 @@ export class DatabaseConnection
         modelName: "DatabaseConnection",
         tableName: "database_connection",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
   }
@@ -83,11 +84,11 @@ export class DatabaseConnection
 export async function setupDbConnectionSequence(sequelize: Sequelize) {
   try {
     // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS db_connection_seq START 1');
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.db_connection_seq START 1`);
     
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE database_connection
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.DATABASE_CONNECTION}-' || LPAD(nextval('db_connection_seq')::text, 5, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.database_connection
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.DATABASE_CONNECTION}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.db_connection_seq')::text, 5, '0')`);
     
     console.log('DbConnection sequence setup complete');
   } catch (error) {

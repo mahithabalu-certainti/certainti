@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface MenuAttributes {
   rid: string;
@@ -72,6 +72,7 @@ export class Menu
         modelName: "Menu",
         tableName: "menu",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (menu) => {
             menu.setDataValue("modified_datetime", new Date());

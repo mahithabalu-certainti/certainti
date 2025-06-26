@@ -1,11 +1,12 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constants";
 import { ProjectSummary } from "./projectSummary";
 
 export interface ProjectFiscalSummaryAttributes {
   rid: string;
   r_number?: string;
   project_rid: string;
+  project_r_number: string;
   project_fiscal_rid: string;
   eid?: string;
 
@@ -142,6 +143,7 @@ export class ProjectFiscalSummary
   public rid!: string;
   public r_number?: string;
   public project_rid!: string;
+  public project_r_number!: string;
   public project_fiscal_rid!: string;
   public eid?: string;
 
@@ -295,6 +297,10 @@ export class ProjectFiscalSummary
           allowNull: true,
         },
         project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_r_number: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },
@@ -495,7 +501,7 @@ export class ProjectFiscalSummary
       },
       {
         sequelize,
-        schema,
+        schema : `${MAIN_SCHEMA_NAME}`,
         tableName: "project_fiscal_summary",
         timestamps: false,
         underscored: true,

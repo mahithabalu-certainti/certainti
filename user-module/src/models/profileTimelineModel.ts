@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ProfileTimelineAttributes {
   rid: string;
@@ -58,7 +58,10 @@ export class ProfileTimeline
         profile_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "profile", key: "rid" },
+          references: { model: {
+            tableName : "profile",
+            schema : `${MAIN_SCHEMA_NAME}`
+          }, key: "rid" },
         },
         event_name: { 
           type: DataTypes.STRING, 
@@ -79,6 +82,7 @@ export class ProfileTimeline
         modelName: "ProfileTimeline",
         tableName: "profile_timeline",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
 

@@ -66,7 +66,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
 
     const value = await validateRequest(
       req,
-      organization === constants.PLATFORM_TWO
+      organization === constants.ENV_TRD365
         ? createUserSchema
         : enterpriseUserSchema,
       organization,
@@ -177,7 +177,7 @@ async function updateUser(req: Request, res: Response): Promise<void> {
 
     const value = await validateRequest(
       req,
-      organization === constants.PLATFORM_TWO
+      organization === constants.ENV_TRD365
         ? updateUserSchema
         : userDetailsUpdateSchema,
       organization,

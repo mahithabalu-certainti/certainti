@@ -1,5 +1,5 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ColorCodesAttributes {
   rid: string;
@@ -73,6 +73,7 @@ export class ColorCodes
         modelName: "ColorCodes",
         tableName: "color_codes",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
   }

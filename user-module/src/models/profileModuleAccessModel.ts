@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { MenuModule } from "./menuModuleModel";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 
 interface ProfileModuleAccessAttributes {
   rid: string;
@@ -56,12 +56,18 @@ export class ProfileModuleAccess
         profile_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "profile", key: "rid" },
+          references: { model: {
+            tableName : "profile",
+            schema : `${MAIN_SCHEMA_NAME}`
+          }, key: "rid" },
         },
         menu_module_id: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          references: { model: "menu_module", key: "rid" },
+          references: { model: {
+            tableName : "menu_module",
+            schema : `${MAIN_SCHEMA_NAME}`
+          }, key: "rid" },
         },
         is_enabled: {
           type: DataTypes.BOOLEAN,
@@ -74,6 +80,7 @@ export class ProfileModuleAccess
         modelName: "ProfileModuleAccess",
         tableName: "profile_module_access",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (record) => {
             record.setDataValue("modified_datetime", new Date());

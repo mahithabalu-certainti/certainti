@@ -4,7 +4,7 @@ import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { States } from "./stateModel";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 
 interface ProjectSummaryAttributes {
   rid: string;
@@ -25,9 +25,9 @@ interface ProjectSummaryAttributes {
   project_client_group?: string | null;
   project_group?: string | null;
   fiscal_year: number;
-  country?: string | null;
-  region?: string | null;
-  currency?: string | null;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
   total_effort?: number | null;
   total_cost?: number | null;
   total_fte?: number | null;
@@ -77,9 +77,9 @@ export class ProjectSummary
   declare project_client_group: string | null;
   declare project_group: string | null;
   declare fiscal_year: number;
-  declare country: string | null;
-  declare region: string | null;
-  declare currency: string | null;
+  declare country_rid: string | null;
+  declare region_rid: string | null;
+  declare currency_rid: string | null;
   declare total_effort: number | null;
   declare total_cost: number | null;
   declare total_fte: number | null;
@@ -145,6 +145,13 @@ export class ProjectSummary
         industry_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "industry",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
         industry_name: {
           type: DataTypes.STRING(100),
@@ -153,6 +160,13 @@ export class ProjectSummary
         account_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName : "account",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
         program_name: {
           type: DataTypes.STRING(255),
@@ -194,17 +208,38 @@ export class ProjectSummary
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-        country: {
+        country_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "country",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
-        region: {
+        region_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "state",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
-        currency: {
+        currency_rid : {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "currency",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          },
         },
         total_effort: {
           type: DataTypes.DOUBLE,
@@ -274,7 +309,7 @@ export class ProjectSummary
       {
         sequelize,
         tableName: "project_summary",
-        schema: "public",
+        schema: `${MAIN_SCHEMA_NAME}`,
         timestamps: false,
       }
     );
@@ -286,13 +321,13 @@ export class ProjectSummary
       onUpdate: "CASCADE",
     });
     ProjectSummary.belongsTo(Country, {
-      foreignKey: "country",
+      foreignKey: "country_rid",
       as: "country_ref",
       onDelete: "SET NULL",
       onUpdate: "CASCADE",
     });
     ProjectSummary.belongsTo(Currency, {
-      foreignKey: "currency",
+      foreignKey: "currency_rid",
       as: "currency_ref",
       onDelete: "SET NULL",
       onUpdate: "CASCADE",
@@ -304,7 +339,7 @@ export class ProjectSummary
       onUpdate: "CASCADE",
     });
     ProjectSummary.belongsTo(States, {
-      foreignKey: "region",
+      foreignKey: "region_rid",
       as: "region_ref",
       onDelete: "SET NULL",
       onUpdate: "CASCADE",
@@ -315,11 +350,11 @@ export class ProjectSummary
 export async function setupProjectSummarySequence(sequelize: Sequelize) {
   try {
     await sequelize.query(
-      "CREATE SEQUENCE IF NOT EXISTS project_summary_seq START 1"
+      `CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.project_summary_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE project_summary
-        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.project_summary
+        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.project_summary_seq')::text, 10, '0')`);
 
     console.log("Project summary sequence setup complete");
   } catch (error) {

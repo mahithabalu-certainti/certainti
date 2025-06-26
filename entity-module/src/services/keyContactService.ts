@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { IKeyContactDetail, IUpdateKeyContactDetail } from "../utils/types";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
 
 export class KeyContactService {
   async manageKeyContacts(
@@ -51,7 +52,7 @@ export class KeyContactService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -64,7 +65,7 @@ export class KeyContactService {
       }
       if (statusIds.length > 0) {
         const statusRows = await mainDbSequlize.query(
-          `SELECT rid, status_name FROM status WHERE rid IN (:ids)`,
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
           {
             replacements: { ids: statusIds },
             type: "SELECT",
@@ -211,7 +212,7 @@ export class KeyContactService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequelize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",

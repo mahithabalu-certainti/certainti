@@ -1,5 +1,5 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
 interface CurrencyAttributes {
   rid: string;
   currency_code: string;
@@ -73,6 +73,7 @@ export class Currency
         modelName: "Currency",
         tableName: "currency",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`
       }
     );
   }

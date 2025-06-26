@@ -3,7 +3,7 @@ import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
-import { ENV_PREFIX} from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME} from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { States } from "./stateModel";
 import { Status } from "./statusModel";
@@ -135,7 +135,10 @@ export class Account
         status_rid: {
           type: DataTypes.STRING(20),
           references: {
-            model: "status",
+            model: {
+              tableName : "status",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid",
           },
         },
@@ -150,6 +153,13 @@ export class Account
         region_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "state",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         storage_type: {
           type: DataTypes.STRING,
@@ -171,18 +181,46 @@ export class Account
         database_connection_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "database_connection",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         country_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "country",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         currency_rid: {
           type: DataTypes.STRING(50),
           allowNull: true,
+          references: {
+            model: {
+              tableName : "currency",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         industry_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName : "industry",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid"
+          }
         },
         industry_name_other: {
           type: DataTypes.STRING(255),
@@ -201,7 +239,10 @@ export class Account
           type: DataTypes.STRING(50),
           allowNull: true,
           references: {
-            model: "account_file_drop_config",
+            model: {
+              tableName : "account_file_drop_config",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
             key: "rid"
           }
         },
@@ -230,6 +271,7 @@ export class Account
         modelName: "Account",
         tableName: "account",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
         hooks: {
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());

@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 interface StatusAttributes {
   rid: string;
   status_name: string;
@@ -77,6 +77,7 @@ export class Status
         modelName: "Status",
         tableName: "status",
         timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
     return Status;

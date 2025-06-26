@@ -96,7 +96,7 @@ async function userProfiles(req: Request, res: Response): Promise<void> {
         }
         
         // Continue with existing validation and pagination logic for when parameters are provided
-    const value = await validateRequest(req, listProfileSchema,"PLATFORM_TWO", res, "GET");
+    const value = await validateRequest(req, listProfileSchema,"ENV_TRD365", res, "GET");
 
     let parsedFilters: Record<string, any> = {};
 
@@ -202,7 +202,7 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
     const validatedData = await validateRequest(
       req,
       userPermissionByIdSchema,
-      "PLATFORM_TWO", // Or appropriate organization value
+      "ENV_TRD365", // Or appropriate organization value
       res,
       "GET"
     );
@@ -250,7 +250,7 @@ async function createProfile(req: Request, res: Response): Promise<void> {
     const validatedData = await validateRequest(
       req,
       createProfileSchema,
-      "PLATFORM_TWO",
+      "ENV_TRD365",
       res,
       "POST"
     );
@@ -309,7 +309,7 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
     const validatedData = await validateRequest(
       req,
       getProfilePermissionsSchema,
-      "PLATFORM_TWO", // Or appropriate organization value
+      "ENV_TRD365", // Or appropriate organization value
       res,
       "GET"
     );
@@ -367,7 +367,7 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
     const validatedData = await validateRequest(
       req,
       updateProfilePermissionsSchema,
-      "PLATFORM_TWO", // Or appropriate organization value
+      "ENV_TRD365", // Or appropriate organization value
       res,
       "POST"
     );
@@ -427,7 +427,7 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
   const validatedData = await validateRequest(
     req,
     editProfilePermissionsSchema,
-    "PLATFORM_TWO", // Or appropriate organization value
+    "ENV_TRD365", // Or appropriate organization value
     res,
     "PUT"
   );
@@ -488,7 +488,7 @@ async function updateUserExtendedPermissions(req: Request, res: Response): Promi
   const validatedData = await validateRequest(
     req,
     updateUserExtendedPermissionsSchema,
-    "PLATFORM_TWO", // Or appropriate organization value
+    "ENV_TRD365", // Or appropriate organization value
     res,
     "PUT"
   );
@@ -580,7 +580,7 @@ async function getUserExtendedPermissions(req: Request, res: Response): Promise<
 async function exportUserProfiles(req: Request, res: Response): Promise<void> {
   const methodName = "Export user profiles"
   try {
-    //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"PLATFORM_TWO", res, "GET");
+    //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"ENV_TRD365", res, "GET");
     //   if (!validatedData) return;
     const profileId = req.params.profileId;
     const profiles = await services.userServices.exportUserprofiles(profileId);
