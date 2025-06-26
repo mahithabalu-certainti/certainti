@@ -1486,6 +1486,7 @@ class SchemaService {
       // Enhanced sort configuration with proper column mappings using output aliases
       const sortColumnMap: Record<string, { parent: string; child: string }> = {
         r_number: { parent: "r_number", child: "r_number"},
+        project_r_number: { parent: "project_r_number", child: "project_r_number" },
         project_name: { parent: "project_name", child: "project_name" },
         account_name: { parent: "account_name", child: "account_name" },
         industry_name: { parent: "industry_name_other", child: "industry_name" },
@@ -1555,7 +1556,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.project_r_number,
         ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
         ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
@@ -1585,7 +1586,7 @@ class SchemaService {
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
         ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
@@ -1607,7 +1608,7 @@ class SchemaService {
             pfs.assessment_status, pfs.created_datetime,
             pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, 
             pfs.comments, pfs.modified_datetime, 
-            pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.r_number
+            pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.project_r_number
             FROM project_fiscal_summary pfs
             INNER JOIN account acc ON acc.rid = pfs.account_rid 
             LEFT JOIN project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -1722,7 +1723,8 @@ class SchemaService {
   
       // Enhanced sort configuration with proper column mappings using output aliases
       const sortColumnMap: Record<string, { parent: string; child: string }> = {
-        r_number: { parent: "r_number", child: "r_number"},
+        r_number: { parent: "r_number", child: "r_number" },
+        project_r_number: {parent: "project_r_number", child: "project_r_number" },
         project_name: { parent: "project_name", child: "project_name" },
         account_name: { parent: "account_name", child: "account_name" },
         industry_name: { parent: "industry_name_other", child: "industry_name" },
@@ -1792,7 +1794,7 @@ class SchemaService {
         ps.project_classification_rid, 
         pt.project_type_name,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.project_r_number,
         ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
         ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
@@ -1822,7 +1824,7 @@ class SchemaService {
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
         ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
@@ -1844,7 +1846,7 @@ class SchemaService {
             pfs.assessment_status, pfs.created_datetime,
             pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, 
             pfs.comments, pfs.modified_datetime, 
-            pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.r_number
+            pfs.project_rid, pfs.project_fiscal_rid, acc.rid, pfs.project_r_number
             FROM project_fiscal_summary pfs
             INNER JOIN account acc ON acc.rid = pfs.account_rid 
             LEFT JOIN project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2151,6 +2153,7 @@ class SchemaService {
 
     const fieldAliasMap: Record<string, string> = {
       r_number: `${tablePrefix}.r_number`,
+      project_r_number: `${tablePrefix}.project_r_number`,
       comments: `${tablePrefix}.comments`,
       region_rid: "st.rid",
       currency_rid: "curr.rid",
