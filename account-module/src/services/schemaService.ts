@@ -1516,7 +1516,7 @@ class SchemaService {
     const orgDbSequelize = await initOrgSequelize();
     const roleKeyMap: Record<string, string> = {};
     const dbRoleMap = await sequelize.query(
-      `SELECT role_map, role_name FROM key_contact_role WHERE role_map IS NOT NULL`,
+      `SELECT role_map, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_map IS NOT NULL`,
       { type: "SELECT" }
   );
 
@@ -1620,7 +1620,7 @@ class SchemaService {
       roleRids.length
         ? (
             await sequelize.query(
-              `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+              `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
               { replacements: { ids: roleRids }, type: "SELECT" }
             )
           ).map((r: any) => [r.rid, r.role_name])
