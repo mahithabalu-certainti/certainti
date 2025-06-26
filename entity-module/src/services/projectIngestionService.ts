@@ -196,10 +196,13 @@ class ProjectIngestionService {
     const { Project } = await this.getModels(accountNumber);
 
     return Project.findOne({
-      where: {
-        project_code: projectCode,
-        account_rid: accountRid,
-      },
+       where: {
+      [Op.and]: [
+        // Convert both the project_code column and input projectCode to lowercase for comparison
+        where(fn('LOWER', col('project_code')), fn('LOWER', projectCode)),
+        { account_rid: accountRid },
+      ],
+    },
     });
   }
 
@@ -1215,7 +1218,7 @@ class ProjectIngestionService {
           fullOrder.push([Sequelize.literal(`"Project"."${field}" ${nullsHandled}`)]);
         }
       } else {
-        fullOrder.push([Sequelize.literal(`"Project"."created_datetime" DESC NULLS LAST`)]);
+          fullOrder.push([Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`)]);
       }
     
       const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
