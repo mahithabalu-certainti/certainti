@@ -1,8 +1,11 @@
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import { ListOption } from '../../../../components/table/types';
 import { ManageUser, UserTableColumn } from '../../../types/manage-user';
 
 export const getUserColumns = (
-  onClick: (row: ManageUser) => void
+  onClick: (row: ManageUser) => void,
+  profileOptions: ListOption[],
+  roleOptions: ListOption[]
 ): UserTableColumn<ManageUser>[] => [
   {
     id: 'username',
@@ -11,6 +14,8 @@ export const getUserColumns = (
     width: 200,
     sortable: true,
     sticky: true,
+    type: 'text',
+    editable: true,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -37,6 +42,8 @@ export const getUserColumns = (
     label: 'Email',
     width: 200,
     sortable: true,
+    type: 'text',
+    editable: true,
   },
   {
     id: 'profile',
@@ -44,6 +51,9 @@ export const getUserColumns = (
     label: 'Profile',
     width: 200,
     sortable: true,
+    type: 'select',
+    editable: true,
+    options: profileOptions,
   },
   {
     id: 'role',
@@ -51,6 +61,9 @@ export const getUserColumns = (
     label: 'Role',
     width: 200,
     sortable: true,
+    type: 'select',
+    editable: true,
+    options: roleOptions,
   },
   {
     id: 'created_datetime',

@@ -1,23 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Checkbox,
   IconButton,
+  MenuItem,
   Table as MuiTable,
+  Select,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
-import { ListTableProps, RowData, SortOrder } from './types';
+import { ListTableColumn, ListTableProps, RowData, SortOrder } from './types';
 import TablePagination from './pagination';
 import TableSortHeader from './sort-header';
 import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
+import { CloseIcon, TickIcon } from '../../assets';
 
 const ListTable = <T extends RowData>({
   data = [],
@@ -50,8 +55,15 @@ const ListTable = <T extends RowData>({
   sortOrder = 'ASC',
   onSort,
   component,
+  onCellEdit,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [editingCell, setEditingCell] = useState<{
+    rowId: string;
+    columnId: string;
+    value: any;
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Handle row selection
   const handleRowSelect = (rowId: string) => {
@@ -79,6 +91,98 @@ const ListTable = <T extends RowData>({
 
   const handleSortChange = (property: string, direction: SortOrder) => {
     onSort?.(property, direction);
+  };
+
+  // Handle cell double click to start editing
+  const handleCellDoubleClick = (
+    rowId: string,
+    columnId: string,
+    value: any,
+    column: ListTableColumn<T>
+  ) => {
+    if (column.editable && !editingCell) {
+      setEditingCell({ rowId, columnId, value });
+    }
+  };
+
+  // Handle save changes
+  const handleSave = async () => {
+    if (!editingCell || !onCellEdit) return;
+
+    setIsSaving(true);
+    try {
+      await onCellEdit(
+        editingCell.rowId,
+        editingCell.columnId,
+        editingCell.value
+      );
+      setEditingCell(null);
+    } catch (error) {
+      console.error('Error saving cell value:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle cancel editing
+  const handleCancel = () => {
+    setEditingCell(null);
+  };
+
+  // Handle key events (Escape to cancel, Enter to save)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleCancel();
+    } else if (e.key === 'Enter') {
+      handleSave();
+    }
+  };
+
+  // Handle value change in edit input
+  const handleValueChange = (value: any) => {
+    if (editingCell) {
+      setEditingCell({ ...editingCell, value });
+    }
+  };
+
+  // Render edit input based on column type
+  const renderEditInput = (column: ListTableColumn<T>) => {
+    if (!editingCell) return null;
+
+    const commonProps = {
+      value: editingCell.value || '',
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      ) => handleValueChange(e.target.value),
+      onKeyDown: handleKeyDown,
+      disabled: isSaving,
+      size: 'small' as const,
+      fullWidth: true,
+      variant: 'outlined' as const,
+    };
+
+    switch (column.type) {
+      case 'select':
+        return (
+          <Select
+            {...commonProps}
+            value={editingCell.value}
+            onChange={(e) => handleValueChange(e.target.value)}
+          >
+            {column.options?.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        );
+      case 'textarea':
+        return <TextField {...commonProps} multiline rows={3} />;
+      case 'number':
+        return <TextField {...commonProps} type='number' />;
+      default: // text
+        return <TextField {...commonProps} />;
+    }
   };
 
   const paginatedData = onPageChange
@@ -347,6 +451,9 @@ const ListTable = <T extends RowData>({
                     )}
                     {/* Data cells */}
                     {columns.map((column) => {
+                      const isEditing =
+                        editingCell?.rowId === rowId &&
+                        editingCell?.columnId === column.id;
                       const isStatus = column.id === 'status';
                       const statusValue = row[column.id];
                       const cellValue = column.render
@@ -376,10 +483,58 @@ const ListTable = <T extends RowData>({
                               ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'}`
                               : 'group-hover:!text-[#1755E7]')
                           } cursor-context-menu`}
+                          onDoubleClick={() =>
+                            column.editable &&
+                            handleCellDoubleClick(
+                              rowId,
+                              column.id,
+                              displayValue,
+                              column
+                            )
+                          }
                         >
-                          <TruncateWithTooltip maxWidth={Number(column.width)}>
-                            {displayValue as React.ReactNode}
-                          </TruncateWithTooltip>
+                          {isEditing ? (
+                            <div className='relative w-full h-full'>
+                              {renderEditInput(column)}
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  right: 0,
+                                  mt: 0.5,
+                                  zIndex: 999,
+                                  display: 'flex',
+                                  gap: '8px',
+                                  backgroundColor: '#fff',
+                                  padding: '4px',
+                                  borderRadius: '4px',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                }}
+                              >
+                                <IconButton
+                                  size='small'
+                                  onClick={handleSave}
+                                  disabled={isSaving}
+                                  color='primary'
+                                >
+                                  <TickIcon className='w-4 h-4' />
+                                </IconButton>
+                                <IconButton
+                                  size='small'
+                                  onClick={handleCancel}
+                                  disabled={isSaving}
+                                  color='error'
+                                >
+                                  <CloseIcon className='w-4 h-4' />
+                                </IconButton>
+                              </Box>
+                            </div>
+                          ) : (
+                            <TruncateWithTooltip
+                              maxWidth={Number(column.width)}
+                            >
+                              {displayValue as React.ReactNode}
+                            </TruncateWithTooltip>
+                          )}
                         </TableCell>
                       );
                     })}

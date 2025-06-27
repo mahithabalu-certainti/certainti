@@ -1,4 +1,5 @@
 import { CommonApiResponse, UserRoles } from '../../common-service';
+import { ListFieldType, ListOption } from '../../components/table/types';
 import { Privilege } from './manage-profile';
 
 export type ManageUser = {
@@ -21,6 +22,9 @@ export interface UserTableColumn<T> {
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
+  type?: ListFieldType;
+  editable?: boolean;
+  options?: ListOption[];
   render?: (row: T) => React.ReactNode;
 }
 

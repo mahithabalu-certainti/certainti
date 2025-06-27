@@ -17,6 +17,8 @@ interface IUserTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
   refreshUserTrigger?: number;
+  profileOptions: { label: string; value: string }[];
+  roleOptions: { label: string; value: string }[];
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
@@ -27,6 +29,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
   setTableParams,
   onSelectionChange,
   refreshUserTrigger,
+  profileOptions,
+  roleOptions,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -108,7 +112,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
   };
 
-  const userColumns = getUserColumns(handleView);
+  const userColumns = getUserColumns(handleView, profileOptions, roleOptions);
 
   const actionButtons: ActionItem<ManageUser>[] = [
     {

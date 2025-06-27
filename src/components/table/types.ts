@@ -50,6 +50,22 @@ export interface ITablePaginationProps {
   rowsPerPageOptions?: number[];
 }
 
+export interface ListOption {
+  label: string | number;
+  value: string | number;
+}
+
+export type ListFieldType =
+  | 'text'
+  | 'select'
+  | 'radio'
+  | 'checkbox'
+  | 'date'
+  | 'number'
+  | 'textarea'
+  | 'autocomplete'
+  | 'phone';
+
 export type ListTableColumn<T> = {
   id: string;
   label: string;
@@ -58,6 +74,9 @@ export type ListTableColumn<T> = {
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
+  type?: ListFieldType;
+  editable?: boolean;
+  options?: ListOption[];
   render?: (row: T) => React.ReactNode;
 };
 
@@ -111,6 +130,12 @@ export interface ListTableProps<T extends RowData> {
   sortOrder?: SortDirection;
   onSort?: (sortBy: string, sortOrder: SortOrder) => void;
   component?: string;
+  onCellEdit?: (
+    rowId: string,
+    columnId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    newValue: any
+  ) => Promise<void> | void;
 }
 
 //Project Accordion table data types

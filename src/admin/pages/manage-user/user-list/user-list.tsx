@@ -339,6 +339,8 @@ const UserList: React.FC = () => {
           isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}
           refreshUserTrigger={refreshUserTrigger}
+          profileOptions={userProfiles}
+          roleOptions={memoizeRole}
         />
       </div>
     </div>
