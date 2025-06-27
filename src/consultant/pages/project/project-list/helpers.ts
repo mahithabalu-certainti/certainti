@@ -31,7 +31,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project Type',
-    value: 'project_type_name',
+    value: 'project_type_rid',
     type: 'enum',
     options: projectTypeOptions,
     operatorOption: fiscalOptions,
@@ -145,7 +145,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project ID',
-    value: 'project_r_number',
+    value: 'r_number',
     type: 'text',
     operatorOption: textOptions,
   },
