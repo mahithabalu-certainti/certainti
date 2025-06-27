@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { useManageUserList } from '../../../service/manage-user/manage-user-service';
-import { ManageUser, User, UserListParams } from '../../../types/manage-user';
+import { FilterCondition, ManageUser, User, UserListParams } from '../../../types/manage-user';
 import { getUserColumns } from './columns';
 import { ActionItem } from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
 
 interface IUserTableProps {
-  appliedFilters: Record<string, any>;
+  appliedFilters: Record<string, FilterCondition>;
   tableParams: UserListParams;
   isUserEditEnable?: boolean;
   isUserViewEnable?: boolean;

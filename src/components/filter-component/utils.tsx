@@ -44,7 +44,7 @@ export const fields: FieldConfig[] = [
 
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
-): FilterState | any => {
+): FilterState => {
   switch (fieldConfig.type) {
     case 'text':
       return { text: { option: 'contains', value: '' } };

@@ -19,7 +19,8 @@ export type DateOptions =
   | 'Before'
   | 'After'
   | 'Between'
-  | 'Is Empty';
+  | 'Is Empty'
+  | 'equals';
 export type KeyContactFilterOption =
   | 'equals'
   | 'not_equals'
@@ -29,7 +30,8 @@ export type EnumSelectFilterOption =
   | 'Equals'
   | 'Not Equals'
   | 'In'
-  | 'Is Empty';
+  | 'Is Empty'
+  | 'equals';
 
 export const DateValueOptions = [
   { value: 'equals', label: 'Equals' },
