@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
@@ -60,7 +59,10 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
   },
   { name: 'button', label: '', width: '35px' },
 ];
-
+export interface Breadcrumb {
+  label: string;
+  path?: string;
+}
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
@@ -70,9 +72,10 @@ const ProjectForm: React.FC = () => {
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
+  const state = location.state;
   const { accountID, projectID, settings } = location.state || {};
-  const breadcrumbs = location.state.breadcrumbs || [];
-  const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
+  const breadcrumbs: Breadcrumb[] = state.breadcrumbs || [];
+  const firstLine = breadcrumbs.map((crumb) => crumb.label).join(' > ');
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
