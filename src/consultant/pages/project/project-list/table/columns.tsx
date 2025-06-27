@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
@@ -29,17 +28,18 @@ export const getAllProjectListColumns = (
       borderBottom: '1px solid #CBD6E2 !important',
     },
     render: (row: Project) => {
-      const data: any = row;
-      let displayCode = row.project_code;
-
-      if (typeof data.fiscal_year === 'number') {
-        displayCode = `${row.project_code} - FY${data.fiscal_year}`;
-      }
+      const displayCode = row.fiscal_year
+        ? `${row.project_code} - FY${row.fiscal_year}`
+        : row.project_code;
 
       return onClick ? (
         <span
           onClick={() => onClick(row)}
-          className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+          className={
+            row.fiscal_year
+              ? 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+              : ''
+          }
         >
           {displayCode}
         </span>
@@ -79,11 +79,8 @@ export const getAllProjectListColumns = (
       textAlign: 'left',
     },
     render: (row: Project) => {
-      const data: any = row;
-      if (typeof data.fiscal_year === 'number') {
-        return `FY-${data.fiscal_year}`;
-      }
-      return '-';
+      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
+      return displayYear;
     },
   },
   {
@@ -236,10 +233,10 @@ export const getAllProjectListColumns = (
         : '-',
   },
   {
-    id: 'r_number',
+    id: 'project_r_number',
     label: 'Project ID',
     sortable: true,
-    sortId: 'r_number',
+    sortId: 'project_r_number',
     width: 140,
   },
 ];
