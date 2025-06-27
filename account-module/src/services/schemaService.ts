@@ -504,7 +504,7 @@ class SchemaService {
         end_date DATE,
         resource_code VARCHAR(100),
         resource_name VARCHAR(200),
-        resource_type VARCHAR(100),
+        resource_type_rid VARCHAR(100),
         designation VARCHAR(100),
         resource_role VARCHAR(100),
         total_hours_pro_res DOUBLE PRECISION,
