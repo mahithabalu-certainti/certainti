@@ -1556,7 +1556,7 @@ async fetchAllProjects(
         ps.project_classification_rid, 
         pt.project_type_name, ps.account_rid,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.project_r_number,
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
         ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
         ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
@@ -1586,30 +1586,42 @@ async fetchAllProjects(
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
         ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.project_r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
         st.state_name, ps.created_datetime, ps.account_rid
       `;
 
-      // 5. Get project IDs first
-      const projectIdsQuery = `
-        SELECT DISTINCT ps.project_rid
-        ${commonJoins}
-        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-          ON pfs.project_rid = ps.project_rid 
-          AND pfs.account_rid = ps.account_rid
-          ${fiscalYearClause}
-        ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
-        ${filterWhereSQLChild ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLChild}` : ""}
-      `;
+      // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
+      const projectIdsQuery = bothParentAndChild 
+        ? `
+          SELECT DISTINCT ps.project_rid
+          ${commonJoins}
+          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
+          ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+        `
+        : `
+          SELECT DISTINCT ps.project_rid
+          ${commonJoins}
+          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+            ON pfs.project_rid = ps.project_rid 
+            AND pfs.account_rid = ps.account_rid
+            ${fiscalYearClause}
+          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
+          ${filterWhereSQLChild ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLChild}` : ""}
+        `;
 
-      const projectIdsReplacements = [
-        ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-        ...(accountMeta.length > 0 ? accountMeta : []),
-        ...whereReplacementsChild
-      ];
+      const projectIdsReplacements = bothParentAndChild
+        ? [
+            ...(accountMeta.length > 0 ? accountMeta : []),
+            ...whereReplacementsParent
+          ]
+        : [
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+            ...(accountMeta.length > 0 ? accountMeta : []),
+            ...whereReplacementsChild
+          ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
@@ -1656,7 +1668,7 @@ async fetchAllProjects(
         pfs.modified_datetime, 
         pfs.project_rid, 
         pfs.project_fiscal_rid, 
-        pfs.project_r_number, 
+        pfs.r_number, 
         pfs.account_rid
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
       INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
@@ -1677,7 +1689,6 @@ async fetchAllProjects(
           ${commonJoins}
           WHERE ps.project_rid IN (${projectIds.map(() => '?').join(',')})
           ${accountMeta.length > 0 ? `AND acc.rid IN (${accountMeta.map(() => '?').join(',')})` : ''}
-          ${bothParentAndChild && filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -1693,7 +1704,6 @@ async fetchAllProjects(
         // For main query
         ...projectIds,
         ...(accountMeta.length > 0 ? accountMeta : []),
-        ...(bothParentAndChild ? whereReplacementsParent : []),
         
         // Pagination
         limit, 
@@ -1801,7 +1811,7 @@ async fetchAllProjects(
         ps.project_classification_rid, 
         pt.project_type_name, ps.account_rid,
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.project_r_number,
+        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
         ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
         ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
@@ -1831,30 +1841,42 @@ async fetchAllProjects(
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
         ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.project_r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
         st.state_name, ps.created_datetime, ps.account_rid
       `;
 
-      // 5. Get project IDs first
-      const projectIdsQuery = `
-        SELECT DISTINCT ps.project_rid
-        ${commonJoins}
-        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-          ON pfs.project_rid = ps.project_rid 
-          AND pfs.account_rid = ps.account_rid
-          ${fiscalYearClause}
-        ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
-        ${filterWhereSQLChild ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLChild}` : ""}
-      `;
+      // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
+      const projectIdsQuery = bothParentAndChild 
+        ? `
+          SELECT DISTINCT ps.project_rid
+          ${commonJoins}
+          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
+          ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+        `
+        : `
+          SELECT DISTINCT ps.project_rid
+          ${commonJoins}
+          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+            ON pfs.project_rid = ps.project_rid 
+            AND pfs.account_rid = ps.account_rid
+            ${fiscalYearClause}
+          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
+          ${filterWhereSQLChild ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLChild}` : ""}
+        `;
 
-      const projectIdsReplacements = [
-        ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-        ...(accountMeta.length > 0 ? accountMeta : []),
-        ...whereReplacementsChild
-      ];
+      const projectIdsReplacements = bothParentAndChild
+        ? [
+            ...(accountMeta.length > 0 ? accountMeta : []),
+            ...whereReplacementsParent
+          ]
+        : [
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+            ...(accountMeta.length > 0 ? accountMeta : []),
+            ...whereReplacementsChild
+          ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
@@ -1901,7 +1923,7 @@ async fetchAllProjects(
         pfs.modified_datetime, 
         pfs.project_rid, 
         pfs.project_fiscal_rid, 
-        pfs.project_r_number, 
+        pfs.r_number, 
         pfs.account_rid
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
       INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
@@ -1922,7 +1944,6 @@ async fetchAllProjects(
           ${commonJoins}
           WHERE ps.project_rid IN (${projectIds.map(() => '?').join(',')})
           ${accountMeta.length > 0 ? `AND acc.rid IN (${accountMeta.map(() => '?').join(',')})` : ''}
-          ${bothParentAndChild && filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -1937,7 +1958,6 @@ async fetchAllProjects(
         // For main query
         ...projectIds,
         ...(accountMeta.length > 0 ? accountMeta : []),
-        ...(bothParentAndChild ? whereReplacementsParent : []),
       ];
 
       const results = await mainDbSequelize.query(fullQuery, {
