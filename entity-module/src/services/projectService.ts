@@ -933,7 +933,7 @@ export class ProjectService {
           ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Project ID": project.project_r_number || "-",
+          "Project ID": project.r_number || "-",
         });
  
         // Add fiscal summary rows if they exist
@@ -965,7 +965,7 @@ export class ProjectService {
               ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
               : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
               : '-',
-              "Project ID": fiscal.project_r_number || "-",
+              "Project ID": fiscal.r_number || "-",
             });
           });
         }
