@@ -1468,7 +1468,7 @@ class SchemaService {
     }
   }
 
-  async fetchAllProjects(
+async fetchAllProjects(
     offset: number,
     limit: number,
     sort: { sortCol: string; sortOrder: string },
@@ -1533,7 +1533,7 @@ class SchemaService {
       const { 
         whereSQL: filterWhereSQLParent, 
         replacements: whereReplacementsParent 
-      } = this.buildRawWhereClause(whereClause, search, true);
+      } = bothParentAndChild ? this.buildRawWhereClause(whereClause, search, true) : { whereSQL: '', replacements: [] };
       
       const { 
         whereSQL: filterWhereSQLChild, 
@@ -1677,7 +1677,7 @@ class SchemaService {
           ${commonJoins}
           WHERE ps.project_rid IN (${projectIds.map(() => '?').join(',')})
           ${accountMeta.length > 0 ? `AND acc.rid IN (${accountMeta.map(() => '?').join(',')})` : ''}
-          ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
+          ${bothParentAndChild && filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -1693,7 +1693,7 @@ class SchemaService {
         // For main query
         ...projectIds,
         ...(accountMeta.length > 0 ? accountMeta : []),
-        ...whereReplacementsParent,
+        ...(bothParentAndChild ? whereReplacementsParent : []),
         
         // Pagination
         limit, 
@@ -1778,7 +1778,7 @@ class SchemaService {
       const { 
         whereSQL: filterWhereSQLParent, 
         replacements: whereReplacementsParent 
-      } = this.buildRawWhereClause(whereClause, search, true);
+      } = bothParentAndChild ? this.buildRawWhereClause(whereClause, search, true) : { whereSQL: '', replacements: [] };
       
       const { 
         whereSQL: filterWhereSQLChild, 
@@ -1922,7 +1922,7 @@ class SchemaService {
           ${commonJoins}
           WHERE ps.project_rid IN (${projectIds.map(() => '?').join(',')})
           ${accountMeta.length > 0 ? `AND acc.rid IN (${accountMeta.map(() => '?').join(',')})` : ''}
-          ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
+          ${bothParentAndChild && filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -1937,7 +1937,7 @@ class SchemaService {
         // For main query
         ...projectIds,
         ...(accountMeta.length > 0 ? accountMeta : []),
-        ...whereReplacementsParent,
+        ...(bothParentAndChild ? whereReplacementsParent : []),
       ];
 
       const results = await mainDbSequelize.query(fullQuery, {
