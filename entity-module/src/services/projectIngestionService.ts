@@ -1025,6 +1025,7 @@ class ProjectIngestionService {
     }
 
     const fullOrder: any[] = [];
+    let totalCount: number = 0;
 
     for (const [field, direction] of order) {
       const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
@@ -1061,7 +1062,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: true,
+          required: false,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
@@ -1087,7 +1088,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: true, 
+          required: false, 
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
@@ -1125,14 +1126,24 @@ class ProjectIngestionService {
       );
       projects = projectData;
 
-      if(projects && projects.length > 0){
+      totalCount = count;
+      if(projects && projects.length > 0 && !bothParentAndChild){
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+        if(totalCount > projects.length){
+          totalCount = projects.length;
+        }
+      }
+
+      if(bothParentAndChild){
+        if(totalCount > projects.length){
+          totalCount = projects.length;
+        }
       }
     }
 
     return {
       projects,
-      count
+      count: totalCount
     };
   }
 
@@ -1338,7 +1349,7 @@ class ProjectIngestionService {
       );
       projects = projectData;
 
-      if(projects && projects.length > 0){
+      if(projects && projects.length > 0 && !bothParentAndChild){
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
       }
     }
