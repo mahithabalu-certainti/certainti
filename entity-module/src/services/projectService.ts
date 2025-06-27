@@ -20,10 +20,6 @@ import {
   KeyContact,
   setupKeyContactsSequence,
 } from "../models/keyContactDetails";
-import {
-  ProjectSummary,
-  setupProjectSummarySequence,
-} from "../models/projectSummary";
 import currency from "currency.js";
 import ProjectIngestionService from "./projectIngestionService";
 import {
@@ -158,7 +154,6 @@ export class ProjectService {
       await setupProjectFiscal(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
-      await setupProjectSummarySequence(mainDbSequlize);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
     } catch (err) {
@@ -287,7 +282,7 @@ export class ProjectService {
           await this.projectIngestion.addProjectFiscalSummary(
             accountNumber,
             projectData,
-            createdProject,
+            createdProjectFiscal,
             createdProject.rid,
             projectData.key_contacts,
             createdProjectFiscal.rid || "",
