@@ -31,7 +31,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project Type',
-    value: 'project_type_rid',
+    value: 'project_type_name',
     type: 'enum',
     options: projectTypeOptions,
     operatorOption: fiscalOptions,
@@ -116,7 +116,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'QRE',
-    value: 'qualified_research_expenditure',
+    value: 'qre_final',
     type: 'number',
     operatorOption: numberOptions,
   },
