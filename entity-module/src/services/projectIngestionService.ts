@@ -996,11 +996,17 @@ class ProjectIngestionService {
       project_code: "project_code"
     };
 
+    const childOnlyFilters = ['fiscal_year', 'project_code'];
+    let isChildOnlyFilter: boolean = false;
+
     const parentFilters: Record<string, any> = {};
 
     for (const key in filters) {
       if (parentLevelFields.includes(key)) {
         parentFilters[key] = filters[key];
+      }
+      if(childOnlyFilters.includes(key)){
+        isChildOnlyFilter = true;
       }
     }
 
@@ -1134,6 +1140,13 @@ class ProjectIngestionService {
         }
       }
 
+      if(isChildOnlyFilter && bothParentAndChild){
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+        if(totalCount > projects.length){
+          totalCount = projects.length;
+        }
+      }
+
       if(bothParentAndChild){
         if(totalCount > projects.length){
           totalCount = projects.length;
@@ -1207,11 +1220,17 @@ class ProjectIngestionService {
       project_code: "project_code"
     };
 
+    const childOnlyFilters = ['fiscal_year', 'project_code'];
+    let isChildOnlyFilter: boolean = false;
+
     const parentFilters: Record<string, any> = {};
 
     for (const key in filters) {
       if (parentLevelFields.includes(key)) {
         parentFilters[key] = filters[key];
+      }
+      if(childOnlyFilters.includes(key)){
+        isChildOnlyFilter = true;
       }
     }
 
@@ -1256,7 +1275,7 @@ class ProjectIngestionService {
       ]);
     }
 
-    let { rows: projects, count } = await Project.findAndCountAll({
+    let projects = await Project.findAll({
       where: whereProject,
       order: fullOrder,
       include: [
@@ -1352,6 +1371,10 @@ class ProjectIngestionService {
       if(projects && projects.length > 0 && !bothParentAndChild){
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
       }
+
+      if(isChildOnlyFilter && bothParentAndChild){
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      }
     }
 
     const formatNumberForExport = (value: any, currency_symbol: string): string => {
@@ -1431,10 +1454,9 @@ class ProjectIngestionService {
       return [baseRow, ...fiscalRows];
     });
 
-
     return {
       exportData,
-      count
+      count: exportData.length
     };
   }
 
