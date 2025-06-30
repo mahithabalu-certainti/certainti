@@ -167,6 +167,10 @@ export const UserTable: React.FC<IUserTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
+      onCellEdit={async (rowId, columnId, newValue) => {
+        // This handler will be called for all editable columns
+        console.log(rowId, { [columnId]: newValue });
+      }}
     />
   );
 };

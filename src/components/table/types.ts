@@ -51,8 +51,21 @@ export interface ITablePaginationProps {
 }
 
 export interface ListOption {
-  label: string | number;
+  label: string;
   value: string | number;
+}
+
+export interface FieldValidation {
+  regex: RegExp;
+  errorMessage: string;
+}
+
+export interface TableField {
+  type: ListFieldType;
+  required: boolean;
+  placeholder?: string;
+  options?: ListOption[];
+  validation?: FieldValidation[];
 }
 
 export type ListFieldType =
@@ -74,10 +87,9 @@ export type ListTableColumn<T> = {
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
-  type?: ListFieldType;
   editable?: boolean;
-  options?: ListOption[];
   render?: (row: T) => React.ReactNode;
+  field?: TableField;
 };
 
 export interface ActionItem<T extends RowData> {

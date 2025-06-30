@@ -22,7 +22,7 @@ import TableSortHeader from './sort-header';
 import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
-import { CloseIcon, TickIcon } from '../../assets';
+import { CloseIcon, ErrorInfoIcon, TickIcon } from '../../assets';
 
 const ListTable = <T extends RowData>({
   data = [],
@@ -62,6 +62,7 @@ const ListTable = <T extends RowData>({
     rowId: string;
     columnId: string;
     value: any;
+    error?: string | null;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -93,21 +94,39 @@ const ListTable = <T extends RowData>({
     onSort?.(property, direction);
   };
 
-  // Handle cell double click to start editing
-  const handleCellDoubleClick = (
-    rowId: string,
-    columnId: string,
-    value: any,
+  // Shared validation function
+  const validateCellValue = (
+    value: string,
     column: ListTableColumn<T>
-  ) => {
-    if (column.editable && !editingCell) {
-      setEditingCell({ rowId, columnId, value });
+  ): string | null => {
+    let error = null;
+
+    if (column.field?.required && !value.trim()) {
+      error = 'This field is required';
+    } else if (column.field?.validation) {
+      for (const validation of column.field.validation) {
+        if (!validation.regex.test(value)) {
+          error = validation.errorMessage;
+          break;
+        }
+      }
     }
+
+    return error;
   };
 
   // Handle save changes
   const handleSave = async () => {
     if (!editingCell || !onCellEdit) return;
+
+    const column = columns.find((col) => col.id === editingCell.columnId);
+    if (!column) return;
+
+    const error = validateCellValue(editingCell.value, column);
+    if (error) {
+      setEditingCell((prev) => (prev ? { ...prev, error } : null));
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -146,42 +165,132 @@ const ListTable = <T extends RowData>({
   };
 
   // Render edit input based on column type
-  const renderEditInput = (column: ListTableColumn<T>) => {
+  const renderFields = (column: ListTableColumn<T>) => {
     if (!editingCell) return null;
+
+    const handleChange = (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+      const value = e.target.value;
+      // Clear any existing error when value changes
+      setEditingCell((prev) => (prev ? { ...prev, value, error: null } : null));
+    };
 
     const commonProps = {
       value: editingCell.value || '',
-      onChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      ) => handleValueChange(e.target.value),
+      onChange: handleChange,
       onKeyDown: handleKeyDown,
       disabled: isSaving,
       size: 'small' as const,
       fullWidth: true,
       variant: 'outlined' as const,
+      error: !!editingCell.error,
+      placeholder: column.field?.placeholder || '',
+      sx: {
+        fontSize: '13px',
+        width: '100%',
+        '& .MuiOutlinedInput-input': {
+          fontSize: '13px',
+          padding: '6px 10px',
+          height: '20px',
+        },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          border: '2px solid #60A5FA',
+        },
+        '& .MuiOutlinedInput-root': {
+          '&.Mui-focused': {
+            boxShadow: 'none',
+          },
+        },
+        '.MuiSelect-select': {
+          padding: '6px 8px',
+          color: editingCell.value === '' ? '#7D98B6' : 'black',
+        },
+        '&.Mui-disabled': {
+          backgroundColor: '#f3f4f6',
+        },
+        '& .MuiOutlinedInput-notchedOutline': {
+          border: editingCell.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
+          borderRadius: '2px',
+        },
+        '&:hover .MuiOutlinedInput-notchedOutline': {
+          border: editingCell.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
+        },
+        '& svg': {
+          color: '#7D98B6',
+        },
+      },
     };
 
-    switch (column.type) {
+    switch (column?.field?.type) {
+      case 'text':
+        return <TextField {...commonProps} type='text' />;
       case 'select':
         return (
           <Select
             {...commonProps}
             value={editingCell.value}
             onChange={(e) => handleValueChange(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  maxWidth: column.width || 300,
+                  maxHeight: 300,
+                  marginTop: '4px',
+                  boxShadow:
+                    'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                  '& .MuiMenuItem-root': {
+                    fontSize: '13px',
+                    padding: '6px 12px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                },
+              },
+            }}
           >
-            {column.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+            {column?.field?.options?.map((option) => (
+              <MenuItem
+                key={option.value}
+                value={option.value}
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
                 {option.label}
               </MenuItem>
             ))}
           </Select>
         );
       case 'textarea':
-        return <TextField {...commonProps} multiline rows={3} />;
+        return (
+          <div className='absolute top-0 left-0 w-full z-30 bg-white'>
+            <TextField
+              {...commonProps}
+              multiline
+              minRows={3}
+              maxRows={10}
+              autoFocus
+              sx={{
+                '& .MuiOutlinedInput-input': {
+                  fontSize: '13px',
+                  borderRadius: '2px',
+                  padding: '0px',
+                  lineHeight: 1.4,
+                },
+                '& textarea': {
+                  resize: 'none',
+                },
+              }}
+            />
+          </div>
+        );
       case 'number':
         return <TextField {...commonProps} type='number' />;
-      default: // text
-        return <TextField {...commonProps} />;
+      default:
+        return null;
     }
   };
 
@@ -374,7 +483,7 @@ const ListTable = <T extends RowData>({
             )}
 
             {/* Empty state */}
-            {!loading && !error && data.length == 0 && (
+            {!loading && !error && data.length === 0 && (
               <TableRow sx={{ height: '32px' }}>
                 <TableCell
                   colSpan={
@@ -425,7 +534,7 @@ const ListTable = <T extends RowData>({
                           width: '32px',
                           maxWidth: '32px',
                           minWidth: '32px',
-                          padding: '0 !important',
+                          padding: '0px !important',
                           borderRight: '1px solid #CBD6E2 !important',
                           borderBottom: '1px solid #CBD6E2 !important',
                         }}
@@ -454,6 +563,7 @@ const ListTable = <T extends RowData>({
                       const isEditing =
                         editingCell?.rowId === rowId &&
                         editingCell?.columnId === column.id;
+                      const columnId = column.id;
                       const isStatus = column.id === 'status';
                       const statusValue = row[column.id];
                       const cellValue = column.render
@@ -476,6 +586,9 @@ const ListTable = <T extends RowData>({
                             ...(column.sx || {}),
                             zIndex: column.sticky ? 6 : 'auto',
                             left: selectable ? '32px' : 0,
+                            padding: isEditing
+                              ? '0px 0px !important'
+                              : '0px 8px !important',
                           }}
                           className={`${
                             hoverHighlight &&
@@ -483,49 +596,71 @@ const ListTable = <T extends RowData>({
                               ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'}`
                               : 'group-hover:!text-[#1755E7]')
                           } cursor-context-menu`}
-                          onDoubleClick={() =>
-                            column.editable &&
-                            handleCellDoubleClick(
-                              rowId,
-                              column.id,
-                              displayValue,
-                              column
-                            )
-                          }
+                          onDoubleClick={() => {
+                            if (column.editable && !editingCell) {
+                              setEditingCell({
+                                rowId,
+                                columnId,
+                                value: cellValue,
+                                error: null,
+                              });
+                            }
+                          }}
                         >
                           {isEditing ? (
-                            <div className='relative w-full h-full'>
-                              {renderEditInput(column)}
+                            <div
+                              className={`box-border !h-[32px] !max-h-[32px] relative ${editingCell.error ? 'bg-[#FEF2F2]' : ''}`}
+                            >
+                              {renderFields(column)}
+                              {editingCell.error &&
+                                column.field?.type === 'text' && (
+                                  <Tooltip
+                                    title={editingCell.error}
+                                    arrow
+                                    placement='top'
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          backgroundColor: '#FEF2F2',
+                                          mr: 1,
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </span>
+                                  </Tooltip>
+                                )}
                               <Box
                                 sx={{
                                   position: 'absolute',
                                   right: 0,
-                                  mt: 0.5,
+                                  top: 0,
+                                  transform: 'translateX(110%)',
+                                  mt: '2px',
                                   zIndex: 999,
                                   display: 'flex',
-                                  gap: '8px',
-                                  backgroundColor: '#fff',
-                                  padding: '4px',
-                                  borderRadius: '4px',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                  gap: 0.5,
                                 }}
                               >
-                                <IconButton
-                                  size='small'
+                                <button
                                   onClick={handleSave}
-                                  disabled={isSaving}
-                                  color='primary'
+                                  disabled={isSaving || !!editingCell?.error}
+                                  className='w-7 h-7 flex items-center justify-center bg-white rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer'
                                 >
-                                  <TickIcon className='w-4 h-4' />
-                                </IconButton>
-                                <IconButton
-                                  size='small'
+                                  <TickIcon className='w-3 h-3' />
+                                </button>
+                                <button
                                   onClick={handleCancel}
                                   disabled={isSaving}
-                                  color='error'
+                                  className='w-7 h-7 flex items-center justify-center bg-white rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer'
                                 >
-                                  <CloseIcon className='w-4 h-4' />
-                                </IconButton>
+                                  <CloseIcon className='w-2.5 h-2.5' />
+                                </button>
                               </Box>
                             </div>
                           ) : (

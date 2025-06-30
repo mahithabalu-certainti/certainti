@@ -1,4 +1,7 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../../common-utils';
 import { ListOption } from '../../../../components/table/types';
 import { ManageUser, UserTableColumn } from '../../../types/manage-user';
 
@@ -14,7 +17,6 @@ export const getUserColumns = (
     width: 200,
     sortable: true,
     sticky: true,
-    type: 'text',
     editable: true,
     sx: {
       position: 'sticky',
@@ -35,6 +37,26 @@ export const getUserColumns = (
       ) : (
         row.username
       ),
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Username',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Username must be more than 2 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NAME_REGEX,
+          errorMessage:
+            "Username must contain only letters, space( ), apostrophes(') and hyphens(-).",
+        },
+      ],
+    },
   },
   {
     id: 'email',
@@ -42,8 +64,22 @@ export const getUserColumns = (
     label: 'Email',
     width: 200,
     sortable: true,
-    type: 'text',
     editable: true,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Email Address',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.EMAIL,
+          errorMessage: 'Invalid email address',
+        },
+      ],
+    },
   },
   {
     id: 'profile',
@@ -51,9 +87,13 @@ export const getUserColumns = (
     label: 'Profile',
     width: 200,
     sortable: true,
-    type: 'select',
     editable: true,
-    options: profileOptions,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: profileOptions,
+    },
   },
   {
     id: 'role',
@@ -61,9 +101,13 @@ export const getUserColumns = (
     label: 'Role',
     width: 200,
     sortable: true,
-    type: 'select',
     editable: true,
-    options: roleOptions,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: roleOptions,
+    },
   },
   {
     id: 'created_datetime',
