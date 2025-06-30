@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
@@ -17,15 +16,14 @@ import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import { Project } from '../../../../../components/table/types';
-
+import { ProjectsAccountDetails } from '../../../account-details/utils';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
   fontWeight: 600,
 };
-
 interface ProjectsProps {
-  accountDetails?: Record<string, any>;
+  accountDetails?: ProjectsAccountDetails;
   activeKey?: string;
   setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
@@ -57,7 +55,9 @@ const Projects: React.FC<ProjectsProps> = ({
   const navigate = useNavigate();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean>
+  >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('project_code');
@@ -178,29 +178,29 @@ const Projects: React.FC<ProjectsProps> = ({
     {
       label: 'Edit',
       disabled: accountInActive,
-      onClick: (row: any) => handleEdit(row),
+      onClick: (row: Project) => handleEdit(row),
       hide: !projectEditIsEnable,
     },
     {
       label: 'Delete',
       disabled: accountInActive,
-      onClick: (row: any) => console.log('Delete', row),
+      onClick: (row: Project) => console.log('Delete', row),
       // hide: !projectDeleteIsEnable,
       hide: true,
     },
     {
       label: 'View Summary',
-      onClick: (row: any) => console.log('Summary', row),
+      onClick: (row: Project) => console.log('Summary', row),
       hide: true,
     },
     {
       label: 'View Activities',
-      onClick: (row: any) => console.log('Activities', row),
+      onClick: (row: Project) => console.log('Activities', row),
       hide: true,
     },
     {
       label: 'View Notes',
-      onClick: (row: any) => console.log('Notes', row),
+      onClick: (row: Project) => console.log('Notes', row),
       hide: true,
     },
   ];

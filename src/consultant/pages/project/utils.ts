@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 interface ProjectResponse {
   project: projectDetails;
 }
@@ -96,7 +95,7 @@ export interface projectDetails {
   rd_credits_fed_level: number | null;
   rd_credits_total: number | null;
 
-  interaction_cc_list: any[] | null;
+  interaction_cc_list: string[] | null;
   assessment_status: string | null;
   claim_status: string | null;
   comments: string | null;
@@ -116,7 +115,7 @@ export interface projectDetails {
   region: string | null;
   currency: string;
 
-  keyContact: any[]; // Replace with `KeyContact[]` if you have the type
+  keyContact: string[]; // Replace with `KeyContact[]` if you have the type
 
   country_name: string | null;
   country_code: string | null;
