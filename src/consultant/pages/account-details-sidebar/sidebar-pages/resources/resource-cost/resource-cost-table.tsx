@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResourceCostList } from '../../../../../types/resource-cost';
@@ -9,10 +9,11 @@ import {
 } from '../../../../../services/resource-cost/resource-cost-service';
 import { RESOURCECOST } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
-import { resourceCostColumns } from './columns';
+import { getResourceCostColumns } from './columns';
 import { convertResourceCost } from './resource-cost-type';
 import { AcceptIcon, RejectIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
+import { useFetchCurrency } from '../../../../../services/account';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -77,6 +78,17 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       setCount(costList?.count || 0);
     }
   }, [costList, setCount]);
+
+  const currency = useFetchCurrency();
+
+  const memoizedCurrency = useMemo(
+    () =>
+      currency.data?.data.currency.map((account) => ({
+        label: account.currency_code,
+        value: account.currency_code,
+      })) || [],
+    [currency.data?.data.currency]
+  );
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
@@ -178,6 +190,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   };
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
+  const resourceCostColumns = getResourceCostColumns(memoizedCurrency);
 
   return (
     <div>

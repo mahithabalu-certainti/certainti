@@ -8,6 +8,7 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     label: 'Profile Name',
     width: 300,
     sortable: true,
+    editable: true,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -16,6 +17,33 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Profile Name',
+      validation: [
+        {
+          regex: /^.{2,64}$/,
+          errorMessage:
+            'The profile name must contain a minimum of 2 and a maximum of 64 characters.',
+        },
+        {
+          regex: /^[A-Za-z\s\-_]+$/,
+          errorMessage:
+            'Profile name can only contain letters, spaces, hyphens (-) and underscores (_).',
+        },
+        {
+          regex: /^[\s\-_]|[\s\-_]$/,
+          errorMessage:
+            'Profile name cannot begin or end with a space or special character.',
+        },
+        {
+          regex: /[-_]{2,}/,
+          errorMessage:
+            'Profile name cannot contain consecutive special characters.',
+        },
+      ],
+    },
   },
   {
     id: 'profile_description',
@@ -23,6 +51,23 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     label: 'Profile Description',
     width: 500,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'textarea',
+      required: true,
+      placeholder: 'Enter Profile Description',
+      validation: [
+        {
+          regex: /^.{50,}$/,
+          errorMessage: 'Profile Description must be more than 49 characters.',
+        },
+        {
+          regex: /^.{50,2000}$/,
+          errorMessage:
+            'Profile Description must be between 50 and 2000 characters.',
+        },
+      ],
+    },
   },
   {
     id: 'created_datetime',

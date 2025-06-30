@@ -1,3 +1,5 @@
+import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
+import { ListOption, TableField } from '../../../../../components/table/types';
 import { ResourceList } from '../../../../types/resource';
 
 export interface ResourceTableColumn<T> {
@@ -9,9 +11,13 @@ export interface ResourceTableColumn<T> {
   sticky?: boolean;
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
+  editable?: boolean;
+  field?: TableField;
 }
 
 export const getResourceColumns = (
+  statusOptions: ListOption[],
+  resourceTypeOptions: ListOption[],
   onResourceIdClick?: (row: ResourceList) => void
 ): ResourceTableColumn<ResourceList>[] => [
   {
@@ -40,6 +46,31 @@ export const getResourceColumns = (
       ) : (
         row.resource_code
       ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Resource Code',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
   },
   {
     id: 'resource_name',
@@ -47,6 +78,37 @@ export const getResourceColumns = (
     label: 'Name',
     width: 200,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_2,
+          errorMessage: 'PLease enter more than 1 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
+          errorMessage:
+            'Consecutive spaces, hyphens, and apostrophes are not allowed.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Max length exceeded.',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+          errorMessage:
+            'Name cannot start or end with a space, apostrophe, or hyphen.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+          errorMessage:
+            'Only letters, spaces, apostrophes, and hyphens are allowed.',
+        },
+      ],
+    },
   },
   {
     id: 'resource_type_name',
@@ -54,6 +116,13 @@ export const getResourceColumns = (
     label: 'Resource Type',
     width: 140,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: resourceTypeOptions,
+    },
   },
   {
     id: 'resource_orgname',
@@ -68,6 +137,31 @@ export const getResourceColumns = (
     label: 'Designation',
     width: 200,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Designation',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Max length exceeded.',
+        },
+        {
+          regex: RESOURCE_REGEX.ROLE,
+          errorMessage:
+            'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+          errorMessage: 'Cannot start or end with a space or special character',
+        },
+      ],
+    },
   },
   {
     id: 'resource_role',
@@ -75,6 +169,27 @@ export const getResourceColumns = (
     label: 'Role',
     width: 200,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Role',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Max length exceeded.',
+        },
+        {
+          regex: RESOURCE_REGEX.ROLE,
+          errorMessage:
+            'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+        },
+      ],
+    },
   },
   {
     id: 'region_name',
@@ -125,6 +240,13 @@ export const getResourceColumns = (
         {row.status_name || '-'}
       </span>
     ),
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: statusOptions,
+    },
   },
   {
     id: 'comments',
@@ -132,6 +254,18 @@ export const getResourceColumns = (
     label: 'Comments',
     width: 160,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'textarea',
+      required: false,
+      placeholder: 'Enter Comments',
+      validation: [
+        {
+          regex: RESOURCE_REGEX.DESCRIPTION,
+          errorMessage: 'Max length exceeded.',
+        },
+      ],
+    },
   },
   {
     id: 'r_number',

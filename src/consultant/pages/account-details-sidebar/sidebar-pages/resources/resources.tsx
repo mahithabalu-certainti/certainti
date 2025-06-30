@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   useLocation,
@@ -10,7 +10,10 @@ import {
 import { ResourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
-import { useResourceList } from '../../../../services/resource-list';
+import {
+  useGetResourceType,
+  useResourceList,
+} from '../../../../services/resource-list';
 import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
 import { getResourceColumns } from './columns';
@@ -22,7 +25,11 @@ import {
   ResourceSkillList,
 } from '../../../../types/resource-skill';
 import { ResourceList } from '../../../../types/resource';
-import { AllPermissions, Permissions } from '../../../../../common-service';
+import {
+  AllPermissions,
+  Permissions,
+  useGetStatus,
+} from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
@@ -192,6 +199,26 @@ const Resource: React.FC<ResourceProps> = ({
   );
 
   const isResoureceOverviewHide = resourceTab[0].hide;
+  const statusOptions = useGetStatus();
+  const resourceTypeOptions = useGetResourceType();
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.status_name,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.resource_type_name,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
 
   useEffect(() => {
     const isHide = (tab: ResourceTabs | TabMenus) => {
@@ -505,7 +532,11 @@ const Resource: React.FC<ResourceProps> = ({
 
   const getRowId = (row: ResourceList) => row.rid;
 
-  const resourceColumns = getResourceColumns(handleResourceClick);
+  const resourceColumns = getResourceColumns(
+    memoizedStatus,
+    memoizedResourceType,
+    handleResourceClick
+  );
 
   const onRefreshClick = () => {
     if (value === 'cost') {
@@ -636,6 +667,9 @@ const Resource: React.FC<ResourceProps> = ({
                 sortBy={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSortRequest}
+                onCellEdit={async (rowId, columnId, newValue) => {
+                  console.log(rowId, { [columnId]: newValue });
+                }}
               />
             </div>
           )}

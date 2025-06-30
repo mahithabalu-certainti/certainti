@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
@@ -8,6 +8,7 @@ import { ManageUser, User, UserListParams } from '../../../types/manage-user';
 import { getUserColumns } from './columns';
 import { ActionItem } from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
+import { useGetStatus } from '../../../../common-service';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
@@ -49,6 +50,16 @@ export const UserTable: React.FC<IUserTableProps> = ({
     refreshUserTrigger
   );
   const totalItems = data?.data?.count || 0;
+  const statusOptions = useGetStatus();
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.status_name,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
 
   const convertUserListData = (data: User[]): ManageUser[] => {
     if (!data) return [];
@@ -112,7 +123,12 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
   };
 
-  const userColumns = getUserColumns(handleView, profileOptions, roleOptions);
+  const userColumns = getUserColumns(
+    handleView,
+    profileOptions,
+    roleOptions,
+    memoizedStatus
+  );
 
   const actionButtons: ActionItem<ManageUser>[] = [
     {

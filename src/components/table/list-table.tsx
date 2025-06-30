@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Checkbox,
@@ -15,7 +14,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ListTableColumn, ListTableProps, RowData, SortOrder } from './types';
 import TablePagination from './pagination';
 import TableSortHeader from './sort-header';
@@ -95,7 +94,6 @@ const ListTable = <T extends RowData>({
     onSort?.(property, direction);
   };
 
-  // Shared validation function
   const validateCellValue = (
     value: string,
     column: ListTableColumn<T>
@@ -116,14 +114,12 @@ const ListTable = <T extends RowData>({
     return error;
   };
 
-  // Handle save changes
   const handleSave = async () => {
     if (!editingCell || !onCellEdit) return;
 
     const column = columns.find((col) => col.id === editingCell.columnId);
     if (!column) return;
 
-    // The value can be a number, but validation rules are regex-based, so convert to string.
     const error = validateCellValue(editingCell.value, column);
     if (error) {
       setEditingCell((prev) => (prev ? { ...prev, error } : null));
@@ -137,19 +133,11 @@ const ListTable = <T extends RowData>({
 
     setIsSaving(true);
     try {
-      // Per user request, convert to number if the column type is 'number'
-      let finalValue: string | number = editingCell.value;
-      if (column.field?.type === 'number') {
-        finalValue = Number(editingCell.value);
-        if (isNaN(finalValue)) {
-          setEditingCell((prev) =>
-            prev ? { ...prev, error: 'Invalid number' } : null
-          );
-          setIsSaving(false);
-          return;
-        }
-      }
-      await onCellEdit(editingCell.rowId, editingCell.columnId, finalValue);
+      await onCellEdit(
+        editingCell.rowId,
+        editingCell.columnId,
+        editingCell.value
+      );
       setEditingCell(null);
     } catch (error) {
       console.error('Error saving cell value:', error);
@@ -158,13 +146,10 @@ const ListTable = <T extends RowData>({
     }
   };
 
-  // Handle cancel editing
   const handleCancel = () => {
-    console.log('cancel called...');
     setEditingCell(null);
   };
 
-  // Handle key events (Escape to cancel, Enter to save)
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       handleCancel();
@@ -173,14 +158,33 @@ const ListTable = <T extends RowData>({
     }
   };
 
-  // Handle value change in edit input
+  useEffect(() => {
+    if (!editingCell) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isEditingCell = target.closest(
+        `[data-editing="${editingCell.rowId}-${editingCell.columnId}"]`
+      );
+
+      if (!isEditingCell) {
+        handleSave();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingCell]);
+
   const handleValueChange = (value: string | number) => {
     if (editingCell) {
       setEditingCell({ ...editingCell, value: String(value), error: null });
     }
   };
 
-  // Render edit input based on column type
   const renderFields = (column: ListTableColumn<T>) => {
     if (!editingCell) return null;
 
@@ -289,10 +293,21 @@ const ListTable = <T extends RowData>({
               maxRows={10}
               autoFocus
               sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 0,
+                  '& fieldset': {
+                    border: `1px solid ${editingCell.error ? '#ef4444' : '#60A5FA'}`,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
+                  },
+                },
                 '& .MuiOutlinedInput-input': {
                   fontSize: '13px',
-                  borderRadius: '2px',
-                  padding: '0px',
+                  padding: '4px 0px 4px 8px !important',
                   lineHeight: 1.4,
                 },
                 '& textarea': {
@@ -578,11 +593,6 @@ const ListTable = <T extends RowData>({
                       const isEditing =
                         editingCell?.rowId === rowId &&
                         editingCell?.columnId === column.id;
-                      const hasValueChanged =
-                        isEditing &&
-                        editingCell &&
-                        String(editingCell.value) !==
-                          String(editingCell.originalValue);
                       const columnId = column.id;
                       const isStatus = column.id === 'status';
                       const statusValue = row[column.id];
@@ -599,6 +609,9 @@ const ListTable = <T extends RowData>({
                       return (
                         <TableCell
                           key={`${rowId}-${column.id}`}
+                          data-editing={
+                            isEditing ? `${rowId}-${column.id}` : undefined
+                          }
                           sx={{
                             width: column.width || 160,
                             minWidth: column.width || 160,
@@ -609,13 +622,13 @@ const ListTable = <T extends RowData>({
                             padding: isEditing
                               ? '0px 0px !important'
                               : '0px 8px !important',
-                            outline: isEditing
-                              ? `2px solid ${
-                                  editingCell.error ? '#ef4444' : '#60A5FA'
-                                }`
-                              : undefined,
-                            outlineOffset: isEditing ? '-2px' : undefined, // Draws 1px inside, 1px outside
-                            ...(isEditing && { zIndex: 12 }), // Lifts cell above others
+                            outline:
+                              isEditing && column.field?.type !== 'textarea'
+                                ? `1px solid ${
+                                    editingCell.error ? '#ef4444' : '#60A5FA'
+                                  }`
+                                : undefined,
+                            outlineOffset: isEditing ? '-2px' : undefined,
                             ...(isEditing &&
                               editingCell.error && {
                                 backgroundColor: '#FEF2F2',
@@ -648,10 +661,11 @@ const ListTable = <T extends RowData>({
                           }}
                         >
                           {isEditing ? (
-                            <div className='box-border !h-[32px] !max-h-[32px] relative'>
+                            <div className='box-border !h-[31px] !max-h-[31px] relative'>
                               {renderFields(column)}
-                              {editingCell.error &&
-                                column.field?.type === 'text' && (
+                              {(editingCell.error &&
+                                column.field?.type === 'text') ||
+                                (column.field?.type === 'textarea' && (
                                   <Tooltip
                                     title={editingCell.error}
                                     arrow
@@ -672,47 +686,45 @@ const ListTable = <T extends RowData>({
                                       />
                                     </span>
                                   </Tooltip>
-                                )}
-                              {hasValueChanged && (
-                                <Box
-                                  sx={{
-                                    position: 'absolute',
-                                    right: 0,
-                                    top: '50%',
-                                    transform: 'translate(110%, -50%)',
-                                    zIndex: 999,
-                                    display: 'flex',
-                                    gap: 1,
-                                    alignItems: 'center',
-                                  }}
+                                ))}
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  right: 0,
+                                  top: '50%',
+                                  transform: 'translate(110%, -50%)',
+                                  zIndex: 999,
+                                  display: 'flex',
+                                  gap: 1,
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <button
+                                  onClick={handleSave}
+                                  disabled={isSaving || !!editingCell?.error}
+                                  className='w-7 h-7 flex items-center justify-center bg-[#A9E3A2] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer outline-none focus:outline-none'
                                 >
-                                  <button
-                                    onClick={handleSave}
-                                    disabled={isSaving || !!editingCell?.error}
-                                    className='w-7 h-7 flex items-center justify-center bg-[#A9E3A2] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-200 hover:brightness-95 hover:shadow-[0_3px_10px_rgba(0,0,0,0.15)] disabled:opacity-50'
-                                  >
-                                    <NewTickIcon
-                                      className='w-3 h-3'
-                                      style={{
-                                        filter: 'brightness(0) saturate(100%)',
-                                      }}
-                                    />
-                                  </button>
+                                  <NewTickIcon
+                                    className='w-3 h-3'
+                                    style={{
+                                      filter: 'brightness(0) saturate(100%)',
+                                    }}
+                                  />
+                                </button>
 
-                                  <button
-                                    onClick={handleCancel}
-                                    disabled={isSaving}
-                                    className='w-7 h-7 flex items-center justify-center bg-[#FBB6AE] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-200 hover:brightness-95 hover:shadow-[0_3px_10px_rgba(0,0,0,0.15)] disabled:opacity-50'
-                                  >
-                                    <CloseIcon
-                                      className='w-2.5 h-2.5'
-                                      style={{
-                                        filter: 'brightness(0) saturate(100%)',
-                                      }}
-                                    />
-                                  </button>
-                                </Box>
-                              )}
+                                <button
+                                  onClick={handleCancel}
+                                  disabled={isSaving}
+                                  className='w-7 h-7 flex items-center justify-center bg-[#FBB6AE] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer outline-none focus:outline-none'
+                                >
+                                  <CloseIcon
+                                    className='w-2.5 h-2.5'
+                                    style={{
+                                      filter: 'brightness(0) saturate(100%)',
+                                    }}
+                                  />
+                                </button>
+                              </Box>
                             </div>
                           ) : (
                             <TruncateWithTooltip

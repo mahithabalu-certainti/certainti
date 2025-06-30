@@ -8,7 +8,8 @@ import { ManageUser, UserTableColumn } from '../../../types/manage-user';
 export const getUserColumns = (
   onClick: (row: ManageUser) => void,
   profileOptions: ListOption[],
-  roleOptions: ListOption[]
+  roleOptions: ListOption[],
+  statusOptions: ListOption[]
 ): UserTableColumn<ManageUser>[] => [
   {
     id: 'username',
@@ -64,22 +65,6 @@ export const getUserColumns = (
     label: 'Email',
     width: 200,
     sortable: true,
-    editable: true,
-    field: {
-      type: 'text',
-      required: true,
-      placeholder: 'Enter Email Address',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.EMAIL,
-          errorMessage: 'Invalid email address',
-        },
-      ],
-    },
   },
   {
     id: 'profile',
@@ -137,5 +122,12 @@ export const getUserColumns = (
     label: 'Status',
     width: 100,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: statusOptions,
+    },
   },
 ];
