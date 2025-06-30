@@ -22,7 +22,7 @@ import TableSortHeader from './sort-header';
 import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
-import { CloseIcon, ErrorInfoIcon, TickIcon } from '../../assets';
+import { CloseIcon, ErrorInfoIcon, NewTickIcon } from '../../assets';
 
 const ListTable = <T extends RowData>({
   data = [],
@@ -61,7 +61,8 @@ const ListTable = <T extends RowData>({
   const [editingCell, setEditingCell] = useState<{
     rowId: string;
     columnId: string;
-    value: any;
+    originalValue: string;
+    value: string;
     error?: string | null;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -122,19 +123,33 @@ const ListTable = <T extends RowData>({
     const column = columns.find((col) => col.id === editingCell.columnId);
     if (!column) return;
 
+    // The value can be a number, but validation rules are regex-based, so convert to string.
     const error = validateCellValue(editingCell.value, column);
     if (error) {
       setEditingCell((prev) => (prev ? { ...prev, error } : null));
       return;
     }
 
+    if (editingCell.originalValue === editingCell.value) {
+      handleCancel();
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await onCellEdit(
-        editingCell.rowId,
-        editingCell.columnId,
-        editingCell.value
-      );
+      // Per user request, convert to number if the column type is 'number'
+      let finalValue: string | number = editingCell.value;
+      if (column.field?.type === 'number') {
+        finalValue = Number(editingCell.value);
+        if (isNaN(finalValue)) {
+          setEditingCell((prev) =>
+            prev ? { ...prev, error: 'Invalid number' } : null
+          );
+          setIsSaving(false);
+          return;
+        }
+      }
+      await onCellEdit(editingCell.rowId, editingCell.columnId, finalValue);
       setEditingCell(null);
     } catch (error) {
       console.error('Error saving cell value:', error);
@@ -145,6 +160,7 @@ const ListTable = <T extends RowData>({
 
   // Handle cancel editing
   const handleCancel = () => {
+    console.log('cancel called...');
     setEditingCell(null);
   };
 
@@ -158,9 +174,9 @@ const ListTable = <T extends RowData>({
   };
 
   // Handle value change in edit input
-  const handleValueChange = (value: any) => {
+  const handleValueChange = (value: string | number) => {
     if (editingCell) {
-      setEditingCell({ ...editingCell, value });
+      setEditingCell({ ...editingCell, value: String(value), error: null });
     }
   };
 
@@ -172,8 +188,7 @@ const ListTable = <T extends RowData>({
       e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
       const value = e.target.value;
-      // Clear any existing error when value changes
-      setEditingCell((prev) => (prev ? { ...prev, value, error: null } : null));
+      handleValueChange(value);
     };
 
     const commonProps = {
@@ -191,11 +206,11 @@ const ListTable = <T extends RowData>({
         width: '100%',
         '& .MuiOutlinedInput-input': {
           fontSize: '13px',
-          padding: '6px 10px',
+          padding: '6px 8px',
           height: '20px',
         },
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          border: '2px solid #60A5FA',
+          border: editingCell.error ? '1px solid #ef4444' : 'none',
         },
         '& .MuiOutlinedInput-root': {
           '&.Mui-focused': {
@@ -210,11 +225,11 @@ const ListTable = <T extends RowData>({
           backgroundColor: '#f3f4f6',
         },
         '& .MuiOutlinedInput-notchedOutline': {
-          border: editingCell.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
+          border: 'none',
           borderRadius: '2px',
         },
         '&:hover .MuiOutlinedInput-notchedOutline': {
-          border: editingCell.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
+          border: 'none',
         },
         '& svg': {
           color: '#7D98B6',
@@ -224,7 +239,7 @@ const ListTable = <T extends RowData>({
 
     switch (column?.field?.type) {
       case 'text':
-        return <TextField {...commonProps} type='text' />;
+        return <TextField {...commonProps} type='text' autoFocus />;
       case 'select':
         return (
           <Select
@@ -563,6 +578,11 @@ const ListTable = <T extends RowData>({
                       const isEditing =
                         editingCell?.rowId === rowId &&
                         editingCell?.columnId === column.id;
+                      const hasValueChanged =
+                        isEditing &&
+                        editingCell &&
+                        String(editingCell.value) !==
+                          String(editingCell.originalValue);
                       const columnId = column.id;
                       const isStatus = column.id === 'status';
                       const statusValue = row[column.id];
@@ -589,6 +609,17 @@ const ListTable = <T extends RowData>({
                             padding: isEditing
                               ? '0px 0px !important'
                               : '0px 8px !important',
+                            outline: isEditing
+                              ? `2px solid ${
+                                  editingCell.error ? '#ef4444' : '#60A5FA'
+                                }`
+                              : undefined,
+                            outlineOffset: isEditing ? '-2px' : undefined, // Draws 1px inside, 1px outside
+                            ...(isEditing && { zIndex: 12 }), // Lifts cell above others
+                            ...(isEditing &&
+                              editingCell.error && {
+                                backgroundColor: '#FEF2F2',
+                              }),
                           }}
                           className={`${
                             hoverHighlight &&
@@ -597,20 +628,27 @@ const ListTable = <T extends RowData>({
                               : 'group-hover:!text-[#1755E7]')
                           } cursor-context-menu`}
                           onDoubleClick={() => {
-                            if (column.editable && !editingCell) {
-                              setEditingCell({
-                                rowId,
-                                columnId,
-                                value: cellValue,
-                                error: null,
-                              });
+                            if (!column.editable) return;
+
+                            if (
+                              editingCell &&
+                              editingCell.value !== editingCell.originalValue
+                            ) {
+                              return;
                             }
+                            const cellValue = row[column.id];
+                            setEditingCell({
+                              rowId,
+                              columnId,
+                              value: cellValue == null ? '' : String(cellValue),
+                              originalValue:
+                                cellValue == null ? '' : String(cellValue),
+                              error: null,
+                            });
                           }}
                         >
                           {isEditing ? (
-                            <div
-                              className={`box-border !h-[32px] !max-h-[32px] relative ${editingCell.error ? 'bg-[#FEF2F2]' : ''}`}
-                            >
+                            <div className='box-border !h-[32px] !max-h-[32px] relative'>
                               {renderFields(column)}
                               {editingCell.error &&
                                 column.field?.type === 'text' && (
@@ -635,33 +673,46 @@ const ListTable = <T extends RowData>({
                                     </span>
                                   </Tooltip>
                                 )}
-                              <Box
-                                sx={{
-                                  position: 'absolute',
-                                  right: 0,
-                                  top: 0,
-                                  transform: 'translateX(110%)',
-                                  mt: '2px',
-                                  zIndex: 999,
-                                  display: 'flex',
-                                  gap: 0.5,
-                                }}
-                              >
-                                <button
-                                  onClick={handleSave}
-                                  disabled={isSaving || !!editingCell?.error}
-                                  className='w-7 h-7 flex items-center justify-center bg-white rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer'
+                              {hasValueChanged && (
+                                <Box
+                                  sx={{
+                                    position: 'absolute',
+                                    right: 0,
+                                    top: '50%',
+                                    transform: 'translate(110%, -50%)',
+                                    zIndex: 999,
+                                    display: 'flex',
+                                    gap: 1,
+                                    alignItems: 'center',
+                                  }}
                                 >
-                                  <TickIcon className='w-3 h-3' />
-                                </button>
-                                <button
-                                  onClick={handleCancel}
-                                  disabled={isSaving}
-                                  className='w-7 h-7 flex items-center justify-center bg-white rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer'
-                                >
-                                  <CloseIcon className='w-2.5 h-2.5' />
-                                </button>
-                              </Box>
+                                  <button
+                                    onClick={handleSave}
+                                    disabled={isSaving || !!editingCell?.error}
+                                    className='w-7 h-7 flex items-center justify-center bg-[#A9E3A2] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-200 hover:brightness-95 hover:shadow-[0_3px_10px_rgba(0,0,0,0.15)] disabled:opacity-50'
+                                  >
+                                    <NewTickIcon
+                                      className='w-3 h-3'
+                                      style={{
+                                        filter: 'brightness(0) saturate(100%)',
+                                      }}
+                                    />
+                                  </button>
+
+                                  <button
+                                    onClick={handleCancel}
+                                    disabled={isSaving}
+                                    className='w-7 h-7 flex items-center justify-center bg-[#FBB6AE] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-200 hover:brightness-95 hover:shadow-[0_3px_10px_rgba(0,0,0,0.15)] disabled:opacity-50'
+                                  >
+                                    <CloseIcon
+                                      className='w-2.5 h-2.5'
+                                      style={{
+                                        filter: 'brightness(0) saturate(100%)',
+                                      }}
+                                    />
+                                  </button>
+                                </Box>
+                              )}
                             </div>
                           ) : (
                             <TruncateWithTooltip

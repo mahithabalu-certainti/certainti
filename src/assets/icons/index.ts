@@ -112,6 +112,7 @@ const icons = {
   orgIcon: () => import('./org-icon.svg?react'),
   RejectIcon: () => import('./RejectIcon.svg?react'),
   AcceptIcon: () => import('./AcceptIcon.svg?react'),
+  newTickIcon: () => import('./new-tick-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -233,3 +234,4 @@ export const VerticalSeparatorIcon = createLazySvgIcon('verticalSeparatorIcon');
 export const OrgIcon = createLazySvgIcon('orgIcon');
 export const RejectIcon = createLazySvgIcon('RejectIcon');
 export const AcceptIcon = createLazySvgIcon('AcceptIcon');
+export const NewTickIcon = createLazySvgIcon('newTickIcon');
