@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
@@ -36,7 +35,7 @@ import {
   Resources,
   Timesheet,
 } from '../account-details-sidebar';
-import { transformAccountData } from './utils';
+import { DisplayColumn, transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
@@ -46,7 +45,7 @@ import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
 import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
-import { MenuItem } from '../../types';
+import { AccountFieldsApiResponse, MenuItem } from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 
@@ -54,8 +53,9 @@ export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [accountDetails, setAccountDetails] = useState<any>(null);
-  const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
+  const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [accountDetailsForEdit, setAccountDetailsForEdit] =
+    useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -103,7 +103,7 @@ export const AccountDetails = () => {
     sortBy: 'created_datetime',
     sortOrder: 'DESC',
     fiscalYear: String(convertedFiscalYear),
-    rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    rNumber: accountDetailsForEdit?.accountById?.r_number || '',
     resourceRid: '',
     filter: {},
   });
@@ -112,7 +112,7 @@ export const AccountDetails = () => {
     sortOrder: 'DESC',
     filters: {},
     fiscalYear: String(convertedFiscalYear),
-    accountNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
   const [exportType, setExportType] = useState<
     'resource' | 'cost' | 'skill' | 'project'

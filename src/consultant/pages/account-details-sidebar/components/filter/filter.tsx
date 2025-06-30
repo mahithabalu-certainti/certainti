@@ -42,12 +42,9 @@ import {
   storeFilters,
   validateFilters,
 } from './utils';
-import {
-  MENU_PROPS,
-  SELECT_STYLES,
-} from '../../../../../components/filter-component/helpers';
 import { useLocation } from 'react-router-dom';
 import { ArrowIcon, CheckedIcon, CloseIcon } from '../../../../../assets';
+import { MENU_PROPS, SELECT_STYLES } from '../../../../../components';
 
 const Filter: React.FC<FilterComponentProps> = ({
   value,

@@ -303,7 +303,7 @@ const UserList: React.FC = () => {
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
                 filterFields={userFilterfields}
-                setAppliedFilters={setAppliedFilters}
+                setAppliedFilters={(filters) => setAppliedFilters(filters as Record<string, FilterCondition>)}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}

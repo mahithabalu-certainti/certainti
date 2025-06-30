@@ -85,7 +85,7 @@ export const formatFilterForApi = (
       const boolOptions = formatString(option) === 'Is Empty';
       if (value?.from || value?.to || boolOptions) {
         formattedFilters[fieldName] = {
-          [option]:
+          [option as string]:
             formatString(option) === 'Between'
               ? { from: value.from?.toString(), to: value.to?.toString() }
               : boolOptions
@@ -214,7 +214,8 @@ export const validateFilters = (
       const { option, value } = state.date;
       const isEmptyCheck = formatString(option) === 'Is Empty';
       const isFromEmpty = !value.from?.trim();
-      const isToEmpty = option.toLowerCase() === 'between' && !value.to?.trim();
+      const isToEmpty =
+        option?.toLowerCase() === 'between' && !value.to?.trim();
       if (!isEmptyCheck) {
         if (isFromEmpty || isToEmpty) {
           hasInvalid = true;
