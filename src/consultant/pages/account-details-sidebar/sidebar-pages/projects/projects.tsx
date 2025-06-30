@@ -147,6 +147,7 @@ const Projects: React.FC<ProjectsProps> = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
 
   const handleFilter = () => {
@@ -159,7 +160,7 @@ const Projects: React.FC<ProjectsProps> = ({
   };
   const accountNameLabel =
     accountDetails?.data?.accountById?.account_name || '';
-  const handleEdit = (account: any) => {
+  const handleEdit = (account: Project) => {
     navigate(`/Project/edit/${account?.project_fiscal_rid}`, {
       state: {
         accountID: account?.account_rid,
