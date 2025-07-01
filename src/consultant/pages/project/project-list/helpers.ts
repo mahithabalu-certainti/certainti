@@ -116,7 +116,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'QRE',
-    value: 'qualified_research_expenditure',
+    value: 'qre_final',
     type: 'number',
     operatorOption: numberOptions,
   },
@@ -145,7 +145,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project ID',
-    value: 'project_r_number',
+    value: 'r_number',
     type: 'text',
     operatorOption: textOptions,
   },
