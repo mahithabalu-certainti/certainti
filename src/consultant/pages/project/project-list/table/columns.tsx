@@ -59,7 +59,7 @@ export const getAllProjectListColumns = (
     id: 'project_type_name',
     label: 'Project Type',
     sortable: true,
-    sortId: 'project_type_rid',
+    sortId: 'project_type_name',
     width: 160,
   },
   {
