@@ -1,5 +1,4 @@
-# **rdcredits_platform_fe**
-
+# **rdcredits\_platform\_fe**
 # **Think RD 365 Frontend**
 
 A React-based ThinkRD365 application with Azure AD authentication, built using TypeScript, Vite, Tailwind CSS, and integrated Material UI components.
@@ -10,7 +9,7 @@ A React-based ThinkRD365 application with Azure AD authentication, built using T
 
 ### **Prerequisites**
 
-- **Node.js** (recommend v16+)
+* **Node.js** (recommend v16+)
 
 ---
 
@@ -39,12 +38,12 @@ A React-based ThinkRD365 application with Azure AD authentication, built using T
 
 Depending on the environment, you can start the application with:
 
-| **Environment** | **Command**                 |
-| --------------- | --------------------------- |
-| Development     | `npm run start:development` |
-| QA              | `npm run start:qa`          |
-| Pre-Production  | `npm run start:preprod`     |
-| Production      | `npm run start:prod`        |
+| **Environment** | **Command**             |
+| --------------- | ----------------------- |
+| Development     | `npm run start:development`     |
+| QA              | `npm run start:qa`      |
+| Pre-Production  | `npm run start:preprod` |
+| Production      | `npm run start:prod`    |
 
 Example:
 
@@ -60,12 +59,12 @@ The app will be available at: [http://localhost:3000](http://localhost:3000)
 
 Build optimized production-ready assets for a specific environment:
 
-| **Environment** | **Command**                 |
-| --------------- | --------------------------- |
-| Development     | `npm run build:development` |
-| QA              | `npm run build:qa`          |
-| Pre-Production  | `npm run build:preprod`     |
-| Production      | `npm run build:prod`        |
+| **Environment** | **Command**             |
+| --------------- | ----------------------- |
+| Development     | `npm run build:development`     |
+| QA              | `npm run build:qa`      |
+| Pre-Production  | `npm run build:preprod` |
+| Production      | `npm run build:prod`    |
 
 Example:
 
@@ -77,14 +76,14 @@ npm run build:prod
 
 ## **Code Quality Commands**
 
-- **Linting:**
+* **Linting:**
 
   ```bash
   npm run lint        # Check for linting errors
   npm run lint:fix    # Auto-fix linting issues
   ```
 
-- **Formatting:**
+* **Formatting:**
 
   ```bash
   npm run format:check  # Check code formatting
@@ -97,25 +96,25 @@ npm run build:prod
 
 ### **Core Libraries**
 
-- **React** – Frontend library for building user interfaces
-- **TypeScript** – Static type-checking for JavaScript
-- **Vite** – Lightning-fast build tool
+* **React** – Frontend library for building user interfaces
+* **TypeScript** – Static type-checking for JavaScript
+* **Vite** – Lightning-fast build tool
 
 ### **UI Framework & Styling**
 
-- **@mui/material** – Material Design components
-- **Tailwind CSS** – Utility-first CSS framework (if included)
+* **@mui/material** – Material Design components
+* **Tailwind CSS** – Utility-first CSS framework (if included)
 
 ### **State Management & Routing**
 
-- **Redux Toolkit** & **React Redux** – Predictable state management
-- **React Router** – Declarative routing for React apps
+* **Redux Toolkit** & **React Redux** – Predictable state management
+* **React Router** – Declarative routing for React apps
 
 ### **Development Tools**
 
-- **ESLint** – Code linting for consistency and best practices
-- **Prettier** – Code formatting
-- **TypeScript ESLint** – Linting TypeScript code
+* **ESLint** – Code linting for consistency and best practices
+* **Prettier** – Code formatting
+* **TypeScript ESLint** – Linting TypeScript code
 
 ---
 
@@ -168,7 +167,7 @@ The application uses **Vite's environment mode system**:
 
 | **Mode**       | **Environment File** |
 | -------------- | -------------------- |
-| Development    | `.env.development`   |
+| Development    | `.env.development`           |
 | QA             | `.env.qa`            |
 | Pre-Production | `.env.preprod`       |
 | Production     | `.env.prod`          |
