@@ -507,7 +507,7 @@ class ProjectIngestionService {
   async addProjectFiscalSummary(
     accountNumber: string,
     projectData: any,
-    project: any,
+    projectFiscal: any,
     projectId: string,
     keyContacts: any[],
     projectFiscalId: string
@@ -529,7 +529,7 @@ class ProjectIngestionService {
 
     const summaryData = ProjectMapper.mapToProjectFiscalSummary(
       projectData,
-      project,
+      projectFiscal,
       projectId,
       startDate,
       endDate,
@@ -996,11 +996,17 @@ class ProjectIngestionService {
       project_code: "project_code"
     };
 
+    const childOnlyFilters = ['fiscal_year', 'project_code'];
+    let isChildOnlyFilter: boolean = false;
+
     const parentFilters: Record<string, any> = {};
 
     for (const key in filters) {
       if (parentLevelFields.includes(key)) {
         parentFilters[key] = filters[key];
+      }
+      if(childOnlyFilters.includes(key)){
+        isChildOnlyFilter = true;
       }
     }
 
@@ -1025,6 +1031,7 @@ class ProjectIngestionService {
     }
 
     const fullOrder: any[] = [];
+    let totalCount: number = 0;
 
     for (const [field, direction] of order) {
       const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
@@ -1034,8 +1041,15 @@ class ProjectIngestionService {
         if (parentLevelFields.includes(field)) {
           fullOrder.push([Sequelize.literal(`"Project"."${field}" ${nullsHandled}`)]);
         }
+        if(field === "created_datetime"){
+          fullOrder.push([Sequelize.literal(`"Project"."created_datetime" ${nullsHandled}`)]);
+        }
       } else {
-        fullOrder.push([Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`)]);
+        if(field === "created_datetime"){
+          fullOrder.push([Sequelize.literal(`"Project"."project_code" ${nullsHandled}`)]);
+        }else{
+          fullOrder.push([Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`)]);
+        }
       }
     
       const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
@@ -1061,7 +1075,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: true,
+          required: false,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
@@ -1087,7 +1101,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: true, 
+          required: false, 
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
@@ -1125,14 +1139,31 @@ class ProjectIngestionService {
       );
       projects = projectData;
 
-      if(projects && projects.length > 0){
+      totalCount = count;
+      if(projects && projects.length > 0 && !bothParentAndChild){
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+        if(totalCount > projects.length){
+          totalCount = projects.length;
+        }
+      }
+
+      if(isChildOnlyFilter && bothParentAndChild){
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+        if(totalCount > projects.length){
+          totalCount = projects.length;
+        }
+      }
+
+      if(bothParentAndChild){
+        if(totalCount > projects.length){
+          totalCount = projects.length;
+        }
       }
     }
 
     return {
       projects,
-      count
+      count: totalCount
     };
   }
 
@@ -1196,11 +1227,17 @@ class ProjectIngestionService {
       project_code: "project_code"
     };
 
+    const childOnlyFilters = ['fiscal_year', 'project_code'];
+    let isChildOnlyFilter: boolean = false;
+
     const parentFilters: Record<string, any> = {};
 
     for (const key in filters) {
       if (parentLevelFields.includes(key)) {
         parentFilters[key] = filters[key];
+      }
+      if(childOnlyFilters.includes(key)){
+        isChildOnlyFilter = true;
       }
     }
 
@@ -1245,7 +1282,7 @@ class ProjectIngestionService {
       ]);
     }
 
-    let { rows: projects, count } = await Project.findAndCountAll({
+    let projects = await Project.findAll({
       where: whereProject,
       order: fullOrder,
       include: [
@@ -1338,7 +1375,11 @@ class ProjectIngestionService {
       );
       projects = projectData;
 
-      if(projects && projects.length > 0){
+      if(projects && projects.length > 0 && !bothParentAndChild){
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      }
+
+      if(isChildOnlyFilter && bothParentAndChild){
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
       }
     }
@@ -1420,10 +1461,9 @@ class ProjectIngestionService {
       return [baseRow, ...fiscalRows];
     });
 
-
     return {
       exportData,
-      count
+      count: exportData.length
     };
   }
 
@@ -1988,7 +2028,7 @@ class ProjectIngestionService {
       }
   
       const currencyRids = Array.from(currencyRidSet);
-      if (currencyRids.length === 0) return;
+      if (currencyRids.length === 0) return project;
   
       // Step 2: Fetch currency details in one query
       const placeholders = currencyRids.map(() => '?').join(', ');

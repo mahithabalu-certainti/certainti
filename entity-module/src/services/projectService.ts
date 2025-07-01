@@ -20,10 +20,6 @@ import {
   KeyContact,
   setupKeyContactsSequence,
 } from "../models/keyContactDetails";
-import {
-  ProjectSummary,
-  setupProjectSummarySequence,
-} from "../models/projectSummary";
 import currency from "currency.js";
 import ProjectIngestionService from "./projectIngestionService";
 import {
@@ -158,7 +154,6 @@ export class ProjectService {
       await setupProjectFiscal(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
-      await setupProjectSummarySequence(mainDbSequlize);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
     } catch (err) {
@@ -287,7 +282,7 @@ export class ProjectService {
           await this.projectIngestion.addProjectFiscalSummary(
             accountNumber,
             projectData,
-            createdProject,
+            createdProjectFiscal,
             createdProject.rid,
             projectData.key_contacts,
             createdProjectFiscal.rid || "",
@@ -933,7 +928,7 @@ export class ProjectService {
           ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Project ID": project.project_r_number || "-",
+          "Project ID": project.r_number || "-",
         });
  
         // Add fiscal summary rows if they exist
@@ -965,7 +960,7 @@ export class ProjectService {
               ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
               : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
               : '-',
-              "Project ID": fiscal.project_r_number || "-",
+              "Project ID": fiscal.r_number || "-",
             });
           });
         }
