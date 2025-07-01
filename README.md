@@ -1,4 +1,5 @@
 # **rdcredits\_platform\_fe**
+# **Think RD 365 Frontend**
 
 A React-based ThinkRD365 application with Azure AD authentication, built using TypeScript, Vite, Tailwind CSS, and integrated Material UI components.
 
