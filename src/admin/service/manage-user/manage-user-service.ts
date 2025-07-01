@@ -88,9 +88,10 @@ export const useManageUserDetail = (userId: string) => {
     queryKey: ['userDetail', userId], // Unique query key
     queryFn: () => fetchManageUserDetail(userId),
     enabled: !!userId, // Only fetch if userId exists
-    staleTime: 0, // No cache
-    gcTime: 0, // Immediately remove from cache
     retry: 0,
+    refetchOnWindowFocus: false,
+    gcTime: 0,
+    staleTime: 0,
   });
 };
 

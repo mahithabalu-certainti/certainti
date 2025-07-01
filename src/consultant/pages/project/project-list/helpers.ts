@@ -85,19 +85,19 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'FTE Cost',
-    value: 'total_fte_cost',
+    value: 'total_cost_fte',
     type: 'number',
     operatorOption: numberOptions,
   },
   {
     name: 'SubCon Cost',
-    value: 'total_sub_con_cost',
+    value: 'total_cost_subcon',
     type: 'number',
     operatorOption: numberOptions,
   },
   {
     name: 'Non-Labor Cost',
-    value: 'total_non_labor_cost',
+    value: 'total_cost_nonlabor',
     type: 'number',
     operatorOption: numberOptions,
   },
@@ -116,7 +116,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'QRE',
-    value: 'qualified_research_expenditure',
+    value: 'qre_final',
     type: 'number',
     operatorOption: numberOptions,
   },
@@ -145,7 +145,7 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Project ID',
-    value: 'project_r_number',
+    value: 'r_number',
     type: 'text',
     operatorOption: textOptions,
   },
