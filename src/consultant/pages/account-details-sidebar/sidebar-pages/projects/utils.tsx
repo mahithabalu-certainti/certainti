@@ -175,7 +175,7 @@ export const projectFilterFields = (
   },
   {
     name: 'QRE',
-    value: 'qualified_research_expenditure',
+    value: 'qre_final',
     type: 'number',
     operatorOption: numberOptions,
   },
