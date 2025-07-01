@@ -177,6 +177,7 @@ export class ProjectMapper {
       project_code: projectData.project_code,
       project_rid: project.rid || "",
       project_r_number: project.r_number || "",
+      r_number: project.r_number || "",
 
       created_datetime: new Date(),
       modified_datetime: undefined,
@@ -235,7 +236,7 @@ export class ProjectMapper {
 
   static mapToProjectFiscalSummary(
     projectData: ICreateProject,
-    project: any,
+    projectFiscal: any,
     projectId: string,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
@@ -245,7 +246,8 @@ export class ProjectMapper {
   ) {
     return {
       project_rid: projectId,
-      project_r_number: project.r_number,
+      project_r_number: projectFiscal.r_number,
+      r_number: projectFiscal.r_number,
       project_fiscal_rid: projectFiscalId,
 
       created_datetime: new Date(),

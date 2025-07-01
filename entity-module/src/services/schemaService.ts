@@ -807,6 +807,7 @@ class SchemaService {
           rid: {
             [Op.ne]: resourceData.resource_id, // Exclude current resource being updated
           },
+          account_rid: accountId,
         },
       });
 
