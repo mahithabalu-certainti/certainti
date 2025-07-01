@@ -819,6 +819,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                           >
                             {regularFilters.map((field) => (
                               <MenuItem
+                                title={field.name}
                                 key={field.value}
                                 value={field.value}
                                 disabled={
@@ -827,7 +828,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                                 }
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '14px',
+                                  fontSize: '13px',
                                   lineHeight: '30px',
                                   color: '#425A76',
                                   py: '1px',
@@ -942,11 +943,12 @@ const Filter: React.FC<FilterComponentProps> = ({
             .filter((field) => !selectedFilters.includes(field.value))
             .map((field) => (
               <MenuItem
+                title={field.name}
                 key={field.name}
                 onClick={() => handleFilterSelect(field.value)}
                 sx={{
                   fontWeight: 600,
-                  fontSize: '14px',
+                  fontSize: '13px',
                   lineHeight: '30px',
                   color: '#425A76',
                   py: '1px',

@@ -75,7 +75,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const handleEdit = (account: any) => {
     navigate(`/project/edit/${account?.project_fiscal_rid}`, {
       state: {
-        accountID: account?.rid,
+        accountID: account?.account_rid,
         projectID: account?.project_fiscal_rid,
         breadcrumbs: [{ label: 'Project' }, { label: account?.project_code }],
       },
@@ -112,7 +112,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     });
     navigate(path, {
       state: {
-        accountID: project?.rid,
+        accountID: project?.account_rid,
         projectID: project?.project_fiscal_rid,
       },
     });

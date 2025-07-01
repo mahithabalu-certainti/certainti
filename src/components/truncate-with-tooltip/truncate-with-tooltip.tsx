@@ -43,8 +43,9 @@ const TruncateWithTooltip = ({
   const [copied, setCopied] = useState<boolean>(false);
 
   const contentToRender = children ?? text;
-  const textForTooltipAndCopy =
-    text ?? extractTextFromReactNode(contentToRender);
+  const textForTooltipAndCopy = contentToRender
+    ? extractTextFromReactNode(contentToRender)
+    : text || '';
 
   const handleCopy = (valueToCopy: string) => {
     navigator.clipboard.writeText(valueToCopy);
