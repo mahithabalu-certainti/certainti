@@ -1511,12 +1511,11 @@ async insertClientTemplateDetails(
     `Account.${columnName}`;
   const column = Sequelize.col(qualifiedColumn);
 
-  if (is_empty !== undefined) {
+if (is_empty !== undefined) {
     return {
       [Op.or]: [
-        { [columnName]: null },
-        { [columnName]: '' },
-        Sequelize.where(column, Op.is, null)
+        Sequelize.where(column, Op.is, null),
+        Sequelize.where(column, Op.eq, 0)
       ]
     };
   }

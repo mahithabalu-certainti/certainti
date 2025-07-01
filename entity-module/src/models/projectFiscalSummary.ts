@@ -522,20 +522,3 @@ export class ProjectFiscalSummary
   }
 }
 
-export async function setupProjectFiscal(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_summary_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal_summary
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL}-' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
-
-    console.log("Project fiscal sequence setup complete");
-  } catch (error) {
-    console.error("Error setting up Project fiscal sequence:", error);
-  }
-}

@@ -507,7 +507,7 @@ class ProjectIngestionService {
   async addProjectFiscalSummary(
     accountNumber: string,
     projectData: any,
-    project: any,
+    projectFiscal: any,
     projectId: string,
     keyContacts: any[],
     projectFiscalId: string
@@ -529,7 +529,7 @@ class ProjectIngestionService {
 
     const summaryData = ProjectMapper.mapToProjectFiscalSummary(
       projectData,
-      project,
+      projectFiscal,
       projectId,
       startDate,
       endDate,
@@ -1041,8 +1041,15 @@ class ProjectIngestionService {
         if (parentLevelFields.includes(field)) {
           fullOrder.push([Sequelize.literal(`"Project"."${field}" ${nullsHandled}`)]);
         }
+        if(field === "created_datetime"){
+          fullOrder.push([Sequelize.literal(`"Project"."created_datetime" ${nullsHandled}`)]);
+        }
       } else {
-        fullOrder.push([Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`)]);
+        if(field === "created_datetime"){
+          fullOrder.push([Sequelize.literal(`"Project"."project_code" ${nullsHandled}`)]);
+        }else{
+          fullOrder.push([Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`)]);
+        }
       }
     
       const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
@@ -2021,7 +2028,7 @@ class ProjectIngestionService {
       }
   
       const currencyRids = Array.from(currencyRidSet);
-      if (currencyRids.length === 0) return;
+      if (currencyRids.length === 0) return project;
   
       // Step 2: Fetch currency details in one query
       const placeholders = currencyRids.map(() => '?').join(', ');
