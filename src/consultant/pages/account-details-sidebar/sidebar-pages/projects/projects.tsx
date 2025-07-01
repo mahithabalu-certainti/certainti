@@ -16,14 +16,19 @@ import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import { Project } from '../../../../../components/table/types';
-import { ProjectsAccountDetails } from '../../../account-details/utils';
+import { AccountDetailsResponse } from '../../../../types';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
   fontWeight: 600,
 };
+
+interface AccountDetailsProps extends AccountDetailsResponse {
+  activeKey: string;
+}
+
 interface ProjectsProps {
-  accountDetails?: ProjectsAccountDetails;
+  accountDetails?: AccountDetailsProps;
   activeKey?: string;
   setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
@@ -71,7 +76,7 @@ const Projects: React.FC<ProjectsProps> = ({
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const accountInActive =
-    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    accountDetails?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
 
   // Permission Mangement
@@ -111,7 +116,7 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+      accountNumber: accountDetails?.accountDetails?.account_rid || '',
       bothParentAndChild: toggleEnabled,
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
@@ -145,7 +150,7 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+      accountNumber: accountDetails?.accountDetails?.account_rid || '',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
@@ -159,7 +164,7 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortField(sortBy);
   };
   const accountNameLabel =
-    accountDetails?.data?.accountById?.account_name || '';
+    accountDetails?.accountById?.account_name || '';
   const handleEdit = (account: Project) => {
     navigate(`/Project/edit/${account?.project_fiscal_rid}`, {
       state: {
@@ -229,19 +234,19 @@ const Projects: React.FC<ProjectsProps> = ({
   ];
 
   const handleCreateProject = () => {
-    const accountID = accountDetails?.data?.accountById?.rid;
-    const accountName = accountDetails?.data?.accountById?.account_name;
+    const accountID = accountDetails?.accountById?.rid;
+    const accountName = accountDetails?.accountById?.account_name;
     const projectSettings = {
-      auto_access_rd: accountDetails?.data?.accountDetails?.auto_access_rd
+      auto_access_rd: accountDetails?.accountDetails?.auto_access_rd
         ? 'Yes'
         : 'No',
-      auto_send_interaction: accountDetails?.data?.accountDetails
+      auto_send_interaction: accountDetails?.accountDetails
         ?.autosend_interaction
         ? 'Yes'
         : 'No',
       max_ai_interactions:
-        accountDetails?.data?.accountDetails?.max_ai_interactions,
-      currency_rid: accountDetails?.data?.accountById?.currency_rid,
+        accountDetails?.accountDetails?.max_ai_interactions,
+      currency_rid: accountDetails?.accountById?.currency_rid,
     };
     navigate(`${PROJECT_CREATE}`, {
       state: {

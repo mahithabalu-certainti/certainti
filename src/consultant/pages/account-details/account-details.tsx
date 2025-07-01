@@ -35,7 +35,11 @@ import {
   Resources,
   Timesheet,
 } from '../account-details-sidebar';
-import { DisplayColumn, transformAccountData } from './utils';
+import {
+  accountDetailsProps,
+  DisplayColumn,
+  transformAccountData,
+} from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
@@ -45,7 +49,11 @@ import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
 import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
-import { AccountFieldsApiResponse, MenuItem } from '../../types';
+import {
+  AccountDetailsResponse,
+  AccountFieldsApiResponse,
+  MenuItem,
+} from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 
@@ -186,7 +194,7 @@ export const AccountDetails = () => {
 
   useEffect(() => {
     if (data?.data) {
-      setAccountDetails(transformAccountData(data.data));
+      setAccountDetails(transformAccountData(data?.data));
       setAccountDetailsForEdit(data.data);
     }
   }, [data]);
@@ -225,7 +233,7 @@ export const AccountDetails = () => {
   ];
 
   const handleEditAccount = () => {
-    navigate(ACCOUNT + '/edit/' + data.data.accountById.rid, {
+    navigate(ACCOUNT + '/edit/' + data?.data?.accountById?.rid, {
       state: { accountDetailsForEdit },
     });
   };
@@ -253,7 +261,7 @@ export const AccountDetails = () => {
       case 'details':
         return (
           <Details
-            accountDetails={{ ...data?.data }}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
             isLoading={isPending}
             isError={isError}
             isAccountEditEnable={isAccountEditEnable}
@@ -274,7 +282,10 @@ export const AccountDetails = () => {
       case 'projects':
         return (
           <Projects
-            accountDetails={{ ...data, activeKey: 'Projects' }}
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'Projects',
+            }}
             setExportType={setExportType}
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
@@ -292,7 +303,14 @@ export const AccountDetails = () => {
       case 'timesheet':
         return <Timesheet />;
       case 'imports':
-        return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
+        return (
+          <Import
+            data={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'imports',
+            }}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>

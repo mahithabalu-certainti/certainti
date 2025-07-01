@@ -138,7 +138,7 @@ export const transformFormData = (
     account_id: account_rid,
     account_name: formData.account_name,
     comments: formData.comments || null,
-    status_rid: formData.status,
+    status_rid: formData.status?.toString(),
     is_parent: formData.is_parent === 'yes',
     parent_account_rid: formData.parent_account_rid || null,
     currency_rid: formData.currency_rid || null,

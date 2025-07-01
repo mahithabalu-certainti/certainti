@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Switch, Tab, Tabs } from '@mui/material';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ResourceFilterIcon, RefreshIcon } from '../../../../assets';
@@ -30,6 +29,7 @@ import {
   useGetResourceType,
 } from '../../../services/resource-list';
 import { useGetProjectType } from '../../../services/project';
+import { FilterType } from '../../../../admin/types';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -39,8 +39,8 @@ interface TabProps {
   value: string;
   showFilter: boolean;
   setCurrentPage: (page: number) => void;
-  appliedFilters: Record<string, any>;
-  setAppliedFilters: (filters: Record<string, any>) => void;
+  appliedFilters: Record<string, FilterType>;
+  setAppliedFilters: (filters: Record<string, FilterType>) => void;
   showRefresh?: boolean;
   onRefreshClick?: () => void;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;

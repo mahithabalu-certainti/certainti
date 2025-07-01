@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // filterUtils.ts
 import {
   FieldConfig,
@@ -76,6 +75,7 @@ function formatString(str: string | undefined): string {
 export const formatFilterForApi = (
   filterStates: Record<string, FilterState>
 ) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formattedFilters: Record<string, any> = {};
 
   Object.entries(filterStates).forEach(([fieldName, state]) => {

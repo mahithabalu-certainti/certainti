@@ -1,3 +1,5 @@
+import { AccountDetailsResponse } from '../../types';
+
 export interface AccountData {
   accountById: {
     rid: string;
@@ -98,7 +100,9 @@ const getValueOrDefault = (
   return value?.toString() || defaultValue;
 };
 
-export const transformAccountData = (data: AccountData): DisplayColumn[] => {
+export const transformAccountData = (
+  data: AccountDetailsResponse
+): DisplayColumn[] => {
   const account = data?.accountById;
   const status = account?.status?.status_name?.toLowerCase();
 
@@ -301,24 +305,6 @@ export interface KeyContactProps {
   interaction_cc_recipient?: boolean;
   status?: string;
   status_name?: string;
-}
-export interface ProjectsAccountDetails {
-  data: {
-    accountById?: {
-      rid?: string;
-      account_name?: string;
-      currency_rid?: string;
-      status?: {
-        status_name?: string;
-      };
-    };
-    accountDetails?: {
-      account_rid?: string;
-      auto_access_rd?: boolean;
-      autosend_interaction?: boolean;
-      max_ai_interactions?: number;
-    };
-  };
 }
 
 export interface accountDetailsProps {
