@@ -17,7 +17,7 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
     {
       id: 'start_date',
       sortId: 'start_date',
-      label: 'Effective From',
+      label: 'Effective Date',
       width: 130,
       sortable: true,
       render: (row: ResourceSkillList) => (

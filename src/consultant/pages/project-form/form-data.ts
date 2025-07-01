@@ -245,7 +245,7 @@ export const FormData = (
             options: projectTypeOptions,
             placeholder: 'Choose Project Type',
           }),
-          createDateField('project_startdate', 'Effective From', {
+          createDateField('project_startdate', 'Start Date', {
             required: false,
             minDate: new Date('2000-01-01'),
             maxDate: currentDate,
