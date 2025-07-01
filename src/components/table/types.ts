@@ -150,6 +150,22 @@ export interface ListTableProps<T extends RowData> {
   ) => Promise<void> | void;
 }
 
+export interface EditingCell {
+  rowId: string;
+  columnId: string;
+  originalValue: string;
+  value: string;
+  error?: string | null;
+}
+
+export interface RenderFieldsProps<T extends RowData> {
+  column: ListTableColumn<T>;
+  editingCell: EditingCell | null;
+  handleValueChange: (value: string | number) => void;
+  handleKeyDown: (e: React.KeyboardEvent) => void;
+  isSaving: boolean;
+}
+
 //Project Accordion table data types
 export type ProjectAccordionResponse = {
   statusCode: number;

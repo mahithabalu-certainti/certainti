@@ -225,6 +225,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         sortBy={costorderBy}
         sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
+        onCellEdit={async (rowId, columnId, newValue) => {
+          console.log(rowId, { [columnId]: newValue });
+        }}
       />
     </div>
   );

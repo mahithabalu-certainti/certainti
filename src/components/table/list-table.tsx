@@ -2,26 +2,24 @@ import {
   Box,
   Checkbox,
   IconButton,
-  MenuItem,
   Table as MuiTable,
-  Select,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { ListTableColumn, ListTableProps, RowData, SortOrder } from './types';
+import { ListTableProps, RowData, SortOrder } from './types';
 import TablePagination from './pagination';
 import TableSortHeader from './sort-header';
 import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
 import { CloseIcon, ErrorInfoIcon, NewTickIcon } from '../../assets';
+import { renderFields, validateCellValue } from './table-utils';
 
 const ListTable = <T extends RowData>({
   data = [],
@@ -94,26 +92,6 @@ const ListTable = <T extends RowData>({
     onSort?.(property, direction);
   };
 
-  const validateCellValue = (
-    value: string,
-    column: ListTableColumn<T>
-  ): string | null => {
-    let error = null;
-
-    if (column.field?.required && !value.trim()) {
-      error = 'This field is required';
-    } else if (column.field?.validation) {
-      for (const validation of column.field.validation) {
-        if (!validation.regex.test(value)) {
-          error = validation.errorMessage;
-          break;
-        }
-      }
-    }
-
-    return error;
-  };
-
   const handleSave = async () => {
     if (!editingCell || !onCellEdit) return;
 
@@ -163,6 +141,11 @@ const ListTable = <T extends RowData>({
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      // Check if click is inside Select dropdown
+      const isSelectDropdown = target.closest(
+        '.MuiMenu-paper, .MuiPopover-root'
+      );
+      if (isSelectDropdown) return;
       const isEditingCell = target.closest(
         `[data-editing="${editingCell.rowId}-${editingCell.columnId}"]`
       );
@@ -182,145 +165,6 @@ const ListTable = <T extends RowData>({
   const handleValueChange = (value: string | number) => {
     if (editingCell) {
       setEditingCell({ ...editingCell, value: String(value), error: null });
-    }
-  };
-
-  const renderFields = (column: ListTableColumn<T>) => {
-    if (!editingCell) return null;
-
-    const handleChange = (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-      const value = e.target.value;
-      handleValueChange(value);
-    };
-
-    const commonProps = {
-      value: editingCell.value || '',
-      onChange: handleChange,
-      onKeyDown: handleKeyDown,
-      disabled: isSaving,
-      size: 'small' as const,
-      fullWidth: true,
-      variant: 'outlined' as const,
-      error: !!editingCell.error,
-      placeholder: column.field?.placeholder || '',
-      sx: {
-        fontSize: '13px',
-        width: '100%',
-        '& .MuiOutlinedInput-input': {
-          fontSize: '13px',
-          padding: '6px 8px',
-          height: '20px',
-        },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          border: editingCell.error ? '1px solid #ef4444' : 'none',
-        },
-        '& .MuiOutlinedInput-root': {
-          '&.Mui-focused': {
-            boxShadow: 'none',
-          },
-        },
-        '.MuiSelect-select': {
-          padding: '6px 8px',
-          color: editingCell.value === '' ? '#7D98B6' : 'black',
-        },
-        '&.Mui-disabled': {
-          backgroundColor: '#f3f4f6',
-        },
-        '& .MuiOutlinedInput-notchedOutline': {
-          border: 'none',
-          borderRadius: '2px',
-        },
-        '&:hover .MuiOutlinedInput-notchedOutline': {
-          border: 'none',
-        },
-        '& svg': {
-          color: '#7D98B6',
-        },
-      },
-    };
-
-    switch (column?.field?.type) {
-      case 'text':
-        return <TextField {...commonProps} type='text' autoFocus />;
-      case 'select':
-        return (
-          <Select
-            {...commonProps}
-            value={editingCell.value}
-            onChange={(e) => handleValueChange(e.target.value)}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxWidth: column.width || 300,
-                  maxHeight: 300,
-                  marginTop: '4px',
-                  boxShadow:
-                    'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                  '& .MuiMenuItem-root': {
-                    fontSize: '13px',
-                    padding: '6px 12px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                },
-              },
-            }}
-          >
-            {column?.field?.options?.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-                sx={{
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                }}
-              >
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        );
-      case 'textarea':
-        return (
-          <div className='absolute top-0 left-0 w-full z-30 bg-white'>
-            <TextField
-              {...commonProps}
-              multiline
-              minRows={3}
-              maxRows={10}
-              autoFocus
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 0,
-                  '& fieldset': {
-                    border: `1px solid ${editingCell.error ? '#ef4444' : '#60A5FA'}`,
-                  },
-                  '&:hover fieldset': {
-                    borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
-                  },
-                },
-                '& .MuiOutlinedInput-input': {
-                  fontSize: '13px',
-                  padding: '4px 0px 4px 8px !important',
-                  lineHeight: 1.4,
-                },
-                '& textarea': {
-                  resize: 'none',
-                },
-              }}
-            />
-          </div>
-        );
-      case 'number':
-        return <TextField {...commonProps} type='number' />;
-      default:
-        return null;
     }
   };
 
@@ -662,10 +506,15 @@ const ListTable = <T extends RowData>({
                         >
                           {isEditing ? (
                             <div className='box-border !h-[31px] !max-h-[31px] relative'>
-                              {renderFields(column)}
-                              {(editingCell.error &&
-                                column.field?.type === 'text') ||
-                                (column.field?.type === 'textarea' && (
+                              {renderFields({
+                                column,
+                                editingCell,
+                                handleValueChange,
+                                handleKeyDown,
+                                isSaving,
+                              })}
+                              {editingCell.error &&
+                                column.field?.type !== 'select' && (
                                   <Tooltip
                                     title={editingCell.error}
                                     arrow
@@ -686,7 +535,7 @@ const ListTable = <T extends RowData>({
                                       />
                                     </span>
                                   </Tooltip>
-                                ))}
+                                )}
                               <Box
                                 sx={{
                                   position: 'absolute',
