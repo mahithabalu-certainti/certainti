@@ -282,18 +282,3 @@ export class ProjectSummary
     return ProjectSummary;
   }
 }
-
-export async function setupProjectSummarySequence(sequelize: Sequelize) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS ${MAIN_SCHEMA_NAME}.project_summary_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.project_summary
-        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.project_summary_seq')::text, 10, '0')`);
-
-    console.log("Project summary sequence setup complete");
-  } catch (error) {
-    console.error("Error setting up Project summary sequence:", error);
-  }
-}
