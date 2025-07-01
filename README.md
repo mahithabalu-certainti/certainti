@@ -173,4 +173,3 @@ The application uses **Vite's environment mode system**:
 | Production     | `.env.prod`          |
 
 Make sure to configure the necessary variables (e.g., API URLs, Azure credentials) in the relevant `.env.*` file before starting or building the app.
-

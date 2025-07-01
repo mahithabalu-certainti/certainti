@@ -587,7 +587,7 @@ export const costDisplay = (
   const formattedCost =
     decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
 
-  return symbol ? `${symbol} ${formattedCost}` : formattedCost;
+  return `${symbol || '$'} ${formattedCost}`;
 };
 
 export const valueDisplay = (
