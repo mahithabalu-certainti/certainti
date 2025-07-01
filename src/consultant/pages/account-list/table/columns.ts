@@ -1,23 +1,18 @@
-import { AccountColumn } from '../../../types/account';
+import { REGEX_PATTERNS } from '../../../../common-utils';
+import { ListOption } from '../../../../components/table/types';
+import { AccountColumn, AccountList } from '../../../types/account';
 
-// export const columns: Column<Account>[] = [
-//   { id: 'accountName', label: 'Account Name', sortable: false },
-//   { id: 'accountId', label: 'Account ID', sortable: false },
-//   { id: 'parentAccount', label: 'Parent Account', sortable: false },
-//   { id: 'accountNumber', label: 'Account Number', sortable: false },
-//   { id: 'industry', label: 'Industry', sortable: true },
-//   { id: 'country', label: 'Country', sortable: true },
-//   { id: 'currency', label: 'Currency', sortable: true },
-//   { id: 'status', label: 'Status', sortable: false },
-// ];
-
-export const accountColumns: AccountColumn[] = [
+export const getAccountColumns = (
+  countryOptions: ListOption[],
+  industryOptions: ListOption[]
+): AccountColumn<AccountList>[] => [
   {
     id: 'account_name',
     sortId: 'account_name',
     label: 'Account Name',
     width: '250px',
     sortable: true,
+    editable: true,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -26,6 +21,26 @@ export const accountColumns: AccountColumn[] = [
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
+          errorMessage: 'Name must be more than 2 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.ACCOUNT_NAME,
+          errorMessage:
+            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+        },
+      ],
+    },
   },
   {
     id: 'industry',
@@ -33,6 +48,13 @@ export const accountColumns: AccountColumn[] = [
     label: 'Industry',
     width: '200px',
     sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: 'Choose Industry',
+      options: industryOptions,
+    },
   },
   {
     id: 'country',
@@ -40,6 +62,13 @@ export const accountColumns: AccountColumn[] = [
     label: 'Country',
     width: '150px',
     sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Country',
+      options: countryOptions,
+    },
   },
   {
     id: 'total_projects',

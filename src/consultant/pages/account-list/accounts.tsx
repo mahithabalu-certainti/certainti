@@ -280,6 +280,8 @@ export const Accounts: React.FC = () => {
           isAccountEditEnable={isAccountEditEnable}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
+          countryOptions={allCountries}
+          industryOptions={allIndustries}
         />
       </div>
     </div>

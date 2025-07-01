@@ -23,7 +23,8 @@ import { Account, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
-import { accountColumns } from './columns';
+import { getAccountColumns } from './columns';
+import { validateCellValue } from '../../../../components/table/table-utils';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -37,6 +38,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
   isAccountDeleteEnable,
   // setPage
   refreshAccountTrigger,
+  countryOptions,
+  industryOptions,
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
@@ -50,6 +53,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
+  const [editingCell, setEditingCell] = useState<{
+    rowId: string;
+    columnId: string;
+    originalValue: string;
+    value: string;
+    error?: string | null;
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: accountList, isLoading: loading } = useAccounts(
     {
@@ -251,6 +262,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOrder(direction);
   };
 
+  const accountColumns = getAccountColumns(countryOptions, industryOptions);
+
   const childRowsRenderer = (parentAccount: string | null) =>
     renderChildRows({
       accounts: accounts || [],
@@ -265,11 +278,94 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleChildRowClick,
       isAccountEditEnable,
       isAccountDeleteEnable,
+      columns: accountColumns,
+      editingCell,
+      setEditingCell,
+      handleValueChange,
+      handleKeyDown,
+      isSaving,
+      handleSave,
+      handleCancel,
     });
 
   const isSkeletonLoading = loading || !isDataLoaded || colorCodes.isLoading;
   const isEmptyState =
     !loading && isDataLoaded && !colorCodes.isLoading && accounts?.length === 0;
+
+  const handleSave = async () => {
+    if (!editingCell) return;
+
+    const column = accountColumns.find(
+      (col) => col.id === editingCell.columnId
+    );
+    if (!column) return;
+
+    const error = validateCellValue(editingCell.value, column);
+    if (error) {
+      setEditingCell((prev) => (prev ? { ...prev, error } : null));
+      return;
+    }
+
+    if (editingCell.originalValue === editingCell.value) {
+      handleCancel();
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await console.log(editingCell.rowId, {
+        [editingCell.columnId]: editingCell.value,
+      });
+      setEditingCell(null);
+    } catch (error) {
+      console.error('Error saving cell value:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingCell(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleCancel();
+    } else if (e.key === 'Enter') {
+      handleSave();
+    }
+  };
+
+  useEffect(() => {
+    if (!editingCell) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is inside Select dropdown
+      const isSelectDropdown = target.closest(
+        '.MuiMenu-paper, .MuiPopover-root'
+      );
+      if (isSelectDropdown) return;
+      const isEditingCell = target.closest(
+        `[data-editing="${editingCell.rowId}-${editingCell.columnId}"]`
+      );
+
+      if (!isEditingCell) {
+        handleSave();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [editingCell]);
+
+  const handleValueChange = (value: string | number) => {
+    if (editingCell) {
+      setEditingCell({ ...editingCell, value: String(value), error: null });
+    }
+  };
 
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
@@ -436,6 +532,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   handleAccountNameClick,
                   isAccountEditEnable,
                   isAccountDeleteEnable,
+                  columns: accountColumns,
+                  editingCell,
+                  setEditingCell,
+                  handleValueChange,
+                  handleKeyDown,
+                  isSaving,
+                  handleSave,
+                  handleCancel,
                 })
               )}
             </TableBody>

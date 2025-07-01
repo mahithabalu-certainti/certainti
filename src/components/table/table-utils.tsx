@@ -74,6 +74,7 @@ export const renderFields = <T extends RowData>({
       return (
         <Select
           {...commonProps}
+          displayEmpty
           value={editingCell.value}
           onChange={handleSelectChange}
           MenuProps={{
@@ -94,9 +95,22 @@ export const renderFields = <T extends RowData>({
             },
           }}
         >
+          {column?.field?.placeholder && (
+            <MenuItem
+              value=''
+              sx={{
+                color: '#425A76',
+                fontSize: '13px',
+                fontWeight: '500',
+              }}
+            >
+              {column?.field?.placeholder}
+            </MenuItem>
+          )}
           {column?.field?.options?.map((option) => (
             <MenuItem
               key={option.value}
+              title={option.label}
               value={option.value}
               sx={{
                 color: '#425A76',
