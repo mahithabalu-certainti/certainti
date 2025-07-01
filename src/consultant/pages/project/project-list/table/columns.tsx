@@ -29,7 +29,7 @@ export const getAllProjectListColumns = (
     },
     render: (row: Project) => {
       const displayCode = row.fiscal_year
-        ? `${row.project_code} - FY${row.fiscal_year}`
+        ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
 
       return onClick ? (
