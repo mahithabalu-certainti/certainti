@@ -16,8 +16,55 @@ const typeDefs = gql`
     permissions: [Permission]
   }
 
+  input UpdateUserInput {
+    rid: ID!
+    azure_id: String!
+    first_name: String
+    status_rid: String
+    profile_rid: String
+    role_rid: String
+  }
+
+  type User {
+    rid: ID!
+    email: String!
+    first_name: String!
+    status_rid: String
+    created_datetime: String
+    modified_datetime: String
+  }
+
+  type UpdateUserResponse {
+    success: Boolean!
+    message: String
+    user: User
+  }
+
+  input UpdateUserProfileInput {
+    rid: ID!
+    profile_name: String
+    profile_description: String
+  }
+
+  type Profile {
+    rid: ID!
+    profile_name: String
+    profile_description: String
+  }
+
+  type UpdateUserProfileResponse {
+    success: Boolean!
+    message: String
+    profile: Profile
+  }
+
   type Query {
     permissionById(azureId: String!): PermissionByIdResponse
+  }
+
+  type Mutation {
+    updateUser(input: UpdateUserInput!): UpdateUserResponse!
+    updateUserProfile(input: UpdateUserProfileInput!): UpdateUserProfileResponse!
   }
 `;
 
