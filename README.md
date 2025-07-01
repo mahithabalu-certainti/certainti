@@ -1,6 +1,6 @@
 # rdcredits_platform_be
 
-## 🧠 Think RD 365 Backend Platform
+## 🧠 Think RD 365 Backend
 
 This is the backend service for Think RD 365, built using Node.js, Express.js, and TypeScript. It provides core functionality for account management, project management, and user services.
 
@@ -15,8 +15,8 @@ This is the backend service for Think RD 365, built using Node.js, Express.js, a
 * ✅ Modular codebase for scalability and maintainability
 
 ## 📁 Project Structure
-
-rdcredits_platform_be/
+```
+rdcredits_platform_be
 │
 ├── account-module/            # Handles account-related operations
 ├── entity-module/             # Handles entities used across modules
@@ -42,7 +42,7 @@ rdcredits_platform_be/
 ├── tsconfig.json              # TypeScript compiler configuration
 ├── .env                       # Environment variables
 └── README.md                  # Project documentation
-
+```
 ## 🛠️ Setup & Installation
 
 ### Prerequisites
@@ -55,17 +55,22 @@ Ensure you have the following installed on your system:
 
 ### Clone the Repository
 
+```
 git clone https://github.com/certainti-ai/rdcredits_platform_be.git
+```
+```
 cd module-name
+```
 
 ### Install Dependencies
-
+```
 npm install
+```
 
 ## 🚀 Running the App
 ### 🧪 Development Mode
-
+```
 npm run start / npm start
-
+```
 * Starts the server using `nodemon`
 * Auto-restarts on file changes
