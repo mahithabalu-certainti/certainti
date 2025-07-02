@@ -1968,7 +1968,8 @@ async insertFiscalInfoOnly(
   offset?: number,
   sortBy?: string,
   sortOrder?: string,
-  type?: string
+  type?: string,
+  fiscalYear?:any
 ) {
   try {
     const orgDbSequelize = await initOrgSequelize();
@@ -2007,8 +2008,10 @@ async insertFiscalInfoOnly(
         async ([schema, accountRids]) => {
           try {
             const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
-            return await orgDbSequelize.query(
-              `SELECT CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
+            
+            // Build the base query
+            let query = `
+              SELECT CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
                 SUM(total_projects::NUMERIC) AS total_projects,
                 SUM(total_project_hours::NUMERIC) AS total_project_hours,
                 SUM(total_project_cost::NUMERIC) AS total_project_cost,
@@ -2018,9 +2021,21 @@ async insertFiscalInfoOnly(
                 SUM(total_projects_rd_credits::NUMERIC) AS total_projects_rd_credits
               FROM "${schemaName}".account_fiscal
               WHERE account_rid IN (:accountRids)
-              GROUP BY account_rid, fiscal_year`,
-              { replacements: { accountRids }, type: "SELECT" }
-            );
+            `;
+            
+            // Add fiscal year condition only if it's provided
+            const replacements: any = { accountRids };
+            if (fiscalYear) {
+              query += ` AND fiscal_year = :fiscal_year`;
+              replacements.fiscal_year = fiscalYear;
+            }
+            
+            query += ` GROUP BY account_rid, fiscal_year`;
+            
+            return await orgDbSequelize.query(query, {
+              replacements,
+              type: "SELECT"
+            });
           } catch (error) {
             console.warn(`Fiscal data skipped for schema ${schema}:`, error);
             return [];
@@ -2048,7 +2063,7 @@ async insertFiscalInfoOnly(
       };
     };
 
-    const enrichedAccounts = accountData.map((account: any) => {
+    let enrichedAccounts = accountData.map((account: any) => {
       const parent = enrichAccount(account.dataValues, false);
       const children = (account.dataValues?.child_accounts || []).map(
         (c: any) => enrichAccount(c.dataValues, true)
@@ -2057,8 +2072,30 @@ async insertFiscalInfoOnly(
       parent.child_accounts = children;
       return parent;
     });
+    // After enriching accounts with fiscal data, apply filtering
+    let filteredAccounts = enrichedAccounts;
 
-    return { data: enrichedAccounts, total: enrichedAccounts.length };
+    if (fiscalYear) {
+      filteredAccounts = filteredAccounts
+        .map((parent: any) => {
+          // Filter child accounts - keep only those with fiscal data
+          const filteredChildren = parent.child_accounts?.filter(
+          (child: any) => child.projects_by_fiscal_year?.length > 0
+          ) || [];
+          // Return a copy of parent with filtered children
+          return {
+            ...parent,
+            child_accounts: filteredChildren
+          };
+        })
+        // Filter out parents that have no children left after filtering
+        .filter((parent: any) => parent.child_accounts?.length > 0);
+      }
+
+    return {
+      data: filteredAccounts,
+      total: filteredAccounts.length
+  };
   } catch (err) {
     throw new Error("Error fetching fiscal data.");
   }
