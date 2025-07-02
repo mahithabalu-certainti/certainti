@@ -169,7 +169,8 @@ async accountList(
       offset,
       finalSortBy,
       finalSortOrder,
-      'create'
+      'create',
+      fiscalYear
     );
 
     // Optimize count query
@@ -469,8 +470,13 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         parentAccounts.forEach((account: any) => {
           account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
         });
-          
-        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,0,0,finalSortBy,finalSortOrder,'download');
+        // Get full account data only for the needed records
+        const updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
+          finalSortBy,
+          finalSortOrder,
+          'download',
+          fiscalYear
+        );
         const rawResult = updatedAccount?.data || [];
         const cleanedUsers = rawResult;
         const emptyRow = {
