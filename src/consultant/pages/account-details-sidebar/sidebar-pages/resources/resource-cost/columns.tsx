@@ -69,7 +69,7 @@ export const getResourceCostColumns = (
   {
     id: 'effective_from',
     sortId: 'effective_from',
-    label: 'Effective From',
+    label: 'Effective Date',
     width: 130,
     sortable: true,
 

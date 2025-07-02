@@ -818,6 +818,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                           >
                             {regularFilters.map((field) => (
                               <MenuItem
+                                title={field.label}
                                 key={field.name}
                                 value={field.name}
                                 disabled={
@@ -826,7 +827,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                 }
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '14px',
+                                  fontSize: '13px',
                                   lineHeight: '30px',
                                   color: '#425A76',
                                   py: '1px',
@@ -944,11 +945,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
             .filter((field) => !selectedFilters.includes(field.name))
             .map((field) => (
               <MenuItem
+                title={field.label}
                 key={field.name}
                 onClick={() => handleFilterSelect(field.name)}
                 sx={{
                   fontWeight: 600,
-                  fontSize: '14px',
+                  fontSize: '13px',
                   lineHeight: '30px',
                   color: '#425A76',
                   py: '1px',

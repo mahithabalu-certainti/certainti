@@ -47,7 +47,7 @@ export const getProjectColumns = (
     },
     render: (row: Project) => {
       const displayCode = row.fiscal_year
-        ? `${row.project_code} - FY${row.fiscal_year}`
+        ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
 
       return onClick ? (
@@ -66,13 +66,6 @@ export const getProjectColumns = (
       );
     },
   },
-  // {
-  //   id: 'project_code',
-  //   label: 'Project Code',
-  //   sortable: true,
-  //   sortId: 'project_code',
-  //   width: 160,
-  // },
   {
     id: 'project_name',
     label: 'Name',
