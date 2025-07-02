@@ -581,8 +581,8 @@ private async getOptimizedCount(repository: any, whereClause: any) {
                    child.projects_by_fiscal_year.forEach((fiscalData: any) => {
                   exportDetails.push({
                       "Account Name": fiscalData?.fiscal_year || "-",
-                      "Industry": child?.industry?.industry_name || "-",
-                      "Country": child?.country?.country_name || "-",
+                      "Industry": "-",
+                      "Country":  "-",
                       "Total Projects": fiscalData?.total_projects || '-',
                       "Total Project Hours": fiscalData?.total_project_hours || "-",
                       "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
