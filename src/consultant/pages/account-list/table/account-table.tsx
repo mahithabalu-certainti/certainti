@@ -1,30 +1,20 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { TableSkeleton, TableSortHeader } from '../../../../components/table';
+import { ListTable } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts, useFetchColorCodes } from '../../../services/account';
 import { FilterState } from '../../../types';
-import { Account, ConvertedAccount } from '../../../types/account';
-import { convertAccounts } from '../helpers';
+import { AccountList } from '../../../types/account';
+import { processAccounts } from '../helpers';
 import './styles.css';
-import { renderChildRows, renderRows } from './utils';
 import { getAccountColumns } from './columns';
-import { validateCellValue } from '../../../../components/table/table-utils';
+import { ActionItem } from '../../../../components/table/types';
+import { DeleteIcon, EditIcon } from '../../../../assets';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -35,34 +25,24 @@ const AccountTable: React.FC<Record<string, any>> = ({
   setOrderBy,
   page,
   isAccountEditEnable,
-  isAccountDeleteEnable,
+  // isAccountDeleteEnable,
   // setPage
   refreshAccountTrigger,
   countryOptions,
   industryOptions,
 }) => {
   const navigate = useNavigate();
-  const [openRows, setOpenRows] = useState<Set<string>>(new Set());
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-
-  // const [rowsPerPage, setRowsPerPage] = useState<number>(1000);
-  const [accounts, setAccounts] = useState<ConvertedAccount[]>();
-  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { filters, fiscalYear } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
-  const [editingCell, setEditingCell] = useState<{
-    rowId: string;
-    columnId: string;
-    originalValue: string;
-    value: string;
-    error?: string | null;
-  } | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
-  const { data: accountList, isLoading: loading } = useAccounts(
+  const {
+    data: accountList,
+    isLoading: loading,
+    isError,
+  } = useAccounts(
     {
       page: page,
       limit: 1000,
@@ -76,6 +56,12 @@ const AccountTable: React.FC<Record<string, any>> = ({
   );
   const colorCodes = useFetchColorCodes();
 
+  useEffect(() => {
+    if (accountList) {
+      setTotalCount(accountList.count || 0);
+    }
+  }, [accountList]);
+
   const colorCodesList = useMemo(() => {
     return (
       colorCodes.data?.data.colors.map((item) => ({
@@ -85,37 +71,15 @@ const AccountTable: React.FC<Record<string, any>> = ({
     );
   }, [colorCodes]);
 
-  useEffect(() => {
-    if (!loading && accountList) {
-      const convertedData = convertAccounts(
-        accountList.accounts || [],
-        colorCodesList
-      );
-      setAccounts(convertedData);
-      setTotalCount(accountList.count || 0);
-      setIsDataLoaded(true);
-
-      // Expand only those accounts which have children
-      const parentAccountNames = new Set(
-        convertedData.map((acc) => acc.parentAccount).filter(Boolean)
-      );
-      const expandableAccounts = convertedData.filter((acc) =>
-        parentAccountNames.has(acc.accountName)
-      );
-      const openRowsSet = new Set<string>(
-        expandableAccounts.map((acc) => acc.accountId)
-      );
-
-      setOpenRows(openRowsSet);
-    } else {
-      setIsDataLoaded(false);
-    }
-  }, [loading, accountList]);
+  const processedAccounts = useMemo(() => {
+    if (!accountList?.accounts) return [];
+    return processAccounts(accountList.accounts, colorCodesList);
+  }, [accountList, colorCodesList]);
 
   // Add this handler in the AccountTable component
-  const handleAccountNameClick = (account: Account) => {
+  const handleAccountNameClick = (account: AccountList) => {
     const path = generatePath(ACCOUNT_DETAILS, {
-      accountid: account.accountId,
+      accountid: account.rid,
     });
     navigate(path, {
       state: { account },
@@ -123,127 +87,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };
 
   // Handler for edit and delete actions
-  const handleEdit = (account: Account) => {
-    navigate(ACCOUNT + '/edit/' + account.accountId, {
-      state: { account },
-    });
+  const handleEdit = (account: AccountList) => {
+    navigate(ACCOUNT + '/edit/' + account.rid);
   };
 
-  const handleDelete = (account: Account) => {
-    console.log('Delete account', account.accountId);
+  const handleDelete = (account: AccountList) => {
+    console.log('Delete account', account.rid);
   };
-
-  // Toggle expand/collapse state for a row
-  const handleRowClick = (accountId: string) => {
-    const newOpenRows = new Set(openRows);
-    if (newOpenRows.has(accountId)) {
-      newOpenRows.delete(accountId);
-    } else {
-      newOpenRows.add(accountId);
-    }
-    setOpenRows(newOpenRows);
-  };
-
-  const [openChildRows, setOpenChildRows] = useState<Set<string>>(new Set());
-
-  // ... existing state and handlers
-
-  const handleChildRowClick = (accountId: string) => {
-    const newOpenChildRows = new Set(openChildRows);
-    if (newOpenChildRows.has(accountId)) {
-      newOpenChildRows.delete(accountId);
-    } else {
-      newOpenChildRows.add(accountId);
-    }
-    setOpenChildRows(newOpenChildRows);
-  };
-
-  // Handle checkbox selection
-  const handleSelectRow = (index: number) => {
-    const newSelectedRows = new Set(selectedRows);
-    const account = accounts?.[index];
-    if (!account) return;
-
-    const hasChildren = accounts.some(
-      (acc) => acc.parentAccount === account.accountName
-    );
-
-    if (newSelectedRows.has(index)) {
-      newSelectedRows.delete(index);
-      if (hasChildren) {
-        accounts
-          .filter((acc) => acc.parentAccount === account.accountName)
-          .forEach((child) => {
-            const childIndex = accounts.findIndex(
-              (acc) => acc.accountName === child.accountName
-            );
-            newSelectedRows.delete(childIndex);
-          });
-      } else if (account.parentAccount) {
-        const parentIndex = accounts.findIndex(
-          (acc) => acc.accountName === account.parentAccount
-        );
-        newSelectedRows.delete(parentIndex);
-      }
-    } else {
-      newSelectedRows.add(index);
-      if (hasChildren) {
-        accounts
-          .filter((acc) => acc.parentAccount === account.accountName)
-          .forEach((child) => {
-            const childIndex = accounts.findIndex(
-              (acc) => acc.accountName === child.accountName
-            );
-            newSelectedRows.add(childIndex);
-          });
-      } else if (account.parentAccount) {
-        const siblingAccounts = accounts.filter(
-          (acc) => acc.parentAccount === account.parentAccount
-        );
-        const allSiblingsSelected = siblingAccounts.every((child) =>
-          newSelectedRows.has(
-            accounts.findIndex((acc) => acc.accountName === child.accountName)
-          )
-        );
-        if (allSiblingsSelected) {
-          const parentIndex = accounts.findIndex(
-            (acc) => acc.accountName === account.parentAccount
-          );
-          newSelectedRows.add(parentIndex);
-        }
-      }
-    }
-    setSelectedRows(newSelectedRows);
-  };
-
-  // const handleSelectAllRows = (selectAll: boolean) => {
-  //   if (!accounts) return;
-
-  //   const newSelectedRows = new Set<number>();
-
-  //   if (selectAll) {
-  //     accounts.forEach((account, index) => {
-  //       const hasParent = !!account.parentAccount;
-
-  //       if (!hasParent) {
-  //         newSelectedRows.add(index);
-
-  //         const children = accounts.filter(
-  //           (acc) => acc.parentAccount === account.accountName
-  //         );
-
-  //         children.forEach((child) => {
-  //           const childIndex = accounts.findIndex(
-  //             (acc) => acc.accountName === child.accountName
-  //           );
-  //           newSelectedRows.add(childIndex);
-  //         });
-  //       }
-  //     });
-  //   }
-
-  //   setSelectedRows(newSelectedRows);
-  // };
 
   // // Handle page change
   // const handleChangePage = (newPage: number) => {
@@ -262,298 +112,85 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOrder(direction);
   };
 
-  const accountColumns = getAccountColumns(countryOptions, industryOptions);
+  const accountColumns = getAccountColumns(
+    handleAccountNameClick,
+    countryOptions,
+    industryOptions
+  );
 
-  const childRowsRenderer = (parentAccount: string | null) =>
-    renderChildRows({
-      accounts: accounts || [],
-      parentAccount,
-      selectedRows,
-      handleSelectRow,
-      handleEdit,
-      handleDelete,
-      openRows,
-      handleAccountNameClick,
-      openChildRows,
-      handleChildRowClick,
-      isAccountEditEnable,
-      isAccountDeleteEnable,
-      columns: accountColumns,
-      editingCell,
-      setEditingCell,
-      handleValueChange,
-      handleKeyDown,
-      isSaving,
-      handleSave,
-      handleCancel,
-    });
+  const isSkeletonLoading = loading || colorCodes.isLoading;
 
-  const isSkeletonLoading = loading || !isDataLoaded || colorCodes.isLoading;
-  const isEmptyState =
-    !loading && isDataLoaded && !colorCodes.isLoading && accounts?.length === 0;
+  const getRowId = (row: AccountList) => row.rid;
 
-  const handleSave = async () => {
-    if (!editingCell) return;
+  const actionButtons: ActionItem<AccountList>[] = [
+    {
+      label: 'Edit',
+      onClick: (row: AccountList) => handleEdit(row),
+      icon: EditIcon,
+      hide: !isAccountEditEnable,
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+    },
+    {
+      label: 'Delete',
+      onClick: (row: AccountList) => handleDelete(row),
+      icon: DeleteIcon,
+      hide: true,
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+    },
+  ];
 
-    const column = accountColumns.find(
-      (col) => col.id === editingCell.columnId
-    );
-    if (!column) return;
-
-    const error = validateCellValue(editingCell.value, column);
-    if (error) {
-      setEditingCell((prev) => (prev ? { ...prev, error } : null));
-      return;
-    }
-
-    if (editingCell.originalValue === editingCell.value) {
-      handleCancel();
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await console.log(editingCell.rowId, {
-        [editingCell.columnId]: editingCell.value,
-      });
-      setEditingCell(null);
-    } catch (error) {
-      console.error('Error saving cell value:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingCell(null);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleCancel();
-    } else if (e.key === 'Enter') {
-      handleSave();
-    }
-  };
-
-  useEffect(() => {
-    if (!editingCell) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      // Check if click is inside Select dropdown
-      const isSelectDropdown = target.closest(
-        '.MuiMenu-paper, .MuiPopover-root'
-      );
-      if (isSelectDropdown) return;
-      const isEditingCell = target.closest(
-        `[data-editing="${editingCell.rowId}-${editingCell.columnId}"]`
-      );
-
-      if (!isEditingCell) {
-        handleSave();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [editingCell]);
-
-  const handleValueChange = (value: string | number) => {
-    if (editingCell) {
-      setEditingCell({ ...editingCell, value: String(value), error: null });
-    }
+  const handleSelectionChange = (selectedIds: string[]) => {
+    console.log('Selected rows:', selectedIds);
   };
 
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
-      <Paper
-        sx={{
-          boxShadow: 'none',
-          borderRadius: '0px',
+      <ListTable
+        data={processedAccounts || []}
+        columns={accountColumns}
+        getRowId={getRowId}
+        component={'account'}
+        hoverHighlight={true}
+        tableStyle={{
           height: '100%',
+          maxHeight: 'calc(100vh - 132px)',
+          overflow: 'auto',
         }}
-      >
-        <TableContainer
-          sx={{
-            height: '100%',
-            maxHeight: 'calc(100vh - 132px)',
-            overflow: 'auto',
-          }}
-        >
-          <Table stickyHeader>
-            <TableHead
-              sx={{
-                '& .MuiTableCell-root': {
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  lineHeight: '21px',
-                  color: '#2A2A2A',
-                  padding: '0px',
-                  px: '8px',
-                  height: '28px',
-                },
-              }}
-            >
-              <TableRow>
-                <TableCell
-                  sx={{
-                    position: 'sticky',
-                    left: 0,
-                    background: '#fff',
-                    zIndex: 11,
-                    width: '32px',
-                    maxWidth: '32px',
-                    minWidth: '32px',
-                    padding: '0px !important',
-                    borderRight: 'none',
-                    borderBottom: '1px solid #CBD6E2 !important',
-                  }}
-                >
-                  {/* <Box className='flex items-center justify-center !h-[28px] !w-[32px]'>
-                    <Checkbox
-                      size="small"
-                      disableRipple
-                      checked={Boolean(
-                        accounts?.length &&
-                        selectedRows.size === accounts.length
-                      )}
-                      indeterminate={Boolean(
-                        accounts?.length &&
-                        selectedRows.size > 0 &&
-                        selectedRows.size < accounts.length
-                      )}
-                      onChange={(e) => handleSelectAllRows(e.target.checked)}
-                      disabled={!accounts?.length}
-                      sx={{
-                        color: '#CBD6E2',
-                        '&.Mui-checked': {
-                          color: '#1755E7',
-                        },
-                        '&.MuiCheckbox-indeterminate': {
-                          color: '#1755E7',
-                        },
-                      }}
-                    />
-                  </Box> */}
-                </TableCell>
-                {accountColumns.map((column) =>
-                  column.sortable ? (
-                    <TableSortHeader
-                      key={column.id}
-                      columnId={column.sortId}
-                      label={column.label}
-                      orderBy={orderBy}
-                      order={order}
-                      onSortChange={handleSortChange}
-                      sx={{
-                        width: column.width || 160,
-                        minWidth: column.width || 160,
-                        maxWidth: column.width || 160,
-                        ...(column.sx || {}),
-                      }}
-                    />
-                  ) : (
-                    <TableCell
-                      key={column.id}
-                      sx={{
-                        width: column.width || 160,
-                        minWidth: column.width || 160,
-                        maxWidth: column.width || 160,
-                        ...(column.sx || {}),
-                      }}
-                    >
-                      {column.label}
-                    </TableCell>
-                  )
-                )}
-                {(isAccountEditEnable || isAccountDeleteEnable) && (
-                  <TableCell
-                    sx={{
-                      width: '60px',
-                      minWidth: '60px',
-                      maxWidth: '60px',
-                      borderRight: 'none',
-                    }}
-                  >
-                    Action
-                  </TableCell>
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody
-              sx={{
-                '& .MuiTableCell-root': {
-                  fontWeight: 500,
-                  fontSize: '13px',
-                  lineHeight: '21px',
-                  color: '#425A76',
-                  padding: '0px',
-                  paddingLeft: '8px',
-                  paddingRight: '8px',
-                  height: '32px',
-                },
-              }}
-            >
-              {isSkeletonLoading ? (
-                <TableSkeleton
-                  rowsPerPage={20}
-                  columnsCount={accountColumns.length}
-                  selectable={true}
-                  hasActions={true}
-                  borderHide={true}
-                  stickyColumnsCount={2}
-                />
-              ) : isEmptyState ? (
-                <TableRow
-                  sx={{
-                    height: '32px',
-                    '& .MuiTableCell-root': {
-                      border: 'none',
-                    },
-                  }}
-                >
-                  <TableCell colSpan={9} align='center'>
-                    <Typography variant='body1'>No data available</Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                renderRows({
-                  accounts: accounts || [],
-                  openRows,
-                  selectedRows,
-                  handleRowClick,
-                  handleSelectRow,
-                  handleEdit,
-                  handleDelete,
-                  renderChildRows: childRowsRenderer,
-                  handleAccountNameClick,
-                  isAccountEditEnable,
-                  isAccountDeleteEnable,
-                  columns: accountColumns,
-                  editingCell,
-                  setEditingCell,
-                  handleValueChange,
-                  handleKeyDown,
-                  isSaving,
-                  handleSave,
-                  handleCancel,
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-      {/* <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        count={accountList?.count ?? 0}
-        rowsPerPage={rowsPerPage}
-        page={(page ?? 1) - 1}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      /> */}
+        expandAllParent={true}
+        expandAllChild={false}
+        expandable={true}
+        childrenKey='child_accounts'
+        grandchildrenKey='projects_by_fiscal_year'
+        maxNestingLevel={3}
+        editDisableLevel={[2]}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        parentBorder={false}
+        // Selection
+        hideHeaderSelect={true}
+        selectable={true}
+        onSelectionChange={handleSelectionChange}
+        // Actions
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        // State
+        loading={isSkeletonLoading}
+        error={isError ? 'Failed to load data' : undefined}
+        // Sorting
+        sortBy={orderBy}
+        sortOrder={order}
+        onSort={handleSortChange}
+        onCellEdit={async (rowId, columnId, newValue) => {
+          console.log(rowId, { [columnId]: newValue });
+        }}
+      />
     </div>
   );
 };

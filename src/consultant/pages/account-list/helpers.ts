@@ -174,3 +174,22 @@ export function convertAccounts(
 
   return result;
 }
+
+export function processAccounts(
+  accounts: AccountList[],
+  colors: { bgColor: string; color: string }[]
+): AccountList[] {
+  if (!accounts || !Array.isArray(accounts) || colors.length === 0)
+    return accounts;
+
+  return accounts.map((account, index) => {
+    const colorIndex = index % colors.length;
+    const assignedColor = colors[colorIndex];
+
+    return {
+      ...account,
+      bgColor: assignedColor.bgColor,
+      color: assignedColor.color,
+    };
+  });
+}

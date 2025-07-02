@@ -367,6 +367,8 @@ export type AccountList = {
   professional_services_consultant: string;
   finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
+  color?: string;
+  bgColor?: string;
 };
 
 export interface ConvertedAccount {

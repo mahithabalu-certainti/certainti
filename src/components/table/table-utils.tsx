@@ -2,6 +2,25 @@ import React from 'react';
 import { TextField, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { ListTableColumn, RenderFieldsProps, RowData } from './types';
 
+export function cleanCellValue(raw: unknown): string {
+  if (raw == null || raw === '-' || raw === '--') return '';
+  if (React.isValidElement(raw)) return '';
+  if (raw instanceof Date) return raw.toISOString();
+  if (typeof raw === 'object') return '';
+  return String(raw);
+}
+
+export const getCleanCellValue = <T extends RowData>(
+  row: T,
+  column: ListTableColumn<T>
+) => {
+  const renderedValue = column.render ? column.render(row) : null;
+  if (renderedValue !== null && typeof renderedValue === 'object') {
+    return cleanCellValue(row[column.id] ?? '');
+  }
+  return cleanCellValue(renderedValue ?? row[column.id] ?? '');
+};
+
 export const renderFields = <T extends RowData>({
   column,
   editingCell,

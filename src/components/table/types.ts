@@ -63,6 +63,7 @@ export interface FieldValidation {
 export interface TableField {
   type: ListFieldType;
   required: boolean;
+  disabled?: boolean;
   placeholder?: string;
   options?: ListOption[];
   validation?: FieldValidation[];
@@ -119,6 +120,7 @@ export interface ListTableProps<T extends RowData> {
   stickyHeader?: boolean;
   stickyColumnsCount?: number;
   // Selection
+  hideHeaderSelect?: boolean;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;
   // Actions
@@ -148,6 +150,16 @@ export interface ListTableProps<T extends RowData> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     newValue: any
   ) => Promise<void> | void;
+
+  // Nested configuration
+  expandAllParent?: boolean;
+  expandAllChild?: boolean;
+  parentBorder?: boolean;
+  expandable?: boolean;
+  childrenKey?: string;
+  grandchildrenKey?: string;
+  maxNestingLevel?: number;
+  editDisableLevel?: number[];
 }
 
 export interface EditingCell {
@@ -246,3 +258,11 @@ export type ProjectFiscalSummary = {
   project_fiscal_rid: string;
   rid: string;
 };
+
+export interface ExpandedState {
+  [key: string]: {
+    expanded: boolean;
+    level: number;
+    children?: ExpandedState;
+  };
+}
