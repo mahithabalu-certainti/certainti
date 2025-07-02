@@ -2074,8 +2074,7 @@ async insertFiscalInfoOnly(
     });
     // After enriching accounts with fiscal data, apply filtering
     let filteredAccounts = enrichedAccounts;
-
-    if (fiscalYear) {
+    if (fiscalYear != null && fiscalYear != "FY-All") {
       filteredAccounts = filteredAccounts
         .map((parent: any) => {
           // Filter child accounts - keep only those with fiscal data

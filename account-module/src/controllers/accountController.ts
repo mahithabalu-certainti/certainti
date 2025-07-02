@@ -58,9 +58,7 @@ async function accounts(req: Request, res: Response): Promise<void> {
     }
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 10;
-    const fiscalYear: number | "FY-All" = value.fiscalYear === "FY-All"
-    ? "FY-All"
-    : parseInt(value.fiscalYear, 10) || new Date().getFullYear();
+    const fiscalYear: number | "FY-All" = value?.fiscalYear || null ;
   
 
     const accounts = await accountServices.accountList(
@@ -136,9 +134,7 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
       );
     }
 
-    const fiscalYear: number | "FY-All" = value.fiscalYear === "FY-All"
-    ? "FY-All"
-    : parseInt(value.fiscalYear, 10) || new Date().getFullYear();
+    const fiscalYear: number | "FY-All" = value?.fiscalYear || null ;
   
 
     const accounts = await accountServices.exportAccountList(
