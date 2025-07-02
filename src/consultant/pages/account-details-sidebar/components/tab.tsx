@@ -410,7 +410,7 @@ const TabPanel: React.FC<TabProps> = ({
           {tabValue === 'account_projects_view_overview' && (
             <div className='flex items-center gap-2'>
               <span className='font-semibold text-[13px] text-[#425A76]'>
-                Enable Parent Scope
+                Include Parent
               </span>
               <Switch
                 checked={toggleEnabled}
