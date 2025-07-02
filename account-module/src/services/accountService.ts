@@ -169,7 +169,8 @@ async accountList(
       offset,
       finalSortBy,
       finalSortOrder,
-      'create'
+      'create',
+      fiscalYear
     );
 
     // Optimize count query
@@ -469,8 +470,13 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         parentAccounts.forEach((account: any) => {
           account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
         });
-          
-        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,0,0,finalSortBy,finalSortOrder,'download');
+        // Get full account data only for the needed records
+        const updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
+          finalSortBy,
+          finalSortOrder,
+          'download',
+          fiscalYear
+        );
         const rawResult = updatedAccount?.data || [];
         const cleanedUsers = rawResult;
         const emptyRow = {
@@ -575,8 +581,8 @@ private async getOptimizedCount(repository: any, whereClause: any) {
                    child.projects_by_fiscal_year.forEach((fiscalData: any) => {
                   exportDetails.push({
                       "Account Name": fiscalData?.fiscal_year || "-",
-                      "Industry": child?.industry?.industry_name || "-",
-                      "Country": child?.country?.country_name || "-",
+                      "Industry": "-",
+                      "Country":  "-",
                       "Total Projects": fiscalData?.total_projects || '-',
                       "Total Project Hours": fiscalData?.total_project_hours || "-",
                       "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
