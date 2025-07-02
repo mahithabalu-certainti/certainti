@@ -1,5 +1,6 @@
 import { IResolvers } from "@graphql-tools/utils";
 import { HttpStatus } from "../utils/constant";
+import { validateInlineEditPayload } from "../utils/helpers";
 
 type PaginationInput = {
   limit?: number;
@@ -52,6 +53,45 @@ const accountResolvers: IResolvers = {
       }
     },
   },
+  Mutation: {
+    updateInlineAccountDetails : async (_, {data} : {data : any}, ctx) => {
+      try {
+        const requestValidation = validateInlineEditPayload(data)
+        if(requestValidation) return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+            statusMessage : requestValidation
+          }
+        const result = await ctx.services.accountServices.inlineEditAccount(data);
+        console.log("Result : ", result)
+        if(result.statusCode == HttpStatus.SUCCESS) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+            statusMessage : result.statusMessage
+          }
+        } else if(result.statusCode == HttpStatus.BAD_REQUEST) {
+            return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+            statusMessage : result.statusMessage
+          }
+        } else {
+            return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+            statusMessage : result.statusMessage
+          }
+        }
+      } catch (error : any) {
+        return {
+            statusCode : HttpStatus.FAILED,
+            statusCodeValue : HttpStatus.FAILED_MESSAGE,
+            statusMessage : error.message
+        }
+      }
+    }
+  }
 };
 
 export default accountResolvers;

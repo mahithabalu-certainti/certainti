@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { Request, Response } from "express";
-import { HttpStatus } from "./constant";
+import { HttpStatus, STATUS_MESSAGE } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
@@ -304,4 +304,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
     default:
       throw new Error(`Unsupported entity type: ${entity}`);
   }
+}
+
+export const validateInlineEditPayload = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
 }

@@ -42,3 +42,17 @@ export const R_NUMBER_PREFIX = {
 
 
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
+
+export const STATUS = {
+  active : 'Active',
+  inactive : 'In-Active'
+}
+
+export const STATUS_MESSAGE = {
+  accountInactive : "Inactive Account",
+  accountNoFound : "Account not found",
+  accountUpdateSuccess : "Account updated successfully",
+  accountIdMissing : "Account Id mising",
+  oneFieldRequired : "Atleast one field is required to update",
+  keyContactIdMissing : "Key-Contact Id is missing"
+}

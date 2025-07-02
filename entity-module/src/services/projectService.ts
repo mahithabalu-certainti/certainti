@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -30,6 +30,7 @@ import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import Decimal from "decimal.js";
+import { ProjectSummary } from "../models/projectSummary";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -1831,4 +1832,287 @@ export class ProjectService {
       }
     }
   }
+
+  async inLineEditProject (data : any) {
+    const mainSequelize = await initMainDbSequelize();
+    const orgSequelize = await initOrgSequelize();
+    const checkAccountExists : any = await mainSequelize.query(`
+      with fetch_account_details AS (
+        SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${data.account_rid}'
+        )
+        SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+        FROM ${MAIN_SCHEMA_NAME}.account a
+        LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+        WHERE a.rid = ad.parent_account_rid`)
+    if(checkAccountExists[0].length < 1) {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNoFound
+      }
+    }
+    else {
+      let schemaName = `"${MAIN_SCHEMA_NAME}_${checkAccountExists[0][0].r_number.replace('ACC-', '')}"`
+      let findProject = await orgSequelize.query(`
+        SELECT * FROM ${schemaName}.project p WHERE project_code = '${data.project_code}' AND rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' 
+        `)
+      let findProjectFiscal = await orgSequelize.query(`
+        SELECT * FROM ${schemaName}.project_fiscal p WHERE project_code = '${data.project_code}' AND project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND rid = '${data.project_fiscal_rid}'
+        `)
+      let findProjectSummary = await mainSequelize.query(`
+        SELECT * FROM ${MAIN_SCHEMA_NAME}.project_summary p WHERE project_code = '${data.project_code}' AND project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}'
+        `)
+      let findProjectFisSummary = await mainSequelize.query(`
+        SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p WHERE project_code = '${data.project_code}' AND project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND project_fiscal_rid = '${data.project_fiscal_rid}'
+        `)
+      if(findProject[0].length > 0 && findProjectSummary[0].length > 0 && findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
+        let setProjectData = this.setProject(findProject[0][0], data);
+        let setProjectFiscalData = this.setPrjFiscalData(findProjectFiscal[0][0], data);
+        let setProjectSummary = this.setProjectSummary(findProjectSummary[0][0], data);
+        let setProjectFiscalSummary = this.setProjectFiscalSummary(findProjectFisSummary[0][0], data)
+      
+      if(setProjectData.length > 0) {
+        await orgSequelize.query(`
+        UPDATE 
+          ${schemaName}.project 
+            SET 
+            ${setProjectData.join(',')} 
+            WHERE 
+              rid = '${data.project_rid}'
+              AND
+              account_rid = '${data.account_rid}'
+              AND
+              project_code = '${data.project_code}'`
+            )
+      }
+      if(setProjectFiscalData.length > 0) {
+      await orgSequelize.query(`
+        UPDATE 
+          ${schemaName}.project_fiscal
+        SET
+          ${setProjectFiscalData.join(',')}
+        WHERE 
+          rid = '${data.project_fiscal_rid}'
+          AND
+          project_code = '${data.project_code}'
+          AND
+          account_rid = '${data.account_rid}'
+          AND
+          project_rid = '${data.project_rid}'
+        `) 
+      }
+
+      if(setProjectSummary.length > 0) {
+      await mainSequelize.query(`
+        UPDATE
+          ${MAIN_SCHEMA_NAME}.project_summary
+        SET
+          ${setProjectSummary.join(',')}
+        WHERE 
+          project_code = '${data.project_code}'
+          AND
+          account_rid = '${data.account_rid}'
+          AND
+          project_rid = '${data.project_rid}'
+        `)
+      }
+
+      if(setProjectFiscalSummary.length > 0) {
+      await mainSequelize.query(`
+        UPDATE
+          ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+        SET
+          ${setProjectFiscalSummary.join(',')}
+        WHERE
+          project_fiscal_rid = '${data.project_fiscal_rid}'
+          AND
+          project_rid = '${data.project_rid}'
+          AND
+          project_code = '${data.project_code}'
+          AND
+          account_rid = '${data.account_rid}'            
+        `)
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.projectUpdateSuccess
+      }
+      }
+    }
 }
+
+private setProject = (dbData : any, requestData : any) => {
+  let newPrjData : any = {}
+  let newPrjArray = []
+  if(requestData.project_name) {
+    newPrjData.project_name = requestData.project_name !== dbData.project_name ? requestData.project_name : dbData.project_name
+    let data = `project_name = '${newPrjData.project_name}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.project_type_rid) {
+    newPrjData.project_type_rid = requestData.project_type_rid != dbData.project_type_rid ? requestData.project_type_rid : dbData.project_type_rid
+    let data = `project_type_rid = '${newPrjData.project_type_rid}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.project_classification_rid) {
+    newPrjData.project_classification_rid = requestData.project_classification_rid != dbData.project_classification_rid ? requestData.project_classification_rid : dbData.project_classification_rid
+    let data = `project_classification_rid = '${newPrjData.project_classification_rid}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.project_client_group) {
+    newPrjData.project_client_group = requestData.project_client_group !== dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
+    let data = `project_client_group = '${newPrjData.project_client_group}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.project_group) {
+    newPrjData.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
+    let data = `project_group = '${newPrjData.project_group}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.assessment_status) {
+    newPrjData.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
+    let data = `assessment_status = '${newPrjData.assessment_status}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.comments) {
+    newPrjData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
+    let data = `comments = '${newPrjData.comments}'`
+    newPrjArray.push(data)
+  }
+  return newPrjArray
+}
+
+private setPrjFiscalData = (dbData : any, requestData : any) => {
+  let newPrjFisData : any = {}
+  let newPrjFisArray = []
+  if(requestData.project_name) {
+    newPrjFisData.project_name = requestData.project_name != dbData.project_name ? requestData.project_name : dbData.project_name
+    let data = `project_name = '${newPrjFisData.project_name}'`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.project_type_rid) {
+    newPrjFisData.project_type_rid = requestData.project_type_rid != dbData.project_type_rid ? requestData.project_type_rid : dbData.project_type_rid
+    let data = `project_type_rid = '${newPrjFisData.project_type_rid}'`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.fiscal_year) {
+    newPrjFisData.fiscal_year = requestData.fiscal_year != dbData.fiscal_year ? requestData.fiscal_year : dbData.fiscal_year
+    let data = `fiscal_year = ${newPrjFisData.fiscal_year}`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.project_classification_rid) {
+    newPrjFisData.project_classification_rid = requestData.project_classification_rid != dbData.project_classification_rid ? requestData.project_classification_rid : dbData.project_classification_rid
+    let data = `project_classification_rid = '${newPrjFisData.project_classification_rid}'`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.project_client_group) {
+    newPrjFisData.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
+    let data = `project_client_group = '${newPrjFisData.project_client_group}'`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.project_group) {
+    newPrjFisData.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
+    let data = `project_group = ${newPrjFisData.project_group}`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.assessment_status) {
+    newPrjFisData.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
+    let data = `assessment_status = '${newPrjFisData.assessment_status}'`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.comments) {
+    newPrjFisData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
+    let data = `comments = '${newPrjFisData.comments}'`
+    newPrjFisArray.push(data)
+  }
+  return newPrjFisArray;
+}
+
+private setProjectSummary = (dbData : any, requestData : any) => {
+  let newDbPrjSummary : any = {};
+  let newDbPrjSummaryArray = []
+  if(requestData.project_name) {
+    newDbPrjSummary.project_name = requestData.project_name != dbData.project_name ? requestData.project_name : dbData.project_name
+    let data = `project_name = '${newDbPrjSummary.project_name}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.project_type_rid) {
+    newDbPrjSummary.project_type_rid = requestData.project_type_rid != dbData.project_type_rid ? requestData.project_type_rid : dbData.project_type_rid
+    let data = `project_type_rid = '${newDbPrjSummary.project_type_rid}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.project_classification_rid) {
+    newDbPrjSummary.project_classification_rid = requestData.project_classification_rid != dbData.project_classification_rid ? requestData.project_classification_rid : dbData.project_classification_rid
+    let data = `project_classification_rid = '${newDbPrjSummary.project_classification_rid}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.project_client_group) {
+    newDbPrjSummary.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
+    let data = `project_client_group = '${newDbPrjSummary.project_client_group}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.project_group) {
+    newDbPrjSummary.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
+    let data = `project_group = '${newDbPrjSummary.project_group}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.assessment_status) {
+    newDbPrjSummary.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
+    let data = `assessment_status = '${newDbPrjSummary.assessment_status}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.comments) {
+    newDbPrjSummary.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
+    let data = `comments = '${newDbPrjSummary.comments}'`
+    newDbPrjSummaryArray.push(data)
+  }
+  return newDbPrjSummaryArray;
+}
+
+private setProjectFiscalSummary = (dbData : any, requestData : any) => {
+  let newFisSummary : any = {}
+  let newFisSummaryArray = []
+  if(requestData.project_name) {
+    newFisSummary.project_name = requestData.project_name !== dbData.project_name ? requestData.project_name : dbData.project_name
+    let data = `project_name = '${newFisSummary.project_name}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.project_type_rid) {
+    newFisSummary.project_type_rid = requestData.project_type_rid !== dbData.project_type_rid ? requestData.project_type_rid : dbData.project_type_rid
+    let data = `project_type_rid = '${newFisSummary.project_type_rid}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.project_classification_rid) {
+    newFisSummary.project_classification_rid = requestData.project_classification_rid != dbData.project_classification_rid ? requestData.project_classification_rid : dbData.project_classification_rid
+    let data = `project_classification_rid = '${newFisSummary.project_classification_rid}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.project_client_group) {
+    newFisSummary.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
+    let data = `project_client_group = '${newFisSummary.project_client_group}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.project_group) {
+    newFisSummary.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
+    let data = `project_group = '${newFisSummary.project_group}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.assessment_status) {
+    newFisSummary.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
+    let data = `assessment_status = '${newFisSummary.assessment_status}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.comments) {
+    newFisSummary.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
+    let data = `comments = '${newFisSummary.comments}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.fiscal_year) {
+    newFisSummary.fiscal_year = requestData.fiscal_year != dbData.fiscal_year ? requestData.fiscal_year : dbData.fiscal_year
+    let data = `fiscal_year = ${newFisSummary.fiscal_year}`
+    newFisSummaryArray.push(data)
+  }
+  return newFisSummaryArray;
+}
+}
+
+

@@ -54,3 +54,23 @@ export const R_NUMBER_PREFIX = {
   CLASSIFICATION: 'CSF',
   KEY_CONTACT_DETAILS: 'KEY'
 }
+
+export const STATUS_MESSAGE = {
+  accountInactive : "Inactive Account",
+  accountNoFound : "Account not found",
+  accountUpdateSuccess : "Account updated successfully",
+  accountIdMissing : "Account RID mising",
+  oneFieldRequired : "Atleast one field is required to update",
+  keyContactIdMissing : "Key-Contact RID is missing",
+  projectUpdateSuccess : "Field updated successfully",
+  projectIdMissing : "Project RID missing",
+  fiscalIdMissing : "Project-Fiscal RID is missing",
+  projectCodeMissing : "Project-Code missing",
+  active : "Active",
+  inactive : "In-Active",
+  resourceInactive : "Resource you are trying to update is currently In-Active",
+  eventUpdate : "update",
+  uiHandler : "ui handler",
+  success : "success",
+  resourceUpdateSuccess : "Resource updated successfully"
+}

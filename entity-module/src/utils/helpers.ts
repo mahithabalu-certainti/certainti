@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { Request, Response } from "express";
-import { HttpStatus } from "./constants";
+import { HttpStatus, STATUS_MESSAGE } from "./constants";
 import { errorResponse,successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
@@ -125,4 +125,11 @@ export async function generateExcelBase64(
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString('base64');
+}
+
+export const validateProjectRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.project_code) return STATUS_MESSAGE.projectCodeMissing
+  if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
 }

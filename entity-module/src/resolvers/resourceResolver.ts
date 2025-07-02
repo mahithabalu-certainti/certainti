@@ -1,5 +1,5 @@
 import { IResolvers } from "@graphql-tools/utils";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 
 type PaginationInput = {
   limit?: number;
@@ -81,6 +81,18 @@ const resourceResolvers: IResolvers = {
 
       return result?.data?.resource?.[0] || 0;
     },
+
+    updateResourceInline : async (_, {data} : {data : any}, ctx) => {
+      data.userId = 'D001-09c06141-8832-472f-9a88-74cd917a45bb'
+      const result = await ctx.services.resourceService.inLineEditResources(data)
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.resourceUpdateSuccess
+        }
+      }
+    }
   },
 };
 

@@ -1,6 +1,7 @@
 import { gql } from "graphql-tag";
+import {mergeTypeDefs} from "@graphql-tools/merge"
 
-const typeDefs = gql`
+const fetchAccountTypeDefs = gql`
 
   scalar Date
   scalar JSON
@@ -72,5 +73,62 @@ const typeDefs = gql`
     getAccounts(pagination: PaginationInput): AccountConnection
   }
 `;
+
+const updateAccountTypeDefs = gql
+`
+    input keyContactDetails {
+      key_contact_name : String
+      key_contact_email : String
+      key_contact_role : String
+      is_primary_contact : Boolean
+      include_in_communication : Boolean
+      interaction_cc_recipient : Boolean
+      status_rid : String,
+      rid : String
+    }
+
+    input updateAccountDetails 
+    {
+      account_rid : String!
+      organisation_name : String
+      account_name : String
+      comments : String
+      status_rid : String
+      is_parent : Boolean
+      parent_account_rid : String
+      max_ai_interactions : Int
+      autosend_interaction : Boolean
+      fiscal_start_date : String
+      fiscal_end_date : String
+      blended_rate_fte : Float
+      blended_rate_subcon : Float
+      industry_rid : String
+      industry_name_other : String
+      website : String
+      annual_revenue : String
+      data_storage : String
+      business_details : String
+      country_rid : String
+      region_rid : String
+      currency_rid : String,
+      finance_lead : String,
+      finance_executive : String,
+      professional_services_consultant : String,
+      key_contacts : [keyContactDetails]
+    }
+
+    type updateAccountResponse {
+      statusCode : Int
+      statusCodeValue : String
+      statusMessage : String
+      data : String
+    }
+
+    type Mutation {
+      updateInlineAccountDetails(data : updateAccountDetails) : updateAccountResponse
+    }
+`
+
+const typeDefs = mergeTypeDefs([fetchAccountTypeDefs, updateAccountTypeDefs])
 
 export default typeDefs;
