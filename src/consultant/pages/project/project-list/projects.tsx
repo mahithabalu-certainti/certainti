@@ -209,7 +209,7 @@ export const Projects: React.FC = () => {
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
         <div className='flex items-center gap-2'>
           <span className='font-semibold text-[13px] text-[#425A76]'>
-            Enable Parent Scope
+            Include Parent
           </span>
           <Switch
             checked={toggleEnabled}

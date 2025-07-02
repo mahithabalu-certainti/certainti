@@ -60,9 +60,9 @@ const FiscalYearDropdown = ({
   );
 
   const handleAllClick = useCallback(() => {
-    setSelectedYear('');
+    setSelectedYear('FY-All');
     onChange({
-      target: { value: '' },
+      target: { value: 'FY-All' },
     } as React.ChangeEvent<HTMLSelectElement>);
     setOpen(false);
   }, [onChange]);
@@ -151,7 +151,7 @@ const FiscalYearDropdown = ({
 
               <button
                 type='button'
-                className={`h-[20px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${!selectedYear ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
+                className={`h-[20px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
                 onClick={handleAllClick}
               >
                 All
