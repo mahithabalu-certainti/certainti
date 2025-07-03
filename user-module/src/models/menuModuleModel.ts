@@ -1,0 +1,110 @@
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { Menu } from "./menuModel";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constant";
+
+interface MenuModuleAttributes {
+  rid: string;
+  module_name: string;
+  module_desc: string;
+  menu_id: string;
+  status: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
+}
+
+interface MenuModuleCreationAttributes extends Optional<MenuModuleAttributes, "rid"> {}
+
+export class MenuModule
+  extends Model<MenuModuleAttributes, MenuModuleCreationAttributes>
+  implements MenuModuleAttributes
+{
+  public rid!: string;
+  public module_name!: string;
+  public module_desc!: string;
+  public menu_id!: string;
+  public status!: string;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
+  public created_by?: string;
+  public modified_by?: string;
+
+  static initialize(sequelize: Sequelize) {
+    MenuModule.init(
+      {
+        rid: {
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          primaryKey: true,
+        },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+        module_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        module_desc: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        menu_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: {
+            model: {
+              tableName : "menu",
+              schema : `${MAIN_SCHEMA_NAME}`
+            },
+            key: "rid",
+          },
+        },
+        status: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          defaultValue: "active",
+        }
+      },
+      {
+        sequelize,
+        modelName: "MenuModule",
+        tableName: "menu_module",
+        timestamps: false,
+        schema : `${MAIN_SCHEMA_NAME}`,
+        hooks: {
+          beforeUpdate: (menuModule) => {
+            menuModule.setDataValue("modified_datetime", new Date());
+          },
+        },
+        indexes: [
+          {
+            unique: true,
+            name: "module_unique_idx",
+            fields: ["module_name", "menu_id"],
+          },
+        ],
+      }
+    );
+
+    MenuModule.belongsTo(Menu, {
+      foreignKey: "menu_id",
+      as: "menu",
+    });
+  }
+}
