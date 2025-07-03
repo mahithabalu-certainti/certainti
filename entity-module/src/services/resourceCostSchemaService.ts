@@ -795,7 +795,7 @@ class ResourceCostSchemaService {
           "Fiscal Year": resource.fiscal_year || "-",
           "Name": resource.resource_name || "-",
           "Resource Type": resource.resource_type_name || "-",
-          "Effective From": resource.effective_from || "-",
+          "Effective Date": resource.effective_from || "-",
           "End Date": resource.end_date || "-",
           "Currency": resource.currency_code || "USD",
           "Effort In Hours": resource.effort_in_hrs || "-",
