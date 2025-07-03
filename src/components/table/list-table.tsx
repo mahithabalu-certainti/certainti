@@ -17,19 +17,19 @@ import TableSortHeader from './sort-header';
 import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
-import { ExpandedState, ListTableProps, RowData, SortOrder } from './types';
 import {
-  getCleanCellValue,
+  EditingCell,
+  ExpandedState,
+  ListTableProps,
+  RowData,
+  SortOrder,
+} from './types';
+import {
+  getEditingCellValue,
   renderFields,
   validateCellValue,
 } from './table-utils';
-import {
-  ArrowDownIcon,
-  ChildAccountIcon,
-  CloseIcon,
-  ErrorInfoIcon,
-  NewTickIcon,
-} from '../../assets';
+import { ArrowDownIcon, ChildAccountIcon, ErrorInfoIcon } from '../../assets';
 
 const ListTable = <T extends RowData>({
   data = [],
@@ -75,13 +75,7 @@ const ListTable = <T extends RowData>({
   expandAllChild = false,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [editingCell, setEditingCell] = useState<{
-    rowId: string;
-    columnId: string;
-    originalValue: string;
-    value: string;
-    error?: string | null;
-  } | null>(null);
+  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
 
@@ -212,20 +206,10 @@ const ListTable = <T extends RowData>({
       const childIds = getAllChildIds(rowId);
       childIds.forEach((id) => newSelected.add(id));
 
-      // If selecting a child, check if we need to select parents
+      // If selecting a child or grandchild, select all parents
       if (row._level > 0) {
         const parentIds = getAllParentIds(rowId);
-        parentIds.forEach((parentId) => {
-          const parentChildren = flattenedData.filter(
-            (item) => item._parentId === parentId
-          );
-          const allChildrenSelected = parentChildren.every((child) =>
-            newSelected.has(getRowId(child))
-          );
-          if (allChildrenSelected) {
-            newSelected.add(parentId);
-          }
-        });
+        parentIds.forEach((parentId) => newSelected.add(parentId));
       }
     }
 
@@ -294,12 +278,12 @@ const ListTable = <T extends RowData>({
     if (!editingCell) return;
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      // Check if click is inside Select dropdown
-      const isSelectDropdown = target.closest(
-        '.MuiMenu-paper, .MuiPopover-root'
+      // Skip if clicking on any picker elements
+      const isPickerElement = target.closest(
+        '.MuiPickersPopper-root, .MuiDialog-root, .MuiCalendarOrClockPicker-root, .MuiPaper-root, .MuiPopover-root'
       );
 
-      if (isSelectDropdown) return;
+      if (isPickerElement) return;
 
       const isEditingCell = target.closest(
         `[data-editing="${editingCell.rowId}-${editingCell.columnId}"]`
@@ -317,7 +301,7 @@ const ListTable = <T extends RowData>({
 
   const handleValueChange = (value: string | number) => {
     if (editingCell) {
-      setEditingCell({ ...editingCell, value: String(value), error: null });
+      setEditingCell({ ...editingCell, value: value, error: null });
     }
   };
 
@@ -806,15 +790,15 @@ const ListTable = <T extends RowData>({
                               ) {
                                 return;
                               }
-                              const displayValue = getCleanCellValue(
+                              const editingValue = getEditingCellValue(
                                 row,
                                 column
                               );
                               setEditingCell({
                                 rowId,
                                 columnId,
-                                value: displayValue,
-                                originalValue: displayValue,
+                                value: editingValue,
+                                originalValue: editingValue,
                                 error: null,
                               });
                             }}
@@ -844,7 +828,7 @@ const ListTable = <T extends RowData>({
                                         },
                                       }}
                                     >
-                                      <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                      <span className='h-[26px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
                                         <ErrorInfoIcon
                                           alt='error'
                                           className='w-5 h-3.5'
@@ -852,43 +836,6 @@ const ListTable = <T extends RowData>({
                                       </span>
                                     </Tooltip>
                                   )}
-                                <Box
-                                  sx={{
-                                    position: 'absolute',
-                                    right: 0,
-                                    top: '50%',
-                                    transform: 'translate(110%, -50%)',
-                                    zIndex: 999,
-                                    display: 'flex',
-                                    gap: 1,
-                                    alignItems: 'center',
-                                  }}
-                                >
-                                  <button
-                                    onClick={handleSave}
-                                    disabled={isSaving || !!editingCell?.error}
-                                    className='w-7 h-7 flex items-center justify-center bg-[#A9E3A2] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer outline-none focus:outline-none'
-                                  >
-                                    <NewTickIcon
-                                      className='w-3 h-3'
-                                      style={{
-                                        filter: 'brightness(0) saturate(100%)',
-                                      }}
-                                    />
-                                  </button>
-                                  <button
-                                    onClick={handleCancel}
-                                    disabled={isSaving}
-                                    className='w-7 h-7 flex items-center justify-center bg-[#FBB6AE] rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer outline-none focus:outline-none'
-                                  >
-                                    <CloseIcon
-                                      className='w-2.5 h-2.5'
-                                      style={{
-                                        filter: 'brightness(0) saturate(100%)',
-                                      }}
-                                    />
-                                  </button>
-                                </Box>
                               </div>
                             ) : (
                               <div

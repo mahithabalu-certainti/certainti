@@ -77,6 +77,12 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{dateFormatToYYYYMMDD(row.effective_from as string) || '-'}</span>
     ),
+    editable: true,
+    field: {
+      type: 'date',
+      required: false,
+      placeholder: 'YYYY-MM-DD',
+    },
   },
   {
     id: 'end_date',
@@ -88,6 +94,12 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{dateFormatToYYYYMMDD(row.end_date as string) || '-'}</span>
     ),
+    editable: true,
+    field: {
+      type: 'date',
+      required: false,
+      placeholder: 'YYYY-MM-DD',
+    },
   },
   {
     id: 'currency_code',

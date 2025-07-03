@@ -44,16 +44,11 @@ export const getProjectColumns = (
   memoizedClassification: ListOption[]
 ): TableColumn<Project>[] => [
   {
-    // id: 'account_name',
-    // label: 'Account Name',
-    // sortable: true,
-    // sortId: 'account_name',
-    // width: 150,
     id: 'project_code',
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
-    width: 160,
+    width: 260,
     sticky: true,
     editable: true,
     sx: {
@@ -177,8 +172,8 @@ export const getProjectColumns = (
     width: 170,
     field: {
       type: 'select',
-      required: true,
-      placeholder: '',
+      required: false,
+      placeholder: 'Choose Classification',
       options: memoizedClassification,
     },
   },
@@ -253,7 +248,7 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Effort',
+      placeholder: 'Enter Project Effort',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -278,12 +273,12 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Project Cost',
+      placeholder: 'Enter Project Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'Project Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -305,7 +300,7 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total FTE Cost',
+      placeholder: 'Enter FTE Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -332,12 +327,12 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Sub Con Effort',
+      placeholder: 'Enter Sub Con Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -359,12 +354,12 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Non Labor Cost',
+      placeholder: 'Enter Non Labor Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
-            'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
     },

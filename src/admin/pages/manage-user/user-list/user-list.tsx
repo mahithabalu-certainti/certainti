@@ -198,6 +198,24 @@ const UserList: React.FC = () => {
     [userRoles.data?.data.roles]
   );
 
+  const profileOptions = useMemo(() => {
+    return (
+      profileList.data?.data.profiles.map((item) => ({
+        label: item.profile_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [profileList]);
+
+  const roleOptions = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.rid,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
+
   const userFilterfields = getUserFilterFields(userProfiles, memoizeRole);
 
   useEffect(() => {
@@ -339,8 +357,8 @@ const UserList: React.FC = () => {
           isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}
           refreshUserTrigger={refreshUserTrigger}
-          profileOptions={userProfiles}
-          roleOptions={memoizeRole}
+          profileOptions={profileOptions}
+          roleOptions={roleOptions}
         />
       </div>
     </div>

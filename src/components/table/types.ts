@@ -63,6 +63,7 @@ export interface FieldValidation {
 export interface TableField {
   type: ListFieldType;
   required: boolean;
+  renderValue?: boolean;
   disabled?: boolean;
   placeholder?: string;
   options?: ListOption[];
@@ -165,8 +166,8 @@ export interface ListTableProps<T extends RowData> {
 export interface EditingCell {
   rowId: string;
   columnId: string;
-  originalValue: string;
-  value: string;
+  originalValue: string | number;
+  value: string | number;
   error?: string | null;
 }
 

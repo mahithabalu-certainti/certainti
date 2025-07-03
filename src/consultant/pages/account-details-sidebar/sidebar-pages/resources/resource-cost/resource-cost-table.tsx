@@ -85,7 +85,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     () =>
       currency.data?.data.currency.map((account) => ({
         label: account.currency_code,
-        value: account.currency_code,
+        value: account.rid,
       })) || [],
     [currency.data?.data.currency]
   );

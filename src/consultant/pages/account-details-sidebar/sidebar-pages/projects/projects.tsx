@@ -294,7 +294,7 @@ const Projects: React.FC<ProjectsProps> = ({
     () =>
       projectTypeOptions?.data?.data?.projectType.map((item) => ({
         label: item.project_type_name,
-        value: item.project_type_name,
+        value: item.rid,
       })) || [],
     [projectTypeOptions?.data?.data?.projectType]
   );
@@ -303,7 +303,7 @@ const Projects: React.FC<ProjectsProps> = ({
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
         label: data.classification_name,
-        value: data.classification_name,
+        value: data.rid,
       })) || [],
     [Classification.data?.data.projectClassifications]
   );
@@ -381,6 +381,9 @@ const Projects: React.FC<ProjectsProps> = ({
                 console.log('Selected:', selectedIds)
               }
               component='project'
+              onCellEdit={async (rowId, columnId, newValue) => {
+                console.log(rowId, { [columnId]: newValue });
+              }}
             />
           </div>
         </>

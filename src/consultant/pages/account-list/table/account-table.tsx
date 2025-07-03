@@ -95,17 +95,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
     console.log('Delete account', account.rid);
   };
 
-  // // Handle page change
-  // const handleChangePage = (newPage: number) => {
-  //   setPage(newPage + 1);
-  // };
-
-  // // Handle rows per page change
-  // const handleChangeRowsPerPage = (newPageSize: number) => {
-  //   setRowsPerPage(newPageSize);
-  //   setPage(1);
-  // };
-
   // Handle sorting
   const handleSortChange = (property: string, direction: 'asc' | 'desc') => {
     setOrderBy(property);
@@ -162,6 +151,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
           maxHeight: 'calc(100vh - 132px)',
           overflow: 'auto',
         }}
+        //Expansion
         expandAllParent={true}
         expandAllChild={false}
         expandable={true}

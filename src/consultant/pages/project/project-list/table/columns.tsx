@@ -21,7 +21,6 @@ const getFiscalYears = (range: number) => {
 };
 
 const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
-console.log(fiscalYears);
 
 export const getAllProjectListColumns = (
   onClick: (row: Project) => void,
@@ -131,29 +130,8 @@ export const getAllProjectListColumns = (
     id: 'account_name',
     label: 'Account Name',
     sortable: true,
-    editable: true,
     sortId: 'account_name',
     width: 150,
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Account Name',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_4,
-          errorMessage: 'Account name must be more than 3 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_255,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.PROJECT_NAME,
-          errorMessage:
-            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-        },
-      ],
-    },
   },
   {
     id: 'fiscal_year',
@@ -185,8 +163,8 @@ export const getAllProjectListColumns = (
     width: 170,
     field: {
       type: 'select',
-      required: true,
-      placeholder: '',
+      required: false,
+      placeholder: 'Choose Classification',
       options: projectClassificationOption,
     },
   },
@@ -261,7 +239,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Effort',
+      placeholder: 'Enter Project Effort',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -286,12 +264,12 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Project Cost',
+      placeholder: 'Enter Project Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'Project Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -313,7 +291,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total FTE Cost',
+      placeholder: 'Enter FTE Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -340,12 +318,12 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Sub Con Effort',
+      placeholder: 'Enter Sub Con Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            'Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -367,12 +345,12 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Total Non Labor Cost',
+      placeholder: 'Enter Non Labor Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
-            'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -381,7 +359,6 @@ export const getAllProjectListColumns = (
     id: 'assessment_status',
     label: 'Assessment Status',
     sortable: true,
-    editable: true,
     sortId: 'assessment_status',
     width: 180,
   },
@@ -389,7 +366,6 @@ export const getAllProjectListColumns = (
     id: 'qre',
     label: 'QRE %',
     sortable: true,
-    editable: true,
     sortId: 'qre',
     width: 130,
     sx: {
@@ -401,7 +377,6 @@ export const getAllProjectListColumns = (
     id: 'qre_final',
     label: 'QRE',
     sortable: true,
-    editable: true,
     sortId: 'qre_final',
     width: 130,
     sx: {
@@ -409,17 +384,11 @@ export const getAllProjectListColumns = (
     },
     render: (row: Project) =>
       row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
-    field: {
-      type: 'text',
-      required: true,
-      placeholder: 'Enter QRE Final',
-    },
   },
   {
     id: 'project_point_of_contact',
     label: 'Project Point of Contact',
     sortable: true,
-    editable: true,
     sortId: 'project_point_of_contact',
     width: 200,
   },
@@ -427,7 +396,6 @@ export const getAllProjectListColumns = (
     id: 'technical_point_of_contact',
     label: 'Technical Point of Contact',
     sortable: true,
-    editable: true,
     sortId: 'technical_point_of_contact',
     width: 210,
   },

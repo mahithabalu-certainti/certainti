@@ -206,7 +206,7 @@ const Resource: React.FC<ResourceProps> = ({
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
         label: status.status_name,
-        value: status.status_name,
+        value: status.rid,
       })) || [],
     [statusOptions?.data?.data?.status]
   );
@@ -215,7 +215,7 @@ const Resource: React.FC<ResourceProps> = ({
     () =>
       resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
         label: item.resource_type_name,
-        value: item.resource_type_name,
+        value: item.rid,
       })) || [],
     [resourceTypeOptions?.data?.data?.resouceType]
   );

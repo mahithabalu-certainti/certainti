@@ -70,6 +70,7 @@ export const getAccountColumns = (
     field: {
       type: 'select',
       required: true,
+      renderValue: true,
       placeholder: 'Choose Industry',
       options: industryOptions,
     },
@@ -85,6 +86,7 @@ export const getAccountColumns = (
     field: {
       type: 'select',
       required: false,
+      renderValue: true,
       placeholder: 'Choose Country',
       options: countryOptions,
     },
