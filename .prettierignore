@@ -1,0 +1,8 @@
+node_modules
+dist
+public
+package-lock.json
+yarn.lock
+.vite
+**/*.svg
+**/*.png
