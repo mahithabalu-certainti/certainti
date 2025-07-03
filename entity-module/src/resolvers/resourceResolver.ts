@@ -1,5 +1,6 @@
 import { IResolvers } from "@graphql-tools/utils";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { validateResourceRequest } from "../utils/helpers";
 
 type PaginationInput = {
   limit?: number;
@@ -83,14 +84,44 @@ const resourceResolvers: IResolvers = {
     },
 
     updateResourceInline : async (_, {data} : {data : any}, ctx) => {
-      data.userId = 'D001-09c06141-8832-472f-9a88-74cd917a45bb'
-      const result = await ctx.services.resourceService.inLineEditResources(data)
-      if(result.statusCode == HttpStatus.SUCCESS) {
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-          statusMessage : STATUS_MESSAGE.resourceUpdateSuccess
+      try {
+        const requestValidation = validateResourceRequest(data)
+        if(requestValidation) {
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+            statusMessage : requestValidation
+          }
         }
+        data.userId = ctx.req.headers['x-user-id']
+        const result = await ctx.services.resourceService.inLineEditResources(data)
+        if(result.statusCode == HttpStatus.SUCCESS) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+            statusMessage : STATUS_MESSAGE.resourceUpdateSuccess
+          }
+        } 
+        else if(result.statusCode == HttpStatus.NOT_FOUND) {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+            statusMessage : result.statusMessage
+          }
+        }
+        else if(result.statusCode == HttpStatus.BAD_REQUEST) {
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+            statusMessage : result.statusMessage
+          }
+        }
+      } catch (error : any) {
+        return {
+            statusCode : HttpStatus.FAILED,
+            statusCodeValue : HttpStatus.FAILED_MESSAGE,
+            statusMessage : error.message
+          }
       }
     }
   },

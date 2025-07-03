@@ -833,12 +833,39 @@ export class ResourceService {
         }
       }
       let isResourceActive : any = await mainSequelize.query(`SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${fetchResources[0][0].status_rid}'`)
-      if(isResourceActive[0][0].status_name == STATUS_MESSAGE.inactive) {
-        return {
-          statusCode : HttpStatus.BAD_REQUEST,
-          statusMessage : STATUS_MESSAGE.resourceInactive
+      if(data.resource_type_rid) {
+        let isResourceTypeExists = await mainSequelize.query(`SELECT 1 FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = '${data.resource_type_rid}'`)
+        if(isResourceTypeExists[0].length < 1) {
+          return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.resourceTypeNotFound
         }
+        } 
       }
+      if(data.country_rid) {
+        let isResourceTypeExists = await mainSequelize.query(`SELECT 1 FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${data.country_rid}'`)
+        if(isResourceTypeExists[0].length < 1) {
+          return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.countryNotFound
+        }
+      } 
+    }
+    if(data.region_rid) {
+      let isResourceTypeExists = await mainSequelize.query(`SELECT 1 FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = '${data.region_rid}'`)
+      if(isResourceTypeExists[0].length < 1) {
+        return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.stateNotFound
+      }
+    } 
+    }
+    if(isResourceActive[0][0].status_name == STATUS_MESSAGE.inactive) {
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.resourceInactive
+      }
+    }
       let setResource = this.setResourcesData(fetchResources[0][0], data)
       let updateResource : any = await orgSequelize.query(`
         UPDATE ${schemaName}.resources
@@ -850,7 +877,6 @@ export class ResourceService {
           account_rid = '${data.account_rid}'
         `)
       if(updateResource) {
-          console.log("eventName : ", STATUS_MESSAGE.eventUpdate)
           let insertQuery = `
             INSERT INTO ${schemaName}.resources_timeline
             (created_by, created_datetime, account_rid, entity_rid, event_name, event_type, event_status, event_datetime)
@@ -862,13 +888,15 @@ export class ResourceService {
           for(let history of setResource) {
             let key = history.split('=')[0]
             let finalTrimmedKey = key.trim()
-            if(finalTrimmedKey != 'modified_by') {
+            if(finalTrimmedKey != 'modified_by' && finalTrimmedKey != 'modified_datetime') {
               let oldValue;
               let newValue;
               let attributeName;
+              if(finalTrimmedKey == 'resource_firstname') newValue = data['resource_name'].split(' ')[0]
+              else if(finalTrimmedKey == 'resource_lastname') newValue = data['resource_name'].split(' ')[1]
+              else newValue = data[finalTrimmedKey]
               attributeName = finalTrimmedKey
               oldValue = fetchResources[0][0][finalTrimmedKey]
-              newValue = data[finalTrimmedKey]
               if(oldValue !== newValue) {
                 let query = 
               `INSERT INTO ${schemaName}.resources_history
@@ -893,7 +921,13 @@ export class ResourceService {
     let newData : any = {}
     if(requestData.resource_name) {
       newData.resource_name = requestData.resource_name !== dbData.resource_name ? requestData.resource_name : dbData.resource_name
+      newData.first_name = newData.resource_name.split(' ')[0]
+      newData.last_name = newData.resource_name.split(' ')[1]
       dataStorage = `resource_name = '${newData.resource_name}'`
+      newDataArray.push(dataStorage)
+      dataStorage = `resource_firstname = '${newData.first_name}'`
+      newDataArray.push(dataStorage)
+      dataStorage = `resource_lastname = '${newData.last_name}'`
       newDataArray.push(dataStorage)
     }
     if(requestData.resource_type_rid) {
@@ -936,7 +970,8 @@ export class ResourceService {
       dataStorage = `comments = '${newData.comments}'`
       newDataArray.push(dataStorage)
     }
-    dataStorage = `modified_datetime = ${new Date().toISOString()}`
+    dataStorage = `modified_datetime = NOW()`
+    newDataArray.push(dataStorage)
     dataStorage = `modified_by = '${requestData.userId}'`
     newDataArray.push(dataStorage)
     return newDataArray;

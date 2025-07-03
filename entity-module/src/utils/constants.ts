@@ -72,5 +72,10 @@ export const STATUS_MESSAGE = {
   eventUpdate : "update",
   uiHandler : "ui handler",
   success : "success",
-  resourceUpdateSuccess : "Resource updated successfully"
+  resourceUpdateSuccess : "Resource updated successfully",
+  resourceTypeNotFound : "Resource Type you are trying to update is invalid",
+  countryNotFound : "Country you are trying to update is invalid",
+  stateNotFound : "Region you are trying to update is invalid",
+  resourceIdMissing : "Resource RID missing",
+  invalidKeyData : "Invalid Id for update. Kindly check RID and update again."
 }

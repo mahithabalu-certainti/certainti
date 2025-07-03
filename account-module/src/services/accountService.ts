@@ -1825,6 +1825,8 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
                 let blended_rate_fte;
                 let blended_rate_subcon;
                 let website;
+                let modifiedBy;
+                let modifiedDatetime;
                 let updatedColumns: any = []
                 if (accDetailsData.account_name != undefined) {
                     account_name = accDetailsData.account_name
@@ -1866,6 +1868,16 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
                     let web = `website = '${website}'`
                     updatedColumns.push(web)
                 }
+                if (accDetailsData.modified_by !== undefined) {
+                    modifiedBy = accDetailsData.modified_by
+                    let data = `modified_by = '${modifiedBy}'`
+                    updatedColumns.push(data)
+                }
+                if (accDetailsData.modified_datetime !== undefined) {
+                    modifiedDatetime = accDetailsData.modified_datetime
+                    let data = `modified_datetime = NOW()`
+                    updatedColumns.push(data)
+                }
                 if (updatedColumns.length > 0) {
                     let accDetailsQuery = `UPDATE ${schemaName}.account_details SET ${updatedColumns.join(',')} WHERE account_rid = '${fetchAccountById.rid}'`
                     await sequelize.query(accDetailsQuery)
@@ -1879,6 +1891,7 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
                         let include_in_communication
                         let interaction_cc_recipient
                         let status_rid
+                        let modified_by
                         let updatedKeyData: any = []
                         for (let d of data.key_contacts) {
                             if (d.rid == undefined || d.rid == '') {
@@ -1923,6 +1936,11 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
                                 if (setDataResult.status_rid !== undefined) {
                                     status_rid = setDataResult.status_rid
                                     let status = `status_rid = '${status_rid}'`
+                                    updatedKeyData.push(status)
+                                }
+                                if (setDataResult.modified_by !== undefined) {
+                                    modified_by = setDataResult.modified_by
+                                    let status = `modified_by = '${modified_by}'`
                                     updatedKeyData.push(status)
                                 }
 
@@ -2008,10 +2026,12 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
        newDbData.country_rid = requestData.country_rid !== dbData.country_rid ? requestData.country_rid : dbData.country_rid
        newDbData.region_rid = requestData.country_rid != dbData.country_rid ? null : dbData.region_rid
     }
-    
     if(requestData.currency_rid)
       newDbData.currency_rid = requestData.currency_rid !== dbData.currency_rid ? requestData.currency_rid : dbData.currency_rid
-
+    newDbData.modified_by = requestData.userId
+    newDbAccDetailsData.modified_by = requestData.userId
+    newDbData.modified_datetime = new Date().toISOString()
+    newDbAccDetailsData.modified_datetime = `NOW()`
     return {
       newDbData, newDbAccDetailsData
     }
@@ -2034,6 +2054,7 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
       if(d.status_rid)
         setKeyData.status_rid = d.status_rid !== dbData.status_rid ? d.status_rid : dbData.status_rid
       
+      setKeyData.modified_by = d.userId
       return setKeyData
   }
 }

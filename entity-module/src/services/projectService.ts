@@ -1936,6 +1936,11 @@ export class ProjectService {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.projectUpdateSuccess
       }
+      } else {
+        return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.invalidKeyData
+      }
       }
     }
 }
@@ -1978,6 +1983,8 @@ private setProject = (dbData : any, requestData : any) => {
     let data = `comments = '${newPrjData.comments}'`
     newPrjArray.push(data)
   }
+  let data = `modified_by = '${requestData.userId}'`
+  newPrjArray.push(data)
   return newPrjArray
 }
 
@@ -2024,6 +2031,8 @@ private setPrjFiscalData = (dbData : any, requestData : any) => {
     let data = `comments = '${newPrjFisData.comments}'`
     newPrjFisArray.push(data)
   }
+  let data = `modified_by = '${requestData.userId}'`
+  newPrjFisArray.push(data)
   return newPrjFisArray;
 }
 
@@ -2065,6 +2074,8 @@ private setProjectSummary = (dbData : any, requestData : any) => {
     let data = `comments = '${newDbPrjSummary.comments}'`
     newDbPrjSummaryArray.push(data)
   }
+  let data = `modified_by = '${requestData.userId}'`
+  newDbPrjSummaryArray.push(data)
   return newDbPrjSummaryArray;
 }
 
@@ -2111,6 +2122,8 @@ private setProjectFiscalSummary = (dbData : any, requestData : any) => {
     let data = `fiscal_year = ${newFisSummary.fiscal_year}`
     newFisSummaryArray.push(data)
   }
+  let data = `modified_by = '${requestData.userId}'`
+  newFisSummaryArray.push(data)
   return newFisSummaryArray;
 }
 }

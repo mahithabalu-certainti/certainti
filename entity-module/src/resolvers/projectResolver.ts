@@ -13,6 +13,7 @@ export const projectResolver : IResolvers = {
                     statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
                     statusMessage : validation
                 }
+                data.userId = ctx.req.headers['x-user-id']
                 let result = await ctx.services.projectServices.inLineEditProject(data)
                 if(result.statusCode == HttpStatus.SUCCESS) {
                     return {

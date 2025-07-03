@@ -133,3 +133,8 @@ export const validateProjectRequest = (data : any) => {
   if(!data.project_code) return STATUS_MESSAGE.projectCodeMissing
   if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
 }
+
+export const validateResourceRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.resource_rid) return STATUS_MESSAGE.resourceIdMissing
+}
