@@ -13,7 +13,7 @@ import { FormType, SelectOption } from '../../types';
 // 1. Extract date constants
 const minYear = 2000;
 const currentYear = new Date().getFullYear();
-const DATE_CONFIG = {
+export const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
   COST_FISCAL_YEARS_RANGE: currentYear - minYear + 1,

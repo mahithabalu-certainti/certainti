@@ -231,6 +231,7 @@ export type Project = {
   fiscal_year?: number;
   project_fiscal_rid?: string;
   ProjectFiscal: ProjectFiscalSummary[];
+  _level?: number;
 };
 export type ProjectFiscalSummary = {
   project_code: string;

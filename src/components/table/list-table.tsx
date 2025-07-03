@@ -780,7 +780,7 @@ const ListTable = <T extends RowData>({
                                     }`
                                   : undefined,
 
-                              outlineOffset: isEditing ? '-2px' : undefined,
+                              outlineOffset: isEditing ? '-1px' : undefined,
                               ...(isEditing &&
                                 editingCell.error && {
                                   backgroundColor: '#FEF2F2 !important',

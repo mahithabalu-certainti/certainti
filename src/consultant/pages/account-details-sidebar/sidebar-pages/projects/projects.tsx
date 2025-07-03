@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
 // import ListTable from '../../components/table';
@@ -7,16 +7,20 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { getProjectColumns } from './columns';
-import { useAccountProjects } from '../../../../services/project';
+import {
+  useAccountProjects,
+  useGetProjectType,
+} from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectListParams } from '../../../../types/project';
-import { AccordionTable } from '../../../../../components/table';
+import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import { Project } from '../../../../../components/table/types';
+import { useFetchClassification } from '../../../../services/account';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -55,6 +59,8 @@ const Projects: React.FC<ProjectsProps> = ({
   setToggleEnabled,
 }) => {
   const navigate = useNavigate();
+  const projectTypeOptions = useGetProjectType();
+  const Classification = useFetchClassification();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -172,7 +178,12 @@ const Projects: React.FC<ProjectsProps> = ({
       },
     });
   };
-  const getRowId = (row: Project) => row.project_rid;
+  const getRowId = (row: Project & { _level?: number }) => {
+    if (row._level === 1 && 'project_fiscal_rid' in row) {
+      return row.project_fiscal_rid || '';
+    }
+    return row.project_rid || '';
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -279,7 +290,29 @@ const Projects: React.FC<ProjectsProps> = ({
     }
   };
 
-  const projectColumns = getProjectColumns(handleProject);
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        label: item.project_type_name,
+        value: item.project_type_name,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
+
+  const memoizedClassification = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        label: data.classification_name,
+        value: data.classification_name,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
+
+  const projectColumns = getProjectColumns(
+    handleProject,
+    memoizedProjectTypes,
+    memoizedClassification
+  );
 
   if (!projectIsEnable) return <AccessRestricted />;
 
@@ -312,7 +345,7 @@ const Projects: React.FC<ProjectsProps> = ({
             headerButtons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
-            <AccordionTable
+            <ListTable
               data={data?.projects as Project[]}
               columns={projectColumns}
               getRowId={getRowId}
@@ -323,6 +356,11 @@ const Projects: React.FC<ProjectsProps> = ({
                 overflow: 'auto',
               }}
               stickyHeader={true}
+              expandAllParent={true}
+              expandable={true}
+              childrenKey='ProjectFiscal'
+              maxNestingLevel={2}
+              editDisableLevel={[0]}
               stickyColumnsCount={1}
               actionWidth={60}
               actionDisplayMode='dropdown'

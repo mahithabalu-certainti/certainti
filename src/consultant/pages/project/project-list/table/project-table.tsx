@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
+  GetProjectTypeApiResponse,
   // ProjectList,
   ProjectListParams,
 } from '../../../../types/project';
@@ -13,8 +14,8 @@ import { PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem, Project } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
-import { FilterState } from '../../../../types';
-import { AccordionTable } from '../../../../../components/table';
+import { ClassificationApiResponse, FilterState } from '../../../../types';
+import { ListTable } from '../../../../../components/table';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
@@ -25,6 +26,10 @@ interface IProjectTableProps {
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshProjectsTrigger?: number;
   toggleEnabled?: boolean;
+  dropdownOptions: {
+    classification: ClassificationApiResponse | undefined;
+    projectType: GetProjectTypeApiResponse | undefined;
+  };
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -36,6 +41,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTotalCount,
   refreshProjectsTrigger,
   toggleEnabled,
+  dropdownOptions,
 }) => {
   const navigate = useNavigate();
   const { fiscalYear, filters } = useSelector<
@@ -70,8 +76,12 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  const getRowId = (row: Project) => row.project_rid;
-
+  const getRowId = (row: Project) => {
+    if (row._level === 1 && 'project_fiscal_rid' in row) {
+      return row.project_fiscal_rid || '';
+    }
+    return row.project_rid || '';
+  };
   const handleEdit = (account: any) => {
     navigate(`/project/edit/${account?.project_fiscal_rid}`, {
       state: {
@@ -118,7 +128,31 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     });
   };
 
-  const projectColumns = getAllProjectListColumns(handleAccountName);
+  const memoizedClassification = useMemo(
+    () =>
+      dropdownOptions.classification?.data?.projectClassifications.map(
+        (data) => ({
+          label: data.classification_name,
+          value: data.classification_name,
+        })
+      ) || [],
+    [dropdownOptions.classification?.data?.projectClassifications]
+  );
+
+  const memoizedProjectTypes = useMemo(
+    () =>
+      dropdownOptions?.projectType?.data?.projectType.map((item) => ({
+        label: item.project_type_name,
+        value: item.project_type_name,
+      })) || [],
+    [dropdownOptions?.projectType?.data?.projectType]
+  );
+
+  const projectColumns = getAllProjectListColumns(
+    handleAccountName,
+    memoizedProjectTypes,
+    memoizedClassification
+  );
 
   const actionButtons: ActionItem<any>[] = [
     {
@@ -141,7 +175,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   ];
 
   return (
-    <AccordionTable
+    <ListTable
       data={data?.projects as Project[]}
       columns={projectColumns}
       getRowId={getRowId}
@@ -154,6 +188,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       stickyHeader={true}
       stickyColumnsCount={2}
       selectable={true}
+      expandAllParent={true}
+      expandable={true}
+      childrenKey='ProjectFiscal'
+      maxNestingLevel={2}
+      editDisableLevel={[0]}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
       actionWidth={60}
       actionDisplayMode='dropdown'
@@ -170,6 +209,10 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       component='global-project'
+      onCellEdit={async (rowId, columnId, newValue) => {
+        // This handler will be called for all editable columns
+        console.log(rowId, { [columnId]: newValue });
+      }}
     />
   );
 };

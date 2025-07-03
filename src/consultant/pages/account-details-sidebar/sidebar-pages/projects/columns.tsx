@@ -2,8 +2,12 @@ import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
   valueDisplay,
+  REGEX_PATTERNS,
 } from '../../../../../common-utils';
+import { TableField } from '../../../../../components/table/types';
 import { Project } from '../../../../../components/table/types';
+import { ListOption } from '../../../../../components/table/types';
+import { DATE_CONFIG } from '../../../resource-form/form-data';
 interface TableColumn<T> {
   id: string;
   sortId: string;
@@ -11,9 +15,21 @@ interface TableColumn<T> {
   sortable?: boolean;
   width: string | number;
   sticky?: boolean;
+  editable?: boolean;
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
+  field?: TableField;
 }
+
+const getFiscalYears = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `FY-${year}`, value: year };
+  });
+};
+
+const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 export const formatDateToYMD = (dateString: string): string => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return ''; // Handle invalid dates
@@ -23,7 +39,9 @@ export const formatDateToYMD = (dateString: string): string => {
   return `${year}-${month}-${day}`;
 };
 export const getProjectColumns = (
-  onClick: (row: Project) => void
+  onClick: (row: Project) => void,
+  memoizedProjectTypes: ListOption[],
+  memoizedClassification: ListOption[]
 ): TableColumn<Project>[] => [
   {
     // id: 'account_name',
@@ -37,6 +55,7 @@ export const getProjectColumns = (
     sortId: 'project_code',
     width: 160,
     sticky: true,
+    editable: true,
     sx: {
       position: 'sticky',
       left: 0,
@@ -65,6 +84,26 @@ export const getProjectColumns = (
         displayCode
       );
     },
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Project Code',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_5,
+          errorMessage: 'Project code must be more than 4 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.PROJECT_NAME,
+          errorMessage:
+            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+        },
+      ],
+    },
   },
   {
     id: 'project_name',
@@ -72,6 +111,27 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_name',
     width: 160,
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_4,
+          errorMessage: 'Name must be more than 3 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_255,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.PROJECT_NAME,
+          errorMessage:
+            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+        },
+      ],
+    },
   },
   {
     id: 'project_type_name',
@@ -79,11 +139,19 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_type_rid',
     width: 160,
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: memoizedProjectTypes,
+    },
   },
   {
     id: 'fiscal_year',
     label: 'Fiscal Year',
     sortable: true,
+    editable: true,
     sortId: 'fiscal_year',
     width: 130,
     sx: {
@@ -91,7 +159,13 @@ export const getProjectColumns = (
     },
     render: (row: Project) => {
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-      return displayYear;
+      return <span>{displayYear}</span>;
+    },
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: fiscalYears,
     },
   },
   {
@@ -99,7 +173,14 @@ export const getProjectColumns = (
     label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
+    editable: true,
     width: 170,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: memoizedClassification,
+    },
   },
   {
     id: 'project_client_group',
@@ -107,13 +188,55 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_client_group',
     width: 160,
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Customer Group',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_4,
+          errorMessage: 'Customer Group must be more than 3 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_255,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.PROJECT_NAME,
+          errorMessage:
+            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+        },
+      ],
+    },
   },
   {
     id: 'project_group',
     label: 'Project Group',
     sortable: true,
     sortId: 'project_group',
+    editable: true,
     width: 160,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Project Group',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_4,
+          errorMessage: 'Project group must be more than 3 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_255,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.PROJECT_NAME,
+          errorMessage:
+            "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+        },
+      ],
+    },
   },
   {
     id: 'total_effort',
@@ -121,11 +244,24 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_effort',
     width: 170,
+    editable: true,
     sx: {
       textAlign: 'right',
     },
     render: (row: Project) =>
       row.total_effort ? valueDisplay(row.total_effort) : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Total Effort',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'total_cost',
@@ -133,11 +269,24 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_cost',
     width: 130,
+    editable: true,
     sx: {
       textAlign: 'right',
     },
     render: (row: Project) =>
       row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Total Project Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'total_cost_fte',
@@ -145,6 +294,7 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_cost_fte',
     width: 140,
+    editable: true,
     sx: {
       textAlign: 'right',
     },
@@ -152,6 +302,18 @@ export const getProjectColumns = (
       row.total_cost_fte
         ? costDisplay(row.total_cost_fte, row.currency_symbol)
         : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Total FTE Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'total_cost_subcon',
@@ -159,6 +321,7 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_cost_subcon',
     width: 140,
+    editable: true,
     sx: {
       textAlign: 'right',
     },
@@ -166,12 +329,25 @@ export const getProjectColumns = (
       row.total_cost_subcon
         ? costDisplay(row.total_cost_subcon, row.currency_symbol)
         : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Total Sub Con Effort',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
     sortId: 'total_cost_nonlabor',
+    editable: true,
     width: 140,
     sx: {
       textAlign: 'right',
@@ -180,6 +356,18 @@ export const getProjectColumns = (
       row.total_cost_nonlabor
         ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
         : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Total Non Labor Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'assessment_status',
@@ -231,6 +419,18 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'comments',
     width: 200,
+    editable: true,
+    field: {
+      type: 'textarea',
+      required: false,
+      placeholder: 'Enter Comments',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MAX_2000,
+          errorMessage: 'Maximum 2000 characters allowed',
+        },
+      ],
+    },
   },
   {
     id: 'modified_datetime',

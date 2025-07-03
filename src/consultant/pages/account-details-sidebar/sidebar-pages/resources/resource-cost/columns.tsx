@@ -8,6 +8,7 @@ import {
   TableField,
 } from '../../../../../../components/table/types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
+import { DATE_CONFIG } from '../../../../resource-form/form-data';
 import { dateFormatToYYYYMMDD } from '../utils';
 
 export interface ResourceCostTableColumn<T> {
@@ -31,7 +32,7 @@ const getFiscalYears = (range: number) => {
   });
 };
 
-const fiscalYearsCost = getFiscalYears(20);
+const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
 
 export const getResourceCostColumns = (
   currencyOptions: ListOption[]
