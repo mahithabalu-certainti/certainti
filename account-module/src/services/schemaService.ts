@@ -2025,7 +2025,7 @@ async insertFiscalInfoOnly(
             
             // Add fiscal year condition only if it's provided
             const replacements: any = { accountRids };
-            if (fiscalYear) {
+            if (fiscalYear != null && fiscalYear != "FY-All") {
               query += ` AND fiscal_year = :fiscal_year`;
               replacements.fiscal_year = fiscalYear;
             }
