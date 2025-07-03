@@ -650,7 +650,7 @@ const Resource: React.FC<ResourceProps> = ({
                   maxHeight: 'calc(100vh - 290px)',
                   overflow: 'auto',
                 }}
-                stickyHeader={false}
+                stickyHeader={true}
                 stickyColumnsCount={1}
                 selectable={false}
                 actionWidth={80}

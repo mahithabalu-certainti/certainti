@@ -123,7 +123,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
           maxHeight: 'calc(100vh - 410px)',
           overflow: 'auto',
         }}
-        selectable={false}
+        selectable={true}
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}

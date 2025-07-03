@@ -138,7 +138,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         maxHeight: 'calc(100vh - 195px)',
         overflow: 'auto',
       }}
-      stickyHeader={false}
+      stickyHeader={true}
       stickyColumnsCount={2}
       selectable={true}
       onSelectionChange={onSelectionChange}
