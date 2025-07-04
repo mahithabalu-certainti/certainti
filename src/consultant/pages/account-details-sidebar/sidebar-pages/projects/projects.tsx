@@ -18,7 +18,7 @@ import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
-import { Project } from '../../../../../components/table/types';
+import { CellEditData, Project } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
 import { AccountDetailsResponse } from '../../../../types';
 const BUTTON_STYLES = {
@@ -320,6 +320,10 @@ const Projects: React.FC<ProjectsProps> = ({
     memoizedClassification
   );
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
+
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
@@ -387,9 +391,7 @@ const Projects: React.FC<ProjectsProps> = ({
                 console.log('Selected:', selectedIds)
               }
               component='project'
-              onCellEdit={async (rowId, columnId, newValue) => {
-                console.log(rowId, { [columnId]: newValue });
-              }}
+              onCellEdit={handleCellEdit}
             />
           </div>
         </>

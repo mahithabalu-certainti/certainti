@@ -28,12 +28,18 @@ import { ResourceList } from '../../../../types/resource';
 import {
   AllPermissions,
   Permissions,
+  useGetAllCountries,
   useGetStatus,
 } from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import {
+  CellEditData,
+  FieldChangeEvent,
+} from '../../../../../components/table/types';
+import { useFetchState } from '../../../../services/account';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -138,6 +144,7 @@ const Resource: React.FC<ResourceProps> = ({
     Date.now()
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -201,6 +208,8 @@ const Resource: React.FC<ResourceProps> = ({
   const isResoureceOverviewHide = resourceTab[0].hide;
   const statusOptions = useGetStatus();
   const resourceTypeOptions = useGetResourceType();
+  const countriesList = useGetAllCountries();
+  const region = useFetchState(currentCountry);
 
   const memoizedStatus = useMemo(
     () =>
@@ -218,6 +227,24 @@ const Resource: React.FC<ResourceProps> = ({
         value: item.rid,
       })) || [],
     [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const regionOptions = useMemo(
+    () =>
+      region.data?.data.states.map((region) => ({
+        label: region.state_name,
+        value: region.rid,
+      })) || [],
+    [region.data?.data.states]
   );
 
   useEffect(() => {
@@ -530,11 +557,19 @@ const Resource: React.FC<ResourceProps> = ({
     setSortField(property);
   };
 
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'country_name' && event.value) {
+      setCurrentCountry(event.value);
+    }
+  };
+
   const getRowId = (row: ResourceList) => row.rid;
 
   const resourceColumns = getResourceColumns(
     memoizedStatus,
     memoizedResourceType,
+    countryOptions,
+    regionOptions,
     handleResourceClick
   );
 
@@ -572,6 +607,10 @@ const Resource: React.FC<ResourceProps> = ({
       setSortField(apiSortBy);
     }
   };
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
+
   return (
     <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
@@ -667,9 +706,8 @@ const Resource: React.FC<ResourceProps> = ({
                 sortBy={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSortRequest}
-                onCellEdit={async (rowId, columnId, newValue) => {
-                  console.log(rowId, { [columnId]: newValue });
-                }}
+                onCellEdit={handleCellEdit}
+                onFieldChange={handleFieldChange}
               />
             </div>
           )}

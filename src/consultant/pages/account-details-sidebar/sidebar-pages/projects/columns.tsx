@@ -7,6 +7,7 @@ import {
 import { TableField } from '../../../../../components/table/types';
 import { Project } from '../../../../../components/table/types';
 import { ListOption } from '../../../../../components/table/types';
+import { OthersEnum } from '../../../../types';
 import { DATE_CONFIG } from '../../../resource-form/form-data';
 interface TableColumn<T> {
   id: string;
@@ -175,6 +176,43 @@ export const getProjectColumns = (
       required: false,
       placeholder: 'Choose Classification',
       options: memoizedClassification,
+      dependencies: [
+        {
+          dependsOn: 'classification_name',
+          condition: (value) => {
+            const found = memoizedClassification.find(
+              (opt) => String(opt.value) === String(value)
+            );
+            return found?.label.toLowerCase() === OthersEnum.Other;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'classification_other',
+              label: 'Classification-Other',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Classification-Other',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Classification-Other must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.PROJECT_NAME,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
   },
   {

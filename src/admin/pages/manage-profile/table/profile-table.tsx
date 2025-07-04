@@ -6,7 +6,7 @@ import { profileColumns } from './';
 import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
 import { MANAGE_PROFILE } from '../../../../routes/routes';
-import { ActionItem } from '../../../../components/table/types';
+import { ActionItem, CellEditData } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 
 interface IUserTableProps {
@@ -126,6 +126,10 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     },
   ];
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
+
   return (
     <ListTable
       data={(data?.data?.profiles || []) as ManageProfileList[]}
@@ -155,10 +159,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
-      onCellEdit={async (rowId, columnId, newValue) => {
-        // This handler will be called for all editable columns
-        console.log(rowId, { [columnId]: newValue });
-      }}
+      onCellEdit={handleCellEdit}
     />
   );
 };

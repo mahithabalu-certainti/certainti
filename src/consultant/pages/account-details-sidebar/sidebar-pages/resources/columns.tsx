@@ -1,6 +1,7 @@
 import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
 import { ListOption, TableField } from '../../../../../components/table/types';
 import { ResourceList } from '../../../../types/resource';
+import { ResourceTypeEnum } from '../../../resource-form/utils';
 
 export interface ResourceTableColumn<T> {
   id: string;
@@ -18,6 +19,8 @@ export interface ResourceTableColumn<T> {
 export const getResourceColumns = (
   statusOptions: ListOption[],
   resourceTypeOptions: ListOption[],
+  countryOptions: ListOption[],
+  regionOptions: ListOption[],
   onResourceIdClick?: (row: ResourceList) => void
 ): ResourceTableColumn<ResourceList>[] => [
   {
@@ -122,6 +125,7 @@ export const getResourceColumns = (
       required: true,
       placeholder: '',
       options: resourceTypeOptions,
+      resetDependentFields: ['resource_orgname'],
     },
   },
   {
@@ -130,6 +134,38 @@ export const getResourceColumns = (
     label: 'Org Name',
     width: 140,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Organization Name',
+      dependencies: [
+        {
+          dependsOn: 'resource_type_name',
+          condition: (value) => {
+            const found = resourceTypeOptions.find(
+              (opt) => String(opt.value) === String(value)
+            );
+            return found?.label.toLowerCase() === ResourceTypeEnum.FULL_TIME;
+          },
+          action: 'disabled',
+          message:
+            'Organization name is not applicable for Full-Time resources',
+        },
+        {
+          dependsOn: 'resource_type_name',
+          condition: (value) => {
+            const found = resourceTypeOptions.find(
+              (opt) => String(opt.value) === String(value)
+            );
+            return found?.label.toLowerCase() !== ResourceTypeEnum.FULL_TIME;
+          },
+          action: 'required',
+          message:
+            'Organization name is required for Non-Labor and Sub-con resources',
+        },
+      ],
+    },
   },
   {
     id: 'resource_designation',
@@ -192,18 +228,46 @@ export const getResourceColumns = (
     },
   },
   {
-    id: 'region_name',
-    sortId: 'region_rid',
-    label: 'Region',
-    width: 150,
-    sortable: true,
-  },
-  {
     id: 'country_name',
     sortId: 'country_rid',
     label: 'Country',
     width: 160,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Country',
+      options: countryOptions,
+      // Reset dependent fields when country changes
+      resetDependentFields: ['region_name'],
+      // Enable onChange callback to fetch regions
+      onChange: true,
+    },
+  },
+  {
+    id: 'region_name',
+    sortId: 'region_rid',
+    label: 'Region',
+    width: 150,
+    sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: 'Choose Region',
+      options: regionOptions,
+      // Enable onChange callback to fetch cities
+      onChange: true,
+      dependencies: [
+        {
+          dependsOn: 'country_name',
+          condition: (value) => !value,
+          action: 'disabled',
+          message: 'Please Choose a country first',
+        },
+      ],
+    },
   },
   {
     id: 'total_project_hours',

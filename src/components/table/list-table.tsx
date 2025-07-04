@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Checkbox,
@@ -18,17 +19,23 @@ import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
 import {
-  EditingCell,
   ExpandedState,
   ListTableProps,
   RowData,
   SortOrder,
+  MultipleEditingCells,
+  FieldChangeEvent,
+  CellEditData,
 } from './types';
+import { getEditingCellValue, renderFields } from './table-utils';
 import {
-  getEditingCellValue,
-  renderFields,
-  validateCellValue,
-} from './table-utils';
+  shouldEnableMultipleEdit,
+  validateDependentFields,
+  getFieldsToReset,
+  shouldShowModalForValue,
+  getDependentValue,
+} from './dependency-utils';
+import ModalDialog from './modal-dialog';
 import { ArrowDownIcon, ChildAccountIcon, ErrorInfoIcon } from '../../assets';
 
 const ListTable = <T extends RowData>({
@@ -70,14 +77,32 @@ const ListTable = <T extends RowData>({
   onSort,
   component,
   onCellEdit,
+  onFieldChange,
   // Expansion
   expandAllParent = false,
   expandAllChild = false,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+  const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
   const [isSaving, setIsSaving] = useState(false);
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
+  const [modalState, setModalState] = useState<{
+    open: boolean;
+    title: string;
+    fields: any[];
+    rowId: string;
+    columnId: string;
+    skillTypeIsOthers: boolean;
+    skillSubtypeIsOthers: boolean;
+  }>({
+    open: false,
+    title: '',
+    fields: [],
+    rowId: '',
+    columnId: '',
+    skillTypeIsOthers: false,
+    skillSubtypeIsOthers: false,
+  });
 
   // handle initial expansion
   useEffect(() => {
@@ -234,27 +259,51 @@ const ListTable = <T extends RowData>({
   };
 
   const handleSave = async () => {
-    if (!editingCell || !onCellEdit) return;
-    const column = columns.find((col) => col.id === editingCell.columnId);
-    if (!column) return;
+    if (Object.keys(editingCells).length === 0 || !onCellEdit) return;
 
-    const error = validateCellValue(editingCell.value, column);
-    if (error) {
-      setEditingCell((prev) => (prev ? { ...prev, error } : null));
+    // Get the row data for validation
+    const firstEditingCell = Object.values(editingCells)[0];
+    const rowData = flattenedData.find(
+      (row) => getRowId(row) === firstEditingCell.rowId
+    );
+
+    if (!rowData) return;
+
+    // Validate all editing cells
+    const errors = validateDependentFields(columns, rowData, editingCells);
+
+    if (Object.keys(errors).length > 0) {
+      // Update editing cells with errors
+      setEditingCells((prev) => {
+        const updated = { ...prev };
+        Object.keys(errors).forEach((cellKey) => {
+          if (updated[cellKey]) {
+            updated[cellKey].error = errors[cellKey];
+          }
+        });
+        return updated;
+      });
       return;
     }
-    if (editingCell.originalValue === editingCell.value) {
+
+    // Check if any values actually changed
+    const changedCells = Object.values(editingCells).filter(
+      (cell) => cell.originalValue !== cell.value
+    );
+
+    if (changedCells.length === 0) {
       handleCancel();
       return;
     }
     setIsSaving(true);
     try {
-      await onCellEdit(
-        editingCell.rowId,
-        editingCell.columnId,
-        editingCell.value
-      );
-      setEditingCell(null);
+      const updates: CellEditData[] = changedCells.map((cell) => ({
+        columnId: cell.columnId,
+        value: cell.value,
+      }));
+
+      await onCellEdit(firstEditingCell.rowId, updates);
+      setEditingCells({});
     } catch (error) {
       console.error('Error saving cell value:', error);
     } finally {
@@ -263,7 +312,7 @@ const ListTable = <T extends RowData>({
   };
 
   const handleCancel = () => {
-    setEditingCell(null);
+    setEditingCells({});
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -275,7 +324,8 @@ const ListTable = <T extends RowData>({
   };
 
   useEffect(() => {
-    if (!editingCell) return;
+    if (Object.keys(editingCells).length === 0) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       // Skip if clicking on any picker elements
@@ -285,9 +335,14 @@ const ListTable = <T extends RowData>({
 
       if (isPickerElement) return;
 
-      const isEditingCell = target.closest(
-        `[data-editing="${editingCell.rowId}-${editingCell.columnId}"]`
-      );
+      // Check if clicking on any editing cell
+      const isEditingCell = Object.keys(editingCells).some((cellKey) => {
+        const cell = editingCells[cellKey];
+        return target.closest(
+          `[data-editing="${cell.rowId}-${cell.columnId}"]`
+        );
+      });
+
       if (!isEditingCell) {
         handleSave();
       }
@@ -297,11 +352,164 @@ const ListTable = <T extends RowData>({
       document.removeEventListener('mousedown', handleClickOutside);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingCell]);
+  }, [editingCells]);
 
-  const handleValueChange = (value: string | number) => {
-    if (editingCell) {
-      setEditingCell({ ...editingCell, value: value, error: null });
+  const handleValueChange = async (cellKey: string, value: string | number) => {
+    setEditingCells((prev) => {
+      const updated = { ...prev };
+      const cell = updated[cellKey];
+
+      if (!cell) return prev;
+
+      // Get the column for this cell
+      const column = columns.find((col) => col.id === cell.columnId);
+      if (!column) return prev;
+
+      const oldValue = cell.value;
+      const rowData = flattenedData.find((row) => getRowId(row) === cell.rowId);
+
+      // Update the current cell value
+      updated[cellKey] = {
+        ...cell,
+        value,
+        error: null,
+      };
+
+      // Check if this value change should trigger a modal
+      const modalCheck = shouldShowModalForValue(
+        column,
+        value,
+        rowData,
+        updated
+      );
+      if (modalCheck.shouldShow && modalCheck.modalFields) {
+        // For skill type/subtype, determine which fields to show in modal
+        let skillTypeIsOthers = false;
+        let skillSubtypeIsOthers = false;
+
+        if (
+          cell.columnId === 'skill_type_name' ||
+          cell.columnId === 'skill_subtype_name'
+        ) {
+          // Get current values for both fields from updated editing cells
+          const currentSkillType =
+            cell.columnId === 'skill_type_name'
+              ? value
+              : getDependentValue('skill_type_name', rowData || {}, updated);
+          const currentSkillSubtype =
+            cell.columnId === 'skill_subtype_name'
+              ? value
+              : getDependentValue('skill_subtype_name', rowData || {}, updated);
+
+          skillTypeIsOthers =
+            currentSkillType === 'D001-f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a';
+          skillSubtypeIsOthers =
+            currentSkillSubtype === 'D001-b8894099-0385-4681-8237-21f89b0d1883';
+        }
+
+        setModalState({
+          open: true,
+          title: `Additional Information for ${column.label}`,
+          fields: modalCheck.modalFields,
+          rowId: cell.rowId,
+          columnId: cell.columnId,
+          skillTypeIsOthers,
+          skillSubtypeIsOthers,
+        });
+
+        return updated;
+      }
+
+      // Get fields that should be reset due to this change
+      const fieldsToReset = getFieldsToReset(
+        columns,
+        cell.columnId,
+        value,
+        oldValue
+      );
+
+      // Reset dependent fields
+      fieldsToReset.forEach((fieldId) => {
+        const resetCellKey = Object.keys(updated).find(
+          (key) =>
+            updated[key].columnId === fieldId &&
+            updated[key].rowId === cell.rowId
+        );
+        if (resetCellKey) {
+          updated[resetCellKey] = {
+            ...updated[resetCellKey],
+            value: '',
+            error: null,
+          };
+        }
+      });
+
+      return updated;
+    });
+
+    // Trigger onChange callback if configured
+    const column = columns.find(
+      (col) => col.id === editingCells[cellKey]?.columnId
+    );
+    if (column?.field?.onChange && onFieldChange) {
+      const rowData = flattenedData.find(
+        (row) => getRowId(row) === editingCells[cellKey]?.rowId
+      );
+      if (rowData) {
+        const changeEvent: FieldChangeEvent = {
+          rowId: editingCells[cellKey].rowId,
+          columnId: editingCells[cellKey].columnId,
+          value,
+          oldValue: editingCells[cellKey].value,
+          rowData,
+        };
+
+        try {
+          await onFieldChange(changeEvent);
+        } catch (error) {
+          console.error('Error in field change callback:', error);
+        }
+      }
+    }
+  };
+
+  const handleModalSubmit = async (modalData: Record<string, any>) => {
+    if (!onCellEdit) return;
+
+    setIsSaving(true);
+    try {
+      const cellKey = `${modalState.rowId}-${modalState.columnId}`;
+      const currentCell = editingCells[cellKey];
+
+      if (!currentCell) {
+        throw new Error('Editing cell not found');
+      }
+
+      const updates: CellEditData[] = [
+        {
+          columnId: modalState.columnId,
+          value: currentCell.value, // The selected dropdown value
+          modalData: modalData, // The additional form data
+        },
+      ];
+
+      // Include other cell edits if needed
+      Object.entries(editingCells).forEach(([key, cell]) => {
+        if (key !== cellKey && key.startsWith(`${modalState.rowId}-`)) {
+          updates.push({
+            columnId: cell.columnId,
+            value: cell.value,
+          });
+        }
+      });
+
+      await onCellEdit(modalState.rowId, updates);
+      setModalState((prev) => ({ ...prev, open: false }));
+      setEditingCells({});
+    } catch (error) {
+      console.error('Error submitting modal data:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -721,10 +929,9 @@ const ListTable = <T extends RowData>({
 
                       {/* Data cells */}
                       {columns.map((column) => {
-                        const isEditing =
-                          editingCell?.rowId === rowId &&
-                          editingCell?.columnId === column.id;
-                        const columnId = column.id;
+                        const cellKey = `${rowId}-${column.id}`;
+                        const isEditing = editingCells[cellKey];
+                        // const columnId = column.id;
                         const isStatus = column.id === 'status';
                         const statusValue = row[column.id];
                         const cellValue = column.render
@@ -760,13 +967,13 @@ const ListTable = <T extends RowData>({
                               outline:
                                 isEditing && column.field?.type !== 'textarea'
                                   ? `1px solid ${
-                                      editingCell.error ? '#ef4444' : '#60A5FA'
+                                      isEditing.error ? '#ef4444' : '#60A5FA'
                                     }`
                                   : undefined,
 
                               outlineOffset: isEditing ? '-1px' : undefined,
                               ...(isEditing &&
-                                editingCell.error && {
+                                isEditing.error && {
                                   backgroundColor: '#FEF2F2 !important',
                                 }),
                               background:
@@ -784,39 +991,58 @@ const ListTable = <T extends RowData>({
                                 return;
                               }
                               if (!column.editable) return;
-                              if (
-                                editingCell &&
-                                editingCell.value !== editingCell.originalValue
-                              ) {
+                              if (Object.keys(editingCells).length > 0) {
                                 return;
                               }
-                              const editingValue = getEditingCellValue(
-                                row,
-                                column
+
+                              // Determine which fields to enable for editing
+                              const fieldsToEdit = shouldEnableMultipleEdit(
+                                columns,
+                                column.id
                               );
-                              setEditingCell({
-                                rowId,
-                                columnId,
-                                value: editingValue,
-                                originalValue: editingValue,
-                                error: null,
+                              const newEditingCells: MultipleEditingCells = {};
+
+                              fieldsToEdit.forEach((fieldId) => {
+                                const targetColumn = columns.find(
+                                  (col) => col.id === fieldId
+                                );
+                                if (targetColumn?.editable) {
+                                  const editingValue = getEditingCellValue(
+                                    row,
+                                    targetColumn
+                                  );
+                                  const key = `${rowId}-${fieldId}`;
+                                  newEditingCells[key] = {
+                                    rowId,
+                                    columnId: fieldId,
+                                    value: editingValue,
+                                    originalValue: editingValue,
+                                    error: null,
+                                    isDependent: fieldId !== column.id,
+                                  };
+                                }
                               });
+
+                              setEditingCells(newEditingCells);
                             }}
                           >
                             {isEditing ? (
                               <div className='box-border !h-[31px] !max-h-[31px] relative'>
                                 {renderFields({
                                   column,
-                                  editingCell,
-                                  handleValueChange,
+                                  editingCell: isEditing,
+                                  handleValueChange: (value) =>
+                                    handleValueChange(cellKey, value),
                                   handleKeyDown,
                                   isSaving,
+                                  rowData: row,
+                                  allEditingCells: editingCells,
                                 })}
 
-                                {editingCell.error &&
+                                {isEditing.error &&
                                   column.field?.type !== 'select' && (
                                     <Tooltip
-                                      title={editingCell.error}
+                                      title={isEditing.error}
                                       arrow
                                       placement='top'
                                       slotProps={{
@@ -1085,6 +1311,18 @@ const ListTable = <T extends RowData>({
           </TableBody>
         </MuiTable>
       </TableContainer>
+
+      {/* Modal Dialog */}
+      <ModalDialog
+        open={modalState.open}
+        title={modalState.title}
+        fields={modalState.fields}
+        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+        onSubmit={handleModalSubmit}
+        loading={isSaving}
+        skillTypeIsOthers={modalState.skillTypeIsOthers}
+        skillSubtypeIsOthers={modalState.skillSubtypeIsOthers}
+      />
 
       {/* Pagination */}
       {(onPageChange || onRowsPerPageChange) &&

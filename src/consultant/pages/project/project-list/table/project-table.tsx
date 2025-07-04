@@ -10,7 +10,11 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { PROJECT_DETAILS } from '../../../../../routes';
-import { ActionItem, Project } from '../../../../../components/table/types';
+import {
+  ActionItem,
+  CellEditData,
+  Project,
+} from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { ClassificationApiResponse, FilterState } from '../../../../types';
@@ -174,6 +178,10 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     // },
   ];
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
+
   return (
     <ListTable
       data={data?.projects as Project[]}
@@ -209,10 +217,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       component='global-project'
-      onCellEdit={async (rowId, columnId, newValue) => {
-        // This handler will be called for all editable columns
-        console.log(rowId, { [columnId]: newValue });
-      }}
+      onCellEdit={handleCellEdit}
     />
   );
 };

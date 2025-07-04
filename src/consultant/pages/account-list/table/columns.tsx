@@ -1,6 +1,6 @@
 import { costDisplay, REGEX_PATTERNS } from '../../../../common-utils';
 import { ListOption } from '../../../../components/table/types';
-import { AccountColumn, AccountList } from '../../../types/account';
+import { AccountColumn, AccountList, OthersEnum } from '../../../types/account';
 import { formatNumberWithCommas } from './utils';
 
 export const getAccountColumns = (
@@ -73,6 +73,43 @@ export const getAccountColumns = (
       renderValue: true,
       placeholder: 'Choose Industry',
       options: industryOptions,
+      dependencies: [
+        {
+          dependsOn: 'industry',
+          condition: (value) => {
+            const found = industryOptions.find(
+              (opt) => String(opt.value) === String(value)
+            );
+            return found?.label.toLowerCase() === OthersEnum.Other;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'industry_other',
+              label: 'Industry-other',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Industry-other',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Industry-other must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     render: (row: AccountList) => row.industry?.industry_name || '-',
   },

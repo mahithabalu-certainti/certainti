@@ -14,6 +14,10 @@ import { convertResourceCost } from './resource-cost-type';
 import { AcceptIcon, RejectIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import { useFetchCurrency } from '../../../../../services/account';
+import {
+  CellEditData,
+  FieldChangeEvent,
+} from '../../../../../../components/table/types';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -54,6 +58,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
+  const [costRequired, setCostRequired] = useState<boolean>(true);
   const {
     data: costList,
     isLoading,
@@ -189,8 +194,21 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     ];
   };
 
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'salary' && event.value) {
+      setCostRequired(event.value);
+    }
+  };
+
   const getRowId = (row: ResourceCostList) => row?.rid || '';
-  const resourceCostColumns = getResourceCostColumns(memoizedCurrency);
+  const resourceCostColumns = getResourceCostColumns(
+    memoizedCurrency,
+    costRequired
+  );
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
 
   return (
     <div>
@@ -225,9 +243,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         sortBy={costorderBy}
         sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
-        onCellEdit={async (rowId, columnId, newValue) => {
-          console.log(rowId, { [columnId]: newValue });
-        }}
+        onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Column<T> = {
   id: string;
   header: string;
@@ -60,6 +61,30 @@ export interface FieldValidation {
   errorMessage: string;
 }
 
+export interface DependencyRule {
+  dependsOn: string | string[];
+  condition: (value: any, rowData: any) => boolean;
+  action: 'required' | 'disabled' | 'hidden' | 'show_modal';
+  message?: string;
+  modalFields?: ModalField[];
+}
+
+export interface ModalField {
+  id: string;
+  label: string;
+  type: ListFieldType;
+  required: boolean;
+  placeholder?: string;
+  validation?: FieldValidation[];
+}
+
+export interface DateFieldConfig {
+  disableFutureDates?: boolean;
+  minDate?: string | null;
+  maxDate?: string | null;
+  fiscalYearValidation?: boolean;
+}
+
 export interface TableField {
   type: ListFieldType;
   required: boolean;
@@ -68,6 +93,13 @@ export interface TableField {
   placeholder?: string;
   options?: ListOption[];
   validation?: FieldValidation[];
+  dependencies?: DependencyRule[];
+  // Dynamic field reset configuration
+  resetDependentFields?: string[];
+  // Dynamic onChange callback
+  onChange?: boolean;
+  // Date field specific configuration
+  dateConfig?: DateFieldConfig;
 }
 
 export type ListFieldType =
@@ -112,6 +144,32 @@ export interface ConditionMenuItem<T extends RowData> {
   disabled?: boolean;
 }
 
+export interface MultipleEditingCells {
+  [key: string]: {
+    rowId: string;
+    columnId: string;
+    originalValue: string | number;
+    value: string | number;
+    error?: string | null;
+    isDependent?: boolean;
+  };
+}
+
+export interface FieldChangeEvent {
+  rowId: string;
+  columnId: string;
+  value: any;
+  oldValue: any;
+  rowData: any;
+}
+
+// Enhanced cell edit data structure to support both regular edits and modal data
+export interface CellEditData {
+  columnId: string;
+  value: any;
+  modalData?: Record<string, any>; // Additional modal data if applicable
+}
+
 export interface ListTableProps<T extends RowData> {
   data: T[];
   columns: ListTableColumn<T>[];
@@ -145,13 +203,9 @@ export interface ListTableProps<T extends RowData> {
   sortOrder?: SortDirection;
   onSort?: (sortBy: string, sortOrder: SortOrder) => void;
   component?: string;
-  onCellEdit?: (
-    rowId: string,
-    columnId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    newValue: any
-  ) => Promise<void> | void;
-
+  onCellEdit?: (rowId: string, updates: CellEditData[]) => Promise<void> | void;
+  // Dynamic field change callback
+  onFieldChange?: (event: FieldChangeEvent) => Promise<void> | void;
   // Nested configuration
   expandAllParent?: boolean;
   expandAllChild?: boolean;
@@ -177,6 +231,8 @@ export interface RenderFieldsProps<T extends RowData> {
   handleValueChange: (value: string | number) => void;
   handleKeyDown: (e: React.KeyboardEvent) => void;
   isSaving: boolean;
+  rowData?: T;
+  allEditingCells?: MultipleEditingCells;
 }
 
 //Project Accordion table data types

@@ -1,13 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
-import { useResourceSkill } from '../../../../../services/resource-skill/resource-skill-service';
+import {
+  useFetchResourceSkillSubType,
+  useFetchResourceSkillType,
+  useGetSkillLevel,
+  useResourceSkill,
+} from '../../../../../services/resource-skill/resource-skill-service';
 import { RESOURCESKILL } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
-import { resourceSkillColumns } from './columns';
+import { getResourceSkillColumns } from './columns';
+import { SkillSubtype, SkillType } from '../../../../../types/resource';
+import {
+  CellEditData,
+  FieldChangeEvent,
+} from '../../../../../../components/table/types';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -105,8 +115,59 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       hide: true,
     },
   ];
+  const [currentSkillType, setCurrentSkillType] = useState<string>('');
+  const skillLevelOptions = useGetSkillLevel();
+  const { data: skillType } = useFetchResourceSkillType(true);
+  const { data: skillSubType } = useFetchResourceSkillSubType(
+    currentSkillType ? ([currentSkillType] as string[]) : []
+  );
+
+  const memoizedSkillLevels = useMemo(
+    () =>
+      skillLevelOptions?.data?.data?.skillLevel.map((item) => ({
+        label: item.skill_level_name,
+        value: item.rid,
+      })) || [],
+    [skillLevelOptions?.data?.data?.skillLevel]
+  );
+
+  const memoizedSkillType = useMemo(() => {
+    const data = skillType as SkillType[];
+    const convertData =
+      data?.map((skill: SkillType) => ({
+        label: skill.skill_type_name,
+        value: skill.rid,
+      })) || [];
+    return convertData;
+  }, [skillType]);
+
+  const memoizedSkillSubType = useMemo(() => {
+    const data = skillSubType as SkillSubtype[];
+    const finalData =
+      data?.map((skill: SkillSubtype) => ({
+        label: skill.skill_subtype_name,
+        value: skill.rid,
+      })) || [];
+    return finalData;
+  }, [skillSubType]);
 
   const getRowId = (row: ResourceSkillList) => row?.rid || '';
+
+  const resourceSkillColumns = getResourceSkillColumns(
+    memoizedSkillLevels,
+    memoizedSkillType,
+    memoizedSkillSubType
+  );
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'skill_type_name' && event.value) {
+      setCurrentSkillType(event.value);
+    }
+  };
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
 
   return (
     <div>
@@ -138,6 +199,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         sortBy={skillOrderBy}
         sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
+        onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import {
   costDisplay,
+  REGEX_PATTERNS,
   RESOURCE_REGEX,
   valueDisplay,
 } from '../../../../../../common-utils';
@@ -35,7 +36,8 @@ const getFiscalYears = (range: number) => {
 const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
 
 export const getResourceCostColumns = (
-  currencyOptions: ListOption[]
+  currencyOptions: ListOption[],
+  costRequired: boolean
 ): ResourceCostTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -65,6 +67,8 @@ export const getResourceCostColumns = (
       required: true,
       placeholder: '',
       options: fiscalYearsCost,
+      // Reset date fields when fiscal year changes
+      resetDependentFields: ['effective_from', 'end_date'],
     },
   },
   {
@@ -82,6 +86,18 @@ export const getResourceCostColumns = (
       type: 'date',
       required: false,
       placeholder: 'YYYY-MM-DD',
+      dateConfig: {
+        fiscalYearValidation: true,
+        disableFutureDates: true,
+      },
+      dependencies: [
+        {
+          dependsOn: ['fiscal_year'],
+          condition: (value) => !value,
+          action: 'disabled',
+          message: 'Please select a fiscal year first',
+        },
+      ],
     },
   },
   {
@@ -99,6 +115,22 @@ export const getResourceCostColumns = (
       type: 'date',
       required: false,
       placeholder: 'YYYY-MM-DD',
+      dateConfig: {
+        fiscalYearValidation: true,
+        disableFutureDates: true, // End date cannot be in the future
+      },
+      dependencies: [
+        {
+          dependsOn: ['fiscal_year', 'effective_from'],
+          condition: (_, rowData) => {
+            const fiscalYear = rowData.fiscal_year;
+            const startDate = rowData.effective_from;
+            return !fiscalYear || !startDate;
+          },
+          action: 'disabled',
+          message: 'Please select fiscal year and start date first',
+        },
+      ],
     },
   },
   {
@@ -127,6 +159,19 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{valueDisplay(row.effort_in_hrs)}</span>
     ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Effort In Hrs',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'salary',
@@ -140,6 +185,20 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.salary, row.currency_symbol)}</span>
     ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      onChange: true,
+      placeholder: 'Enter Salary',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'bonus',
@@ -153,6 +212,19 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.bonus, row.currency_symbol)}</span>
     ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Bonus',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'insurance',
@@ -166,6 +238,19 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.insurance, row.currency_symbol)}</span>
     ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Insurance',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'deductions',
@@ -179,6 +264,19 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.deductions, row.currency_symbol)}</span>
     ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Deductions',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'resource_cost',
@@ -192,6 +290,19 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.resource_cost, row.currency_symbol)}</span>
     ),
+    editable: true,
+    field: {
+      type: 'text',
+      required: !costRequired,
+      placeholder: 'Enter Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
   },
   {
     id: 'comments',

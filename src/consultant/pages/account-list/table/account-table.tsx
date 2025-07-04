@@ -13,7 +13,7 @@ import { AccountList } from '../../../types/account';
 import { processAccounts } from '../helpers';
 import './styles.css';
 import { getAccountColumns } from './columns';
-import { ActionItem } from '../../../../components/table/types';
+import { ActionItem, CellEditData } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 
 const AccountTable: React.FC<Record<string, any>> = ({
@@ -138,6 +138,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
     console.log('Selected rows:', selectedIds);
   };
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
       <ListTable
@@ -177,9 +181,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         sortBy={orderBy}
         sortOrder={order}
         onSort={handleSortChange}
-        onCellEdit={async (rowId, columnId, newValue) => {
-          console.log(rowId, { [columnId]: newValue });
-        }}
+        onCellEdit={handleCellEdit}
       />
     </div>
   );

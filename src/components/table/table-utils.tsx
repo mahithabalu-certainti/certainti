@@ -1,11 +1,17 @@
 import React from 'react';
 import { TextField, MenuItem } from '@mui/material';
-import { ListTableColumn, RenderFieldsProps, RowData } from './types';
+import {
+  ListTableColumn,
+  RenderFieldsProps,
+  RowData,
+  MultipleEditingCells,
+} from './types';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { CalendarIcon } from '../../assets';
+import { checkDependencies, getDateConstraints } from './dependency-utils';
 
 export function cleanCellValue(raw: unknown): string {
   if (raw == null || raw === '-' || raw === '--') return '';
@@ -71,8 +77,13 @@ export const renderFields = <T extends RowData>({
   handleValueChange,
   handleKeyDown,
   isSaving,
+  rowData,
+  allEditingCells = {},
 }: RenderFieldsProps<T>) => {
-  if (!editingCell) return null;
+  if (!editingCell || !rowData) return null;
+
+  // Check dependencies
+  const dependencies = checkDependencies(column, rowData, allEditingCells);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -80,15 +91,18 @@ export const renderFields = <T extends RowData>({
     handleValueChange(e.target.value);
   };
 
+  const isFieldDisabled = isSaving || dependencies.isDisabled;
+  const fieldError = editingCell.error || dependencies.errorMessage;
+
   const commonProps = {
     value: editingCell.value || '',
     onChange: handleChange,
     onKeyDown: handleKeyDown,
-    disabled: isSaving,
+    disabled: isFieldDisabled,
     size: 'small' as const,
     fullWidth: true,
     variant: 'outlined' as const,
-    error: !!editingCell.error,
+    error: !!fieldError,
     placeholder: column.field?.placeholder || '',
     sx: {
       fontSize: '13px',
@@ -99,7 +113,7 @@ export const renderFields = <T extends RowData>({
         height: '20px',
       },
       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        border: editingCell.error ? '1px solid #ef4444' : 'none',
+        border: fieldError ? '1px solid #ef4444' : 'none',
       },
       '& .MuiOutlinedInput-root': {
         '&.Mui-focused': {
@@ -126,9 +140,13 @@ export const renderFields = <T extends RowData>({
     },
   };
 
+  // Get options for select fields
+  const columnOptions = column.field?.options || [];
+
   switch (column?.field?.type) {
     case 'text':
       return <TextField {...commonProps} type='text' autoFocus />;
+
     case 'select':
       return (
         <TextField
@@ -167,7 +185,7 @@ export const renderFields = <T extends RowData>({
               {column?.field?.placeholder}
             </MenuItem>
           )}
-          {column?.field?.options?.map((option) => (
+          {columnOptions.map((option) => (
             <MenuItem
               key={option.value}
               title={option.label}
@@ -183,6 +201,7 @@ export const renderFields = <T extends RowData>({
           ))}
         </TextField>
       );
+
     case 'textarea':
       return (
         <div className='absolute -top-1 left-0 w-full z-30 bg-white'>
@@ -197,13 +216,13 @@ export const renderFields = <T extends RowData>({
                 padding: '4px 0px 4px 8px !important',
                 borderRadius: 0,
                 '& fieldset': {
-                  border: `1px solid ${editingCell.error ? '#ef4444' : '#60A5FA'}`,
+                  border: `1px solid ${fieldError ? '#ef4444' : '#60A5FA'}`,
                 },
                 '&:hover fieldset': {
-                  borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
+                  borderColor: fieldError ? '#ef4444' : '#60A5FA',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
+                  borderColor: fieldError ? '#ef4444' : '#60A5FA',
                 },
               },
               '& .MuiOutlinedInput-input': {
@@ -217,9 +236,17 @@ export const renderFields = <T extends RowData>({
           />
         </div>
       );
+
     case 'number':
-      return <TextField {...commonProps} type='number' />;
-    case 'date':
+      return <TextField {...commonProps} type='number' autoFocus />;
+
+    case 'date': {
+      const dateConstraints = getDateConstraints(
+        column,
+        rowData,
+        allEditingCells
+      );
+
       return (
         <div onKeyDown={handleKeyDown}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -231,7 +258,10 @@ export const renderFields = <T extends RowData>({
                 );
               }}
               format='YYYY-MM-DD'
-              disabled={isSaving}
+              disabled={isFieldDisabled}
+              minDate={dateConstraints.minDate || undefined}
+              maxDate={dateConstraints.maxDate || undefined}
+              disableFuture={dateConstraints.disableFuture}
               sx={{
                 width: '100%',
                 '& .MuiOutlinedInput-root': {
@@ -244,13 +274,13 @@ export const renderFields = <T extends RowData>({
                     },
                   },
                   '& fieldset': {
-                    border: editingCell.error ? '1px solid #ef4444' : 'none',
+                    border: fieldError ? '1px solid #ef4444' : 'none',
                   },
                   '&:hover fieldset': {
-                    borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
+                    borderColor: fieldError ? '#ef4444' : '#60A5FA',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: editingCell.error ? '#ef4444' : '#60A5FA',
+                    borderColor: fieldError ? '#ef4444' : '#60A5FA',
                   },
                 },
                 '& .MuiInputBase-input': {
@@ -263,7 +293,7 @@ export const renderFields = <T extends RowData>({
               slotProps={{
                 textField: {
                   size: 'small',
-                  error: !!editingCell.error,
+                  error: !!fieldError,
                   placeholder: column.field?.placeholder || 'YYYY-MM-DD',
                   InputProps: {
                     disabled: true,
@@ -282,11 +312,11 @@ export const renderFields = <T extends RowData>({
                   <CalendarIcon alt='calendar' className='w-3 h-3' />
                 ),
               }}
-              // onKeyDown={handleKeyDown}
             />
           </LocalizationProvider>
         </div>
       );
+    }
     default:
       return null;
   }
@@ -294,21 +324,34 @@ export const renderFields = <T extends RowData>({
 
 export const validateCellValue = <T extends RowData>(
   value: string | number,
-  column: ListTableColumn<T>
+  column: ListTableColumn<T>,
+  rowData?: T,
+  allEditingCells?: MultipleEditingCells
 ): string | null => {
   const stringValue = String(value ?? '').trim();
-  let error = null;
 
-  if (column.field?.required && !stringValue) {
-    error = 'This field is required';
-  } else if (column.field?.validation) {
+  // Check dependencies first
+  if (rowData && allEditingCells) {
+    const dependencies = checkDependencies(column, rowData, allEditingCells);
+    if (dependencies.errorMessage) {
+      return dependencies.errorMessage;
+    }
+
+    if (dependencies.isRequired && !stringValue) {
+      return 'This field is required';
+    }
+  } else if (column.field?.required && !stringValue) {
+    return 'This field is required';
+  }
+
+  // Standard validation
+  if (column.field?.validation && stringValue) {
     for (const validation of column.field.validation) {
       if (!validation.regex.test(stringValue)) {
-        error = validation.errorMessage;
-        break;
+        return validation.errorMessage;
       }
     }
   }
 
-  return error;
+  return null;
 };

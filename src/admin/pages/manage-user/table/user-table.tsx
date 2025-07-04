@@ -10,7 +10,7 @@ import {
   UserListParams,
 } from '../../../types/manage-user';
 import { getUserColumns } from './columns';
-import { ActionItem } from '../../../../components/table/types';
+import { ActionItem, CellEditData } from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
 import { useGetStatus } from '../../../../common-service';
 
@@ -153,6 +153,10 @@ export const UserTable: React.FC<IUserTableProps> = ({
     },
   ];
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    console.log(rowId, updates);
+  };
+
   return (
     <ListTable
       data={users}
@@ -187,10 +191,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
-      onCellEdit={async (rowId, columnId, newValue) => {
-        // This handler will be called for all editable columns
-        console.log(rowId, { [columnId]: newValue });
-      }}
+      onCellEdit={handleCellEdit}
     />
   );
 };

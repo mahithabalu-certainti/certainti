@@ -110,7 +110,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   useEffect(() => {
     setResourceDetails(resource ? transformResourceData(resource) : []);
   }, [resource]);
-
+  console.log(resourceDetails);
   return (
     <Fragment>
       <Box className='max-w-[100%] border-t border border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
