@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
 import {
   Layout,
@@ -35,6 +35,7 @@ import { getDateFormat } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
+import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
@@ -72,14 +73,38 @@ const ProjectForm: React.FC = () => {
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
-  const state = location.state;
-  const { accountID, projectID, settings } = location.state || {};
-  const breadcrumbs: Breadcrumb[] = state.breadcrumbs || [];
-  const firstLine = breadcrumbs.map((crumb) => crumb.label).join(' > ');
+  const [searchParams] = useSearchParams();
+  const { projectid: projectID } = useParams();
+  const accountID = searchParams.get('accountID') || '';
+  const settings = JSON.parse(searchParams.get('settings') || '{}');
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  const getProjectData = useProjectDetail(accountID, projectID);
+  const getProjectData = useProjectDetail(accountID, projectID || '');
   const account = getProjectData.data?.data?.project;
 
+  const accountName = account?.account_name;
+  const projectCode = account?.project_code;
+
+  const source = searchParams.get('source');
+  const AccountNameValue = searchParams.get('AccountName');
+  let breadcrumbLabel = '';
+
+  switch (source) {
+    case 'createAccount':
+      breadcrumbLabel = `Account > ${AccountNameValue || ''}`;
+      break;
+
+    case 'account':
+      breadcrumbLabel = `Account > ${accountName || ''} > ${projectCode || ''}`;
+      break;
+
+    case 'project':
+      breadcrumbLabel = `Project > ${projectCode || ''}`;
+      break;
+
+    default:
+      breadcrumbLabel = '';
+      break;
+  }
   const statusOptions = useGetStatus();
   const projectTypeOptions = useGetProjectType();
   const allCountries = useGetAllCountries();
@@ -381,9 +406,16 @@ const ProjectForm: React.FC = () => {
           )}
 
           <div className='w-[90%]'>
-            <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
-              {firstLine}
-            </div>
+            {isEditView && getProjectData?.isPending ? (
+              <div className='ml-2'>
+                <SingleSkeleton width={150} height={12} />
+              </div>
+            ) : (
+              <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
+                {breadcrumbLabel}
+              </div>
+            )}
+
             <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
               {isEditView ? 'Edit Project' : 'Create Project'}
             </h4>

@@ -50,7 +50,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
       if (key === 'resource_startdate' && !Array.isArray(value)) {
         return {
-          label: 'Effective From',
+          label: 'Effective Date',
           value: formatDateToYYYYMMDD(value as string) || '-', // or handle nested objects differently
         };
       }
@@ -156,7 +156,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const employmentDetails: DetailItem[] = [
     {
-      label: 'Effective From',
+      label: 'Effective Date',
       value: formatDateToYYYYMMDD(resourceData?.resource_startdate),
     },
     {

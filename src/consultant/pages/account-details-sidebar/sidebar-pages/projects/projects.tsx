@@ -163,21 +163,19 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
-  const accountNameLabel =
-    accountDetails?.accountById?.account_name || '';
   const handleEdit = (account: Project) => {
-    navigate(`/Project/edit/${account?.project_fiscal_rid}`, {
-      state: {
-        accountID: account?.account_rid,
-        projectID: account?.project_fiscal_rid,
-        breadcrumbs: [
-          { label: 'Account' },
-          { label: accountNameLabel },
-          { label: account?.project_code },
-        ],
-      },
+    const accountID = account?.account_rid ?? '';
+    const projectID = account?.project_fiscal_rid ?? '';
+
+    const queryParams = new URLSearchParams({
+      accountID,
+      projectID,
+      source: 'account',
     });
+
+    navigate(`/Project/edit/${projectID}?${queryParams.toString()}`);
   };
+
   const getRowId = (row: Project) => row.project_rid;
   const actionMenuItems = [
     {
@@ -234,8 +232,9 @@ const Projects: React.FC<ProjectsProps> = ({
   ];
 
   const handleCreateProject = () => {
-    const accountID = accountDetails?.accountById?.rid;
-    const accountName = accountDetails?.accountById?.account_name;
+    const accountID = accountDetails?.accountById?.rid ?? '';
+    const accountName = accountDetails?.accountById?.account_name ?? '';
+
     const projectSettings = {
       auto_access_rd: accountDetails?.accountDetails?.auto_access_rd
         ? 'Yes'
@@ -245,28 +244,30 @@ const Projects: React.FC<ProjectsProps> = ({
         ? 'Yes'
         : 'No',
       max_ai_interactions:
-        accountDetails?.accountDetails?.max_ai_interactions,
-      currency_rid: accountDetails?.accountById?.currency_rid,
+        accountDetails?.accountDetails?.max_ai_interactions ?? '',
+      currency_rid: accountDetails?.accountById?.currency_rid ?? '',
     };
-    navigate(`${PROJECT_CREATE}`, {
-      state: {
-        accountID,
-        breadcrumbs: [{ label: 'Account' }, { label: accountName }],
-        settings: projectSettings,
-      },
+
+    const queryParams = new URLSearchParams({
+      accountID,
+      source: 'createAccount',
+      AccountName: accountName,
+      settings: JSON.stringify(projectSettings),
     });
+    console.log(accountName, 'vvvv');
+    navigate(`${PROJECT_CREATE}?${queryParams.toString()}`);
   };
 
   const handleProject = (project: Project) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.project_fiscal_rid ?? null,
+      projectid: project?.project_fiscal_rid ?? '',
     });
-    navigate(path, {
-      state: {
-        accountID: project?.account_rid,
-        projectID: project?.project_fiscal_rid,
-      },
+    const queryParams = new URLSearchParams({
+      accountID: project?.account_rid ?? '',
+      source: 'account',
     });
+
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {

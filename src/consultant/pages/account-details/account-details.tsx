@@ -40,7 +40,6 @@ import {
   DisplayColumn,
   transformAccountData,
 } from './utils';
-import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { ExportModule } from '../../types/resource-skill';
@@ -469,13 +468,7 @@ export const AccountDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
         >
-          {isPending ? (
-            <div className='flex items-center justify-center w-full h-full'>
-              <CircularProgress />
-            </div>
-          ) : (
-            <Suspense fallback={null}>{renderContent()}</Suspense>
-          )}
+          <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
     </div>

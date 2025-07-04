@@ -368,7 +368,7 @@ export const ResourceFormData = (
             type: '',
             required: false,
           }),
-          createDateField('financial_start_date', 'Effective From', {
+          createDateField('financial_start_date', 'Effective Date', {
             required: false,
             minDate: minDate,
             maxDate: previousDate,
@@ -450,7 +450,7 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: !disableSkill,
         fields: [
-          createDateField('skill_start_date', 'Effective From', {
+          createDateField('skill_start_date', 'Effective Date', {
             required: false,
             minDate: new Date('1950-01-01'),
             maxDate: currentDate,
@@ -547,7 +547,7 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: disableCostAndSkill,
         fields: [
-          createDateField('resource_startdate', 'Effective From', {
+          createDateField('resource_startdate', 'Effective Date', {
             required: false,
             disabled: disableCostAndSkill,
             minDate: new Date('1950-01-01'),
