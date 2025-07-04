@@ -80,8 +80,8 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
           req.originalUrl
         );
         if (!hasPermission) {
-          res.status(constants.FORBIDDEN).json({
-            error: constants.FORBIDDEN_MESSAGE,
+          res.status(constants.UNAUTHORIZED).json({
+            error: constants.UNAUTHORIZED_MESSAGE,
             message: "Access Restricted. Contact administrator to gain access"
           });
           return;
