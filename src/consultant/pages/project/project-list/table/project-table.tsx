@@ -73,13 +73,15 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const getRowId = (row: Project) => row.project_rid;
 
   const handleEdit = (account: any) => {
-    navigate(`/project/edit/${account?.project_fiscal_rid}`, {
-      state: {
-        accountID: account?.account_rid,
-        projectID: account?.project_fiscal_rid,
-        breadcrumbs: [{ label: 'Project' }, { label: account?.project_code }],
-      },
+    const accountID = account?.account_rid ?? '';
+    const projectID = account?.project_fiscal_rid ?? '';
+    const queryParams = new URLSearchParams({
+      accountID,
+      projectID,
+      source: 'project',
     });
+
+    navigate(`/project/edit/${projectID}?${queryParams.toString()}`);
   };
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -108,14 +110,15 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   const handleAccountName = (project: Project) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.project_fiscal_rid ?? null,
+      projectid: project?.project_fiscal_rid ?? '',
     });
-    navigate(path, {
-      state: {
-        accountID: project?.account_rid,
-        projectID: project?.project_fiscal_rid,
-      },
+    // Create query parameter
+    const queryParams = new URLSearchParams({
+      accountID: project?.account_rid ?? '',
+      source: 'project',
     });
+
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const projectColumns = getAllProjectListColumns(handleAccountName);
