@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
+import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 // import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
@@ -42,9 +43,6 @@ const detailsTabs: DetailsTabs[] = [
   },
 ];
 
-// interface ErrorProps {
-//   message?: string;
-// }
 interface DetailsProps {
   accountDetails?: accountDetailsProps; // need to change once api info is availableRecord<string, any>
   isLoading?: boolean;
@@ -184,12 +182,16 @@ const Details: React.FC<DetailsProps> = ({
               </Box>
             </Box>
             <Box>
-              <DetailsInfo
-                detailsInfo={accountDetails}
-                isDetailsLoading={isLoading}
-                detailsError={isError}
-                isKeyContactAvailable={isKeyContactAvailable}
-              />
+              {isLoading ? (
+                <DetailsSectionSkeleton />
+              ) : (
+                <DetailsInfo
+                  detailsInfo={accountDetails}
+                  isDetailsLoading={isLoading}
+                  detailsError={isError}
+                  isKeyContactAvailable={isKeyContactAvailable}
+                />
+              )}
             </Box>
           </div>
         )}

@@ -124,6 +124,7 @@ export interface NewProjectData {
   status_rid: string;
   name?: string;
   r_number?: string;
+  account_name: string;
   industry_rid_name?: string;
   start_date?: string | null;
   end_date?: string | null;
