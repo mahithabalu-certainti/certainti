@@ -8,6 +8,7 @@ import { OrganizationLicenses } from "../models/organisationLicense";
 import moment, { Moment } from "moment";
 import "moment-timezone"; 
 import { Status } from "../models/statusModel";
+import { PermissionObjectMapping } from "../models/permissionObjectMappingModel";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -712,7 +713,7 @@ async getAllUserPermission(userId: string, profileId: string) {
   console.log("userId : ",userId);
   console.log("profileId : ",profileId);
   const [profilePermissions, userPermissions] = await Promise.all([
-    this.getProfilePermission(profileId),
+    this.getProfilePermission(profileId,false),
     this.getUserPermission(userId)
   ]);
 
@@ -735,19 +736,66 @@ async getAllUserPermission(userId: string, profileId: string) {
 }
 
   // Get all profile-based permissions
-  async getProfilePermission(profileId: string) {
-    const permissions: any[] = [];
+async getProfilePermission(profileId: string,includeDependencies: boolean = false) {
+  const permissions: any[] = [];
+  const mainDbSequelize = await initSequelize();
 
-    // Menus
-    const menuAccess = await ProfileMenuAccess.findAll({
-      where: { profile_id: profileId},
+  // Get all data including dependencies in parallel
+  const [
+    menuAccess,
+    moduleAccess,
+    permissionAccess,
+    fieldAccess,
+    allDependencies
+  ] = await Promise.all([
+    ProfileMenuAccess.findAll({
+      where: { profile_id: profileId },
       include: [{ model: Menu, as: "menu" }],
-      order: [[{ model: Menu, as: "menu" }, "menu_desc", "ASC"]],
-      
-    });
-    console.log(`After menuAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+      order: [
+        [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
+        [{ model: Menu, as: "menu" }, "sort_order", "ASC"]
+      ]
+    }),
+    ProfileModuleAccess.findAll({
+      where: { profile_id: profileId },
+      include: [{ model: MenuModule, as: "menu_module" }],
+      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
+    }),
+    ProfilePermissionAccess.findAll({
+      where: { profile_id: profileId},
+      include: [{ model: ModulePermission, as: "module_permission" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }],
+       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]]
+    }),
+    ProfileFieldsAccess.findAll({
+      where: { profile_id: profileId },
+      include: [{ model: PermissionField, as: "permission_field" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }],
+       order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
+    }),
+   includeDependencies ? PermissionObjectMapping.findAll({
+      attributes: ['dependent_id', 'depends_on_id', 'dependent_type', 'depends_on_type']
+    }) : Promise.resolve([])
+  ]);
 
-    menuAccess.forEach(ma => {
+  // Create lookup maps for dependencies
+  const dependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
+  
+   if (includeDependencies) {
+    allDependencies.forEach((dep: any) => {
+      const key = `${dep.dependent_id}`;
+      if (!dependencyMap!.has(key)) {
+        dependencyMap!.set(key, []);
+      }
+      dependencyMap!.get(key)!.push({
+        id: dep.depends_on_id,
+        type: dep.depends_on_type
+      });
+    });
+  }
+
+  // Process menus with dependencies
+  menuAccess.forEach((ma: any) => {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
         permissions.push({
@@ -756,22 +804,14 @@ async getAllUserPermission(userId: string, profileId: string) {
           menu_id: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
-          is_enabled: maWithMenu.is_enabled
+          is_enabled: maWithMenu.is_enabled,
+          depends_on: includeDependencies ? (dependencyMap?.get(`${maWithMenu.menu.rid}`) || []) : undefined
         });
       }
     });
-    console.log(`After menuAccess response map: ${new Date(Date.now()).toISOString()}`);
 
-
-    // Modules
-    const moduleAccess = await ProfileModuleAccess.findAll({
-      where: { profile_id: profileId},
-      include: [{ model: MenuModule, as: "menu_module" }],
-       order: [[{ model: MenuModule, as: "menu_module" }, "module_name", "ASC"]],
-    });
-    console.log(`After module access retrieve: ${new Date(Date.now()).toISOString()}`);
-
-    moduleAccess.forEach(mo => {
+  // Process modules with dependencies
+  moduleAccess.forEach((mo: any) => {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
         permissions.push({
@@ -781,23 +821,14 @@ async getAllUserPermission(userId: string, profileId: string) {
           menu_id: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
-          is_enabled: moWithModule.is_enabled
+          is_enabled: moWithModule.is_enabled,
+          depends_on: includeDependencies ? (dependencyMap?.get(`${moWithModule.menu_module.rid}`) || []) : undefined
         });
       }
     });
-    console.log(`After module access map: ${new Date(Date.now()).toISOString()}`);
 
-    // Permissions
-    const permissionAccess = await ProfilePermissionAccess.findAll({
-      where: { profile_id: profileId},
-      include: [{ model: ModulePermission, as: "module_permission" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }],
-       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]]
-    });
-    console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
-
-
-    permissionAccess.forEach(pa => {
+  // Process permissions (unchanged)
+  permissionAccess.forEach((pa: any) => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
@@ -808,20 +839,14 @@ async getAllUserPermission(userId: string, profileId: string) {
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
           is_field_available: paWithPerm.module_permission.is_field_available,
-          is_enabled: paWithPerm.is_enabled
+          is_enabled: paWithPerm.is_enabled,
+          depends_on: includeDependencies ? (dependencyMap?.get(paWithPerm.module_permission.rid) || []) : undefined
         });
       }
     });
 
-    const fieldAccess = await ProfileFieldsAccess.findAll({
-      where: { profile_id: profileId },
-      include: [{ model: PermissionField, as: "permission_field" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }],
-       order: [[{ model: PermissionField, as: "permission_field" }, "field_desc", "ASC"]],
-    });
-    console.log(`After fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
-
-    fieldAccess.forEach(fa => {
+  // Process fields (unchanged)
+    fieldAccess.forEach((fa: any) => {
       const faWithField = fa as any;
       if (faWithField.permission_field) {
         permissions.push({
@@ -832,7 +857,8 @@ async getAllUserPermission(userId: string, profileId: string) {
           name: faWithField.permission_field.field_name,
           desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
-          edit: faWithField.edit
+          edit: faWithField.edit,
+          is_read_only: includeDependencies ? faWithField.permission_field.is_read_only : undefined
         });
       }
     });
@@ -1723,7 +1749,7 @@ const rawResult = users || [];
   console.log("Profile ID:", profileId);
 
   const [profilePermissions, userPermissions] = await Promise.all([
-    this.getProfilePermission(profileId),
+    this.getProfilePermission(profileId,true),
     this.getUserPermission(userId)
   ]);
 

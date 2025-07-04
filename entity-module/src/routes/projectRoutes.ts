@@ -6,37 +6,37 @@ const routes: Router = Router();
 
 routes.get(
   "/list",
-  checkUserStatusMiddleware("projects_projects_view_all"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.projectController.allProjectList
 );
 routes.get(
   "/list/export",
-  checkUserStatusMiddleware("projects_projects_export"),
+  checkUserStatusMiddleware("projects_export"),
   controller.projectController.exportAllProjectList
 );
 routes.get(
   "/list/:accountId",
-  checkUserStatusMiddleware("account_projects_view_all"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.projectController.projectList
 );
 routes.get(
   "/export/:accountId",
-  checkUserStatusMiddleware("account_projects_download"),
+  checkUserStatusMiddleware("projects_export"),
   controller.projectController.exportProjectList
 );
 routes.get(
   "/list/:accountId/:projectId",
-  checkUserStatusMiddleware("account_projects_view_overview"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.projectController.projectById
 );
 routes.post(
   "/new",
-  checkUserStatusMiddleware("account_projects_create"),
+  checkUserStatusMiddleware("projects_create"),
   controller.projectController.createProject
 );
 routes.put(
   "/update",
-  checkUserStatusMiddleware("account_projects_edit_update"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.projectController.updateProject
 );
 routes.get(
