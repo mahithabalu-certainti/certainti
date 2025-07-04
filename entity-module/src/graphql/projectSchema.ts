@@ -11,7 +11,7 @@ type UpdateProjectResponse {
 input updateInlineProject {
     account_rid : String!,
     project_rid : String!,
-    project_code : String!,
+    project_code : String,
     project_name : String,
     project_type_rid : String,
     project_fiscal_rid : String,

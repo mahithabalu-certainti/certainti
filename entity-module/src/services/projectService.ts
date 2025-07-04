@@ -1853,16 +1853,16 @@ export class ProjectService {
     else {
       let schemaName = `"${MAIN_SCHEMA_NAME}_${checkAccountExists[0][0].r_number.replace('ACC-', '')}"`
       let findProject = await orgSequelize.query(`
-        SELECT * FROM ${schemaName}.project p WHERE project_code = '${data.project_code}' AND rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' 
+        SELECT * FROM ${schemaName}.project p WHERE rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' 
         `)
       let findProjectFiscal = await orgSequelize.query(`
-        SELECT * FROM ${schemaName}.project_fiscal p WHERE project_code = '${data.project_code}' AND project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND rid = '${data.project_fiscal_rid}'
+        SELECT * FROM ${schemaName}.project_fiscal p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND rid = '${data.project_fiscal_rid}'
         `)
       let findProjectSummary = await mainSequelize.query(`
-        SELECT * FROM ${MAIN_SCHEMA_NAME}.project_summary p WHERE project_code = '${data.project_code}' AND project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}'
+        SELECT * FROM ${MAIN_SCHEMA_NAME}.project_summary p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}'
         `)
       let findProjectFisSummary = await mainSequelize.query(`
-        SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p WHERE project_code = '${data.project_code}' AND project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND project_fiscal_rid = '${data.project_fiscal_rid}'
+        SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND project_fiscal_rid = '${data.project_fiscal_rid}'
         `)
       if(findProject[0].length > 0 && findProjectSummary[0].length > 0 && findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
         let setProjectData = this.setProject(findProject[0][0], data);
@@ -1879,9 +1879,7 @@ export class ProjectService {
             WHERE 
               rid = '${data.project_rid}'
               AND
-              account_rid = '${data.account_rid}'
-              AND
-              project_code = '${data.project_code}'`
+              account_rid = '${data.account_rid}'`
             )
       }
       if(setProjectFiscalData.length > 0) {
@@ -1892,8 +1890,6 @@ export class ProjectService {
           ${setProjectFiscalData.join(',')}
         WHERE 
           rid = '${data.project_fiscal_rid}'
-          AND
-          project_code = '${data.project_code}'
           AND
           account_rid = '${data.account_rid}'
           AND
@@ -1908,8 +1904,6 @@ export class ProjectService {
         SET
           ${setProjectSummary.join(',')}
         WHERE 
-          project_code = '${data.project_code}'
-          AND
           account_rid = '${data.account_rid}'
           AND
           project_rid = '${data.project_rid}'
@@ -1926,8 +1920,6 @@ export class ProjectService {
           project_fiscal_rid = '${data.project_fiscal_rid}'
           AND
           project_rid = '${data.project_rid}'
-          AND
-          project_code = '${data.project_code}'
           AND
           account_rid = '${data.account_rid}'            
         `)
@@ -1951,6 +1943,11 @@ private setProject = (dbData : any, requestData : any) => {
   if(requestData.project_name) {
     newPrjData.project_name = requestData.project_name !== dbData.project_name ? requestData.project_name : dbData.project_name
     let data = `project_name = '${newPrjData.project_name}'`
+    newPrjArray.push(data)
+  }
+  if(requestData.project_code) {
+    newPrjData.project_code = requestData.project_code !== dbData.project_code ? requestData.project_code : dbData.project_code
+    let data = `project_code = '${newPrjData.project_code}'`
     newPrjArray.push(data)
   }
   if(requestData.project_type_rid) {
@@ -1994,6 +1991,11 @@ private setPrjFiscalData = (dbData : any, requestData : any) => {
   if(requestData.project_name) {
     newPrjFisData.project_name = requestData.project_name != dbData.project_name ? requestData.project_name : dbData.project_name
     let data = `project_name = '${newPrjFisData.project_name}'`
+    newPrjFisArray.push(data)
+  }
+  if(requestData.project_code) {
+    newPrjFisData.project_code = requestData.project_code != dbData.project_code ? requestData.project_code : dbData.project_code
+    let data = `project_code = '${newPrjFisData.project_code}'`
     newPrjFisArray.push(data)
   }
   if(requestData.project_type_rid) {
@@ -2044,6 +2046,11 @@ private setProjectSummary = (dbData : any, requestData : any) => {
     let data = `project_name = '${newDbPrjSummary.project_name}'`
     newDbPrjSummaryArray.push(data)
   }
+  if(requestData.project_code) {
+    newDbPrjSummary.project_code = requestData.project_code != dbData.project_code ? requestData.project_code : dbData.project_code
+    let data = `project_code = '${newDbPrjSummary.project_code}'`
+    newDbPrjSummaryArray.push(data)
+  }
   if(requestData.project_type_rid) {
     newDbPrjSummary.project_type_rid = requestData.project_type_rid != dbData.project_type_rid ? requestData.project_type_rid : dbData.project_type_rid
     let data = `project_type_rid = '${newDbPrjSummary.project_type_rid}'`
@@ -2085,6 +2092,11 @@ private setProjectFiscalSummary = (dbData : any, requestData : any) => {
   if(requestData.project_name) {
     newFisSummary.project_name = requestData.project_name !== dbData.project_name ? requestData.project_name : dbData.project_name
     let data = `project_name = '${newFisSummary.project_name}'`
+    newFisSummaryArray.push(data)
+  }
+  if(requestData.project_code) {
+    newFisSummary.project_code = requestData.project_code !== dbData.project_code ? requestData.project_code : dbData.project_code
+    let data = `project_code = '${newFisSummary.project_code}'`
     newFisSummaryArray.push(data)
   }
   if(requestData.project_type_rid) {

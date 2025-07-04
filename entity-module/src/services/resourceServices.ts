@@ -1,6 +1,7 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
+import { ResourceFiscal } from "../models/resourceFiscal";
 import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
@@ -877,6 +878,23 @@ export class ResourceService {
           account_rid = '${data.account_rid}'
         `)
       if(updateResource) {
+        let fetchResourceFiscal : any = await orgSequelize.query(`
+          SELECT * FROM ${schemaName}.resource_fiscal WHERE account_rid = '${data.account_rid}' AND resource_rid = '${data.resource_rid}'`)
+
+          if(fetchResourceFiscal[0].length > 0) {
+            let setFiscalData = this.setResourceFiscal(fetchResourceFiscal[0][0], data)
+            await orgSequelize.query(`
+              UPDATE ${schemaName}.resource_fiscal
+              SET
+                ${setFiscalData.join(',')}
+              WHERE
+               rid = '${fetchResourceFiscal[0][0].rid}'
+               AND
+               account_rid = '${data.account_rid}'
+               AND
+               resource_rid = '${data.resource_rid}'
+              `)
+          }
           let insertQuery = `
             INSERT INTO ${schemaName}.resources_timeline
             (created_by, created_datetime, account_rid, entity_rid, event_name, event_type, event_status, event_datetime)
@@ -935,6 +953,11 @@ export class ResourceService {
       dataStorage = `resource_type_rid = '${newData.resource_type_rid}'`
       newDataArray.push(dataStorage)
     }
+    if(requestData.resource_code) {
+      newData.resource_code = requestData.resource_code !== dbData.resource_code ? requestData.resource_code : dbData.resource_code
+      dataStorage = `resource_code = '${newData.resource_code}'`
+      newDataArray.push(dataStorage)
+    }
     if(requestData.resource_orgname) {
       newData.resource_orgname = requestData.resource_orgname !== dbData.resource_orgname ? requestData.resource_orgname : dbData.resource_orgname
       dataStorage = `resource_orgname = '${newData.resource_orgname}'`
@@ -968,6 +991,33 @@ export class ResourceService {
     if(requestData.comments) {
       newData.comments = requestData.comments !== dbData.comments ? requestData.comments : dbData.comments
       dataStorage = `comments = '${newData.comments}'`
+      newDataArray.push(dataStorage)
+    }
+    dataStorage = `modified_datetime = NOW()`
+    newDataArray.push(dataStorage)
+    dataStorage = `modified_by = '${requestData.userId}'`
+    newDataArray.push(dataStorage)
+    return newDataArray;
+  }
+
+  private setResourceFiscal = (dbData : ResourceFiscal, requestData : any) => {
+    let newDataArray = []
+    let dataStorage;
+    let newData : any = {}
+
+    if(requestData.country_rid) {
+      newData.country_rid = requestData.country_rid !== dbData.country_rid ? requestData.country_rid : dbData.country_rid
+      dataStorage = `country_rid = '${newData.country_rid}'`
+      newDataArray.push(dataStorage)
+    }
+    if(requestData.region_rid) {
+      newData.region_rid = requestData.region_rid !== dbData.country_region_rid ? requestData.region_rid : dbData.country_region_rid
+      dataStorage = `country_region_rid = '${newData.region_rid}'`
+      newDataArray.push(dataStorage)
+    }
+    if(requestData.resource_type_rid) {
+      newData.resource_type_rid = requestData.resource_type_rid !== dbData.resource_type_rid ? requestData.resource_type_rid : dbData.resource_type_rid
+      dataStorage = `resource_type_rid = '${newData.resource_type_rid}'`
       newDataArray.push(dataStorage)
     }
     dataStorage = `modified_datetime = NOW()`

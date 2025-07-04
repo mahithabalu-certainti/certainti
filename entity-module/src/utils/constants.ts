@@ -69,7 +69,7 @@ export const STATUS_MESSAGE = {
   active : "Active",
   inactive : "In-Active",
   resourceInactive : "Resource you are trying to update is currently In-Active",
-  eventUpdate : "update",
+  eventUpdate : "Update",
   uiHandler : "ui handler",
   success : "success",
   resourceUpdateSuccess : "Resource updated successfully",
@@ -77,5 +77,10 @@ export const STATUS_MESSAGE = {
   countryNotFound : "Country you are trying to update is invalid",
   stateNotFound : "Region you are trying to update is invalid",
   resourceIdMissing : "Resource RID missing",
-  invalidKeyData : "Invalid Id for update. Kindly check RID and update again."
+  invalidKeyData : "Invalid Id for update. Kindly check RID and update again.",
+  resourceCostNotFound : "Resource Cost not found",
+  resourceCostUpdSuccess : "Resource Cost updated successfully",
+  duplicateProjectCode : "Project Code already exists",
+  costIdMissing : "Resource Cost RID missing",
+  currencyInvalid : "Currency you are trying to update is invalid"
 }
