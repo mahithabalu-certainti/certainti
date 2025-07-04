@@ -14,10 +14,8 @@ import { convertResourceCost } from './resource-cost-type';
 import { AcceptIcon, RejectIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import { useFetchCurrency } from '../../../../../services/account';
-import {
-  CellEditData,
-  FieldChangeEvent,
-} from '../../../../../../components/table/types';
+import { CellEditData } from '../../../../../../components/table/types';
+import { ResourceTypeEnum } from '../../../../resource-form/utils';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -34,6 +32,7 @@ interface ResourceCostTableProps {
   isResourceCostEditEnable?: boolean;
   refreshCostTrigger?: number;
   setCount?: (count: number) => void;
+  resourceType: ResourceTypeEnum;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -50,6 +49,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   isResourceCostEditEnable,
   refreshCostTrigger,
   setCount,
+  resourceType,
 }) => {
   const navigate = useNavigate();
   const { successToast } = useToast();
@@ -58,7 +58,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
-  const [costRequired, setCostRequired] = useState<boolean>(true);
   const {
     data: costList,
     isLoading,
@@ -194,16 +193,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     ];
   };
 
-  const handleFieldChange = async (event: FieldChangeEvent) => {
-    if (event.columnId === 'salary' && event.value) {
-      setCostRequired(event.value);
-    }
-  };
+  const isFullTime = resourceType?.toLowerCase() === ResourceTypeEnum.FULL_TIME;
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
   const resourceCostColumns = getResourceCostColumns(
     memoizedCurrency,
-    costRequired
+    isFullTime
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -244,7 +239,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
         onCellEdit={handleCellEdit}
-        onFieldChange={handleFieldChange}
       />
     </div>
   );

@@ -64,7 +64,7 @@ export interface FieldValidation {
 export interface DependencyRule {
   dependsOn: string | string[];
   condition: (value: any, rowData: any) => boolean;
-  action: 'required' | 'disabled' | 'hidden' | 'show_modal';
+  action: 'required' | 'disabled' | 'hidden' | 'show_modal' | 'enable';
   message?: string;
   modalFields?: ModalField[];
 }
@@ -121,7 +121,7 @@ export type ListTableColumn<T> = {
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
-  editable?: boolean;
+  editable?: boolean | ((row: T) => boolean);
   render?: (row: T) => React.ReactNode;
   field?: TableField;
 };
@@ -215,6 +215,11 @@ export interface ListTableProps<T extends RowData> {
   grandchildrenKey?: string;
   maxNestingLevel?: number;
   editDisableLevel?: number[];
+  //skill
+  skillTypeIds?: {
+    othersSkillTypeId: string | null;
+    othersSkillSubTypeId: string | null;
+  };
 }
 
 export interface EditingCell {

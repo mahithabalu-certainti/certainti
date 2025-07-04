@@ -6,24 +6,11 @@ import {
 } from '../../../../../../common-utils';
 import {
   ListOption,
-  TableField,
+  ListTableColumn,
 } from '../../../../../../components/table/types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
 import { DATE_CONFIG } from '../../../../resource-form/form-data';
 import { dateFormatToYYYYMMDD } from '../utils';
-
-export interface ResourceCostTableColumn<T> {
-  id: string;
-  label: string;
-  width: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-  editable?: boolean;
-  field?: TableField;
-}
 
 const getFiscalYears = (range: number) => {
   const currentYear = new Date().getFullYear();
@@ -37,8 +24,8 @@ const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
 
 export const getResourceCostColumns = (
   currencyOptions: ListOption[],
-  costRequired: boolean
-): ResourceCostTableColumn<ResourceCostList>[] => [
+  isFullTime: boolean
+): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
     sortId: 'fiscal_year',
@@ -75,7 +62,7 @@ export const getResourceCostColumns = (
     id: 'effective_from',
     sortId: 'effective_from',
     label: 'Effective Date',
-    width: 130,
+    width: 150,
     sortable: true,
 
     render: (row: ResourceCostList) => (
@@ -104,7 +91,7 @@ export const getResourceCostColumns = (
     id: 'end_date',
     sortId: 'end_date',
     label: 'End Date',
-    width: 130,
+    width: 150,
     sortable: true,
 
     render: (row: ResourceCostList) => (
@@ -161,7 +148,7 @@ export const getResourceCostColumns = (
     ),
     editable: true,
     field: {
-      type: 'text',
+      type: 'number',
       required: true,
       placeholder: 'Enter Effort In Hrs',
       validation: [
@@ -185,17 +172,58 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.salary, row.currency_symbol)}</span>
     ),
-    editable: true,
+    editable: isFullTime ? true : false,
     field: {
-      type: 'text',
+      type: 'number',
       required: false,
-      onChange: true,
       placeholder: 'Enter Salary',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
             'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+      dependencies: [
+        {
+          dependsOn: ['resource_cost'],
+          action: 'hidden',
+          condition: (value) => !value,
+          message: '',
+        },
+      ],
+    },
+  },
+  {
+    id: 'resource_cost',
+    sortId: 'resource_cost',
+    label: 'Cost',
+    width: 180,
+    sortable: true,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: ResourceCostList) => (
+      <span>{costDisplay(row.resource_cost, row.currency_symbol)}</span>
+    ),
+    editable: true,
+    field: {
+      type: 'number',
+      required: !isFullTime,
+      placeholder: 'Enter Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+      dependencies: [
+        {
+          dependsOn: ['salary'],
+          action: 'required',
+          condition: (value) => !value,
+          message: '',
         },
       ],
     },
@@ -212,9 +240,9 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.bonus, row.currency_symbol)}</span>
     ),
-    editable: true,
+    editable: isFullTime ? true : false,
     field: {
-      type: 'text',
+      type: 'number',
       required: false,
       placeholder: 'Enter Bonus',
       validation: [
@@ -238,9 +266,9 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.insurance, row.currency_symbol)}</span>
     ),
-    editable: true,
+    editable: isFullTime ? true : false,
     field: {
-      type: 'text',
+      type: 'number',
       required: false,
       placeholder: 'Enter Insurance',
       validation: [
@@ -266,35 +294,9 @@ export const getResourceCostColumns = (
     ),
     editable: true,
     field: {
-      type: 'text',
+      type: 'number',
       required: false,
       placeholder: 'Enter Deductions',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-        },
-      ],
-    },
-  },
-  {
-    id: 'resource_cost',
-    sortId: 'resource_cost',
-    label: 'Cost',
-    width: 180,
-    sortable: true,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: ResourceCostList) => (
-      <span>{costDisplay(row.resource_cost, row.currency_symbol)}</span>
-    ),
-    editable: true,
-    field: {
-      type: 'text',
-      required: !costRequired,
-      placeholder: 'Enter Cost',
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,

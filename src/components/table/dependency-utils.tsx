@@ -8,6 +8,11 @@ import isBetween from 'dayjs/plugin/isBetween';
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
+const validateRegex = (regex: RegExp | string, value: string) => {
+  const pattern = regex instanceof RegExp ? regex : new RegExp(regex || '');
+  return !pattern.test(value); // Returns true if INVALID
+};
+
 export const checkDependencies = <T extends RowData>(
   column: ListTableColumn<T>,
   rowData: T,
@@ -185,7 +190,7 @@ export const validateDependentFields = <T extends RowData>(
               )
             ) {
               errors[cellKey] =
-                `Date must be within fiscal year ${fiscalYearValue} (${fiscalYearStart.format('YYYY-MM-DD')} to ${fiscalYearEnd.format('YYYY-MM-DD')})`;
+                `Date must be within fiscal year ${fiscalYearValue}`;
               continue;
             }
           }
@@ -232,10 +237,15 @@ export const validateDependentFields = <T extends RowData>(
 
     // Custom validation rules
     if (column.field?.validation) {
-      for (const validation of column.field.validation) {
-        if (!validation.regex.test(String(cellValue))) {
-          errors[cellKey] = validation.errorMessage;
-          break;
+      const stringValue = String(cellValue);
+      if (stringValue.trim() === '' && column.field.required !== true) {
+        // Skip validation when not required and empty
+      } else {
+        for (const validation of column.field.validation) {
+          if (validateRegex(validation.regex, stringValue)) {
+            errors[cellKey] = validation.errorMessage;
+            break;
+          }
         }
       }
     }

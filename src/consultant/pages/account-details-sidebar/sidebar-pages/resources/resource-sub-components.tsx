@@ -16,6 +16,7 @@ import { checkPermission } from '../../../../../common-utils';
 import { TabMenus } from './resources';
 import { InfoSection } from '../../../../../components';
 import { useResourceDetail } from '../../../../services/resource-details';
+import { ResourceTypeEnum } from '../../../resource-form/utils';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -110,7 +111,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   useEffect(() => {
     setResourceDetails(resource ? transformResourceData(resource) : []);
   }, [resource]);
-  console.log(resourceDetails);
+
   return (
     <Fragment>
       <Box className='max-w-[100%] border-t border border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
@@ -186,6 +187,10 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
               refreshCostTrigger={refreshCostTrigger}
               setCount={setCount}
+              resourceType={
+                resource?.data?.resourceDetails
+                  ?.resource_type_name as ResourceTypeEnum
+              }
             />
           </Box>
         )}

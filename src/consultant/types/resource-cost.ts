@@ -13,6 +13,7 @@ export interface ResourceCostListParams {
 }
 
 export type ResourceCostList = {
+  resource_type_name: string;
   resource_name?: string;
   resource_code?: string;
   id?: string;

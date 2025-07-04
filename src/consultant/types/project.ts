@@ -1,5 +1,4 @@
 import { CommonApiResponse } from '../../common-service';
-import { TableField } from '../../components/table/types';
 
 export type ProjectList = {
   rid: string;
@@ -66,18 +65,6 @@ export type Project = {
   industry_name?: string;
 };
 
-export interface ProjectTableColumn<T> {
-  id: string;
-  sortId: string;
-  label: string;
-  sortable?: boolean;
-  width: string | number;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-  field?: TableField;
-  editable?: boolean;
-}
 export interface globalFilters {
   [key: string]: string[];
 }

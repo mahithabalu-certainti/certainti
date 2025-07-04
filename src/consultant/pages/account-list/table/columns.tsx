@@ -1,13 +1,16 @@
 import { costDisplay, REGEX_PATTERNS } from '../../../../common-utils';
-import { ListOption } from '../../../../components/table/types';
-import { AccountColumn, AccountList, OthersEnum } from '../../../types/account';
+import {
+  ListOption,
+  ListTableColumn,
+} from '../../../../components/table/types';
+import { AccountList, OthersEnum } from '../../../types/account';
 import { formatNumberWithCommas } from './utils';
 
 export const getAccountColumns = (
   onClick: (row: AccountList) => void,
   countryOptions: ListOption[],
   industryOptions: ListOption[]
-): AccountColumn<AccountList>[] => [
+): ListTableColumn<AccountList>[] => [
   {
     id: 'account_name',
     sortId: 'account_name',

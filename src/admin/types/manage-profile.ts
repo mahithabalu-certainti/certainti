@@ -1,5 +1,3 @@
-import { TableField } from '../../components/table/types';
-
 export type ManageProfile = {
   id: string;
   profileName: string;
@@ -20,18 +18,6 @@ export type ManageProfileList = {
   created_by: string | null;
   modified_by: string | null;
 };
-export interface ProfileTableColumn<T> {
-  id: string;
-  label: string;
-  width?: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-  editable?: boolean;
-  field?: TableField;
-}
 
 export interface ProfileDetail {
   source_profile_id: string;

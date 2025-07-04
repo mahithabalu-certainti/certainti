@@ -1,7 +1,8 @@
 import { getDateFormat } from '../../../../common-utils';
-import { ManageProfileList, ProfileTableColumn } from '../../../types';
+import { ListTableColumn } from '../../../../components/table/types';
+import { ManageProfileList } from '../../../types';
 
-export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
+export const profileColumns: ListTableColumn<ManageProfileList>[] = [
   {
     id: 'profile_name',
     sortId: 'profile_name',

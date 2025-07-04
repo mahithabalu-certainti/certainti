@@ -2,15 +2,18 @@ import {
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,
 } from '../../../../common-utils';
-import { ListOption } from '../../../../components/table/types';
-import { ManageUser, UserTableColumn } from '../../../types/manage-user';
+import {
+  ListOption,
+  ListTableColumn,
+} from '../../../../components/table/types';
+import { ManageUser } from '../../../types/manage-user';
 
 export const getUserColumns = (
   onClick: (row: ManageUser) => void,
   profileOptions: ListOption[],
   roleOptions: ListOption[],
   statusOptions: ListOption[]
-): UserTableColumn<ManageUser>[] => [
+): ListTableColumn<ManageUser>[] => [
   {
     id: 'username',
     sortId: 'first_name',

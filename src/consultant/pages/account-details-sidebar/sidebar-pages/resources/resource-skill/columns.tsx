@@ -1,30 +1,17 @@
 import { REGEX_PATTERNS } from '../../../../../../common-utils';
 import {
   ListOption,
-  TableField,
+  ListTableColumn,
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import { dateFormatToYYYYMMDD } from '../utils';
 
-export interface ResourceSkillTableColumn<T> {
-  id: string;
-  label: string;
-  width?: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  editable?: boolean;
-  render?: (row: T) => React.ReactNode;
-  field?: TableField;
-}
-
 export const getResourceSkillColumns = (
   skillLevelOptions: ListOption[],
   skillTypeOptions: ListOption[],
   skillSubTypeOptions: ListOption[]
-): ResourceSkillTableColumn<ResourceSkillList>[] => [
+): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
     sortId: 'start_date',
@@ -66,19 +53,15 @@ export const getResourceSkillColumns = (
       required: true,
       placeholder: 'Choose Skill Type',
       options: skillTypeOptions,
-      // Reset skill subtype when skill type changes
       resetDependentFields: ['skill_subtype_name'],
-      // Enable onChange callback to fetch skill subtypes
       onChange: true,
       dependencies: [
         {
           dependsOn: ['skill_type_name', 'skill_subtype_name'],
           condition: (value, rowData) => {
-            // CRITICAL: Only show modal if BOTH fields have values
-            const skillType = value; // Current skill_type value
+            const skillType = value;
             const skillSubtype = rowData.skill_subtype_name;
 
-            // Check if both fields have values (not empty/null/undefined)
             const bothFieldsHaveValues =
               skillType &&
               skillType !== '' &&
@@ -86,7 +69,7 @@ export const getResourceSkillColumns = (
               skillSubtype !== '';
 
             if (!bothFieldsHaveValues) {
-              return false; // Don't show modal if either field is empty
+              return false;
             }
 
             const typeFound = skillTypeOptions.find(
@@ -188,10 +171,8 @@ export const getResourceSkillColumns = (
         {
           dependsOn: ['skill_type_name', 'skill_subtype_name'],
           condition: (value, rowData) => {
-            // CRITICAL: Only show modal if BOTH fields have values
             const skillType = rowData.skill_type_name;
-            const skillSubtype = value; // Current skill_subtype value
-            // Check if both fields have values (not empty/null/undefined)
+            const skillSubtype = value;
             const bothFieldsHaveValues =
               skillType &&
               skillType !== '' &&
@@ -199,7 +180,7 @@ export const getResourceSkillColumns = (
               skillSubtype !== '';
 
             if (!bothFieldsHaveValues) {
-              return false; // Don't show modal if either field is empty
+              return false;
             }
 
             const typeFound = skillTypeOptions.find(

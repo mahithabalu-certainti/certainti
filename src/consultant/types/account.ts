@@ -1,5 +1,4 @@
 import { CommonApiResponse } from '../../common-service';
-import { TableField } from '../../components/table/types';
 
 export interface ParentAccountApiResponse extends CommonApiResponse {
   data: {
@@ -117,19 +116,6 @@ export interface Column<T> {
   id: keyof T;
   label: string;
   sortable?: boolean;
-}
-
-export interface AccountColumn<T> {
-  id: string;
-  label: string;
-  width?: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  editable?: boolean;
-  render?: (row: T) => React.ReactNode;
-  field?: TableField;
 }
 
 export enum Storagetype {

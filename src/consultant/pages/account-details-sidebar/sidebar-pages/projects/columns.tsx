@@ -4,23 +4,11 @@ import {
   valueDisplay,
   REGEX_PATTERNS,
 } from '../../../../../common-utils';
-import { TableField } from '../../../../../components/table/types';
+import { ListTableColumn } from '../../../../../components/table/types';
 import { Project } from '../../../../../components/table/types';
 import { ListOption } from '../../../../../components/table/types';
 import { OthersEnum } from '../../../../types';
 import { DATE_CONFIG } from '../../../resource-form/form-data';
-interface TableColumn<T> {
-  id: string;
-  sortId: string;
-  label: string;
-  sortable?: boolean;
-  width: string | number;
-  sticky?: boolean;
-  editable?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-  field?: TableField;
-}
 
 const getFiscalYears = (range: number) => {
   const currentYear = new Date().getFullYear();
@@ -43,7 +31,7 @@ export const getProjectColumns = (
   onClick: (row: Project) => void,
   memoizedProjectTypes: ListOption[],
   memoizedClassification: ListOption[]
-): TableColumn<Project>[] => [
+): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
     label: 'Project Code',

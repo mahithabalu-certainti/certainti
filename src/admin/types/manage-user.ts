@@ -1,5 +1,4 @@
 import { CommonApiResponse, UserRoles } from '../../common-service';
-import { TableField } from '../../components/table/types';
 import { Privilege } from './manage-profile';
 
 export type ManageUser = {
@@ -13,19 +12,6 @@ export type ManageUser = {
   modified_datetime: string;
   role: string;
 };
-
-export interface UserTableColumn<T> {
-  id: string;
-  label: string;
-  width: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  editable?: boolean;
-  render?: (row: T) => React.ReactNode;
-  field?: TableField;
-}
 
 export type SortOrder = 'ASC' | 'DESC';
 

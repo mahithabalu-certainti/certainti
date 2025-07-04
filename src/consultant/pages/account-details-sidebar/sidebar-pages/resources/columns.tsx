@@ -1,20 +1,10 @@
 import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
-import { ListOption, TableField } from '../../../../../components/table/types';
+import {
+  ListOption,
+  ListTableColumn,
+} from '../../../../../components/table/types';
 import { ResourceList } from '../../../../types/resource';
 import { ResourceTypeEnum } from '../../../resource-form/utils';
-
-export interface ResourceTableColumn<T> {
-  id: string;
-  label: string;
-  width: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-  editable?: boolean;
-  field?: TableField;
-}
 
 export const getResourceColumns = (
   statusOptions: ListOption[],
@@ -22,7 +12,7 @@ export const getResourceColumns = (
   countryOptions: ListOption[],
   regionOptions: ListOption[],
   onResourceIdClick?: (row: ResourceList) => void
-): ResourceTableColumn<ResourceList>[] => [
+): ListTableColumn<ResourceList>[] => [
   {
     id: 'resource_code',
     sortId: 'resource_code',

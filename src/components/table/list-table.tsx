@@ -81,6 +81,7 @@ const ListTable = <T extends RowData>({
   // Expansion
   expandAllParent = false,
   expandAllChild = false,
+  skillTypeIds,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -402,9 +403,9 @@ const ListTable = <T extends RowData>({
               : getDependentValue('skill_subtype_name', rowData || {}, updated);
 
           skillTypeIsOthers =
-            currentSkillType === 'D001-f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a';
+            currentSkillType === skillTypeIds?.othersSkillTypeId;
           skillSubtypeIsOthers =
-            currentSkillSubtype === 'D001-b8894099-0385-4681-8237-21f89b0d1883';
+            currentSkillSubtype === skillTypeIds?.othersSkillSubTypeId;
         }
 
         setModalState({
@@ -1039,29 +1040,30 @@ const ListTable = <T extends RowData>({
                                   allEditingCells: editingCells,
                                 })}
 
-                                {isEditing.error &&
-                                  column.field?.type !== 'select' && (
-                                    <Tooltip
-                                      title={isEditing.error}
-                                      arrow
-                                      placement='top'
-                                      slotProps={{
-                                        tooltip: {
-                                          sx: {
-                                            backgroundColor: '#FEF2F2',
-                                            mr: 1,
-                                          },
+                                {isEditing.error && (
+                                  <Tooltip
+                                    title={isEditing.error}
+                                    arrow
+                                    placement='top'
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          backgroundColor: '#FEF2F2',
+                                          mr: 1,
                                         },
-                                      }}
+                                      },
+                                    }}
+                                  >
+                                    <span
+                                      className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40' : 'top-[3px] right-0'} cursor-pointer`}
                                     >
-                                      <span className='h-[26px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                        <ErrorInfoIcon
-                                          alt='error'
-                                          className='w-5 h-3.5'
-                                        />
-                                      </span>
-                                    </Tooltip>
-                                  )}
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </span>
+                                  </Tooltip>
+                                )}
                               </div>
                             ) : (
                               <div

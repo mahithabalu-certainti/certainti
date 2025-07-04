@@ -10,7 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-import { CalendarIcon } from '../../assets';
+import { CalendarIcon, CloseIcon } from '../../assets';
 import { checkDependencies, getDateConstraints } from './dependency-utils';
 
 export function cleanCellValue(raw: unknown): string {
@@ -100,13 +100,16 @@ export const renderFields = <T extends RowData>({
     onKeyDown: handleKeyDown,
     disabled: isFieldDisabled,
     size: 'small' as const,
-    fullWidth: true,
+    fullWidth: fieldError ? false : true,
     variant: 'outlined' as const,
     error: !!fieldError,
     placeholder: column.field?.placeholder || '',
     sx: {
       fontSize: '13px',
-      width: '100%',
+      width:
+        fieldError && typeof column.width === 'number'
+          ? column.width - 18
+          : '100%',
       '& .MuiOutlinedInput-input': {
         fontSize: '13px',
         padding: '5px 8px',
@@ -137,6 +140,14 @@ export const renderFields = <T extends RowData>({
       '& svg': {
         color: '#7D98B6',
       },
+      '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
+        {
+          WebkitAppearance: 'none',
+          margin: 0,
+        },
+      '& input[type=number]': {
+        MozAppearance: 'textfield',
+      },
     },
   };
 
@@ -160,6 +171,7 @@ export const renderFields = <T extends RowData>({
                   maxWidth: column.width || 300,
                   maxHeight: 300,
                   marginTop: '4px',
+                  ml: fieldError ? '9px' : 0,
                   boxShadow:
                     'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                   '& .MuiMenuItem-root': {
@@ -212,9 +224,11 @@ export const renderFields = <T extends RowData>({
             maxRows={10}
             autoFocus
             sx={{
+              width: '100%',
               '& .MuiOutlinedInput-root': {
                 padding: '4px 0px 4px 8px !important',
                 borderRadius: 0,
+                bgcolor: fieldError ? '#FEF2F2' : '#fff',
                 '& fieldset': {
                   border: `1px solid ${fieldError ? '#ef4444' : '#60A5FA'}`,
                 },
@@ -238,7 +252,16 @@ export const renderFields = <T extends RowData>({
       );
 
     case 'number':
-      return <TextField {...commonProps} type='number' autoFocus />;
+      return (
+        <TextField
+          {...commonProps}
+          type='number'
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'e') e.preventDefault();
+            handleKeyDown(e);
+          }}
+        />
+      );
 
     case 'date': {
       const dateConstraints = getDateConstraints(
@@ -263,7 +286,10 @@ export const renderFields = <T extends RowData>({
               maxDate={dateConstraints.maxDate || undefined}
               disableFuture={dateConstraints.disableFuture}
               sx={{
-                width: '100%',
+                width:
+                  fieldError && typeof column.width === 'number'
+                    ? column.width - 20
+                    : '100%',
                 '& .MuiOutlinedInput-root': {
                   height: '32px',
                   borderRadius: '2px',
@@ -277,11 +303,14 @@ export const renderFields = <T extends RowData>({
                     border: fieldError ? '1px solid #ef4444' : 'none',
                   },
                   '&:hover fieldset': {
-                    borderColor: fieldError ? '#ef4444' : '#60A5FA',
+                    borderColor: fieldError ? '#ef4444' : 'transparent',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: fieldError ? '#ef4444' : '#60A5FA',
+                    borderColor: fieldError ? '#ef4444' : '#transparent',
                   },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'transparent !important',
                 },
                 '& .MuiInputBase-input': {
                   fontSize: '12px',
@@ -291,6 +320,13 @@ export const renderFields = <T extends RowData>({
                 },
               }}
               slotProps={{
+                field: { clearable: !isFieldDisabled },
+                clearButton: {
+                  tabIndex: -1, // disable tab focus for clear button
+                },
+                openPickerButton: {
+                  tabIndex: -1, // prevent focus on calendar icon
+                },
                 textField: {
                   size: 'small',
                   error: !!fieldError,
@@ -310,6 +346,9 @@ export const renderFields = <T extends RowData>({
               slots={{
                 openPickerIcon: () => (
                   <CalendarIcon alt='calendar' className='w-3 h-3' />
+                ),
+                clearIcon: () => (
+                  <CloseIcon alt='calendar' className='w-[9px] h-[9px]' />
                 ),
               }}
             />

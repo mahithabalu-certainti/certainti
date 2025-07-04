@@ -4,13 +4,12 @@ import {
   valueDisplay,
   REGEX_PATTERNS,
 } from '../../../../../common-utils';
-import { Project } from '../../../../../components/table/types';
+import {
+  ListTableColumn,
+  Project,
+} from '../../../../../components/table/types';
 import { ListOption } from '../../../../../components/table/types';
 import { OthersEnum } from '../../../../types';
-import {
-  ProjectTableColumn,
-  // ProjectList
-} from '../../../../types/project';
 import { DATE_CONFIG } from '../../../resource-form/form-data';
 
 const getFiscalYears = (range: number) => {
@@ -27,7 +26,7 @@ export const getAllProjectListColumns = (
   onClick: (row: Project) => void,
   projectTypeOption: ListOption[],
   projectClassificationOption: ListOption[]
-): ProjectTableColumn<Project>[] => [
+): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
     label: 'Project Code',
