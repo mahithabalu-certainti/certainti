@@ -117,7 +117,6 @@ export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  // const { accountID, projectID } = location.state || {};
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
@@ -148,29 +147,8 @@ export const ProjectDetails = () => {
       setActiveKey(list);
     }
   }, [searchParams]);
-  // const initialAccountID =
-  //   location.state?.accountID || localStorage.getItem('accountID');
-  // const initialProjectID =
-  //   location.state?.projectID || localStorage.getItem('projectID');
-  // const parentName = location.state?.parent || localStorage.getItem('parent');
-
-  // const [accountID, setAccountID] = useState(initialAccountID);
-  // const [projectID, setProjectID] = useState(initialProjectID);
-  // const [parent, setParent] = useState(parentName);
-
-  // useEffect(() => {
-  //   if (location.state?.accountID && location.state?.projectID) {
-  //     localStorage.setItem('accountID', location.state.accountID);
-  //     localStorage.setItem('projectID', location.state.projectID);
-  //     localStorage.setItem('parent', parent);
-  //     setAccountID(location.state.accountID);
-  //     setProjectID(location.state.projectID);
-  //     setParent(location.state.parent);
-  //   }
-  // }, [location.state]);
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
-  // const projectID = searchParams.get('projectid') || '';
   const parent = searchParams.get('source');
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
@@ -290,7 +268,6 @@ export const ProjectDetails = () => {
               style={{ backgroundColor: '#AF78FF' }}
             />
           }
-          //   title={data?.data?.accountById?.account_name || 'Project Title'}
           title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}
           actionItems={menuItems}

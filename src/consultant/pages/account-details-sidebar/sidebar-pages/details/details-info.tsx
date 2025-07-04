@@ -12,10 +12,6 @@ import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 
-// interface ErrorProps {
-//     message?: string;
-// }
-
 interface DetailsInfoProps {
   detailsInfo?: accountDetailsProps;
   isDetailsLoading?: boolean;
@@ -43,7 +39,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   detailsInfo,
   detailsError,
   isKeyContactAvailable,
-  // accountId,
 }) => {
   const accountById = detailsInfo?.accountById;
   const accountDetails = detailsInfo?.accountDetails;
@@ -51,17 +46,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     DATA_STORAGE_OPTIONS.find(
       (option) => option.value === accountDetails?.data_storage
     )?.label || '-';
-
-  // if (isDetailsLoading) {
-  //   return (
-  //     <div className='flex items-center justify-center h-64'>
-  //       <CircularProgress />
-  //       <Typography variant='body1' className='ml-4'>
-  //         Loading details...
-  //       </Typography>
-  //     </div>
-  //   );
-  // }
 
   if (detailsError) {
     return (

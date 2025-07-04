@@ -157,8 +157,6 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
-  // const accountNameLabel =
-  //   accountDetails?.data?.accountById?.account_name || '';
   const handleEdit = (account: any) => {
     const accountID = account?.account_rid ?? '';
     const projectID = account?.project_fiscal_rid ?? '';
@@ -166,7 +164,7 @@ const Projects: React.FC<ProjectsProps> = ({
     const queryParams = new URLSearchParams({
       accountID,
       projectID,
-      source: 'account', // pass source instead of full breadcrumb data
+      source: 'account',
     });
 
     navigate(`/Project/edit/${projectID}?${queryParams.toString()}`);

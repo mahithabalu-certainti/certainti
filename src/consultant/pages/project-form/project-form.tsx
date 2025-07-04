@@ -71,17 +71,10 @@ const ProjectForm: React.FC = () => {
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
-  // const { accountID, projectID, settings } = location.state || {};
   const [searchParams] = useSearchParams();
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
-  // const projectID = searchParams.get('projectID');
-  // const parent = searchParams.get('parent');
   const settings = JSON.parse(searchParams.get('settings') || '{}');
-  // const breadcrumbs = JSON.parse(searchParams.get('source') || '');
-  // const breadcrumbs = location.state.breadcrumbs || [];
-
-  // const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const getProjectData = useProjectDetail(accountID, projectID || '');
   const account = getProjectData.data?.data?.project;

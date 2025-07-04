@@ -43,9 +43,6 @@ const detailsTabs: DetailsTabs[] = [
   },
 ];
 
-// interface ErrorProps {
-//   message?: string;
-// }
 interface DetailsProps {
   accountDetails?: accountDetailsProps; // need to change once api info is availableRecord<string, any>
   isLoading?: boolean;
