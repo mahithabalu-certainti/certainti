@@ -89,20 +89,20 @@ const ListTable = <T extends RowData>({
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
   const [modalState, setModalState] = useState<{
     open: boolean;
-    title: string;
     fields: any[];
     rowId: string;
     columnId: string;
     skillTypeIsOthers: boolean;
     skillSubtypeIsOthers: boolean;
+    anchorEl: HTMLElement | null;
   }>({
     open: false,
-    title: '',
     fields: [],
     rowId: '',
     columnId: '',
     skillTypeIsOthers: false,
     skillSubtypeIsOthers: false,
+    anchorEl: null,
   });
 
   // handle initial expansion
@@ -408,14 +408,16 @@ const ListTable = <T extends RowData>({
             currentSkillSubtype === skillTypeIds?.othersSkillSubTypeId;
         }
 
+        const anchorEl = document.querySelector(`[data-editing="${cellKey}"]`);
+
         setModalState({
           open: true,
-          title: `Additional Information for ${column.label}`,
           fields: modalCheck.modalFields,
           rowId: cell.rowId,
           columnId: cell.columnId,
           skillTypeIsOthers,
           skillSubtypeIsOthers,
+          anchorEl: anchorEl as HTMLElement,
         });
 
         return updated;
@@ -1317,13 +1319,16 @@ const ListTable = <T extends RowData>({
       {/* Modal Dialog */}
       <ModalDialog
         open={modalState.open}
-        title={modalState.title}
         fields={modalState.fields}
-        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+        onClose={() => {
+          setModalState((prev) => ({ ...prev, open: false }));
+          handleCancel();
+        }}
         onSubmit={handleModalSubmit}
         loading={isSaving}
         skillTypeIsOthers={modalState.skillTypeIsOthers}
         skillSubtypeIsOthers={modalState.skillSubtypeIsOthers}
+        anchorEl={modalState.anchorEl}
       />
 
       {/* Pagination */}

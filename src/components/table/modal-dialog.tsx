@@ -1,33 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-} from '@mui/material';
+import { Popover, TextField, Box, Tooltip } from '@mui/material';
+import TextButton from '../button/text-button';
 import { ModalField } from './types';
+import { ErrorInfoIcon } from '../../assets';
 
 interface ModalDialogProps {
   open: boolean;
-  title: string;
   fields: ModalField[];
+  anchorEl: HTMLElement | null;
   onClose: () => void;
   onSubmit: (data: Record<string, any>) => void;
   loading?: boolean;
-  // Additional props to determine which fields to show
   skillTypeIsOthers?: boolean;
   skillSubtypeIsOthers?: boolean;
 }
 
 const ModalDialog: React.FC<ModalDialogProps> = ({
   open,
-  title,
   fields,
+  anchorEl,
   onClose,
   onSubmit,
   loading = false,
@@ -135,123 +127,124 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
 
   return (
-    <Dialog
+    <Popover
       open={open}
+      anchorEl={anchorEl}
       onClose={handleClose}
-      maxWidth='sm'
-      fullWidth
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'left',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'left',
+      }}
       PaperProps={{
         sx: {
-          borderRadius: '8px',
+          width: 300,
+          minWidth: 300,
+          marginTop: '1px',
+          borderRadius: '2px',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #E5E7EB',
         },
       }}
     >
-      <DialogTitle
-        sx={{
-          fontSize: '18px',
-          fontWeight: 600,
-          color: '#2A2A2A',
-          borderBottom: '1px solid #E5E7EB',
-          pb: 2,
-        }}
-      >
-        {title}
-      </DialogTitle>
-
-      <DialogContent sx={{ pt: 3 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {visibleFields.map((field) => (
-            <Box key={field.id}>
-              <Typography
-                variant='body2'
-                sx={{
-                  mb: 1,
-                  fontWeight: 500,
-                  color: '#374151',
-                }}
-              >
-                {field.label}
-                {field.required && (
-                  <span style={{ color: '#EF4444', marginLeft: '4px' }}>*</span>
+      <Box sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          {visibleFields.map((field) => {
+            return (
+              <div className='!h-[32px] !max-h-[32px] relative'>
+                <TextField
+                  key={field.id}
+                  fullWidth
+                  size='small'
+                  type={field.type === 'number' ? 'number' : 'text'}
+                  multiline={field.type === 'textarea'}
+                  rows={field.type === 'textarea' ? 3 : 1}
+                  placeholder={`Enter ${field.label}`}
+                  value={formData[field.id] || ''}
+                  error={!!errors[field.id]}
+                  onChange={(e) => handleChange(field.id, e.target.value)}
+                  disabled={loading}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '32px',
+                      borderRadius: '2px',
+                      '& fieldset': {
+                        borderColor: '#60A5FA',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#60A5FA',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#60A5FA',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      fontSize: '13px',
+                    },
+                  }}
+                />
+                {errors[field.id] && (
+                  <Tooltip
+                    title={errors[field.id]}
+                    arrow
+                    placement='top'
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          backgroundColor: '#FEF2F2',
+                          mr: 1,
+                        },
+                      },
+                    }}
+                  >
+                    <span
+                      className={`h-[26px] w-6 flex items-center justify-center absolute ${field?.type === 'textarea' ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40' : 'top-[3px] right-0'} cursor-pointer`}
+                    >
+                      <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                    </span>
+                  </Tooltip>
                 )}
-              </Typography>
-
-              <TextField
-                fullWidth
-                size='small'
-                type={field.type === 'number' ? 'number' : 'text'}
-                multiline={field.type === 'textarea'}
-                rows={field.type === 'textarea' ? 3 : 1}
-                placeholder={field.placeholder}
-                value={formData[field.id] || ''}
-                onChange={(e) => handleChange(field.id, e.target.value)}
-                error={!!errors[field.id]}
-                helperText={errors[field.id]}
-                disabled={loading}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '6px',
-                    '& fieldset': {
-                      borderColor: '#D1D5DB',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#9CA3AF',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#3B82F6',
-                    },
-                  },
-                  '& .MuiInputBase-input': {
-                    fontSize: '14px',
-                  },
-                }}
-              />
-            </Box>
-          ))}
+              </div>
+            );
+          })}
         </Box>
-      </DialogContent>
 
-      <DialogActions
-        sx={{
-          p: 3,
-          borderTop: '1px solid #E5E7EB',
-          gap: 1,
-        }}
-      >
-        <Button
-          onClick={handleClose}
-          disabled={loading}
+        <Box
           sx={{
-            color: '#6B7280',
-            borderColor: '#D1D5DB',
-            '&:hover': {
-              borderColor: '#9CA3AF',
-              backgroundColor: '#F9FAFB',
-            },
-          }}
-          variant='outlined'
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          variant='contained'
-          sx={{
-            backgroundColor: '#3B82F6',
-            '&:hover': {
-              backgroundColor: '#2563EB',
-            },
-            '&:disabled': {
-              backgroundColor: '#9CA3AF',
-            },
+            display: 'flex',
+            justifyContent: 'flex-end',
+            pt: 2,
+            gap: 1,
           }}
         >
-          {loading ? 'Submitting...' : 'Submit'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+          <TextButton
+            label='Cancel'
+            onClick={handleClose}
+            disabled={loading}
+            sx={{
+              minWidth: '75px',
+              maxWidth: '75px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label={'Save'}
+            onClick={handleSubmit}
+            disabled={loading}
+            sx={{
+              minWidth: '64px',
+              maxWidth: '64px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+        </Box>
+      </Box>
+    </Popover>
   );
 };
 
