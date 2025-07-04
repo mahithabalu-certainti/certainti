@@ -45,7 +45,7 @@ import { RootState } from '../../../store/store';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
 import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
-import { AllModules, AllPermissions } from '../../../common-service';
+import { AllMenus, AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
 import {
@@ -76,27 +76,23 @@ export const AccountDetails = () => {
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const isAccountDetailsEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_DETAILS_VIEW
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
-  const isAccountDetailsDownloadEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
-  );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+  // const isAccountDetailsDownloadEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
+  // );
   // const isAccountExportEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_EXPORT
   // );
   const isResourcesExportEnable = checkPermission(
     permission,
-    AllPermissions.RESOURCES_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+    AllPermissions.PROFILE_EXPORT
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -263,8 +259,6 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data } as accountDetailsProps}
             isLoading={isPending}
             isError={isError}
-            isAccountEditEnable={isAccountEditEnable}
-            isAccountDetailsDownloadEnable={isAccountDetailsDownloadEnable}
           />
         );
       case 'resources':
@@ -326,7 +320,7 @@ export const AccountDetails = () => {
       {
         name: 'Details',
         key: 'details',
-        id: AllModules.DETAILS,
+        id: AllModules.ACCOUNTS,
         disabled: false,
         icon: DetailsIcon,
       },
@@ -340,7 +334,7 @@ export const AccountDetails = () => {
       {
         name: 'Projects',
         key: 'projects',
-        id: AllModules.PROJECTS,
+        id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
       },
@@ -354,7 +348,7 @@ export const AccountDetails = () => {
       {
         name: 'Cases',
         key: 'cases',
-        id: AllModules.CASES,
+        id: AllMenus.CASES,
         disabled: disable,
         icon: CasesIcon,
       },
@@ -368,35 +362,35 @@ export const AccountDetails = () => {
       {
         name: 'Notes',
         key: 'notes',
-        id: AllModules.NOTES,
+        id: AllMenus.NOTES,
         disabled: disable,
         icon: NotesSideIcon,
       },
       {
         name: 'Attachments',
         key: 'attachments',
-        id: AllModules.ATTACHMENTS,
+        id: AllMenus.ATTACHMENTS,
         disabled: disable,
         icon: AttachmentsSideIcon,
       },
       {
         name: 'Checklist',
         key: 'checklist',
-        id: AllModules.CHECKLISTS,
+        id: AllMenus.CHECKLISTS,
         disabled: disable,
         icon: ChecklistIcon,
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
-        id: AllModules.TIMESHEETS,
+        id: AllMenus.TIMESHEETS,
         disabled: disable,
         icon: TimeSheetIcon,
       },
       {
         name: 'Imports',
         key: 'imports',
-        id: AllModules.IMPORTS,
+        id: AllMenus.IMPORTS,
         disabled: disable,
         icon: ImportsIcon,
       },
@@ -409,7 +403,6 @@ export const AccountDetails = () => {
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
-
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
@@ -425,14 +418,10 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={
-            isAccountEditEnable
-              ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                }
-              : undefined
-          }
+          primaryButton={{
+            label: 'Edit',
+            onClick: handleEditAccount,
+          }}
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}

@@ -10,7 +10,11 @@ import TabPanel from './tab';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
-import { AllPermissions, Permissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllPermissions,
+  Permissions,
+} from '../../../../../common-service';
 import { Box } from '@mui/material';
 
 const BUTTON_STYLES = {
@@ -30,7 +34,7 @@ interface ProjectsDataProps {
   projectEditIsEnable?: boolean;
 }
 export interface DetailsTabs {
-  id: AllPermissions;
+  id: AllPermissions | AllMenus;
   name: string;
   hide: boolean;
   disable?: boolean;
@@ -38,12 +42,12 @@ export interface DetailsTabs {
 
 const detailsTabs: DetailsTabs[] = [
   {
-    id: AllPermissions.PROJECT_DETAILS_OVERVIEW,
+    id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
   },
   {
-    id: AllPermissions.PROJECT_DETAILS_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,

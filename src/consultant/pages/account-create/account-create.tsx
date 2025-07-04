@@ -91,14 +91,18 @@ export const AccountForm: React.FC = () => {
     (state: RootState) => state.permission
   );
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
-  const isAccountCreateEnable = checkPermission(
+  const accountViewEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_CREATE
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+  // const isAccountCreateEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNTS_CREATE
+  // );
+  // const isAccountEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EDIT
+  // );
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
@@ -428,11 +432,7 @@ export const AccountForm: React.FC = () => {
     statusOptions.isLoading ||
     keyContactRoles.isLoading;
 
-  if (
-    !accountIsEnable ||
-    (isEditView ? !isAccountEditEnable : !isAccountCreateEnable)
-  )
-    return <AccessRestricted />;
+  if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
 
   return (
     <>

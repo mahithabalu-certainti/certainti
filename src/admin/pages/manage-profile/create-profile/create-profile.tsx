@@ -65,10 +65,10 @@ export const CreateProfile: React.FC = () => {
     permission,
     AllPermissions.PROFILE_CREATE
   );
-  const isProfileEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_EDIT
-  );
+  // const isProfileEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROFILE_EDIT
+  // );
 
   useEffect(() => {
     if (commonSuccess) {
@@ -138,11 +138,7 @@ export const CreateProfile: React.FC = () => {
     }
   };
 
-  if (
-    !isProfileEnable ||
-    (isEditView ? !isProfileEditEnable : !isProfileCreateEnable)
-  )
-    return <AccessRestricted />;
+  if (!isProfileEnable || !isProfileCreateEnable) return <AccessRestricted />;
 
   return (
     <>

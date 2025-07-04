@@ -22,7 +22,11 @@ import {
   ResourceSkillList,
 } from '../../../../types/resource-skill';
 import { ResourceList } from '../../../../types/resource';
-import { AllPermissions, Permissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllPermissions,
+  Permissions,
+} from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
@@ -44,7 +48,7 @@ interface ResourceProps {
 }
 
 export interface ResourceTabs {
-  id: AllPermissions;
+  id: AllPermissions | AllMenus;
   name: string;
   hide: boolean;
   disable?: boolean;
@@ -58,9 +62,9 @@ export interface TabMenus {
 }
 
 const resourceTabs: ResourceTabs[] = [
-  { id: AllPermissions.RESOURCES_OVERVIEW, name: 'Overview', hide: false },
+  { id: AllPermissions.ACCOUNTS_VIEW_EDIT, name: 'Overview', hide: false },
   {
-    id: AllPermissions.RESOURCE_VIEW_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,
@@ -72,19 +76,19 @@ const tabs: TabMenus[] = [
     label: 'Details',
     value: 'details',
     hide: false,
-    id: AllPermissions.RESOURCE_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT,
   },
   {
     label: 'Resource Cost',
     value: 'cost',
     hide: false,
-    id: AllPermissions.RESOURCE_COST_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW,
   },
   {
     label: 'Resource Skills',
     value: 'skill',
     hide: false,
-    id: AllPermissions.RESOURCE_SKILL_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
   },
 ];
 
@@ -139,39 +143,39 @@ const Resource: React.FC<ResourceProps> = ({
   // Permission Mangement
   const isResourceDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCES_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
   const isResourceCostDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_COST_EXPORT
   );
   const isResourceSkillDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_EXPORT
   );
   const isResourceViewAllEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_VIEW_ALL
+    AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
   );
   const isResourceCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_CREATE
   );
   const isResourceDeleteEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_DELETE
+    AllPermissions.ACCOUNT_RESOURCES_DELETE
   );
-  const isResourceEditEnable = checkPermission(
-    permission || [],
-    AllPermissions.RESOURCE_EDIT
-  );
+  // const isResourceEditEnable = checkPermission(
+  //   permission || [],
+  //   AllPermissions.RESOURCE_EDIT
+  // );
   const isResourceCostCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_COST_CREATE
   );
   const isResourceSkillCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_CREATE
   );
 
   const {
@@ -297,7 +301,7 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
-      hide: !isResourceEditEnable,
+      hide: false,
     },
     {
       label: 'Delete',
