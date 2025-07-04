@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowIcon, CheckedIcon, CloseIcon } from '../../assets';
 import {
@@ -19,6 +17,7 @@ import {
   FilterState,
   NumberFilterOption,
   numberOperators,
+  Options,
   textfieldOperators,
   TextFilterOption,
 } from '../../consultant/types/account-filter';
@@ -36,13 +35,12 @@ import {
   NewNumberFilterControl,
   NewStatusFilterControl,
   NewBooleanFilterControl,
-  SELECT_STYLES,
-  MENU_PROPS,
   KeyContactFilterControl,
   NewDateFilterControl,
   EnumSelectFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
+import { MENU_PROPS, SELECT_STYLES } from './styles';
 
 const FilterModal: React.FC<FilterModalProps> = ({
   isOpen,
@@ -116,6 +114,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         formatFilterForApi(saved as Record<string, FilterState>)
       );
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -155,6 +154,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     };
 
     return unListen;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const handleFilterSelect = (field: string) => {
@@ -171,7 +171,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   const handleFilterOptionChange = (
     fieldName: string,
-    event: SelectChangeEvent<any>
+    event: SelectChangeEvent<string | number | string[] | number[]>
   ) => {
     setFilterStates(
       (prev: Record<string, FilterState>): Record<string, FilterState> => {
@@ -234,7 +234,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 ...currentState,
                 status: {
                   ...currentState.status!,
-                  value: event.target.value,
+                  value: event.target.value as string,
                 },
               },
             };
@@ -255,7 +255,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   keyContact: {
                     ...keyContact,
                     role: {
-                      option: value,
+                      option: value as string,
                       value:
                         value === 'is_empty' ? 'true' : keyContact.role.value,
                     },
@@ -272,7 +272,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   keyContact: {
                     ...keyContact,
                     name: {
-                      option: value,
+                      option: value as string,
                       value:
                         value === 'is_empty' ? 'true' : keyContact.name.value,
                     },
@@ -461,36 +461,40 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleDateChange = (type: string, fieldName: string, value: string) => {
-    setFilterStates((prev: any) => {
-      return {
-        ...prev,
-        [fieldName]: {
-          ...prev[fieldName],
-          date: {
-            ...prev[fieldName].date,
-            value: {
-              ...prev[fieldName].date.value,
-              [type]: value,
+    setFilterStates(
+      (prev: Record<string, FilterState>): Record<string, FilterState> => {
+        return {
+          ...prev,
+          [fieldName]: {
+            ...prev[fieldName],
+            date: {
+              ...prev[fieldName].date,
+              value: {
+                ...(prev[fieldName]?.date?.value || {}),
+                [type]: value,
+              },
             },
           },
-        },
-      };
-    });
+        };
+      }
+    );
   };
 
   const handleEnumSelectChange = (fieldName: string, value: string[]) => {
-    setFilterStates((prev: any) => {
-      return {
-        ...prev,
-        [fieldName]: {
-          ...prev[fieldName],
-          enumSelect: {
-            ...prev[fieldName].enumSelect,
-            value: value,
+    setFilterStates(
+      (prev: Record<string, FilterState>): Record<string, FilterState> => {
+        return {
+          ...prev,
+          [fieldName]: {
+            ...prev[fieldName],
+            enumSelect: {
+              ...prev[fieldName].enumSelect,
+              value: value,
+            },
           },
-        },
-      };
-    });
+        };
+      }
+    );
   };
 
   const handleApplyFilters = () => {
@@ -688,7 +692,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               {systemFilters
                 .filter((filter) => filter.type === 'system')
                 .flatMap((systemFilter) =>
-                  systemFilter.options?.map((field: any) => (
+                  (systemFilter.options as Options[])?.map((field) => (
                     <button
                       key={field.value}
                       className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
@@ -718,7 +722,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               {systemFilters
                 .filter((filter) => filter.type === 'system-sort')
                 .flatMap((sortFilter) =>
-                  sortFilter.options?.map((field: any) => (
+                  (sortFilter.options as Options[])?.map((field) => (
                     <button
                       key={field.value}
                       className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${

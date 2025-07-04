@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Typography } from '@mui/material';
 import { SxProps } from '@mui/material';
 import React from 'react';
@@ -72,7 +71,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 }) => {
   const CreateSectionData = (
     dataObj: Partial<NewProjectData>,
-    customMappings?: Record<string, (val: any) => React.ReactNode>
+    customMappings?: Record<string, (val: string) => React.ReactNode>
   ) => {
     return Object.entries(dataObj).map(([key, value]) => {
       // Handle nested objects
@@ -104,7 +103,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         value === null || value === '' || value === undefined
           ? '-'
           : customMappings?.[key]
-            ? customMappings[key](value)
+            ? customMappings[key](value as string)
             : value;
 
       return {

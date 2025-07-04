@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { FilterType } from '../../admin/types';
+
 // Define filter options for each field type
 export type TextFilterOption =
   | 'contains'
@@ -19,7 +20,8 @@ export type DateOptions =
   | 'Before'
   | 'After'
   | 'Between'
-  | 'Is Empty';
+  | 'Is Empty'
+  | 'equals';
 export type KeyContactFilterOption =
   | 'equals'
   | 'not_equals'
@@ -29,7 +31,8 @@ export type EnumSelectFilterOption =
   | 'Equals'
   | 'Not Equals'
   | 'In'
-  | 'Is Empty';
+  | 'Is Empty'
+  | 'equals';
 
 export const DateValueOptions = [
   { value: 'equals', label: 'Equals' },
@@ -93,7 +96,7 @@ interface SystemFilterState {
 }
 
 export interface DateFilterState {
-  option: DateOptions;
+  option?: DateOptions;
   value: {
     from?: string;
     to?: string;
@@ -118,7 +121,7 @@ interface KeyContactFilterState {
 
 export interface EnumSelectFilterState {
   option?: EnumSelectFilterOption;
-  value?: [];
+  value?: string[];
 }
 
 // Union type for all possible filter states
@@ -133,6 +136,11 @@ export type FilterState = {
   enumSelect?: EnumSelectFilterState;
   system?: SystemFilterState;
 };
+
+export interface Options {
+  value: string;
+  label: string;
+}
 
 // Define field configuration
 export type FieldConfig = {
@@ -150,12 +158,12 @@ export type FieldConfig = {
     | 'system'
     | 'system-sort'
     | 'enum';
-  options?: string[] | { value: string; label: string }[];
-  operatorOption?: { label: string; value: string }[];
+  options?: string[] | Options[];
+  operatorOption?: Options[];
 };
 
 export interface FilterComponentProps {
-  setAppliedFilters: (filters: Record<string, any>) => void;
+  setAppliedFilters: (filters: Record<string, FilterType>) => void;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   filterFields: FieldConfig[];
@@ -167,7 +175,7 @@ export interface FilterModalProps {
   isOpen: boolean;
   filterId: string | undefined;
   filterAnchorEl: HTMLButtonElement | null;
-  setAppliedFilters: (filters: Record<string, any>) => void;
+  setAppliedFilters: (filters: Record<string, FilterType>) => void;
   filterFields: FieldConfig[];
   setPage: (page: number) => void;
   handleCloseFilter: () => void;

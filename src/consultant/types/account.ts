@@ -42,11 +42,13 @@ export interface CitysApiResponse extends CommonApiResponse {
   };
 }
 
+export interface AccountDetailsResponse {
+  accountById: AccountById;
+  accountDetails: AccountFieldsTypes;
+}
+
 export interface AccountFieldsApiResponse extends CommonApiResponse {
-  data: {
-    accountById: AccountById;
-    accountDetails: AccountFieldsTypes;
-  };
+  data: AccountDetailsResponse;
 }
 
 export interface States {
@@ -135,6 +137,10 @@ export enum Status {
   InActive = 'inactive',
 }
 
+type NewStatus = {
+  status_name: string;
+};
+
 export enum YesNo {
   Yes = 'yes',
   No = 'no',
@@ -162,10 +168,11 @@ export interface AccountById {
   account_name: string;
   industry: string;
   industry_rid: string;
+  industry_rid_name: string;
   business_details: string;
   country_rid: string | null;
   currency_rid: string | null;
-  status: Status;
+  status: NewStatus;
   primary_contact_name: string;
   status_rid: string;
   is_parent: boolean;
@@ -176,6 +183,14 @@ export interface AccountById {
   created_datetime: string;
   modified_datetime: string;
   logo_url: string;
+  parent_account: {
+    account_name: string;
+  };
+  country: { country_name: string; country_code: string };
+  currency: {
+    currency_code: string;
+    currency_symbol: string;
+  };
 }
 
 export interface KeyContacts {
@@ -214,6 +229,7 @@ export interface AccountFieldsTypes {
   keyContacts: KeyContacts[];
   modified_by: string;
   created_by: string;
+  account_rid: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
