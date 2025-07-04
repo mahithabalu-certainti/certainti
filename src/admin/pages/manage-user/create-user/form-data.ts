@@ -20,7 +20,7 @@ export const FormData = (
   disableFields?: boolean,
   stateLoading?: boolean,
   cityLoading?: boolean,
-  disabledStatus?: boolean,
+  // disabledStatus?: boolean,
   isConsultantFirm?: string,
   org_id?: string
 ): FormType[] => {
@@ -133,7 +133,7 @@ export const FormData = (
             required: true,
             options: statusOptions,
             placeholder: 'Choose Status',
-            disabled: disabledStatus,
+            // disabled: disabledStatus,
           }),
         ],
       },
@@ -209,7 +209,7 @@ export const FormData = (
       stateLoading,
       city,
       cityLoading,
-      disabledStatus,
+      // disabledStatus,
       isConsultantFirm,
       org_id,
     ]

@@ -80,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const isViewProfileEnable = useMemo(
-    () => checkPermission(permission, AllPermissions.PROFILE_VIEW),
+    () => checkPermission(permission, AllPermissions.PROFILE_VIEW_EDIT),
     [permission]
   );
   const { orgName, logoUrl } = useSelector(
