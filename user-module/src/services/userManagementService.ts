@@ -123,7 +123,7 @@ class UserManagementService {
           }
         };
       } else {
-        const privileges = await userService.getProfilePermission(profile.rid);
+        const privileges = await userService.getProfilePermission(profile.rid,true);
         return {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
@@ -389,7 +389,7 @@ class UserManagementService {
         privileges = await this.getModulesForMenu(profileId, id);
       } else {
         // Case 5: If no filters, get all permissions for the profile
-        privileges = await userService.getProfilePermission(profileId);
+        privileges = await userService.getProfilePermission(profileId,true);
       }
 
       return {
