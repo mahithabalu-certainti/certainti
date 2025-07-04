@@ -82,5 +82,7 @@ export const STATUS_MESSAGE = {
   resourceCostUpdSuccess : "Resource Cost updated successfully",
   duplicateProjectCode : "Project Code already exists",
   costIdMissing : "Resource Cost RID missing",
-  currencyInvalid : "Currency you are trying to update is invalid"
+  currencyInvalid : "Currency you are trying to update is invalid",
+  projectCodeDuplicate : "Project Code already exists",
+  resourceCodeDuplicate : "Resource Code already exists"
 }

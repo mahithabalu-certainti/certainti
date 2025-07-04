@@ -1865,6 +1865,33 @@ export class ProjectService {
         SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND project_fiscal_rid = '${data.project_fiscal_rid}'
         `)
       if(findProject[0].length > 0 && findProjectSummary[0].length > 0 && findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
+        if(data.project_code) {
+          let checkDuplicateCode = await orgSequelize.query(
+            `
+            SELECT p.rid, p.project_code, p.fiscal_year 
+            FROM ${schemaName}.project_fiscal p
+            WHERE
+            p.account_rid = '${data.account_rid}'
+            AND
+            p.rid = '${data.project_fiscal_rid}'
+            AND
+            p.fiscal_year IN (
+            SELECT fiscal_year FROM trd365_00001.project_fiscal pf
+            WHERE 
+            pf.account_rid = '${data.account_rid}'
+            AND
+            pf.project_code ILIKE '%${data.project_code}%'
+            AND
+            pf.rid != p.rid
+            )
+            `)
+          if(checkDuplicateCode[0].length > 0) {
+            return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : STATUS_MESSAGE.projectCodeDuplicate
+          }            
+        }
+        }
         let setProjectData = this.setProject(findProject[0][0], data);
         let setProjectFiscalData = this.setPrjFiscalData(findProjectFiscal[0][0], data);
         let setProjectSummary = this.setProjectSummary(findProjectSummary[0][0], data);

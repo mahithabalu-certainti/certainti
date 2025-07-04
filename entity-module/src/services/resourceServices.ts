@@ -867,6 +867,24 @@ export class ResourceService {
         statusMessage : STATUS_MESSAGE.resourceInactive
       }
     }
+    if(data.resource_code) {
+      let checkDuplicateCode = await orgSequelize.query(`
+        SELECT resource_code FROM ${schemaName}.resources
+        WHERE 
+          account_rid = '${data.account_rid}'
+          AND
+          resource_code ILIKE '%${data.resource_code}%'
+          AND
+          rid != '${data.resource_rid}'
+        
+        `)
+      if(checkDuplicateCode[0].length > 0) {
+        return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.resourceCodeDuplicate
+      }        
+      }
+    }
       let setResource = this.setResourcesData(fetchResources[0][0], data)
       let updateResource : any = await orgSequelize.query(`
         UPDATE ${schemaName}.resources
