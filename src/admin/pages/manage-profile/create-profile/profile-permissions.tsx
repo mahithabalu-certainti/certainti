@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import {
   MenuArrowRight,
   MenuArrowRightHover,
@@ -7,7 +7,7 @@ import {
   CheckboxUnchecked,
 } from '../../../../assets/icons';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
-import { Privilege } from '../../../types';
+import { Depends_on, Privilege } from '../../../types';
 import { CircularProgress } from '@mui/material';
 
 type BasePrivilege = {
@@ -23,6 +23,7 @@ type MenuPrivilege = BasePrivilege & {
   menu_id: string;
   is_enabled: boolean;
   has_extended_permission?: boolean;
+  depends_on?: Depends_on[];
 };
 
 type ModulePrivilege = BasePrivilege & {
@@ -88,12 +89,22 @@ const PrivilegeAccordion: React.FC<{
   groupedPrivilege: GroupedPrivileges;
   onPrivilegesChange: (privileges: Privilege[]) => void;
   viewProfileDisabled?: boolean;
-}> = ({ groupedPrivilege, onPrivilegesChange, viewProfileDisabled }) => {
+  checkBoxUpdate: (data: GroupedPrivileges) => void;
+}> = ({
+  groupedPrivilege,
+  onPrivilegesChange,
+  viewProfileDisabled,
+  checkBoxUpdate,
+}) => {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [expandedPermissions, setExpandedPermissions] = useState<string[]>([]);
   const [privileges, setPrivileges] =
     useState<GroupedPrivileges>(groupedPrivilege);
+
+  useEffect(() => {
+    setPrivileges(groupedPrivilege);
+  }, [groupedPrivilege]);
 
   const [confirmationState, setConfirmationState] = useState<{
     isOpen: boolean;
@@ -127,6 +138,7 @@ const PrivilegeAccordion: React.FC<{
       is_enabled: groupedPrivs.menu.is_enabled,
       is_modified: true,
       has_extended_permission: groupedPrivs.menu.has_extended_permission,
+      depends_on: groupedPrivs.menu.depends_on,
     };
     result.push(menuPrivilege);
 
@@ -181,24 +193,11 @@ const PrivilegeAccordion: React.FC<{
     return result;
   };
 
-  const flattenedPrivileges = React.useMemo(() => {
-    return getFlattenedPrivileges(privileges);
-  }, [privileges]);
-  const previousFlattened = useRef<string | null>(null);
-
-  useEffect(() => {
-    const current = JSON.stringify(flattenedPrivileges);
-    if (previousFlattened.current !== current) {
-      previousFlattened.current = current;
-      onPrivilegesChange(flattenedPrivileges);
-    }
-  }, [flattenedPrivileges, onPrivilegesChange]);
-
   const handleMenuCheck = (e: React.MouseEvent) => {
     e.stopPropagation();
     const newMenuState = !privileges.menu.is_enabled;
-
     if (!newMenuState) {
+      //If uncheck
       setIsMenuExpanded(true);
       setExpandedModules(privileges.modules.map((mod) => mod.module.module_id));
       const allPermissionIds = privileges.modules.flatMap((mod) =>
@@ -222,14 +221,14 @@ const PrivilegeAccordion: React.FC<{
   };
 
   const updatePrivilegesState = (newMenuState: boolean) => {
-    setPrivileges((prev) => ({
-      ...prev,
+    const newData = {
+      ...privileges,
       menu: {
-        ...prev.menu,
+        ...privileges.menu,
         is_enabled: newMenuState,
         is_modified: true,
       },
-      modules: prev.modules.map((mod) => ({
+      modules: privileges.modules.map((mod) => ({
         ...mod,
         module: {
           ...mod.module,
@@ -248,7 +247,10 @@ const PrivilegeAccordion: React.FC<{
           })),
         })),
       })),
-    }));
+    };
+    setPrivileges(newData);
+    checkBoxUpdate(newData);
+    onPrivilegesChange(getFlattenedPrivileges(newData));
   };
 
   const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
@@ -434,6 +436,7 @@ const PrivilegeAccordion: React.FC<{
       };
     });
   };
+
   const handleFieldChange =
     (
       moduleId: string,
@@ -984,61 +987,164 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
   viewProfileDisabled,
   loading,
 }) => {
-  const privileges = createProfilePermissionsData || [];
-
   const [allModifiedPrivileges, setAllModifiedPrivileges] = useState<
     Privilege[]
   >([]);
 
-  const groupPrivileges = (privileges: Privilege[]): GroupedPrivileges[] => {
-    const menuPrivileges = privileges.filter(
-      (p): p is MenuPrivilege => p.type === 'menu'
-    );
+  const [groupedPrivileges, setGroupedPrivileges] = useState<
+    GroupedPrivileges[]
+  >([]);
 
-    return menuPrivileges.map((menu): GroupedPrivileges => {
-      const modules = privileges.filter(
-        (p): p is ModulePrivilege =>
-          p.type === 'module' && 'menu_id' in p && p.menu_id === menu.menu_id
+  const groupPrivileges = useCallback(
+    (privileges: Privilege[]): GroupedPrivileges[] => {
+      const menuPrivileges = privileges.filter(
+        (p): p is MenuPrivilege => p.type === 'menu'
       );
 
-      return {
-        menu,
-        modules: modules.map((module) => {
-          const permissions = privileges
-            .filter(
-              (p): p is PermissionPrivilege =>
-                p.type === 'permission' &&
-                'module_id' in p &&
-                p.module_id === module.module_id
-            )
-            .map((permission) => ({
-              ...permission,
-              fields: privileges.filter(
-                (f): f is FieldPrivilege =>
-                  f.type === 'field' &&
-                  f.permission_id === permission.permission_id
-              ),
-            }));
+      return menuPrivileges.map((menu): GroupedPrivileges => {
+        const modules = privileges.filter(
+          (p): p is ModulePrivilege =>
+            p.type === 'module' && 'menu_id' in p && p.menu_id === menu.menu_id
+        );
 
-          return {
-            module,
-            permissions,
-          };
-        }),
-      };
-    });
-  };
+        return {
+          menu,
+          modules: modules.map((module) => {
+            const permissions = privileges
+              .filter(
+                (p): p is PermissionPrivilege =>
+                  p.type === 'permission' &&
+                  'module_id' in p &&
+                  p.module_id === module.module_id
+              )
+              .map((permission) => ({
+                ...permission,
+                fields: privileges.filter(
+                  (f): f is FieldPrivilege =>
+                    f.type === 'field' &&
+                    f.permission_id === permission.permission_id
+                ),
+              }));
 
-  const groupedPrivileges = groupPrivileges(privileges);
+            return {
+              module,
+              permissions,
+            };
+          }),
+        };
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    setGroupedPrivileges(groupPrivileges(createProfilePermissionsData || []));
+  }, [createProfilePermissionsData, groupPrivileges]);
 
   const handlePrivilegesChange = (modified: Privilege[]) => {
     const updatedMap = new Map(allModifiedPrivileges.map((p) => [p.rid, p]));
     modified.forEach((p) => updatedMap.set(p.rid, p));
     const merged = Array.from(updatedMap.values());
-
     setAllModifiedPrivileges(merged);
     onPrivilegesChange(merged);
   };
+
+  const checkBoxUpdate = (data: GroupedPrivileges) => {
+    // update checkbox changes into groupedPrivileges
+    const updatedData = groupedPrivileges.map((it) => {
+      if (it.menu.rid === data.menu.rid) {
+        //If Menu was changed
+        const newMenuState = data.menu.is_enabled
+        return {
+          menu: {
+            ...it.menu,
+            is_enabled: newMenuState,
+          },
+          modules: it.modules.map((mod) => ({
+            ...mod,
+            module: {
+              ...mod.module,
+              is_enabled: newMenuState,
+            },
+            permissions: mod.permissions.map((perm) => ({
+              ...perm,
+              is_enabled: newMenuState,
+              fields: perm.fields?.map((field) => ({
+                ...field,
+                read: newMenuState ? field.read : false,
+                edit: newMenuState ? field.edit : false,
+                is_modified: true,
+              })),
+            })),
+          })),
+        };
+      }
+      return it;
+    });
+
+    // const currentMenu = data.menu;
+    // //If Parent unchecked
+    // if (currentMenu.depends_on?.length === 0 && !currentMenu.is_enabled) {
+    //   const newData = updatedData.map((it) => {
+    //     if (
+    //       it.menu.depends_on?.findIndex(
+    //         (item) => item.type === 'menu' && item.id === currentMenu.menu_id
+    //       ) !== -1
+    //     ) {
+    //       return {
+    //         menu: {
+    //           ...it.menu,
+    //           is_enabled: false,
+    //         },
+    //         modules: it.modules.map((mod) => ({
+    //           ...mod,
+    //           module: {
+    //             ...mod.module,
+    //             is_enabled: false,
+    //           },
+    //           permissions: mod.permissions.map((perm) => ({
+    //             ...perm,
+    //             is_enabled: false,
+    //             fields: perm.fields?.map((field) => ({
+    //               ...field,
+    //               read: false,
+    //               edit: false,
+    //             })),
+    //           })),
+    //         })),
+    //       };
+    //     }
+    //     return it;
+    //   });
+    //   updatedData = newData;
+    // } else if (
+    //   currentMenu.depends_on &&
+    //   currentMenu.depends_on.length > 0 &&
+    //   currentMenu.is_enabled
+    // ) {
+    //   // If Child checked
+    //   const allMenus = currentMenu.depends_on.filter(
+    //     (it) => it.type === 'menu'
+    //   );
+    //   // const allPermissions = currentMenu.depends_on.filter((it) => it.type === "permission")
+    //   // const allModules = currentMenu.depends_on.filter((it) => it.type === "module")
+    //   const newData = updatedData?.map((it) => {
+    //     const isMenuMatchDependsMenu = allMenus.findIndex((item) => item.id === it.menu.menu_id) !== -1;
+    //     return {
+    //       menu: {
+    //         ...it.menu,
+    //         is_enabled: isMenuMatchDependsMenu ? true : it.menu.is_enabled,
+    //       },
+    //       modules: it.modules,
+    //     };
+    //   });
+    //   updatedData = newData;
+    //   // console.log('checkBox update', newData, currentMenu.depends_on);
+    // }
+    setGroupedPrivileges(updatedData);
+  };
+
+  console.log('groupedPrivileges', groupedPrivileges);
 
   if (loading) {
     return (
@@ -1070,6 +1176,7 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
               groupedPrivilege={groupedPrivilege}
               onPrivilegesChange={handlePrivilegesChange}
               viewProfileDisabled={viewProfileDisabled}
+              checkBoxUpdate={checkBoxUpdate}
             />
           ))}
         </div>

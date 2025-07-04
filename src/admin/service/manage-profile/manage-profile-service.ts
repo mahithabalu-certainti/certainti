@@ -14,6 +14,7 @@ import {
   CommonProfilePermissionApiResponse,
   ProfilePermission,
 } from '../../types/manage-profile';
+import { profileDetailsMockData } from '../../mockdata';
 
 export const fetchManageProfileList = async (params: UserListParams = {}) => {
   const queryParams = {
@@ -133,10 +134,11 @@ export const getProfileDetails = async (
   profileId: string
 ): Promise<CommonProfileApiResponse> => {
   try {
-    const { data } = await userServiceApi.get<CommonProfileApiResponse>(
-      getProfileDetailsUrl(profileId)
-    );
-    return data;
+    // const { data } = await userServiceApi.get<CommonProfileApiResponse>(
+    //   getProfileDetailsUrl(profileId)
+    // );
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return profileDetailsMockData;
   } catch (error) {
     console.error('Error fetching user details:', error);
     throw error;

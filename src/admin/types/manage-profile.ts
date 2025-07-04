@@ -65,6 +65,12 @@ export interface ProfilePermission {
   profile_name: string;
   privileges: Privilege[];
 }
+
+export interface Depends_on {
+  id: string;
+  type: string;
+}
+
 export interface Privilege {
   rid: string;
   type: 'menu' | 'module' | 'permission' | 'field';
@@ -82,6 +88,8 @@ export interface Privilege {
   has_extended_permission?: boolean;
   hasReadExtendedPermsission?: boolean;
   hasEditExtendedPermsission?: boolean;
+  depends_on?: Depends_on[];
+  is_read_only?: null | boolean;
 }
 export interface ProfileHeaderData {
   profile_id: string;
