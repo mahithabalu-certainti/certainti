@@ -1599,8 +1599,12 @@ async fetchAllProjects(
         ? `
           SELECT DISTINCT ps.project_rid
           ${commonJoins}
+          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
           ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
           ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+          ${fiscalYearClause}
         `
         : `
           SELECT DISTINCT ps.project_rid
@@ -1616,7 +1620,8 @@ async fetchAllProjects(
       const projectIdsReplacements = bothParentAndChild
         ? [
             ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsParent
+            ...whereReplacementsParent,
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : [])
           ]
         : [
             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
@@ -1854,8 +1859,12 @@ async fetchAllProjects(
         ? `
           SELECT DISTINCT ps.project_rid
           ${commonJoins}
+          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
           ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
           ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+          ${fiscalYearClause}
         `
         : `
           SELECT DISTINCT ps.project_rid
@@ -1871,7 +1880,8 @@ async fetchAllProjects(
       const projectIdsReplacements = bothParentAndChild
         ? [
             ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsParent
+            ...whereReplacementsParent,
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
           ]
         : [
             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
