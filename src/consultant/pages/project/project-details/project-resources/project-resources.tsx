@@ -1,0 +1,285 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState } from 'react';
+import TabPanel from '../../../account-details-sidebar/components/tab';
+import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import {
+  useProjectResourceDetail,
+  useProjectResources,
+} from '../../../../services/project-resources/project-resource-service';
+import { PROJECT_RESOURCE } from '../../../../../routes';
+import { getProjectResourcesColumns } from './list/columns';
+import { ProjectResourcesListType } from '../../../../types/project-resources';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import ProjectResourceTableHeader from './project-resource-list-header';
+import ProjectResourceDetails from './details/project-resource-detail';
+// import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
+import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
+import { AllPermissions } from '../../../../../common-service';
+import { ListTable } from '../../../../../components/table';
+
+const BUTTON_STYLES = {
+  height: '24px !important',
+  fontSize: '13px',
+  fontWeight: 600,
+};
+
+const projectTabs: ResourceTabs[] = [
+  {
+    id: AllPermissions.ACCOUNT_PROJECTS_OVERVIEW,
+    name: 'Overview',
+    hide: false,
+  },
+  {
+    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    disable: true,
+  },
+];
+
+export const ProjectResources = () => {
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [
+    projectsTabs,
+    // setProjectsTabs
+  ] = useState(projectTabs);
+  const [
+    ,
+    // sortFilterCount
+    setSortFilterCount,
+  ] = useState<number>(0);
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean>
+  >({});
+  const [currentPage, setCurrentPage] = useState(0);
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
+  const [sortField, setSortField] = useState<string>('created_datetime');
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [, setProjectResData] = useState<ProjectResourcesListType | null>(null);
+  const [showProjectResourceDetails, setShowProjectResourceDetails] =
+    useState<boolean>(false);
+  //   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+  //     {}
+  //   );
+  //   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
+  const [searchParams] = useSearchParams();
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const navigate = useNavigate();
+  const [
+    ,
+    // refreshProjectsTrigger
+    setRefreshProjectsTrigger,
+  ] = useState<number>(Date.now());
+
+  const { data, isLoading, error } = useProjectResources({
+    page: currentPage + 1,
+    limit: rowsPerPage,
+    sortBy: sortField,
+    sortOrder: sortOrder,
+    filters: appliedFilters,
+    fiscalYear: convertedFiscalYear,
+    // accountNumber: accountDetails?.data?.accountById.r_number || '',
+  });
+  const detailsResourceId = searchParams.get('pro_res_id');
+  // get project resource detail
+  // project resource details
+  const {
+    data: resourceDetails,
+    isLoading: isDetailsLoading,
+    error: detailsError,
+  } = useProjectResourceDetail(detailsResourceId || '');
+
+  const totalItems = data?.count || 0;
+
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'project_code';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setSortOrder(defaultSortOrder);
+      setSortField(defaultSortField);
+    } else {
+      setSortFilterCount(1);
+      setSortOrder(apiOrder);
+      setSortField(sortBy);
+    }
+  };
+
+  useEffect(() => {
+    // update sub tab when refereshing the page
+    const page = searchParams.get('page');
+    if (page) {
+      setShowProjectResourceDetails(true);
+    }
+  }, [searchParams]);
+
+  const resourceData = resourceDetails?.data?.projectResourceDetails;
+  const actionMenuItems = [
+    {
+      label: 'Edit',
+      onClick: (row: any) => handleEditProjectResource(row),
+    },
+  ];
+
+  const headerButtonsEdit = [
+    {
+      label: 'Edit',
+      variant: 'outlined' as const,
+      onClick: (row: any) => handleEditProjectResource(row),
+      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+    },
+  ];
+  const headerButtonsCreate = [
+    {
+      label: 'New',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateProjectResource(),
+      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+    },
+  ];
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const handleBackClick = () => {
+    setShowProjectResourceDetails(!showProjectResourceDetails);
+    setProjectResData(null);
+    setShowFilter(false);
+    // clear query params
+    searchParams.delete('pro_res_id');
+    searchParams.delete('page');
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString(),
+    });
+    setFilterVisibility(true);
+    //   resetFilter(
+    //       {
+    //   setAppliedFilters,
+    //   setFilterStates,
+    //   setSelectedFilters,
+    //       }
+    //   );
+  };
+
+  const handleCreateProjectResource = () => {
+    navigate({
+      pathname: `${PROJECT_RESOURCE}/create`,
+    });
+  };
+
+  const handleEditProjectResource = (row: any) => {
+    navigate({
+      pathname: `${PROJECT_RESOURCE}/edit/${row?.rid}`,
+    });
+  };
+  const getRowId = (row: any) => row.project_rid;
+  const handleProjectResourceClick = (row: any) => {
+    searchParams.set('page', 'details');
+    searchParams.set('pro_res_id', row?.rid ?? '');
+    navigate({ search: searchParams.toString() });
+    setProjectResData(row);
+    setShowProjectResourceDetails(true);
+    setShowFilter(false);
+    setFilterVisibility(false);
+  };
+
+  const projectResourcesColumns = getProjectResourcesColumns(
+    handleProjectResourceClick
+  );
+  const onRefreshClick = () => {
+    setRefreshProjectsTrigger(Date.now());
+  };
+
+  return (
+    <div className='w-full pt-2 pb-2 pl-2 pr-4'>
+      <TabPanel
+        value={'project-resources'}
+        appliedFilters={appliedFilters}
+        setAppliedFilters={(data) => {
+          setAppliedFilters(data);
+          setShowFilter(false);
+        }}
+        showFilter={showFilter}
+        filterVisibility={filterVisibility}
+        handleFilter={handleFilter}
+        setCurrentPage={setCurrentPage}
+        resourceTab={projectsTabs}
+        showRefresh={true}
+        onRefreshClick={onRefreshClick}
+        handleSorting={handleSorting}
+        sortFilterCount={0}
+        setSortFilterCount={setSortFilterCount}
+        keyProjectTask={'ProjectResources'}
+      />
+      <>
+        <ProjectResourceTableHeader
+          value={
+            resourceData ? 'project-resource-details' : 'projects-resources'
+          }
+          title={resourceData ? 'Project Resource' : 'Project Resources'}
+          titleIcon={
+            resourceData ? <ResourceProfileIcon /> : <CreateResourceIcon />
+          }
+          count={totalItems}
+          showBackArrow={resourceData ? true : false}
+          headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
+          projectResourceNumber={resourceData?.resource_code}
+          onBackClick={handleBackClick}
+        />
+        <div className='border border-[#CBD6E2]'>
+          {showProjectResourceDetails ? (
+            <ProjectResourceDetails
+              resourceData={
+                resourceDetails?.data?.projectResourceDetails || undefined
+              }
+              isDetailsLoading={isDetailsLoading}
+              detailsError={detailsError}
+            />
+          ) : (
+            <ListTable
+              data={data?.projectResources as any}
+              columns={projectResourcesColumns}
+              actionMenuItems={actionMenuItems}
+              getRowId={getRowId}
+              hoverHighlight={false}
+              tableStyle={{
+                height: '100%',
+                maxHeight: 'calc(100vh - 290px)',
+                overflow: 'auto',
+              }}
+              stickyHeader={true}
+              stickyColumnsCount={1}
+              actionWidth={60}
+              actionDisplayMode='dropdown'
+              loading={isLoading}
+              error={error ? 'Failed to load projects' : undefined}
+              rowsPerPageOptions={[25, 50, 100]}
+              rowsPerPage={rowsPerPage}
+              currentPage={currentPage ?? 1}
+              totalItems={data?.count || 0}
+              onPageChange={setCurrentPage}
+              onRowsPerPageChange={setRowsPerPage}
+              sortBy={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSorting}
+              selectable={true}
+              onSelectionChange={(selectedIds: unknown) =>
+                console.log('Selected:', selectedIds)
+              }
+              component='project resources'
+            />
+          )}
+        </div>
+      </>
+    </div>
+  );
+};
