@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
@@ -17,15 +16,19 @@ import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import { Project } from '../../../../../components/table/types';
-
+import { AccountDetailsResponse } from '../../../../types';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
   fontWeight: 600,
 };
 
+interface AccountDetailsProps extends AccountDetailsResponse {
+  activeKey: string;
+}
+
 interface ProjectsProps {
-  accountDetails?: Record<string, any>;
+  accountDetails?: AccountDetailsProps;
   activeKey?: string;
   setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
@@ -57,7 +60,9 @@ const Projects: React.FC<ProjectsProps> = ({
   const navigate = useNavigate();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean>
+  >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('project_code');
@@ -71,7 +76,7 @@ const Projects: React.FC<ProjectsProps> = ({
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const accountInActive =
-    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    accountDetails?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
 
   // Permission Mangement
@@ -111,7 +116,7 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+      accountNumber: accountDetails?.accountDetails?.account_rid || '',
       bothParentAndChild: toggleEnabled,
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
@@ -145,8 +150,9 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+      accountNumber: accountDetails?.accountDetails?.account_rid || '',
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
 
   const handleFilter = () => {
@@ -157,7 +163,7 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
-  const handleEdit = (account: any) => {
+  const handleEdit = (account: Project) => {
     const accountID = account?.account_rid ?? '';
     const projectID = account?.project_fiscal_rid ?? '';
 
@@ -175,29 +181,29 @@ const Projects: React.FC<ProjectsProps> = ({
     {
       label: 'Edit',
       disabled: accountInActive,
-      onClick: (row: any) => handleEdit(row),
+      onClick: (row: Project) => handleEdit(row),
       hide: !projectEditIsEnable,
     },
     {
       label: 'Delete',
       disabled: accountInActive,
-      onClick: (row: any) => console.log('Delete', row),
+      onClick: (row: Project) => console.log('Delete', row),
       // hide: !projectDeleteIsEnable,
       hide: true,
     },
     {
       label: 'View Summary',
-      onClick: (row: any) => console.log('Summary', row),
+      onClick: (row: Project) => console.log('Summary', row),
       hide: true,
     },
     {
       label: 'View Activities',
-      onClick: (row: any) => console.log('Activities', row),
+      onClick: (row: Project) => console.log('Activities', row),
       hide: true,
     },
     {
       label: 'View Notes',
-      onClick: (row: any) => console.log('Notes', row),
+      onClick: (row: Project) => console.log('Notes', row),
       hide: true,
     },
   ];
@@ -226,20 +232,20 @@ const Projects: React.FC<ProjectsProps> = ({
   ];
 
   const handleCreateProject = () => {
-    const accountID = accountDetails?.data?.accountById?.rid ?? '';
-    const accountName = accountDetails?.data?.accountById?.account_name ?? '';
+    const accountID = accountDetails?.accountById?.rid ?? '';
+    const accountName = accountDetails?.accountById?.account_name ?? '';
 
     const projectSettings = {
-      auto_access_rd: accountDetails?.data?.accountDetails?.auto_access_rd
+      auto_access_rd: accountDetails?.accountDetails?.auto_access_rd
         ? 'Yes'
         : 'No',
-      auto_send_interaction: accountDetails?.data?.accountDetails
+      auto_send_interaction: accountDetails?.accountDetails
         ?.autosend_interaction
         ? 'Yes'
         : 'No',
       max_ai_interactions:
-        accountDetails?.data?.accountDetails?.max_ai_interactions ?? '',
-      currency_rid: accountDetails?.data?.accountById?.currency_rid ?? '',
+        accountDetails?.accountDetails?.max_ai_interactions ?? '',
+      currency_rid: accountDetails?.accountById?.currency_rid ?? '',
     };
 
     const queryParams = new URLSearchParams({

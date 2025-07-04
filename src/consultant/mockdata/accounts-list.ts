@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export const mockAccountListData = {
   statusCode: 200,
   statusCodeValue: 'Success',
@@ -99,7 +97,7 @@ export const mockAccountListData = {
   requestId: 'd7812cd6-e2d6-4fa3-8d42-ade6093c2b3a',
 };
 
-export const mockAccountsData: any[] = [
+export const mockAccountsData = [
   {
     accountName: 'True Tech AI Solutions Inc - Global',
     accountId: '1001001',

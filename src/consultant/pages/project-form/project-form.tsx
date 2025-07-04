@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
@@ -61,7 +60,10 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
   },
   { name: 'button', label: '', width: '35px' },
 ];
-
+export interface Breadcrumb {
+  label: string;
+  path?: string;
+}
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
 import { FilterModal } from '../../../../components';
 import { getManageProfileFilterfields } from './';
-import { UserListParams } from '../../../types/manage-user';
+import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
@@ -241,7 +241,7 @@ export const ProfileList: React.FC = () => {
       <div className='border border-[#CBD6E2]'>
         <Suspense fallback={null}>
           <ProfileTable
-            appliedFilters={appliedFilters}
+            appliedFilters={appliedFilters as Record<string, FilterCondition>}
             tableParams={tableParams}
             setTableParams={setTableParams}
             onSelectionChange={handleSelectionChange}

@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
-import { UserListParams } from '../../../types/manage-user';
+import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { profileColumns } from './';
 import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
@@ -11,7 +10,7 @@ import { ActionItem } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 
 interface IUserTableProps {
-  appliedFilters: Record<string, any>;
+  appliedFilters: Record<string, FilterCondition>;
   tableParams: UserListParams;
   isProfileViewEnable?: boolean;
   isProfileEditEnable?: boolean;
@@ -129,7 +128,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
 
   return (
     <ListTable
-      data={data?.data?.profiles as any}
+      data={(data?.data?.profiles || []) as ManageProfileList[]}
       columns={profileColumns}
       getRowId={getRowId}
       hoverHighlight={false}

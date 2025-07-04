@@ -44,7 +44,7 @@ const detailsTabs: DetailsTabs[] = [
 ];
 
 interface DetailsProps {
-  accountDetails?: accountDetailsProps; // need to change once api info is availableRecord<string, any>
+  accountDetails?: accountDetailsProps;
   isLoading?: boolean;
   isError?: boolean; // ErrorProps | null | undefined;
   isAccountEditEnable?: boolean;
