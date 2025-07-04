@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo } from 'react';
 import {
   GetProjectTypeApiResponse,
@@ -18,7 +17,7 @@ import { ClassificationApiResponse, FilterState } from '../../../../types';
 import { ListTable } from '../../../../../components/table';
 
 interface IProjectTableProps {
-  appliedFilters: Record<string, any>;
+  appliedFilters: Record<string, string | number | boolean>;
   tableParams: ProjectListParams;
   isProjectEditEnable?: boolean;
   isProjectDeleteEnable?: boolean;
@@ -118,14 +117,15 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   const handleAccountName = (project: Project) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.project_fiscal_rid ?? null,
+      projectid: project?.project_fiscal_rid ?? '',
     });
-    navigate(path, {
-      state: {
-        accountID: project?.account_rid,
-        projectID: project?.project_fiscal_rid,
-      },
+    // Create query parameter
+    const queryParams = new URLSearchParams({
+      accountID: project?.account_rid ?? '',
+      source: 'project',
     });
+
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const memoizedClassification = useMemo(
@@ -154,10 +154,10 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     memoizedClassification
   );
 
-  const actionButtons: ActionItem<any>[] = [
+  const actionButtons: ActionItem<Project>[] = [
     {
       label: 'Edit',
-      onClick: (row: any) => handleEdit(row),
+      onClick: (row: Project) => handleEdit(row),
       icon: EditIcon,
       iconStyle: {
         filter:
@@ -168,7 +168,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     // Delete functionality will be implemented later
     // {
     //   label: 'Delete',
-    //   onClick: (row: any) => console.log('Delete row', row),
+    //   onClick: (row: Project) => console.log('Delete row', row),
     //   icon: deleteIcon,
     //   hide: !isProjectDeleteEnable,
     // },

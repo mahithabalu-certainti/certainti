@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,7 +16,7 @@ import {
   useManageUserProfile,
   useManageUserRole,
 } from '../../../service';
-import { UserListParams } from '../../../types/manage-user';
+import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
@@ -28,6 +27,7 @@ import {
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
 import { useToast } from '../../../../hooks';
+import { FilterState } from '../../../../consultant/types/account-filter';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -37,7 +37,9 @@ const BUTTON_STYLES = {
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, FilterCondition>
+  >({});
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
@@ -221,7 +223,9 @@ const UserList: React.FC = () => {
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {
-      setAppliedFilters(formatFilterForApi(saved as Record<string, any>));
+      setAppliedFilters(
+        formatFilterForApi(saved as Record<string, FilterState>)
+      );
     }
   }, []);
 
@@ -317,7 +321,7 @@ const UserList: React.FC = () => {
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
                 filterFields={userFilterfields}
-                setAppliedFilters={setAppliedFilters}
+                setAppliedFilters={(filters) => setAppliedFilters(filters as Record<string, FilterCondition>)}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}

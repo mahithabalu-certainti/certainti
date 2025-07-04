@@ -1,8 +1,8 @@
 import { UserDetail } from '../../common-service';
-import { CircularProgress, Typography } from '@mui/material';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import { Fragment } from 'react/jsx-runtime';
 import DetailsSection, { DetailItem } from '../details-section/details';
+import DetailsSectionSkeleton from '../skeleton-component/detailsskeleton';
 
 export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   // Map your API data to the mock data structure
@@ -15,11 +15,8 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center h-64 border-t border-[#CBD6E2]'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading details...
-        </Typography>
+      <div>
+        <DetailsSectionSkeleton />
       </div>
     );
   }

@@ -14,18 +14,39 @@ export const formatSlashDateToDash = (
   const [year, month, day] = parts;
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 };
+interface KeyContactTypes {
+  rid?: string;
+  r_number?: string;
+  created_by?: string;
+  modified_by?: string | null;
+  created_datetime?: string;
+  modified_datetime?: string | null;
+  entity_rid?: string;
+  entity_type?: 'Project' | string;
+  key_contact_name?: string;
+  key_contact_email?: string;
+  key_contact_role?: string;
+  is_primary_contact?: boolean | null;
+  include_in_communication?: boolean;
+  status_rid: string;
+  role_name?: string;
+  status_name?: string;
+}
+interface FlatKeyContactsForm {
+  [key: string]: string | undefined;
+}
 export const transformKeyContactsFromAPI = (
   keyContacts: KeyContacts[],
   memoizedStatus: SelectOption[]
 ) => {
-  const formData = {} as any;
+  const formData = {} as FlatKeyContactsForm;
 
   // ID → Label
   const getStatusLabelById = (id: string): string => {
     return memoizedStatus.find((option) => option.value === id)?.desc || '';
   };
 
-  keyContacts.forEach((contact: any, index: number) => {
+  keyContacts.forEach((contact: KeyContactTypes, index: number) => {
     formData[`key_contact_name_${index}`] = contact.key_contact_name || '';
     formData[`key_contact_role_${index}`] = contact.key_contact_role || '';
     formData[`key_contact_email_${index}`] = contact.key_contact_email || '';
@@ -42,7 +63,7 @@ export const transformKeyContactsFromAPI = (
 };
 
 export const keyContactsTransformPayload = (
-  formData: Partial<Record<string, any>>,
+  formData: Partial<Record<string, string>>,
   isEdit: boolean = false,
   keyContactsList: KeyContacts[] = [],
   memoizedStatus: SelectOption[],
@@ -84,12 +105,12 @@ export const keyContactsTransformPayload = (
       keyContacts.push({
         key_contact_name: name || '',
         key_contact_email: email || '',
-        key_contact_role: role || null,
+        key_contact_role: role || null || '',
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
           formData[`include_in_communication_${index}`] === 'yes',
         status_rid:
-          getStatusIdByLabel(formData[`key_contact_status_${index}`]) ||
+          getStatusIdByLabel(formData[`key_contact_status_${index}`] || '') ||
           defaultActiveValue,
         action_type:
           isEdit && rid ? KeyContactsUpdate.Edit : KeyContactsUpdate.Add,
@@ -175,7 +196,7 @@ export const transformFormData = (
     comments: formData.comments || '',
     key_contacts:
       keyContactsTransformPayload(
-        formData,
+        formData as Partial<Record<string, string>>,
         isEdit,
         keyContactsList,
         memoizedStatus,

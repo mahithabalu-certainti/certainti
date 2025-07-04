@@ -2,13 +2,14 @@ import { useState } from 'react';
 import ActionImportDropdown from './importdropdown';
 import Overview from './overview';
 import Timeline from './TimeLine';
-interface ImportProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  accountDetails?: Record<string, any>;
-  activeKey?: string;
-}
+import { AccountDetailsResponse } from '../../../../types';
 
-const Import: React.FC<ImportProps> = ({ accountDetails }) => {
+interface ImportProps {
+  data?: {
+    activeKey: string;
+  } & AccountDetailsResponse;
+}
+const Import: React.FC<ImportProps> = ({ data }) => {
   const [isActive, setIsActive] = useState('overView');
   const menuYear = [
     {
@@ -104,11 +105,10 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
       <div className='mt-1'>
         {isActive === 'overView' && (
           <Overview
-            accountNo={accountDetails?.data?.accountById.r_number}
-            accountId={accountDetails?.data?.accountDetails?.account_rid}
+            accountNo={data?.accountById?.r_number}
+            accountId={data?.accountDetails?.account_rid}
             accountInActive={
-              accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
-              'active'
+              data?.accountById?.status?.status_name?.toLowerCase() !== 'active'
             }
           />
         )}

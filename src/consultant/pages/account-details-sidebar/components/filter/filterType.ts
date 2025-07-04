@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
-
 import { Dispatch, SetStateAction } from 'react';
+import { FilterType } from '../../../../../admin/types';
 
 export type TextFilterOption =
   | 'Equals'
@@ -215,7 +214,7 @@ export interface FilterComponentProps {
   filterId: string | undefined;
   filterAnchorEl: HTMLButtonElement | null;
   filterMenu: FieldConfig[];
-  setAppliedFilters: (filters: Record<string, any>) => void;
+  setAppliedFilters: (filters: Record<string, FilterType>) => void;
   handleCloseFilter: () => void;
   setCurrentSkillType?: Dispatch<
     SetStateAction<{

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { CircularProgress, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { SxProps } from '@mui/material';
 import React from 'react';
 import { LeftArrowIcon } from '../../../../../assets';
@@ -14,6 +13,7 @@ import { KeyContactProps } from '../../../account-details/utils';
 import { costDisplay, getDateFormat } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
+import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
@@ -69,47 +69,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   detailsError,
   isKeyContactAvailable,
 }) => {
-  if (isDetailsLoading) {
-    return (
-      <div className='flex items-center justify-center h-64'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading details...
-        </Typography>
-      </div>
-    );
-  }
-
-  if (detailsError) {
-    return (
-      <div className='flex flex-col items-center justify-center h-64 p-4'>
-        <Typography variant='h6' color='error' className='mb-2'>
-          Error loading details
-        </Typography>
-        <Typography
-          variant='body2'
-          color='textSecondary'
-          className='text-center'
-        >
-          {'Failed to fetch details. Please try again later.'}
-        </Typography>
-      </div>
-    );
-  }
-
-  if (!projectDetails) {
-    return (
-      <div className='flex flex-col items-center justify-center h-64 p-4'>
-        <Typography variant='h6' color='textSecondary'>
-          No details available
-        </Typography>
-      </div>
-    );
-  }
-
   const CreateSectionData = (
     dataObj: Partial<NewProjectData>,
-    customMappings?: Record<string, (val: any) => React.ReactNode>
+    customMappings?: Record<string, (val: string) => React.ReactNode>
   ) => {
     return Object.entries(dataObj).map(([key, value]) => {
       // Handle nested objects
@@ -141,7 +103,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         value === null || value === '' || value === undefined
           ? '-'
           : customMappings?.[key]
-            ? customMappings[key](value)
+            ? customMappings[key](value as string)
             : value;
 
       return {
@@ -249,15 +211,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     updated_on: projectDetails?.modified_datetime,
     Updated_By: projectDetails?.modified_name,
   });
-  // const settingInfo = CreateSectionData({
-  //   auto_send_ai_interaction: projectDetails?.auto_send_ai_interaction
-  //     ? 'Yes'
-  //     : 'No',
-  //   blended_rate_FTE: projectDetails?.blended_rate_fte,
-  //   auto_assessment: projectDetails?.auto_access_rd ? 'Yes' : 'No',
-  //   blended_rate_subCon: projectDetails?.blended_rate_sub_con,
-  //   max_ai_interaction_follow_up: projectDetails?.max_ai_interaction,
-  // });
   const comments = CreateSectionData({
     comments: projectDetails?.comments,
   });
@@ -337,38 +290,61 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           </div>
         </div>
       </div>
-      <div>
-        <DetailsSection
-          title='Basic Information'
-          data={basicInfo as DetailItem[]}
-          customStyle='pt-0 mt-0'
-        />
-        <DetailsSection title='' data={description as DetailItem[]} />
-        <DetailsSection
-          title='Location and Currency Information'
-          data={locationInfo as DetailItem[]}
-        />
-        {isKeyContactAvailable && keyContactsList && (
-          <KeyContactSection
-            title='Key Contacts List'
-            data={keyContactsList || []}
+      {isDetailsLoading ? (
+        <DetailsSectionSkeleton />
+      ) : detailsError ? (
+        <div className='flex flex-col items-center justify-center h-64 p-4'>
+          <Typography variant='h6' color='error' className='mb-2'>
+            Error loading details
+          </Typography>
+          <Typography
+            variant='body2'
+            color='textSecondary'
+            className='text-center'
+          >
+            Failed to fetch details. Please try again later.
+          </Typography>
+        </div>
+      ) : !projectDetails ? (
+        <div className='flex flex-col items-center justify-center h-64 p-4'>
+          <Typography variant='h6' color='textSecondary'>
+            No details available
+          </Typography>
+        </div>
+      ) : (
+        <div>
+          <DetailsSection
+            title='Basic Information'
+            data={basicInfo as DetailItem[]}
+            customStyle='pt-0 mt-0'
           />
-        )}
-        <DetailsSection
-          title='Financial Information'
-          data={financialInfo as DetailItem[]}
-        />
-        <DetailsSection
-          title='Project Settings'
-          data={settingInfo as DetailItem[]}
-        />
-        <DetailsSection title='Comments' data={comments as DetailItem[]} />
-        <DetailsSection
-          title='Audit Information'
-          data={auditInfo as DetailItem[]}
-          isAudit={true}
-        />
-      </div>
+          <DetailsSection title='' data={description as DetailItem[]} />
+          <DetailsSection
+            title='Location and Currency Information'
+            data={locationInfo as DetailItem[]}
+          />
+          {isKeyContactAvailable && keyContactsList && (
+            <KeyContactSection
+              title='Key Contacts List'
+              data={keyContactsList || []}
+            />
+          )}
+          <DetailsSection
+            title='Financial Information'
+            data={financialInfo as DetailItem[]}
+          />
+          <DetailsSection
+            title='Project Settings'
+            data={settingInfo as DetailItem[]}
+          />
+          <DetailsSection title='Comments' data={comments as DetailItem[]} />
+          <DetailsSection
+            title='Audit Information'
+            data={auditInfo as DetailItem[]}
+            isAudit={true}
+          />
+        </div>
+      )}
     </div>
   );
 };
