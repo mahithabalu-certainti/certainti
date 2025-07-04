@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   ActivitiesIcon,
@@ -16,7 +21,6 @@ import {
   ResourcesIcon,
   TechSummaryIcon,
 } from '../../../../assets';
-import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
@@ -144,24 +148,34 @@ export const ProjectDetails = () => {
       setActiveKey(list);
     }
   }, [searchParams]);
-  const initialAccountID =
-    location.state?.accountID || localStorage.getItem('accountID');
-  const initialProjectID =
-    location.state?.projectID || localStorage.getItem('projectID');
+  // const initialAccountID =
+  //   location.state?.accountID || localStorage.getItem('accountID');
+  // const initialProjectID =
+  //   location.state?.projectID || localStorage.getItem('projectID');
+  // const parentName = location.state?.parent || localStorage.getItem('parent');
 
-  const [accountID, setAccountID] = useState(initialAccountID);
-  const [projectID, setProjectID] = useState(initialProjectID);
+  // const [accountID, setAccountID] = useState(initialAccountID);
+  // const [projectID, setProjectID] = useState(initialProjectID);
+  // const [parent, setParent] = useState(parentName);
 
-  useEffect(() => {
-    if (location.state?.accountID && location.state?.projectID) {
-      localStorage.setItem('accountID', location.state.accountID);
-      localStorage.setItem('projectID', location.state.projectID);
-      setAccountID(location.state.accountID);
-      setProjectID(location.state.projectID);
-    }
-  }, [location.state]);
-
-  const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
+  // useEffect(() => {
+  //   if (location.state?.accountID && location.state?.projectID) {
+  //     localStorage.setItem('accountID', location.state.accountID);
+  //     localStorage.setItem('projectID', location.state.projectID);
+  //     localStorage.setItem('parent', parent);
+  //     setAccountID(location.state.accountID);
+  //     setProjectID(location.state.projectID);
+  //     setParent(location.state.parent);
+  //   }
+  // }, [location.state]);
+  const { projectid: projectID } = useParams();
+  const accountID = searchParams.get('accountID') || '';
+  // const projectID = searchParams.get('projectid') || '';
+  const parent = searchParams.get('source');
+  const { data, isLoading, isError } = useProjectDetail(
+    accountID,
+    projectID || ''
+  );
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
@@ -186,16 +200,18 @@ export const ProjectDetails = () => {
   ];
 
   const handleEditAccount = () => {
-    navigate(`/project/edit/${projectData?.rid}`, {
-      state: {
-        accountID: projectData?.account_rid,
-        projectID: projectData?.rid,
-        breadcrumbs: [
-          { label: 'Project' },
-          { label: projectData?.project_code },
-        ],
-      },
+    const projectID = projectData?.rid ?? '';
+    const accountID = projectData?.account_rid ?? '';
+
+    const source = parent === 'account' ? 'account' : 'project';
+
+    const queryParams = new URLSearchParams({
+      accountID,
+      projectID,
+      source,
     });
+
+    navigate(`/project/edit/${projectID}?${queryParams.toString()}`);
   };
 
   const handleActionsClick = () => {
@@ -322,13 +338,7 @@ export const ProjectDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
         >
-          {isLoading ? (
-            <div className='flex items-center justify-center w-full h-full'>
-              <CircularProgress />
-            </div>
-          ) : (
-            <Suspense fallback={null}>{renderContent()}</Suspense>
-          )}
+          <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
     </div>

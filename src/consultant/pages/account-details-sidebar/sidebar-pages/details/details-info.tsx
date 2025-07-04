@@ -1,4 +1,4 @@
-import { CircularProgress, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { Fragment } from 'react/jsx-runtime';
 import {
   accountDetailsProps,
@@ -41,7 +41,6 @@ interface DetailItem {
 
 const DetailsInfo: React.FC<DetailsInfoProps> = ({
   detailsInfo,
-  isDetailsLoading,
   detailsError,
   isKeyContactAvailable,
   // accountId,
@@ -53,16 +52,16 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       (option) => option.value === accountDetails?.data_storage
     )?.label || '-';
 
-  if (isDetailsLoading) {
-    return (
-      <div className='flex items-center justify-center h-64'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading details...
-        </Typography>
-      </div>
-    );
-  }
+  // if (isDetailsLoading) {
+  //   return (
+  //     <div className='flex items-center justify-center h-64'>
+  //       <CircularProgress />
+  //       <Typography variant='body1' className='ml-4'>
+  //         Loading details...
+  //       </Typography>
+  //     </div>
+  //   );
+  // }
 
   if (detailsError) {
     return (
