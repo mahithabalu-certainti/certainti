@@ -155,6 +155,8 @@ export enum AllPermissions {
   PROJECT_PROJECTS_DELETE = 'projects_projects_delete',
   PROJECT_DETAILS_OVERVIEW = 'project_details_overview',
   PROJECT_DETAILS_TIMELINE = 'project_details_timeline',
+  ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
+  ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
 }
 
 export interface Country {

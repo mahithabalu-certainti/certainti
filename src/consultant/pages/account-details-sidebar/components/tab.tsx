@@ -73,6 +73,7 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: [] as string[],
     skill_subtype_rid: [] as string[] | undefined[],
   });
+  console.log('currentSkillType', tabValue);
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]

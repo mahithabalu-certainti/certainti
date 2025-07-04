@@ -54,6 +54,11 @@ export const CityUrl = (stateId: string) =>
 
 export const uploadUrl = () => `/importService/api/upload-csv`;
 
+export const attachmentUploadUrl = () => `/api/attachments/upload-csv`;
+
+export const attachmentListUrl = (accountId: string) =>
+  `/api/attachments/list/${accountId}`;
+
 export const getAccountExportUrl = ({
   sortBy,
   sortOrder,

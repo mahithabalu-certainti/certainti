@@ -1,0 +1,42 @@
+export const attachmentresponse = [
+  {
+    document_name: 'test.pdf',
+    document_id: 'DC_0001',
+    document_number: 'DOC00012',
+    attachement_id: 'acc001',
+    attachment_level: 'begineer',
+    attachment_description: 'test attachments',
+  },
+  {
+    document_name: 'documement.xlxs',
+    document_id: 'DC_0002',
+    document_number: 'DOC00022',
+    attachement_id: 'acc001',
+    attachment_level: 'begineer',
+    attachment_description: 'test attachments',
+  },
+  {
+    document_name: 'test.pdf',
+    document_id: 'DC_0003',
+    document_number: 'DOC00032',
+    attachement_id: 'acc001',
+    attachment_level: 'begineer',
+    attachment_description: 'test attachments',
+  },
+  {
+    document_name: 'empolyee.xlxs',
+    document_id: 'DC_0004',
+    document_number: 'DOC000142',
+    attachement_id: 'acc001',
+    attachment_level: 'begineer',
+    attachment_description: 'test attachments',
+  },
+  {
+    document_name: 'test.docx',
+    document_id: 'DC_0005',
+    document_number: 'DOC00052',
+    attachement_id: 'acc001',
+    attachment_level: 'begineer',
+    attachment_description: 'test attachments',
+  },
+];

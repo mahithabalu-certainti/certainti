@@ -15,6 +15,7 @@ import {
   ADMIN_EDIT_USER,
   ADMIN_MANAGE_USER,
   ADMIN_MANAGE_USER_DETAILS,
+  ATTACHMENTUPLOADS,
   LOGIN,
   MAIN_ROUTE,
   MANAGE_PROFILE,
@@ -91,6 +92,7 @@ const ProfileList = lazy(
 const CreateProfile = lazy(
   () => import('./admin/pages/manage-profile/create-profile/create-profile')
 );
+const Uploads = lazy(() => import('./components/Attachments/upload'));
 
 // Loading component for Suspense fallback
 const Loading = () => (
@@ -139,6 +141,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                 <Route path={RESOURCE} element={<Resource />} />
                 <Route path={PROFILE} element={<Profile />} />
+                <Route path={ATTACHMENTUPLOADS} element={<Uploads />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>
