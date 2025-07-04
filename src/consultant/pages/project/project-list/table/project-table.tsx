@@ -81,7 +81,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }
     return row.project_rid || '';
   };
-  const handleEdit = (account: any) => {
+  const handleEdit = (account: Project) => {
     navigate(`/project/edit/${account?.project_fiscal_rid}`, {
       state: {
         accountID: account?.account_rid,
