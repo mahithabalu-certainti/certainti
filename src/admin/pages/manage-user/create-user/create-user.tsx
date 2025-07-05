@@ -80,14 +80,14 @@ export const CreateUser: React.FC = () => {
     permission,
     AllPermissions.USER_CREATE
   );
-  const isUserEditEnable = checkPermission(
-    permission,
-    AllPermissions.USER_EDIT_UPDATE
-  );
-  const isUserActivateEnable = checkPermission(
-    permission,
-    AllPermissions.USER_ACTIVATE
-  );
+  // const isUserEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_EDIT_UPDATE
+  // );
+  // const isUserActivateEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_ACTIVATE
+  // );
   // const isUserDeleteEnable = checkPermission(
   //   permission,
   //   AllPermissions.USER_DELETE
@@ -259,7 +259,7 @@ export const CreateUser: React.FC = () => {
     isEditView,
     states.isLoading,
     city.isLoading,
-    isEditView ? !isUserActivateEnable : false,
+    // isEditView ? !isUserActivateEnable : false,
     isConsultantFirm.isConsultantFirm,
     isConsultantFirm.org_id
   );
@@ -271,8 +271,7 @@ export const CreateUser: React.FC = () => {
     statusOptions.isLoading ||
     userRoles.isLoading;
 
-  if (!userIsEnable || (isEditView ? !isUserEditEnable : !isUserCreateEnable))
-    return <AccessRestricted />;
+  if (!userIsEnable || !isUserCreateEnable) return <AccessRestricted />;
 
   return (
     <>

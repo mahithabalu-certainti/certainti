@@ -6,6 +6,7 @@ dayjs.extend(timezone);
 
 import { UserDetail } from '../admin/types/manage-user';
 import {
+  AllMenus,
   AllModules,
   AllPermissions,
   AxiosErrorMsg,
@@ -530,7 +531,7 @@ export const reShapePermissionData = (all: Permissions[]): PermissionState => {
 
 export const checkPermission = (
   data: Permissions[],
-  condition: AllPermissions | MenuOption | AllModules | AllModules[]
+  condition: AllPermissions | MenuOption | AllMenus | AllModules | AllModules[]
 ) => {
   if (Array.isArray(condition)) {
     return condition.some(
