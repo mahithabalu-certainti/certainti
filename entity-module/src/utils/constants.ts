@@ -86,3 +86,234 @@ export const STATUS_MESSAGE = {
   projectCodeDuplicate : "Project Code already exists",
   resourceCodeDuplicate : "Resource Code already exists"
 }
+
+export const rawQueries = {
+  fetchParentAccount (accountRid : string) {
+      return `
+      with fetch_account_details AS (
+      SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      )
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+      WHERE a.rid = ad.parent_account_rid`
+  },
+  findProject (schemaName : string, projectRid : string, accountRid : string) {
+    return `
+            SELECT * FROM ${schemaName}.project p WHERE rid = '${projectRid}' AND account_rid = '${accountRid}' 
+            `
+  },
+  findProjectFiscal (schemaName : string, projectRid : string, accountRid : string, projectFiscalRid : string) {
+    return `
+            SELECT * FROM ${schemaName}.project_fiscal p WHERE project_rid = '${projectRid}' AND account_rid = '${accountRid}' AND rid = '${projectFiscalRid}'
+            `
+  },
+  findProjectSummary (data : any) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.project_summary p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}'
+            `
+  },
+  findProjectFiscalSummary (data : any) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}' AND project_fiscal_rid = '${data.project_fiscal_rid}'
+            `
+  },
+  checkProjectIdDuplicate (schemaName : string, data : any) {
+    return `
+                SELECT p.rid, p.project_code, p.fiscal_year 
+                FROM ${schemaName}.project_fiscal p
+                WHERE
+                p.account_rid = '${data.account_rid}'
+                AND
+                p.rid = '${data.project_fiscal_rid}'
+                AND
+                p.fiscal_year IN (
+                SELECT fiscal_year FROM trd365_00001.project_fiscal pf
+                WHERE 
+                pf.account_rid = '${data.account_rid}'
+                AND
+                pf.project_code ILIKE '%${data.project_code}%'
+                AND
+                pf.rid != p.rid
+                )
+                `
+  },
+  updateProject(schemaName : string, setProjectData : any, data : any) {
+    return `
+            UPDATE 
+                ${schemaName}.project 
+                SET 
+                ${setProjectData.join(',')} 
+                WHERE 
+                    rid = '${data.project_rid}'
+                    AND
+                    account_rid = '${data.account_rid}'`
+  },
+  updateProjectFiscal (schemaName : string, setProjectFiscalData : any, data : any) {
+    return `
+            UPDATE 
+                ${schemaName}.project_fiscal
+            SET
+                ${setProjectFiscalData.join(',')}
+            WHERE 
+                rid = '${data.project_fiscal_rid}'
+                AND
+                account_rid = '${data.account_rid}'
+                AND
+                project_rid = '${data.project_rid}'
+            `
+  },
+  updateProjectSummary(setProjectSummary : any, data : any) {
+    return `
+            UPDATE
+                ${MAIN_SCHEMA_NAME}.project_summary
+            SET
+                ${setProjectSummary.join(',')}
+            WHERE 
+                account_rid = '${data.account_rid}'
+                AND
+                project_rid = '${data.project_rid}'
+            `
+  },
+  updateProjectFiscalSummary(setProjectFiscalSummary : any, data : any) {
+    return `
+            UPDATE
+                ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+            SET
+                ${setProjectFiscalSummary.join(',')}
+            WHERE
+                project_fiscal_rid = '${data.project_fiscal_rid}'
+                AND
+                project_rid = '${data.project_rid}'
+                AND
+                account_rid = '${data.account_rid}'            
+            `
+  },
+  fetchResources (schemaName : string, data : any) {
+    return `
+            SELECT * 
+            FROM ${schemaName}.resources 
+            WHERE 
+            rid = '${data.resource_rid}' AND account_rid = '${data.account_rid}' 
+            `
+  },
+  checkResourceActive(fetchResources : any) {
+    return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${fetchResources[0][0].status_rid}'`
+  },
+  checkResourceTypeExists(data : any) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = '${data.resource_type_rid}'`
+  },
+  checkCountryExists(data : any) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${data.country_rid}'`
+  },
+  checkRegionExists(data : any) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = '${data.region_rid}'`
+  },
+  isResourceCodeDuplicate(schemaName : string, data : any) {
+    return `
+            SELECT resource_code FROM ${schemaName}.resources
+            WHERE 
+              account_rid = '${data.account_rid}'
+              AND
+              resource_code ILIKE '%${data.resource_code}%'
+              AND
+              rid != '${data.resource_rid}'
+            
+            `
+  },
+  updateResourceQuery (schemaName : string, setResource : any, data : any) {
+    return `
+            UPDATE ${schemaName}.resources
+            SET
+              ${setResource.join(',')}
+            WHERE
+              rid = '${data.resource_rid}'
+              AND
+              account_rid = '${data.account_rid}'
+            `
+  },
+  getResourceFiscalQuery (schemaName : string, data : any) {
+    return `SELECT * FROM ${schemaName}.resource_fiscal WHERE account_rid = '${data.account_rid}' AND resource_rid = '${data.resource_rid}'`
+  },
+  updateResourceFiscalQuery (schemaName : string, setFiscalData : any, fetchResourceFiscal : any, data : any) {
+    return `
+            UPDATE ${schemaName}.resource_fiscal
+            SET
+              ${setFiscalData.join(',')}
+            WHERE
+              rid = '${fetchResourceFiscal[0][0].rid}'
+              AND
+              account_rid = '${data.account_rid}'
+              AND
+              resource_rid = '${data.resource_rid}'
+            `
+  },
+  insertQueryResTimeline(schemaName : string, data : any) {
+    return `
+            INSERT INTO ${schemaName}.resources_timeline
+            (created_by, created_datetime, account_rid, entity_rid, event_name, event_type, event_status, event_datetime)
+            VALUES ('${data.userId}', NOW(), '${data.account_rid}', 
+            '${data.resource_rid}','${STATUS_MESSAGE.eventUpdate}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', NOW())
+            `
+  },
+  insertQueryResHistory(schemaName : string, data : any, attributeName : any, oldValue : any, newValue : any) {
+    return `INSERT INTO ${schemaName}.resources_history
+      (created_by, created_datetime, resource_rid, attribute_name, old_value, new_value)
+      VALUES ('${data.userId}', NOW(), '${data.resource_rid}', '${attributeName}',
+      '${oldValue}', '${newValue}')`
+  },
+  isResourceCostExists (schemaName : string, data : any) {
+    return `
+        SELECT 
+          * 
+        FROM 
+          ${schemaName}.resource_cost 
+        WHERE
+          rid = '${data.resource_cost_rid}'
+          AND
+          resource_rid = '${data.resource_rid}'
+          AND
+          account_rid = '${data.account_rid}'   
+        `
+  },
+  isCurrencyExists(data : any) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${data.currency_rid}'`
+  },
+  updateResourceCostQuery (schemaName : string, setResourceCost : any, data : any) {
+    return `
+          UPDATE ${schemaName}.resource_cost
+          SET
+           ${setResourceCost.join(',')}
+          WHERE
+            rid = '${data.resource_cost_rid}'
+            AND
+            account_rid = '${data.account_rid}'
+            AND
+            resource_rid = '${data.resource_rid}'
+          `
+  },
+  insertResCostTimelineQuery (schemaName : string, data : any) {
+    return `
+      INSERT INTO ${schemaName}.resource_cost_timeline
+      (created_by, created_datetime, account_rid, event_name, event_status, event_type, entity_rid, event_datetime)
+      VALUES
+      ('${data.userId}', NOW(), '${data.account_rid}', '${STATUS_MESSAGE.eventUpdate}', '${STATUS_MESSAGE.success}', 
+      '${STATUS_MESSAGE.uiHandler}', '${data.resource_cost_rid}', NOW())
+      `
+  },
+  insertResCostHisQuery (schemaName : string, data : any, attribute_name : any, oldValue : any, newValue : any) {
+    return `
+      INSERT INTO ${schemaName}.resource_cost_history
+      (created_by, created_datetime, resource_cost_rid, attribute_name, old_value, new_value)
+      VALUES
+      ('${data.userId}', NOW(), '${data.resource_cost_rid}', '${attribute_name}', '${oldValue}', '${newValue}')`
+  },
+  setFiscalYear(schemaName : string, setFiscal : any, data : any) {
+    return `UPDATE ${schemaName}.resource_fiscal 
+            SET fiscal_year = ${setFiscal}
+              WHERE
+                resource_rid = '${data.resource_rid}'
+                AND
+                account_rid = '${data.account_rid}'`  
+  }
+}

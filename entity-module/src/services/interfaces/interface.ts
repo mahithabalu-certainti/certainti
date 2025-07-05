@@ -10,6 +10,13 @@ import {
   IUpdateResourceSkill,
 } from "../../utils/types";
 
+export interface IProjectGraphQlServices {
+  inLineEditProject(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}> 
+}
+
 export interface IResourceService {
   createResource(
     resourceData: ICreateResource,
@@ -318,4 +325,23 @@ export interface IProjectService {
     errorMessage?: string;
     data?: { projects: any, count: number };
   }>;
+}
+
+export interface IResourceGraphQlServices {
+  inLineEditResources(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
+}
+
+export interface IResourceCostGraphQlService {
+  inlineEditResourceCost(data : any) : Promise<{
+    statusCode: number;
+    statusMesage: string;
+    statusMessage?: undefined;
+} | {
+    statusCode: number;
+    statusMessage: string;
+    statusMesage?: undefined;
+} | undefined>
 }

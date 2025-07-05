@@ -94,7 +94,7 @@ const resourceResolvers: IResolvers = {
           }
         }
         data.userId = ctx.req.headers['x-user-id']
-        const result = await ctx.services.resourceService.inLineEditResources(data)
+        const result = await ctx.services.resourceGraphQlServices.inLineEditResources(data)
         if(result.statusCode == HttpStatus.SUCCESS) {
           return {
             statusCode : HttpStatus.SUCCESS,

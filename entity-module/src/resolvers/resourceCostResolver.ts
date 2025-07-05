@@ -1,5 +1,6 @@
 import { IResolvers } from "@graphql-tools/utils";
 import { HttpStatus } from "../utils/constants";
+import { validateResourceCost } from "../utils/helpers";
 
 type PaginationInput = {
   limit?: number;
@@ -126,6 +127,41 @@ const resourceCostResolvers: IResolvers = {
         return err;
       }
     },
+
+    updateResourceCostInline : async (_, {data} : {data :any}, ctx) => {
+      try {
+      data.userId = ctx.req.headers['x-user-id']
+      const requestValidation = validateResourceCost(data)
+      if(requestValidation) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+          statusMessage : requestValidation
+        }
+      }
+      const result = await ctx.services.resourceCostGraphQlServices.inlineEditResourceCost(data);
+      if(result.statusCode == HttpStatus.NOT_FOUND) {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+          statusMessage : result.statusMessage
+        }
+      }
+      else if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : result.statusMessage
+        }       
+      }
+      } catch (error : any) {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusCodeValue : HttpStatus.FAILED_MESSAGE,
+          statusMessage : error.message
+        }
+      }
+    }
   },
 };
 

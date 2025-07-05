@@ -167,6 +167,10 @@ export interface IGeoDataService {
     count: number;
   }>
   >;
-  
-  
+}
+
+export interface IAccountGraphQlServices {
+  inlineEditAccount(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string} | undefined>
 }

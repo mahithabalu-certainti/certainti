@@ -63,7 +63,7 @@ const accountResolvers: IResolvers = {
             statusMessage : requestValidation
           }
           data.userId = ctx.req.headers['x-user-id'];
-        const result = await ctx.services.accountServices.inlineEditAccount(data);
+        const result = await ctx.services.accountGraphqlServices.inlineEditAccount(data);
         console.log("Result : ", result)
         if(result.statusCode == HttpStatus.SUCCESS) {
           return {

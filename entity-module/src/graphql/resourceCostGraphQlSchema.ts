@@ -1,6 +1,7 @@
 import { gql } from "graphql-tag";
+import {mergeTypeDefs} from "@graphql-tools/merge"
 
-const typeDefs = gql`
+const listCostDefs = gql`
   enum SortOrder {
     ASC
     DESC
@@ -107,5 +108,37 @@ const typeDefs = gql`
   # Add scalar type for JSON
   scalar JSON
 `;
+
+const inLineCostDefs = gql`
+
+type resourceCostInlineResponse {
+  statusCode : Int,
+  statusCodeValue : String,
+  statusMessage : String
+}
+
+input resourceCostInlineInput {
+  resource_cost_rid : String!,
+  account_rid : String!,
+  resource_rid : String!,
+  fiscal_year : Int,
+  currency_rid : String,
+  effective_from : String,
+  end_date : String,
+  effort_in_hrs : Float,
+  salary : Float,
+  bonus : Float,
+  insurance : Float,
+  deductions : Float,
+  resource_cost : Float,
+  comments : String
+}
+
+type Mutation {
+  updateResourceCostInline (data : resourceCostInlineInput) : resourceCostInlineResponse
+}
+`
+
+const typeDefs = mergeTypeDefs([inLineCostDefs, listCostDefs])
 
 export default typeDefs;

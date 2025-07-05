@@ -56,3 +56,22 @@ export const STATUS_MESSAGE = {
   oneFieldRequired : "Atleast one field is required to update",
   keyContactIdMissing : "Key-Contact Id is missing"
 }
+
+export const rawQueries = {
+  fetchAccountDetails (schemaName : string, accountRid : string) {
+    return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  },
+  updateAccDetails (schemaName : string, updatedColumns : any, accountRid : string) {
+    return `UPDATE ${schemaName}.account_details SET ${updatedColumns.join(',')} WHERE account_rid = '${accountRid}'`
+  },
+  fetchKeyContactDetailsByRid (schemaName : string, keyContactRid : string) {
+    return `SELECT * FROM ${schemaName}.key_contact_details WHERE rid = '${keyContactRid}'`
+  },
+  updateKeyContactDetails (schemaName : string, updatedKeyData : any, keyContactDetailsRid : string) {
+    return `UPDATE ${schemaName}.key_contact_details 
+              SET 
+                ${updatedKeyData.join(',')}
+              WHERE 
+                 rid = '${keyContactDetailsRid}'`
+  }
+}
