@@ -6,6 +6,7 @@ import {
   IResourceCostService,
   IResourceGraphQlServices,
   IResourceService,
+  IResourceSkillGraphQlService,
   IResourceSkillService,
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
@@ -26,6 +27,7 @@ class Services implements IServiceContainer {
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
+  private _resourceSkillGraphqlServices? : IResourceSkillGraphQlService;
 
   constructor(
     logger: Logger,
@@ -67,6 +69,14 @@ class Services implements IServiceContainer {
       this._resourceCostGraphQlServices = new ResourceCostGraphQlService();
     }
     return this._resourceCostGraphQlServices!
+  }
+
+  get resourceSkillGraphqlServices() : IResourceSkillGraphQlService {
+    if(!this._resourceSkillGraphqlServices) {
+      const {default : ResourceSkillGraphQlService} = require('../services/resourceSkillGraphqlService.ts')
+      this._resourceSkillGraphqlServices = new ResourceSkillGraphQlService()
+    }
+    return this._resourceSkillGraphqlServices!
   }
 }
 

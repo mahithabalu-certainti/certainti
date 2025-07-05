@@ -4,6 +4,7 @@ import { HttpStatus, STATUS_MESSAGE } from "./constants";
 import { errorResponse,successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
+import { ResourceSkill } from "../models/resourceSkill";
 const logger = configurations.getInstance().getLogger();
 
 export async function validateRequest(
@@ -142,6 +143,12 @@ export const validateResourceCost = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.resource_rid) return STATUS_MESSAGE.resourceIdMissing
   if(!data.resource_cost_rid) return STATUS_MESSAGE.costIdMissing
+}
+
+export const validateResourceSkill = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.resource_rid) return STATUS_MESSAGE.resourceIdMissing
+  if(!data.resource_skill_rid) return STATUS_MESSAGE.skillIdMissing
 }
 
 export const setProject = (dbData : any, requestData : any) => {
@@ -513,4 +520,40 @@ export const setResourceCostDatas = (dbData : any, requestData : any) => {
   dataStorage = `modified_datetime = NOW()`
   newCostDataArray.push(dataStorage)
   return newCostDataArray;
+}
+
+export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) => {
+  let newData : any = {};
+  let newDataArray = [];
+  let dataStorage;
+  if(requestData.start_date) {
+    newData.start_date = requestData.start_date != dbData.start_date ? requestData.start_date : dbData.start_date
+    dataStorage = `start_date = '${newData.start_date}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.skill_type_rid) {
+    newData.skill_type_rid = requestData.skill_type_rid != dbData.skill_type_rid ? requestData.skill_type_rid : dbData.skill_type_rid
+    dataStorage = `skill_type_rid = '${newData.skill_type_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.skill_subtype_rid) {
+    newData.skill_subtype_rid = requestData.skill_subtype_rid != dbData.skill_subtype_rid ? requestData.skill_subtype_rid : dbData.skill_subtype_rid
+    dataStorage = `skill_subtype_rid = '${newData.skill_subtype_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.skill_level_rid) {
+    newData.skill_level_rid = requestData.skill_level_rid != dbData.skill_level_rid ? requestData.skill_level_rid : dbData.skill_level_rid
+    dataStorage = `skill_level_rid = '${newData.skill_level_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.skill_details) {
+    newData.skill_details = requestData.skill_details != dbData.skill_details ? requestData.skill_details : dbData.skill_details
+    dataStorage = `skill_details = '${newData.skill_details}'`
+    newDataArray.push(dataStorage)
+  }
+  dataStorage = `modified_by = '${requestData.userId}'`
+  newDataArray.push(dataStorage)
+  dataStorage = `modified_datetime = NOW()`
+  newDataArray.push(dataStorage)
+  return newDataArray;
 }

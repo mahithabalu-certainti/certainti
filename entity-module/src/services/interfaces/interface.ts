@@ -345,3 +345,10 @@ export interface IResourceCostGraphQlService {
     statusMesage?: undefined;
 } | undefined>
 }
+
+export interface IResourceSkillGraphQlService {
+  updateInlineResourceSkill(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
+}

@@ -82,9 +82,22 @@ export const STATUS_MESSAGE = {
   resourceCostUpdSuccess : "Resource Cost updated successfully",
   duplicateProjectCode : "Project Code already exists",
   costIdMissing : "Resource Cost RID missing",
+  skillIdMissing : "Resource Skill RID missing",
   currencyInvalid : "Currency you are trying to update is invalid",
   projectCodeDuplicate : "Project Code already exists",
-  resourceCodeDuplicate : "Resource Code already exists"
+  resourceCodeDuplicate : "Resource Code already exists",
+  resourceSkillNoFound : "Resource Skill you are trying to update is invalid",
+  resourceSkillTypeNoFound : "Resource SkillType you are trying to update is invalid",
+  resourceSkillSubTypeNoFound : "Resource Skill SubType you are trying to update is invalid",
+  resourceSkillLevelNoFound : "Resource Skill level you are trying to update is invalid",
+  resourceSkillUpdSuccess : "Resource Skill updated successfully",
+
+}
+
+export const TYPES = {
+  SKILL_TYPE : "skill_type",
+  SKILL_SUBTYPE : "skill_subtype",
+  SKILL_LEVEL : "skill_level"
 }
 
 export const rawQueries = {
@@ -315,5 +328,38 @@ export const rawQueries = {
                 resource_rid = '${data.resource_rid}'
                 AND
                 account_rid = '${data.account_rid}'`  
+  },
+  fetchResourceSkill(schemaName : string, resource_skill_rid : string) {
+    return `SELECT * FROM ${schemaName}.resource_skill WHERE rid = '${resource_skill_rid}'`
+  },
+  checkForExists(type : string, rid : string) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.${type} WHERE rid = '${rid}'`
+  },
+  updateResourceSkillQuery (schemaName : string, setSkillData : string[], data : any) {
+    return `UPDATE 
+            ${schemaName}.resource_skill 
+            SET ${setSkillData.join(',')}
+            WHERE
+              rid = '${data.resource_skill_rid}'
+              AND
+              account_rid = '${data.account_rid}'
+              AND
+              resource_rid = '${data.resource_rid}'
+            `},
+  insertSkillTimeQuery (schemaName : string, data : any) {
+    return `
+          INSERT INTO ${schemaName}.resource_skill_timeline
+            (created_by, created_datetime, account_rid, event_name, event_status, event_type, entity_rid, event_datetime)
+          VALUES
+            ('${data.userId}', NOW(), '${data.account_rid}', '${STATUS_MESSAGE.eventUpdate}', '${STATUS_MESSAGE.success}', '${STATUS_MESSAGE.uiHandler}', '${data.resource_skill_rid}', NOW())
+          `
+  },
+  insertSkillHistory (schemaName : string, data : any, attributeName : string, oldValue : string, newValue : string) {
+    return `
+          INSERT INTO ${schemaName}.resource_skill_history
+              (created_by, created_datetime, resource_skill_rid, attribute_name, old_value, new_value)
+          VALUES
+              ('${data.userId}', NOW(), '${data.resource_skill_rid}', '${attributeName}', '${oldValue}', '${newValue}')
+          `
   }
 }
