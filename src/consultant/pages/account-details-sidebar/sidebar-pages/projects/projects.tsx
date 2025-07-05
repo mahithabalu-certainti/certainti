@@ -16,7 +16,11 @@ import { ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import { CellEditData, Project } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
@@ -42,12 +46,12 @@ interface ProjectsProps {
 
 const projectTabs: ResourceTabs[] = [
   {
-    id: AllPermissions.ACCOUNT_PROJECTS_OVERVIEW,
+    id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
   },
   {
-    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,
@@ -92,21 +96,21 @@ const Projects: React.FC<ProjectsProps> = ({
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const projectViewAllIsEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_PROJECTS_VIEW_ALL
+    AllPermissions.PROFILE_VIEW_EDIT
   );
 
   const projectCreateIsEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_PROJECTS_CREATE
+    AllPermissions.PROFILE_CREATE
   );
   const projectDownloadIsEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+    AllPermissions.PROFILE_EXPORT
   );
-  const projectEditIsEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_PROJECTS_EDIT
-  );
+  // const projectEditIsEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_PROJECTS_EDIT
+  // );
   // This functionality will be implemented later
   // const projectDeleteIsEnable = checkPermission(
   //   permission,
@@ -192,7 +196,7 @@ const Projects: React.FC<ProjectsProps> = ({
       label: 'Edit',
       disabled: accountInActive,
       onClick: (row: Project) => handleEdit(row),
-      hide: !projectEditIsEnable,
+      hide: true,
     },
     {
       label: 'Delete',
@@ -324,7 +328,7 @@ const Projects: React.FC<ProjectsProps> = ({
     console.log(rowId, updates);
   };
 
-  if (!projectIsEnable) return <AccessRestricted />;
+  if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>

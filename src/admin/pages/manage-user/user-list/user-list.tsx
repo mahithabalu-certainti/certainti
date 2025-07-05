@@ -65,7 +65,7 @@ const UserList: React.FC = () => {
   );
   const isUserEditEnable = checkPermission(
     permission,
-    AllPermissions.USER_EDIT_UPDATE
+    AllPermissions.USER_VIEW_EDIT
   );
   const isUserDeleteEnable = checkPermission(
     permission,
@@ -73,20 +73,20 @@ const UserList: React.FC = () => {
   );
   const isUserViewEnable = checkPermission(
     permission,
-    AllPermissions.USER_VIEW
+    AllPermissions.USER_VIEW_EDIT
   );
   const isUserViewAllEnable = checkPermission(
     permission,
-    AllPermissions.USER_VIEW_ALL
+    AllPermissions.USER_VIEW_EDIT
   );
-  const isUserSuspendEnable = checkPermission(
-    permission,
-    AllPermissions.USER_SUSPEND
-  );
-  const isUserResetPasswordEnable = checkPermission(
-    permission,
-    AllPermissions.USER_RESET_PASSWORD
-  );
+  // const isUserSuspendEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_SUSPEND
+  // );
+  // const isUserResetPasswordEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_RESET_PASSWORD
+  // );
   const isUserExportEnable = checkPermission(
     permission,
     AllPermissions.USER_EXPORT
@@ -101,12 +101,12 @@ const UserList: React.FC = () => {
   );
 
   const userActionButtons = [
-    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Suspend User', width: '104px', hide: false },
     { label: 'Reinstate User', width: '116px', hide: false },
     {
       label: 'Reset Password',
       width: '118px',
-      hide: !isUserResetPasswordEnable,
+      hide: false,
     },
     { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];
@@ -321,7 +321,9 @@ const UserList: React.FC = () => {
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
                 filterFields={userFilterfields}
-                setAppliedFilters={(filters) => setAppliedFilters(filters as Record<string, FilterCondition>)}
+                setAppliedFilters={(filters) =>
+                  setAppliedFilters(filters as Record<string, FilterCondition>)
+                }
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}

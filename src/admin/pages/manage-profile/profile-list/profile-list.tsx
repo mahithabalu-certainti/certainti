@@ -68,19 +68,19 @@ export const ProfileList: React.FC = () => {
   );
   const isProfileViewEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_VIEW
+    AllPermissions.PROFILE_VIEW_EDIT
   );
-  const isProfileEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_EDIT
-  );
+  // const isProfileEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROFILE_EDIT
+  // );
   const isProfileDeleteEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_DELETE
   );
   const isProfileViewAllEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_VIEW_ALL
+    AllPermissions.PROFILE_PERMISSION_VIEW_EDIT
   );
 
   const handleCloseFilter = () => {
@@ -246,7 +246,7 @@ export const ProfileList: React.FC = () => {
             setTableParams={setTableParams}
             onSelectionChange={handleSelectionChange}
             isProfileViewEnable={isProfileViewEnable}
-            isProfileEditEnable={isProfileEditEnable}
+            isProfileEditEnable={true}
             isProfileDeleteEnable={isProfileDeleteEnable}
             refreshProfileTrigger={refreshProfileTrigger}
           />

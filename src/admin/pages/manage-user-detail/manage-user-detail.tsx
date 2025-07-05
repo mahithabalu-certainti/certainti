@@ -32,7 +32,7 @@ export const ManageUserDetails: React.FC = () => {
   const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
   const isUserViewEnable = checkPermission(
     permission,
-    AllPermissions.USER_VIEW
+    AllPermissions.USER_VIEW_EDIT
   );
   const isUserCreateEnable = checkPermission(
     permission,
@@ -42,18 +42,18 @@ export const ManageUserDetails: React.FC = () => {
     permission,
     AllPermissions.USER_DELETE
   );
-  const isUserSuspendEnable = checkPermission(
-    permission,
-    AllPermissions.USER_SUSPEND
-  );
+  // const isUserSuspendEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_SUSPEND
+  // );
   const isUserViewPermissionEnable = checkPermission(
     permission,
     AllPermissions.USER_VIEW_PERMISSION
   );
-  const isUserResetPasswordEnable = checkPermission(
-    permission,
-    AllPermissions.USER_RESET_PASSWORD
-  );
+  // const isUserResetPasswordEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_RESET_PASSWORD
+  // );
   const isUserAssignPermissionEnable = checkPermission(
     permission,
     AllPermissions.USER_ASSIGN_PERMISSION
@@ -74,12 +74,12 @@ export const ManageUserDetails: React.FC = () => {
   ];
 
   const userActionButtons = [
-    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Suspend User', width: '104px', hide: false },
     { label: 'Reinstate User', width: '116px', hide: false },
     {
       label: 'Reset Password',
       width: '118px',
-      hide: !isUserResetPasswordEnable,
+      hide: false,
     },
     { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];

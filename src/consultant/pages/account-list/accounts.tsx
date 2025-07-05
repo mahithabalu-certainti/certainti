@@ -85,16 +85,16 @@ export const Accounts: React.FC = () => {
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const isAccountViewAllEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_VIEW_ALL
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
   const isAccountCreateEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_CREATE
+    AllPermissions.ACCOUNTS_CREATE
   );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+  // const isAccountEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EDIT
+  // );
   // Delete functionality will be implemented later
   // const isAccountDeleteEnable = checkPermission(
   //   permission,
@@ -103,7 +103,7 @@ export const Accounts: React.FC = () => {
   const isAccountDeleteEnable = false;
   const isAccountExportEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_EXPORT
+    AllPermissions.ACCOUNTS_EXPORT
   );
 
   const menuItems: ActionsDropdownItem[] = [
@@ -289,7 +289,7 @@ export const Accounts: React.FC = () => {
           setOrderBy={setOrderBy}
           setPage={setPage}
           page={page}
-          isAccountEditEnable={isAccountEditEnable}
+          isAccountEditEnable={true}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
           countryOptions={countryOptions}

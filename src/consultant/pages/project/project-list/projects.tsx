@@ -53,17 +53,21 @@ export const Projects: React.FC = () => {
     (state: RootState) => state.permission
   );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.PROJECT_PROJECTS_EXPORT
+    AllPermissions.PROJECTS_EXPORT
   );
-  const isProjectEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECT_PROJECTS_EDIT
-  );
+  // const isProjectEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECT_PROJECTS_EDIT
+  // );
   const isProjectDeleteEnable = checkPermission(
     permission,
-    AllPermissions.PROJECT_PROJECTS_DELETE
+    AllPermissions.PROJECTS_DELETE
   );
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -174,10 +178,10 @@ export const Projects: React.FC = () => {
     projectType: projectTypeOptions?.data,
   };
 
-  if (!projectIsEnable) return <AccessRestricted />;
+  if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col w-full h-full'>
+    <div className='flex flex-col w-full  h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
@@ -269,7 +273,7 @@ export const Projects: React.FC = () => {
             onRefreshClick();
           }}
           setTotalCount={setTotalCount}
-          isProjectEditEnable={isProjectEditEnable}
+          isProjectEditEnable={true}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
           toggleEnabled={toggleEnabled}

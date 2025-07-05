@@ -75,31 +75,31 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_VIEW
+    AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
   );
   const isResourceCostViewEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_VIEW
+    AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
   );
-  const isResourceCostEditEnable = checkPermission(
-    permission || [],
-    AllPermissions.RESOURCE_COST_EDIT
-  );
+  // const isResourceCostEditEnable = checkPermission(
+  //   permission || [],
+  //   AllPermissions.RESOURCE_COST_EDIT
+  // );
   const isResourceCostDeleteEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_DELETE
+    AllPermissions.ACCOUNT_RESOURCE_COST_DELETE
   );
   const isResourceSkillViewEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_VIEW
+    AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
   );
-  const isResourceSkillEditEnable = checkPermission(
-    permission || [],
-    AllPermissions.RESOURCE_SKILL_EDIT
-  );
+  // const isResourceSkillEditEnable = checkPermission(
+  //   permission || [],
+  //   AllPermissions.RESOURCE_SKILL_EDIT
+  // );
   const isResourceSkillDeleteEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_DELETE
+    AllPermissions.ACCOUNT_RESOURCE_SKILL_DELETE
   );
   const {
     data: resource,
@@ -183,7 +183,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setCostOrder={setCostOrder}
               costorderBy={costorderBy}
               setCostorderBy={setCostorderBy}
-              isResourceCostEditEnable={isResourceCostEditEnable}
+              isResourceCostEditEnable={true}
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
               refreshCostTrigger={refreshCostTrigger}
               setCount={setCount}
@@ -208,7 +208,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setSkillOrder={setSkillOrder}
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
-              isResourceSkillEditEnable={isResourceSkillEditEnable}
+              isResourceSkillEditEnable={true}
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
               refreshSkillTrigger={refreshSkillTrigger}
               setCount={setCount}
