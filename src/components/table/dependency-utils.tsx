@@ -1,5 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ListTableColumn, RowData, MultipleEditingCells } from './types';
+import {
+  ListTableColumn,
+  RowData,
+  MultipleEditingCells,
+  DependencyValue,
+  DependencyRowData,
+  ModalField,
+} from './types';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isBetween from 'dayjs/plugin/isBetween';
@@ -45,12 +51,12 @@ export const checkDependencies = <T extends RowData>(
       : [dependency.dependsOn];
 
     // For modal conditions, we need to pass the current row data with editing values
-    const currentRowData = { ...rowData };
+    const currentRowData: DependencyRowData = { ...rowData };
 
     // Update current row data with editing values
     Object.values(editingCells).forEach((cell) => {
-      if (cell.rowId === (rowData as any).id) {
-        (currentRowData as Record<string, any>)[cell.columnId] = cell.value;
+      if (cell.rowId === getRowId(rowData)) {
+        currentRowData[cell.columnId] = cell.value;
       }
     });
 
@@ -88,11 +94,17 @@ export const checkDependencies = <T extends RowData>(
   return { isRequired, isDisabled, isHidden, shouldShowModal, errorMessage };
 };
 
+// Helper function to get row ID from row data
+const getRowId = <T extends RowData>(rowData: T): string => {
+  // This assumes there's an 'id' field, adjust based on your actual implementation
+  return String(rowData.id || rowData.rid || '');
+};
+
 export const getDependentValue = <T extends RowData>(
   fieldId: string,
   rowData: T,
   editingCells: MultipleEditingCells
-): any => {
+): DependencyValue => {
   // Check if the field is currently being edited
   const editingKey = Object.keys(editingCells).find(
     (key) => editingCells[key].columnId === fieldId
@@ -102,7 +114,7 @@ export const getDependentValue = <T extends RowData>(
     return editingCells[editingKey].value;
   }
 
-  return rowData[fieldId];
+  return rowData[fieldId] as DependencyValue;
 };
 
 export const validateDependentFields = <T extends RowData>(
@@ -159,7 +171,7 @@ export const validateDependentFields = <T extends RowData>(
       const dateConfig = column.field.dateConfig;
 
       if (cellValue) {
-        const selectedDate = dayjs(cellValue);
+        const selectedDate = dayjs(String(cellValue));
 
         // Future date validation - check against current date
         if (
@@ -227,7 +239,10 @@ export const validateDependentFields = <T extends RowData>(
         if (
           cellValue &&
           startDateValue &&
-          dayjs(cellValue).isSameOrBefore(dayjs(startDateValue), 'day')
+          dayjs(String(cellValue)).isSameOrBefore(
+            dayjs(String(startDateValue)),
+            'day'
+          )
         ) {
           errors[cellKey] = 'End Date must be after Start Date';
           continue;
@@ -299,8 +314,8 @@ export const shouldEnableMultipleEdit = <T extends RowData>(
 export const getFieldsToReset = <T extends RowData>(
   columns: ListTableColumn<T>[],
   changedFieldId: string,
-  newValue: any,
-  oldValue: any
+  newValue: DependencyValue,
+  oldValue: DependencyValue
 ): string[] => {
   const column = columns.find((col) => col.id === changedFieldId);
 
@@ -319,22 +334,22 @@ export const getFieldsToReset = <T extends RowData>(
 // Helper function to check if a field value should trigger a modal
 export const shouldShowModalForValue = <T extends RowData>(
   column: ListTableColumn<T>,
-  value: any,
+  value: DependencyValue,
   rowData?: T,
   editingCells?: MultipleEditingCells
-): { shouldShow: boolean; modalFields?: any[] } => {
+): { shouldShow: boolean; modalFields?: ModalField[] } => {
   if (!column.field?.dependencies) {
     return { shouldShow: false };
   }
 
   // Create a temporary row data with the new value
-  const tempRowData = rowData ? { ...rowData } : {};
-  (tempRowData as Record<string, any>)[column.id] = value;
+  const tempRowData: DependencyRowData = rowData ? { ...rowData } : {};
+  tempRowData[column.id] = value;
 
   // Update with any current editing values
   if (editingCells) {
     Object.values(editingCells).forEach((cell) => {
-      (tempRowData as Record<string, any>)[cell.columnId] = cell.value;
+      tempRowData[cell.columnId] = cell.value;
     });
   }
 
@@ -346,7 +361,7 @@ export const shouldShowModalForValue = <T extends RowData>(
 
       // Check if all dependent fields meet the condition
       const allConditionsMet = dependsOnFields.every((fieldId) => {
-        const dependentValue = (tempRowData as Record<string, any>)[fieldId];
+        const dependentValue = tempRowData[fieldId];
         return dependency.condition(dependentValue, tempRowData);
       });
 
@@ -416,9 +431,8 @@ export const getDateConstraints = <T extends RowData>(
   if (dateConfig.fiscalYearValidation) {
     const fiscalYear = getDependentValue('fiscal_year', rowData, editingCells);
     if (fiscalYear) {
-      const fyStart = dayjs(`${fiscalYear}-04-01`);
-      const fyEnd = dayjs(`${Number(fiscalYear) + 1}-03-31`);
-
+      const fyStart = dayjs(`${fiscalYear}-01-01`);
+      const fyEnd = dayjs(`${fiscalYear}-12-31`);
       minDate = getMaxDate(minDate, fyStart);
       maxDate = getMinDate(maxDate, fyEnd);
     }
@@ -432,7 +446,7 @@ export const getDateConstraints = <T extends RowData>(
       editingCells
     );
     if (startDate) {
-      const startDayjs = dayjs(startDate).add(1, 'day'); // End date must be after start date
+      const startDayjs = dayjs(String(startDate)).add(1, 'day'); // End date must be after start date
       minDate = getMaxDate(minDate, startDayjs);
     }
   }

@@ -84,6 +84,12 @@ export const getResourceCostColumns = (
           action: 'disabled',
           message: 'Please select a fiscal year first',
         },
+        {
+          dependsOn: ['end_date'],
+          action: 'hidden',
+          condition: (value) => !value,
+          message: '',
+        },
       ],
     },
   },
@@ -104,7 +110,7 @@ export const getResourceCostColumns = (
       placeholder: 'YYYY-MM-DD',
       dateConfig: {
         fiscalYearValidation: true,
-        disableFutureDates: true, // End date cannot be in the future
+        disableFutureDates: true,
       },
       dependencies: [
         {
@@ -115,7 +121,7 @@ export const getResourceCostColumns = (
             return !fiscalYear || !startDate;
           },
           action: 'disabled',
-          message: 'Please select fiscal year and start date first',
+          message: '',
         },
       ],
     },

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Column<T> = {
   id: string;
   header: string;
@@ -61,9 +60,21 @@ export interface FieldValidation {
   errorMessage: string;
 }
 
+// Define specific types for dependency condition values
+export type DependencyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | unknown;
+
+// Define row data type for dependency conditions
+export type DependencyRowData = Record<string, DependencyValue>;
+
 export interface DependencyRule {
   dependsOn: string | string[];
-  condition: (value: any, rowData: any) => boolean;
+  condition: (value: DependencyValue, rowData: DependencyRowData) => boolean;
   action: 'required' | 'disabled' | 'hidden' | 'show_modal' | 'enable';
   message?: string;
   modalFields?: ModalField[];
@@ -121,7 +132,8 @@ export type ListTableColumn<T> = {
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
-  editable?: boolean | ((row: T) => boolean);
+  editable?: boolean;
+  hide?: boolean;
   render?: (row: T) => React.ReactNode;
   field?: TableField;
 };
@@ -155,19 +167,22 @@ export interface MultipleEditingCells {
   };
 }
 
+// Define specific types for field change event values
+export type FieldChangeValue = string | number | boolean | null | undefined;
+
 export interface FieldChangeEvent {
   rowId: string;
   columnId: string;
-  value: any;
-  oldValue: any;
-  rowData: any;
+  value: FieldChangeValue;
+  oldValue: FieldChangeValue;
+  rowData: DependencyRowData;
 }
 
 // Enhanced cell edit data structure to support both regular edits and modal data
 export interface CellEditData {
   columnId: string;
-  value: any;
-  modalData?: Record<string, any>; // Additional modal data if applicable
+  value: FieldChangeValue;
+  modalData?: Record<string, FieldChangeValue>; // Additional modal data if applicable
 }
 
 export interface ListTableProps<T extends RowData> {
@@ -238,6 +253,39 @@ export interface RenderFieldsProps<T extends RowData> {
   isSaving: boolean;
   rowData?: T;
   allEditingCells?: MultipleEditingCells;
+}
+
+// Modal state interface
+export interface ModalState {
+  open: boolean;
+  fields: ModalField[];
+  rowId: string;
+  columnId: string;
+  skillTypeIsOthers: boolean;
+  skillSubtypeIsOthers: boolean;
+  anchorEl: HTMLElement | null;
+}
+
+// Modal dialog specific types
+export type ModalFormValue = string | number | boolean;
+
+export interface ModalFormData {
+  [fieldId: string]: ModalFormValue;
+}
+
+export interface ModalFormErrors {
+  [fieldId: string]: string;
+}
+
+export interface ModalDialogProps {
+  open: boolean;
+  fields: ModalField[];
+  anchorEl: HTMLElement | null;
+  onClose: () => void;
+  onSubmit: (data: ModalFormData) => void;
+  loading?: boolean;
+  skillTypeIsOthers?: boolean;
+  skillSubtypeIsOthers?: boolean;
 }
 
 //Project Accordion table data types

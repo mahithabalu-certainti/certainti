@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Checkbox,
@@ -26,6 +25,9 @@ import {
   MultipleEditingCells,
   FieldChangeEvent,
   CellEditData,
+  ModalState,
+  FieldChangeValue,
+  DependencyRowData,
 } from './types';
 import { getEditingCellValue, renderFields } from './table-utils';
 import {
@@ -87,15 +89,7 @@ const ListTable = <T extends RowData>({
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
   const [isSaving, setIsSaving] = useState(false);
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
-  const [modalState, setModalState] = useState<{
-    open: boolean;
-    fields: any[];
-    rowId: string;
-    columnId: string;
-    skillTypeIsOthers: boolean;
-    skillSubtypeIsOthers: boolean;
-    anchorEl: HTMLElement | null;
-  }>({
+  const [modalState, setModalState] = useState<ModalState>({
     open: false,
     fields: [],
     rowId: '',
@@ -104,6 +98,11 @@ const ListTable = <T extends RowData>({
     skillSubtypeIsOthers: false,
     anchorEl: null,
   });
+
+  const visibleColumns = useMemo(
+    () => columns.filter((column) => !column.hide),
+    [columns]
+  );
 
   // handle initial expansion
   useEffect(() => {
@@ -271,7 +270,11 @@ const ListTable = <T extends RowData>({
     if (!rowData) return;
 
     // Validate all editing cells
-    const errors = validateDependentFields(columns, rowData, editingCells);
+    const errors = validateDependentFields(
+      visibleColumns,
+      rowData,
+      editingCells
+    );
 
     if (Object.keys(errors).length > 0) {
       // Update editing cells with errors
@@ -363,7 +366,7 @@ const ListTable = <T extends RowData>({
       if (!cell) return prev;
 
       // Get the column for this cell
-      const column = columns.find((col) => col.id === cell.columnId);
+      const column = visibleColumns.find((col) => col.id === cell.columnId);
       if (!column) return prev;
 
       const oldValue = cell.value;
@@ -425,7 +428,7 @@ const ListTable = <T extends RowData>({
 
       // Get fields that should be reset due to this change
       const fieldsToReset = getFieldsToReset(
-        columns,
+        visibleColumns,
         cell.columnId,
         value,
         oldValue
@@ -451,7 +454,7 @@ const ListTable = <T extends RowData>({
     });
 
     // Trigger onChange callback if configured
-    const column = columns.find(
+    const column = visibleColumns.find(
       (col) => col.id === editingCells[cellKey]?.columnId
     );
     if (column?.field?.onChange && onFieldChange) {
@@ -462,9 +465,9 @@ const ListTable = <T extends RowData>({
         const changeEvent: FieldChangeEvent = {
           rowId: editingCells[cellKey].rowId,
           columnId: editingCells[cellKey].columnId,
-          value,
-          oldValue: editingCells[cellKey].value,
-          rowData,
+          value: value as FieldChangeValue,
+          oldValue: editingCells[cellKey].value as FieldChangeValue,
+          rowData: rowData as DependencyRowData,
         };
 
         try {
@@ -476,7 +479,9 @@ const ListTable = <T extends RowData>({
     }
   };
 
-  const handleModalSubmit = async (modalData: Record<string, any>) => {
+  const handleModalSubmit = async (
+    modalData: Record<string, FieldChangeValue>
+  ) => {
     if (!onCellEdit) return;
 
     setIsSaving(true);
@@ -719,7 +724,7 @@ const ListTable = <T extends RowData>({
                 </TableCell>
               )}
 
-              {columns.map((column) =>
+              {visibleColumns.map((column) =>
                 column.sortable ? (
                   <TableSortHeader
                     key={column.id}
@@ -809,7 +814,9 @@ const ListTable = <T extends RowData>({
                       ? 20
                       : rowsPerPage
                 }
-                columnsCount={columns.length + (conditionMenuItems ? 1 : 0)}
+                columnsCount={
+                  visibleColumns.length + (conditionMenuItems ? 1 : 0)
+                }
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}
                 stickyColumnsCount={stickyColumnsCount}
@@ -821,7 +828,7 @@ const ListTable = <T extends RowData>({
               <TableRow sx={{ height: '32px' }}>
                 <TableCell
                   colSpan={
-                    columns.length +
+                    visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
                     (conditionMenuItems ? 1 : 0)
@@ -838,7 +845,7 @@ const ListTable = <T extends RowData>({
               <TableRow sx={{ height: '32px' }}>
                 <TableCell
                   colSpan={
-                    columns.length +
+                    visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
                     (conditionMenuItems ? 1 : 0)
@@ -931,7 +938,7 @@ const ListTable = <T extends RowData>({
                       )}
 
                       {/* Data cells */}
-                      {columns.map((column) => {
+                      {visibleColumns.map((column) => {
                         const cellKey = `${rowId}-${column.id}`;
                         const isEditing = editingCells[cellKey];
                         // const columnId = column.id;
@@ -948,7 +955,8 @@ const ListTable = <T extends RowData>({
                             ? cellValue
                             : '-';
 
-                        const isFirstDataColumn = column.id === columns[0].id;
+                        const isFirstDataColumn =
+                          column.id === visibleColumns[0].id;
                         const isChildRows = isFirstDataColumn && rowLevel !== 0;
 
                         return (
@@ -1000,13 +1008,13 @@ const ListTable = <T extends RowData>({
 
                               // Determine which fields to enable for editing
                               const fieldsToEdit = shouldEnableMultipleEdit(
-                                columns,
+                                visibleColumns,
                                 column.id
                               );
                               const newEditingCells: MultipleEditingCells = {};
 
                               fieldsToEdit.forEach((fieldId) => {
-                                const targetColumn = columns.find(
+                                const targetColumn = visibleColumns.find(
                                   (col) => col.id === fieldId
                                 );
                                 if (targetColumn?.editable) {
@@ -1264,7 +1272,7 @@ const ListTable = <T extends RowData>({
                         >
                           <TableCell
                             colSpan={
-                              columns.length +
+                              visibleColumns.length +
                               (selectable ? 1 : 0) +
                               (actionMenuItems?.length > 0 ? 1 : 0) +
                               (conditionMenuItems ? 1 : 0)
@@ -1287,7 +1295,7 @@ const ListTable = <T extends RowData>({
                         >
                           <TableCell
                             colSpan={
-                              columns.length +
+                              visibleColumns.length +
                               (selectable ? 1 : 0) +
                               (actionMenuItems?.length > 0 ? 1 : 0) +
                               (conditionMenuItems ? 1 : 0)
@@ -1303,7 +1311,7 @@ const ListTable = <T extends RowData>({
               <TableRow sx={{ height: '10px !important' }}>
                 <TableCell
                   colSpan={
-                    columns.length +
+                    visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
                     (conditionMenuItems ? 1 : 0)

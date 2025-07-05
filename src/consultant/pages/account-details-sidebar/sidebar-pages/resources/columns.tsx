@@ -116,6 +116,14 @@ export const getResourceColumns = (
       placeholder: '',
       options: resourceTypeOptions,
       resetDependentFields: ['resource_orgname'],
+      dependencies: [
+        {
+          dependsOn: ['resource_orgname'],
+          action: 'hidden',
+          condition: (value) => !value,
+          message: '',
+        },
+      ],
     },
   },
   {
