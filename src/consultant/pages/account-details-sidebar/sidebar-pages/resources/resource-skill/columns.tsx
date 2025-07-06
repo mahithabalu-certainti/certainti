@@ -1,5 +1,6 @@
 import { REGEX_PATTERNS } from '../../../../../../common-utils';
 import {
+  DependencyRowData,
   ListOption,
   ListTableColumn,
 } from '../../../../../../components/table/types';
@@ -10,7 +11,8 @@ import { dateFormatToYYYYMMDD } from '../utils';
 export const getResourceSkillColumns = (
   skillLevelOptions: ListOption[],
   skillTypeOptions: ListOption[],
-  skillSubTypeOptions: ListOption[]
+  skillSubTypeOptions: ListOption[],
+  handleSkillType: (rid: string) => void
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -55,98 +57,10 @@ export const getResourceSkillColumns = (
       options: skillTypeOptions,
       resetDependentFields: ['skill_subtype_name'],
       onChange: true,
-      dependencies: [
-        {
-          dependsOn: ['skill_type_name', 'skill_subtype_name'],
-          condition: (value, rowData) => {
-            const skillType = value;
-            const skillSubtype = rowData.skill_subtype_name;
-
-            const bothFieldsHaveValues =
-              skillType &&
-              skillType !== '' &&
-              skillSubtype &&
-              skillSubtype !== '';
-
-            if (!bothFieldsHaveValues) {
-              return false;
-            }
-
-            const typeFound = skillTypeOptions.find(
-              (opt) => String(opt.value) === String(skillType)
-            );
-            const subtypeFound = skillSubTypeOptions.find(
-              (opt) => String(opt.value) === String(skillSubtype)
-            );
-
-            // Show modal if either is "Others"
-            const shouldShowModal =
-              typeFound?.label.toLowerCase() === OthersEnum.Others ||
-              subtypeFound?.label.toLowerCase() === OthersEnum.Others;
-
-            return shouldShowModal;
-          },
-          action: 'show_modal',
-          modalFields: [
-            {
-              id: 'skill_type_others',
-              label: 'Skill Type(Others)',
-              type: 'text',
-              required: true,
-              placeholder: 'Skill Type(Others)',
-              validation: [
-                {
-                  regex: REGEX_PATTERNS.MIN_3,
-                  errorMessage: 'Skill type must more than 2 characters.',
-                },
-                {
-                  regex: REGEX_PATTERNS.MAX_64,
-                  errorMessage: 'Max length exceeded.',
-                },
-                {
-                  regex:
-                    REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-                  errorMessage:
-                    'Cannot start or end with a space or special character',
-                },
-                {
-                  regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
-                  errorMessage:
-                    "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
-                },
-              ],
-            },
-            {
-              id: 'skill_subtype_others',
-              label: 'Skill SubType(Others)',
-              type: 'text',
-              required: true,
-              placeholder: 'Skill SubType(Others)',
-              validation: [
-                {
-                  regex: REGEX_PATTERNS.MIN_3,
-                  errorMessage: 'Skill subtype must more than 2 characters.',
-                },
-                {
-                  regex: REGEX_PATTERNS.MAX_64,
-                  errorMessage: 'Max length exceeded.',
-                },
-                {
-                  regex:
-                    REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-                  errorMessage:
-                    'Cannot start or end with a space or special character',
-                },
-                {
-                  regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
-                  errorMessage:
-                    "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      getFieldData: (rowData: DependencyRowData) => {
+        handleSkillType(String(rowData.skill_type_rid));
+        return String(rowData.skill_type_rid);
+      },
     },
   },
   {
@@ -161,6 +75,9 @@ export const getResourceSkillColumns = (
       required: true,
       placeholder: 'Choose Skill SubType',
       options: skillSubTypeOptions,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.skill_subtype_rid);
+      },
       dependencies: [
         {
           dependsOn: 'skill_type_name',
@@ -203,7 +120,7 @@ export const getResourceSkillColumns = (
               label: 'Skill Type(Others)',
               type: 'text',
               required: true,
-              placeholder: 'Skill Type(Others)',
+              placeholder: 'Enter Skill Type(Others)',
               validation: [
                 {
                   regex: REGEX_PATTERNS.MIN_3,
@@ -231,7 +148,7 @@ export const getResourceSkillColumns = (
               label: 'Skill SubType(Others)',
               type: 'text',
               required: true,
-              placeholder: 'Skill SubType(Others)',
+              placeholder: 'Enter Skill SubType(Others)',
               validation: [
                 {
                   regex: REGEX_PATTERNS.MIN_3,

@@ -75,7 +75,7 @@ export type DependencyRowData = Record<string, DependencyValue>;
 export interface DependencyRule {
   dependsOn: string | string[];
   condition: (value: DependencyValue, rowData: DependencyRowData) => boolean;
-  action: 'required' | 'disabled' | 'hidden' | 'show_modal' | 'enable';
+  action: 'required' | 'disabled' | 'show_modal' | 'enable';
   message?: string;
   modalFields?: ModalField[];
 }
@@ -91,8 +91,8 @@ export interface ModalField {
 
 export interface DateFieldConfig {
   disableFutureDates?: boolean;
-  minDate?: string | null;
-  maxDate?: string | null;
+  minDate?: string | Date | null;
+  maxDate?: string | Date | null;
   fiscalYearValidation?: boolean;
 }
 
@@ -111,6 +111,12 @@ export interface TableField {
   onChange?: boolean;
   // Date field specific configuration
   dateConfig?: DateFieldConfig;
+  getFieldData?: (
+    rowData: DependencyRowData,
+    columnId: string
+  ) => string | number;
+  // Loading state
+  loading?: boolean;
 }
 
 export type ListFieldType =

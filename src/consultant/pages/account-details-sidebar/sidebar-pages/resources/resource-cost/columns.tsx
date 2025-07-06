@@ -9,7 +9,10 @@ import {
   ListTableColumn,
 } from '../../../../../../components/table/types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
-import { DATE_CONFIG } from '../../../../resource-form/form-data';
+import {
+  DATE_CONFIG,
+  getDateConstraints,
+} from '../../../../resource-form/form-data';
 import { dateFormatToYYYYMMDD } from '../utils';
 
 const getFiscalYears = (range: number) => {
@@ -21,6 +24,9 @@ const getFiscalYears = (range: number) => {
 };
 
 const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
+const { currentDate, previousDate } = getDateConstraints(
+  DATE_CONFIG.COST_FISCAL_YEARS_RANGE
+);
 
 export const getResourceCostColumns = (
   currencyOptions: ListOption[],
@@ -62,7 +68,7 @@ export const getResourceCostColumns = (
     id: 'effective_from',
     sortId: 'effective_from',
     label: 'Effective Date',
-    width: 150,
+    width: 160,
     sortable: true,
 
     render: (row: ResourceCostList) => (
@@ -76,7 +82,9 @@ export const getResourceCostColumns = (
       dateConfig: {
         fiscalYearValidation: true,
         disableFutureDates: true,
+        maxDate: previousDate,
       },
+      resetDependentFields: ['end_date'],
       dependencies: [
         {
           dependsOn: ['fiscal_year'],
@@ -86,7 +94,7 @@ export const getResourceCostColumns = (
         },
         {
           dependsOn: ['end_date'],
-          action: 'hidden',
+          action: 'enable',
           condition: (value) => !value,
           message: '',
         },
@@ -97,7 +105,7 @@ export const getResourceCostColumns = (
     id: 'end_date',
     sortId: 'end_date',
     label: 'End Date',
-    width: 150,
+    width: 160,
     sortable: true,
 
     render: (row: ResourceCostList) => (
@@ -111,6 +119,7 @@ export const getResourceCostColumns = (
       dateConfig: {
         fiscalYearValidation: true,
         disableFutureDates: true,
+        maxDate: currentDate,
       },
       dependencies: [
         {
@@ -193,7 +202,7 @@ export const getResourceCostColumns = (
       dependencies: [
         {
           dependsOn: ['resource_cost'],
-          action: 'hidden',
+          action: 'enable',
           condition: (value) => !value,
           message: '',
         },

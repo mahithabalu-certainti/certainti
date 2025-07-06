@@ -26,7 +26,7 @@ export const checkDependencies = <T extends RowData>(
 ): {
   isRequired: boolean;
   isDisabled: boolean;
-  isHidden: boolean;
+  isEnable: boolean;
   shouldShowModal: boolean;
   errorMessage?: string;
 } => {
@@ -34,14 +34,14 @@ export const checkDependencies = <T extends RowData>(
     return {
       isRequired: column.field?.required || false,
       isDisabled: false,
-      isHidden: false,
+      isEnable: false,
       shouldShowModal: false,
     };
   }
 
   let isRequired = column.field?.required || false;
   let isDisabled = false;
-  let isHidden = false;
+  let isEnable = false;
   let shouldShowModal = false;
   let errorMessage: string | undefined;
 
@@ -78,8 +78,8 @@ export const checkDependencies = <T extends RowData>(
         case 'disabled':
           isDisabled = true;
           break;
-        case 'hidden':
-          isHidden = true;
+        case 'enable':
+          isEnable = true;
           break;
         case 'show_modal':
           shouldShowModal = true;
@@ -91,7 +91,7 @@ export const checkDependencies = <T extends RowData>(
     }
   }
 
-  return { isRequired, isDisabled, isHidden, shouldShowModal, errorMessage };
+  return { isRequired, isDisabled, isEnable, shouldShowModal, errorMessage };
 };
 
 // Helper function to get row ID from row data
@@ -156,11 +156,11 @@ export const validateDependentFields = <T extends RowData>(
         (!startDateValue && endDateValue)
       ) {
         if (column.id === 'effective_from' && endDateValue && !cellValue) {
-          errors[cellKey] = 'Start Date is required when End Date is provided';
+          errors[cellKey] = 'Both Effective date and End date must be provided';
           continue;
         }
         if (column.id === 'end_date' && startDateValue && !cellValue) {
-          errors[cellKey] = 'End Date is required when Start Date is provided';
+          errors[cellKey] = 'Both Effective date and End date must be provided';
           continue;
         }
       }
@@ -190,8 +190,8 @@ export const validateDependentFields = <T extends RowData>(
             editingCells
           );
           if (fiscalYearValue) {
-            const fiscalYearStart = dayjs(`${fiscalYearValue}-04-01`);
-            const fiscalYearEnd = dayjs(`${Number(fiscalYearValue) + 1}-03-31`);
+            const fiscalYearStart = dayjs(`${fiscalYearValue}-01-01`);
+            const fiscalYearEnd = dayjs(`${fiscalYearValue}-12-31`);
 
             if (
               !selectedDate.isBetween(
@@ -202,7 +202,7 @@ export const validateDependentFields = <T extends RowData>(
               )
             ) {
               errors[cellKey] =
-                `Date must be within fiscal year ${fiscalYearValue}`;
+                `Date must be within the selected fiscal year ${fiscalYearValue}`;
               continue;
             }
           }
@@ -244,7 +244,7 @@ export const validateDependentFields = <T extends RowData>(
             'day'
           )
         ) {
-          errors[cellKey] = 'End Date must be after Start Date';
+          errors[cellKey] = 'End Date must be after Effective Date';
           continue;
         }
       }

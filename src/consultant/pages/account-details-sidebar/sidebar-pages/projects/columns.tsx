@@ -4,7 +4,10 @@ import {
   valueDisplay,
   REGEX_PATTERNS,
 } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../components/table/types';
 import { Project } from '../../../../../components/table/types';
 import { ListOption } from '../../../../../components/table/types';
 import { OthersEnum } from '../../../../types';
@@ -164,6 +167,9 @@ export const getProjectColumns = (
       required: false,
       placeholder: 'Choose Classification',
       options: memoizedClassification,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.project_classification_rid);
+      },
       dependencies: [
         {
           dependsOn: 'classification_name',

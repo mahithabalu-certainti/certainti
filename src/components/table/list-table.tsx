@@ -28,6 +28,7 @@ import {
   ModalState,
   FieldChangeValue,
   DependencyRowData,
+  ListTableColumn,
 } from './types';
 import { getEditingCellValue, renderFields } from './table-utils';
 import {
@@ -332,6 +333,8 @@ const ListTable = <T extends RowData>({
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      // If modal is open, do nothing
+      if (modalState.open) return;
       // Skip if clicking on any picker elements
       const isPickerElement = target.closest(
         '.MuiPickersPopper-root, .MuiDialog-root, .MuiCalendarOrClockPicker-root, .MuiPaper-root, .MuiPopover-root'
@@ -356,7 +359,7 @@ const ListTable = <T extends RowData>({
       document.removeEventListener('mousedown', handleClickOutside);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingCells]);
+  }, [editingCells, modalState.open]);
 
   const handleValueChange = async (cellKey: string, value: string | number) => {
     setEditingCells((prev) => {
@@ -424,6 +427,19 @@ const ListTable = <T extends RowData>({
         });
 
         return updated;
+      } else {
+        // If there was a modal open and this change does NOT require modal, close/reset it
+        if (modalState.open) {
+          setModalState({
+            open: false,
+            fields: [],
+            rowId: '',
+            columnId: '',
+            skillTypeIsOthers: false,
+            skillSubtypeIsOthers: false,
+            anchorEl: null,
+          });
+        }
       }
 
       // Get fields that should be reset due to this change
@@ -500,6 +516,13 @@ const ListTable = <T extends RowData>({
           modalData: modalData, // The additional form data
         },
       ];
+      // Add modal data fields as separate entries
+      Object.entries(modalData).forEach(([columnId, value]) => {
+        updates.push({
+          columnId,
+          value,
+        });
+      });
 
       // Include other cell edits if needed
       Object.entries(editingCells).forEach(([key, cell]) => {
@@ -519,6 +542,99 @@ const ListTable = <T extends RowData>({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCellDoubleClick = (
+    rowId: string,
+    column: ListTableColumn<T>,
+    row: T & { _level: number; _type: string },
+    editingCells: MultipleEditingCells,
+    cellKey: string
+  ) => {
+    if (editDisableLevel?.includes(row._level)) {
+      return;
+    }
+    if (!column.editable) return;
+    if (Object.keys(editingCells).length > 0) {
+      return;
+    }
+
+    // Determine which fields to enable for editing
+    const fieldsToEdit = shouldEnableMultipleEdit(visibleColumns, column.id);
+    const newEditingCells: MultipleEditingCells = {};
+
+    fieldsToEdit.forEach((fieldId) => {
+      const targetColumn = visibleColumns.find((col) => col.id === fieldId);
+      if (targetColumn?.editable) {
+        let editingValue: string | number;
+
+        if (targetColumn.field?.getFieldData) {
+          const value = targetColumn.field.getFieldData(row, fieldId);
+          if (value !== undefined && value !== '') {
+            editingValue = value;
+          } else {
+            editingValue = getEditingCellValue(row, targetColumn);
+          }
+        } else {
+          editingValue = getEditingCellValue(row, targetColumn);
+        }
+        const key = `${rowId}-${fieldId}`;
+        // Check if modal should open for this initial value
+        const modalCheck = shouldShowModalForValue(
+          targetColumn,
+          editingValue,
+          row,
+          newEditingCells
+        );
+        if (modalCheck.shouldShow && modalCheck.modalFields) {
+          let skillTypeIsOthers = false;
+          let skillSubtypeIsOthers = false;
+
+          if (
+            targetColumn.id === 'skill_type_name' ||
+            targetColumn.id === 'skill_subtype_name'
+          ) {
+            const currentSkillType =
+              targetColumn.id === 'skill_type_name'
+                ? editingValue
+                : getDependentValue('skill_type_name', row, newEditingCells);
+
+            const currentSkillSubtype =
+              targetColumn.id === 'skill_subtype_name'
+                ? editingValue
+                : getDependentValue('skill_subtype_name', row, newEditingCells);
+
+            skillTypeIsOthers =
+              currentSkillType === skillTypeIds?.othersSkillTypeId;
+            skillSubtypeIsOthers =
+              currentSkillSubtype === skillTypeIds?.othersSkillSubTypeId;
+          }
+          const anchorEl = document.querySelector(
+            `[data-editing="${cellKey}"]`
+          );
+
+          setModalState({
+            open: true,
+            fields: modalCheck.modalFields || [],
+            rowId: rowId,
+            columnId: targetColumn.id,
+            skillTypeIsOthers,
+            skillSubtypeIsOthers,
+            anchorEl: anchorEl as HTMLElement,
+          });
+        }
+        newEditingCells[key] = {
+          rowId,
+          columnId: fieldId,
+          value: editingValue,
+          originalValue: editingValue,
+          error: null,
+          isDependent: fieldId !== column.id,
+        };
+      }
+    });
+
+    setEditingCells(newEditingCells);
   };
 
   // Flatten nested data for display
@@ -962,9 +1078,7 @@ const ListTable = <T extends RowData>({
                         return (
                           <TableCell
                             key={`${rowId}-${column.id}`}
-                            data-editing={
-                              isEditing ? `${rowId}-${column.id}` : undefined
-                            }
+                            data-editing={`${rowId}-${column.id}`}
                             sx={{
                               width: column.width || 160,
                               minWidth: column.width || 160,
@@ -998,43 +1112,13 @@ const ListTable = <T extends RowData>({
                                 : 'group-hover:!text-[#1755E7]')
                             } cursor-context-menu`}
                             onDoubleClick={() => {
-                              if (editDisableLevel?.includes(row._level)) {
-                                return;
-                              }
-                              if (!column.editable) return;
-                              if (Object.keys(editingCells).length > 0) {
-                                return;
-                              }
-
-                              // Determine which fields to enable for editing
-                              const fieldsToEdit = shouldEnableMultipleEdit(
-                                visibleColumns,
-                                column.id
+                              handleCellDoubleClick(
+                                rowId,
+                                column,
+                                row,
+                                editingCells,
+                                cellKey
                               );
-                              const newEditingCells: MultipleEditingCells = {};
-
-                              fieldsToEdit.forEach((fieldId) => {
-                                const targetColumn = visibleColumns.find(
-                                  (col) => col.id === fieldId
-                                );
-                                if (targetColumn?.editable) {
-                                  const editingValue = getEditingCellValue(
-                                    row,
-                                    targetColumn
-                                  );
-                                  const key = `${rowId}-${fieldId}`;
-                                  newEditingCells[key] = {
-                                    rowId,
-                                    columnId: fieldId,
-                                    value: editingValue,
-                                    originalValue: editingValue,
-                                    error: null,
-                                    isDependent: fieldId !== column.id,
-                                  };
-                                }
-                              });
-
-                              setEditingCells(newEditingCells);
                             }}
                           >
                             {isEditing ? (

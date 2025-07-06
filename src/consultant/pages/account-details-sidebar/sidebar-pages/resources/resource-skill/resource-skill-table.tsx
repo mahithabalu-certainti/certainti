@@ -170,15 +170,20 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 
   const getRowId = (row: ResourceSkillList) => row?.rid || '';
 
+  const handleSkillType = (rid: string) => {
+    setCurrentSkillType(rid);
+  };
+
   const resourceSkillColumns = getResourceSkillColumns(
     memoizedSkillLevels,
     memoizedSkillType,
-    memoizedSkillSubType
+    memoizedSkillSubType,
+    handleSkillType
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'skill_type_name' && event.value) {
-      setCurrentSkillType(event.value);
+      setCurrentSkillType(String(event.value));
     }
   };
 

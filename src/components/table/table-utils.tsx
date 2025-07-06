@@ -153,6 +153,15 @@ export const renderFields = <T extends RowData>({
 
   // Get options for select fields
   const columnOptions = column.field?.options || [];
+  const loading = column.field?.loading || false;
+
+  if (loading) {
+    return (
+      <div className='w-full h-[30px] px-2 flex items-center justify-start'>
+        Loading...
+      </div>
+    );
+  }
 
   switch (column?.field?.type) {
     case 'text':

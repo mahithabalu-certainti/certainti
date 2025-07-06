@@ -5,6 +5,7 @@ import {
   REGEX_PATTERNS,
 } from '../../../../../common-utils';
 import {
+  DependencyRowData,
   ListTableColumn,
   Project,
 } from '../../../../../components/table/types';
@@ -166,6 +167,9 @@ export const getAllProjectListColumns = (
       required: false,
       placeholder: 'Choose Classification',
       options: projectClassificationOption,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.project_classification_rid);
+      },
       dependencies: [
         {
           dependsOn: 'classification_name',

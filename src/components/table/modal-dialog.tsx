@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Popover, TextField, Box, Tooltip } from '@mui/material';
+import { TextField, Box, Tooltip } from '@mui/material';
 import TextButton from '../button/text-button';
 import {
   ModalField,
@@ -22,6 +22,20 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState<ModalFormData>({});
   const [errors, setErrors] = useState<ModalFormErrors>({});
+  const [position, setPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+      });
+    }
+  }, [anchorEl]);
 
   // Determine which fields to show based on the scenario
   const getVisibleFields = (): ModalField[] => {
@@ -139,27 +153,21 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
 
   return (
-    <Popover
-      id='table-popover'
-      open={open && Boolean(anchorEl)}
-      anchorEl={open ? anchorEl : null}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'left',
-      }}
-      PaperProps={{
-        sx: {
-          width: 300,
-          minWidth: 300,
-          marginTop: '1px',
-          borderRadius: '2px',
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E7EB',
-        },
+    <Box
+      sx={{
+        position: 'absolute',
+        top: position?.top,
+        left: position?.left,
+        width: 300,
+        border: '1px solid #E5E7EB',
+        borderRadius: '2px',
+        backgroundColor: 'white',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+        zIndex: 1000,
+        mt: 0.5,
+        opacity: open ? 1 : 0,
+        pointerEvents: open ? 'auto' : 'none',
+        transition: 'opacity 250ms ease-in-out',
       }}
     >
       <Box sx={{ p: 2 }}>
@@ -169,89 +177,101 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
             const isTextarea = field.type === 'textarea';
 
             return (
-              <div
-                key={field.id}
-                className={`${isTextarea ? '!h-auto' : '!h-[32px]'} !max-h-[${isTextarea ? 'auto' : '32px'}] relative`}
-              >
-                <TextField
-                  key={field.id}
-                  fullWidth
-                  size='small'
-                  type={getInputType(field.type)}
-                  multiline={isTextarea}
-                  rows={isTextarea ? 3 : 1}
-                  placeholder={field.placeholder || `Enter ${field.label}`}
-                  value={getInputValue(field.id)}
-                  error={hasError}
-                  onChange={(e) => {
-                    const value =
-                      field.type === 'number'
-                        ? e.target.value === ''
-                          ? ''
-                          : Number(e.target.value)
-                        : e.target.value;
-                    handleChange(field.id, value);
-                  }}
-                  disabled={loading}
+              <div key={field.id}>
+                <Box
+                  component='label'
+                  htmlFor={`modal-field-${field.id}`}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      height: isTextarea ? 'auto' : '32px',
-
-                      borderRadius: '2px',
-
-                      '& fieldset': {
-                        borderColor: hasError ? '#ef4444' : '#60A5FA',
-                      },
-
-                      '&:hover fieldset': {
-                        borderColor: hasError ? '#ef4444' : '#60A5FA',
-                      },
-
-                      '&.Mui-focused fieldset': {
-                        borderColor: hasError ? '#ef4444' : '#60A5FA',
-                      },
-
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: errors[field.id]
-                          ? '1px solid #ef4444'
-                          : '1px solid #60A5FA',
-                      },
-
-                      ...(hasError && {
-                        backgroundColor: '#FEF2F2',
-                      }),
-                    },
-
-                    '& .MuiInputBase-input': {
-                      fontSize: '13px',
-                    },
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: '#374151',
+                    mb: 0.5,
                   }}
-                />
-                {hasError && (
-                  <Tooltip
-                    title={errors[field.id]}
-                    arrow
-                    placement='top'
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          backgroundColor: '#FEF2F2',
-                          mr: 1,
+                >
+                  {field.label}
+                  {field.required && (
+                    <span style={{ color: '#EF4444', marginLeft: '4px' }}>
+                      *
+                    </span>
+                  )}
+                </Box>
+                <div
+                  className={`${isTextarea ? '!h-auto' : '!h-[32px]'} !max-h-[${isTextarea ? 'auto' : '32px'}] relative`}
+                >
+                  <TextField
+                    id={`modal-field-${field.id}`}
+                    fullWidth
+                    size='small'
+                    type={getInputType(field.type)}
+                    multiline={isTextarea}
+                    rows={isTextarea ? 3 : 1}
+                    placeholder={field.placeholder || `Enter ${field.label}`}
+                    value={getInputValue(field.id)}
+                    error={hasError}
+                    onChange={(e) => {
+                      const value =
+                        field.type === 'number'
+                          ? e.target.value === ''
+                            ? ''
+                            : Number(e.target.value)
+                          : e.target.value;
+                      handleChange(field.id, value);
+                    }}
+                    disabled={loading}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: isTextarea ? 'auto' : '32px',
+                        borderRadius: '2px',
+                        '& fieldset': {
+                          borderColor: hasError ? '#ef4444' : '#60A5FA',
                         },
+                        '&:hover fieldset': {
+                          borderColor: hasError ? '#ef4444' : '#60A5FA',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: hasError ? '#ef4444' : '#60A5FA',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: errors[field.id]
+                            ? '1px solid #ef4444'
+                            : '1px solid #60A5FA',
+                        },
+                        ...(hasError && {
+                          backgroundColor: '#FEF2F2',
+                        }),
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '13px',
                       },
                     }}
-                  >
-                    <span
-                      className={`h-[26px] w-6 flex items-center justify-center absolute ${
-                        isTextarea
-                          ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40'
-                          : 'top-[3px] right-0'
-                      } cursor-pointer`}
+                  />
+                  {hasError && (
+                    <Tooltip
+                      title={errors[field.id]}
+                      arrow
+                      placement='top'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#FEF2F2',
+                            mr: 1,
+                          },
+                        },
+                      }}
                     >
-                      <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-                    </span>
-                  </Tooltip>
-                )}
+                      <span
+                        className={`h-[26px] w-6 flex items-center justify-center absolute ${
+                          isTextarea
+                            ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40'
+                            : 'top-[3px] right-0'
+                        } cursor-pointer`}
+                      >
+                        <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+                      </span>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -289,7 +309,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
           />
         </Box>
       </Box>
-    </Popover>
+    </Box>
   );
 };
 

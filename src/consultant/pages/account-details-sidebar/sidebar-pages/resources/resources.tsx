@@ -566,11 +566,17 @@ const Resource: React.FC<ResourceProps> = ({
 
   const getRowId = (row: ResourceList) => row.rid;
 
+  const handleCountry = (country: string) => {
+    setCurrentCountry(country);
+  };
+
   const resourceColumns = getResourceColumns(
     memoizedStatus,
     memoizedResourceType,
     countryOptions,
     regionOptions,
+    handleCountry,
+    region.isPending,
     handleResourceClick
   );
 

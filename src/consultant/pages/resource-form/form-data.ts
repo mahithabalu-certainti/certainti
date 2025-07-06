@@ -38,7 +38,7 @@ const getSkillStartDateOptions = (range: number) => {
 };
 
 // 3. Extract date calculations
-const getDateConstraints = (yearsBack: number) => {
+export const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
   minDate.setFullYear(currentDate.getFullYear() - yearsBack + 1);

@@ -1,5 +1,6 @@
 import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
 import {
+  DependencyRowData,
   ListOption,
   ListTableColumn,
 } from '../../../../../components/table/types';
@@ -11,6 +12,8 @@ export const getResourceColumns = (
   resourceTypeOptions: ListOption[],
   countryOptions: ListOption[],
   regionOptions: ListOption[],
+  onCountryClick: (country: string) => void,
+  regionLoading: boolean,
   onResourceIdClick?: (row: ResourceList) => void
 ): ListTableColumn<ResourceList>[] => [
   {
@@ -119,7 +122,7 @@ export const getResourceColumns = (
       dependencies: [
         {
           dependsOn: ['resource_orgname'],
-          action: 'hidden',
+          action: 'enable',
           condition: (value) => !value,
           message: '',
         },
@@ -241,6 +244,10 @@ export const getResourceColumns = (
       resetDependentFields: ['region_name'],
       // Enable onChange callback to fetch regions
       onChange: true,
+      getFieldData: (rowData: DependencyRowData) => {
+        onCountryClick(String(rowData.country_rid));
+        return String(rowData.country_rid);
+      },
     },
   },
   {
@@ -252,17 +259,19 @@ export const getResourceColumns = (
     editable: true,
     field: {
       type: 'select',
-      required: true,
+      required: false,
       placeholder: 'Choose Region',
       options: regionOptions,
-      // Enable onChange callback to fetch cities
-      onChange: true,
+      loading: regionLoading,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.region_rid);
+      },
       dependencies: [
         {
           dependsOn: 'country_name',
           condition: (value) => !value,
-          action: 'disabled',
-          message: 'Please Choose a country first',
+          action: 'enable',
+          message: '',
         },
       ],
     },
