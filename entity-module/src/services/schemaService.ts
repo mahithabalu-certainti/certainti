@@ -13,7 +13,7 @@ import {
   ResourceFiscal,
   setupResourceFiscalSeq,
 } from "../models/resourceFiscal";
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import {
   ResourcesHistory,
   setupResourceHistorySeq,
@@ -87,7 +87,7 @@ class SchemaService {
     parentAccountId: string;
   }> {
     try {
-      const mainDbSequelize = await initSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
 
       const [account]: any[] = await mainDbSequelize.query(
         `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid and r_number = :r_number`,
@@ -206,7 +206,7 @@ class SchemaService {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
-      const mainDdSequilze = await initSequelize();
+      const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -481,7 +481,7 @@ class SchemaService {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
-      const mainDdSequilze = await initSequelize();
+      const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -947,7 +947,7 @@ class SchemaService {
    */
   async fetchParentAccount(parentAccountId: string): Promise<string> {
     try {
-      const sequelize = await initSequelize();
+      const sequelize = await initMainDbSequelize();
 
       const [account]: any[] = await sequelize.query(
         `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
@@ -972,7 +972,7 @@ class SchemaService {
    */
   async fetchAccountByNumber(accountNumber: string) {
     try {
-      const sequelize = await initSequelize();
+      const sequelize = await initMainDbSequelize();
 
       let accountRnumber = accountNumber;
 
@@ -1088,7 +1088,7 @@ class SchemaService {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
-      const mainDbSequelize = await initSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
 
       const ResourcesModel = await Resources.initialize(sequelize, schemaName);
 
@@ -1453,7 +1453,7 @@ class SchemaService {
 
   async fetchAccountById(accountId: string) {
     try {
-      const mainDbSequelize = await initSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
         `SELECT ${MAIN_SCHEMA_NAME}.account.*, ${MAIN_SCHEMA_NAME}.status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
           LEFT JOIN ${MAIN_SCHEMA_NAME}.status ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
@@ -1483,7 +1483,7 @@ async fetchAllProjects(
     bothParentAndChild: boolean
   ) {
     try {
-      const mainDbSequelize = await initSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
       const MAIN_SCHEMA_NAME = 'trd365';
       const replacements: any[] = [];
 
@@ -1743,7 +1743,7 @@ async fetchAllProjects(
     bothParentAndChild: boolean
   ) {
     try {
-      const mainDbSequelize = await initSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
       const MAIN_SCHEMA_NAME = 'trd365';
       const replacements: any[] = [];
 
@@ -2161,7 +2161,7 @@ async fetchAllProjects(
   }
   async fetchSchemaByUserId(userId: string) {
     try {
-      const mainDbInstance = await initSequelize();
+      const mainDbInstance = await initMainDbSequelize();
 
       let account: any[] = await mainDbInstance.query(
         `SELECT rid, r_number, storage_type, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account`,
@@ -3154,7 +3154,7 @@ async fetchAllProjects(
 
   async insertUserDetails(projectData: any): Promise<any> {
     try {
-      const mainDbInit = await initSequelize();
+      const mainDbInit = await initMainDbSequelize();
 
       const createdById = projectData.created_by;
       const modifiedById = projectData.modified_by;
@@ -3197,7 +3197,7 @@ async fetchAllProjects(
  */
 async getChildAccounts(entityId: string) {
   try {
-    const mainDbSequelize = await initSequelize();
+    const mainDbSequelize = await initMainDbSequelize();
     
     const childAccounts = await mainDbSequelize.query(
       `SELECT * FROM ${MAIN_SCHEMA_NAME}.account 

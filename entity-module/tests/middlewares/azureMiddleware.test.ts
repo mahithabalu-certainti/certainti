@@ -5,10 +5,10 @@ import { checkUserStatusMiddleware } from "../../src/middlewares/authMiddleware"
 
 // Mocks
 jest.mock("../../src/config/mainDataSource", () => ({
-  initSequelize: jest.fn(),
+  initMainDbSequelize: jest.fn(),
 }));
 
-const { initSequelize } = require("../../src/config/mainDataSource");
+const { initMainDbSequelize } = require("../../src/config/mainDataSource");
 
 describe("checkUserStatusMiddleware", () => {
   let req: Partial<Request>;
@@ -39,7 +39,7 @@ describe("checkUserStatusMiddleware", () => {
   it("should proceed if x-azure-id is present and user is active", async () => {
     req.headers = { "x-azure-id": "azure-123" };
     const mockUser = { status: "active", rid: "user-1", profile_rid: "profile-1", email: "test@test.com" };
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest.fn().mockResolvedValue([mockUser]),
     });
     await checkUserStatusMiddleware()(req as Request, res as Response, next);
@@ -49,7 +49,7 @@ describe("checkUserStatusMiddleware", () => {
   it("should proceed if x-user-id is present and user is active", async () => {
     req.headers = { "x-user-id": "user-123" };
     const mockUser = { status: "active", rid: "user-123", profile_rid: "profile-1", email: "test@test.com" };
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest.fn().mockResolvedValue([mockUser]),
     });
     await checkUserStatusMiddleware()(req as Request, res as Response, next);
@@ -58,7 +58,7 @@ describe("checkUserStatusMiddleware", () => {
 
   it("should return 403 if user is not found", async () => {
     req.headers = { "x-azure-id": "azure-123" };
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest.fn().mockResolvedValue([]),
     });
     await checkUserStatusMiddleware()(req as Request, res as Response, next);
@@ -73,7 +73,7 @@ describe("checkUserStatusMiddleware", () => {
   it("should return 403 if user is inactive", async () => {
     req.headers = { "x-azure-id": "azure-123" };
     const mockUser = { status: "inactive", rid: "user-1", profile_rid: "profile-1", email: "test@test.com" };
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest.fn().mockResolvedValue([mockUser]),
     });
     await checkUserStatusMiddleware()(req as Request, res as Response, next);
@@ -88,7 +88,7 @@ describe("checkUserStatusMiddleware", () => {
   it("should skip permission check if permissionName is NA", async () => {
     req.headers = { "x-azure-id": "azure-123" };
     const mockUser = { status: "active", rid: "user-1", profile_rid: "profile-1", email: "test@test.com" };
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest.fn().mockResolvedValue([mockUser]),
     });
     await checkUserStatusMiddleware("NA")(req as Request, res as Response, next);
@@ -99,7 +99,7 @@ describe("checkUserStatusMiddleware", () => {
     req.headers = { "x-azure-id": "azure-123" };
     const mockUser = { status: "active", rid: "user-1", profile_rid: "profile-1", email: "test@test.com" };
     // Mock the DB for user lookup, permission lookup, profile access, user access
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest
         .fn()
         // user lookup
@@ -119,7 +119,7 @@ describe("checkUserStatusMiddleware", () => {
     req.headers = { "x-azure-id": "azure-123" };
     const mockUser = { status: "active", rid: "user-1", profile_rid: "profile-1", email: "test@test.com" };
     // Mock the DB for user lookup, permission lookup, profile access, user access, denial insert
-    initSequelize.mockResolvedValue({
+    initMainDbSequelize.mockResolvedValue({
       query: jest
         .fn()
         // user lookup
@@ -144,7 +144,7 @@ describe("checkUserStatusMiddleware", () => {
 
   it("should return 500 if an error is thrown", async () => {
     req.headers = { "x-azure-id": "azure-123" };
-    initSequelize.mockRejectedValue(new Error("DB error"));
+    initMainDbSequelize.mockRejectedValue(new Error("DB error"));
     await checkUserStatusMiddleware()(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(HttpStatus.FAILED);
     expect(res.json).toHaveBeenCalledWith({

@@ -56,7 +56,7 @@ async function getAzureSecrets() {
   }
 }
  
-export async function initSequelize() {
+export async function initMainDbSequelize() {
   try {
     if (sequelize) {
       return sequelize;

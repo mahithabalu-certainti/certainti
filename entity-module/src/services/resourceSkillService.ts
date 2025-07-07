@@ -9,7 +9,7 @@ import SchemaService from "./schemaService";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import { Resources } from "../models/resource";
 
@@ -37,7 +37,7 @@ class ResourceSkillService {
    */
   private async getMainDbSequelize(): Promise<Sequelize> {
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await initSequelize();
+      this.mainDbSequelize = await initMainDbSequelize();
     }
     return this.mainDbSequelize;
   }

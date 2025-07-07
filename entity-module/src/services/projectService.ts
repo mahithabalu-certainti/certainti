@@ -15,7 +15,7 @@ import {
   ProjectHistory,
   setupProjectHistorySeq,
 } from "../models/projectHistory";
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import {
   KeyContact,
   setupKeyContactsSequence,
@@ -117,7 +117,7 @@ export class ProjectService {
   async createProjectTables(accountNumber: string) {
     try {
       const orgDbSequlize = await initOrgSequelize();
-      const mainDbSequlize = await initSequelize();
+      const mainDbSequlize = await initMainDbSequelize();
       const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       
 
@@ -521,7 +521,7 @@ export class ProjectService {
       let projectData = await this.projectIngestion.fetchProjectById(accountRNumber, projectId);
 
       if (projectData) {
-        const mainDbInit = await initSequelize();
+        const mainDbInit = await initMainDbSequelize();
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
@@ -1755,7 +1755,7 @@ export class ProjectService {
     data?: { projectClassifications: any; count: number };
   }> {
     try {
-      const mainDbSequlize = await initSequelize();
+      const mainDbSequlize = await initMainDbSequelize();
       const projectClassifications = await mainDbSequlize.query(
         `SELECT rid, classification_name, classification_description, classification_status
          FROM ${MAIN_SCHEMA_NAME}.project_classification
@@ -1802,7 +1802,7 @@ export class ProjectService {
   ): Promise<string | null> {
     const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
     try {
-      const mainDb = await initSequelize();
+      const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
         replacements: { accountRid },
         type: "SELECT",

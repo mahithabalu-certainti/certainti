@@ -1,4 +1,4 @@
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE, TYPES } from "../utils/constants";
 import { setResourceSkillData } from "../utils/helpers";
@@ -6,7 +6,7 @@ import { setResourceSkillData } from "../utils/helpers";
 export default class ResourceSkillGraphQlService {
 
 async updateInlineResourceSkill (data : any) {
-    const mainSequelize = await initSequelize();
+    const mainSequelize = await initMainDbSequelize();
     const orgSequelize = await initOrgSequelize();
 
     let fetchParentAccount : any = await mainSequelize.query(rawQueries.fetchParentAccount(data.account_rid))

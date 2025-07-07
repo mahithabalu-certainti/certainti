@@ -13,7 +13,7 @@ import { ProjectTimeline } from "../models/projectTimeline";
 import { KeyContact } from "../models/keyContactDetails";
 import { KeyContactService } from "./keyContactService";
 import { ProjectSummary } from "../models/projectSummary";
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import { AccountFiscal } from "../models/accountFiscal";
 import { ProjectHistory } from "../models/projectHistory";
@@ -60,7 +60,7 @@ class ProjectIngestionService {
 
   private async getMainSequelize(): Promise<Sequelize> {
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await initSequelize();
+      this.mainDbSequelize = await initMainDbSequelize();
     }
     return this.mainDbSequelize;
   }

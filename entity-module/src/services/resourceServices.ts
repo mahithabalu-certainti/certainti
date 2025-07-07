@@ -1,4 +1,4 @@
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
 import { ResourceFiscal } from "../models/resourceFiscal";
@@ -761,7 +761,7 @@ export class ResourceService {
     };
 
     try {
-      const sequelize = await initSequelize();
+      const sequelize = await initMainDbSequelize();
 
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {

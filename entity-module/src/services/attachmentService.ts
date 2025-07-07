@@ -5,7 +5,7 @@ import { Attachment, setupAttachmentSeq } from "../models/attachments";
 import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ICreateAttachment } from "../utils/types";
 import { Op, Sequelize } from "sequelize";
-import { initSequelize } from "../config/mainDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
 import { AttachmentTimeline, setupAttachmentTimelineSequence } from "../models/attachmentTimeline";
@@ -168,7 +168,7 @@ async createAttachment(
    async createAttachmentTables(accountNumber: string) {
     try {
       const orgDbSequlize = await initOrgSequelize();
-      const mainDbSequlize = await initSequelize();
+      const mainDbSequlize = await initMainDbSequelize();
       const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       
 
@@ -422,7 +422,7 @@ async getAttachments(
     const documentTypeIds = [...new Set(paginatedAttachments.map(att => att.document_type_rid))];
     const userIds = [...new Set(paginatedAttachments.map(att => att.created_by))];
 
-    const mainSequelize = await initSequelize();
+    const mainSequelize = await initMainDbSequelize();
 
     const [documentTypes, users] = await Promise.all([
       documentTypeIds.length > 0 
@@ -526,7 +526,7 @@ async getDocumentTypeAndCategory(category_rid?: string): Promise<{
   data?: { documentTypes: any[]; documentCategories: any[] };
 }> {
   try {
-    const mainSequelize = await initSequelize();
+    const mainSequelize = await initMainDbSequelize();
 
     let whereCategory="";
     if(category_rid){

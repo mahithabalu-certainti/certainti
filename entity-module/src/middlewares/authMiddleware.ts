@@ -1,6 +1,6 @@
 import {Request, Response, NextFunction} from 'express';
 import { HttpStatus } from '../utils/constants';
-import { initSequelize } from '../config/mainDataSource';
+import { initMainDbSequelize } from '../config/mainDataSource';
 import {constants} from "../utils/constants";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -41,7 +41,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
         return;
       }
   
-      const sequelize = await initSequelize();
+      const sequelize = await initMainDbSequelize();
       const users = await sequelize.query(
         constants.SQL_GET_USER.replace("{whereClause}", whereClause),
         {
@@ -109,7 +109,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
     permissionName: string,
     apiEndpoint: string
   ): Promise<boolean> => {
-    const sequelize = await initSequelize();
+    const sequelize = await initMainDbSequelize();
   
     // Get permissionId from module_permission table
     const permissionResult = await sequelize.query(
