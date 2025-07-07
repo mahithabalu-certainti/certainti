@@ -19,6 +19,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   loading = false,
   skillTypeIsOthers = false,
   skillSubtypeIsOthers = false,
+  initialValues,
 }) => {
   const [formData, setFormData] = useState<ModalFormData>({});
   const [errors, setErrors] = useState<ModalFormErrors>({});
@@ -36,6 +37,12 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
       });
     }
   }, [anchorEl]);
+
+  useEffect(() => {
+    if (open) {
+      setFormData(initialValues || {});
+    }
+  }, [open, initialValues]);
 
   // Determine which fields to show based on the scenario
   const getVisibleFields = (): ModalField[] => {
@@ -152,6 +159,10 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
     }
   }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
 
+  if (!open) {
+    return null;
+  }
+
   return (
     <Box
       sx={{
@@ -165,10 +176,8 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
         boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
         zIndex: 1000,
         mt: 0.5,
-        opacity: open ? 1 : 0,
-        pointerEvents: open ? 'auto' : 'none',
-        transition: 'opacity 250ms ease-in-out',
       }}
+      className='opacity-0 animate-[fadeIn_300ms_ease-in-out_forwards]'
     >
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

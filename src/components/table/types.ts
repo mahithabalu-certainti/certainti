@@ -270,6 +270,7 @@ export interface ModalState {
   skillTypeIsOthers: boolean;
   skillSubtypeIsOthers: boolean;
   anchorEl: HTMLElement | null;
+  modalFieldValues?: ModalFormData;
 }
 
 // Modal dialog specific types
@@ -292,6 +293,7 @@ export interface ModalDialogProps {
   loading?: boolean;
   skillTypeIsOthers?: boolean;
   skillSubtypeIsOthers?: boolean;
+  initialValues?: ModalFormData;
 }
 
 //Project Accordion table data types

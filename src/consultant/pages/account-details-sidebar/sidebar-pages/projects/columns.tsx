@@ -182,7 +182,7 @@ export const getProjectColumns = (
           action: 'show_modal',
           modalFields: [
             {
-              id: 'classification_other',
+              id: 'project_classification_other',
               label: 'Classification-Other',
               type: 'text',
               required: true,

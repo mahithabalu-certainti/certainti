@@ -29,6 +29,8 @@ import {
   FieldChangeValue,
   DependencyRowData,
   ListTableColumn,
+  ModalFormData,
+  ModalFormValue,
 } from './types';
 import { getEditingCellValue, renderFields } from './table-utils';
 import {
@@ -98,6 +100,7 @@ const ListTable = <T extends RowData>({
     skillTypeIsOthers: false,
     skillSubtypeIsOthers: false,
     anchorEl: null,
+    modalFieldValues: {},
   });
 
   const visibleColumns = useMemo(
@@ -259,6 +262,12 @@ const ListTable = <T extends RowData>({
     onSort?.(property, direction);
   };
 
+  useEffect(() => {
+    if (loading) {
+      handleCancel();
+    }
+  }, [loading]);
+
   const handleSave = async () => {
     if (Object.keys(editingCells).length === 0 || !onCellEdit) return;
 
@@ -318,6 +327,16 @@ const ListTable = <T extends RowData>({
 
   const handleCancel = () => {
     setEditingCells({});
+    setModalState({
+      open: false,
+      fields: [],
+      rowId: '',
+      columnId: '',
+      skillTypeIsOthers: false,
+      skillSubtypeIsOthers: false,
+      anchorEl: null,
+      modalFieldValues: {},
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -607,11 +626,23 @@ const ListTable = <T extends RowData>({
             skillTypeIsOthers =
               currentSkillType === skillTypeIds?.othersSkillTypeId;
             skillSubtypeIsOthers =
+              skillTypeIsOthers ||
               currentSkillSubtype === skillTypeIds?.othersSkillSubTypeId;
           }
           const anchorEl = document.querySelector(
             `[data-editing="${cellKey}"]`
           );
+
+          // Build initial values for modal fields dynamically
+          const modalFieldValues: ModalFormData = {};
+          modalCheck.modalFields?.forEach((field) => {
+            const fieldValue = getDependentValue(
+              field.id,
+              row,
+              newEditingCells
+            );
+            modalFieldValues[field.id] = (fieldValue ?? '') as ModalFormValue;
+          });
 
           setModalState({
             open: true,
@@ -621,6 +652,7 @@ const ListTable = <T extends RowData>({
             skillTypeIsOthers,
             skillSubtypeIsOthers,
             anchorEl: anchorEl as HTMLElement,
+            modalFieldValues,
           });
         }
         newEditingCells[key] = {
@@ -1421,6 +1453,7 @@ const ListTable = <T extends RowData>({
         skillTypeIsOthers={modalState.skillTypeIsOthers}
         skillSubtypeIsOthers={modalState.skillSubtypeIsOthers}
         anchorEl={modalState.anchorEl}
+        initialValues={modalState.modalFieldValues}
       />
 
       {/* Pagination */}
