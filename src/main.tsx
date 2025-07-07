@@ -14,6 +14,8 @@ import { persistor } from './store/store';
 
 import './config/i18n.ts';
 import './index.css';
+import { ApolloProvider } from '@apollo/client';
+import { accountClient } from './api/graphql/client';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 const queryClient = new QueryClient({
@@ -37,14 +39,16 @@ msalInstance.addEventCallback((event) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={theme}>
-            <App instance={msalInstance} />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </PersistGate>
-    </Provider>
+    <ApolloProvider client={accountClient}>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider theme={theme}>
+              <App instance={msalInstance} />
+            </ThemeProvider>
+          </QueryClientProvider>
+        </PersistGate>
+      </Provider>
+    </ApolloProvider>
   </StrictMode>
 );

@@ -13,8 +13,14 @@ import { AccountList } from '../../../types/account';
 import { processAccounts } from '../helpers';
 import './styles.css';
 import { getAccountColumns } from './columns';
-import { ActionItem, CellEditData } from '../../../../components/table/types';
+import {
+  ActionItem,
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
+import { useMutation } from '@apollo/client';
+import { UPDATE_INLINE_ACCOUNT_DETAILS } from '../../../../api/graphql/queries/account-query';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -71,10 +77,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
     );
   }, [colorCodes]);
 
-  const processedAccounts = useMemo(() => {
-    if (!accountList?.accounts) return [];
-    return processAccounts(accountList.accounts, colorCodesList);
-  }, [accountList, colorCodesList]);
+  // const processedAccounts = useMemo(() => {
+  //   if (!accountList?.accounts) return [];
+  //   return processAccounts(accountList.accounts, colorCodesList);
+  // }, [accountList, colorCodesList]);
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: AccountList) => {
@@ -138,8 +144,68 @@ const AccountTable: React.FC<Record<string, any>> = ({
     console.log('Selected rows:', selectedIds);
   };
 
+  const [processedAccounts, setProcessedAccounts] = React.useState<
+    AccountList[]
+  >([]);
+
+  // keep this effect to initialize it when accountList changes
+  useEffect(() => {
+    if (accountList?.accounts) {
+      setProcessedAccounts(
+        processAccounts(accountList.accounts, colorCodesList)
+      );
+    }
+  }, [accountList, colorCodesList]);
+
+  const [updateInlineAccountMutation] = useMutation(
+    UPDATE_INLINE_ACCOUNT_DETAILS
+  );
+
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    const previousAccounts = [...processedAccounts];
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        const key = item.editId || item.columnId;
+        acc[key] = item.value;
+        return acc;
+      },
+      {
+        account_rid: rowId,
+      }
+    );
+
+    // Optimistically update UI
+    const updatedAccounts = processedAccounts.map((account) => {
+      if (account.rid === rowId) {
+        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
+          (acc, item) => {
+            acc[item.columnId] = item.value;
+            return acc;
+          },
+          {}
+        );
+        return {
+          ...account,
+          ...updatedFields,
+        };
+      }
+      return account;
+    });
+
+    setProcessedAccounts(updatedAccounts);
+
+    try {
+      const res = await updateInlineAccountMutation({
+        variables: {
+          data: updateData,
+        },
+      });
+      console.log('Update success', res.data);
+    } catch (error) {
+      console.error('Update failed', error);
+      setProcessedAccounts(previousAccounts);
+    }
   };
 
   return (

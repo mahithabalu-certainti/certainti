@@ -82,6 +82,7 @@ export interface DependencyRule {
 
 export interface ModalField {
   id: string;
+  editId?: string;
   label: string;
   type: ListFieldType;
   required: boolean;
@@ -135,6 +136,7 @@ export type ListTableColumn<T> = {
   label: string;
   width?: string | number;
   sortId: string;
+  editId?: string;
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
@@ -187,6 +189,7 @@ export interface FieldChangeEvent {
 // Enhanced cell edit data structure to support both regular edits and modal data
 export interface CellEditData {
   columnId: string;
+  editId: string;
   value: FieldChangeValue;
   modalData?: Record<string, FieldChangeValue>; // Additional modal data if applicable
 }

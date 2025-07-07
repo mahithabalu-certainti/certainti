@@ -311,10 +311,14 @@ const ListTable = <T extends RowData>({
     }
     setIsSaving(true);
     try {
-      const updates: CellEditData[] = changedCells.map((cell) => ({
-        columnId: cell.columnId,
-        value: cell.value,
-      }));
+      const updates: CellEditData[] = changedCells.map((cell) => {
+        const column = visibleColumns.find((col) => col.id === cell.columnId);
+        return {
+          columnId: cell.columnId,
+          value: cell.value,
+          editId: column?.editId || '', // include editId if present
+        };
+      });
 
       await onCellEdit(firstEditingCell.rowId, updates);
       setEditingCells({});
@@ -528,11 +532,18 @@ const ListTable = <T extends RowData>({
         throw new Error('Editing cell not found');
       }
 
+      // Helper to get editId
+      const getEditIdForColumn = (columnId: string) => {
+        const column = visibleColumns.find((col) => col.id === columnId);
+        return column?.editId || '';
+      };
+
       const updates: CellEditData[] = [
         {
           columnId: modalState.columnId,
           value: currentCell.value, // The selected dropdown value
           modalData: modalData, // The additional form data
+          editId: getEditIdForColumn(modalState.columnId),
         },
       ];
       // Add modal data fields as separate entries
@@ -540,6 +551,7 @@ const ListTable = <T extends RowData>({
         updates.push({
           columnId,
           value,
+          editId: getEditIdForColumn(columnId),
         });
       });
 
@@ -549,6 +561,7 @@ const ListTable = <T extends RowData>({
           updates.push({
             columnId: cell.columnId,
             value: cell.value,
+            editId: getEditIdForColumn(cell.columnId),
           });
         }
       });

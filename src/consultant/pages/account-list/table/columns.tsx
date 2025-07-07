@@ -13,6 +13,7 @@ export const getAccountColumns = (
 ): ListTableColumn<AccountList>[] => [
   {
     id: 'account_name',
+    editId: 'account_name',
     sortId: 'account_name',
     label: 'Account Name',
     width: 250,
@@ -65,6 +66,7 @@ export const getAccountColumns = (
   },
   {
     id: 'industry',
+    editId: 'industry_rid',
     sortId: 'industry',
     label: 'Industry',
     width: 200,
@@ -89,6 +91,7 @@ export const getAccountColumns = (
           modalFields: [
             {
               id: 'industry_other',
+              editId: 'industry_name_other',
               label: 'Industry-other',
               type: 'text',
               required: true,
@@ -118,6 +121,7 @@ export const getAccountColumns = (
   },
   {
     id: 'country',
+    editId: 'country_rid',
     sortId: 'country',
     label: 'Country',
     width: 150,

@@ -30,6 +30,7 @@ export const getAllProjectListColumns = (
 ): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
+    editId: 'project_code',
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
@@ -87,6 +88,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'project_name',
+    editId: 'project_name',
     label: 'Name',
     sortable: true,
     editable: true,
@@ -115,6 +117,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'project_type_name',
+    editId: 'project_type_rid',
     label: 'Project Type',
     sortable: true,
     editable: true,
@@ -136,6 +139,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'fiscal_year',
+    editId: 'fiscal_year',
     label: 'Fiscal Year',
     sortable: true,
     editable: true,
@@ -157,6 +161,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'classification_name',
+    editId: 'project_classification_rid',
     label: 'Project Classification',
     sortable: true,
     editable: true,
@@ -211,6 +216,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'project_client_group',
+    editId: 'project_client_group',
     label: 'Customer Group',
     sortable: true,
     editable: true,
@@ -239,6 +245,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'project_group',
+    editId: 'project_group',
     label: 'Project Group',
     sortable: true,
     editable: true,
@@ -267,6 +274,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'total_effort',
+    editId: 'total_effort',
     label: 'Project Effort (Hours)',
     sortable: true,
     editable: true,
@@ -292,6 +300,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'total_cost',
+    editId: 'total_cost',
     label: 'Project Cost',
     sortable: true,
     editable: true,
@@ -317,6 +326,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'total_cost_fte',
+    editId: 'total_cost_fte',
     label: 'FTE Cost',
     sortable: true,
     editable: true,
@@ -344,6 +354,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'total_cost_subcon',
+    editId: 'total_cost_subcon',
     label: 'SubCon Cost',
     sortable: true,
     editable: true,
@@ -371,6 +382,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'total_cost_nonlabor',
+    editId: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
     editable: true,
@@ -442,6 +454,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'comments',
+    editId: 'comments',
     label: 'Comments',
     sortable: true,
     editable: true,

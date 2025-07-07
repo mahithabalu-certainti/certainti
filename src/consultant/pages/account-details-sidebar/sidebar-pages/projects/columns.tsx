@@ -37,6 +37,7 @@ export const getProjectColumns = (
 ): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
+    editId: 'project_code',
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
@@ -94,6 +95,7 @@ export const getProjectColumns = (
   },
   {
     id: 'project_name',
+    editId: 'project_name',
     label: 'Name',
     sortable: true,
     sortId: 'project_name',
@@ -122,6 +124,7 @@ export const getProjectColumns = (
   },
   {
     id: 'project_type_name',
+    editId: 'project_type_rid',
     label: 'Project Type',
     sortable: true,
     sortId: 'project_type_rid',
@@ -136,6 +139,7 @@ export const getProjectColumns = (
   },
   {
     id: 'fiscal_year',
+    editId: 'fiscal_year',
     label: 'Fiscal Year',
     sortable: true,
     editable: true,
@@ -157,6 +161,7 @@ export const getProjectColumns = (
   },
   {
     id: 'classification_name',
+    editId: 'project_classification_rid',
     label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
@@ -211,6 +216,7 @@ export const getProjectColumns = (
   },
   {
     id: 'project_client_group',
+    editId: 'project_client_group',
     label: 'Customer Group',
     sortable: true,
     sortId: 'project_client_group',
@@ -239,6 +245,7 @@ export const getProjectColumns = (
   },
   {
     id: 'project_group',
+    editId: 'project_group',
     label: 'Project Group',
     sortable: true,
     sortId: 'project_group',
@@ -267,6 +274,7 @@ export const getProjectColumns = (
   },
   {
     id: 'total_effort',
+    editId: 'total_effort',
     label: 'Project Effort (Hours)',
     sortable: true,
     sortId: 'total_effort',
@@ -292,6 +300,7 @@ export const getProjectColumns = (
   },
   {
     id: 'total_cost',
+    editId: 'total_cost',
     label: 'Project Cost',
     sortable: true,
     sortId: 'total_cost',
@@ -317,6 +326,7 @@ export const getProjectColumns = (
   },
   {
     id: 'total_cost_fte',
+    editId: 'total_cost_fte',
     label: 'FTE Cost',
     sortable: true,
     sortId: 'total_cost_fte',
@@ -344,6 +354,7 @@ export const getProjectColumns = (
   },
   {
     id: 'total_cost_subcon',
+    editId: 'total_cost_subcon',
     label: 'SubCon Cost',
     sortable: true,
     sortId: 'total_cost_subcon',
@@ -371,6 +382,7 @@ export const getProjectColumns = (
   },
   {
     id: 'total_cost_nonlabor',
+    editId: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
     sortId: 'total_cost_nonlabor',
@@ -442,6 +454,7 @@ export const getProjectColumns = (
   },
   {
     id: 'comments',
+    editId: 'comments',
     label: 'Comments',
     sortable: true,
     sortId: 'comments',
