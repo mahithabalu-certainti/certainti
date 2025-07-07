@@ -4,7 +4,7 @@ import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import { Resources } from "../models/resource";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
@@ -397,7 +397,7 @@ class ResourceCostSchemaService {
         type: "SELECT",
       });
 
-      const mainDbSequelize = await initMainDbSequelize();
+      const mainDbSequelize = await initSequelize();
       const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
       const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
       const items = await mainDbSequelize.query(query, { type: "SELECT" });
@@ -609,7 +609,7 @@ class ResourceCostSchemaService {
         type: "SELECT",
       });
 
-      const mainDbSequelize = await initMainDbSequelize();
+      const mainDbSequelize = await initSequelize();
       const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
         const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
         const items = await mainDbSequelize.query(query, { type: "SELECT" });
@@ -1311,7 +1311,7 @@ class ResourceCostSchemaService {
   async getCurrencyRidByAccountRidRaw(accountRid: string): Promise<string | null> {
     const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
     try {
-      const mainDb = await initMainDbSequelize();
+      const mainDb = await initSequelize();
       const result = await mainDb.query(query, {
         replacements: { accountRid },
         type: 'SELECT'

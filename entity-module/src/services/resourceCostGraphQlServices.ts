@@ -1,11 +1,11 @@
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { setResFiscalForResCost, setResourceCostDatas } from "../utils/helpers";
 
 export default class ResourceCostGraphQlService {
       async inlineEditResourceCost (data : any) {
-    const mainDbSequelize = await initMainDbSequelize();
+    const mainDbSequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
     let fetchParentAcc : any = await mainDbSequelize.query(rawQueries.fetchParentAccount(data.account_rid))
     

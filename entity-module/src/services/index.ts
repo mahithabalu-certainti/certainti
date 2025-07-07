@@ -8,11 +8,13 @@ import {
   IResourceService,
   IResourceSkillGraphQlService,
   IResourceSkillService,
+  IAttachmentService
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
 import { ResourceService } from "./resourceServices";
 import ResourceSkillService from "./resourceSkillService";
+import { AttachmentService } from "./attachmentService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -24,6 +26,7 @@ class Services implements IServiceContainer {
   resourceSkillServices: IResourceSkillService;
   projectServices: IProjectService;
   private _projectGraphQlServices?: IProjectGraphQlServices;
+  attachmentServices: IAttachmentService;
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
@@ -41,6 +44,7 @@ class Services implements IServiceContainer {
       this.resourceCostServices = resourceCostServices;
       this.resourceSkillServices = resourceSkillServices;
       this.projectServices = new ProjectService(this.logger);
+      this.attachmentServices = new AttachmentService(this.logger);
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");

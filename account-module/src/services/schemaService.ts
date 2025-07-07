@@ -1,4 +1,4 @@
-import { QueryTypes } from "sequelize";
+import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
@@ -81,11 +81,46 @@ class SchemaService {
       await this.createResourceSkillTimelineTable(schemaName, sequelize);
       await this.createResourceSkillHistoryTable(schemaName, sequelize);
       await this.createResourceFiscalTable(schemaName, sequelize);
+      await this.createAttachmentTable(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
       console.log("Ta ble createng err", Err);
     }
+  }
+
+
+  private async createAttachmentTable(schemaName: string, sequelize: Sequelize) {
+
+     await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_seq START 1;
+   `);
+
+     await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."attachments"
+   (
+    rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number character varying(20) COLLATE pg_catalog."default" DEFAULT ('ATT-'::text || lpad((nextval('"${schemaName}".attachment_seq'::regclass))::text, 10, '0'::text)),
+    created_datetime timestamp with time zone NOT NULL,
+    created_by character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    modified_datetime timestamp with time zone,
+    modified_by character varying(50) COLLATE pg_catalog."default",
+    account_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    browse_file character varying(1000) COLLATE pg_catalog."default" NOT NULL,
+    document_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attachment_level character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    fiscal_year integer NOT NULL,
+    format character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    size_in_mb numeric(10,2) NOT NULL,
+    document_category_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_type_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_category_others character varying(120) COLLATE pg_catalog."default",
+    document_type_others character varying(120) COLLATE pg_catalog."default",
+    comments character varying(2000) COLLATE pg_catalog."default",
+    CONSTRAINT attachments_pkey PRIMARY KEY (rid),
+    CONSTRAINT attachments_r_number_key UNIQUE (r_number)
+   )`)
   }
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {

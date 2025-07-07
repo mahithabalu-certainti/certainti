@@ -7,7 +7,7 @@ import { ResourceSkill } from "../models/resourceSkill";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import { ResourceFiscal } from "../models/resourceFiscal";
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import moment from "moment";
 
 class ResourceSkillSchemaService {
@@ -282,7 +282,7 @@ async exportResoucreSkill(
   account_rid: string
 ) {
   const sequelize = await this.getDbConnection(schemaName);
-  const mainDbSequelize = await initMainDbSequelize();
+  const mainDbSequelize = await initSequelize();
 
   // Build the query to get data from the account-specific schema
   const query = `
@@ -467,7 +467,7 @@ async executeQueries(
   ]);
 
   let resourceSkill = results as any[];
-  const mainDbSequelize = await initMainDbSequelize();
+  const mainDbSequelize = await initSequelize();
 
   // Fetch skill type and subtype names from separate databases if needed
   if (resourceSkill.length > 0) {

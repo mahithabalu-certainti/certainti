@@ -1,11 +1,11 @@
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { setPrjFiscalData, setProject, setProjectFiscalSummary, setProjectSummary } from "../utils/helpers";
 
 class ProjectGraphQlServices {
     async inLineEditProject (data : any) {
-        const mainSequelize = await initMainDbSequelize();
+        const mainSequelize = await initSequelize();
         const orgSequelize = await initOrgSequelize();
         const checkAccountExists : any = await mainSequelize.query(rawQueries.fetchParentAccount(data.account_rid))
         if(checkAccountExists[0].length < 1) {

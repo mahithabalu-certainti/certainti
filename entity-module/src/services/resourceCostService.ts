@@ -8,7 +8,7 @@ import resourceCostSchemaService from "../services/resourceCostSchemaService";
 import SchemaService from "./schemaService";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { ResourceFiscal } from "../models/resourceFiscal";
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
@@ -37,7 +37,7 @@ class ResourceCostService {
    */
   private async getMainDbSequelize(): Promise<Sequelize> {
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await initMainDbSequelize();
+      this.mainDbSequelize = await initSequelize();
     }
     return this.mainDbSequelize;
   }

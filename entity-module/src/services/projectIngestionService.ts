@@ -13,7 +13,7 @@ import { ProjectTimeline } from "../models/projectTimeline";
 import { KeyContact } from "../models/keyContactDetails";
 import { KeyContactService } from "./keyContactService";
 import { ProjectSummary } from "../models/projectSummary";
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import { AccountFiscal } from "../models/accountFiscal";
 import { ProjectHistory } from "../models/projectHistory";
@@ -60,7 +60,7 @@ class ProjectIngestionService {
 
   private async getMainSequelize(): Promise<Sequelize> {
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await initMainDbSequelize();
+      this.mainDbSequelize = await initSequelize();
     }
     return this.mainDbSequelize;
   }
@@ -2082,6 +2082,20 @@ class ProjectIngestionService {
       console.error("Error in insertCurrencyDetails:", err);
     }
   }
+
+async getProjectsByAccountId(schemaNumber: string, accountRid: string) {
+  const { Project } = await this.getModels(schemaNumber);
+
+  return Project.findAll({
+    where: {
+      account_rid: accountRid
+    },
+    order: [
+      ['created_datetime', 'DESC']
+    ]
+  });
+}
+
 }
 
 export default ProjectIngestionService;

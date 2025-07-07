@@ -1,4 +1,4 @@
-import { initMainDbSequelize } from "../config/mainDataSource";
+import { initSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
   HttpStatus,
@@ -9,7 +9,7 @@ import { setResourceFiscal, setResourcesData } from "../utils/helpers";
 
 export default class ResourceGraphQlServices {
   async inLineEditResources(data: any) {
-    const mainSequelize = await initMainDbSequelize();
+    const mainSequelize = await initSequelize();
     const orgSequelize = await initOrgSequelize();
 
     const checkAccountExists: any = await mainSequelize.query(
