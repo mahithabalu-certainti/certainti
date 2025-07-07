@@ -38,6 +38,7 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
 
   const server = new ApolloServer({
     schema,
+    introspection : true
   });
 
   await server.start();
