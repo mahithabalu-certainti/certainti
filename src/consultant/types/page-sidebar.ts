@@ -1,9 +1,9 @@
-import { AllModules } from '../../common-service';
+import { AllMenus, AllModules } from '../../common-service';
 
 export type MenuItem = {
   name: string;
   key: string;
-  id: AllModules;
+  id: AllModules | AllMenus;
   hide?: boolean;
   disabled?: boolean;
   icon?: React.ElementType;

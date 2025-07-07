@@ -26,7 +26,11 @@ import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { NewProjectData } from '../../../types/project';
 import { MenuItem } from '../../../types';
-import { AllModules, AllPermissions } from '../../../../common-service';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -38,7 +42,7 @@ const sideMenuItems: MenuItem[] = [
   {
     name: 'Project Details',
     key: 'projectDetails',
-    id: AllModules.PROJECT_DETAILS,
+    id: AllModules.PROJECTS,
     disabled: false,
     icon: DetailsIcon,
   },
@@ -59,7 +63,7 @@ const sideMenuItems: MenuItem[] = [
   {
     name: 'Financial Highlights',
     key: 'financial',
-    id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
+    id: AllModules.FINANCIAL_HIGHLIGHTS,
     disabled: false,
     icon: FinancialIcon,
   },
@@ -80,35 +84,35 @@ const sideMenuItems: MenuItem[] = [
   {
     name: 'Cases',
     key: 'cases',
-    id: AllModules.PROJECT_CASES,
+    id: AllMenus.CASES,
     disabled: false,
     icon: CasesIcon,
   },
   {
     name: 'Activities',
     key: 'activities',
-    id: AllModules.PROJECT_ACTIVITIES,
+    id: AllModules.ACTIVITIES,
     disabled: false,
     icon: ActivitiesIcon,
   },
   {
     name: 'Notes',
     key: 'notes',
-    id: AllModules.PROJECT_NOTES,
+    id: AllMenus.NOTES,
     disabled: false,
     icon: NotesSideIcon,
   },
   {
     name: 'Attachments',
     key: 'attachments',
-    id: AllModules.PROJECT_ATTACHMENTS,
+    id: AllMenus.ATTACHMENTS,
     disabled: false,
     icon: AttachmentsSideIcon,
   },
   {
     name: 'Checklists',
     key: 'checklists',
-    id: AllModules.PROJECT_CHECKLISTS,
+    id: AllMenus.CHECKLISTS,
     disabled: false,
     icon: ChecklistIcon,
   },
@@ -130,17 +134,17 @@ export const ProjectDetails = () => {
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const projectDownloadIsEnable = checkPermission(
     permission,
-    AllPermissions.PROJECT_PROJECTS_DOWNLOAD
+    AllPermissions.PROJECTS_EXPORT
   );
   // Functionality will be implement later
   // const projectExportIsEnable = checkPermission(
   //   permission,
   //   AllPermissions.PROJECT_PROJECTS_EXPORT
   // );
-  const projectEditIsEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECT_PROJECTS_EDIT
-  );
+  // const projectEditIsEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECT_PROJECTS_EDIT
+  // );
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -221,7 +225,7 @@ export const ProjectDetails = () => {
             isDetailsLoading={isLoading}
             detailsError={isError}
             projectDownloadIsEnable={projectDownloadIsEnable}
-            projectEditIsEnable={projectEditIsEnable}
+            projectEditIsEnable={true}
             permission={permission}
           />
         );
@@ -272,15 +276,11 @@ export const ProjectDetails = () => {
           title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={
-            projectEditIsEnable
-              ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                  disabled: accountInActive,
-                }
-              : undefined
-          }
+          primaryButton={{
+            label: 'Edit',
+            onClick: handleEditAccount,
+            disabled: accountInActive,
+          }}
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}
