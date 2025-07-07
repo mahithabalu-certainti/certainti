@@ -4,9 +4,9 @@ export const constants = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
   NOT_FOUND: 404,
-  FORBIDDEN: 403,
+  FORBIDDEN: 403,//For inactive_users
   FAILED: 500,
-  UNAUTHORIZED: 401,
+  UNAUTHORIZED: 401,//For users with no permssion_access
   SUCCESS_MESSAGE: "Success",
   BAD_REQUEST_MESSAGE: "BadRequest",
   NOT_FOUND_MESSAGE: "NotFound",
