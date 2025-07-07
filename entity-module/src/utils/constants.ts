@@ -143,7 +143,7 @@ export const rawQueries = {
                 p.rid = '${data.project_fiscal_rid}'
                 AND
                 p.fiscal_year IN (
-                SELECT fiscal_year FROM trd365_00001.project_fiscal pf
+                SELECT fiscal_year FROM ${schemaName}.project_fiscal pf
                 WHERE 
                 pf.account_rid = '${data.account_rid}'
                 AND
