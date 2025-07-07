@@ -1463,6 +1463,7 @@ class SchemaService {
           type: "SELECT",
         }
       );
+
       return accountData;
     } catch (err) {
       throw new Error("Error fetching Accounts: " + (err as Error).message);
@@ -3187,6 +3188,32 @@ async fetchAllProjects(
       throw new Error("Error adding user details" + (err as Error).message);
     }
   }
+
+/**
+ * Gets all child accounts for a given entity ID
+ * @param schemaName - The schema name to query
+ * @param entityId - The parent entity ID to find children for
+ * @returns Promise containing array of child account records
+ */
+async getChildAccounts(entityId: string) {
+  try {
+    const mainDbSequelize = await initMainDbSequelize();
+    
+    const childAccounts = await mainDbSequelize.query(
+      `SELECT * FROM ${MAIN_SCHEMA_NAME}.account 
+       WHERE parent_account_rid = :entityId`,
+      {
+        replacements: { entityId },
+        type: "SELECT"
+      }
+    );
+
+    return childAccounts;
+  } catch (err) {
+    throw new Error("Error getting child accounts: " + (err as Error).message);
+  }
+}
+
 }
 
 export default SchemaService;

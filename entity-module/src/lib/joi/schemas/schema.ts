@@ -1709,6 +1709,210 @@ const updateProjectSchema = Joi.object({
   comments: Joi.string().max(2000).allow(null).allow(""),
 });
 
+const createAttachmentSchema = Joi.object({
+    account_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    // browse_file: Joi.string()
+    //     .required()
+    //     .max(1000)
+    //     .custom((value, helpers) => {
+    //         // Check for disallowed file extensions
+    //         const disallowedExtensions = ['.exe', '.bat', '.cmd', '.sh', '.bash'];
+    //         if (disallowedExtensions.some(ext => value.toLowerCase().endsWith(ext))) {
+    //             return helpers.error('string.fileType');
+    //         }
+    //         return value;
+    //     })
+    //     .messages({
+    //         'string.empty': 'Browse file path cannot be empty',
+    //         'any.required': 'Browse file path is required',
+    //         'string.max': 'Browse file path must be less than or equal to 1000 characters',
+    //         'string.fileType': 'Executable file types (.exe, .bat, .cmd, .sh, .bash) are not allowed'
+    //     }),
+    attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    attachment_level: Joi.string()
+        .required()
+        .valid('project', 'account', 'case')
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be either project, account or case'
+        }),
+    // document_name: Joi.string()
+    //     .required()
+    //     .max(100)
+    //     .messages({
+    //         'string.empty': 'Document name cannot be empty',
+    //         'any.required': 'Document name is required', 
+    //         'string.max': 'Document name must be less than or equal to 100 characters'
+    //     }),
+    // format: Joi.string()
+    //     .required()
+    //     .max(10)
+    //     .pattern(/^[a-zA-Z0-9.]+$/) // Allows alphanumeric and periods
+    //     .invalid('.exe', '.bat', '.cmd', '.sh', '.bash')
+    //     .custom((value, helpers) => {
+    //         // Ensure format starts with a period
+    //         if (!value.startsWith('.')) {
+    //             return helpers.error('string.format');
+    //         }
+    //         return value;
+    //     })
+    //     .messages({
+    //         'string.empty': 'Format cannot be empty',
+    //         'any.required': 'Format is required',
+    //         'string.max': 'Format must be less than or equal to 10 characters',
+    //         'any.invalid': 'Executable file formats are not allowed',
+    //         'string.pattern.base': 'Format must contain only alphanumeric characters and periods',
+    //         'string.format': 'Format must start with a period (e.g., .pdf)'
+    //     }),
+    // size_in_mb: Joi.number()
+    //     .required()
+    //     .precision(2)
+    //     .positive()
+    //     .max(20)
+    //     .messages({
+    //         'number.base': 'Size must be a number',
+    //         'any.required': 'Size is required',
+    //         'number.positive': 'Size must be a positive number',
+    //         'number.precision': 'Size can have maximum 2 decimal places',
+    //         'number.max': 'File size must be 20MB or less'
+    //     }),
+    fiscal_year: Joi.number()
+        .integer()
+        .custom((value, helpers) => {
+            const currentYear = new Date().getFullYear();
+            const minYear = currentYear - 20;
+            
+            if (value < minYear || value > currentYear) {
+                return helpers.error('number.yearRange');
+            }
+            return value;
+        })
+        .default(() => new Date().getFullYear())
+        .required()
+        .messages({
+            'number.base': 'Fiscal year must be a number',
+            'number.integer': 'Fiscal year must be an integer',
+            'number.yearRange': `Fiscal year must be between ${new Date().getFullYear() - 20} and ${new Date().getFullYear()}`,
+            'any.required': 'Fiscal year is required'
+        }),
+    document_category_rid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'string.empty': 'Document category cannot be empty',
+            'any.required': 'Document category is required',
+            'string.pattern.base': 'Document category must be a valid UUID'
+        }),
+    document_type_rid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'string.empty': 'Document type cannot be empty',
+            'any.required': 'Document type is required',
+            'string.pattern.base': 'Document category must be a valid UUID'
+        }),
+    document_category_others: Joi.string()
+        .min(2)
+        .max(120)
+        .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,118}[A-Za-z]$/)
+        .optional()
+        .allow("")
+        .allow(null)
+        .messages({
+            "string.pattern.base": "Other category must start and end with a letter and can only contain letters, spaces, hyphens (-), apostrophes ('), and periods (.)",
+            "string.min": "Other category must be at least 2 characters long",
+            "string.max": "Other category must not exceed 120 characters"
+        }),
+    document_type_others: Joi.string()
+        .min(2)
+        .max(120)
+        .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,118}[A-Za-z]$/)
+        .optional()
+        .allow("")
+        .allow(null)
+        .messages({
+            "string.pattern.base": "Other category must start and end with a letter and can only contain letters, spaces, hyphens (-), apostrophes ('), and periods (.)",
+            "string.min": "Other category must be at least 2 characters long",
+            "string.max": "Other category must not exceed 120 characters"
+        }),     
+    comments: Joi.string()
+        .allow(null, '')
+        .when(Joi.exist(), {
+            then: Joi.string()
+                .min(1)
+                .max(2000)
+                .trim()
+                .messages({
+                    'string.min': 'Comments must be at least 1 character long when provided',
+                    'string.max': 'Comments must be less than or equal to 2000 characters'
+                })
+        }),
+});
+
+const listAttachmentsSchema = Joi.object({
+    level: Joi.string()
+        .valid('account', 'project', 'case')
+        .required()
+        .messages({
+            'any.required': 'Level is required',
+            'string.base': 'Level must be a string',
+            'any.only': 'Level must be one of: account, project, case'
+        }),
+    entityId: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+    accountRid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Account RID is required',
+            'string.pattern.base': 'Account RID must be a valid UUID'
+        }),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const getDocumentTypeAndCategorySchema = Joi.object({
+   category_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional()
+})
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -1726,5 +1930,8 @@ export {
   exportResourceSkillSchema,
   createProjectSchema,
   updateProjectSchema,
-  exportListResourceSchema
+  exportListResourceSchema,
+  createAttachmentSchema,
+  listAttachmentsSchema,
+  getDocumentTypeAndCategorySchema
 };

@@ -5,7 +5,11 @@ import { errorResponse,successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
 import { ResourceSkill } from "../models/resourceSkill";
-const logger = configurations.getInstance().getLogger();
+import { BlobServiceClient } from '@azure/storage-blob';
+import { getSecret } from "./azureSecrets";
+function getLogger() {
+  return configurations.getInstance().getLogger();
+}
 
 export async function validateRequest(
   req: Request,
@@ -20,7 +24,7 @@ export async function validateRequest(
   });
   if (error) {
     const errorMessages = requestErrorMessages(error);
-    logger.error("Validation failed:", {
+    getLogger().error("Validation failed:", {
       timestamp: new Date().toISOString(),
       method: "API method",
       message: "Request validation failed",
@@ -63,14 +67,14 @@ export function requestErrorMessages(error: any): Record<string, string> | strin
 
 
 export function successLog(methodName: string): void {
-  logger.info(`Successfully retrieved ${methodName} data `, {
+   getLogger().info(`Successfully retrieved ${methodName} data `, {
     timestamp: new Date().toISOString(),
     method: methodName,
   });
 }
 
 export function errorLog(methodName: string, errorMessage?: string): void {
-  logger.error("Failed log: ", {
+  getLogger().error("Failed log: ", {
     timestamp: new Date().toISOString(),
     method: methodName,
     message: errorMessage,
@@ -556,4 +560,81 @@ export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) 
   dataStorage = `modified_datetime = NOW()`
   newDataArray.push(dataStorage)
   return newDataArray;
+}
+
+export async function uploadToAzureBlob(
+  file: Express.Multer.File, 
+  account_id: string
+): Promise<{
+  url: string;
+  name: string;
+  extension: string;
+  size: number;
+}> {
+  try {
+    // Validate input
+    if (!file) {
+      throw new Error('File is required');
+    }
+    if (!account_id) {
+      throw new Error('Account ID is required');
+    }
+
+    // Get connection string from secrets manager
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const containerName = 'account';
+
+    if (!connectionString) {
+      throw new Error('Azure storage connection string is required');
+    }
+
+    // Create clients
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    
+    // Ensure container exists with public blob access
+    await containerClient.createIfNotExists({ 
+      access: 'blob' // This makes blobs publicly readable
+    });
+
+    // Sanitize filename and remove extension
+    // Process filename
+    const originalExtension = file.originalname.includes('.') 
+      ? file.originalname.substring(file.originalname.lastIndexOf('.'))
+      : '';
+    const baseName = file.originalname.replace(/\.[^/.]+$/, ""); // Remove extension
+    const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ''); // More strict sanitization
+    
+    // Create unique blob name with timestamp
+    const timestamp = Date.now();
+    const blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    
+    // Upload file with content type
+    const uploadOptions = {
+      blobHTTPHeaders: { 
+        blobContentType: file.mimetype || 'application/octet-stream' 
+      }
+    };
+
+    await blockBlobClient.uploadData(file.buffer, uploadOptions);
+
+    // Get properties for additional metadata
+    const properties = await blockBlobClient.getProperties();
+
+    // Convert size from bytes to megabytes and round to 2 decimal places
+    const sizeInMB = parseFloat((file.size / (1024 * 1024)).toFixed(2));
+
+    return {
+      url: blockBlobClient.url,
+      name: sanitizedBaseName,
+      extension: originalExtension,
+      size: sizeInMB
+    };
+
+  } catch (error) {
+    console.error('Azure Blob upload failed:', error);
+    throw new Error(`File upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }

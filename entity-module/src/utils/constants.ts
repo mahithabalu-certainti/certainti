@@ -52,7 +52,9 @@ export const R_NUMBER_PREFIX = {
   PROJECT_SUMMARY: 'PRS',
   PROJECT_FISCAL_SUMMARY: 'PFS',
   CLASSIFICATION: 'CSF',
-  KEY_CONTACT_DETAILS: 'KEY'
+  KEY_CONTACT_DETAILS: 'KEY',
+  ATTACHMENT: 'ATT',
+  ATTACHMENT_TIMELINE: 'ATI'
 }
 
 export const STATUS_MESSAGE = {
@@ -91,7 +93,7 @@ export const STATUS_MESSAGE = {
   resourceSkillSubTypeNoFound : "Resource Skill SubType you are trying to update is invalid",
   resourceSkillLevelNoFound : "Resource Skill level you are trying to update is invalid",
   resourceSkillUpdSuccess : "Resource Skill updated successfully",
-
+    
 }
 
 export const TYPES = {

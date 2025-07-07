@@ -2082,6 +2082,20 @@ class ProjectIngestionService {
       console.error("Error in insertCurrencyDetails:", err);
     }
   }
+
+async getProjectsByAccountId(schemaNumber: string, accountRid: string) {
+  const { Project } = await this.getModels(schemaNumber);
+
+  return Project.findAll({
+    where: {
+      account_rid: accountRid
+    },
+    order: [
+      ['created_datetime', 'DESC']
+    ]
+  });
+}
+
 }
 
 export default ProjectIngestionService;
