@@ -484,8 +484,7 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
   for (const attachment of attachments) {
     try {
       switch (attachment.attachment_level) {
-        case 'child_account':
-        case 'parent_account':
+        case 'account':
           const account = await this.schemaService.fetchAccountById(attachment.attach_to);
           displayNames[attachment.rid] = account?.account_name || attachment.attach_to;
           break;
