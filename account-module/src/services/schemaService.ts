@@ -82,12 +82,42 @@ class SchemaService {
       await this.createResourceSkillHistoryTable(schemaName, sequelize);
       await this.createResourceFiscalTable(schemaName, sequelize);
       await this.createAttachmentTable(schemaName, sequelize);
+      await this.createAttachmentTimeline(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
       console.log("Ta ble createng err", Err);
     }
   }
+
+  private async createAttachmentTimeline(schemaName: string, sequelize: Sequelize) {
+
+    await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_timeline_seq START 1;
+   `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".attachment_timeline
+(
+    rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number character varying(20) COLLATE pg_catalog."default" DEFAULT ('ATI-'::text || lpad((nextval('"${schemaName}".attachment_timeline_seq'::regclass))::text, 10, '0'::text)),
+    created_by character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    modified_by character varying(50) COLLATE pg_catalog."default",
+    document_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    document_category_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_type_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attachment_level character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_type character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_status character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_name character varying(255) COLLATE pg_catalog."default",
+    event_datetime timestamp with time zone NOT NULL,
+    CONSTRAINT attachment_timeline_pkey PRIMARY KEY (rid),
+    CONSTRAINT attachment_timeline_r_number_key UNIQUE (r_number)
+)
+      `);
+  };
 
 
   private async createAttachmentTable(schemaName: string, sequelize: Sequelize) {
@@ -120,8 +150,9 @@ class SchemaService {
     comments character varying(2000) COLLATE pg_catalog."default",
     CONSTRAINT attachments_pkey PRIMARY KEY (rid),
     CONSTRAINT attachments_r_number_key UNIQUE (r_number)
-   )`)
-  }
+   )`
+  );
+  };
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
     await sequelize.query(`
