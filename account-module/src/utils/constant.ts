@@ -42,3 +42,36 @@ export const R_NUMBER_PREFIX = {
 
 
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
+
+export const STATUS = {
+  active : 'Active',
+  inactive : 'In-Active'
+}
+
+export const STATUS_MESSAGE = {
+  accountInactive : "Inactive Account",
+  accountNoFound : "Account not found",
+  accountUpdateSuccess : "Account updated successfully",
+  accountIdMissing : "Account Id mising",
+  oneFieldRequired : "Atleast one field is required to update",
+  keyContactIdMissing : "Key-Contact Id is missing"
+}
+
+export const rawQueries = {
+  fetchAccountDetails (schemaName : string, accountRid : string) {
+    return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'`
+  },
+  updateAccDetails (schemaName : string, updatedColumns : any, accountRid : string) {
+    return `UPDATE ${schemaName}.account_details SET ${updatedColumns.join(',')} WHERE account_rid = '${accountRid}'`
+  },
+  fetchKeyContactDetailsByRid (schemaName : string, keyContactRid : string) {
+    return `SELECT * FROM ${schemaName}.key_contact_details WHERE rid = '${keyContactRid}'`
+  },
+  updateKeyContactDetails (schemaName : string, updatedKeyData : any, keyContactDetailsRid : string) {
+    return `UPDATE ${schemaName}.key_contact_details 
+              SET 
+                ${updatedKeyData.join(',')}
+              WHERE 
+                 rid = '${keyContactDetailsRid}'`
+  }
+}
