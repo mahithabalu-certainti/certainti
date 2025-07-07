@@ -1731,11 +1731,11 @@ const createAttachmentSchema = Joi.object({
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
         .required()
-        .valid('project', 'child_account', 'parent_account')
+        .valid('project', 'account', 'case')
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be either project, child_account or parent_account'
+            'any.only': 'Attachment level must be either project, account or case'
         }),
     // document_name: Joi.string()
     //     .required()
@@ -1852,12 +1852,12 @@ const createAttachmentSchema = Joi.object({
 
 const listAttachmentsSchema = Joi.object({
     level: Joi.string()
-        .valid('parent_account', 'project', 'child_account')
+        .valid('account', 'project', 'case')
         .required()
         .messages({
             'any.required': 'Level is required',
             'string.base': 'Level must be a string',
-            'any.only': 'Level must be one of: parent_account, project, child_account'
+            'any.only': 'Level must be one of: account, project, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")

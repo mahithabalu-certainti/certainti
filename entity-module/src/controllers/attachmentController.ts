@@ -15,8 +15,7 @@ const services = configurations.getInstance().getServices();
 const attachmentService = services.attachmentServices;
 
 async function createAttachment(req: Request, res: Response): Promise<void> {
-  const methodName = "create account";
-  let file_url = '';
+  const methodName = "create attachment";
   try {
     const value = await validateRequest(req, createAttachmentSchema, res);
      if (!value) {
@@ -43,19 +42,19 @@ async function createAttachment(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    const account = await attachmentService.createAttachment(value, userId, req.file);
+    const attachment = await attachmentService.createAttachment(value, userId, req.file);
 
-    if (account.statusCode === HttpStatus.SUCCESS) {
+    if (attachment.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, account.data);
+      handleSuccessResponse(res, attachment.data);
       return;
     } else {
-      errorLog(methodName, account.errorMessage);
+      errorLog(methodName, attachment.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        account.errorMessage
+        attachment.errorMessage
       );
       return;
     }
@@ -91,15 +90,16 @@ async function getAllAttachments(req: Request, res: Response): Promise<void> {
       );
       return;
     }
+
     // Before calling buildRawWhereClause
-if (typeof value.filters === 'string') {
-  try {
-    value.filters = JSON.parse(value.filters);
-  } catch (err) {
-    console.error('Invalid filters JSON:', value.filters);
-    value.filters = {};
-  }
-}
+    if (typeof value.filters === 'string') {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error('Invalid filters JSON:', value.filters);
+        value.filters = {};
+      }
+    }
     const attachments = await attachmentService.getAttachments(userId,value.level,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {

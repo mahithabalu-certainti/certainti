@@ -6,9 +6,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const routes: Router = Router();
 
-routes.post("/upload/attachment", upload.single('logo'), controller.attachmentController.createAttachment);
-routes.get("/list", controller.attachmentController.getAllAttachments);
-routes.get("/document-type-category", controller.attachmentController.getDocumentTypeAndCategory);
+routes.post("/upload/attachment", checkUserStatusMiddleware("attachments_create"), upload.single('attachment'), controller.attachmentController.createAttachment);
+routes.get("/list", checkUserStatusMiddleware("attachments_view_edit"), controller.attachmentController.getAllAttachments);
+routes.get("/document-type-category", checkUserStatusMiddleware("NA"), controller.attachmentController.getDocumentTypeAndCategory);
 
 export default routes;
 

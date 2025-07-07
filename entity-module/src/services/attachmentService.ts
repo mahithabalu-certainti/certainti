@@ -37,21 +37,12 @@ async createAttachment(
     data?: { attachment: any };
 }> {
     try {
-        // Check if file exists (if file upload is required)
-        if (!file) {
-            return {
-                statusCode: 400,
-                message: 'File upload failed',
-                errorMessage: 'No file was uploaded'
-            };
-        }
-
          const { account_rid, attachment_level } = attachmentData;
 
       const accountData = await this.schemaService.fetchAccountById(account_rid);
 
       if (!accountData) {
-        throw new Error("Error creating project: Invalid account ID");
+        throw new Error("Attachment creation failed: Invalid account ID");
       }
 
       if (accountData.status !== "active") {
@@ -62,11 +53,8 @@ async createAttachment(
 
       let accountNumber = accountData.r_number;
 
-      if (
-        accountData.parent_account_rid === null && attachment_level !== "parent_account" ||
-        accountData.parent_account_rid === "" && attachment_level !== "parent_account"
-      ) {
-        throw new Error("Error creating project: Invalid account ID");
+      if (accountData.is_parent && attachment_level !== "account") {
+        throw new Error("Attachment creation failed: Invalid account ID");
       }
 
       if (accountData.storage_type === "store_in_parent") {
@@ -80,7 +68,7 @@ async createAttachment(
       );
 
       if (!isExists) {
-        throw new Error("Invalid account ID: schema doesn't exists");
+        throw new Error("Attachment creation failed: schema doesn't exists");
       }
        
         await this.createAttachmentTables(accountNumber);
@@ -102,7 +90,6 @@ async createAttachment(
             document_type_others: attachmentData.document_type_others || null,
             comments: attachmentData.comments || null,
             created_by: userId,
-            // modified_by: userId
         });
 
         await AttachmentTimeline.create({
@@ -136,7 +123,6 @@ async createAttachment(
             document_type_others: attachmentModel.document_type_others || null,
             comments: attachmentModel.comments || null,
             created_by: userId,
-            modified_by: userId
         });
 
         return {
@@ -169,7 +155,7 @@ async createAttachment(
     try {
       const orgDbSequlize = await initOrgSequelize();
       const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
       
 
       const AttachmentModel = await Attachment.initialize(
@@ -224,11 +210,11 @@ async getAttachments(
     if (!accountData) throw new Error("Invalid account ID");
 
     let schemaNumber = accountData.r_number;
-    if (accountData.storage_type === "store_in_parent" && accountData.parent_account_rid) {
+    if (accountData.storage_type === "store_in_parent" && accountData.is_parent) {
       schemaNumber = await this.schemaService.fetchParentAccount(accountData.parent_account_rid);
     }
 
-    const schemaName = `trd365_${schemaNumber.replace(/\D/g, '')}`;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, '')}`;
     const AttachmentModel = Attachment.initialize(orgDbSequelize, schemaName);
 
     let allAttachments: any[] = [];
@@ -244,18 +230,17 @@ async getAttachments(
     const { whereClause } = this.buildRawWhereClause(filters, search);
 
     // 🔷 Handle parent_account separately
-    if (level === 'parent_account' && entityId) {
-      // ... [Previous parent account logic remains the same]
+    if (level === 'account' && accountData.is_parent && entityId) {
       const parentAccountData = await this.schemaService.fetchAccountById(entityId);
       if (!parentAccountData) throw new Error("Invalid parent account ID");
 
       const parentSchemaNumber = parentAccountData.r_number;
-      const parentSchemaName = `trd365_${parentSchemaNumber.replace(/\D/g, '')}`;
+      const parentSchemaName = `${MAIN_SCHEMA_NAME}_${parentSchemaNumber.replace(/\D/g, '')}`;
       const ParentAttachmentModel = Attachment.initialize(orgDbSequelize, parentSchemaName);
 
       const parentWhere = {
         [Op.and]: [
-          { attachment_level: 'parent_account' },
+          { attachment_level: 'account' },
           { attach_to: entityId },
           ...(whereClause[Op.and] || [])
         ]
@@ -264,13 +249,12 @@ async getAttachments(
       const parentAttachments = await ParentAttachmentModel.findAll({ where: parentWhere });
       allAttachments.push(...parentAttachments);
 
-      // ... [Rest of parent account logic remains the same]
       const childAccounts = await this.schemaService.getChildAccounts(entityId);
 
       const schemaToChildAccountsMap: Record<string, any[]> = {};
       for (const child of childAccounts) {
         const schemaToUse = ((child as any).storage_type === 'separate_db')
-          ? `trd365_${(child as any).r_number.replace(/\D/g, '')}`
+          ? `${MAIN_SCHEMA_NAME}_${(child as any).r_number.replace(/\D/g, '')}`
           : parentSchemaName;
 
         if (!schemaToChildAccountsMap[schemaToUse]) {
@@ -287,7 +271,7 @@ async getAttachments(
 
           const childAccountWhere = {
             [Op.and]: [
-              { attachment_level: 'child_account' },
+              { attachment_level: 'account' },
               { attach_to: childRid },
               ...(whereClause[Op.and] || [])
             ]
@@ -299,7 +283,7 @@ async getAttachments(
           allAttachments.push(...childAccountAttachments);
 
           const childProjects = await this.projectIngestionService.getProjectsByAccountId(
-            schema.replace('trd365_', ''),
+            schema.replace(`${MAIN_SCHEMA_NAME}_`, ''),
             childRid
           );
           const childProjectIds = childProjects.map(p => p.rid);
@@ -330,19 +314,21 @@ async getAttachments(
               attach_to: entityId
             });
             break;
-          case 'child_account':
+          case 'account':
+            if (!accountData.is_parent) {
             if (whereClause[Op.and]) {
               whereClause[Op.and].push({
-                attachment_level: 'child_account',
+                attachment_level: 'account',
                 attach_to: entityId
               });
             } else {
               whereClause[Op.and] = [{
-                attachment_level: 'child_account',
+                attachment_level: 'account',
                 attach_to: entityId
               }];
             }
-            break;
+          }
+          break;  
           default:
             whereClause[Op.and].push({ attach_to: entityId });
         }
