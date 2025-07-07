@@ -52,7 +52,7 @@ const userResolvers: IResolvers = {
             azure_id: input.azure_id,
             first_name: input.first_name,
             last_name: userRecord.last_name,
-            status: userStatus
+            status_rid: userStatus
           });
         }
 
