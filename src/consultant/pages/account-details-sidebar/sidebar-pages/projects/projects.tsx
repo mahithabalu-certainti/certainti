@@ -90,16 +90,16 @@ const Projects: React.FC<ProjectsProps> = ({
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const projectViewAllIsEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_VIEW_EDIT
+    AllPermissions.PROJECTS_VIEW_EDIT
   );
 
   const projectCreateIsEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_CREATE
+    AllPermissions.PROJECTS_CREATE
   );
   const projectDownloadIsEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_EXPORT
+    AllPermissions.PROJECTS_EXPORT
   );
   // const projectEditIsEnable = checkPermission(
   //   permission,
@@ -186,7 +186,7 @@ const Projects: React.FC<ProjectsProps> = ({
       label: 'Edit',
       disabled: accountInActive,
       onClick: (row: Project) => handleEdit(row),
-      hide: true,
+      hide: false,
     },
     {
       label: 'Delete',
