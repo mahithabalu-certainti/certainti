@@ -15,16 +15,26 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission } from '../../../../../common-utils';
+import {
+  checkPermission,
+  displayValueForInline,
+} from '../../../../../common-utils';
 import {
   AllMenus,
   AllModules,
   AllPermissions,
 } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
-import { CellEditData, Project } from '../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+  Project,
+} from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
 import { AccountDetailsResponse } from '../../../../types';
+import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
+import { useMutation } from '@apollo/client';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -88,6 +98,7 @@ const Projects: React.FC<ProjectsProps> = ({
   const accountInActive =
     accountDetails?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
+  const [projectList, setProjectList] = useState<Project[]>([]);
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -132,10 +143,22 @@ const Projects: React.FC<ProjectsProps> = ({
     projectOverviewIsEnable && projectViewAllIsEnable,
     refreshProjectsTrigger
   );
+  const [updateProjectMutation] = useMutation(UPDATE_PROJECT, {
+    client: resourceClient,
+  });
+
   const totalItems = data?.count || 0;
+
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
   };
+
+  useEffect(() => {
+    if (data?.projects) {
+      setProjectList(data.projects || []);
+    }
+  }, [data?.projects]);
+
   useEffect(() => {
     const isHide = (tab: ResourceTabs) => {
       return (
@@ -325,7 +348,102 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    // Save the old state to revert if needed
+    const previousProject = [...projectList];
+
+    // Find parent project
+    const parentProject = projectList.find((project) =>
+      project.ProjectFiscal?.some((fiscal) => fiscal.rid === rowId)
+    );
+
+    if (!parentProject) return;
+
+    // Find the child fiscal
+    const childFiscal = parentProject.ProjectFiscal.find(
+      (fiscal) => fiscal.rid === rowId
+    );
+
+    if (!childFiscal) return;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        account_rid: parentProject.account_rid,
+        project_rid: childFiscal.project_rid,
+        project_fiscal_rid: childFiscal.project_fiscal_rid,
+      }
+    );
+
+    const isClassificationUpdated = updates.some(
+      (item) => item.columnId === 'classification_name'
+    );
+    const hasClassificationOther = updates.some(
+      (item) => item.columnId === 'project_classification_other'
+    );
+
+    if (isClassificationUpdated && !hasClassificationOther) {
+      updateData['project_classification_other'] = '';
+    }
+
+    const updatedProjectList = projectList.map((project) => {
+      if (project.rid !== parentProject.rid) return project;
+
+      return {
+        ...project,
+        ProjectFiscal: project.ProjectFiscal.map((fiscal) =>
+          fiscal.rid === rowId
+            ? {
+                ...fiscal,
+                ...updates.reduce<Record<string, FieldChangeValue>>(
+                  (pro, item) => {
+                    // If the column is a dropdown, get the label
+                    const displayValue = displayValueForInline(
+                      item.columnId,
+                      item.value,
+                      {
+                        project_type_name: memoizedProjectTypes,
+                        classification_name: memoizedClassification,
+                      }
+                    );
+                    pro[item.columnId] = displayValue;
+
+                    if (item.editId && item.editId !== item.columnId) {
+                      pro[item.editId] = item.value;
+                    }
+                    return pro;
+                  },
+                  {}
+                ),
+                ...(isClassificationUpdated && !hasClassificationOther
+                  ? { project_classification_other: '' }
+                  : {}),
+              }
+            : fiscal
+        ),
+      };
+    });
+
+    setProjectList(updatedProjectList);
+
+    try {
+      const res = await updateProjectMutation({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateSpecificProjectDetails;
+
+      if (result?.statusCode === 200) {
+        console.log('Update success');
+      } else {
+        setProjectList(previousProject);
+      }
+    } catch (error) {
+      console.error('Update failed', error);
+      setProjectList(previousProject);
+    }
   };
 
   if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
@@ -360,7 +478,7 @@ const Projects: React.FC<ProjectsProps> = ({
           />
           <div className='border border-[#CBD6E2]'>
             <ListTable
-              data={data?.projects as Project[]}
+              data={projectList as Project[]}
               columns={projectColumns}
               getRowId={getRowId}
               hoverHighlight={false}

@@ -3,7 +3,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { reshapeGlobalFilter } from '../../../../common-utils';
+import {
+  displayValueForInline,
+  reshapeGlobalFilter,
+} from '../../../../common-utils';
 import { ListTable } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
@@ -20,7 +23,7 @@ import {
 } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
-import { UPDATE_INLINE_ACCOUNT_DETAILS } from '../../../../api/graphql/queries/account-query';
+import { UPDATE_ACCOUNT } from '../../../../api/graphql/queries/account-query';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -43,9 +46,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
+  const [accountsList, setAccountsList] = React.useState<AccountList[]>([]);
 
   const {
-    data: accountList,
+    data,
     isLoading: loading,
     isError,
   } = useAccounts(
@@ -61,26 +65,34 @@ const AccountTable: React.FC<Record<string, any>> = ({
     refreshAccountTrigger
   );
   const colorCodes = useFetchColorCodes();
+  const [updateAccountMutation] = useMutation(UPDATE_ACCOUNT);
 
   useEffect(() => {
-    if (accountList) {
-      setTotalCount(accountList.count || 0);
+    if (data) {
+      setTotalCount(data.count || 0);
     }
-  }, [accountList]);
+  }, [data]);
 
   const colorCodesList = useMemo(() => {
     return (
-      colorCodes.data?.data.colors.map((item) => ({
+      colorCodes.data?.data.colors?.map((item) => ({
         color: '#000000',
         bgColor: item.color_code,
       })) || []
     );
-  }, [colorCodes]);
+  }, [colorCodes.data?.data.colors]);
 
-  // const processedAccounts = useMemo(() => {
-  //   if (!accountList?.accounts) return [];
-  //   return processAccounts(accountList.accounts, colorCodesList);
-  // }, [accountList, colorCodesList]);
+  const processedAccounts = useMemo(() => {
+    if (!data?.accounts) return [];
+    return processAccounts(data.accounts, colorCodesList);
+  }, [data?.accounts, colorCodesList]);
+
+  useEffect(() => {
+    setAccountsList((prev) => {
+      if (prev === processedAccounts) return prev;
+      return processedAccounts;
+    });
+  }, [processedAccounts]);
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: AccountList) => {
@@ -144,30 +156,23 @@ const AccountTable: React.FC<Record<string, any>> = ({
     console.log('Selected rows:', selectedIds);
   };
 
-  const [processedAccounts, setProcessedAccounts] = React.useState<
-    AccountList[]
-  >([]);
-
-  // keep this effect to initialize it when accountList changes
-  useEffect(() => {
-    if (accountList?.accounts) {
-      setProcessedAccounts(
-        processAccounts(accountList.accounts, colorCodesList)
-      );
-    }
-  }, [accountList, colorCodesList]);
-
-  const [updateInlineAccountMutation] = useMutation(
-    UPDATE_INLINE_ACCOUNT_DETAILS
-  );
-
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    const previousAccounts = [...processedAccounts];
+    const previousAccounts = [...accountsList];
+
+    // Flags
+    let hasIndustry = false;
+    let hasIndustryOther = false;
+    let hasCountry = false;
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         const key = item.editId || item.columnId;
         acc[key] = item.value;
+
+        if (item.columnId === 'industry') hasIndustry = true;
+        if (item.columnId === 'industry_other') hasIndustryOther = true;
+        if (item.columnId === 'country') hasCountry = true;
+
         return acc;
       },
       {
@@ -175,43 +180,118 @@ const AccountTable: React.FC<Record<string, any>> = ({
       }
     );
 
-    // Optimistically update UI
-    const updatedAccounts = processedAccounts.map((account) => {
+    if (hasIndustry && !hasIndustryOther) {
+      updateData['industry_name_other'] = '';
+    }
+    if (hasCountry) {
+      updateData['region_rid'] = '';
+    }
+
+    const updatedAccounts = accountsList.map((account) => {
       if (account.rid === rowId) {
-        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
-          (acc, item) => {
-            acc[item.columnId] = item.value;
-            return acc;
-          },
-          {}
-        );
+        const updatedFields = updates.reduce<
+          Record<string, FieldChangeValue | any>
+        >((acc, item) => {
+          const displayValue = displayValueForInline(
+            item.columnId,
+            item.value,
+            {
+              industry: industryOptions,
+              country: countryOptions,
+            }
+          );
+          if (item.columnId === 'industry') {
+            acc['industry'] = {
+              rid: item.value,
+              industry_name: displayValue,
+            };
+          } else if (item.columnId === 'country') {
+            acc['country'] = {
+              rid: item.value,
+              country_name: displayValue,
+            };
+          } else {
+            acc[item.columnId] = displayValue;
+          }
+
+          if (item.editId && item.editId !== item.columnId) {
+            acc[item.editId] = item.value;
+          }
+          return acc;
+        }, {});
+
+        if (hasIndustry && !hasIndustryOther) {
+          updatedFields['industry_name_other'] = '';
+        }
+
         return {
           ...account,
           ...updatedFields,
         };
       }
+
+      if (account.child_accounts?.some((child) => child.rid === rowId)) {
+        return {
+          ...account,
+          child_accounts: account.child_accounts.map((child) => {
+            if (child.rid === rowId) {
+              const updatedFields = updates.reduce<
+                Record<string, FieldChangeValue>
+              >((acc, item) => {
+                const displayValue = displayValueForInline(
+                  item.columnId,
+                  item.value,
+                  {
+                    industry: industryOptions,
+                    country: countryOptions,
+                  }
+                );
+                acc[item.columnId] = displayValue;
+                return acc;
+              }, {});
+
+              if (hasIndustry && !hasIndustryOther) {
+                updatedFields['industry_name_other'] = '';
+              }
+
+              return {
+                ...child,
+                ...updatedFields,
+              };
+            }
+            return child;
+          }),
+        };
+      }
+
       return account;
     });
 
-    setProcessedAccounts(updatedAccounts);
+    setAccountsList(updatedAccounts);
 
     try {
-      const res = await updateInlineAccountMutation({
+      const res = await updateAccountMutation({
         variables: {
           data: updateData,
         },
       });
-      console.log('Update success', res.data);
+      const result = res.data?.updateInlineAccountDetails;
+
+      if (result?.statusCode === 200) {
+        console.log('Update success');
+      } else {
+        setAccountsList(previousAccounts);
+      }
     } catch (error) {
       console.error('Update failed', error);
-      setProcessedAccounts(previousAccounts);
+      setAccountsList(previousAccounts);
     }
   };
 
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
       <ListTable
-        data={processedAccounts || []}
+        data={accountsList || []}
         columns={accountColumns}
         getRowId={getRowId}
         component={'account'}

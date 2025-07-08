@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   GetProjectTypeApiResponse,
   // ProjectList,
@@ -13,12 +13,19 @@ import { PROJECT_DETAILS } from '../../../../../routes';
 import {
   ActionItem,
   CellEditData,
+  FieldChangeValue,
   Project,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
-import { reshapeGlobalFilter } from '../../../../../common-utils';
+import {
+  displayValueForInline,
+  reshapeGlobalFilter,
+} from '../../../../../common-utils';
 import { ClassificationApiResponse, FilterState } from '../../../../types';
 import { ListTable } from '../../../../../components/table';
+import { useMutation } from '@apollo/client';
+import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -51,8 +58,12 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
+  const [allProjectList, setAllProjectList] = useState<Project[]>([]);
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const [updateProjectMutation] = useMutation(UPDATE_PROJECT, {
+    client: resourceClient,
+  });
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -75,6 +86,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   useEffect(() => {
     if (data) {
       setTotalCount(data?.count || 0);
+      setAllProjectList(data.projects || []);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
@@ -86,13 +98,15 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     return row.project_rid || '';
   };
   const handleEdit = (account: Project) => {
-    navigate(`/project/edit/${account?.project_fiscal_rid}`, {
-      state: {
-        accountID: account?.account_rid,
-        projectID: account?.project_fiscal_rid,
-        breadcrumbs: [{ label: 'Project' }, { label: account?.project_code }],
-      },
+    const accountID = account?.account_rid ?? '';
+    const projectID = account?.project_fiscal_rid ?? '';
+    const queryParams = new URLSearchParams({
+      accountID,
+      projectID,
+      source: 'project',
     });
+
+    navigate(`/project/edit/${projectID}?${queryParams.toString()}`);
   };
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -179,12 +193,109 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   ];
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    console.log(updates);
+    // Save the old state to revert if needed
+    const previousProject = [...allProjectList];
+
+    // Find parent project
+    const parentProject = allProjectList.find((project) =>
+      project.ProjectFiscal?.some(
+        (fiscal) => fiscal.project_fiscal_rid === rowId
+      )
+    );
+
+    if (!parentProject) return;
+
+    // Find the child fiscal
+    const childFiscal = parentProject.ProjectFiscal.find(
+      (fiscal) => fiscal.project_fiscal_rid === rowId
+    );
+    if (!childFiscal) return;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        account_rid: parentProject.account_rid,
+        project_rid: childFiscal.project_rid,
+        project_fiscal_rid: childFiscal.project_fiscal_rid,
+      }
+    );
+
+    const isClassificationUpdated = updates.some(
+      (item) => item.columnId === 'classification_name'
+    );
+    const hasClassificationOther = updates.some(
+      (item) => item.columnId === 'classification_other'
+    );
+
+    if (isClassificationUpdated && !hasClassificationOther) {
+      updateData['classification_other'] = '';
+    }
+
+    const updatedProjectList = allProjectList.map((project) => {
+      if (project.project_rid !== parentProject.project_rid) return project;
+
+      return {
+        ...project,
+        ProjectFiscal: project.ProjectFiscal.map((fiscal) =>
+          fiscal.project_fiscal_rid === rowId
+            ? {
+                ...fiscal,
+                ...updates.reduce<Record<string, FieldChangeValue>>(
+                  (pro, item) => {
+                    // If the column is a dropdown, get the label
+                    const displayValue = displayValueForInline(
+                      item.columnId,
+                      item.value,
+                      {
+                        project_type_name: memoizedProjectTypes,
+                        classification_name: memoizedClassification,
+                      }
+                    );
+                    pro[item.columnId] = displayValue;
+
+                    if (item.editId && item.editId !== item.columnId) {
+                      pro[item.editId] = item.value;
+                    }
+                    return pro;
+                  },
+                  {}
+                ),
+                ...(isClassificationUpdated && !hasClassificationOther
+                  ? { classification_other: '' }
+                  : {}),
+              }
+            : fiscal
+        ),
+      };
+    });
+
+    setAllProjectList(updatedProjectList);
+
+    try {
+      const res = await updateProjectMutation({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateSpecificProjectDetails;
+
+      if (result?.statusCode === 200) {
+        console.log('Update success');
+      } else {
+        setAllProjectList(previousProject);
+      }
+    } catch (error) {
+      console.error('Update failed', error);
+      setAllProjectList(previousProject);
+    }
   };
 
   return (
     <ListTable
-      data={data?.projects as Project[]}
+      data={allProjectList as Project[]}
       columns={projectColumns}
       getRowId={getRowId}
       hoverHighlight={false}

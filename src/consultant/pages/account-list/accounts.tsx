@@ -294,6 +294,7 @@ export const Accounts: React.FC = () => {
           refreshAccountTrigger={refreshAccountTrigger}
           countryOptions={countryOptions}
           industryOptions={industryOptions}
+          onRefreshClick={onRefreshClick}
         />
       </div>
     </div>

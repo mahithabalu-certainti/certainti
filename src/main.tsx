@@ -15,7 +15,7 @@ import { persistor } from './store/store';
 import './config/i18n.ts';
 import './index.css';
 import { ApolloProvider } from '@apollo/client';
-import { accountClient } from './api/graphql/client';
+import { accountClient } from './api/graphql/clients/client.ts';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 const queryClient = new QueryClient({

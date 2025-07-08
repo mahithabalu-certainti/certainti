@@ -533,9 +533,29 @@ const ListTable = <T extends RowData>({
       }
 
       // Helper to get editId
-      const getEditIdForColumn = (columnId: string) => {
-        const column = visibleColumns.find((col) => col.id === columnId);
-        return column?.editId || '';
+      const getEditIdForColumn = (
+        columnId: string,
+        modal?: boolean
+      ): string => {
+        if (!modal) {
+          const column = visibleColumns.find((col) => col.id === columnId);
+          if (column?.editId) return column.editId || '';
+        }
+
+        for (const col of visibleColumns) {
+          const dependencies = col.field?.dependencies;
+          if (Array.isArray(dependencies)) {
+            for (const dep of dependencies) {
+              const modalFields = dep.modalFields;
+              if (Array.isArray(modalFields)) {
+                const modalField = modalFields.find((mf) => mf.id === columnId);
+                if (modalField?.editId) return modalField.editId;
+              }
+            }
+          }
+        }
+
+        return '';
       };
 
       const updates: CellEditData[] = [
@@ -551,7 +571,7 @@ const ListTable = <T extends RowData>({
         updates.push({
           columnId,
           value,
-          editId: getEditIdForColumn(columnId),
+          editId: getEditIdForColumn(columnId, true),
         });
       });
 
