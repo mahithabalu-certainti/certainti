@@ -26,7 +26,6 @@ import {
   ExportModule,
   ResourceSkillList,
 } from '../../../../types/resource-skill';
-import { ResourceTypeEnum } from '../../../resource-form/utils';
 import { ResourceList } from '../../../../types/resource';
 import {
   AllMenus,
@@ -35,7 +34,10 @@ import {
   useGetAllCountries,
   useGetStatus,
 } from '../../../../../common-service';
-import { checkPermission } from '../../../../../common-utils';
+import {
+  checkPermission,
+  displayValueForInline,
+} from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -43,7 +45,6 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
-  ListTableColumn,
 } from '../../../../../components/table/types';
 import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -152,9 +153,7 @@ const Resource: React.FC<ResourceProps> = ({
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
-  const [localResourceData, setLocalResourceData] = useState<ResourceList[]>(
-    []
-  );
+  const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
   const [updateResource] = useMutation(UPDATE_RESOURCE, {
     client: resourceClient,
   });
@@ -300,7 +299,7 @@ const Resource: React.FC<ResourceProps> = ({
 
   useEffect(() => {
     if (ResourceList?.resource) {
-      setLocalResourceData(ResourceList.resource);
+      setResourcesList(ResourceList.resource);
     }
   }, [ResourceList]);
   const handleFilter = () => {
@@ -633,128 +632,69 @@ const Resource: React.FC<ResourceProps> = ({
     }
   };
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    const previousCostList = [...localResourceData];
-
-    const columnEditIdMap: Record<string, string> = {};
-    const columnMap: Record<string, ListTableColumn<ResourceList>> = {};
-    resourceColumns.forEach((col) => {
-      if (col.id) {
-        columnMap[col.id] = col;
-        if (col.editId) {
-          columnEditIdMap[col.id] = col.editId;
-        }
+    const previousResourceList = [...resourcesList];
+    let hasCountry = false;
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (res, item) => {
+        const key = item.editId || item.columnId;
+        res[key] = item.value;
+        if (item.columnId === 'country_name') hasCountry = true;
+        return res;
+      },
+      {
+        resource_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
       }
-    });
-
-    const updateFieldsForApi: Record<string, FieldChangeValue> = {};
-    const updateFieldsForUi: Record<string, FieldChangeValue> = {};
-
-    // Dynamically get the ID for "Full-Time" from memoizedResourceType
-    const FULL_TIME_RESOURCE_TYPE_ID = memoizedResourceType.find(
-      (option) => option.label === ResourceTypeEnum.FULL_TIME
-    )?.value;
-
-    // Check if resource_type is being updated to Full-Time or if the current resource is Full-Time
-    let isFullTime = false;
-    const currentResource = localResourceData.find((row) => row.rid === rowId);
-    const resourceTypeUpdate = updates.find(
-      (item) =>
-        (item.editId || columnEditIdMap[item.columnId] || item.columnId) ===
-        'resource_type'
     );
-
-    if (resourceTypeUpdate && FULL_TIME_RESOURCE_TYPE_ID !== undefined) {
-      isFullTime =
-        Number(resourceTypeUpdate.value) === Number(FULL_TIME_RESOURCE_TYPE_ID);
-    } else if (
-      currentResource?.resource_type &&
-      FULL_TIME_RESOURCE_TYPE_ID !== undefined
-    ) {
-      isFullTime =
-        Number(currentResource.resource_type) ===
-        Number(FULL_TIME_RESOURCE_TYPE_ID);
+    if (hasCountry) {
+      updateData['region_rid'] = '';
     }
 
-    updates.forEach((item) => {
-      const column = columnMap[item.columnId];
-      const editKey =
-        item.editId || columnEditIdMap[item.columnId] || item.columnId;
-      let value = item.value;
+    const updatedResource = resourcesList?.map((resource) => {
+      if (resource.rid === rowId) {
+        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
+          (res, item) => {
+            const displayValue = displayValueForInline(
+              item.columnId,
+              item.value,
+              {
+                resource_type_name: memoizedResourceType,
+                country_name: countryOptions,
+                region_name: regionOptions,
+                status_name: memoizedStatus,
+              }
+            );
+            res[item.columnId] = displayValue;
 
-      // Handle resource_orgname: empty string for Full-Time, user-entered text for others
-      if (editKey === 'resource_orgname') {
-        value = isFullTime ? '' : String(value); // Empty string for Full-Time, user text for others
-      } else if (
-        typeof value === 'string' &&
-        !isNaN(Number(value)) &&
-        editKey !== 'resource_orgname' // Avoid numeric conversion for resource_orgname
-      ) {
-        value = Number(value); // Convert to number for non-string fields
-      }
-
-      // For API, use the processed value
-      updateFieldsForApi[editKey] = value;
-
-      if (column?.field?.type === 'select') {
-        // For select fields, find the selected option
-        const selectedOption = column.field.options?.find(
-          (opt: any) => opt.value === value
+            if (item.editId && item.editId !== item.columnId) {
+              res[item.editId] = item.value;
+            }
+            return res;
+          },
+          {}
         );
-
-        if (selectedOption) {
-          // Update the UI field with the label (display value)
-          updateFieldsForUi[item.columnId] = selectedOption.label;
-
-          // If editKey is different from columnId, also update the edit field with the ID
-          if (editKey !== item.columnId) {
-            updateFieldsForUi[editKey] = value;
-          }
-        } else {
-          // If no option found, keep the original value
-          updateFieldsForUi[item.columnId] = value;
-          if (editKey !== item.columnId) {
-            updateFieldsForUi[editKey] = value;
-          }
-        }
-      } else {
-        // For non-select fields, update both UI and edit fields with the same value
-        updateFieldsForUi[item.columnId] = value;
-        if (editKey !== item.columnId) {
-          updateFieldsForUi[editKey] = value;
-        }
+        return {
+          ...resource,
+          ...updatedFields,
+        };
       }
+      return resource;
     });
-
-    // Ensure resource_orgname is set to empty string for Full-Time resources
-    if (isFullTime) {
-      updateFieldsForApi['resource_orgname'] = '';
-      updateFieldsForUi['resource_orgname'] = '';
-    }
-
-    const updateData = {
-      resource_rid: rowId,
-      account_rid: accountDetails?.data?.accountById?.rid,
-      ...updateFieldsForApi,
-    };
-
-    const updatedLocalList = localResourceData.map((row) =>
-      row.rid === rowId ? { ...row, ...updateFieldsForUi } : row
-    );
-    setLocalResourceData(updatedLocalList);
+    setResourcesList(updatedResource);
 
     try {
       const res = await updateResource({
         variables: { data: updateData },
       });
-      if (res?.data?.updateResourceInline.statusCode !== 200) {
-        console.log('Please check the status code...', res?.data);
-        setLocalResourceData(previousCostList);
+      const result = res.data?.updateResourceInline;
+      if (result?.statusCode === 200) {
+        console.log('Update success');
       } else {
-        console.log('Update success:', res?.data);
+        setResourcesList(previousResourceList);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Update failed:', error);
-      setLocalResourceData(previousCostList);
+      setResourcesList(previousResourceList);
     }
   };
 
@@ -826,7 +766,7 @@ const Resource: React.FC<ResourceProps> = ({
           {viewResourceList && !value && (
             <div className='border border-[#CBD6E2]'>
               <ListTable
-                data={localResourceData}
+                data={resourcesList}
                 columns={resourceColumns}
                 getRowId={getRowId}
                 hoverHighlight={false}

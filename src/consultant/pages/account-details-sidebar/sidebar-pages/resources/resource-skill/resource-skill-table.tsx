@@ -21,9 +21,9 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
-  ListTableColumn,
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
+import { displayValueForInline } from '../../../../../../common-utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -57,7 +57,9 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
-  const [localSkillList, setLocalSkillList] = useState<ResourceSkillList[]>([]);
+  const [resourceSkillList, setResourceSkillList] = useState<
+    ResourceSkillList[]
+  >([]);
   const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
     client: resourceClient,
   });
@@ -90,7 +92,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 
   useEffect(() => {
     if (skillList?.resourceSkill) {
-      setLocalSkillList(skillList.resourceSkill);
+      setResourceSkillList(skillList.resourceSkill);
     }
   }, [skillList]);
 
@@ -133,10 +135,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   ];
   const [currentSkillType, setCurrentSkillType] = useState<string>('');
   const skillLevelOptions = useGetSkillLevel();
-  const { data: skillType } = useFetchResourceSkillType(true);
-  const { data: skillSubType } = useFetchResourceSkillSubType(
-    currentSkillType ? ([currentSkillType] as string[]) : []
-  );
+  const { data: skillType, isLoading: skillTypeLoading } =
+    useFetchResourceSkillType(true);
+  const { data: skillSubType, isLoading: subTypeLoading } =
+    useFetchResourceSkillSubType(
+      currentSkillType ? ([currentSkillType] as string[]) : []
+    );
 
   const memoizedSkillLevels = useMemo(
     () =>
@@ -193,7 +197,9 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     memoizedSkillLevels,
     memoizedSkillType,
     memoizedSkillSubType,
-    handleSkillType
+    handleSkillType,
+    skillTypeLoading,
+    subTypeLoading
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -203,120 +209,100 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   };
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    const previousCostList = [...localSkillList];
+    const previousSkillList = [...resourceSkillList];
 
-    const columnEditIdMap: Record<string, string> = {};
-    const columnMap: Record<string, ListTableColumn<ResourceSkillList>> = {};
-    resourceSkillColumns.forEach((col) => {
-      if (col.id) {
-        columnMap[col.id] = col;
-        if (col.editId) {
-          columnEditIdMap[col.id] = col.editId;
-        }
+    // Flags
+    let hasSkillType = false;
+    let hasSkillTypeOther = false;
+    let hasSkillSubType = false;
+    let hasSkillSubTypeOther = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (skill, item) => {
+        const key = item.editId || item.columnId;
+        skill[key] = item.value;
+
+        if (item.columnId === 'skill_type_name') hasSkillType = true;
+        if (item.columnId === 'skill_type_others') hasSkillTypeOther = true;
+        if (item.columnId === 'skill_subtype_name') hasSkillSubType = true;
+        if (item.columnId === 'skill_subtype_others')
+          hasSkillSubTypeOther = true;
+
+        return skill;
+      },
+      {
+        resource_skill_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
+        resource_rid: resourceRid,
       }
-    });
+    );
 
-    const updateFieldsForApi: Record<string, FieldChangeValue> = {};
-    const updateFieldsForUi: Record<string, FieldChangeValue> = {};
-
-    let skillTypeEdited = false;
-    let skillSubTypeEdited = false;
-
-    updates.forEach((item) => {
-      const column = columnMap[item.columnId];
-      const editKey =
-        item.editId || columnEditIdMap[item.columnId] || item.columnId;
-      let value = item.value;
-
-      if (editKey === 'skill_type_rid') {
-        skillTypeEdited = true;
-      } else if (editKey === 'skill_subtype_rid') {
-        skillSubTypeEdited = true;
-      }
-
-      if (typeof value === 'string' && !isNaN(Number(value))) {
-        value = Number(value);
-      }
-      updateFieldsForApi[editKey] = value;
-      if (column?.field?.type === 'select') {
-        const selectedOption = column.field.options?.find(
-          (opt: any) => opt.value === value
-        );
-
-        if (selectedOption) {
-          updateFieldsForUi[item.columnId] = selectedOption.label;
-          if (editKey !== item.columnId) {
-            updateFieldsForUi[editKey] = value;
-          }
-        } else {
-          updateFieldsForUi[item.columnId] = value;
-          if (editKey !== item.columnId) {
-            updateFieldsForUi[editKey] = value;
-          }
-        }
-      } else {
-        updateFieldsForUi[item.columnId] = value;
-        if (editKey !== item.columnId) {
-          updateFieldsForUi[editKey] = value;
-        }
-      }
-    });
-
-    if (skillTypeEdited || skillSubTypeEdited) {
-      const skillTypeOthersUpdate = updates.find(
-        (item) =>
-          (item.editId || columnEditIdMap[item.columnId] || item.columnId) ===
-          'skill_type_others'
-      );
-      const skillSubTypeOthersUpdate = updates.find(
-        (item) =>
-          (item.editId || columnEditIdMap[item.columnId] || item.columnId) ===
-          'skill_subtype_others'
-      );
-      updateFieldsForApi['skill_type_others'] = skillTypeOthersUpdate
-        ? String(skillTypeOthersUpdate.value)
-        : '';
-      updateFieldsForApi['skill_subtype_others'] = skillSubTypeOthersUpdate
-        ? String(skillSubTypeOthersUpdate.value)
-        : '';
-
-      updateFieldsForUi['skill_type_others'] =
-        updateFieldsForApi['skill_type_others'];
-      updateFieldsForUi['skill_subtype_others'] =
-        updateFieldsForApi['skill_subtype_others'];
+    if (
+      hasSkillType &&
+      hasSkillSubType &&
+      !hasSkillTypeOther &&
+      !hasSkillSubTypeOther
+    ) {
+      updateData['skill_type_others'] = '';
+      updateData['skill_subtype_others'] = '';
     }
 
-    const updateData = {
-      resource_skill_rid: rowId,
-      account_rid: accountDetails?.data?.accountById?.rid,
-      resource_rid: resourceRid,
-      ...updateFieldsForApi,
-    };
+    const updatedResourceSkill = resourceSkillList?.map((resource) => {
+      if (resource.rid === rowId) {
+        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
+          (res, item) => {
+            const displayValue = displayValueForInline(
+              item.columnId,
+              item.value,
+              {
+                skill_type_name: memoizedSkillType,
+                skill_subtype_name: memoizedSkillSubType,
+                skill_level_name: memoizedSkillLevels,
+              }
+            );
+            res[item.columnId] = displayValue;
 
-    const updatedLocalList = localSkillList.map((row) =>
-      row.rid === rowId ? { ...row, ...updateFieldsForUi } : row
-    );
-    setLocalSkillList(updatedLocalList);
+            if (item.editId && item.editId !== item.columnId) {
+              res[item.editId] = item.value;
+            }
+            return res;
+          },
+          {}
+        );
+        return {
+          ...resource,
+          ...updatedFields,
+          ...(hasSkillType &&
+          hasSkillSubType &&
+          !hasSkillTypeOther &&
+          !hasSkillSubTypeOther
+            ? { skill_type_others: '', skill_subtype_others: '' }
+            : {}),
+        };
+      }
+      return resource;
+    });
+    setResourceSkillList(updatedResourceSkill);
 
     try {
       const res = await updateResourceSkill({
         variables: { data: updateData },
       });
-      if (res?.data?.updateResourceSkillInline?.statusCode !== 200) {
-        console.log('Please check the status code...', res?.data);
-        setLocalSkillList(previousCostList);
+      const result = res.data?.updateResourceSkillInline;
+      if (result?.statusCode === 200) {
+        console.log('Update success');
       } else {
-        console.log('Update success:', res?.data);
+        setResourceSkillList(previousSkillList);
       }
     } catch (error) {
       console.error('Update failed:', error);
-      setLocalSkillList(previousCostList); // rollback on error
+      setResourceSkillList(previousSkillList);
     }
   };
   return (
     <div>
       <ListTable
-        data={localSkillList}
+        data={resourceSkillList}
         columns={resourceSkillColumns}
         getRowId={getRowId}
         hoverHighlight={false}

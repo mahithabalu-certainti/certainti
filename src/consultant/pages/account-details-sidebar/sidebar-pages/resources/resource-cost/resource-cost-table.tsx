@@ -9,10 +9,7 @@ import {
   useResourceCost,
   useUpdateCostAccept,
 } from '../../../../../services/resource-cost/resource-cost-service';
-import {
-  FieldChangeValue,
-  ListTableColumn,
-} from '../../../../../../components/table/types';
+import { FieldChangeValue } from '../../../../../../components/table/types';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCECOST } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
@@ -23,6 +20,7 @@ import { useToast } from '../../../../../../hooks';
 import { useFetchCurrency } from '../../../../../services/account';
 import { CellEditData } from '../../../../../../components/table/types';
 import { ResourceTypeEnum } from '../../../../resource-form/utils';
+import { displayValueForInline } from '../../../../../../common-utils';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -60,7 +58,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 }) => {
   const navigate = useNavigate();
   const { successToast } = useToast();
-  const [localCostList, setLocalCostList] = useState<ResourceCostList[]>([]);
+  const [resourceCostList, setResourceCostList] = useState<ResourceCostList[]>(
+    []
+  );
   const [updateResourceCost] = useMutation(UPDATE_RESOURCE_COST, {
     client: resourceClient,
   });
@@ -96,7 +96,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   useEffect(() => {
     if (costList?.resourceCost) {
-      setLocalCostList(costList.resourceCost);
+      setResourceCostList(costList.resourceCost);
     }
   }, [costList]);
 
@@ -219,78 +219,71 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    const previousCostList = [...localCostList];
+    const previousCostList = [...resourceCostList];
 
-    const columnEditIdMap: Record<string, string> = {};
-    const columnMap: Record<string, ListTableColumn<ResourceCostList>> = {};
-    resourceCostColumns.forEach((col) => {
-      if (col.id) {
-        columnMap[col.id] = col;
-        if (col.editId) {
-          columnEditIdMap[col.id] = col.editId;
-        }
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (cost, item) => {
+        const key = item.editId || item.columnId;
+        cost[key] = item.value;
+        return cost;
+      },
+      {
+        resource_cost_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
+        resource_rid: resourceRid,
       }
-    });
-
-    const updateFieldsForApi: Record<string, FieldChangeValue> = {};
-    const updateFieldsForUi: Record<string, FieldChangeValue> = {};
-
-    updates.forEach((item) => {
-      const column = columnMap[item.columnId];
-      const editKey =
-        item.editId || columnEditIdMap[item.columnId] || item.columnId;
-      let value = item.value;
-
-      if (typeof value === 'string' && !isNaN(Number(value))) {
-        value = Number(value);
-      }
-
-      updateFieldsForApi[editKey] = value;
-      updateFieldsForUi[editKey] = value;
-
-      if (column?.field?.type === 'select') {
-        const selectedOption = column.field.options?.find(
-          (opt: any) => opt.value === value
-        );
-        if (selectedOption && column.id !== editKey) {
-          updateFieldsForUi[column.id] = selectedOption.label;
-        }
-      }
-    });
-
-    const updateData = {
-      resource_cost_rid: rowId,
-      account_rid: accountDetails?.data?.accountById?.rid,
-      resource_rid: resourceRid,
-      ...updateFieldsForApi,
-    };
-
-    const updatedLocalList = localCostList.map((row) =>
-      row.rid === rowId ? { ...row, ...updateFieldsForUi } : row
     );
-    setLocalCostList(updatedLocalList);
+
+    const updatedResourceCost = resourceCostList?.map((resource) => {
+      if (resource.rid === rowId) {
+        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
+          (res, item) => {
+            const displayValue = displayValueForInline(
+              item.columnId,
+              item.value,
+              {
+                currency_code: memoizedCurrency,
+              }
+            );
+            res[item.columnId] = displayValue;
+
+            if (item.editId && item.editId !== item.columnId) {
+              res[item.editId] = item.value;
+            }
+            return res;
+          },
+          {}
+        );
+        return {
+          ...resource,
+          ...updatedFields,
+        };
+      }
+      return resource;
+    });
+    setResourceCostList(updatedResourceCost);
 
     try {
       const res = await updateResourceCost({
         variables: { data: updateData },
       });
 
-      if (res?.data?.updateResourceCostInline?.statusCode !== 200) {
-        console.log('Please check the status code...', res?.data);
-        setLocalCostList(previousCostList);
+      const result = res.data?.updateResourceCostInline;
+      if (result?.statusCode === 200) {
+        console.log('Update success');
       } else {
-        console.log('Update success:', res?.data);
+        setResourceCostList(previousCostList);
       }
     } catch (error) {
       console.error('Update failed:', error);
-      setLocalCostList(previousCostList); // rollback
+      setResourceCostList(previousCostList);
     }
   };
 
   return (
     <div>
       <ListTable
-        data={localCostList as any}
+        data={resourceCostList}
         columns={resourceCostColumns}
         getRowId={getRowId}
         hoverHighlight={false}

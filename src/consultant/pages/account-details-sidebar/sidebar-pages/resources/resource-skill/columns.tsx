@@ -12,7 +12,9 @@ export const getResourceSkillColumns = (
   skillLevelOptions: ListOption[],
   skillTypeOptions: ListOption[],
   skillSubTypeOptions: ListOption[],
-  handleSkillType: (rid: string) => void
+  handleSkillType: (rid: string) => void,
+  skillTypeLoading: boolean,
+  subTypeLoading: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -57,6 +59,7 @@ export const getResourceSkillColumns = (
       required: true,
       placeholder: 'Choose Skill Type',
       options: skillTypeOptions,
+      loading: skillTypeLoading,
       resetDependentFields: ['skill_subtype_name'],
       onChange: true,
       getFieldData: (rowData: DependencyRowData) => {
@@ -78,6 +81,7 @@ export const getResourceSkillColumns = (
       required: true,
       placeholder: 'Choose Skill SubType',
       options: skillSubTypeOptions,
+      loading: subTypeLoading,
       getFieldData: (rowData: DependencyRowData) => {
         return String(rowData.skill_subtype_rid);
       },
@@ -120,6 +124,7 @@ export const getResourceSkillColumns = (
           modalFields: [
             {
               id: 'skill_type_others',
+              editId: 'skill_type_others',
               label: 'Skill Type(Others)',
               type: 'text',
               required: true,
@@ -148,6 +153,7 @@ export const getResourceSkillColumns = (
             },
             {
               id: 'skill_subtype_others',
+              editId: 'skill_subtype_others',
               label: 'Skill SubType(Others)',
               type: 'text',
               required: true,
