@@ -73,5 +73,25 @@ export const rawQueries = {
                 ${updatedKeyData.join(',')}
               WHERE 
                  rid = '${keyContactDetailsRid}'`
+  },
+  fetchAccountWithRelevantData (schemaName : string, account_rid : string) {
+    return `
+    SELECT 
+      account_rid, account_name, max_ai_interactions,
+      autosend_interaction, fiscal_start_date, fiscal_end_date,
+      website, data_storage AS storage_type, business_details
+    FROM
+      ${schemaName}.account_details
+    WHERE account_rid = '${account_rid}'
+    `
+  },
+  fetchCountry (rid : string) {
+    return `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${rid}'`
+  },
+  fetchIndustry (rid : string) {
+    return `SELECT rid, industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = '${rid}'`
+  },
+  fetchCurrency (rid : string) {
+    return `SELECT rid, currency_code, currency_name, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${rid}'`
   }
 }

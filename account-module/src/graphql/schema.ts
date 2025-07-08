@@ -117,11 +117,59 @@ const updateAccountTypeDefs = gql
       key_contacts : [keyContactDetails]
     }
 
+    type country {
+    rid : String,
+    country_name: String
+    }
+
+    type industry {
+    rid : String,
+    industry_name: String
+    }
+
+    type status {
+    status_name: String
+    }
+
+    type currency {
+      rid : String,
+      currency_code: String,
+      currency_name: String,
+      currency_symbol: String
+    }
+    
+    type updatedAccountResponse {
+      rid : String
+      account_name : String
+      max_ai_interactions : Int
+      autosend_interaction : Boolean
+      fiscal_start_date : String
+      fiscal_end_date : String
+      industry : industry
+      industry_name_other : String
+      website : String
+      annual_revenue : String
+      data_storage : String
+      business_details : String
+      country : country
+      currency : currency,
+      status : status,
+      finance_lead : String,
+      finance_executive : String,
+      professional_services_consultant : String,
+      total_project_hours : Float,
+      total_projects : Int,
+      qualifying_project_hours_fed : Float,
+      qualifying_project_qre_fed : Float,
+      qualifying_project_rd_credits_fed : Float,
+      parent_account_rid : String
+    }
+
     type updateAccountResponse {
       statusCode : Int
       statusCodeValue : String
       statusMessage : String
-      data : String
+      data : updatedAccountResponse
     }
 
     type Mutation {
