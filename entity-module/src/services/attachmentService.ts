@@ -477,6 +477,172 @@ async getAttachments(
 }
 
 
+async getAttachmentSummary(
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+  search?: string,
+  filters: Record<string, any> = {},
+  sortBy: string = 'created_datetime',
+  sortOrder: string = 'DESC'
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[]; totalCount: number };
+}> {
+  try {
+    const mainSequelize = await initMainDbSequelize();
+    if (!mainSequelize) throw new Error("Failed to initialize main DB connection");
+
+    const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
+
+    // 🔷 Handle attached_to filter separately
+    let attachedToFilter;
+    if (filters.attached_to) {
+      attachedToFilter = filters.attached_to;
+      delete filters.attached_to;
+    }
+
+    // Build where clause
+    const { whereClause } = this.buildRawWhereClause(filters, search);
+
+    // Determine final sortBy and sortOrder
+    const validSortFields = [
+      'document_name', 'document_type', 'r_number', 'format',
+      'attachment_level', 'size_in_mb', 'attached_to',
+      'comments', 'created_by', 'created_datetime'
+    ];
+    const validOrder = ['ASC', 'DESC'];
+    const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
+    const finalSortOrder = validOrder.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    // 🔷 Prepare order clause
+    let orderClause: any[] = [];
+    if (finalSortBy !== 'attached_to' && finalSortBy !== 'document_type') {
+      orderClause = [[finalSortBy, finalSortOrder]];
+    }
+
+    // 🔷 Fetch all attachments matching filters (DB sorting applied if applicable)
+    const attachmentsRaw = await AttachmentSummaryModel.findAll({
+      where: whereClause,
+      order: orderClause
+    });
+
+    // Fetch display names for all attachments in result
+    const attachmentDisplayNames: Record<string, string> = {};
+    for (const attachment of attachmentsRaw) {
+      const schemaNumber = attachment.r_number;
+      try {
+        const displayName = await this.getAttachmentDisplayNames([attachment], schemaNumber || '');
+        attachmentDisplayNames[attachment.rid] = displayName[attachment.rid] || attachment.attach_to;
+      } catch (err) {
+        console.error(`Error fetching display name for attachment ${attachment.rid}:`, err);
+        attachmentDisplayNames[attachment.rid] = attachment.attach_to;
+      }
+    }
+
+    // Apply attached_to filter if present
+    let filteredAttachments = attachmentsRaw;
+    if (attachedToFilter) {
+      filteredAttachments = attachmentsRaw.filter(attachment => {
+        let displayName = attachmentDisplayNames[attachment.rid];
+        if (!displayName && attachment.attach_to) {
+          displayName = String(attachment.attach_to);
+        }
+        if (!displayName) return false;
+
+        const displayValue = displayName.toLowerCase();
+        const operator = Object.keys(attachedToFilter)[0];
+        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
+
+        switch (operator) {
+          case 'contains': return displayValue.includes(filterValue);
+          case 'equals': return displayValue === filterValue;
+          case 'not_equals': return displayValue !== filterValue;
+          default: return false;
+        }
+      });
+    }
+
+    // 🔷 Sort in JS if sorting by attached_to or document_type
+    if (finalSortBy === 'attached_to') {
+      filteredAttachments.sort((a, b) => {
+        const aDisplay = attachmentDisplayNames[a.rid] || '';
+        const bDisplay = attachmentDisplayNames[b.rid] || '';
+        return finalSortOrder === 'ASC'
+          ? aDisplay.localeCompare(bDisplay)
+          : bDisplay.localeCompare(aDisplay);
+      });
+    }
+
+    // Map document type & user
+    const paginatedAttachments = filteredAttachments.slice((page - 1) * limit, page * limit);
+    const documentTypeIds = [...new Set(paginatedAttachments.map(att => att.document_type_rid))];
+    const userIds = [...new Set(paginatedAttachments.map(att => att.created_by))];
+
+    const [documentTypes, users] = await Promise.all([
+      documentTypeIds.length > 0
+        ? mainSequelize.query(
+            `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+            { replacements: { documentTypeIds }, type: 'SELECT' }
+          )
+        : Promise.resolve([]),
+      userIds.length > 0
+        ? mainSequelize.query(
+            `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+            { replacements: { userIds }, type: 'SELECT' }
+          )
+        : Promise.resolve([])
+    ]);
+
+    const documentTypeMap = new Map(documentTypes.map((dt: any) => [dt.rid, dt.type_name]));
+    const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
+
+    // Final mapping
+    const attachments = paginatedAttachments.map(attachment => ({
+      ...attachment.get({ plain: true }),
+      document_type: documentTypeMap.get(attachment.document_type_rid) || null,
+      uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
+      attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to
+    }));
+
+    // 🔷 Additional sorting for document_type if needed
+    if (finalSortBy === 'document_type') {
+      attachments.sort((a, b) => {
+        const aType = a.document_type || '';
+        const bType = b.document_type || '';
+        return finalSortOrder === 'ASC'
+          ? aType.localeCompare(bType)
+          : bType.localeCompare(aType);
+      });
+    }
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        attachments,
+        totalCount: filteredAttachments.length
+      }
+    };
+
+  } catch (error) {
+    console.error("getAttachmentSummary error:", error);
+    return {
+      statusCode: 500,
+      message: 'Failed to fetch attachment summary',
+      errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
+      data: {
+        attachments: [],
+        totalCount: 0
+      }
+    };
+  }
+}
+
+
+
 // Helper method to get display names for attachments
 private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<Record<string, string>> {
   const displayNames: Record<string, string> = {};

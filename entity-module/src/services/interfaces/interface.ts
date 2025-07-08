@@ -375,7 +375,20 @@ export interface IAttachmentService {
   message: string;
   errorMessage?: string;
   data?: { attachments: any[]; totalCount: number };
-}>
+  }>
+
+  getAttachmentSummary(userId: string,
+  page:number,
+  limit:number,
+  search: string,
+  filters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string):Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[]; totalCount: number };
+  }>
 
   getDocumentTypeAndCategory(category_rid: string): Promise<{
     statusCode: number;
