@@ -34,6 +34,7 @@ export const getResourceCostColumns = (
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
+    editId: 'fiscal_year',
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
     width: 130,
@@ -66,6 +67,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'effective_from',
+    editId: 'effective_from',
     sortId: 'effective_from',
     label: 'Effective Date',
     width: 160,
@@ -103,6 +105,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'end_date',
+    editId: 'end_date',
     sortId: 'end_date',
     label: 'End Date',
     width: 160,
@@ -137,6 +140,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'currency_code',
+    editId: 'currency_rid',
     sortId: 'currency',
     label: 'Currency',
     width: 130,
@@ -151,6 +155,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'effort_in_hrs',
+    editId: 'effort_in_hrs',
     sortId: 'effort_in_hrs',
     label: 'Effort in Hrs',
     width: 180,
@@ -177,6 +182,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'salary',
+    editId: 'salary',
     sortId: 'salary',
     label: 'Salary',
     width: 180,
@@ -211,6 +217,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'resource_cost',
+    editId: 'resource_cost',
     sortId: 'resource_cost',
     label: 'Cost',
     width: 180,
@@ -245,6 +252,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'bonus',
+    editId: 'bonus',
     sortId: 'bonus',
     label: 'Bonus',
     width: 200,
@@ -271,6 +279,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'insurance',
+    editId: 'insurance',
     sortId: 'insurance',
     label: 'Insurance',
     width: 180,
@@ -297,6 +306,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'deductions',
+    editId: 'deductions',
     sortId: 'deductions',
     label: 'Deductions',
     width: 160,
@@ -323,6 +333,7 @@ export const getResourceCostColumns = (
   },
   {
     id: 'comments',
+    editId: 'comments',
     sortId: 'comments',
     label: 'Comments',
     width: 130,

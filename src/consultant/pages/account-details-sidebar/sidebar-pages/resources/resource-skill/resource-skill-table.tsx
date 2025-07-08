@@ -10,6 +10,9 @@ import {
   useGetSkillLevel,
   useResourceSkill,
 } from '../../../../../services/resource-skill/resource-skill-service';
+import { useMutation } from '@apollo/client';
+import { UPDATE_RESOURCE_SKILL } from '../../../../../../api/graphql/queries/resource-query';
+import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCESKILL } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
 import { getResourceSkillColumns } from './columns';
@@ -17,6 +20,8 @@ import { SkillSubtype, SkillType } from '../../../../../types/resource';
 import {
   CellEditData,
   FieldChangeEvent,
+  FieldChangeValue,
+  ListTableColumn,
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
 
@@ -52,6 +57,10 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const [localSkillList, setLocalSkillList] = useState<ResourceSkillList[]>([]);
+  const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
+    client: resourceClient,
+  });
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
@@ -78,6 +87,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setCount(skillList?.count || 0);
     }
   }, [skillList, setCount]);
+
+  useEffect(() => {
+    if (skillList?.resourceSkill) {
+      setLocalSkillList(skillList.resourceSkill);
+    }
+  }, [skillList]);
 
   const handleEdit = (skill: ResourceSkillList) => {
     const data = convertResourceSkill(skill);
@@ -188,13 +203,120 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   };
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
-  };
+    const previousCostList = [...localSkillList];
 
+    const columnEditIdMap: Record<string, string> = {};
+    const columnMap: Record<string, ListTableColumn<ResourceSkillList>> = {};
+    resourceSkillColumns.forEach((col) => {
+      if (col.id) {
+        columnMap[col.id] = col;
+        if (col.editId) {
+          columnEditIdMap[col.id] = col.editId;
+        }
+      }
+    });
+
+    const updateFieldsForApi: Record<string, FieldChangeValue> = {};
+    const updateFieldsForUi: Record<string, FieldChangeValue> = {};
+
+    let skillTypeEdited = false;
+    let skillSubTypeEdited = false;
+
+    updates.forEach((item) => {
+      const column = columnMap[item.columnId];
+      const editKey =
+        item.editId || columnEditIdMap[item.columnId] || item.columnId;
+      let value = item.value;
+
+      if (editKey === 'skill_type_rid') {
+        skillTypeEdited = true;
+      } else if (editKey === 'skill_subtype_rid') {
+        skillSubTypeEdited = true;
+      }
+
+      if (typeof value === 'string' && !isNaN(Number(value))) {
+        value = Number(value);
+      }
+      updateFieldsForApi[editKey] = value;
+      if (column?.field?.type === 'select') {
+        const selectedOption = column.field.options?.find(
+          (opt: any) => opt.value === value
+        );
+
+        if (selectedOption) {
+          updateFieldsForUi[item.columnId] = selectedOption.label;
+          if (editKey !== item.columnId) {
+            updateFieldsForUi[editKey] = value;
+          }
+        } else {
+          updateFieldsForUi[item.columnId] = value;
+          if (editKey !== item.columnId) {
+            updateFieldsForUi[editKey] = value;
+          }
+        }
+      } else {
+        updateFieldsForUi[item.columnId] = value;
+        if (editKey !== item.columnId) {
+          updateFieldsForUi[editKey] = value;
+        }
+      }
+    });
+
+    if (skillTypeEdited || skillSubTypeEdited) {
+      const skillTypeOthersUpdate = updates.find(
+        (item) =>
+          (item.editId || columnEditIdMap[item.columnId] || item.columnId) ===
+          'skill_type_others'
+      );
+      const skillSubTypeOthersUpdate = updates.find(
+        (item) =>
+          (item.editId || columnEditIdMap[item.columnId] || item.columnId) ===
+          'skill_subtype_others'
+      );
+      updateFieldsForApi['skill_type_others'] = skillTypeOthersUpdate
+        ? String(skillTypeOthersUpdate.value)
+        : '';
+      updateFieldsForApi['skill_subtype_others'] = skillSubTypeOthersUpdate
+        ? String(skillSubTypeOthersUpdate.value)
+        : '';
+
+      updateFieldsForUi['skill_type_others'] =
+        updateFieldsForApi['skill_type_others'];
+      updateFieldsForUi['skill_subtype_others'] =
+        updateFieldsForApi['skill_subtype_others'];
+    }
+
+    const updateData = {
+      resource_skill_rid: rowId,
+      account_rid: accountDetails?.data?.accountById?.rid,
+      resource_rid: resourceRid,
+      ...updateFieldsForApi,
+    };
+
+    const updatedLocalList = localSkillList.map((row) =>
+      row.rid === rowId ? { ...row, ...updateFieldsForUi } : row
+    );
+    setLocalSkillList(updatedLocalList);
+
+    try {
+      const res = await updateResourceSkill({
+        variables: { data: updateData },
+      });
+      if (res?.data?.updateResourceSkillInline?.statusCode !== 200) {
+        console.log('Please check the status code...', res?.data);
+        setLocalSkillList(previousCostList);
+      } else {
+        console.log('Update success:', res?.data);
+      }
+    } catch (error) {
+      console.error('Update failed:', error);
+      setLocalSkillList(previousCostList); // rollback on error
+    }
+  };
   return (
     <div>
       <ListTable
-        data={skillList?.resourceSkill as any}
+        data={localSkillList}
         columns={resourceSkillColumns}
         getRowId={getRowId}
         hoverHighlight={false}

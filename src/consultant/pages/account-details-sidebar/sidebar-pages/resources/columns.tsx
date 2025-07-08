@@ -18,6 +18,7 @@ export const getResourceColumns = (
 ): ListTableColumn<ResourceList>[] => [
   {
     id: 'resource_code',
+    editId: 'resource_code',
     sortId: 'resource_code',
     label: 'Resource Code',
     width: 150,
@@ -70,6 +71,7 @@ export const getResourceColumns = (
   },
   {
     id: 'resource_name',
+    editId: 'resource_name',
     sortId: 'resource_name',
     label: 'Name',
     width: 200,
@@ -108,6 +110,7 @@ export const getResourceColumns = (
   },
   {
     id: 'resource_type_name',
+    editId: 'resource_type_rid',
     sortId: 'resource_type_rid',
     label: 'Resource Type',
     width: 140,
@@ -131,6 +134,7 @@ export const getResourceColumns = (
   },
   {
     id: 'resource_orgname',
+    editId: 'resource_orgname',
     sortId: 'resource_orgname',
     label: 'Org Name',
     width: 140,
@@ -170,6 +174,7 @@ export const getResourceColumns = (
   },
   {
     id: 'resource_designation',
+    editId: 'resource_designation',
     sortId: 'resource_designation',
     label: 'Designation',
     width: 200,
@@ -202,6 +207,7 @@ export const getResourceColumns = (
   },
   {
     id: 'resource_role',
+    editId: 'resource_role',
     sortId: 'resource_role',
     label: 'Role',
     width: 200,
@@ -230,6 +236,7 @@ export const getResourceColumns = (
   },
   {
     id: 'country_name',
+    editId: 'country_rid',
     sortId: 'country_rid',
     label: 'Country',
     width: 160,
@@ -252,6 +259,7 @@ export const getResourceColumns = (
   },
   {
     id: 'region_name',
+    editId: 'region_rid',
     sortId: 'region_rid',
     label: 'Region',
     width: 150,
@@ -298,6 +306,7 @@ export const getResourceColumns = (
   },
   {
     id: 'status_name',
+    editId: 'status_rid',
     sortId: 'status_name',
     label: 'Status',
     width: 150,
@@ -321,6 +330,7 @@ export const getResourceColumns = (
   },
   {
     id: 'comments',
+    editId: 'comments',
     sortId: 'comments',
     label: 'Comments',
     width: 160,

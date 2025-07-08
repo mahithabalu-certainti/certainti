@@ -16,6 +16,7 @@ export const getResourceSkillColumns = (
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
+    editId: 'start_date',
     sortId: 'start_date',
     label: 'Effective Date',
     width: 130,
@@ -45,6 +46,7 @@ export const getResourceSkillColumns = (
   },
   {
     id: 'skill_type_name',
+    editId: 'skill_type_rid',
     sortId: 'skill_type_name',
     label: 'Skill Type',
     width: 180,
@@ -65,6 +67,7 @@ export const getResourceSkillColumns = (
   },
   {
     id: 'skill_subtype_name',
+    editId: 'skill_subtype_rid',
     sortId: 'skill_subtype_name',
     label: 'Skill SubType',
     width: 180,
@@ -178,6 +181,7 @@ export const getResourceSkillColumns = (
   },
   {
     id: 'skill_level_name',
+    editId: 'skill_level_rid',
     sortId: 'skill_level_name',
     label: 'Skill Level',
     width: 140,
@@ -192,6 +196,7 @@ export const getResourceSkillColumns = (
   },
   {
     id: 'skill_details',
+    editId: 'skill_details',
     sortId: 'skill_details',
     label: 'Skill Details',
     width: 180,

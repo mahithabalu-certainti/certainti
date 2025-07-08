@@ -2,11 +2,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
+import { UPDATE_RESOURCE_COST } from '../../../../../../api/graphql/queries/resource-query';
 import { ResourceCostList } from '../../../../../types/resource-cost';
 import {
   useResourceCost,
   useUpdateCostAccept,
 } from '../../../../../services/resource-cost/resource-cost-service';
+import {
+  FieldChangeValue,
+  ListTableColumn,
+} from '../../../../../../components/table/types';
+import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCECOST } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
 import { getResourceCostColumns } from './columns';
@@ -53,6 +60,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 }) => {
   const navigate = useNavigate();
   const { successToast } = useToast();
+  const [localCostList, setLocalCostList] = useState<ResourceCostList[]>([]);
+  const [updateResourceCost] = useMutation(UPDATE_RESOURCE_COST, {
+    client: resourceClient,
+  });
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
@@ -82,6 +93,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       setCount(costList?.count || 0);
     }
   }, [costList, setCount]);
+
+  useEffect(() => {
+    if (costList?.resourceCost) {
+      setLocalCostList(costList.resourceCost);
+    }
+  }, [costList]);
 
   const currency = useFetchCurrency();
 
@@ -202,13 +219,78 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    const previousCostList = [...localCostList];
+
+    const columnEditIdMap: Record<string, string> = {};
+    const columnMap: Record<string, ListTableColumn<ResourceCostList>> = {};
+    resourceCostColumns.forEach((col) => {
+      if (col.id) {
+        columnMap[col.id] = col;
+        if (col.editId) {
+          columnEditIdMap[col.id] = col.editId;
+        }
+      }
+    });
+
+    const updateFieldsForApi: Record<string, FieldChangeValue> = {};
+    const updateFieldsForUi: Record<string, FieldChangeValue> = {};
+
+    updates.forEach((item) => {
+      const column = columnMap[item.columnId];
+      const editKey =
+        item.editId || columnEditIdMap[item.columnId] || item.columnId;
+      let value = item.value;
+
+      if (typeof value === 'string' && !isNaN(Number(value))) {
+        value = Number(value);
+      }
+
+      updateFieldsForApi[editKey] = value;
+      updateFieldsForUi[editKey] = value;
+
+      if (column?.field?.type === 'select') {
+        const selectedOption = column.field.options?.find(
+          (opt: any) => opt.value === value
+        );
+        if (selectedOption && column.id !== editKey) {
+          updateFieldsForUi[column.id] = selectedOption.label;
+        }
+      }
+    });
+
+    const updateData = {
+      resource_cost_rid: rowId,
+      account_rid: accountDetails?.data?.accountById?.rid,
+      resource_rid: resourceRid,
+      ...updateFieldsForApi,
+    };
+
+    const updatedLocalList = localCostList.map((row) =>
+      row.rid === rowId ? { ...row, ...updateFieldsForUi } : row
+    );
+    setLocalCostList(updatedLocalList);
+
+    try {
+      const res = await updateResourceCost({
+        variables: { data: updateData },
+      });
+
+      if (res?.data?.updateResourceCostInline?.statusCode !== 200) {
+        console.log('Please check the status code...', res?.data);
+        setLocalCostList(previousCostList);
+      } else {
+        console.log('Update success:', res?.data);
+      }
+    } catch (error) {
+      console.error('Update failed:', error);
+      setLocalCostList(previousCostList); // rollback
+    }
   };
 
   return (
     <div>
       <ListTable
-        data={costList?.resourceCost as any}
+        data={localCostList as any}
         columns={resourceCostColumns}
         getRowId={getRowId}
         hoverHighlight={false}

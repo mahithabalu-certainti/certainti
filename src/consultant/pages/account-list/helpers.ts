@@ -50,7 +50,11 @@ export const getAccountFilterFields = (
     options: countryOptions,
   },
   { label: 'Total Projects', name: 'total_projects', type: 'number' },
-  { label: 'Total Project Hours', name: 'total_project_hours', type: 'number' },
+  {
+    label: 'Total Project Hours',
+    name: 'total_project_hours',
+    type: 'number',
+  },
   { label: 'Total Cost', name: 'total_project_cost', type: 'number' },
   {
     label: 'Estimated R&D Hours',
