@@ -162,7 +162,8 @@ const updateAccountTypeDefs = gql
       qualifying_project_hours_fed : Float,
       qualifying_project_qre_fed : Float,
       qualifying_project_rd_credits_fed : Float,
-      parent_account_rid : String
+      parent_account_rid : String,
+      modified_datetime : Date
     }
 
     type updateAccountResponse {

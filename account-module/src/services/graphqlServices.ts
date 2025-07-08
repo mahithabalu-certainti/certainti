@@ -108,7 +108,8 @@ class AccountGraphQlServices {
                             total_projects : fetchUpdatedAccount!.total_projects,
                             qualifying_project_hours_fed : fetchUpdatedAccount!.qualifying_project_hours_fed,
                             qualifying_project_qre_fed : fetchUpdatedAccount!.qualifying_project_qre_fed,
-                            qualifying_project_rd_credits_fed : fetchUpdatedAccount!.qualifying_project_rd_credits_fed
+                            qualifying_project_rd_credits_fed : fetchUpdatedAccount!.qualifying_project_rd_credits_fed,
+                            modified_datetime : fetchUpdatedAccount!.modified_datetime
                         }
                     })
                     return {
