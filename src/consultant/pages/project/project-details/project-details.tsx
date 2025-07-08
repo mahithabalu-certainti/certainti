@@ -36,6 +36,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
+import ProjectTask from './project-task/project-task';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -231,7 +232,8 @@ export const ProjectDetails = () => {
       case 'projectResources':
         return <NotFound />;
       case 'projectsTask':
-        return <NotFound />;
+        return <ProjectTask />;
+
       case 'interactions':
         return <NotFound />;
       case 'technicalSummary':

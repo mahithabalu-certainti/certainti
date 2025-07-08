@@ -48,6 +48,7 @@ interface TabProps {
   setSortFilterCount: (count: number) => void;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
+  keyProjectTask?: string;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -65,6 +66,7 @@ const TabPanel: React.FC<TabProps> = ({
   setSortFilterCount,
   toggleEnabled,
   setToggleEnabled,
+  keyProjectTask,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -404,22 +406,21 @@ const TabPanel: React.FC<TabProps> = ({
             })}
           </Tabs>
         )}
-
         <Box className='flex items-center'>
-          {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {tabValue === 'account_projects_view_overview' && (
-            <div className='flex items-center gap-2'>
-              <span className='font-semibold text-[13px] text-[#425A76]'>
-                Include Parent
-              </span>
-              <Switch
-                checked={toggleEnabled}
-                onChange={handleToggleChange}
-                size='small'
-                color='success'
-              />
-            </div>
-          )}
+          {tabValue === 'account_projects_view_overview' &&
+            keyProjectTask !== 'ProjectTask' && (
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold text-[13px] text-[#425A76]'>
+                  Include Parent
+                </span>
+                <Switch
+                  checked={toggleEnabled}
+                  onChange={handleToggleChange}
+                  size='small'
+                  color='success'
+                />
+              </div>
+            )}
           {filterVisibility && value !== 'details' && (
             <>
               <Box className='relative'>
