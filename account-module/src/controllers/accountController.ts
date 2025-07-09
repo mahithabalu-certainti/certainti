@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus } from "../utils/constant";
+import { FLAG, HttpStatus, TYPES_FLAG } from "../utils/constant";
 import configurations from "../config/config";
 import {
   errorLog,
@@ -69,7 +69,9 @@ async function accounts(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      fiscalYear
+      fiscalYear,
+      FLAG.restAPI,
+      TYPES_FLAG.child
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {

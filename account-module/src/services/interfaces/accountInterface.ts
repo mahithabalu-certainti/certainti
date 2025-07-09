@@ -9,7 +9,9 @@ export interface IAccountService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    fiscalYear: number | "FY-All"
+    fiscalYear: number | "FY-All",
+    flag : string,
+    typeFlag : string
   ): Promise<{
     statusCode: number;
     message: string;

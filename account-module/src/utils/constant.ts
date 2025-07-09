@@ -14,6 +14,16 @@ export const HttpStatus = {
 };
 export const MAIN_SCHEMA_NAME = "trd365"
 
+export const TYPES_FLAG = {
+  parent : "parent",
+  child : "child"
+}
+
+export const FLAG = {
+  restAPI : "restAPI",
+  graphql : "graphql"
+}
+
 export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION"

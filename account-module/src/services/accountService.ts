@@ -1,5 +1,5 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { HttpStatus, STATUS, STATUS_MESSAGE } from "../utils/constant";
+import { FLAG, HttpStatus, STATUS, STATUS_MESSAGE, TYPES_FLAG } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -54,7 +54,9 @@ async accountList(
   sortBy: string = "created_datetime", 
   sortOrder: string = "ASC",
   globalFilters: Record<string, string[]> = {},
-  fiscalYear: number | "FY-All"
+  fiscalYear: number | "FY-All",
+  flag : string,
+  typeFlag : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -73,7 +75,7 @@ async accountList(
           
     const { whereClause } = this.buildWhereClause(parsedFilters, search);
     
-    const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause);
+    const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause, flag, typeFlag);
     
     const offset = (page - 1) * limit;
 
@@ -137,7 +139,6 @@ async accountList(
       // Set USD currency for child accounts
       this.setDefaultCurrency(childAccounts, usdCurrency);
     }
-
     // Group child accounts by parent - optimized with Map
    const childAccountsByParent = new Map();
     childAccounts.forEach((child: any) => {
@@ -146,20 +147,25 @@ async accountList(
       }
       childAccountsByParent.get(child.parent_account_rid).push(child);
     });
-    if(Object.keys(parsedFilters).length > 0)
-    {
-    parentAccounts = parentAccounts.filter((parent: any) => {
-      // Keep parent if it has children that match filters
-      if (childAccountsByParent.has(parent.rid)) {
-        return true;
-      }
-      // // Also keep parent if it has no children at all (standalone parent)
-      // const hasChildren = await repository.count({
-      //   where: { parent_account_rid: parent.rid }
-      // });
-      // return !hasChildren;
-    });
+
+      if(typeFlag == TYPES_FLAG.child) {
+      
+      if(Object.keys(parsedFilters).length > 0)
+      {
+        parentAccounts = parentAccounts.filter((parent: any) => {
+          // Keep parent if it has children that match filters
+          if (childAccountsByParent.has(parent.rid)) {
+            return true;
+          }
+        //   // // Also keep parent if it has no children at all (standalone parent)
+        //   // const hasChildren = await repository.count({
+        //   //   where: { parent_account_rid: parent.rid }
+        //   // });
+        //   // return !hasChildren;
+        });
+    }
   }
+
     // Attach child accounts to parents
     parentAccounts.forEach((account: any) => {
       account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
@@ -384,7 +390,8 @@ private async getOptimizedCount(repository: any, whereClause: any) {
               
         const { whereClause } = this.buildWhereClause(parsedFilters, search);
         
-        const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause); 
+        const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause, FLAG.restAPI, TYPES_FLAG.child);
+
         const [finalSortBy, finalSortOrder] = this.getSortParameters(
           sortBy,
           sortOrder
@@ -456,6 +463,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           }
           childAccountsByParent.get(child.parent_account_rid).push(child);
         });
+
          if(Object.keys(parsedFilters).length > 0)
         {
           parentAccounts = parentAccounts.filter((parent: any) => {
@@ -1675,17 +1683,54 @@ if (is_empty !== undefined) {
     return whereClause;
   }
  
-  private applyAccountIDFilter(
+  // private applyAccountIDFilter(
+  //   globalFilters: Record<string, string[]>,
+  //   whereClause: Record<string, any>, flag : string, typeFlag : string
+  // ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+  //   // Parent: only get global filter and must have no parent_account
+  //   let parentWhereClause: Record<string, any> = {
+  //     parent_account_rid: { [Op.is]: null }
+  //   };
+  
+  //   // Child: inherit original filters
+  //   let childWhereClause: Record<string, any> = { ...whereClause };
+  
+  //   if (globalFilters && Object.keys(globalFilters).length > 0) {
+  //     const parentIds = Object.keys(globalFilters);
+  //     const childIds: string[] = Object.values(globalFilters).flat();
+  
+  //     // Parent account filtering
+  //     parentWhereClause.rid = { [Op.in]: parentIds };
+  
+  //     // Child account filtering (on account_rid)
+  //     if (childIds.length > 0) {
+  //       childWhereClause.rid = { [Op.in]: childIds };
+  //     }
+  //   }
+  
+  //   return {
+  //     parentWhereClause,
+  //     childWhereClause
+  //   };
+  // }  
+
+    private applyAccountIDFilter(
     globalFilters: Record<string, string[]>,
-    whereClause: Record<string, any>
-  ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+    whereClause: Record<string, any>, flag : string, typeFlag : string): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
     // Parent: only get global filter and must have no parent_account
-    let parentWhereClause: Record<string, any> = {
-      parent_account_rid: { [Op.is]: null }
-    };
+    let parentWhereClause: Record<string, any> = {};
+    let childWhereClause: Record<string, any> = {}
+    if(flag == FLAG.graphql && typeFlag == TYPES_FLAG.parent) {
+      parentWhereClause.r_number = { [Op.eq] : whereClause.r_number.logic.toUpperCase()}
+      childWhereClause = {}
+    }
+    else {
+      parentWhereClause = {parent_account_rid: { [Op.is]: null}}
+      childWhereClause = { ...whereClause };
+    }
   
     // Child: inherit original filters
-    let childWhereClause: Record<string, any> = { ...whereClause };
+    // let childWhereClause: Record<string, any> = { ...whereClause };
   
     if (globalFilters && Object.keys(globalFilters).length > 0) {
       const parentIds = Object.keys(globalFilters);
@@ -1698,13 +1743,12 @@ if (is_empty !== undefined) {
       if (childIds.length > 0) {
         childWhereClause.rid = { [Op.in]: childIds };
       }
-    }
-  
+    } 
     return {
       parentWhereClause,
       childWhereClause
     };
-  }  
+  } 
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
@@ -1776,286 +1820,6 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
    */
   private async getUSDCurrency() {
     return Currency.findOne({ where: { currency_code: 'USD' } });
-  }
-
-  async inlineEditAccount(data : any) {
-    let parentAccount: any
-    let accountDetails: any
-    let schemaName: string
-
-    const sequelize = await initOrgSequelize()
-    const fetchAccountById = await Account.findOne({
-        where: {
-            rid: data.account_rid
-        },
-        raw: true
-    })
-    if (fetchAccountById) {
-        const isAccountActive = await Status.findOne({
-            where: {
-                rid: fetchAccountById.status_rid
-            }, raw: true
-        })
-        if (isAccountActive) {
-            if (isAccountActive.status_name == STATUS.active) {
-                if (fetchAccountById.parent_account_rid != null) {
-                    parentAccount = await AccountModel.findOne({
-                        where: {
-                            rid: fetchAccountById.parent_account_rid
-                        }, raw: true
-                    })
-                    schemaName = `"trd365_${parentAccount?.r_number?.replace('ACC-', '')}"`
-                    accountDetails = await sequelize.query(`SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${fetchAccountById.rid}'`)
-                } else {
-                    schemaName = `"trd365_${fetchAccountById?.r_number?.replace('ACC-', '')}"`
-                    accountDetails = await sequelize.query(`SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${fetchAccountById.rid}'`)
-                }
-                const setAccountData = await this.setInlineValues(fetchAccountById, data, accountDetails[0])
-                let updateAccount = await AccountModel.update(setAccountData.newDbData, {
-                    where: {
-                        rid: fetchAccountById.rid
-                    }
-                })
-                let accDetailsData = setAccountData.newDbAccDetailsData;
-                let account_name;
-                let max_ai_interactions;
-                let autosend_interaction;
-                let fiscal_start_date;
-                let fiscal_end_date;
-                let blended_rate_fte;
-                let blended_rate_subcon;
-                let website;
-                let modifiedBy;
-                let modifiedDatetime;
-                let updatedColumns: any = []
-                if (accDetailsData.account_name != undefined) {
-                    account_name = accDetailsData.account_name
-                    let name = `account_name = '${account_name}'`
-                    updatedColumns.push(name)
-                }
-                if (accDetailsData.max_ai_interactions !== undefined) {
-                    max_ai_interactions = accDetailsData.max_ai_interactions
-                    let max_ai = `max_ai_interactions = ${max_ai_interactions}`
-                    updatedColumns.push(max_ai)
-                }
-                if (accDetailsData.autosend_interaction !== undefined) {
-                    autosend_interaction = accDetailsData.autosend_interaction
-                    let autosend = `autosend_interaction = ${autosend_interaction}`
-                    updatedColumns.push(autosend)
-                }
-                if (accDetailsData.fiscal_start_date !== undefined) {
-                    fiscal_start_date = accDetailsData.fiscal_start_date
-                    let fiscal = `fiscal_start_date = '${fiscal_start_date}'`
-                    updatedColumns.push(fiscal)
-                }
-                if (accDetailsData.fiscal_end_date !== undefined) {
-                    fiscal_end_date = accDetailsData.fiscal_end_date
-                    let fiscal = `fiscal_end_date = '${fiscal_end_date}'`
-                    updatedColumns.push(fiscal)
-                }
-                if (accDetailsData.blended_rate_fte !== undefined) {
-                    blended_rate_fte = accDetailsData.blended_rate_fte
-                    let blended = `blended_rate_fte = ${blended_rate_fte}`
-                    updatedColumns.push(blended)
-                }
-                if (accDetailsData.blended_rate_subcon !== undefined) {
-                    blended_rate_subcon = accDetailsData.blended_rate_subcon
-                    let blended = `blended_rate_subcon = ${blended_rate_subcon}`
-                    updatedColumns.push(blended)
-                }
-                if (accDetailsData.website !== undefined) {
-                    website = accDetailsData.website
-                    let web = `website = '${website}'`
-                    updatedColumns.push(web)
-                }
-                if (accDetailsData.modified_by !== undefined) {
-                    modifiedBy = accDetailsData.modified_by
-                    let data = `modified_by = '${modifiedBy}'`
-                    updatedColumns.push(data)
-                }
-                if (accDetailsData.modified_datetime !== undefined) {
-                    modifiedDatetime = accDetailsData.modified_datetime
-                    let data = `modified_datetime = NOW()`
-                    updatedColumns.push(data)
-                }
-                if (updatedColumns.length > 0) {
-                    let accDetailsQuery = `UPDATE ${schemaName}.account_details SET ${updatedColumns.join(',')} WHERE account_rid = '${fetchAccountById.rid}'`
-                    await sequelize.query(accDetailsQuery)
-                }
-                if (data.key_contacts !== undefined) {
-                    if (data.key_contacts.length > 0) {
-                        let key_contact_name
-                        let key_contact_email
-                        let key_contact_role
-                        let is_primary_contact
-                        let include_in_communication
-                        let interaction_cc_recipient
-                        let status_rid
-                        let modified_by
-                        let updatedKeyData: any = []
-                        for (let d of data.key_contacts) {
-                            if (d.rid == undefined || d.rid == '') {
-                                return {
-                                    statusCode: HttpStatus.BAD_REQUEST,
-                                    statusMessage: STATUS_MESSAGE.keyContactIdMissing
-                                }
-                            }
-                            let dbKeyContactData: any = await sequelize.query(`SELECT * FROM ${schemaName}.key_contact_details WHERE rid = '${d.rid}'`)
-                            if (dbKeyContactData[0].length > 0) {
-                                let setDataResult = await this.setKeyContact(dbKeyContactData[0][0], d)
-                                if (setDataResult.key_contact_name !== undefined) {
-                                    key_contact_name = setDataResult.key_contact_name
-                                    let name = `key_contact_name = '${key_contact_name}'`
-                                    updatedKeyData.push(name)
-                                }
-                                if (setDataResult.key_contact_email !== undefined) {
-                                    key_contact_email = setDataResult.key_contact_email
-                                    let email = `key_contact_email = '${key_contact_email}'`
-                                    updatedKeyData.push(email)
-                                }
-                                if (setDataResult.key_contact_role !== undefined) {
-                                    key_contact_role = setDataResult.key_contact_role
-                                    let role = `key_contact_role = '${key_contact_role}'`
-                                    updatedKeyData.push(role)
-                                }
-                                if (setDataResult.is_primary_contact !== undefined) {
-                                    is_primary_contact = setDataResult.is_primary_contact
-                                    let primary = `is_primary_contact = ${is_primary_contact}`
-                                    updatedKeyData.push(primary)
-                                }
-                                if (setDataResult.include_in_communication != undefined) {
-                                    include_in_communication = setDataResult.include_in_communication
-                                    let communication = `include_in_communication = ${include_in_communication}`
-                                    updatedKeyData.push(communication)
-                                }
-                                if (setDataResult.interaction_cc_recipient !== undefined) {
-                                    interaction_cc_recipient = setDataResult.interaction_cc_recipient
-                                    let recipient = `interaction_cc_recipient = ${interaction_cc_recipient}`
-                                    updatedKeyData.push(recipient)
-                                }
-                                if (setDataResult.status_rid !== undefined) {
-                                    status_rid = setDataResult.status_rid
-                                    let status = `status_rid = '${status_rid}'`
-                                    updatedKeyData.push(status)
-                                }
-                                if (setDataResult.modified_by !== undefined) {
-                                    modified_by = setDataResult.modified_by
-                                    let status = `modified_by = '${modified_by}'`
-                                    updatedKeyData.push(status)
-                                }
-
-                                await sequelize.query(
-                                    `UPDATE ${schemaName}.key_contact_details 
-                    SET 
-                        ${updatedKeyData.join(',')}
-                    WHERE 
-                        rid = '${dbKeyContactData[0][0].rid}'`)
-                            }
-                        }
-                    }
-                }
-                if (updateAccount.length > 0) {
-                    return {
-                        statusCode: HttpStatus.SUCCESS,
-                        statusMessage: STATUS_MESSAGE.accountUpdateSuccess,
-                    }
-                }
-            }
-            else {
-                return {
-                    statusCode: HttpStatus.BAD_REQUEST,
-                    statusMessage: STATUS_MESSAGE.accountInactive
-                }
-            }
-        }
-    } else {
-        return {
-            statusCode: HttpStatus.NOT_FOUND,
-            statusMessage: STATUS_MESSAGE.accountNoFound
-        }
-    }
-}
-
-  private async setInlineValues (dbData : AccountModel, requestData : any, dbDataDetails : AccountDetails) {
-    let newDbData : any = {};
-    let newDbAccDetailsData : any = {}
-
-    if(requestData.organisation_name) 
-      newDbData.organisation_name = requestData.organisation_name !== dbData.organisation_name ? requestData.organisation_name : dbData.organisation_name
-    if(requestData.finance_lead)
-      newDbData.finance_lead = requestData.finance_lead !== dbData.finance_lead ? requestData.finance_lead : dbData.finance_lead
-    if(requestData.finance_executive)
-      newDbData.finance_executive = requestData.finance_executive !== dbData.finance_executive ? requestData.finance_executive : dbData.finance_executive
-    if(requestData.professional_services_consultant)
-      newDbData.professional_services_consultant = requestData.professional_services_consultant !== dbData.professional_services_consultant ? requestData.professional_services_consultant : dbData.professional_services_consultant
-    if(requestData.account_name) 
-      newDbData.account_name = requestData.account_name !== dbData.account_name ? requestData.account_name : dbData.account_name
-    if(requestData.comments) 
-      newDbData.comments = requestData.comments !== dbData.comments ? requestData.comments : dbData.comments
-    if(requestData.status_rid)
-      newDbData.status_rid = requestData.status_rid !== dbData.status_rid ? requestData.status_rid : dbData.status_rid
-    if(typeof requestData.is_parent == 'boolean')
-      newDbData.is_parent = requestData.is_parent !== dbData.is_parent ? requestData.is_parent : dbData.is_parent
-    if(requestData.parent_account_rid)
-      newDbData.parent_account_rid = requestData.parent_account_rid !== dbData.parent_account_rid ? requestData.parent_account_rid : dbData.parent_account_rid
-    if(requestData.account_name)
-      newDbAccDetailsData.account_name = requestData.account_name !== dbDataDetails.account_name ? requestData.account_name : dbDataDetails.account_name
-    if(requestData.max_ai_interactions)
-      newDbAccDetailsData.max_ai_interactions = requestData.max_ai_interactions !== dbDataDetails.max_ai_interactions ? requestData.max_ai_interactions : dbDataDetails.max_ai_interactions
-    if(typeof requestData.autosend_interaction == 'boolean')
-      newDbAccDetailsData.autosend_interaction = requestData.autosend_interaction !== dbDataDetails.autosend_interaction ? requestData.autosend_interaction : dbDataDetails.autosend_interaction
-    if(requestData.fiscal_start_date)
-      newDbAccDetailsData.fiscal_start_date = requestData.fiscal_start_date !== dbDataDetails.fiscal_start_date ? requestData.fiscal_start_date : dbDataDetails.fiscal_start_date
-    if(requestData.fiscal_end_date)
-      newDbAccDetailsData.fiscal_end_date = requestData.fiscal_end_date !== dbDataDetails.fiscal_end_date ? requestData.fiscal_end_date : dbDataDetails.fiscal_end_date
-    if(requestData.blended_rate_fte)
-      newDbAccDetailsData.blended_rate_fte = requestData.blended_rate_fte !== dbDataDetails.blended_rate_fte ? requestData.blended_rate_fte : dbDataDetails.blended_rate_fte
-    if(requestData.blended_rate_subcon)
-      newDbAccDetailsData.blended_rate_subcon = requestData.blended_rate_subcon !== dbDataDetails.blended_rate_subcon ? requestData.blended_rate_subcon : dbDataDetails.blended_rate_subcon
-    if(requestData.industry_rid)
-      newDbData.industry_rid = requestData.industry_rid !== dbData.industry_rid ? requestData.industry_rid : dbData.industry_rid
-    if(requestData.industry_name_other)
-      newDbData.industry_name_other = requestData.industry_name_other !== dbData.industry_name_other ? requestData.industry_name_other : dbData.industry_name_other
-    if(requestData.website)
-      newDbAccDetailsData.website = requestData.website !== dbDataDetails.website ? requestData.website : dbDataDetails.website
-    if(requestData.annual_revenue)
-      newDbData.annual_revenue = requestData.annual_revenue !== dbData.annual_revenue ? requestData.annual_revenue : dbData.annual_revenue
-    if(requestData.business_details)
-      newDbAccDetailsData.business_details = requestData.business_details !== dbDataDetails.business_details ? requestData.business_details : dbDataDetails.business_details
-    if(requestData.country_rid) {
-       newDbData.country_rid = requestData.country_rid !== dbData.country_rid ? requestData.country_rid : dbData.country_rid
-       newDbData.region_rid = requestData.country_rid != dbData.country_rid ? null : dbData.region_rid
-    }
-    if(requestData.currency_rid)
-      newDbData.currency_rid = requestData.currency_rid !== dbData.currency_rid ? requestData.currency_rid : dbData.currency_rid
-    newDbData.modified_by = requestData.userId
-    newDbAccDetailsData.modified_by = requestData.userId
-    newDbData.modified_datetime = new Date().toISOString()
-    newDbAccDetailsData.modified_datetime = `NOW()`
-    return {
-      newDbData, newDbAccDetailsData
-    }
-  }
-
-  private async setKeyContact (dbData : KeyContact, d : any) {
-    let setKeyData : any = {}
-      if(d.key_contact_name)
-        setKeyData.key_contact_name = d.key_contact_name != dbData.key_contact_name ? d.key_contact_name : dbData.key_contact_name
-      if(d.key_contact_email)
-        setKeyData.key_contact_email = d.key_contact_email !== dbData.key_contact_email ? d.key_contact_email : dbData.key_contact_email
-      if(d.key_contact_role)
-        setKeyData.key_contact_role = d.key_contact_role !== dbData.key_contact_role ? d.key_contact_role : dbData.key_contact_role
-      if(typeof d.is_primary_contact == 'boolean')
-        setKeyData.is_primary_contact = d.is_primary_contact !== dbData.is_primary_contact ? d.is_primary_contact : dbData.is_primary_contact
-      if(typeof d.include_in_communication == 'boolean')
-        setKeyData.include_in_communication = d.include_in_communication !== dbData.include_in_communication ? d.include_in_communication : dbData.include_in_communication
-      if(typeof d.interaction_cc_recipient == 'boolean')
-        setKeyData.interaction_cc_recipient = d.interaction_cc_recipient !== dbData.interaction_cc_recipient ? d.interaction_cc_recipient : dbData.interaction_cc_recipient
-      if(d.status_rid)
-        setKeyData.status_rid = d.status_rid !== dbData.status_rid ? d.status_rid : dbData.status_rid
-      
-      setKeyData.modified_by = d.userId
-      return setKeyData
   }
 }
 

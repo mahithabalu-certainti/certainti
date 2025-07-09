@@ -83,7 +83,7 @@ const updateAccountTypeDefs = gql
       is_primary_contact : Boolean
       include_in_communication : Boolean
       interaction_cc_recipient : Boolean
-      status_rid : String,
+      status_rid : String
       rid : String
     }
 
@@ -110,20 +110,20 @@ const updateAccountTypeDefs = gql
       business_details : String
       country_rid : String
       region_rid : String
-      currency_rid : String,
-      finance_lead : String,
-      finance_executive : String,
-      professional_services_consultant : String,
+      currency_rid : String
+      finance_lead : String
+      finance_executive : String
+      professional_services_consultant : String
       key_contacts : [keyContactDetails]
     }
 
     type country {
-    rid : String,
+    rid : String
     country_name: String
     }
 
     type industry {
-    rid : String,
+    rid : String
     industry_name: String
     }
 
@@ -132,38 +132,80 @@ const updateAccountTypeDefs = gql
     }
 
     type currency {
-      rid : String,
-      currency_code: String,
-      currency_name: String,
+      rid : String
+      currency_code: String
+      currency_name: String
       currency_symbol: String
+      created_by : String
+      created_datetime : Date
+      modified_datetime : Date
+      modified_by : Date
+    }
+
+    type projectFiscalYearResponse {
+      fiscal_year: String
+      account_rid: String
+      total_projects: String
+      total_project_hours: String
+      total_project_cost: String
+      qualifying_project_hours_fed: String
+      qualifying_project_qre_fed: String
+      qualifying_project_rd_credits_fed: String
+      total_projects_rd_credits: String
+    }
+
+    type parent_account {
+      rid : String
+      account_name : String
+    }
+
+    type childAccountsResponse {
+      rid: String
+      account_name: String
+      parent_account_rid: String
+      currency_rid: String
+      total_project_hours: String
+      total_projects: Int
+      total_project_cost: String
+      total_projects_rd_credits: String
+      qualifying_project_hours_fed: String
+      qualifying_project_qre_fed: String
+      qualifying_project_rd_credits_fed: String
+      r_number: String
+      storage_type: String
+      professional_services_consultant: String
+      finance_lead: String
+      finance_executive: String
+      country: country
+      currency: currency
+      parent_account: parent_account
+      industry: industry
+      status: status
+      projects_by_fiscal_year: [projectFiscalYearResponse]
     }
     
     type updatedAccountResponse {
       rid : String
       account_name : String
-      max_ai_interactions : Int
-      autosend_interaction : Boolean
-      fiscal_start_date : String
-      fiscal_end_date : String
-      industry : industry
-      industry_name_other : String
-      website : String
-      annual_revenue : String
-      data_storage : String
-      business_details : String
+      currency_rid : String,
+      total_project_hours : Float
+      total_projects : Int
+      total_project_cost : Float
+      total_projects_rd_credits : Float
+      qualifying_project_hours_fed : Float
+      qualifying_project_qre_fed : Float
+      qualifying_project_rd_credits_fed : Float
+      r_number : String
+      storage_type : String
+      finance_lead : String
+      finance_executive : String
+      professional_services_consultant : String
       country : country
-      currency : currency,
-      status : status,
-      finance_lead : String,
-      finance_executive : String,
-      professional_services_consultant : String,
-      total_project_hours : Float,
-      total_projects : Int,
-      qualifying_project_hours_fed : Float,
-      qualifying_project_qre_fed : Float,
-      qualifying_project_rd_credits_fed : Float,
-      parent_account_rid : String,
+      currency : currency
+      status : status
+      industry : industry
       modified_datetime : Date
+      child_accounts : [childAccountsResponse]
     }
 
     type updateAccountResponse {

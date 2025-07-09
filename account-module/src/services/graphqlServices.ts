@@ -2,17 +2,22 @@ import { initSequelize } from "../config/maindbDataSource"
 import { initOrgSequelize } from "../config/orgdbDataSource"
 import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
-import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
+import { FLAG, HttpStatus, rawQueries, STATUS, STATUS_MESSAGE, TYPES_FLAG } from "../utils/constant"
 import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
+import configurations from "../config/config";
 
 class AccountGraphQlServices {
     async inlineEditAccount(data : any) {
     let parentAccount: any
     let accountDetails: any
     let schemaName: string
+    let flag : string
+    let typeFlag : string
+
+    const services = configurations.getInstance().getServices();
+    const accountServices = services.accountServices;
 
     const sequelize = await initOrgSequelize()
-    const mainSequelize = await initSequelize()
     const fetchAccountById : any = await Account.findOne({
         where: {
             rid: data.account_rid
@@ -35,7 +40,11 @@ class AccountGraphQlServices {
                     })
                     schemaName = `"trd365_${parentAccount?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
+                    typeFlag = TYPES_FLAG.child
+                    flag = FLAG.restAPI
                 } else {
+                    typeFlag = TYPES_FLAG.parent
+                    flag = FLAG.graphql
                     schemaName = `"trd365_${fetchAccountById?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 }
@@ -53,69 +62,101 @@ class AccountGraphQlServices {
                     }
                 }
                 if (updateAccount.length > 0) {
-                    let fetchUpdatedAccount = await Account.findOne({
-                        where : {
-                            rid : data.account_rid
-                        }
-                    })
-                    let fetchAccount = await sequelize.query(rawQueries.fetchAccountWithRelevantData(schemaName, data.account_rid))
-                    let fetchCountry : any = await mainSequelize.query(rawQueries.fetchCountry(fetchAccountById.country_rid))
-                    let fetchIndustry : any = await mainSequelize.query(rawQueries.fetchIndustry(fetchAccountById.industry_rid))
-                    let fetchCurrency : any = await mainSequelize.query(rawQueries.fetchCurrency(fetchAccountById.currency_rid))
-                    let industry;
-                    let country;
-                    let currency;
-                    if(fetchCountry[0][0] == undefined) country = null
-                    else country = {
-                                rid : fetchCountry[0][0].rid, 
-                                country_name : fetchCountry[0][0].country_name
+                    
+                    let response = await accountServices.accountList(1, 1000, '', {account_number:{equals:`${fetchAccountById.r_number}`}}, 'account_name', 'ASC', {}, 'FY-All', flag, typeFlag)
+                    let finalData = response.data?.account.data.map((d : any) => {
+                    return {
+                        rid : d.rid,
+                        account_name : d.account_name,
+                        currency_rid : d.currency_rid,
+                        total_project_hours : d.total_project_hours,
+                        total_projects : d.total_projects,
+                        total_project_cost : d.total_project_cost,
+                        total_projects_rd_credits : d.total_projects_rd_credits,
+                        qualifying_project_hours_fed : d.qualifying_project_hours_fed,
+                        qualifying_project_qre_fed : d.qualifying_project_qre_fed,
+                        qualifying_project_rd_credits_fed : d.qualifying_project_rd_credits_fed,
+                        r_number : d.r_number,
+                        storage_type : d.storage_type,
+                        professional_services_consultant : d.professional_services_consultant,
+                        finance_lead : d.finance_lead,
+                        finance_executive : d.finance_executive,
+                        country : d.country == null ? null : {
+                            rid : d.country.dataValues.rid,
+                            country_name : d.country.dataValues.country_name
+                        },
+                        currency : d.currency == null ? null : {
+                            rid : d.currency.dataValues.rid,
+                            currency_name : d.currency.dataValues.currency_name,
+                            currency_code : d.currency.dataValues.currency_code,
+                            currency_symbol : d.currency.dataValues.currency_symbol
+                        },
+                        industry : d.industry == null ? null : {
+                            rid : d.industry.dataValues.rid,
+                            industry_name : d.industry.dataValues.industry_name
+                        },
+                        status : d.status == null ? null : {
+                            status_name : d.status.dataValues.status_name
+                        },
+                        child_accounts : d.child_accounts.length < 1 ? [] : d.child_accounts.map((da : any) => {
+                            return {
+                                rid : da.rid,
+                                account_name : da.account_name,
+                                parent_account_rid : da.parent_account_rid,
+                                currency_rid : da.currency_rid,
+                                total_project_hours : da.total_project_hours,
+                                total_projects : da.total_projects,
+                                total_project_cost : da.total_project_cost,
+                                total_projects_rd_credits : da.total_projects_rd_credits,
+                                qualifying_project_hours_fed : da.qualifying_project_hours_fed,
+                                qualifying_project_qre_fed : da.qualifying_project_qre_fed,
+                                qualifying_project_rd_credits_fed : da.qualifying_project_rd_credits_fed,
+                                r_number : da.r_number,
+                                storage_type : da.storage_type,
+                                professional_services_consultant : da.professional_services_consultant,
+                                finance_lead : da.finance_lead,
+                                finance_executive : da.finance_executive,
+                                country : da.country == null ? null : {
+                                    rid : da.country.dataValues.rid,
+                                    country_name : da.country.dataValues.country_name
+                                },
+                                currency : da.currency == null ? null : {
+                                    rid : da.currency.dataValues.rid,
+                                    currency_code : da.currency.dataValues.currency_code,
+                                    currency_symbol: da.currency.dataValues.currency_symbol
+                                },
+                                parent_account : da.parent_account == null ? null : {
+                                    rid : da.parent_account.dataValues.rid,
+                                    account_name : da.parent_account.dataValues.account_name
+                                },
+                                industry : da.industry == null ? null : {
+                                    rid : da.industry.dataValues.rid,
+                                    industry_name : da.industry.dataValues.industry_name
+                                },
+                                status : {
+                                    status_name : da.status.dataValues.status_name
+                                },
+                               projects_by_fiscal_year : da.projects_by_fiscal_year.length < 1 ? [] : da.projects_by_fiscal_year.map((dat : any) => {
+                                return {
+                                    fiscal_year : dat.fiscal_year,
+                                    account_rid : dat.account_rid,
+                                    total_projects : dat.total_projects,
+                                    total_project_hours : dat.total_project_hours,
+                                    total_project_cost : dat.total_project_cost,
+                                    qualifying_project_hours_fed : dat.qualifying_project_hours_fed,
+                                    qualifying_project_qre_fed : dat.qualifying_project_qre_fed,
+                                    qualifying_project_rd_credits_fed : dat.qualifying_project_rd_credits_fed,
+                                    total_projects_rd_credits : dat.total_projects_rd_credits
+                                }
+                               }) 
                             }
-                    if(fetchIndustry[0][0] == undefined) industry = null
-                    else industry = {
-                                rid : fetchIndustry[0][0].rid,
-                                industry_name : fetchIndustry[0][0].industry_name
-                            }
-                    if(fetchCurrency[0][0] == undefined) currency = null
-                    else currency = {
-                                rid : fetchCurrency[0][0].rid,
-                                currency_name : fetchCurrency[0][0].currency_name,
-                                currency_code : fetchCurrency[0][0].currency_code,
-                                currency_symbol : fetchCurrency[0][0].currency_symbol
-                            }
-                    let response = fetchAccount[0].map((d : any) => {
-                        return {
-                            rid : d.account_rid,
-                            parent_account_rid : fetchUpdatedAccount!.parent_account_rid,
-                            account_name : d.account_name,
-                            max_ai_interactions : d.max_ai_interactions,
-                            autosend_interaction : d.autosend_interaction,
-                            fiscal_start_date : d.fiscal_start_date,
-                            fiscal_end_date : d.fiscal_end_date,
-                            website : d.website,
-                            storage_type : d.storage_type,
-                            business_details : d.business_details,
-                            finance_lead : fetchUpdatedAccount!.finance_lead,
-                            finance_executive : fetchUpdatedAccount!.finance_executive,
-                            professional_services_consultant : fetchUpdatedAccount!.professional_services_consultant,
-                            industry_other : fetchUpdatedAccount!.industry_name_other,
-                            country : country,
-                            industry : industry,
-                            currency : currency,
-                            status : {
-                                status_name : isAccountActive.status_name
-                            },
-                            total_project_hours : fetchUpdatedAccount!.total_project_hours,
-                            total_projects : fetchUpdatedAccount!.total_projects,
-                            qualifying_project_hours_fed : fetchUpdatedAccount!.qualifying_project_hours_fed,
-                            qualifying_project_qre_fed : fetchUpdatedAccount!.qualifying_project_qre_fed,
-                            qualifying_project_rd_credits_fed : fetchUpdatedAccount!.qualifying_project_rd_credits_fed,
-                            modified_datetime : fetchUpdatedAccount!.modified_datetime
-                        }
+                        })
+                    }
                     })
                     return {
                         statusCode: HttpStatus.SUCCESS,
                         statusMessage: STATUS_MESSAGE.accountUpdateSuccess,
-                        data : response
+                        data : finalData
                     }
                 }
             }
