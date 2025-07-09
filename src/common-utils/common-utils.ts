@@ -265,6 +265,7 @@ export const createDateField = (
   others: {
     required: boolean;
     disabled?: boolean;
+    hide?: boolean;
     disableFutureDates?: boolean;
     minDate?: Date;
     maxDate?: Date;
@@ -285,6 +286,7 @@ export const createDateField = (
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
+  hide: others.hide,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
 import {
+  AllPermissions,
   Layout,
   OnChange,
   useGetAllCountries,
@@ -36,6 +37,8 @@ import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
@@ -115,6 +118,23 @@ const ProjectForm: React.FC = () => {
   const states = useFetchState(currentCountry);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
@@ -240,7 +260,11 @@ const ProjectForm: React.FC = () => {
   );
   useEffect(() => {
     const existingContacts = account?.keyContact || [];
-    const newKeyData = newKeyContactFields(memoizedRole);
+    const disabled =
+      isEditView &&
+      permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit;
+    const newKeyData = newKeyContactFields(memoizedRole, disabled);
 
     let fields: FieldType[] = [];
 
@@ -377,7 +401,8 @@ const ProjectForm: React.FC = () => {
     isEditView,
     showOthersField,
     showClassifyOthersField,
-    states.isLoading
+    states.isLoading,
+    permissionMap
   );
 
   const formLoading =

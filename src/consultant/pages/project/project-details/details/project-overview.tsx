@@ -1,20 +1,22 @@
 import { Typography } from '@mui/material';
 import { SxProps } from '@mui/material';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LeftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 import { NewProjectData } from '../../../../types/project';
-import {
-  formatDateToYYYYMMDD,
-  formatDateToYYYYMMDDWithTime,
-} from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 import { KeyContactProps } from '../../../account-details/utils';
-import { costDisplay, getDateFormat } from '../../../../../common-utils';
+import {
+  applyHidePermission,
+  costDisplay,
+  getDateFormat,
+} from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+import { AllPermissions, Permissions } from '../../../../../common-service';
 interface DetailItem {
+  key?: string;
   label: string;
   value: React.ReactNode;
 }
@@ -45,18 +47,9 @@ interface ProjectOverviewProps {
   isDetailsLoading?: boolean;
   detailsError?: boolean;
   isKeyContactAvailable?: boolean;
+  permission: Permissions[];
 }
 
-const formatKey = (key: string): string => {
-  return key
-    .split('_')
-    .map((word) =>
-      word.toLowerCase() === 'id'
-        ? 'ID'
-        : word.charAt(0).toUpperCase() + word.slice(1)
-    )
-    .join(' ');
-};
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   title = '',
   titleIcon,
@@ -68,85 +61,91 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   isDetailsLoading,
   detailsError,
   isKeyContactAvailable,
+  permission,
 }) => {
-  const CreateSectionData = (
-    dataObj: Partial<NewProjectData>,
-    customMappings?: Record<string, (val: string) => React.ReactNode>
-  ) => {
-    return Object.entries(dataObj).map(([key, value]) => {
-      // Handle nested objects
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        return {
-          label: formatKey(key),
-          value: Object.values(value).join(', ') || '-', // or handle nested objects differently
-        };
-      }
-      if (
-        (key === 'created_on' || key === 'updated_on') &&
-        typeof value === 'string'
-      ) {
-        return {
-          label: formatKey(key),
-          value: formatDateToYYYYMMDDWithTime(value), // custom formatter
-        };
-      }
-      if (
-        (key === 'project_enddate' || key === 'project_startdate') &&
-        typeof value === 'string'
-      ) {
-        return {
-          label: formatKey(key),
-          value: formatDateToYYYYMMDD(value), // custom formatter
-        };
-      }
-      const displayValue =
-        value === null || value === '' || value === undefined
-          ? '-'
-          : customMappings?.[key]
-            ? customMappings[key](value as string)
-            : value;
-
-      return {
-        label: formatKey(key),
-        value: displayValue,
-      };
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
-  };
-
+    return map;
+  }, [projectViewEditFields]);
+  const keycontactVisable =
+    !permissionMap['key_contacts']?.read &&
+    !permissionMap['key_contacts']?.edit;
+  console.log('permissionMap', permissionMap);
   const basicInfo: DetailItem[] = [
-    { label: 'Project Code', value: projectDetails?.project_code },
-    { label: 'Fiscal Year', value: projectDetails?.fiscal_year },
-    { label: 'Name', value: projectDetails?.project_name },
-    { label: 'Project Type', value: projectDetails?.project_type_name },
     {
+      key: 'project_code',
+      label: 'Project Code',
+      value: projectDetails?.project_code,
+    },
+    {
+      key: 'fiscal_year',
+      label: 'Fiscal Year',
+      value: projectDetails?.fiscal_year,
+    },
+    { key: 'project_name', label: 'Name', value: projectDetails?.project_name },
+    {
+      key: 'project_type_rid',
+      label: 'Project Type',
+      value: projectDetails?.project_type_name,
+    },
+    {
+      key: 'project_startdate',
       label: 'Start Date',
       value: getDateFormat(projectDetails?.project_startdate ?? undefined),
     },
     {
+      key: 'project_enddate',
       label: 'End Date',
       value: getDateFormat(projectDetails?.project_enddate ?? undefined),
     },
     {
+      key: 'project_classification_rid',
       label: 'Classification',
       value:
         projectDetails?.project_classification_other ||
         projectDetails?.classification_name,
     },
 
-    { label: 'Project Group', value: projectDetails?.project_group },
-    { label: 'Client Group', value: projectDetails?.project_client_group },
-    { label: 'Program Name', value: projectDetails?.program_name },
     {
+      key: 'project_group',
+      label: 'Project Group',
+      value: projectDetails?.project_group,
+    },
+    {
+      key: 'project_client_group',
+      label: 'Client Group',
+      value: projectDetails?.project_client_group,
+    },
+    {
+      key: 'program_name',
+      label: 'Program Name',
+      value: projectDetails?.program_name,
+    },
+    {
+      key: 'industry_rid',
       label: 'Industry',
       value: projectDetails?.industry_name || projectDetails?.industry_rid_name,
     },
-    { label: 'Status', value: projectDetails?.status_name },
+    { key: 'status_rid', label: 'Status', value: projectDetails?.status_name },
   ];
 
   const locationInfo: DetailItem[] = [
-    { label: 'Country', value: projectDetails?.country_name },
-    { label: 'Region', value: projectDetails?.region_name },
-    { label: 'Currency', value: projectDetails?.currency_name },
+    { key: 'country', label: 'Country', value: projectDetails?.country_name },
+    { key: 'region', label: 'Region', value: projectDetails?.region_name },
+    {
+      key: 'currency',
+      label: 'Currency',
+      value: projectDetails?.currency_name,
+    },
   ];
 
   const keyContactsList: trasnformedKeyContacts[] | undefined =
@@ -160,19 +159,34 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       keyContactStatus: contact.status_name,
     }));
   const financialInfo: DetailItem[] = [
-    { label: 'Total FTE Count', value: projectDetails?.total_fte },
     {
+      key: 'total_fte',
+      label: 'Total FTE Count',
+      value: projectDetails?.total_fte,
+    },
+    {
+      key: 'total_subcon',
       label: 'Total Sub Con Count',
       value: projectDetails?.total_subcon,
     },
     { label: '', value: 'empty' },
-    { label: 'Total FTE Effort', value: projectDetails?.total_effort_fte },
     {
+      key: 'total_effort_fte',
+      label: 'Total FTE Effort',
+      value: projectDetails?.total_effort_fte,
+    },
+    {
+      key: 'total_effort_subcon',
       label: 'Total Sub Con Effort',
       value: projectDetails?.total_effort_subcon,
     },
-    { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
     {
+      key: 'total_effort',
+      label: 'Total Effort in Hrs',
+      value: projectDetails?.total_effort,
+    },
+    {
+      key: 'total_cost_fte',
       label: 'Total FTE Cost',
       value: costDisplay(
         projectDetails?.total_cost_fte,
@@ -180,6 +194,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ),
     },
     {
+      key: 'total_cost_subcon',
       label: 'Total Sub Con Cost',
       value: costDisplay(
         projectDetails?.total_cost_subcon,
@@ -188,6 +203,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
 
     {
+      key: 'total_cost_nonlabor',
       label: 'Total Non Labor Cost',
       value: costDisplay(
         projectDetails?.total_cost_nonlabor,
@@ -195,6 +211,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ),
     },
     {
+      key: 'total_cost',
       label: 'Total Cost',
       value: costDisplay(
         projectDetails?.total_cost,
@@ -203,23 +220,45 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
   ];
 
-  const auditInfo = CreateSectionData({
-    record_id: projectDetails?.rid,
-    project_id: projectDetails?.r_number,
-    created_on: projectDetails?.created_datetime,
-    created_by: projectDetails?.created_name,
-    updated_on: projectDetails?.modified_datetime,
-    Updated_By: projectDetails?.modified_name,
-  });
-  const comments = CreateSectionData({
-    comments: projectDetails?.comments,
-  });
-  const description = CreateSectionData({
-    description: projectDetails?.project_description,
-  });
+  const auditInfo: DetailItem[] = [
+    { key: 'rid', label: 'Record ID', value: projectDetails?.rid },
+    { key: 'r_number', label: 'Project ID', value: projectDetails?.r_number },
+    {
+      key: 'created_datetime',
+      label: 'Created On',
+      value: projectDetails?.created_datetime,
+    },
+    {
+      key: 'created_by',
+      label: 'Created By',
+      value: projectDetails?.created_name,
+    },
+    {
+      key: 'modified_datetime',
+      label: 'Updated On',
+      value: projectDetails?.modified_datetime,
+    },
+    {
+      key: 'modified_by',
+      label: 'Updated By',
+      value: projectDetails?.modified_name,
+    },
+  ];
+  const comments: DetailItem[] = [
+    { key: 'comments', label: 'Comments', value: projectDetails?.comments },
+  ];
+
+  const description: DetailItem[] = [
+    {
+      key: 'project_description',
+      label: 'description',
+      value: projectDetails?.project_description,
+    },
+  ];
 
   const settingInfo: DetailItem[] = [
     {
+      key: 'blended_rate_fte',
       label: 'Blended Rate - FTE',
       value: costDisplay(
         projectDetails?.blended_rate_fte,
@@ -227,6 +266,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ),
     },
     {
+      key: 'blended_rate_subcon',
       label: 'Blended Rate - SubCon',
       value: costDisplay(
         projectDetails?.blended_rate_subcon,
@@ -235,19 +275,38 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
     { label: '', value: 'empty' },
     {
+      key: 'auto_access_rd',
       label: 'Auto Assessment',
       value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
     },
     {
+      key: 'autosend_interaction',
       label: 'Auto Send Interaction',
       value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
     }, // need to Discuss
 
     {
+      key: 'max_ai_interactions',
       label: 'Max Interaction Follow up',
       value: projectDetails?.max_ai_interaction,
     },
   ];
+
+  const IdentityDetails = applyHidePermission(basicInfo, permissionMap);
+  const descriptionDetails = applyHidePermission(description, permissionMap);
+  const locationInfoDetails = applyHidePermission(locationInfo, permissionMap);
+  const financialInfoDetails = applyHidePermission(
+    financialInfo,
+    permissionMap
+  );
+  const settingInfoInfoDetails = applyHidePermission(
+    settingInfo,
+    permissionMap
+  );
+
+  const commentsDetails = applyHidePermission(comments, permissionMap);
+  const auditInfoDetails = applyHidePermission(auditInfo, permissionMap);
+
   return (
     <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
       <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
@@ -315,15 +374,15 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         <div>
           <DetailsSection
             title='Basic Information'
-            data={basicInfo as DetailItem[]}
+            data={IdentityDetails as DetailItem[]}
             customStyle='pt-0 mt-0'
           />
-          <DetailsSection title='' data={description as DetailItem[]} />
+          <DetailsSection title='' data={descriptionDetails as DetailItem[]} />
           <DetailsSection
             title='Location and Currency Information'
-            data={locationInfo as DetailItem[]}
+            data={locationInfoDetails as DetailItem[]}
           />
-          {isKeyContactAvailable && keyContactsList && (
+          {isKeyContactAvailable && keyContactsList && !keycontactVisable && (
             <KeyContactSection
               title='Key Contacts List'
               data={keyContactsList || []}
@@ -331,16 +390,19 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           )}
           <DetailsSection
             title='Financial Information'
-            data={financialInfo as DetailItem[]}
+            data={financialInfoDetails as DetailItem[]}
           />
           <DetailsSection
             title='Project Settings'
-            data={settingInfo as DetailItem[]}
+            data={settingInfoInfoDetails as DetailItem[]}
           />
-          <DetailsSection title='Comments' data={comments as DetailItem[]} />
+          <DetailsSection
+            title='Comments'
+            data={commentsDetails as DetailItem[]}
+          />
           <DetailsSection
             title='Audit Information'
-            data={auditInfo as DetailItem[]}
+            data={auditInfoDetails as DetailItem[]}
             isAudit={true}
           />
         </div>
