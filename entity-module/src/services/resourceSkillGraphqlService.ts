@@ -67,7 +67,8 @@ async updateInlineResourceSkill (data : any) {
                     attributeName = trimmedData
                     oldValue = getResourceSkill[0][0][trimmedData]
                     newValue = data[trimmedData]
-
+                    if(newValue == undefined) newValue = ''
+                    else newValue = newValue
                     await orgSequelize.query(rawQueries.insertSkillHistory(schemaName, data, attributeName, oldValue, newValue))
                     return {
                         statusCode : HttpStatus.SUCCESS,

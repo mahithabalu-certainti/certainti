@@ -118,8 +118,8 @@ const updateAccountTypeDefs = gql
     }
 
     type country {
-    country_name: String,
-    country_code : String
+    rid : String
+    country_name: String
     }
 
     type region_details {
@@ -136,7 +136,8 @@ const updateAccountTypeDefs = gql
     }
 
     type currency {
-      currency_code: String,
+      rid : String
+      currency_code: String
       currency_symbol: String
     }
 
@@ -153,6 +154,7 @@ const updateAccountTypeDefs = gql
     }
     
     type parent_account {
+      rid : String
       account_name : String
     }
 
@@ -173,12 +175,12 @@ const updateAccountTypeDefs = gql
       professional_services_consultant: String
       finance_lead: String
       finance_executive: String
+      industry_name_other : String
       country: country
       currency: currency
       parent_account: parent_account
       industry: industry
       status: status
-      projects_by_fiscal_year: [projectFiscalYearResponse]
     }
     
     type updatedAccountResponse {
@@ -187,8 +189,8 @@ const updateAccountTypeDefs = gql
       eid : String,
       created_by : String,
       modified_by : String,
-      created_datetime : String,
-      modified_datetime : String,
+      created_datetime : Date,
+      modified_datetime : Date,
       comments : String,
       account_name : String,
       status_rid : String,
@@ -230,7 +232,7 @@ const updateAccountTypeDefs = gql
       statusCode : Int
       statusCodeValue : String
       statusMessage : String
-      data : updatedAccountResponse
+      data : childAccountsResponse
     }
 
     type Mutation {
