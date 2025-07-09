@@ -3,13 +3,11 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant
 import { Status } from "./statusModel";
 import { User } from "./userModel";
 import { UserGroupMapping } from "./userGroupMappingModel";
-import { AccountView } from "./accountViewModel";
 
 // Import User model
 // import { User } from "./userModel";
 
 interface UserGroupAttributes {
-  account_view?: AccountView;
   rid: string;
   r_number?: string;
   group_name: string;
@@ -21,6 +19,7 @@ interface UserGroupAttributes {
   modified_datetime?: Date;
   is_consultant_only_group:boolean;
   user_count?:number;
+   account_name?: string
 }
 
 // Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
@@ -42,7 +41,7 @@ export class UserGroup
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
   public is_consultant_only_group!:boolean;
-  public account_view?: AccountView
+  public account_name?: string
   public user_count?:number;
 
 
@@ -113,11 +112,6 @@ export class UserGroup
     );
   }
   static associate(models: any) {
-      UserGroup.belongsTo(AccountView, {
-      foreignKey: "account_rid",
-      as: "account_view", // Different alias to avoid conflicts
-      targetKey: "rid"
-    });
     
     UserGroup.belongsTo(Status, {
          foreignKey: "status_rid",

@@ -8,7 +8,6 @@ import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/dataSource";
 import dayjs from "dayjs";
 import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
-import { AccountView } from "../models/accountViewModel";
 import moment from "moment";
 import { isValidTimezone } from "../utils/helpers";
 import { ProjectAccessView } from "../utils/types";
@@ -973,9 +972,7 @@ private createUserCountCondition(operator: string, value: number): any {
         ] as any;
       } 
       else if (finalSortBy === 'account_name') {
-        orderArray = [
-        [{ model: AccountView, as: 'account_view' }, 'account_name', finalSortOrder],
-        ];
+         orderArray = [[Sequelize.literal('account_name'), finalSortOrder]];
       }
       else {
         orderArray = [[finalSortBy, finalSortOrder]];
@@ -986,11 +983,6 @@ private createUserCountCondition(operator: string, value: number): any {
               {
                 model: User,
                 as: "user",
-                attributes: [], 
-              },
-              {
-                model: AccountView,
-                as: "account_view",
                 attributes: [], 
               }
             ],
@@ -1010,7 +1002,15 @@ private createUserCountCondition(operator: string, value: number): any {
                     WHERE ugm.group_rid = "UserGroup".rid
                   )`),
                   'user_count'
-                ]
+                ],
+                [
+                literal(`(
+                  SELECT account_name
+                  FROM "${MAIN_SCHEMA_NAME}".account AS acc
+                  WHERE acc.rid = "UserGroup".account_rid
+                )`),
+                'account_name'
+               ],
               ]
             },
           include: [
@@ -1018,11 +1018,6 @@ private createUserCountCondition(operator: string, value: number): any {
             model: User,
              as: "user",
             attributes: ['first_name','last_name'],
-          },
-          {
-            model: AccountView,
-            as: "account_view",
-            attributes: ['account_name'], // Only fetch account_name
           }],
         }
       );
@@ -1032,7 +1027,7 @@ private createUserCountCondition(operator: string, value: number): any {
       const result = userGrp.get({ plain: true });
       return {
           ...result,
-          account_name: result.account_view?.account_name ?? null,
+         account_name: result?.account_name ?? null,
            user_count: result.user_count ?? 0,
           creator: undefined,
           modifier: undefined,
@@ -1084,9 +1079,7 @@ private createUserCountCondition(operator: string, value: number): any {
         ] as any;
       } 
       else if (finalSortBy === 'account_name') {
-        orderArray = [
-        [{ model: AccountView, as: 'account_view' }, 'account_name', finalSortOrder],
-        ];
+        orderArray = [[Sequelize.literal('account_name'), finalSortOrder]];
       }
       else {
         orderArray = [[finalSortBy, finalSortOrder]];
@@ -1105,7 +1098,15 @@ private createUserCountCondition(operator: string, value: number): any {
                     WHERE ugm.group_rid = "UserGroup".rid
                   )`),
                   'user_count'
-                ]
+                ],
+                [
+                literal(`(
+                  SELECT account_name
+                  FROM "${MAIN_SCHEMA_NAME}".account AS acc
+                  WHERE acc.rid = "UserGroup".account_rid
+                )`),
+                'account_name'
+               ],
               ]
             },
           include: [
@@ -1113,11 +1114,6 @@ private createUserCountCondition(operator: string, value: number): any {
             model: User,
              as: "user",
             attributes: ['first_name','last_name'],
-          },
-          {
-            model: AccountView,
-            as: "account_view",
-            attributes: ['account_name'], // Only fetch account_name
           }],
         }
       );
@@ -1134,7 +1130,7 @@ private createUserCountCondition(operator: string, value: number): any {
 
       return {
         "Group Name": result.group_name,
-        "Account Name": result.account_view?.account_name ?? null,
+        "Account Name": result?.account_name ?? null,
         "Is Consultant Only Group": result.is_consultant_only_group ? 'Yes' : 'No',
         "User Count": result.user_count ?? 0,
         "Created On": formatDate(result.created_datetime),
