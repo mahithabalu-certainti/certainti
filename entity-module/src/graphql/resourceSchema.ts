@@ -182,6 +182,7 @@ input updateInlineResource {
   region_rid : String,
   country_rid : String,
   status_rid : String,
+  city_rid : String,
   comments : String,
   resource_code : String
 }

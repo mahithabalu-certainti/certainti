@@ -35,9 +35,6 @@ export default class ResourceGraphQlServices {
           statusMessage: STATUS_MESSAGE.accountNoFound,
         };
       }
-      let isResourceActive: any = await mainSequelize.query(
-        rawQueries.checkResourceActive(fetchResources)
-      );
       if (data.resource_type_rid) {
         let isResourceTypeExists = await mainSequelize.query(
           rawQueries.checkResourceTypeExists(data)
@@ -70,12 +67,6 @@ export default class ResourceGraphQlServices {
             statusMessage: STATUS_MESSAGE.stateNotFound,
           };
         }
-      }
-      if (isResourceActive[0][0].status_name == STATUS_MESSAGE.inactive) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          statusMessage: STATUS_MESSAGE.resourceInactive,
-        };
       }
       if (data.resource_code) {
         let checkDuplicateCode = await orgSequelize.query(

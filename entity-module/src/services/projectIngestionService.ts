@@ -1592,10 +1592,8 @@ class ProjectIngestionService {
           ...(typeof project.toJSON === "function"
             ? project.toJSON()
             : project),
-          classification_name: project.project_classification_other
-            ? project.project_classification_other
-            : classificationMap[project.project_classification_rid]
-                ?.classification_name || null,
+          classification_name: classificationMap[project.project_classification_rid]
+          ?.classification_name || null,
           is_other_classification: !!project.project_classification_other,
           project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
           status_name:statusMap[project.status_rid]?.status_name
@@ -1605,9 +1603,7 @@ class ProjectIngestionService {
           updatedProject.ProjectFiscal = project.ProjectFiscal.map(
             (child: any) => ({
               ...(typeof child.toJSON === "function" ? child.toJSON() : child),
-              classification_name: child.project_classification_other
-                ? child.project_classification_other
-                : classificationMap[child.project_classification_rid]
+              classification_name: classificationMap[child.project_classification_rid]
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
               project_type_name: projectTypeMap[child.project_type_rid]?.project_type_name || null,

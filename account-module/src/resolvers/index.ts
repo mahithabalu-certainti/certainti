@@ -64,24 +64,26 @@ const accountResolvers: IResolvers = {
           }
           data.userId = ctx.req.headers['x-user-id'];
         const result = await ctx.services.accountGraphqlServices.inlineEditAccount(data);
-        console.log("Result : ", result)
         if(result.statusCode == HttpStatus.SUCCESS) {
           return {
             statusCode : HttpStatus.SUCCESS,
             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-            statusMessage : result.statusMessage
+            statusMessage : result.statusMessage,
+            data : result.data
           }
         } else if(result.statusCode == HttpStatus.BAD_REQUEST) {
             return {
             statusCode : HttpStatus.BAD_REQUEST,
             statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
-            statusMessage : result.statusMessage
+            statusMessage : result.statusMessage,
+            data : result.data
           }
         } else {
             return {
             statusCode : HttpStatus.NOT_FOUND,
             statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-            statusMessage : result.statusMessage
+            statusMessage : result.statusMessage,
+            data : result.data
           }
         }
       } catch (error : any) {
