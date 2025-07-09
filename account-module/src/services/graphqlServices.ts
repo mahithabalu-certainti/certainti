@@ -4,20 +4,15 @@ import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
 import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
 import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
-import configurations from "../config/config";
 
 class AccountGraphQlServices {
     async inlineEditAccount(data : any) {
     let parentAccount: any
     let accountDetails: any
     let schemaName: string
-    let flag : string
-    let typeFlag : string
-
-    const services = configurations.getInstance().getServices();
-    const accountServices = services.accountServices;
 
     const sequelize = await initOrgSequelize()
+    const mainSequelize = await initSequelize()
     const fetchAccountById : any = await Account.findOne({
         where: {
             rid: data.account_rid
@@ -58,64 +53,46 @@ class AccountGraphQlServices {
                     }
                 }
                 if (updateAccount.length > 0) {
-                    let response = await accountServices.accountById(data.account_rid)
-                    let d = response.data?.accountById
+                    let response : any = await mainSequelize.query(rawQueries.fetchAccountForInlineRespone(data.account_rid))
+                    let d = response[0][0]
                     let finalData = {
                         rid : d.rid,
+                        account_name : d.account_name,
+                        parent_account_rid : d.parent_account_rid,
+                        currency_rid : d.currency_rid,
+                        total_project_hours : d.total_project_hours,
+                        total_projects : d.total_projects,
+                        total_project_cost : d.total_project_cost,
+                        total_projects_rd_credits : d.total_projects_rd_credits,
+                        qualifying_project_hours_fed : d.qualifying_project_hours_fed,
+                        qualifying_project_qre_fed : d.qualifying_project_qre_fed,
+                        qualifying_project_rd_credits_fed : d.qualifying_project_rd_credits_fed,
                         r_number : d.r_number,
-                        eid : d.dataValues.eid,
-                        created_by : d.dataValues.created_by,
-                        modified_by : d.dataValues.modified_by,
-                        created_datetime : d.dataValues.created_datetime,
-                        modified_datetime : d.dataValues.modified_datetime,
-                        comments : d.dataValues.comments,
-                        account_name : d.dataValues.account_name,
-                        status_rid : d.dataValues.status_rid,
-                        is_parent : d.dataValues.is_parent,
-                        annual_revenue : d.dataValues.annual_revenue,
-                        region_rid : d.dataValues.region_rid,
-                        storage_type : d.dataValues.storage_type,
-                        logo_url : d.dataValues.logo_url,
-                        organisation_name : d.dataValues.organisation_name,
-                        parent_account_rid : d.dataValues.parent_account_rid,
-                        database_connection_rid : d.dataValues.daabase_connection_rid,
-                        country_rid : d.dataValues.country_rid,
-                        currency_rid : d.dataValues.currency_rid,
-                        industry_rid : d.dataValues.industry_rid,
-                        industry_name_other : d.dataValues.industry_name_other,
-                        is_file_drop_enabled : d.dataValues.is_file_drop_enabled,
-                        file_drop_medium : d.dataValues.file_drop_medium,
-                        file_drop_config_id : d.dataValues.file_drop_config_id,
-                        professional_services_consultant : d.dataValues.professional_services_consultant,
-                        finance_lead : d.dataValues.finance_lead,
-                        finance_executive : d.dataValues.finance_executive,
-                        total_project_hours : d.dataValues.total_project_hours,
-                        total_projects : d.dataValues.total_projects,
-                        total_project_cost : d.dataValues.total_project_cost,
-                        total_projects_rd_credits : d.dataValues.total_projects_rd_credits,
-                        qualifying_project_hours_fed : d.dataValues.qualifying_project_hours_fed,
-                        qualifying_project_qre_fed : d.dataValues.qualifying_project_qre_fed,
-                        qualifying_project_rd_credits_fed : d.dataValues.qualifying_project_rd_credits_fed,
-
+                        storage_type : d.storage_type,
+                        professional_services_consultant : d.professional_services_consultant,
+                        finance_lead : d.finance_lead,
+                        finance_executive : d.finance_executive,
                         country : d.country == null ? null : {
-                            country_code : d.country.dataValues.country_code,
-                            country_name : d.country.dataValues.country_name
+                            rid : d.country.rid,
+                            country_name : d.country.country_name
                         },
                         currency : d.currency == null ? null : {
-                            currency_code : d.currency.dataValues.currency_code,
-                            currency_symbol : d.currency.dataValues.currency_symbol
+                            rid : d.currency.rid,
+                            currency_code : d.currency.currency_code,
+                            currency_symbol : d.currency.currency_symbol
                         },
                         industry : d.industry == null ? null : {
-                            rid : d.industry.dataValues.rid,
-                            industry_name : d.industry.dataValues.industry_name
+                            rid : d.industry.rid,
+                            industry_name : d.industry.industry_name
                         },
                         status : d.status == null ? null : {
-                            status_name : d.status.dataValues.status_name
+                            status_name : d.status.status_name
                         },
                         parent_account : d.parent_account == null ? null : {
-                            account_name : d.parent_account.dataValues.account_name
+                            rid : d.parent_account.rid,
+                            account_name : d.parent_account.account_name
                         },
-                        industry_rid_name : d.industry_rid_name
+                        industry_name_other : d.industry_name_other
                     }
                     return {
                         statusCode: HttpStatus.SUCCESS,
