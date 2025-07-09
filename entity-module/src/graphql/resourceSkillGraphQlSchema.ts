@@ -115,7 +115,9 @@ const inlineEditDefs = gql`
     resource_skill_rid : String!,
     start_date : String,
     skill_type_rid : String,
+    skill_type_others : String,
     skill_subtype_rid : String,
+    skill_subtype_others : String,
     skill_level_rid : String,
     skill_details : String
   }

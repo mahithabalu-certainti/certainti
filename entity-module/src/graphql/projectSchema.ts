@@ -17,10 +17,16 @@ input updateInlineProject {
     project_fiscal_rid : String,
     fiscal_year : Int,
     project_classification_rid : String,
+    project_classification_other : String,
     project_client_group : String,
     project_group : String,
     assessment_status : String,
-    comments : String
+    comments : String,
+    total_cost_nonlabor : String,
+    total_cost_subcon : String,
+    total_cost_fte : String,
+    total_effort : String,
+    total_cost : String
 }
 
 type Mutation {
