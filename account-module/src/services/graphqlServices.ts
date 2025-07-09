@@ -2,7 +2,7 @@ import { initSequelize } from "../config/maindbDataSource"
 import { initOrgSequelize } from "../config/orgdbDataSource"
 import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
-import { FLAG, HttpStatus, rawQueries, STATUS, STATUS_MESSAGE, TYPES_FLAG } from "../utils/constant"
+import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
 import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
 import configurations from "../config/config";
 
@@ -40,11 +40,7 @@ class AccountGraphQlServices {
                     })
                     schemaName = `"trd365_${parentAccount?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
-                    typeFlag = TYPES_FLAG.child
-                    flag = FLAG.restAPI
                 } else {
-                    typeFlag = TYPES_FLAG.parent
-                    flag = FLAG.graphql
                     schemaName = `"trd365_${fetchAccountById?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 }
