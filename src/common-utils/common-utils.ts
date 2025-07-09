@@ -104,6 +104,7 @@ export const createTextAreaField = (
     regexErrorMessage?: string;
     placeholder?: string;
     disabled?: boolean;
+    hide?: boolean;
   } = {}
 ): FieldType => ({
   type: 'textarea',
@@ -114,6 +115,7 @@ export const createTextAreaField = (
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
   disabled: options.disabled,
+  hide: options.hide,
 });
 
 export const createCheckboxField = (
@@ -214,6 +216,7 @@ export const createButton = (
   others: {
     iconUrl?: React.ElementType | string;
     onClick?: () => void;
+    disabled?: boolean;
   }
 ): FieldType => ({
   type: 'button',
@@ -222,6 +225,7 @@ export const createButton = (
   required: false,
   iconUrl: others.iconUrl,
   onClick: others.onClick,
+  disabled: others.disabled,
 });
 export const createEmptyField = (
   name: string,
@@ -240,6 +244,7 @@ export const createImgButton = (
   others?: {
     width?: string;
     onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
+    disabled?: boolean;
   }
 ): FieldType => ({
   type: 'iconButton',
@@ -248,6 +253,7 @@ export const createImgButton = (
   label: '',
   required: false,
   width: others?.width,
+  disabled: others?.disabled,
   onClick: (e?: React.MouseEvent<HTMLElement>) => {
     others?.onClick?.(e);
   },
@@ -297,6 +303,7 @@ export const createFiscalDateField = (
     disabled?: boolean;
     greaterThan?: Record<string, string>;
     toBeNotSame?: Record<string, string>;
+    hide?: boolean;
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -306,6 +313,7 @@ export const createFiscalDateField = (
   disabled: others.disabled,
   greaterThan: others.greaterThan,
   toBeNotSame: others.toBeNotSame,
+  hide: others.hide,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [

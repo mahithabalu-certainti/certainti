@@ -92,7 +92,7 @@ export const AccountDetails = () => {
   );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_EXPORT
+    AllPermissions.PROJECTS_EXPORT
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;

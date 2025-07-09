@@ -1509,8 +1509,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'button':
         return (
           <button
-            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
+            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:cursor-default'
             type='button'
+            disabled={field.disabled}
             onClick={(e) => {
               e.stopPropagation();
               field.onClick?.(e);
@@ -2302,18 +2303,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           {field.type === 'iconButton' && isLastColumn ? (
                             <Tooltip
                               title={'Remove contact'}
+                              disableHoverListener={field.disabled}
                               arrow
                               placement='top'
                             >
                               <button
                                 type='button'
+                                disabled={field.disabled}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   field.onClick?.(e);
                                   handleRemoveKeyContactRow(rowIndex);
                                 }}
                                 style={{
-                                  cursor: 'pointer',
+                                  cursor: field.disabled
+                                    ? 'default'
+                                    : 'pointer',
                                   background: 'transparent',
                                   border: 'none',
                                   padding: 0,
