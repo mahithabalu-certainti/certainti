@@ -54,6 +54,8 @@ export default class ResourceCostGraphQlService {
               oldValue = checkResourceCostExists[0][0][finalData]
               newValue = data[finalData]
               attribute_name = finalData
+              if(newValue == undefined) newValue = ''
+              else newValue = newValue
 
               await orgDbSequelize.query(rawQueries.insertResCostHisQuery(schemaName, data, attribute_name, oldValue, newValue))
             }

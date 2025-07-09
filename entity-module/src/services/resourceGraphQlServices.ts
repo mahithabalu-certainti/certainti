@@ -122,6 +122,9 @@ export default class ResourceGraphQlServices {
             else newValue = data[finalTrimmedKey];
             attributeName = finalTrimmedKey;
             oldValue = fetchResources[0][0][finalTrimmedKey];
+            
+            if(newValue == undefined) newValue = ''
+            else newValue = newValue
             if (oldValue !== newValue) {
               let query = rawQueries.insertQueryResHistory(
                 schemaName,
