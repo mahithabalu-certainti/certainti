@@ -1120,6 +1120,7 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
         "first_name",
         "created_datetime",
         "modified_datetime",
+        "azure_id"
       ],
       limit,
       offset,
@@ -1128,13 +1129,13 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
         {
           model: Profile,
           as: "profile",
-          attributes: ["profile_name"],
+          attributes: ["profile_name", "rid"],
           required: true,
         },
         {
           model: BusinessTeams,
           as: "business_teams",
-          attributes: ["business_teams"],
+          attributes: ["business_teams", "rid"],
           required: true,
         },
         {
