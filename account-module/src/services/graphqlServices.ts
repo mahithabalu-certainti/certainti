@@ -62,32 +62,50 @@ class AccountGraphQlServices {
                     }
                 }
                 if (updateAccount.length > 0) {
-                    
-                    let response = await accountServices.accountList(1, 1000, '', {account_number:{equals:`${fetchAccountById.r_number}`}}, 'account_name', 'ASC', {}, 'FY-All', flag, typeFlag)
-                    let finalData = response.data?.account.data.map((d : any) => {
-                    return {
+                    let response = await accountServices.accountById(data.account_rid)
+                    let d = response.data?.accountById
+                    let finalData = {
                         rid : d.rid,
-                        account_name : d.account_name,
-                        currency_rid : d.currency_rid,
-                        total_project_hours : d.total_project_hours,
-                        total_projects : d.total_projects,
-                        total_project_cost : d.total_project_cost,
-                        total_projects_rd_credits : d.total_projects_rd_credits,
-                        qualifying_project_hours_fed : d.qualifying_project_hours_fed,
-                        qualifying_project_qre_fed : d.qualifying_project_qre_fed,
-                        qualifying_project_rd_credits_fed : d.qualifying_project_rd_credits_fed,
                         r_number : d.r_number,
-                        storage_type : d.storage_type,
-                        professional_services_consultant : d.professional_services_consultant,
-                        finance_lead : d.finance_lead,
-                        finance_executive : d.finance_executive,
+                        eid : d.dataValues.eid,
+                        created_by : d.dataValues.created_by,
+                        modified_by : d.dataValues.modified_by,
+                        created_datetime : d.dataValues.created_datetime,
+                        modified_datetime : d.dataValues.modified_datetime,
+                        comments : d.dataValues.comments,
+                        account_name : d.dataValues.account_name,
+                        status_rid : d.dataValues.status_rid,
+                        is_parent : d.dataValues.is_parent,
+                        annual_revenue : d.dataValues.annual_revenue,
+                        region_rid : d.dataValues.region_rid,
+                        storage_type : d.dataValues.storage_type,
+                        logo_url : d.dataValues.logo_url,
+                        organisation_name : d.dataValues.organisation_name,
+                        parent_account_rid : d.dataValues.parent_account_rid,
+                        database_connection_rid : d.dataValues.daabase_connection_rid,
+                        country_rid : d.dataValues.country_rid,
+                        currency_rid : d.dataValues.currency_rid,
+                        industry_rid : d.dataValues.industry_rid,
+                        industry_name_other : d.dataValues.industry_name_other,
+                        is_file_drop_enabled : d.dataValues.is_file_drop_enabled,
+                        file_drop_medium : d.dataValues.file_drop_medium,
+                        file_drop_config_id : d.dataValues.file_drop_config_id,
+                        professional_services_consultant : d.dataValues.professional_services_consultant,
+                        finance_lead : d.dataValues.finance_lead,
+                        finance_executive : d.dataValues.finance_executive,
+                        total_project_hours : d.dataValues.total_project_hours,
+                        total_projects : d.dataValues.total_projects,
+                        total_project_cost : d.dataValues.total_project_cost,
+                        total_projects_rd_credits : d.dataValues.total_projects_rd_credits,
+                        qualifying_project_hours_fed : d.dataValues.qualifying_project_hours_fed,
+                        qualifying_project_qre_fed : d.dataValues.qualifying_project_qre_fed,
+                        qualifying_project_rd_credits_fed : d.dataValues.qualifying_project_rd_credits_fed,
+
                         country : d.country == null ? null : {
-                            rid : d.country.dataValues.rid,
+                            country_code : d.country.dataValues.country_code,
                             country_name : d.country.dataValues.country_name
                         },
                         currency : d.currency == null ? null : {
-                            rid : d.currency.dataValues.rid,
-                            currency_name : d.currency.dataValues.currency_name,
                             currency_code : d.currency.dataValues.currency_code,
                             currency_symbol : d.currency.dataValues.currency_symbol
                         },
@@ -98,61 +116,11 @@ class AccountGraphQlServices {
                         status : d.status == null ? null : {
                             status_name : d.status.dataValues.status_name
                         },
-                        child_accounts : d.child_accounts.length < 1 ? [] : d.child_accounts.map((da : any) => {
-                            return {
-                                rid : da.rid,
-                                account_name : da.account_name,
-                                parent_account_rid : da.parent_account_rid,
-                                currency_rid : da.currency_rid,
-                                total_project_hours : da.total_project_hours,
-                                total_projects : da.total_projects,
-                                total_project_cost : da.total_project_cost,
-                                total_projects_rd_credits : da.total_projects_rd_credits,
-                                qualifying_project_hours_fed : da.qualifying_project_hours_fed,
-                                qualifying_project_qre_fed : da.qualifying_project_qre_fed,
-                                qualifying_project_rd_credits_fed : da.qualifying_project_rd_credits_fed,
-                                r_number : da.r_number,
-                                storage_type : da.storage_type,
-                                professional_services_consultant : da.professional_services_consultant,
-                                finance_lead : da.finance_lead,
-                                finance_executive : da.finance_executive,
-                                country : da.country == null ? null : {
-                                    rid : da.country.dataValues.rid,
-                                    country_name : da.country.dataValues.country_name
-                                },
-                                currency : da.currency == null ? null : {
-                                    rid : da.currency.dataValues.rid,
-                                    currency_code : da.currency.dataValues.currency_code,
-                                    currency_symbol: da.currency.dataValues.currency_symbol
-                                },
-                                parent_account : da.parent_account == null ? null : {
-                                    rid : da.parent_account.dataValues.rid,
-                                    account_name : da.parent_account.dataValues.account_name
-                                },
-                                industry : da.industry == null ? null : {
-                                    rid : da.industry.dataValues.rid,
-                                    industry_name : da.industry.dataValues.industry_name
-                                },
-                                status : {
-                                    status_name : da.status.dataValues.status_name
-                                },
-                               projects_by_fiscal_year : da.projects_by_fiscal_year.length < 1 ? [] : da.projects_by_fiscal_year.map((dat : any) => {
-                                return {
-                                    fiscal_year : dat.fiscal_year,
-                                    account_rid : dat.account_rid,
-                                    total_projects : dat.total_projects,
-                                    total_project_hours : dat.total_project_hours,
-                                    total_project_cost : dat.total_project_cost,
-                                    qualifying_project_hours_fed : dat.qualifying_project_hours_fed,
-                                    qualifying_project_qre_fed : dat.qualifying_project_qre_fed,
-                                    qualifying_project_rd_credits_fed : dat.qualifying_project_rd_credits_fed,
-                                    total_projects_rd_credits : dat.total_projects_rd_credits
-                                }
-                               }) 
-                            }
-                        })
+                        parent_account : d.parent_account == null ? null : {
+                            account_name : d.parent_account.dataValues.account_name
+                        },
+                        industry_rid_name : d.industry_rid_name
                     }
-                    })
                     return {
                         statusCode: HttpStatus.SUCCESS,
                         statusMessage: STATUS_MESSAGE.accountUpdateSuccess,

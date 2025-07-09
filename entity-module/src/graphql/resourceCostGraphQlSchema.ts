@@ -125,12 +125,12 @@ input resourceCostInlineInput {
   currency_rid : String,
   effective_from : String,
   end_date : String,
-  effort_in_hrs : Float,
-  salary : Float,
-  bonus : Float,
-  insurance : Float,
-  deductions : Float,
-  resource_cost : Float,
+  effort_in_hrs : String,
+  salary : String,
+  bonus : String,
+  insurance : String,
+  deductions : String,
+  resource_cost : String,
   comments : String
 }
 

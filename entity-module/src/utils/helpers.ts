@@ -178,6 +178,11 @@ export const setProject = (dbData : any, requestData : any) => {
   let data = `project_classification_rid = '${newPrjData.project_classification_rid}'`
   newPrjArray.push(data)
   }
+  if(requestData.project_classification_other) {
+  newPrjData.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
+  let data = `project_classification_other = '${newPrjData.project_classification_other}'`
+  newPrjArray.push(data)
+  }
   if(requestData.project_client_group) {
   newPrjData.project_client_group = requestData.project_client_group !== dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
   let data = `project_client_group = '${newPrjData.project_client_group}'`
@@ -196,6 +201,31 @@ export const setProject = (dbData : any, requestData : any) => {
   if(requestData.comments) {
   newPrjData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
   let data = `comments = '${newPrjData.comments}'`
+  newPrjArray.push(data)
+  }
+  if(requestData.total_cost) {
+  newPrjData.total_cost = requestData.total_cost != dbData.total_cost ? requestData.total_cost : dbData.total_cost
+  let data = `total_cost = ${parseFloat(newPrjData.total_cost)}`
+  newPrjArray.push(data)
+  }
+  if(requestData.total_effort) {
+  newPrjData.total_effort = requestData.total_effort != dbData.total_effort ? requestData.total_effort : dbData.total_effort
+  let data = `total_effort = ${parseFloat(newPrjData.total_effort)}`
+  newPrjArray.push(data)
+  }
+  if(requestData.total_cost_fte) {
+  newPrjData.total_cost_fte = requestData.total_cost_fte != dbData.total_cost_fte ? requestData.total_cost_fte : dbData.total_cost_fte
+  let data = `total_cost_fte = ${parseFloat(newPrjData.total_cost_fte)}`
+  newPrjArray.push(data)
+  }
+  if(requestData.total_cost_subcon) {
+  newPrjData.total_cost_subcon = requestData.total_cost_subcon != dbData.total_cost_subcon ? requestData.total_cost_subcon : dbData.total_cost_subcon
+  let data = `total_cost_subcon = ${parseFloat(newPrjData.total_cost_subcon)}`
+  newPrjArray.push(data)
+  }
+  if(requestData.total_cost_nonlabor) {
+  newPrjData.total_cost_nonlabor = requestData.total_cost_nonlabor != dbData.total_cost_nonlabor ? requestData.total_cost_nonlabor : dbData.total_cost_nonlabor
+  let data = `total_cost_nonlabor = ${parseFloat(newPrjData.total_cost_nonlabor)}`
   newPrjArray.push(data)
   }
   let data = `modified_by = '${requestData.userId}'`
@@ -231,6 +261,11 @@ export const setPrjFiscalData = (dbData : any, requestData : any) => {
   let data = `project_classification_rid = '${newPrjFisData.project_classification_rid}'`
   newPrjFisArray.push(data)
   }
+  if(requestData.project_classification_other) {
+  newPrjFisData.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
+  let data = `project_classification_other = '${newPrjFisData.project_classification_other}'`
+  newPrjFisArray.push(data)
+  }
   if(requestData.project_client_group) {
   newPrjFisData.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
   let data = `project_client_group = '${newPrjFisData.project_client_group}'`
@@ -238,7 +273,7 @@ export const setPrjFiscalData = (dbData : any, requestData : any) => {
   }
   if(requestData.project_group) {
   newPrjFisData.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
-  let data = `project_group = ${newPrjFisData.project_group}`
+  let data = `project_group = '${newPrjFisData.project_group}'`
   newPrjFisArray.push(data)
   }
   if(requestData.assessment_status) {
@@ -249,6 +284,31 @@ export const setPrjFiscalData = (dbData : any, requestData : any) => {
   if(requestData.comments) {
   newPrjFisData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
   let data = `comments = '${newPrjFisData.comments}'`
+  newPrjFisArray.push(data)
+  }
+  if(requestData.total_effort) {
+  newPrjFisData.total_effort_prj = requestData.total_effort != dbData.total_effort_prj ? requestData.total_effort : dbData.total_effort_prj
+  let data = `total_effort_prj = ${parseFloat(newPrjFisData.total_effort_prj)}`
+  newPrjFisArray.push(data)
+  }
+  if(requestData.total_cost) {
+  newPrjFisData.total_cost_prj = requestData.total_cost != dbData.total_cost_prj ? requestData.total_cost : dbData.total_cost_prj
+  let data = `total_cost_prj = ${parseFloat(newPrjFisData.total_cost_prj)}`
+  newPrjFisArray.push(data)
+  }
+  if(requestData.total_cost_fte) {
+  newPrjFisData.total_cost_fte_prj = requestData.total_cost_fte != dbData.total_cost_fte_prj ? requestData.total_cost_fte : dbData.total_cost_fte_prj
+  let data = `total_cost_fte_prj = ${parseFloat(newPrjFisData.total_cost_fte_prj)}`
+  newPrjFisArray.push(data)
+  }
+  if(requestData.total_cost_subcon) {
+  newPrjFisData.total_cost_subcon_prj = requestData.total_cost_subcon != dbData.total_cost_subcon_prj ? requestData.total_cost_subcon : dbData.total_cost_subcon_prj
+  let data = `total_cost_subcon_prj = ${parseFloat(newPrjFisData.total_cost_subcon_prj)}`
+  newPrjFisArray.push(data)
+  }
+  if(requestData.total_cost_nonlabor) {
+  newPrjFisData.total_cost_nonlabor_prj = requestData.total_cost_nonlabor != dbData.total_cost_nonlabor_prj ? requestData.total_cost_nonlabor : dbData.total_cost_nonlabor_prj
+  let data = `total_cost_nonlabor_prj = ${parseFloat(newPrjFisData.total_cost_nonlabor_prj)}`
   newPrjFisArray.push(data)
   }
   let data = `modified_by = '${requestData.userId}'`
@@ -279,6 +339,11 @@ export const setProjectSummary = (dbData : any, requestData : any) => {
   let data = `project_classification_rid = '${newDbPrjSummary.project_classification_rid}'`
   newDbPrjSummaryArray.push(data)
   }
+  if(requestData.project_classification_other) {
+  newDbPrjSummary.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
+  let data = `project_classification_other = '${newDbPrjSummary.project_classification_other}'`
+  newDbPrjSummaryArray.push(data)
+  }
   if(requestData.project_client_group) {
   newDbPrjSummary.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
   let data = `project_client_group = '${newDbPrjSummary.project_client_group}'`
@@ -297,6 +362,31 @@ export const setProjectSummary = (dbData : any, requestData : any) => {
   if(requestData.comments) {
   newDbPrjSummary.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
   let data = `comments = '${newDbPrjSummary.comments}'`
+  newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.total_effort) {
+  newDbPrjSummary.total_effort = requestData.total_effort != dbData.total_effort ? requestData.total_effort : dbData.total_effort
+  let data = `total_effort = ${parseFloat(newDbPrjSummary.total_effort)}`
+  newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.total_cost) {
+  newDbPrjSummary.total_cost = requestData.total_cost != dbData.total_cost ? requestData.total_cost : dbData.total_cost
+  let data = `total_cost = ${parseFloat(newDbPrjSummary.total_cost)}`
+  newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.total_cost_fte) {
+  newDbPrjSummary.total_cost_fte = requestData.total_cost_fte != dbData.total_cost_fte ? requestData.total_cost_fte : dbData.total_cost_fte
+  let data = `total_cost_fte = ${parseFloat(newDbPrjSummary.total_cost_fte)}`
+  newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.total_cost_subcon) {
+  newDbPrjSummary.total_cost_subcon = requestData.total_cost_subcon != dbData.total_cost_subcon ? requestData.total_cost_subcon : dbData.total_cost_subcon
+  let data = `total_cost_subcon = ${parseFloat(newDbPrjSummary.total_cost_subcon)}`
+  newDbPrjSummaryArray.push(data)
+  }
+  if(requestData.total_cost_nonlabor) {
+  newDbPrjSummary.total_cost_nonlabor = requestData.total_cost_nonlabor != dbData.total_cost_nonlabor ? requestData.total_cost_nonlabor : dbData.total_cost_nonlabor
+  let data = `total_cost_nonlabor = ${parseFloat(newDbPrjSummary.total_cost_nonlabor)}`
   newDbPrjSummaryArray.push(data)
   }
   let data = `modified_by = '${requestData.userId}'`
@@ -327,6 +417,11 @@ export const setProjectFiscalSummary = (dbData : any, requestData : any) => {
   let data = `project_classification_rid = '${newFisSummary.project_classification_rid}'`
   newFisSummaryArray.push(data)
   }
+  if(requestData.project_classification_other) {
+  newFisSummary.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
+  let data = `project_classification_other = '${newFisSummary.project_classification_other}'`
+  newFisSummaryArray.push(data)
+  }
   if(requestData.project_client_group) {
   newFisSummary.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
   let data = `project_client_group = '${newFisSummary.project_client_group}'`
@@ -345,6 +440,31 @@ export const setProjectFiscalSummary = (dbData : any, requestData : any) => {
   if(requestData.comments) {
   newFisSummary.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
   let data = `comments = '${newFisSummary.comments}'`
+  newFisSummaryArray.push(data)
+  }
+  if(requestData.total_effort) {
+  newFisSummary.total_effort_prj = requestData.total_effort != dbData.total_effort_prj ? requestData.total_effort : dbData.total_effort_prj
+  let data = `total_effort_prj = ${parseFloat(newFisSummary.total_effort_prj)}`
+  newFisSummaryArray.push(data)
+  }
+  if(requestData.total_cost) {
+  newFisSummary.total_cost_prj = requestData.total_cost != dbData.total_cost_prj ? requestData.total_cost : dbData.total_cost_prj
+  let data = `total_effort_prj = ${parseFloat(newFisSummary.total_cost_prj)}`
+  newFisSummaryArray.push(data)
+  }
+  if(requestData.total_cost_fte) {
+  newFisSummary.total_cost_fte_prj = requestData.total_cost_fte != dbData.total_cost_fte_prj ? requestData.total_cost_fte : dbData.total_cost_fte_prj
+  let data = `total_cost_fte_prj = ${parseFloat(newFisSummary.total_cost_fte_prj)}`
+  newFisSummaryArray.push(data)
+  }
+  if(requestData.total_cost_subcon) {
+  newFisSummary.total_cost_subcon_prj = requestData.total_cost_subcon != dbData.total_cost_subcon_prj ? requestData.total_cost_subcon : dbData.total_cost_subcon_prj
+  let data = `total_cost_subcon_prj = ${parseFloat(newFisSummary.total_cost_subcon_prj)}`
+  newFisSummaryArray.push(data)
+  }
+  if(requestData.total_cost_nonlabor) {
+  newFisSummary.total_cost_nonlabor_prj = requestData.total_cost_nonlabor != dbData.total_cost_nonlabor_prj ? requestData.total_cost_nonlabor : dbData.total_cost_nonlabor_prj
+  let data = `total_cost_nonlabor_prj = ${parseFloat(newFisSummary.total_cost_nonlabor_prj)}`
   newFisSummaryArray.push(data)
   }
   if(requestData.fiscal_year) {
@@ -430,6 +550,11 @@ export const setResourcesData = (dbData : any, requestData : any) => {
     dataStorage = `region_rid = '${newData.region_rid}'`
     newDataArray.push(dataStorage)
   }
+  if(requestData.city_rid) {
+    newData.city_rid = requestData.city_rid !== dbData.city_rid ? requestData.city_rid : dbData.city_rid
+    dataStorage = `city_rid = '${newData.city_rid}'`
+    newDataArray.push(dataStorage)
+  }
   if(requestData.country_rid) {
     newData.country_rid = requestData.country_rid !== dbData.country_rid ? requestData.country_rid : dbData.country_rid
     dataStorage = `country_rid = '${newData.country_rid}'`
@@ -486,37 +611,37 @@ export const setResourceCostDatas = (dbData : any, requestData : any) => {
   }
   if(requestData.effort_in_hrs) {
     newCostData.effort_in_hrs = requestData.effort_in_hrs != dbData.effort_in_hrs ? requestData.effort_in_hrs : dbData.effort_in_hrs
-    dataStorage = `effort_in_hrs = ${newCostData.effort_in_hrs}`
+    dataStorage = `effort_in_hrs = ${parseFloat(newCostData.effort_in_hrs)}`
     newCostDataArray.push(dataStorage)
   }
   if(requestData.salary) {
     newCostData.salary = requestData.salary != dbData.salary ? requestData.salary : dbData.salary
-    dataStorage = `salary = ${newCostData.salary}`
+    dataStorage = `salary = ${parseFloat(newCostData.salary)}`
     newCostDataArray.push(dataStorage)
   }
   if(requestData.bonus) {
     newCostData.bonus = requestData.bonus != dbData.bonus ? requestData.bonus : dbData.bonus
-    dataStorage = `bonus = ${newCostData.bonus}`
+    dataStorage = `bonus = ${parseFloat(newCostData.bonus)}`
     newCostDataArray.push(dataStorage)
   }
   if(requestData.insurance) {
     newCostData.insurance = requestData.insurance != dbData.insurance ? requestData.insurance : dbData.insurance
-    dataStorage = `insurance = ${newCostData.insurance}`
+    dataStorage = `insurance = ${parseFloat(newCostData.insurance)}`
     newCostDataArray.push(dataStorage)
   }
   if(requestData.deductions) {
     newCostData.deductions = requestData.deductions != dbData.deductions ? requestData.deductions : dbData.deductions
-    dataStorage = `deductions = ${newCostData.deductions}`
+    dataStorage = `deductions = ${parseFloat(newCostData.deductions)}`
     newCostDataArray.push(dataStorage)
   }
   if(requestData.resource_cost) {
     newCostData.resource_cost = requestData.resource_cost != dbData.resource_cost ? requestData.resource_cost : dbData.resource_cost
-    dataStorage = `resource_cost = ${newCostData.resource_cost}`
+    dataStorage = `resource_cost = ${parseFloat(newCostData.resource_cost)}`
     newCostDataArray.push(dataStorage)
   }
   if(requestData.comments) {
     newCostData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
-    dataStorage = `comments = ${newCostData.comments}`
+    dataStorage = `comments = '${newCostData.comments}'`
     newCostDataArray.push(dataStorage)
   }
   dataStorage = `modified_by = '${requestData.userId}'`
@@ -540,9 +665,19 @@ export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) 
     dataStorage = `skill_type_rid = '${newData.skill_type_rid}'`
     newDataArray.push(dataStorage)
   }
+  if(requestData.skill_type_others) {
+    newData.skill_type_others = requestData.skill_type_others != dbData.skill_type_others ? requestData.skill_type_others : dbData.skill_type_others
+    dataStorage = `skill_type_others = '${newData.skill_type_others}'`
+    newDataArray.push(dataStorage)
+  }
   if(requestData.skill_subtype_rid) {
     newData.skill_subtype_rid = requestData.skill_subtype_rid != dbData.skill_subtype_rid ? requestData.skill_subtype_rid : dbData.skill_subtype_rid
     dataStorage = `skill_subtype_rid = '${newData.skill_subtype_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.skill_subtype_others) {
+    newData.skill_subtype_others = requestData.skill_subtype_others != dbData.skill_subtype_others ? requestData.skill_subtype_others : dbData.skill_subtype_others
+    dataStorage = `skill_subtype_others = '${newData.skill_subtype_others}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.skill_level_rid) {

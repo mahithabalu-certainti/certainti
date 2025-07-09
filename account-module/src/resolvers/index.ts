@@ -69,7 +69,7 @@ const accountResolvers: IResolvers = {
             statusCode : HttpStatus.SUCCESS,
             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
             statusMessage : result.statusMessage,
-            data : result.data[0]
+            data : result.data
           }
         } else if(result.statusCode == HttpStatus.BAD_REQUEST) {
             return {

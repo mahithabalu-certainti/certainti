@@ -1,5 +1,5 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { FLAG, HttpStatus, STATUS, STATUS_MESSAGE, TYPES_FLAG } from "../utils/constant";
+import { HttpStatus, STATUS, STATUS_MESSAGE } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -54,9 +54,7 @@ async accountList(
   sortBy: string = "created_datetime", 
   sortOrder: string = "ASC",
   globalFilters: Record<string, string[]> = {},
-  fiscalYear: number | "FY-All",
-  flag : string,
-  typeFlag : string
+  fiscalYear: number | "FY-All"
 ): Promise<{
   statusCode: number;
   message: string;
@@ -75,7 +73,7 @@ async accountList(
           
     const { whereClause } = this.buildWhereClause(parsedFilters, search);
     
-    const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause, flag, typeFlag);
+    const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause);
     
     const offset = (page - 1) * limit;
 
@@ -139,6 +137,7 @@ async accountList(
       // Set USD currency for child accounts
       this.setDefaultCurrency(childAccounts, usdCurrency);
     }
+
     // Group child accounts by parent - optimized with Map
    const childAccountsByParent = new Map();
     childAccounts.forEach((child: any) => {
@@ -147,25 +146,20 @@ async accountList(
       }
       childAccountsByParent.get(child.parent_account_rid).push(child);
     });
-
-      if(typeFlag == TYPES_FLAG.child) {
-      
-      if(Object.keys(parsedFilters).length > 0)
-      {
-        parentAccounts = parentAccounts.filter((parent: any) => {
-          // Keep parent if it has children that match filters
-          if (childAccountsByParent.has(parent.rid)) {
-            return true;
-          }
-        //   // // Also keep parent if it has no children at all (standalone parent)
-        //   // const hasChildren = await repository.count({
-        //   //   where: { parent_account_rid: parent.rid }
-        //   // });
-        //   // return !hasChildren;
-        });
-    }
+    if(Object.keys(parsedFilters).length > 0)
+    {
+    parentAccounts = parentAccounts.filter((parent: any) => {
+      // Keep parent if it has children that match filters
+      if (childAccountsByParent.has(parent.rid)) {
+        return true;
+      }
+      // // Also keep parent if it has no children at all (standalone parent)
+      // const hasChildren = await repository.count({
+      //   where: { parent_account_rid: parent.rid }
+      // });
+      // return !hasChildren;
+    });
   }
-
     // Attach child accounts to parents
     parentAccounts.forEach((account: any) => {
       account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
@@ -390,8 +384,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
               
         const { whereClause } = this.buildWhereClause(parsedFilters, search);
         
-        const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause, FLAG.restAPI, TYPES_FLAG.child);
-
+        const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause); 
         const [finalSortBy, finalSortOrder] = this.getSortParameters(
           sortBy,
           sortOrder
@@ -463,7 +456,6 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           }
           childAccountsByParent.get(child.parent_account_rid).push(child);
         });
-
          if(Object.keys(parsedFilters).length > 0)
         {
           parentAccounts = parentAccounts.filter((parent: any) => {
@@ -1683,54 +1675,17 @@ if (is_empty !== undefined) {
     return whereClause;
   }
  
-  // private applyAccountIDFilter(
-  //   globalFilters: Record<string, string[]>,
-  //   whereClause: Record<string, any>, flag : string, typeFlag : string
-  // ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
-  //   // Parent: only get global filter and must have no parent_account
-  //   let parentWhereClause: Record<string, any> = {
-  //     parent_account_rid: { [Op.is]: null }
-  //   };
-  
-  //   // Child: inherit original filters
-  //   let childWhereClause: Record<string, any> = { ...whereClause };
-  
-  //   if (globalFilters && Object.keys(globalFilters).length > 0) {
-  //     const parentIds = Object.keys(globalFilters);
-  //     const childIds: string[] = Object.values(globalFilters).flat();
-  
-  //     // Parent account filtering
-  //     parentWhereClause.rid = { [Op.in]: parentIds };
-  
-  //     // Child account filtering (on account_rid)
-  //     if (childIds.length > 0) {
-  //       childWhereClause.rid = { [Op.in]: childIds };
-  //     }
-  //   }
-  
-  //   return {
-  //     parentWhereClause,
-  //     childWhereClause
-  //   };
-  // }  
-
-    private applyAccountIDFilter(
+  private applyAccountIDFilter(
     globalFilters: Record<string, string[]>,
-    whereClause: Record<string, any>, flag : string, typeFlag : string): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+    whereClause: Record<string, any>
+  ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
     // Parent: only get global filter and must have no parent_account
-    let parentWhereClause: Record<string, any> = {};
-    let childWhereClause: Record<string, any> = {}
-    if(flag == FLAG.graphql && typeFlag == TYPES_FLAG.parent) {
-      parentWhereClause.r_number = { [Op.eq] : whereClause.r_number.logic.toUpperCase()}
-      childWhereClause = {}
-    }
-    else {
-      parentWhereClause = {parent_account_rid: { [Op.is]: null}}
-      childWhereClause = { ...whereClause };
-    }
+    let parentWhereClause: Record<string, any> = {
+      parent_account_rid: { [Op.is]: null }
+    };
   
     // Child: inherit original filters
-    // let childWhereClause: Record<string, any> = { ...whereClause };
+    let childWhereClause: Record<string, any> = { ...whereClause };
   
     if (globalFilters && Object.keys(globalFilters).length > 0) {
       const parentIds = Object.keys(globalFilters);
@@ -1743,12 +1698,13 @@ if (is_empty !== undefined) {
       if (childIds.length > 0) {
         childWhereClause.rid = { [Op.in]: childIds };
       }
-    } 
+    }
+  
     return {
       parentWhereClause,
       childWhereClause
     };
-  } 
+  }  
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
