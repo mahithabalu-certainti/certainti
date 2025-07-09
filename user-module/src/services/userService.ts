@@ -1156,6 +1156,7 @@ if (includeDependencies) {
         "first_name",
         "created_datetime",
         "modified_datetime",
+        "azure_id"
       ],
       limit,
       offset,
@@ -1164,13 +1165,13 @@ if (includeDependencies) {
         {
           model: Profile,
           as: "profile",
-          attributes: ["profile_name"],
+          attributes: ["profile_name", "rid"],
           required: true,
         },
         {
           model: BusinessTeams,
           as: "business_teams",
-          attributes: ["business_teams"],
+          attributes: ["business_teams", "rid"],
           required: true,
         },
         {

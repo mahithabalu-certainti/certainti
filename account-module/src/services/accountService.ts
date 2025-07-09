@@ -99,7 +99,7 @@ async accountList(
       where: parentWhereClause,
       order: [["account_name", "ASC"]],
       include: this.buildBaseIncludes(),
-      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','professional_services_consultant', 'finance_lead', 'finance_executive'] // Only select needed fields initially
+      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'] // Only select needed fields initially
     };
 
     // Only apply pagination if key_contact filter is NOT present
@@ -130,7 +130,7 @@ async accountList(
         order,
         attributes: ['rid', 
           'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-          'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive'
+          'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'
         ] // Only select needed fields
       });
 
@@ -434,7 +434,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
             order,
             attributes: ['rid', 
               'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-              'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive'
+              'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'
             ] // Only select needed fields
           });
 
