@@ -876,22 +876,39 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
   // Create lookup maps for dependencies
   const dependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
   
-   if (includeDependencies) {
-    allDependencies.forEach((dep: any) => {
-      const key = `${dep.dependent_id}`;
-      if (!dependencyMap!.has(key)) {
-        dependencyMap!.set(key, []);
-      }
-      dependencyMap!.get(key)!.push({
-        id: dep.depends_on_id,
-        type: dep.depends_on_type
-      });
+  const reverseDependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
+
+if (includeDependencies) {
+  allDependencies.forEach((dep: any) => {
+    const key = `${dep.dependent_id}`;
+    const reverseKey = `${dep.depends_on_id}`;
+
+    if (!dependencyMap!.has(key)) {
+      dependencyMap!.set(key, []);
+    }
+    dependencyMap!.get(key)!.push({
+      id: dep.depends_on_id,
+      type: dep.depends_on_type
     });
-  }
+
+    // Populate reverse dependency map (parenting_on)
+    if (!reverseDependencyMap!.has(reverseKey)) {
+      reverseDependencyMap!.set(reverseKey, []);
+    }
+    reverseDependencyMap!.get(reverseKey)!.push({
+      id: dep.dependent_id,
+      type: dep.dependent_type
+    });
+  });
+}
+
 
   // Process menus with dependencies
   menuAccess.forEach((ma: any) => {
       const maWithMenu = ma as any;
+      const deps = includeDependencies ? dependencyMap?.get(`${maWithMenu.menu.rid}`) || [] : [];
+      const parents = includeDependencies ? reverseDependencyMap?.get(`${maWithMenu.menu.rid}`) || [] : [];
+
       if (maWithMenu.menu) {
         permissions.push({
           rid: maWithMenu.rid,
@@ -900,7 +917,12 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
           is_enabled: maWithMenu.is_enabled,
-          depends_on: includeDependencies ? (dependencyMap?.get(`${maWithMenu.menu.rid}`) || []) : undefined
+          depends_on_menu:deps.filter(d => d.type === 'menu').map(d => d.id),
+          depends_on_module:deps.filter(d => d.type === 'module').map(d => d.id),
+          depends_on_permission : deps.filter(d => d.type === 'permission').map(d => d.id),
+          depended_by_menu : parents.filter(d => d.type === 'menu').map(d => d.id),
+          depended_by_module : parents.filter(d => d.type === 'module').map(d => d.id),
+          depended_by_permission : parents.filter(d => d.type === 'permission').map(d => d.id)
         });
       }
     });
@@ -908,6 +930,8 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
   // Process modules with dependencies
   moduleAccess.forEach((mo: any) => {
       const moWithModule = mo as any;
+       const deps = includeDependencies ? dependencyMap?.get(`${moWithModule.menu_module.rid}`) || [] : [];
+      const parents = includeDependencies ? reverseDependencyMap?.get(`${moWithModule.menu_module.rid}`) || [] : [];
       if (moWithModule.menu_module) {
         permissions.push({
           rid: moWithModule.rid,
@@ -917,7 +941,12 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled,
-          depends_on: includeDependencies ? (dependencyMap?.get(`${moWithModule.menu_module.rid}`) || []) : undefined
+          depends_on_menu:deps.filter(d => d.type === 'menu').map(d => d.id),
+          depends_on_module:deps.filter(d => d.type === 'module').map(d => d.id),
+          depends_on_permission : deps.filter(d => d.type === 'permission').map(d => d.id),
+          depended_by_menu : parents.filter(d => d.type === 'menu').map(d => d.id),
+          depended_by_module : parents.filter(d => d.type === 'module').map(d => d.id),
+          depended_by_permission : parents.filter(d => d.type === 'permission').map(d => d.id)
         });
       }
     });
@@ -925,6 +954,8 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
   // Process permissions (unchanged)
   permissionAccess.forEach((pa: any) => {
       const paWithPerm = pa as any;
+       const deps = includeDependencies ? dependencyMap?.get(`${paWithPerm.module_permission.rid}`) || [] : [];
+      const parents = includeDependencies ? reverseDependencyMap?.get(`${paWithPerm.module_permission.rid}`) || [] : [];
       if (paWithPerm.module_permission) {
         permissions.push({
           rid: paWithPerm.rid,
@@ -935,7 +966,12 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
           desc: paWithPerm.module_permission.permission_desc,
           is_field_available: paWithPerm.module_permission.is_field_available,
           is_enabled: paWithPerm.is_enabled,
-          depends_on: includeDependencies ? (dependencyMap?.get(paWithPerm.module_permission.rid) || []) : undefined
+          depends_on_menu:deps.filter(d => d.type === 'menu').map(d => d.id),
+          depends_on_module:deps.filter(d => d.type === 'module').map(d => d.id),
+          depends_on_permission : deps.filter(d => d.type === 'permission').map(d => d.id),
+          depended_by_menu : parents.filter(d => d.type === 'menu').map(d => d.id),
+          depended_by_module : parents.filter(d => d.type === 'module').map(d => d.id),
+          depended_by_permission : parents.filter(d => d.type === 'permission').map(d => d.id)
         });
       }
     });
