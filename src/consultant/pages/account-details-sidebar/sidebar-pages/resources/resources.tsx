@@ -636,11 +636,13 @@ const Resource: React.FC<ResourceProps> = ({
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousResourceList = [...resourcesList];
     let hasCountry = false;
+    let hasRegion = false;
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (res, item) => {
         const key = item.editId || item.columnId;
         res[key] = item.value;
         if (item.columnId === 'country_name') hasCountry = true;
+        if (item.columnId === 'region_name') hasRegion = true;
         return res;
       },
       {
@@ -648,8 +650,13 @@ const Resource: React.FC<ResourceProps> = ({
         account_rid: accountDetails?.data?.accountById?.rid,
       }
     );
-    if (hasCountry) {
+
+    if (hasCountry && !hasRegion) {
       updateData['region_rid'] = '';
+    }
+
+    if (hasCountry) {
+      updateData['city_rid'] = '';
     }
 
     const updatedResource = resourcesList?.map((resource) => {
@@ -678,6 +685,8 @@ const Resource: React.FC<ResourceProps> = ({
         return {
           ...resource,
           ...updatedFields,
+          ...(hasCountry && !hasRegion && { region_name: '' }),
+          ...(hasCountry && { city_name: '' }),
         };
       }
       return resource;

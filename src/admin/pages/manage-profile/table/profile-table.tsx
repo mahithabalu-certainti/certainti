@@ -1,13 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
-import { FilterCondition, UserListParams } from '../../../types/manage-user';
+import {
+  FilterCondition,
+  Profiles,
+  UserListParams,
+} from '../../../types/manage-user';
 import { profileColumns } from './';
 import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
 import { MANAGE_PROFILE } from '../../../../routes/routes';
-import { ActionItem, CellEditData } from '../../../../components/table/types';
+import {
+  ActionItem,
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
+import { useMutation } from '@apollo/client';
+import { UPDATE_USER_PROFILE } from '../../../../api/graphql/queries/profile-query';
+import { userClient } from '../../../../api/graphql/clients/client';
+import { displayValueForInline } from '../../../../common-utils';
+import { useToast } from '../../../../hooks';
 
 interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -31,6 +44,11 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   refreshProfileTrigger,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
+  const [profileList, setProfileList] = useState<Profiles[]>([]);
+  const [updateUserProfile] = useMutation(UPDATE_USER_PROFILE, {
+    client: userClient,
+  });
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -40,11 +58,16 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters]);
 
-  const { data, isLoading, isError } = useManageProfileList(
-    tableParams,
-    refreshProfileTrigger
-  );
-  const totalItems = data?.data?.count || 0;
+  const {
+    data: ProfileList,
+    isLoading,
+    isError,
+  } = useManageProfileList(tableParams, refreshProfileTrigger);
+  const totalItems = ProfileList?.data?.count || 0;
+
+  useEffect(() => {
+    setProfileList(ProfileList?.data?.profiles ?? []);
+  }, [ProfileList]);
 
   const convertUserListData = (data: ManageProfileList): ManageProfile => {
     if (!data) return {} as ManageProfile;
@@ -127,12 +150,63 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   ];
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    const previousProfileList = [...profileList];
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (res, item) => {
+        const key = item.editId || item.columnId;
+        res[key] = item.value;
+        return res;
+      },
+      { rid: rowId }
+    );
+    const updatedProfile = profileList?.map((profile) => {
+      if (profile.rid === rowId) {
+        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
+          (res, item) => {
+            const displayValue = displayValueForInline(
+              item.columnId,
+              item.value,
+              {}
+            );
+            res[item.columnId] = displayValue;
+
+            if (item.editId && item.editId !== item.columnId) {
+              res[item.editId] = item.value;
+            }
+            return res;
+          },
+          {}
+        );
+        return {
+          ...profile,
+          ...updatedFields,
+        };
+      }
+      return profile;
+    });
+    setProfileList(updatedProfile);
+
+    try {
+      const res = await updateUserProfile({
+        variables: { input: updateData },
+      });
+
+      const result = res.data?.updateUserProfile;
+      if (result?.success === true) {
+        console.log('Update success');
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setProfileList(previousProfileList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setProfileList(previousProfileList);
+    }
   };
 
   return (
     <ListTable
-      data={(data?.data?.profiles || []) as ManageProfileList[]}
+      data={(profileList || []) as ManageProfileList[]}
       columns={profileColumns}
       getRowId={getRowId}
       hoverHighlight={false}

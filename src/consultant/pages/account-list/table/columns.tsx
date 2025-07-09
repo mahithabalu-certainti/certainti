@@ -239,14 +239,17 @@ export const getAccountColumns = (
     label: 'Finance Executive',
     width: 200,
     sortable: true,
-    render: (row: AccountList) => {
-      return (
+    render: (row: AccountList & { _level?: number }) => {
+      const isClickable = row._level === undefined || row._level < 2;
+      return isClickable ? (
         <div
           onDoubleClick={() => handleEdit(row)}
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.finance_executive}
         </div>
+      ) : (
+        <span>{row.finance_executive}</span>
       );
     },
   },
@@ -256,14 +259,17 @@ export const getAccountColumns = (
     label: 'Finance Lead',
     width: 160,
     sortable: true,
-    render: (row: AccountList) => {
-      return (
+    render: (row: AccountList & { _level?: number }) => {
+      const isClickable = row._level === undefined || row._level < 2;
+      return isClickable ? (
         <div
           onDoubleClick={() => handleEdit(row)}
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.finance_lead}
         </div>
+      ) : (
+        <span>{row.finance_lead}</span>
       );
     },
   },
@@ -273,14 +279,17 @@ export const getAccountColumns = (
     label: 'Professional Services Consultant',
     width: 250,
     sortable: true,
-    render: (row: AccountList) => {
-      return (
+    render: (row: AccountList & { _level?: number }) => {
+      const isClickable = row._level === undefined || row._level < 2;
+      return isClickable ? (
         <div
           onDoubleClick={() => handleEdit(row)}
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.professional_services_consultant}
         </div>
+      ) : (
+        <span>{row.professional_services_consultant}</span>
       );
     },
   },

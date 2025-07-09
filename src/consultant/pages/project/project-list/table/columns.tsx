@@ -26,7 +26,8 @@ const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 export const getAllProjectListColumns = (
   onClick: (row: Project) => void,
   projectTypeOption: ListOption[],
-  projectClassificationOption: ListOption[]
+  projectClassificationOption: ListOption[],
+  handleEdit: (row: Project) => void
 ): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
@@ -449,6 +450,19 @@ export const getAllProjectListColumns = (
     sortable: true,
     sortId: 'project_point_of_contact',
     width: 200,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() => handleEdit(row)}
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.project_point_of_contact}
+        </div>
+      ) : (
+        <span>{row.project_point_of_contact}</span>
+      );
+    },
   },
   {
     id: 'technical_point_of_contact',
@@ -456,6 +470,19 @@ export const getAllProjectListColumns = (
     sortable: true,
     sortId: 'technical_point_of_contact',
     width: 210,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() => handleEdit(row)}
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.technical_point_of_contact}
+        </div>
+      ) : (
+        <span>{row.technical_point_of_contact}</span>
+      );
+    },
   },
   {
     id: 'comments',

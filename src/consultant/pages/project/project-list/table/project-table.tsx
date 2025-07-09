@@ -171,7 +171,8 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const projectColumns = getAllProjectListColumns(
     handleAccountName,
     memoizedProjectTypes,
-    memoizedClassification
+    memoizedClassification,
+    handleEdit
   );
 
   const actionButtons: ActionItem<Project>[] = [
@@ -195,7 +196,6 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   ];
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(updates);
     // Save the old state to revert if needed
     const previousProject = [...allProjectList];
 

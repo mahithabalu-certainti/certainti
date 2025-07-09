@@ -345,7 +345,8 @@ const Projects: React.FC<ProjectsProps> = ({
   const projectColumns = getProjectColumns(
     handleProject,
     memoizedProjectTypes,
-    memoizedClassification
+    memoizedClassification,
+    handleEdit
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {

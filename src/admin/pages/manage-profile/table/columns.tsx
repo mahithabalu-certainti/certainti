@@ -5,6 +5,7 @@ import { ManageProfileList } from '../../../types';
 export const profileColumns: ListTableColumn<ManageProfileList>[] = [
   {
     id: 'profile_name',
+    editId: 'profile_name',
     sortId: 'profile_name',
     label: 'Profile Name',
     width: 300,
@@ -34,12 +35,12 @@ export const profileColumns: ListTableColumn<ManageProfileList>[] = [
             'Profile name can only contain letters, spaces, hyphens (-) and underscores (_).',
         },
         {
-          regex: /^[\s\-_]|[\s\-_]$/,
+          regex: /^[A-Za-z](?:[A-Za-z\s\-_]*[A-Za-z])?$/,
           errorMessage:
             'Profile name cannot begin or end with a space or special character.',
         },
         {
-          regex: /[-_]{2,}/,
+          regex: /^(?!.*(--|__))[A-Za-z\s\-_]+$/,
           errorMessage:
             'Profile name cannot contain consecutive special characters.',
         },
@@ -48,6 +49,7 @@ export const profileColumns: ListTableColumn<ManageProfileList>[] = [
   },
   {
     id: 'profile_description',
+    editId: 'profile_description',
     sortId: 'profile_description',
     label: 'Profile Description',
     width: 500,
