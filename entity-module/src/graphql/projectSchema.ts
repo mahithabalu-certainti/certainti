@@ -24,8 +24,9 @@ status_name: String
 }
 
 type projectResponse {
-rid: String,
+project_fiscal_rid: String,
 r_number: String,
+qre : String,
 eid: String,
 created_by: String,
 modified_by: String,

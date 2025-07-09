@@ -363,5 +363,8 @@ export const rawQueries = {
           VALUES
               ('${data.userId}', NOW(), '${data.resource_skill_rid}', '${attributeName}', '${oldValue}', '${newValue}')
           `
+  },
+  fetchQreFromPrjSum (project_rid : string, account_rid : string) {
+    return `SELECT qre FROM ${MAIN_SCHEMA_NAME}.project_summary WHERE project_rid = '${project_rid}' AND account_rid = '${account_rid}'`
   }
 }

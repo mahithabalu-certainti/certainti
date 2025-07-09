@@ -54,10 +54,11 @@ class ProjectGraphQlServices {
             await mainSequelize.query(rawQueries.updateProjectFiscalSummary(setProjectsFiscalSummary, data))
             }
             let fetchUpdatedProjectResponse = await projectService.projectById(data.account_rid, data.project_fiscal_rid);
+            let fetchQre : any = await mainSequelize.query(rawQueries.fetchQreFromPrjSum(data.project_rid, data.account_rid))
             if(fetchUpdatedProjectResponse.data?.project) {
                 let data = fetchUpdatedProjectResponse.data?.project
                 let finalData = {
-                    rid: data.rid,
+                    project_fiscal_rid: data.rid,
                     r_number: data.r_number,
                     eid: data.eid,
                     created_by: data.created_by,
@@ -132,6 +133,7 @@ class ProjectGraphQlServices {
                     rd_percent_potential_ai: data.rd_percent_potential_ai,
                     rd_percent_adjustment: data.rd_percent_adjustment,
                     rd_percent_final: data.rd_percent_final,
+                    qre : fetchQre[0][0].qre,
                     qre_fte: data.qre_fte,
                     qre_subcon: data.qre_subcon,
                     qre_nonlabor: data.qre_nonlabor,
