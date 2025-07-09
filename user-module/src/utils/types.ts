@@ -68,3 +68,15 @@ export interface IUpdateUserData {
   org_id:string;
   
 }
+
+export interface ProjectAccessView {
+  rid: string;
+  project_name: string;
+  account_rid: string;
+  has_project_enabled: boolean;
+  access_type: 'INCLUDE' | 'EXCLUDE' | null;
+  has_access: boolean; // Derived boolean field
+}
+
+
+

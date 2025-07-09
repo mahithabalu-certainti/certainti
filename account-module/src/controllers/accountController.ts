@@ -16,6 +16,7 @@ import {
   listAccountSchema,
   exportAccountSchema,
   updateAccountSchema,
+  listOrgAccountSchema,
 } from "../lib/joi/schemas/schema";
 
 
@@ -394,9 +395,32 @@ async function accountById(req: Request, res: Response): Promise<void> {
 }
 
 async function listOrgAccounts(req: Request, res: Response): Promise<void> {
-   const methodName = "List global account";
+   const methodName = "List Org account";
     try {
-    const account = await accountServices.listAllAccounts();
+       const value = await validateRequest(req, listOrgAccountSchema, res,"GET");
+    if (!value) {
+      return;
+    }
+    let parsedFilters: Record<string, any> = {};
+      try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+  
+    const account = await accountServices.listAllAccounts({
+  page: value.page,
+  limit: value.limit,
+  sortBy: value.sortBy,
+  sortOrder: value.sortOrder,
+  filters: parsedFilters,
+});
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
