@@ -12,7 +12,7 @@ import {
 } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { ProjectListParams } from '../../../../types/project';
+import { Project, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import {
@@ -28,13 +28,13 @@ import { ResourceTabs } from '../resources/resources';
 import {
   CellEditData,
   FieldChangeValue,
-  Project,
 } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
 import { AccountDetailsResponse } from '../../../../types';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -76,6 +76,7 @@ const Projects: React.FC<ProjectsProps> = ({
   setToggleEnabled,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const projectTypeOptions = useGetProjectType();
   const Classification = useFetchClassification();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
@@ -438,10 +439,11 @@ const Projects: React.FC<ProjectsProps> = ({
       if (result?.statusCode === 200) {
         console.log('Update success');
       } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
         setProjectList(previousProject);
       }
     } catch (error) {
-      console.error('Update failed', error);
+      errorToast((error as Error)?.message || 'Failed to update filed');
       setProjectList(previousProject);
     }
   };

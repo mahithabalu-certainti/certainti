@@ -122,8 +122,6 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
       });
 
       onSubmit(submitData);
-      setFormData({});
-      setErrors({});
     }
   };
 
@@ -154,9 +152,9 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   // Reset form when modal opens/closes or scenarios change
   useEffect(() => {
     if (!open) {
-      setFormData({});
-      setErrors({});
+      handleClose();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
 
   if (!open) {

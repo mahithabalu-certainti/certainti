@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   GetProjectTypeApiResponse,
+  Project,
   // ProjectList,
   ProjectListParams,
 } from '../../../../types/project';
@@ -14,7 +15,6 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
-  Project,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
 import {
@@ -26,6 +26,7 @@ import { ListTable } from '../../../../../components/table';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -54,6 +55,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   dropdownOptions,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
@@ -228,11 +230,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       (item) => item.columnId === 'classification_name'
     );
     const hasClassificationOther = updates.some(
-      (item) => item.columnId === 'classification_other'
+      (item) => item.columnId === 'project_classification_other'
     );
 
     if (isClassificationUpdated && !hasClassificationOther) {
-      updateData['classification_other'] = '';
+      updateData['project_classification_other'] = '';
     }
 
     const updatedProjectList = allProjectList.map((project) => {
@@ -265,7 +267,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
                   {}
                 ),
                 ...(isClassificationUpdated && !hasClassificationOther
-                  ? { classification_other: '' }
+                  ? { project_classification_other: '' }
                   : {}),
               }
             : fiscal
@@ -285,10 +287,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       if (result?.statusCode === 200) {
         console.log('Update success');
       } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
         setAllProjectList(previousProject);
       }
     } catch (error) {
-      console.error('Update failed', error);
+      errorToast((error as Error)?.message || 'Failed to update filed');
       setAllProjectList(previousProject);
     }
   };

@@ -24,6 +24,7 @@ import {
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
 import { displayValueForInline } from '../../../../../../common-utils';
+import { useToast } from '../../../../../../hooks';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -56,6 +57,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   setCount,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [resourceSkillList, setResourceSkillList] = useState<
     ResourceSkillList[]
@@ -292,10 +294,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       if (result?.statusCode === 200) {
         console.log('Update success');
       } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
         setResourceSkillList(previousSkillList);
       }
     } catch (error) {
-      console.error('Update failed:', error);
+      errorToast((error as Error)?.message || 'Failed to update filed');
       setResourceSkillList(previousSkillList);
     }
   };

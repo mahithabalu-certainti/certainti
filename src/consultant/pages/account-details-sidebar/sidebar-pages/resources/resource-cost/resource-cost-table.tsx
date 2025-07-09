@@ -57,7 +57,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   resourceType,
 }) => {
   const navigate = useNavigate();
-  const { successToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const [resourceCostList, setResourceCostList] = useState<ResourceCostList[]>(
     []
   );
@@ -272,10 +272,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       if (result?.statusCode === 200) {
         console.log('Update success');
       } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
         setResourceCostList(previousCostList);
       }
     } catch (error) {
-      console.error('Update failed:', error);
+      errorToast((error as Error)?.message || 'Failed to update filed');
       setResourceCostList(previousCostList);
     }
   };

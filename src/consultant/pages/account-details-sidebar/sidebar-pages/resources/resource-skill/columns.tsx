@@ -54,6 +54,10 @@ export const getResourceSkillColumns = (
     width: 180,
     sortable: true,
     editable: true,
+    render: (row: ResourceSkillList) =>
+      row.skill_type_others
+        ? `${row.skill_type_name} - ${row.skill_type_others}`
+        : row.skill_type_name,
     field: {
       type: 'select',
       required: true,
@@ -76,6 +80,10 @@ export const getResourceSkillColumns = (
     width: 180,
     sortable: true,
     editable: true,
+    render: (row: ResourceSkillList) =>
+      row.skill_subtype_others
+        ? `${row.skill_subtype_name} - ${row.skill_subtype_others}`
+        : row.skill_subtype_name,
     field: {
       type: 'select',
       required: true,

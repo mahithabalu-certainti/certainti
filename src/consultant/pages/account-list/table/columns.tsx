@@ -1,5 +1,6 @@
 import { costDisplay, REGEX_PATTERNS } from '../../../../common-utils';
 import {
+  DependencyRowData,
   ListOption,
   ListTableColumn,
 } from '../../../../components/table/types';
@@ -9,7 +10,8 @@ import { formatNumberWithCommas } from './utils';
 export const getAccountColumns = (
   onClick: (row: AccountList) => void,
   countryOptions: ListOption[],
-  industryOptions: ListOption[]
+  industryOptions: ListOption[],
+  handleEdit: (row: AccountList) => void
 ): ListTableColumn<AccountList>[] => [
   {
     id: 'account_name',
@@ -75,9 +77,12 @@ export const getAccountColumns = (
     field: {
       type: 'select',
       required: true,
-      renderValue: true,
       placeholder: 'Choose Industry',
       options: industryOptions,
+      getFieldData: (rowData: DependencyRowData) => {
+        const industryId = (rowData.industry as { rid: string }).rid;
+        return String(industryId);
+      },
       dependencies: [
         {
           dependsOn: 'industry',
@@ -90,7 +95,7 @@ export const getAccountColumns = (
           action: 'show_modal',
           modalFields: [
             {
-              id: 'industry_other',
+              id: 'industry_name_other',
               editId: 'industry_name_other',
               label: 'Industry-other',
               type: 'text',
@@ -117,7 +122,10 @@ export const getAccountColumns = (
         },
       ],
     },
-    render: (row: AccountList) => row.industry?.industry_name || '-',
+    render: (row: AccountList) =>
+      row.industry_name_other
+        ? `${row.industry?.industry_name} - ${row.industry_name_other}`
+        : row.industry?.industry_name,
   },
   {
     id: 'country',
@@ -130,9 +138,12 @@ export const getAccountColumns = (
     field: {
       type: 'select',
       required: false,
-      renderValue: true,
       placeholder: 'Choose Country',
       options: countryOptions,
+      getFieldData: (rowData: DependencyRowData) => {
+        const countryId = (rowData.country as { rid: string }).rid;
+        return String(countryId);
+      },
     },
     render: (row: AccountList) => row.country?.country_name || '-',
   },
@@ -228,6 +239,16 @@ export const getAccountColumns = (
     label: 'Finance Executive',
     width: 200,
     sortable: true,
+    render: (row: AccountList) => {
+      return (
+        <div
+          onDoubleClick={() => handleEdit(row)}
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.finance_executive}
+        </div>
+      );
+    },
   },
   {
     id: 'finance_lead',
@@ -235,6 +256,16 @@ export const getAccountColumns = (
     label: 'Finance Lead',
     width: 160,
     sortable: true,
+    render: (row: AccountList) => {
+      return (
+        <div
+          onDoubleClick={() => handleEdit(row)}
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.finance_lead}
+        </div>
+      );
+    },
   },
   {
     id: 'professional_services_consultant',
@@ -242,6 +273,16 @@ export const getAccountColumns = (
     label: 'Professional Services Consultant',
     width: 250,
     sortable: true,
+    render: (row: AccountList) => {
+      return (
+        <div
+          onDoubleClick={() => handleEdit(row)}
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.professional_services_consultant}
+        </div>
+      );
+    },
   },
   {
     id: 'r_number',

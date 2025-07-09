@@ -48,6 +48,7 @@ import {
 } from '../../../../../components/table/types';
 import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -158,6 +159,7 @@ const Resource: React.FC<ResourceProps> = ({
     client: resourceClient,
   });
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
@@ -690,10 +692,11 @@ const Resource: React.FC<ResourceProps> = ({
       if (result?.statusCode === 200) {
         console.log('Update success');
       } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
         setResourcesList(previousResourceList);
       }
     } catch (error) {
-      console.error('Update failed:', error);
+      errorToast((error as Error)?.message || 'Failed to update filed');
       setResourcesList(previousResourceList);
     }
   };

@@ -7,10 +7,10 @@ import {
 import {
   DependencyRowData,
   ListTableColumn,
-  Project,
 } from '../../../../../components/table/types';
 import { ListOption } from '../../../../../components/table/types';
 import { OthersEnum } from '../../../../types';
+import { Project } from '../../../../types/project';
 import { DATE_CONFIG } from '../../../resource-form/form-data';
 
 const getFiscalYears = (range: number) => {
@@ -167,6 +167,10 @@ export const getAllProjectListColumns = (
     editable: true,
     sortId: 'classification_name',
     width: 170,
+    render: (row: Project) =>
+      row.project_classification_other
+        ? `${row.classification_name} - ${row.project_classification_other}`
+        : row.classification_name,
     field: {
       type: 'select',
       required: false,
@@ -187,7 +191,8 @@ export const getAllProjectListColumns = (
           action: 'show_modal',
           modalFields: [
             {
-              id: 'classification_other',
+              id: 'project_classification_other',
+              editId: 'project_classification_other',
               label: 'Classification-Other',
               type: 'text',
               required: true,

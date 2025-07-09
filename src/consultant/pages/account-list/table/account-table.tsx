@@ -24,6 +24,7 @@ import {
 import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
 import { UPDATE_ACCOUNT } from '../../../../api/graphql/queries/account-query';
+import { useToast } from '../../../../hooks';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -41,6 +42,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   industryOptions,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { filters, fiscalYear } = useSelector<
     RootState,
@@ -122,7 +124,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
   const accountColumns = getAccountColumns(
     handleAccountNameClick,
     countryOptions,
-    industryOptions
+    industryOptions,
+    handleEdit
   );
 
   const isSkeletonLoading = loading || colorCodes.isLoading;
@@ -170,7 +173,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         acc[key] = item.value;
 
         if (item.columnId === 'industry') hasIndustry = true;
-        if (item.columnId === 'industry_other') hasIndustryOther = true;
+        if (item.columnId === 'industry_name_other') hasIndustryOther = true;
         if (item.columnId === 'country') hasCountry = true;
 
         return acc;
@@ -200,15 +203,17 @@ const AccountTable: React.FC<Record<string, any>> = ({
               country: countryOptions,
             }
           );
-          if (item.columnId === 'industry') {
-            acc['industry'] = {
-              rid: item.value,
-              industry_name: displayValue,
-            };
-          } else if (item.columnId === 'country') {
-            acc['country'] = {
-              rid: item.value,
-              country_name: displayValue,
+          if (['industry', 'country', 'currency'].includes(item.columnId)) {
+            const labelKey =
+              item.columnId === 'industry'
+                ? 'industry_name'
+                : item.columnId === 'country'
+                  ? 'country_name'
+                  : 'currency_code';
+
+            acc[item.columnId] = {
+              rid: item.value as string,
+              [labelKey]: displayValue as string,
             };
           } else {
             acc[item.columnId] = displayValue;
@@ -236,7 +241,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
           child_accounts: account.child_accounts.map((child) => {
             if (child.rid === rowId) {
               const updatedFields = updates.reduce<
-                Record<string, FieldChangeValue>
+                Record<string, FieldChangeValue | any>
               >((acc, item) => {
                 const displayValue = displayValueForInline(
                   item.columnId,
@@ -246,7 +251,26 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     country: countryOptions,
                   }
                 );
-                acc[item.columnId] = displayValue;
+                if (
+                  ['industry', 'country', 'currency'].includes(item.columnId)
+                ) {
+                  const labelKey =
+                    item.columnId === 'industry'
+                      ? 'industry_name'
+                      : item.columnId === 'country'
+                        ? 'country_name'
+                        : 'currency_code';
+
+                  acc[item.columnId] = {
+                    rid: item.value as string,
+                    [labelKey]: displayValue as string,
+                  };
+                } else {
+                  acc[item.columnId] = displayValue;
+                }
+                if (item.editId && item.editId !== item.columnId) {
+                  acc[item.editId] = item.value;
+                }
                 return acc;
               }, {});
 
@@ -280,10 +304,11 @@ const AccountTable: React.FC<Record<string, any>> = ({
       if (result?.statusCode === 200) {
         console.log('Update success');
       } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
         setAccountsList(previousAccounts);
       }
     } catch (error) {
-      console.error('Update failed', error);
+      errorToast((error as Error)?.message || 'Failed to update filed');
       setAccountsList(previousAccounts);
     }
   };

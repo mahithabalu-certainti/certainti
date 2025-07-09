@@ -10,9 +10,18 @@ import {
   UserListParams,
 } from '../../../types/manage-user';
 import { getUserColumns } from './columns';
-import { ActionItem, CellEditData } from '../../../../components/table/types';
+import {
+  ActionItem,
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
 import { useGetStatus } from '../../../../common-service';
+import { UPDATE_USER } from '../../../../api/graphql/queries/user-query';
+import { displayValueForInline } from '../../../../common-utils';
+import { useMutation } from '@apollo/client';
+import { userClient } from '../../../../api/graphql/clients/client';
+import { useToast } from '../../../../hooks';
 
 interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -39,6 +48,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
+  const { errorToast } = useToast();
+  const [updateUserMutation] = useMutation(UPDATE_USER, { client: userClient });
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -73,10 +84,14 @@ export const UserTable: React.FC<IUserTableProps> = ({
         id: item.rid,
         username: item.first_name,
         fullName: item.full_name,
+        azure_id: item.azure_id,
         email: item.email,
         profile: item.profile.profile_name,
+        profile_rid: item.profile.rid,
         status: item.status?.status_name,
+        status_rid: item.status_rid,
         role: item.business_teams.business_teams,
+        role_rid: item.business_teams.rid,
         created_datetime: item.created_datetime,
         modified_datetime: item.modified_datetime,
       };
@@ -154,7 +169,71 @@ export const UserTable: React.FC<IUserTableProps> = ({
   ];
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    const previousUsers = [...users];
+    // Find the matching user
+    const matchedUser = users.find((user) => user.id === rowId);
+    if (!matchedUser) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (usr, item) => {
+        const key = item.editId || item.columnId;
+        usr[key] = item.value;
+        return usr;
+      },
+      {
+        rid: rowId,
+        azure_id: matchedUser.azure_id,
+      }
+    );
+
+    const updatedUser = users?.map((user) => {
+      if (user.id === rowId) {
+        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
+          (res, item) => {
+            const displayValue = displayValueForInline(
+              item.columnId,
+              item.value,
+              {
+                profile: profileOptions,
+                role: roleOptions,
+                status: memoizedStatus,
+              }
+            );
+            res[item.columnId] = displayValue;
+
+            if (item.editId && item.editId !== item.columnId) {
+              res[item.editId] = item.value;
+            }
+            return res;
+          },
+          {}
+        );
+        return {
+          ...user,
+          ...updatedFields,
+        };
+      }
+      return user;
+    });
+    setUsers(updatedUser);
+
+    try {
+      const res = await updateUserMutation({
+        variables: { input: updateData },
+      });
+      const result = res.data?.updateUser;
+      if (result?.success === true) {
+        console.log('Update success');
+      } else {
+        errorToast(result?.message || 'Failed to update filed');
+        setUsers(previousUsers);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setUsers(previousUsers);
+    }
   };
 
   return (

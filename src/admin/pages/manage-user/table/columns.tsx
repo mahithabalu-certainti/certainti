@@ -3,6 +3,7 @@ import {
   REGEX_PATTERNS,
 } from '../../../../common-utils';
 import {
+  DependencyRowData,
   ListOption,
   ListTableColumn,
 } from '../../../../components/table/types';
@@ -16,6 +17,7 @@ export const getUserColumns = (
 ): ListTableColumn<ManageUser>[] => [
   {
     id: 'username',
+    editId: 'first_name',
     sortId: 'first_name',
     label: 'Username',
     width: 200,
@@ -71,6 +73,7 @@ export const getUserColumns = (
   },
   {
     id: 'profile',
+    editId: 'profile_rid',
     sortId: 'profile',
     label: 'Profile',
     width: 200,
@@ -81,10 +84,14 @@ export const getUserColumns = (
       required: true,
       placeholder: '',
       options: profileOptions,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.profile_rid);
+      },
     },
   },
   {
     id: 'role',
+    editId: 'role_rid',
     sortId: 'business_teams',
     label: 'Role',
     width: 200,
@@ -95,6 +102,9 @@ export const getUserColumns = (
       required: true,
       placeholder: '',
       options: roleOptions,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.role_rid);
+      },
     },
   },
   {
@@ -121,6 +131,7 @@ export const getUserColumns = (
   },
   {
     id: 'status',
+    editId: 'status_rid',
     sortId: 'status_name',
     label: 'Status',
     width: 100,
