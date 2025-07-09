@@ -816,7 +816,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     const uniqueByNameType: { [key: string]: any } = {};
 
     merged.forEach((item) => {
-      const key = `${item.type}::${item.name}`;
+      const key = getPermissionKey(item);
       const existingItem = uniqueByNameType[key];
 
       if (!existingItem) {
@@ -917,12 +917,12 @@ if (includeDependencies) {
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
           is_enabled: maWithMenu.is_enabled,
-          depends_on_menu:deps.filter(d => d.type === 'menu').map(d => d.id),
-          depends_on_module:deps.filter(d => d.type === 'module').map(d => d.id),
-          depends_on_permission : deps.filter(d => d.type === 'permission').map(d => d.id),
-          depended_by_menu : parents.filter(d => d.type === 'menu').map(d => d.id),
-          depended_by_module : parents.filter(d => d.type === 'module').map(d => d.id),
-          depended_by_permission : parents.filter(d => d.type === 'permission').map(d => d.id)
+          depends_on_menu:includeDependencies ?  deps.filter(d => d.type === 'menu').map(d => d.id) : undefined,
+          depends_on_module: includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depends_on_permission :includeDependencies ?  deps.filter(d => d.type === 'permission').map(d => d.id) : undefined,
+          depended_by_menu :includeDependencies ?  parents.filter(d => d.type === 'menu').map(d => d.id):undefined,
+          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depended_by_permission :includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
         });
       }
     });
@@ -941,12 +941,12 @@ if (includeDependencies) {
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled,
-          depends_on_menu:deps.filter(d => d.type === 'menu').map(d => d.id),
-          depends_on_module:deps.filter(d => d.type === 'module').map(d => d.id),
-          depends_on_permission : deps.filter(d => d.type === 'permission').map(d => d.id),
-          depended_by_menu : parents.filter(d => d.type === 'menu').map(d => d.id),
-          depended_by_module : parents.filter(d => d.type === 'module').map(d => d.id),
-          depended_by_permission : parents.filter(d => d.type === 'permission').map(d => d.id)
+          depends_on_menu:includeDependencies ? deps.filter(d => d.type === 'menu').map(d => d.id) :undefined,
+          depends_on_module:includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depends_on_permission :includeDependencies ? deps.filter(d => d.type === 'permission').map(d => d.id):undefined,
+          depended_by_menu : includeDependencies ? parents.filter(d => d.type === 'menu').map(d => d.id):undefined,
+          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depended_by_permission : includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
         });
       }
     });
@@ -966,12 +966,12 @@ if (includeDependencies) {
           desc: paWithPerm.module_permission.permission_desc,
           is_field_available: paWithPerm.module_permission.is_field_available,
           is_enabled: paWithPerm.is_enabled,
-          depends_on_menu:deps.filter(d => d.type === 'menu').map(d => d.id),
-          depends_on_module:deps.filter(d => d.type === 'module').map(d => d.id),
-          depends_on_permission : deps.filter(d => d.type === 'permission').map(d => d.id),
-          depended_by_menu : parents.filter(d => d.type === 'menu').map(d => d.id),
-          depended_by_module : parents.filter(d => d.type === 'module').map(d => d.id),
-          depended_by_permission : parents.filter(d => d.type === 'permission').map(d => d.id)
+          depends_on_menu:includeDependencies ? deps.filter(d => d.type === 'menu').map(d => d.id):undefined,
+          depends_on_module:includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id) :undefined,
+          depends_on_permission :includeDependencies ?  deps.filter(d => d.type === 'permission').map(d => d.id) :undefined,
+          depended_by_menu : includeDependencies ? parents.filter(d => d.type === 'menu').map(d => d.id) :undefined,
+          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depended_by_permission :includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
         });
       }
     });
