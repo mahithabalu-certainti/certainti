@@ -226,7 +226,8 @@ class ProjectGraphQlServices {
                             total_cost: d.total_cost,
                             total_cost_fte: d.total_cost_fte,
                             total_cost_subcon: d.total_cost_subcon,
-                            total_cost_nonlabor: d.total_cost_nonlabor
+                            total_cost_nonlabor: d.total_cost_nonlabor,
+                            project_type_name: d.project_type_name,
                         }
                     }
             return {

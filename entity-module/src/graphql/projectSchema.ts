@@ -121,6 +121,7 @@ type ProjectFiscalDetails {
     total_cost_fte : String
     total_cost_subcon : String
     total_cost_nonlabor : String
+    project_type_name : String
   }
 
 type projectNewResponse {

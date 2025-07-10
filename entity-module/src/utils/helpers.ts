@@ -609,12 +609,12 @@ export const setResourceCostDatas = (dbData : any, requestData : any) => {
   }
   if(requestData.effective_from != undefined) {
     newCostData.effective_from = requestData.effective_from != dbData.effective_from ? requestData.effective_from : dbData.effective_from
-    dataStorage = `effective_from = '${newCostData.effective_from}'`
+    dataStorage = newCostData.effective_from == '' ? `effective_from = null` : `effective_from = '${newCostData.effective_from}'`
     newCostDataArray.push(dataStorage);
   }
   if(requestData.end_date != undefined) {
     newCostData.end_date = requestData.end_date != dbData.end_date ? requestData.end_date : dbData.end_date
-    dataStorage = `end_date = '${newCostData.end_date}'`
+    dataStorage = newCostData.end_date == '' ? `end_date = null` : `end_date = '${newCostData.end_date}'`
     newCostDataArray.push(dataStorage);
   }
   if(requestData.effort_in_hrs != undefined) {
@@ -665,7 +665,7 @@ export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) 
   let dataStorage;
   if(requestData.start_date != undefined) {
     newData.start_date = requestData.start_date != dbData.start_date ? requestData.start_date : dbData.start_date
-    dataStorage = `start_date = '${newData.start_date}'`
+    dataStorage = newData.start_date == '' ? `start_date = null` : `start_date = '${newData.start_date}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.skill_type_rid != undefined) {
