@@ -1,6 +1,6 @@
 import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
-import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME, rawQuery } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
 import ExcelJS from "exceljs";
@@ -229,6 +229,7 @@ class UserService {
     data?: { user: any };
   }> {
     try {
+      const mainSequelize = await initSequelize()
       const { ...fieldsToUpdate } = userData;
 
       if (Object.keys(fieldsToUpdate).length === 0) {
@@ -261,11 +262,34 @@ class UserService {
         { where: { rid: userId } }
       );
 
+      let userDetails = await mainSequelize.query(rawQuery.fetchUserByIdForGraphql(userId))
+      let d : any = userDetails[0][0]
+      let finalData = {
+        rid : d.rid,
+        email : d.email,
+        status_rid : d.status_rid,
+        first_name : d.first_name,
+        created_datetime : d.created_datetime,
+        modified_datetime : d.modified_datetime,
+        azure_id : d.azure_id,
+        profile : d.profile == null ? null : {
+          rid : d.profile.rid,
+          profile_name : d.profile.profile_name
+        },
+        business_teams : d.business_teams == null ? null : {
+          rid : d.business_teams.rid,
+          business_teams : d.business_teams.business_teams
+        },
+        status : d.status == null ? null : {
+          status_name : d.status.status_name,
+          status_description : d.status.status_description
+        }
+      }
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          user: updatedData,
+          user: finalData,
         },
       };
     } catch (err) {

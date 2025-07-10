@@ -66,9 +66,9 @@ class ProjectIngestionService {
   }
 
   private async getModels(accountNumber: string) {
-    this.logger.info(`Before account number transfer | ${accountNumber}`)
+    // this.logger.info(`Before account number transfer | ${accountNumber}`)
     const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
-    this.logger.info(`After account number transferr | ${schemaName}`);
+    // this.logger.info(`After account number transferr | ${schemaName}`);
     // if (this.modelCache.has(schemaName)) {
     //   return this.modelCache.get(schemaName)!;
     // }
@@ -946,7 +946,8 @@ class ProjectIngestionService {
     bothParentAndChild: boolean,
     rawFilters: Record<string, any> = {},
     finalMetaDataSortBy: string,
-    finalMetaDataSortOrder: string
+    finalMetaDataSortOrder: string,
+    graphqlData : any
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1010,10 +1011,19 @@ class ProjectIngestionService {
       }
     }
 
-    const whereProject: Record<string, any> = {
+    let whereProject : Record<string, any>
+    if(graphqlData.type == 'graphql') {
+      whereProject = {
+      account_rid: accountData.rid,
+      ...(bothParentAndChild ? parentFilters : {}),
+      rid : graphqlData.project_rid
+    };
+    } else {
+      whereProject = {
       account_rid: accountData.rid,
       ...(bothParentAndChild ? parentFilters : {}),
     };
+    }
 
     const whereFiscal: Record<string, any> = {
       account_rid: accountData.rid,

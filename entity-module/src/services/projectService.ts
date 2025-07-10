@@ -653,7 +653,8 @@ export class ProjectService {
         bothParentAndChild,
         filters,
         finalMetaDataSortBy,
-        finalMetaDataSortOrder
+        finalMetaDataSortOrder,
+        {}
       );
 
       return {
