@@ -1012,22 +1012,30 @@ class ProjectIngestionService {
     }
 
     let whereProject : Record<string, any>
+    let whereFiscal: Record<string, any>
     if(graphqlData.type == 'graphql') {
       whereProject = {
       account_rid: accountData.rid,
       ...(bothParentAndChild ? parentFilters : {}),
       rid : graphqlData.project_rid
     };
+      whereFiscal = {
+        account_rid: accountData.rid,
+        rid : graphqlData.fiscal_rid
+      }
     } else {
       whereProject = {
       account_rid: accountData.rid,
       ...(bothParentAndChild ? parentFilters : {}),
     };
+      whereFiscal = {
+        account_rid: accountData.rid,
+      }
     }
 
-    const whereFiscal: Record<string, any> = {
-      account_rid: accountData.rid,
-    };
+    // const whereFiscal: Record<string, any> = {
+    //   account_rid: accountData.rid,
+    // };
 
     for (const key in filters) {
       const dbField = fiscalFieldMap[key];

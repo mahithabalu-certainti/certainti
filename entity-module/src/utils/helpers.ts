@@ -230,6 +230,8 @@ export const setProject = (dbData : any, requestData : any) => {
   }
   let data = `modified_by = '${requestData.userId}'`
   newPrjArray.push(data)
+  let datas = `modified_datetime = NOW()`
+  newPrjArray.push(datas)
   return newPrjArray
     }
 
@@ -313,6 +315,8 @@ export const setPrjFiscalData = (dbData : any, requestData : any) => {
   }
   let data = `modified_by = '${requestData.userId}'`
   newPrjFisArray.push(data)
+  let datas = `modified_datetime = NOW()`
+  newPrjFisArray.push(datas)
   return newPrjFisArray;
 }
 
@@ -391,6 +395,8 @@ export const setProjectSummary = (dbData : any, requestData : any) => {
   }
   let data = `modified_by = '${requestData.userId}'`
   newDbPrjSummaryArray.push(data)
+  let datas = `modified_datetime = NOW()`
+  newDbPrjSummaryArray.push(datas)
   return newDbPrjSummaryArray;
 }
 
@@ -474,6 +480,8 @@ export const setProjectFiscalSummary = (dbData : any, requestData : any) => {
   }
   let data = `modified_by = '${requestData.userId}'`
   newFisSummaryArray.push(data)
+  let datas = `modified_datetime = NOW()`
+  newFisSummaryArray.push(datas)
   return newFisSummaryArray;
 }
 

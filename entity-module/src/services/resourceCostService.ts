@@ -128,7 +128,8 @@ class ResourceCostService {
         limit,
         offset,
         search,
-        accountId
+        accountId,
+        {}
       );
     } catch (err) {
       console.log("Error ", err);

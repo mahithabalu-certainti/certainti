@@ -104,7 +104,7 @@ const userResolvers: IResolvers = {
           return {
             success: true,
             message: "User profile updated successfully",
-            profile: response.profile,
+            profile: response.data.profile,
           };
         }
 

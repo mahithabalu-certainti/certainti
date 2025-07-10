@@ -695,7 +695,8 @@ class ResourceSkillService {
         limit,
         offset,
         search,
-        accountId
+        accountId,
+        {}
       );
 
       if (results?.data?.resourceSkill?.length) {
