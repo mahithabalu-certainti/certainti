@@ -1432,12 +1432,7 @@ class UserManagementService {
     currentProfileName: string,
     currentProfileDescription: string,
     userId: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { profile: any };
-  }> {
+  ) {
     try {
       const updateData: Record<string, any> = {
         modified_by: userId,
@@ -1503,14 +1498,32 @@ class UserManagementService {
           where: { rid: profileId },
         });
       }
-
-      return {
+      let updatedProfileData = await Profile.findOne({
+        where : {
+          rid : profileId
+        }, raw : true
+      })
+      if(updatedProfileData) {
+        let finalData = {
+          rid: updatedProfileData.rid,
+          r_number: updatedProfileData.r_number,
+          profile_name: updatedProfileData.profile_name,
+          profile_description: updatedProfileData.profile_description,
+          profile_type: updatedProfileData.profile_type,
+          profile_status: updatedProfileData.profile_status,
+          created_datetime: updatedProfileData.created_datetime,
+          modified_datetime: updatedProfileData.modified_datetime,
+          created_by: updatedProfileData.created_by,
+          modified_by: updatedProfileData.modified_by
+        }
+        return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profile: profileData,
+          profile: finalData,
         },
       };
+      }
     } catch (error) {
       return this.throwServiceError(error as Error);
     }

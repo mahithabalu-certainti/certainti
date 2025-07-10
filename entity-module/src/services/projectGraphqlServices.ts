@@ -68,6 +68,7 @@ class ProjectGraphQlServices {
             graphqlData.type = 'graphql'
             graphqlData.project_rid = data.project_rid
             graphqlData.accountrid = data.account_rid
+            graphqlData.fiscal_rid = data.project_fiscal_rid
             
             let fetchUpdatedProjectResponse : any = await this.projectIngestion.fetchProjectList
             (checkAccountExists[0][0].r_number, accountData, {}, 0, 0, 1,[], false, {}, 'project_code', 'ASC',graphqlData)
@@ -191,7 +192,41 @@ class ProjectGraphQlServices {
                             total_cost_from_tasks: d.total_cost_from_tasks,
                             total_cost_fte_from_tasks: d.total_cost_fte_from_tasks,
                             total_cost_subcon_from_tasks: d.total_cost_subcon_from_tasks,
-                            total_cost_prj_blended: d.total_cost_prj_blended
+                            total_cost_prj_blended: d.total_cost_prj_blended,
+                            project_fiscal_rid : d.project_fiscal_rid,
+                            classification_name : d.classification_name,
+                            total_cost_fte_prj_blended: d.total_cost_fte_prj_blended,
+                            total_cost_subcon_prj_blended: d.total_cost_subcon_prj_blended,
+                            total_cost_from_prj_res_blended: d.total_cost_from_prj_res_blended,
+                            total_cost_fte_from_prj_res_blended: d.total_cost_fte_from_prj_res_blended,
+                            total_cost_subcon_from_prj_res_blended: d.total_cost_subcon_from_prj_res_blended,
+                            total_cost_from_tasks_blended: d.total_cost_from_tasks_blended,
+                            total_cost_fte_from_tasks_blended: d.total_cost_fte_from_tasks_blended,
+                            total_cost_subcon_from_tasks_blended: d.total_cost_subcon_from_tasks_blended,
+                            blended_rate_fte: d.blended_rate_fte,
+                            blended_rate_subcon: d.blended_rate_subcon,
+                            rd_percent_potential_ai: d.rd_percent_potential_ai,
+                            rd_percent_adjustment: d.rd_percent_adjustment,
+                            rd_percent_final: d.rd_percent_final,
+                            qre_fte: d.qre_fte,
+                            qre_subcon: d.qre_subcon,
+                            qre_nonlabor: d.qre_nonlabor,
+                            rd_credits_fte_fed_level: d.rd_credits_fte_fed_level,
+                            rd_credits_subcon_fed_level: d.rd_credits_subcon_fed_level,
+                            rd_credits_nonlabor_fed_level: d.rd_credits_nonlabor_fed_level,
+                            rd_credits_fed_level: d.rd_credits_fed_level,
+                            rd_credits_total: d.rd_credits_total,
+                            interaction_cc_list: d.interaction_cc_list,
+                            assessment_status: d.assessment_status,
+                            claim_status: d.claim_status,
+                            comments: d.comments,
+                            project_description: d.project_description,
+                            total_fte: d.total_fte,
+                            total_effort: d.total_effort,
+                            total_cost: d.total_cost,
+                            total_cost_fte: d.total_cost_fte,
+                            total_cost_subcon: d.total_cost_subcon,
+                            total_cost_nonlabor: d.total_cost_nonlabor
                         }
                     }
             return {

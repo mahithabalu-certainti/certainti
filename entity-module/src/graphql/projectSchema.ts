@@ -24,69 +24,103 @@ status_name: String
 }
 
 type ProjectFiscalDetails {
-  rid: String
-  r_number: String
-  eid: String
-  created_by: String
-  modified_by: String
-  created_datetime: Date
-  modified_datetime: Date
-  project_rid: String
-  project_code: String
-  industry_rid: String
-  industry_name: String
-  fiscal_year: Int
-  project_name: String
-  program_name: String
-  project_type_rid: String
-  project_classification_rid: String
-  project_classification_other: String
-  project_client_group: String
-  project_group: String
-  auto_send_ai_interaction: String
-  account_rid: String
-  country_rid: String
-  region_rid: String
-  currency_rid: String
-  max_ai_interaction: String
-  expiry_duration: String
-  auto_access_rd: String
-  status_rid: String
-  project_startdate: String
-  project_enddate: String
-  total_fte_prj: String
-  total_fte_from_prj_res: String
-  total_fte_from_tasks: String
-  total_subcon_prj: String
-  total_subcon_from_prj_res: String
-  total_subcon_from_tasks: String
-  total_nonlabor_prj: String
-  total_nonlabor_from_prj_res: String
-  total_resources_prj: String
-  total_resources_from_prj_res: String
-  total_resources_from_tasks: String
-  total_effort_prj: String
-  total_effort_fte_prj: String
-  total_effort_subcon_prj: String
-  total_effort_from_prj_res: String
-  total_effort_fte_from_prj_res: String
-  total_effort_subcon_from_prj_res: String
-  total_effort_from_tasks: String
-  total_effort_fte_from_tasks: String
-  total_effort_subcon_from_tasks: String
-  total_cost_prj: String
-  total_cost_fte_prj: String
-  total_cost_subcon_prj: String
-  total_cost_nonlabor_prj: String
-  total_cost_from_prj_res: String
-  total_cost_fte_from_prj_res: String
-  total_cost_subcon_from_prj_res: String
-  total_cost_nonlabor_from_prj_res: String
-  total_cost_from_tasks: String
-  total_cost_fte_from_tasks: String
-  total_cost_subcon_from_tasks: String
-  total_cost_prj_blended: String
-  qre_final: Int
+    rid: String
+    project_fiscal_rid : String
+    classification_name : String
+    r_number: String
+    eid: String
+    created_by: String
+    modified_by: String
+    created_datetime: Date
+    modified_datetime: Date
+    project_rid: String
+    project_code: String
+    industry_rid: String
+    industry_name: String
+    fiscal_year: Int
+    project_name: String
+    program_name: String
+    project_type_rid: String
+    project_classification_rid: String
+    project_classification_other: String
+    project_client_group: String
+    project_group: String
+    auto_send_ai_interaction: String
+    account_rid: String
+    country_rid: String
+    region_rid: String
+    currency_rid: String
+    max_ai_interaction: String
+    expiry_duration: String
+    auto_access_rd: String
+    status_rid: String
+    project_startdate: String
+    project_enddate: String
+    total_fte_prj: String
+    total_fte_from_prj_res: String
+    total_fte_from_tasks: String
+    total_subcon_prj: String
+    total_subcon_from_prj_res: String
+    total_subcon_from_tasks: String
+    total_nonlabor_prj: String
+    total_nonlabor_from_prj_res: String
+    total_resources_prj: String
+    total_resources_from_prj_res: String
+    total_resources_from_tasks: String
+    total_effort_prj: String
+    total_effort_fte_prj: String
+    total_effort_subcon_prj: String
+    total_effort_from_prj_res: String
+    total_effort_fte_from_prj_res: String
+    total_effort_subcon_from_prj_res: String
+    total_effort_from_tasks: String
+    total_effort_fte_from_tasks: String
+    total_effort_subcon_from_tasks: String
+    total_cost_prj: String
+    total_cost_fte_prj: String
+    total_cost_subcon_prj: String
+    total_cost_nonlabor_prj: String
+    total_cost_from_prj_res: String
+    total_cost_fte_from_prj_res: String
+    total_cost_subcon_from_prj_res: String
+    total_cost_nonlabor_from_prj_res: String
+    total_cost_from_tasks: String
+    total_cost_fte_from_tasks: String
+    total_cost_subcon_from_tasks: String
+    total_cost_prj_blended: String
+    qre_final: Int
+    total_cost_fte_prj_blended : String
+    total_cost_subcon_prj_blended : String
+    total_cost_from_prj_res_blended : String
+    total_cost_fte_from_prj_res_blended : String
+    total_cost_subcon_from_prj_res_blended : String
+    total_cost_from_tasks_blended : String
+    total_cost_fte_from_tasks_blended : String
+    total_cost_subcon_from_tasks_blended : String
+    blended_rate_fte : String
+    blended_rate_subcon : String
+    rd_percent_potential_ai : String
+    rd_percent_adjustment : String
+    rd_percent_final : String
+    qre_fte : String
+    qre_subcon : String
+    qre_nonlabor : String
+    rd_credits_fte_fed_level : String
+    rd_credits_subcon_fed_level : String
+    rd_credits_nonlabor_fed_level : String
+    rd_credits_fed_level : String
+    rd_credits_total : String
+    interaction_cc_list : String
+    assessment_status : String
+    claim_status : String
+    comments : String
+    project_description : String
+    total_fte : String
+    total_effort : String
+    total_cost : String
+    total_cost_fte : String
+    total_cost_subcon : String
+    total_cost_nonlabor : String
   }
 
 type projectNewResponse {
