@@ -47,7 +47,6 @@ const userResolvers: IResolvers = {
             !input.status_rid || input.status_rid === userRecord.status_rid
               ? userRecord.status.status_name
               : toggleStatus(userRecord.status.status_name);
-
           await updateAzureUser({
             azure_id: input.azure_id,
             first_name: input.first_name,
@@ -66,7 +65,7 @@ const userResolvers: IResolvers = {
           return {
             success: true,
             message: "User updated successfully",
-            user: response.data,
+            user: response.data.user,
           };
         }
 
