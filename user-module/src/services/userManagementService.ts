@@ -1498,11 +1498,43 @@ class UserManagementService {
           where: { rid: profileId },
         });
       }
-      let updatedProfileData = await Profile.findOne({
-        where : {
-          rid : profileId
-        }, raw : true
-      })
+      const updatedProfileData : any = await Profile.findOne({
+        where: { rid: profileId },
+        include: [
+          {
+            model: User,
+            as: 'creator',
+            attributes: [
+              [
+                Sequelize.fn(
+                  'CONCAT',
+                  Sequelize.col('creator.first_name'),
+                  ' ',
+                  Sequelize.col('creator.last_name')
+                ),
+                'full_name'
+              ]
+            ]
+          },
+          {
+            model: User,
+            as: 'modifier',
+            attributes: [
+              [
+                Sequelize.fn(
+                  'CONCAT',
+                  Sequelize.col('modifier.first_name'),
+                  ' ',
+                  Sequelize.col('modifier.last_name')
+                ),
+                'full_name'
+              ]
+            ]
+          }
+        ],
+        raw: true
+      });
+      console.log(updatedProfileData)
       if(updatedProfileData) {
         let finalData = {
           rid: updatedProfileData.rid,
@@ -1513,8 +1545,8 @@ class UserManagementService {
           profile_status: updatedProfileData.profile_status,
           created_datetime: updatedProfileData.created_datetime,
           modified_datetime: updatedProfileData.modified_datetime,
-          created_by: updatedProfileData.created_by,
-          modified_by: updatedProfileData.modified_by
+          created_by: updatedProfileData['creator.full_name'],
+          modified_by: updatedProfileData['modifier.full_name']
         }
         return {
         statusCode: constants.SUCCESS,
