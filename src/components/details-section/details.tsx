@@ -2,8 +2,10 @@ import React from 'react';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface DetailItem {
+  key?: string;
   label?: string;
   value?: React.ReactNode;
+  hide?: boolean;
 }
 
 const DetailsSection: React.FC<{
@@ -16,14 +18,16 @@ const DetailsSection: React.FC<{
   const leftColumn: DetailItem[] = [];
   const middleColumn: DetailItem[] = [];
   const rightColumn: DetailItem[] = [];
+  const styleName = customStyle ? customStyle : ' pt-2 mt-3  ';
+  const visibleData = data.filter((item) => !item.hide);
 
   if (isAudit) {
-    data.forEach((item, index) => {
+    visibleData.forEach((item, index) => {
       if (index % 2 === 0) leftColumn.push(item);
       else middleColumn.push(item);
     });
   } else {
-    data.forEach((item, index) => {
+    visibleData.forEach((item, index) => {
       if (index % 3 === 0) leftColumn.push(item);
       else if (index % 3 === 1) middleColumn.push(item);
       else rightColumn.push(item);
@@ -72,17 +76,16 @@ const DetailsSection: React.FC<{
     );
   };
 
-  const styleName = customStyle ? customStyle : ' pt-2 mt-3  ';
   return (
     <div className={styleName}>
       {title && (
-        <div className='flex items-center align-middle px-6  h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+        <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
           {title}
         </div>
       )}
       <div className='text-sm my-[6px] px-6 grid gap-y-3'>
         {fullColumn
-          ? data.map((item, index) => (
+          ? visibleData.map((item, index) => (
               <div
                 key={index}
                 className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
@@ -130,7 +133,6 @@ const DetailsSection: React.FC<{
                           </div>
                           <div className='font-medium text-[13px] truncate min-w-0'>
                             <TruncateWithTooltip
-                              // text={String(item.value)}
                               maxWidth={'100%'}
                               className='truncate inline-block max-w-full'
                               alwaysShowTooltip={

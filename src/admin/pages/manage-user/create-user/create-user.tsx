@@ -75,11 +75,20 @@ export const CreateUser: React.FC = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
   const isUserCreateEnable = checkPermission(
     permission,
     AllPermissions.USER_CREATE
   );
+
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
   // const isUserEditEnable = checkPermission(
   //   permission,
   //   AllPermissions.USER_EDIT_UPDATE
@@ -125,6 +134,15 @@ export const CreateUser: React.FC = () => {
     }
   }, [userData?.country_rid, userData?.region_rid]);
 
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
+
+  // Memoized Options
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
@@ -261,7 +279,8 @@ export const CreateUser: React.FC = () => {
     city.isLoading,
     // isEditView ? !isUserActivateEnable : false,
     isConsultantFirm.isConsultantFirm,
-    isConsultantFirm.org_id
+    isConsultantFirm.org_id,
+    permissionMap
   );
 
   const formLoading =
