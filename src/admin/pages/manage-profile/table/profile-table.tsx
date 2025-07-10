@@ -19,7 +19,6 @@ import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
 import { UPDATE_USER_PROFILE } from '../../../../api/graphql/queries/profile-query';
 import { userClient } from '../../../../api/graphql/clients/client';
-import { displayValueForInline } from '../../../../common-utils';
 import { useToast } from '../../../../hooks';
 
 interface IUserTableProps {
@@ -159,32 +158,6 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       },
       { rid: rowId }
     );
-    const updatedProfile = profileList?.map((profile) => {
-      if (profile.rid === rowId) {
-        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
-          (res, item) => {
-            const displayValue = displayValueForInline(
-              item.columnId,
-              item.value,
-              {}
-            );
-            res[item.columnId] = displayValue;
-
-            if (item.editId && item.editId !== item.columnId) {
-              res[item.editId] = item.value;
-            }
-            return res;
-          },
-          {}
-        );
-        return {
-          ...profile,
-          ...updatedFields,
-        };
-      }
-      return profile;
-    });
-    setProfileList(updatedProfile);
 
     try {
       const res = await updateUserProfile({
@@ -192,10 +165,15 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       });
 
       const result = res.data?.updateUserProfile;
-      if (result?.success === true) {
-        console.log('Update success');
+      if (result?.success === true && result.profile) {
+        const updatedProfile = result.profile;
+        setProfileList((prevProfiles) =>
+          prevProfiles.map((profile) =>
+            profile.rid === updatedProfile.rid ? updatedProfile : profile
+          )
+        );
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
+        errorToast(result?.message || 'Failed to update filed');
         setProfileList(previousProfileList);
       }
     } catch (error) {

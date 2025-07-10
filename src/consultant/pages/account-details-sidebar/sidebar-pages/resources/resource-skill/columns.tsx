@@ -21,7 +21,7 @@ export const getResourceSkillColumns = (
     editId: 'start_date',
     sortId: 'start_date',
     label: 'Effective Date',
-    width: 130,
+    width: 160,
     sortable: true,
     render: (row: ResourceSkillList) => (
       <span>{dateFormatToYYYYMMDD(row.start_date as string) || '-'}</span>

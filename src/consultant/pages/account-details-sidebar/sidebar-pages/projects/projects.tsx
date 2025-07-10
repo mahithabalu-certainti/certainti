@@ -15,10 +15,7 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import { Project, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import {
-  checkPermission,
-  displayValueForInline,
-} from '../../../../../common-utils';
+import { checkPermission } from '../../../../../common-utils';
 import {
   AllMenus,
   AllModules,
@@ -390,46 +387,6 @@ const Projects: React.FC<ProjectsProps> = ({
       updateData['project_classification_other'] = '';
     }
 
-    const updatedProjectList = projectList.map((project) => {
-      if (project.rid !== parentProject.rid) return project;
-
-      return {
-        ...project,
-        ProjectFiscal: project.ProjectFiscal.map((fiscal) =>
-          fiscal.rid === rowId
-            ? {
-                ...fiscal,
-                ...updates.reduce<Record<string, FieldChangeValue>>(
-                  (pro, item) => {
-                    // If the column is a dropdown, get the label
-                    const displayValue = displayValueForInline(
-                      item.columnId,
-                      item.value,
-                      {
-                        project_type_name: memoizedProjectTypes,
-                        classification_name: memoizedClassification,
-                      }
-                    );
-                    pro[item.columnId] = displayValue;
-
-                    if (item.editId && item.editId !== item.columnId) {
-                      pro[item.editId] = item.value;
-                    }
-                    return pro;
-                  },
-                  {}
-                ),
-                ...(isClassificationUpdated && !hasClassificationOther
-                  ? { project_classification_other: '' }
-                  : {}),
-              }
-            : fiscal
-        ),
-      };
-    });
-
-    setProjectList(updatedProjectList);
-
     try {
       const res = await updateProjectMutation({
         variables: { data: updateData },
@@ -437,8 +394,41 @@ const Projects: React.FC<ProjectsProps> = ({
 
       const result = res.data?.updateSpecificProjectDetails;
 
-      if (result?.statusCode === 200) {
-        console.log('Update success');
+      if (result?.statusCode === 200 && result.data) {
+        const updatedParentData = result.data;
+        const updatedFiscalData = updatedParentData.ProjectFiscal;
+
+        if (!updatedFiscalData) {
+          errorToast('Failed to update project. Please try again.');
+          setProjectList(previousProject);
+          return;
+        }
+
+        const newProjects = projectList.map((project) => {
+          if (project.project_rid === updatedParentData.project_rid) {
+            const mergedParent = {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                if (
+                  fiscal.project_fiscal_rid ===
+                  updatedFiscalData.project_fiscal_rid
+                ) {
+                  return {
+                    ...fiscal,
+                    ...updatedFiscalData,
+                  };
+                }
+                return fiscal;
+              }),
+            };
+
+            return mergedParent;
+          }
+          return project;
+        });
+
+        setProjectList(newProjects);
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');
         setProjectList(previousProject);

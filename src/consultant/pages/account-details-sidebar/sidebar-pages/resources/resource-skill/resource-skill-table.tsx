@@ -23,7 +23,6 @@ import {
   FieldChangeValue,
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
-import { displayValueForInline } from '../../../../../../common-utils';
 import { useToast } from '../../../../../../hooks';
 
 interface ResourceSkillTableProps {
@@ -249,50 +248,20 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       updateData['skill_subtype_others'] = '';
     }
 
-    const updatedResourceSkill = resourceSkillList?.map((resource) => {
-      if (resource.rid === rowId) {
-        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
-          (res, item) => {
-            const displayValue = displayValueForInline(
-              item.columnId,
-              item.value,
-              {
-                skill_type_name: memoizedSkillType,
-                skill_subtype_name: memoizedSkillSubType,
-                skill_level_name: memoizedSkillLevels,
-              }
-            );
-            res[item.columnId] = displayValue;
-
-            if (item.editId && item.editId !== item.columnId) {
-              res[item.editId] = item.value;
-            }
-            return res;
-          },
-          {}
-        );
-        return {
-          ...resource,
-          ...updatedFields,
-          ...(hasSkillType &&
-          hasSkillSubType &&
-          !hasSkillTypeOther &&
-          !hasSkillSubTypeOther
-            ? { skill_type_others: '', skill_subtype_others: '' }
-            : {}),
-        };
-      }
-      return resource;
-    });
-    setResourceSkillList(updatedResourceSkill);
-
     try {
       const res = await updateResourceSkill({
         variables: { data: updateData },
       });
       const result = res.data?.updateResourceSkillInline;
-      if (result?.statusCode === 200) {
-        console.log('Update success');
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResourceSkill = result.data;
+        setResourceSkillList((prevSkill) =>
+          prevSkill.map((skill) =>
+            skill.rid === updatedResourceSkill.rid
+              ? updatedResourceSkill
+              : skill
+          )
+        );
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');
         setResourceSkillList(previousSkillList);

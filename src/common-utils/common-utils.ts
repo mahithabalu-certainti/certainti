@@ -624,19 +624,3 @@ export const valueDisplay = (
 
   return formattedValue;
 };
-
-export const displayValueForInline = (
-  columnId: string,
-  value: string | number | boolean | null | undefined,
-  columnOptions: Record<string, { label: string; value: string }[]>
-) => {
-  if (value === null || value === undefined) return value;
-
-  const options = columnOptions[columnId];
-  if (options) {
-    const match = options.find((opt) => opt.value === value);
-    return match?.label ?? value;
-  }
-
-  return value;
-};

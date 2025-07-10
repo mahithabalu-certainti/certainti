@@ -34,10 +34,7 @@ import {
   useGetAllCountries,
   useGetStatus,
 } from '../../../../../common-service';
-import {
-  checkPermission,
-  displayValueForInline,
-} from '../../../../../common-utils';
+import { checkPermission } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -659,47 +656,18 @@ const Resource: React.FC<ResourceProps> = ({
       updateData['city_rid'] = '';
     }
 
-    const updatedResource = resourcesList?.map((resource) => {
-      if (resource.rid === rowId) {
-        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
-          (res, item) => {
-            const displayValue = displayValueForInline(
-              item.columnId,
-              item.value,
-              {
-                resource_type_name: memoizedResourceType,
-                country_name: countryOptions,
-                region_name: regionOptions,
-                status_name: memoizedStatus,
-              }
-            );
-            res[item.columnId] = displayValue;
-
-            if (item.editId && item.editId !== item.columnId) {
-              res[item.editId] = item.value;
-            }
-            return res;
-          },
-          {}
-        );
-        return {
-          ...resource,
-          ...updatedFields,
-          ...(hasCountry && !hasRegion && { region_name: '' }),
-          ...(hasCountry && { city_name: '' }),
-        };
-      }
-      return resource;
-    });
-    setResourcesList(updatedResource);
-
     try {
       const res = await updateResource({
         variables: { data: updateData },
       });
       const result = res.data?.updateResourceInline;
-      if (result?.statusCode === 200) {
-        console.log('Update success');
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResource = result.data;
+        setResourcesList((prevList) =>
+          prevList.map((resource) =>
+            resource.rid === updatedResource.rid ? updatedResource : resource
+          )
+        );
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');
         setResourcesList(previousResourceList);

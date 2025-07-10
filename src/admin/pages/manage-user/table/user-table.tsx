@@ -18,7 +18,6 @@ import {
 import { EditIcon, EyeIcon } from '../../../../assets';
 import { useGetStatus } from '../../../../common-service';
 import { UPDATE_USER } from '../../../../api/graphql/queries/user-query';
-import { displayValueForInline } from '../../../../common-utils';
 import { useMutation } from '@apollo/client';
 import { userClient } from '../../../../api/graphql/clients/client';
 import { useToast } from '../../../../hooks';
@@ -71,7 +70,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
         label: status.status_name,
-        value: status.status_name,
+        value: status.rid,
       })) || [],
     [statusOptions?.data?.data?.status]
   );
@@ -97,6 +96,22 @@ export const UserTable: React.FC<IUserTableProps> = ({
       };
     });
   };
+
+  const convertSingleUserData = (item: User): ManageUser => ({
+    id: item.rid,
+    username: item.first_name,
+    fullName: item.full_name,
+    azure_id: item.azure_id,
+    email: item.email,
+    profile: item.profile.profile_name,
+    profile_rid: item.profile.rid,
+    status: item.status?.status_name,
+    status_rid: item.status_rid,
+    role: item.business_teams.business_teams,
+    role_rid: item.business_teams.rid,
+    created_datetime: item.created_datetime,
+    modified_datetime: item.modified_datetime,
+  });
 
   useEffect(() => {
     if (data?.data) {
@@ -188,44 +203,18 @@ export const UserTable: React.FC<IUserTableProps> = ({
       }
     );
 
-    const updatedUser = users?.map((user) => {
-      if (user.id === rowId) {
-        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
-          (res, item) => {
-            const displayValue = displayValueForInline(
-              item.columnId,
-              item.value,
-              {
-                profile: profileOptions,
-                role: roleOptions,
-                status: memoizedStatus,
-              }
-            );
-            res[item.columnId] = displayValue;
-
-            if (item.editId && item.editId !== item.columnId) {
-              res[item.editId] = item.value;
-            }
-            return res;
-          },
-          {}
-        );
-        return {
-          ...user,
-          ...updatedFields,
-        };
-      }
-      return user;
-    });
-    setUsers(updatedUser);
-
     try {
       const res = await updateUserMutation({
         variables: { input: updateData },
       });
       const result = res.data?.updateUser;
-      if (result?.success === true) {
-        console.log('Update success');
+      if (result?.success === true && result.user) {
+        const updatedUser = convertSingleUserData(result.user);
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === updatedUser.id ? updatedUser : user
+          )
+        );
       } else {
         errorToast(result?.message || 'Failed to update filed');
         setUsers(previousUsers);

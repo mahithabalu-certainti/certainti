@@ -20,7 +20,6 @@ import { useToast } from '../../../../../../hooks';
 import { useFetchCurrency } from '../../../../../services/account';
 import { CellEditData } from '../../../../../../components/table/types';
 import { ResourceTypeEnum } from '../../../../resource-form/utils';
-import { displayValueForInline } from '../../../../../../common-utils';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -234,43 +233,19 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       }
     );
 
-    const updatedResourceCost = resourceCostList?.map((resource) => {
-      if (resource.rid === rowId) {
-        const updatedFields = updates.reduce<Record<string, FieldChangeValue>>(
-          (res, item) => {
-            const displayValue = displayValueForInline(
-              item.columnId,
-              item.value,
-              {
-                currency_code: memoizedCurrency,
-              }
-            );
-            res[item.columnId] = displayValue;
-
-            if (item.editId && item.editId !== item.columnId) {
-              res[item.editId] = item.value;
-            }
-            return res;
-          },
-          {}
-        );
-        return {
-          ...resource,
-          ...updatedFields,
-        };
-      }
-      return resource;
-    });
-    setResourceCostList(updatedResourceCost);
-
     try {
       const res = await updateResourceCost({
         variables: { data: updateData },
       });
 
       const result = res.data?.updateResourceCostInline;
-      if (result?.statusCode === 200) {
-        console.log('Update success');
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResourceCost = result.data;
+        setResourceCostList((prevCost) =>
+          prevCost.map((cost) =>
+            cost.rid === updatedResourceCost.rid ? updatedResourceCost : cost
+          )
+        );
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');
         setResourceCostList(previousCostList);

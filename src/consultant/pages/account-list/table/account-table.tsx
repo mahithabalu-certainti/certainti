@@ -3,10 +3,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import {
-  displayValueForInline,
-  reshapeGlobalFilter,
-} from '../../../../common-utils';
+import { reshapeGlobalFilter } from '../../../../common-utils';
 import { ListTable } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
@@ -190,122 +187,60 @@ const AccountTable: React.FC<Record<string, any>> = ({
       updateData['region_rid'] = '';
     }
 
-    const updatedAccounts = accountsList.map((account) => {
-      if (account.rid === rowId) {
-        const updatedFields = updates.reduce<
-          Record<string, FieldChangeValue | any>
-        >((acc, item) => {
-          const displayValue = displayValueForInline(
-            item.columnId,
-            item.value,
-            {
-              industry: industryOptions,
-              country: countryOptions,
-            }
-          );
-          if (['industry', 'country', 'currency'].includes(item.columnId)) {
-            const labelKey =
-              item.columnId === 'industry'
-                ? 'industry_name'
-                : item.columnId === 'country'
-                  ? 'country_name'
-                  : 'currency_code';
-
-            acc[item.columnId] = {
-              rid: item.value as string,
-              [labelKey]: displayValue as string,
-            };
-          } else {
-            acc[item.columnId] = displayValue;
-          }
-
-          if (item.editId && item.editId !== item.columnId) {
-            acc[item.editId] = item.value;
-          }
-          return acc;
-        }, {});
-
-        if (hasIndustry && !hasIndustryOther) {
-          updatedFields['industry_name_other'] = '';
-        }
-
-        return {
-          ...account,
-          ...updatedFields,
-        };
-      }
-
-      if (account.child_accounts?.some((child) => child.rid === rowId)) {
-        return {
-          ...account,
-          child_accounts: account.child_accounts.map((child) => {
-            if (child.rid === rowId) {
-              const updatedFields = updates.reduce<
-                Record<string, FieldChangeValue | any>
-              >((acc, item) => {
-                const displayValue = displayValueForInline(
-                  item.columnId,
-                  item.value,
-                  {
-                    industry: industryOptions,
-                    country: countryOptions,
-                  }
-                );
-                if (
-                  ['industry', 'country', 'currency'].includes(item.columnId)
-                ) {
-                  const labelKey =
-                    item.columnId === 'industry'
-                      ? 'industry_name'
-                      : item.columnId === 'country'
-                        ? 'country_name'
-                        : 'currency_code';
-
-                  acc[item.columnId] = {
-                    rid: item.value as string,
-                    [labelKey]: displayValue as string,
-                  };
-                } else {
-                  acc[item.columnId] = displayValue;
-                }
-                if (item.editId && item.editId !== item.columnId) {
-                  acc[item.editId] = item.value;
-                }
-                return acc;
-              }, {});
-
-              if (hasIndustry && !hasIndustryOther) {
-                updatedFields['industry_name_other'] = '';
-              }
-
-              return {
-                ...child,
-                ...updatedFields,
-              };
-            }
-            return child;
-          }),
-        };
-      }
-
-      return account;
-    });
-
-    setAccountsList(updatedAccounts);
-
     try {
       const res = await updateAccountMutation({
         variables: {
           data: updateData,
         },
       });
+
       const result = res.data?.updateInlineAccountDetails;
 
-      if (result?.statusCode === 200) {
-        console.log('Update success');
+      if (result?.statusCode === 200 && result?.data) {
+        const updatedData = result.data;
+        const updatedRid = updatedData.rid;
+
+        if (updatedRid !== rowId) {
+          errorToast('Account data did not match. Update canceled.');
+          setAccountsList(previousAccounts);
+          return;
+        }
+
+        const newAccountsList = accountsList.map((account) => {
+          // Parent account
+          if (account.rid === updatedRid) {
+            return {
+              ...account,
+              ...updatedData,
+              child_accounts: account.child_accounts,
+            };
+          }
+
+          // Child account
+          if (
+            account.child_accounts?.some((child) => child.rid === updatedRid)
+          ) {
+            return {
+              ...account,
+              child_accounts: account.child_accounts.map((child) => {
+                if (child.rid === updatedRid) {
+                  return {
+                    ...child,
+                    ...updatedData,
+                    projects_by_fiscal_year: child.projects_by_fiscal_year,
+                  };
+                }
+                return child;
+              }),
+            };
+          }
+
+          return account;
+        });
+
+        setAccountsList(newAccountsList);
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
-        setAccountsList(previousAccounts);
+        errorToast(result?.statusMessage || 'Failed to update field');
       }
     } catch (error) {
       errorToast((error as Error)?.message || 'Failed to update filed');

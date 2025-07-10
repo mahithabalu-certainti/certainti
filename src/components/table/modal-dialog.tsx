@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TextField, Box, Tooltip } from '@mui/material';
+import { TextField, Box, Tooltip, Popover } from '@mui/material';
 import TextButton from '../button/text-button';
 import {
   ModalField,
@@ -23,20 +23,6 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState<ModalFormData>({});
   const [errors, setErrors] = useState<ModalFormErrors>({});
-  const [position, setPosition] = useState<{
-    top: number;
-    left: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (anchorEl) {
-      const rect = anchorEl.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-      });
-    }
-  }, [anchorEl]);
 
   useEffect(() => {
     if (open) {
@@ -152,9 +138,9 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   // Reset form when modal opens/closes or scenarios change
   useEffect(() => {
     if (!open) {
-      handleClose();
+      setFormData({});
+      setErrors({});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
 
   if (!open) {
@@ -162,22 +148,34 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   }
 
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: position?.top,
-        left: position?.left,
-        width: 300,
-        border: '1px solid #E5E7EB',
-        borderRadius: '2px',
-        backgroundColor: 'white',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-        zIndex: 1000,
-        mt: 0.5,
+    <Popover
+      id='table-popover'
+      open={open && Boolean(anchorEl)}
+      anchorEl={open ? anchorEl : null}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'left',
       }}
-      className='opacity-0 animate-[fadeIn_300ms_ease-in-out_forwards]'
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'left',
+      }}
+      disableRestoreFocus
+      disableAutoFocus
+      disableEnforceFocus
+      sx={{ pointerEvents: 'none' }}
+      PaperProps={{
+        sx: {
+          width: 300,
+          minWidth: 300,
+          marginTop: '1px',
+          borderRadius: '2px',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #E5E7EB',
+        },
+      }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, pointerEvents: 'all !important' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {visibleFields.map((field) => {
             const hasError = !!errors[field.id];
@@ -316,7 +314,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
           />
         </Box>
       </Box>
-    </Box>
+    </Popover>
   );
 };
 

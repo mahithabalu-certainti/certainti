@@ -106,10 +106,7 @@ export const renderFields = <T extends RowData>({
     placeholder: column.field?.placeholder || '',
     sx: {
       fontSize: '13px',
-      width:
-        fieldError && typeof column.width === 'number'
-          ? column.width - 18
-          : '100%',
+      width: '100%',
       '& .MuiOutlinedInput-input': {
         fontSize: '13px',
         padding: '5px 8px',
@@ -172,6 +169,13 @@ export const renderFields = <T extends RowData>({
         <TextField
           select
           {...commonProps}
+          sx={{
+            ...commonProps.sx,
+            width:
+              fieldError && typeof column.width === 'number'
+                ? column.width - 18
+                : '100%',
+          }}
           SelectProps={{
             displayEmpty: true,
             MenuProps: {
@@ -225,7 +229,7 @@ export const renderFields = <T extends RowData>({
 
     case 'textarea':
       return (
-        <div className='absolute -top-1 left-0 w-full z-30 bg-white'>
+        <div className='absolute top-0 left-0 w-full z-30 bg-white'>
           <TextField
             {...commonProps}
             multiline

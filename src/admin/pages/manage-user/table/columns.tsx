@@ -142,6 +142,9 @@ export const getUserColumns = (
       required: true,
       placeholder: '',
       options: statusOptions,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.status_rid);
+      },
     },
   },
 ];

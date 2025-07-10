@@ -850,7 +850,6 @@ const ListTable = <T extends RowData>({
                 px: '8px',
                 height: '28px',
                 bgcolor: component === 'account' ? '#fff' : '#FCFCFC',
-                borderRight: '1px solid #CBD6E2 !important',
                 borderBottom: '1px solid #CBD6E2 !important',
               },
             }}
@@ -1214,7 +1213,7 @@ const ListTable = <T extends RowData>({
                                     }}
                                   >
                                     <span
-                                      className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40' : 'top-[3px] right-0'} cursor-pointer`}
+                                      className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40' : 'top-[3px] right-0 bg-[#FEF2F2]'} cursor-pointer`}
                                     >
                                       <ErrorInfoIcon
                                         alt='error'
@@ -1456,19 +1455,22 @@ const ListTable = <T extends RowData>({
                 );
               })}
 
-            {!loading && !error && flattenedData.length > 0 && (
-              <TableRow sx={{ height: '10px !important' }}>
-                <TableCell
-                  colSpan={
-                    visibleColumns.length +
-                    (selectable ? 1 : 0) +
-                    (actionMenuItems?.length > 0 ? 1 : 0) +
-                    (conditionMenuItems ? 1 : 0)
-                  }
-                  sx={{ height: '10px !important' }}
-                ></TableCell>
-              </TableRow>
-            )}
+            {!loading &&
+              !error &&
+              component !== 'account' &&
+              flattenedData.length > 0 && (
+                <TableRow sx={{ height: '10px !important' }}>
+                  <TableCell
+                    colSpan={
+                      visibleColumns.length +
+                      (selectable ? 1 : 0) +
+                      (actionMenuItems?.length > 0 ? 1 : 0) +
+                      (conditionMenuItems ? 1 : 0)
+                    }
+                    sx={{ height: '10px !important' }}
+                  ></TableCell>
+                </TableRow>
+              )}
           </TableBody>
         </MuiTable>
       </TableContainer>
