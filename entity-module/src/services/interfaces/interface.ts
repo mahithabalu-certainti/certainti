@@ -364,7 +364,7 @@ export interface IAttachmentService {
   }>;
 
   getAttachments(userId: string,
-  level: string,
+  attachmentLevel: string,
   entityId: string,
   accountRid: string,
   page:number,
@@ -372,12 +372,28 @@ export interface IAttachmentService {
   search: string,
   filters: Record<string, any>,
   sortBy: string,
-  sortOrder: string):Promise<{
+  sortOrder: string,
+  fiscalYear:number):Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
   data?: { attachments: any[]; totalCount: number };
-}>
+  }>
+
+  getAttachmentSummary(userId: string,
+  page:number,
+  limit:number,
+  search: string,
+  filters: Record<string, any>,
+  globalFilters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string,
+  fiscalYear:number):Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[]; totalCount: number };
+  }>
 
   getDocumentTypeAndCategory(category_rid: string): Promise<{
     statusCode: number;

@@ -1778,12 +1778,12 @@ const createAttachmentSchema = Joi.object({
     //     }),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
-        .valid('project', 'account', 'case')
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be either project, account or case'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
         }),
     // document_name: Joi.string()
     //     .required()
@@ -1899,13 +1899,13 @@ const createAttachmentSchema = Joi.object({
 });
 
 const listAttachmentsSchema = Joi.object({
-    level: Joi.string()
-        .valid('account', 'project', 'case')
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
         .messages({
-            'any.required': 'Level is required',
-            'string.base': 'Level must be a string',
-            'any.only': 'Level must be one of: account, project, case'
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -1953,6 +1953,68 @@ const listAttachmentsSchema = Joi.object({
             'string.max': 'Search cannot exceed 255 characters'
         }),
     filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const listAttachmentSummarySchema = Joi.object({
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
@@ -2173,6 +2235,7 @@ export {
   createAttachmentSchema,
   listAttachmentsSchema,
   getDocumentTypeAndCategorySchema,
+  listAttachmentSummarySchema,
   createProjectResourceSchema,
   updateProjectResourceSchema
 };

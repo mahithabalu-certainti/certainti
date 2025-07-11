@@ -92,7 +92,7 @@ class SchemaService {
 
       await transaction.commit();
     } catch (Err) {
-      console.log("Ta ble createng err", Err);
+      console.log("Table createng err", Err);
     }
   }
 
@@ -145,7 +145,7 @@ class SchemaService {
     browse_file character varying(1000) COLLATE pg_catalog."default" NOT NULL,
     document_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
     attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    attachment_level character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    attachment_level character varying(50) COLLATE pg_catalog."default" NOT NULL,
     fiscal_year integer NOT NULL,
     format character varying(10) COLLATE pg_catalog."default" NOT NULL,
     size_in_mb numeric(10,2) NOT NULL,
@@ -158,6 +158,32 @@ class SchemaService {
     CONSTRAINT attachments_r_number_key UNIQUE (r_number)
    )`
   );
+
+  const fieldsToIndex = [
+    'r_number',
+    'created_datetime', 
+    'created_by',
+    'account_rid',
+    'browse_file',
+    'document_name',
+    'attach_to',
+    'attachment_level',
+    'fiscal_year',
+    'format',
+    'size_in_mb',
+    'document_category_rid',
+    'document_type_rid',
+    'comments'
+  ];
+
+  for (const field of fieldsToIndex) {
+    const indexName = `${schemaName}_attachments_${field}_idx`;
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."attachments"("${field}");
+    `);
+  }
+
   };
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {

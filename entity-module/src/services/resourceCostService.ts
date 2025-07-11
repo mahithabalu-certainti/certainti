@@ -1316,6 +1316,39 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
 
     return date.toDate();
   }
+
+  /**
+ * Fetches resource costs for a given resource ID using raw SQL query
+ * 
+ * @param {string} resourceId - ID of the resource
+ * @param {string} accountNumber - Account number to determine schema
+ * @returns {Promise<any>} - Resource costs data
+ */
+ async getResourceCostsByResourceId(accountNumber: string, resourceId: string): Promise<any> {
+  try {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+    const query = `
+      SELECT 
+        rc.rid
+      FROM "${schemaName}".resource_cost rc
+      WHERE rc.resource_rid = :resourceId
+      ORDER BY rc.created_datetime DESC
+    `;
+
+    const sequelize = await initOrgSequelize();
+    const results = await sequelize.query(query, {
+      replacements: { resourceId },
+      type: 'SELECT'
+    });
+
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching resource costs:', error);
+    throw error;
+  }
+}
 }
 
 async function getResourceStatuses(
