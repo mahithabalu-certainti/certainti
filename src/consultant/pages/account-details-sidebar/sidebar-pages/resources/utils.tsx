@@ -22,7 +22,8 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 
 export const getCostFilterFields = (
   currencyOptions: { option: string; value: string }[],
-  costStatusOptions: { option: string; value: string }[]
+  costStatusOptions: { option: string; value: string }[],
+  resourceCostpermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   // { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
   {
@@ -32,15 +33,19 @@ export const getCostFilterFields = (
     options: fiscalYears,
     required: true,
     filterOptions: requiredFieldFilterOptionsForEnum,
+    hide:
+      !resourceCostpermissionMap?.['fiscal_year']?.read &&
+      !resourceCostpermissionMap?.['fiscal_year']?.edit,
   },
-  // { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
-  // { name: 'Resource Type', value: 'resource_type', type: 'enum', required: true, options: resourceTypeOptions, filterOptions: requiredFieldFilterOptionsForEnum },
   {
     name: 'Effective From',
     value: 'effective_from',
     type: 'date',
     minDate: new Date('2000-01-01'),
     maxDate: new Date(),
+    hide:
+      !resourceCostpermissionMap?.['effective_from']?.read &&
+      !resourceCostpermissionMap?.['effective_from']?.edit,
   },
   {
     name: 'End Date',
@@ -48,6 +53,9 @@ export const getCostFilterFields = (
     type: 'date',
     minDate: new Date('2000-01-01'),
     maxDate: new Date(),
+    hide:
+      !resourceCostpermissionMap?.['end_date']?.read &&
+      !resourceCostpermissionMap?.['end_date']?.edit,
   },
   {
     name: 'Currency',
@@ -55,32 +63,76 @@ export const getCostFilterFields = (
     type: 'enum',
     options: currencyOptions,
     operatorOption: fiscalOptions,
+    hide:
+      !resourceCostpermissionMap?.['currency_rid']?.read &&
+      !resourceCostpermissionMap?.['currency_rid']?.edit,
   },
   {
     name: 'Efforts in Hrs',
     value: 'effort_in_hrs',
     type: 'number',
     operatorOption: effortNumberOptions,
+    hide:
+      !resourceCostpermissionMap?.['effort_in_hrs']?.read &&
+      !resourceCostpermissionMap?.['effort_in_hrs']?.edit,
   },
-  { name: 'Salary', value: 'Salary', type: 'number' },
-  { name: 'Bonus', value: 'bonus', type: 'number' },
-  { name: 'Insurance', value: 'insurance', type: 'number' },
-  { name: 'Deductions', value: 'deductions', type: 'number' },
-  { name: 'Cost', value: 'resource_cost', type: 'number' },
-  // { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
-  // {
-  //   name: 'Designation',
-  //   value: 'resource_designation',
-  //   type: 'textCostAndSkill',
-  // },
-  // { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
-  { name: 'Comments', value: 'comments', type: 'textCostAndSkill' },
+  {
+    name: 'Salary',
+    value: 'Salary',
+    type: 'number',
+    hide:
+      !resourceCostpermissionMap?.['salary']?.read &&
+      !resourceCostpermissionMap?.['salary']?.edit,
+  },
+  {
+    name: 'Bonus',
+    value: 'bonus',
+    type: 'number',
+    hide:
+      !resourceCostpermissionMap?.['bonus']?.read &&
+      !resourceCostpermissionMap?.['bonus']?.edit,
+  },
+  {
+    name: 'Insurance',
+    value: 'insurance',
+    type: 'number',
+    hide:
+      !resourceCostpermissionMap?.['insurance']?.read &&
+      !resourceCostpermissionMap?.['insurance']?.edit,
+  },
+  {
+    name: 'Deductions',
+    value: 'deductions',
+    type: 'number',
+    hide:
+      !resourceCostpermissionMap?.['deductions']?.read &&
+      !resourceCostpermissionMap?.['deductions']?.edit,
+  },
+  {
+    name: 'Cost',
+    value: 'resource_cost',
+    type: 'number',
+    hide:
+      !resourceCostpermissionMap?.['resource_cost']?.read &&
+      !resourceCostpermissionMap?.['resource_cost']?.edit,
+  },
+  {
+    name: 'Comments',
+    value: 'comments',
+    type: 'textCostAndSkill',
+    hide:
+      !resourceCostpermissionMap?.['comments']?.read &&
+      !resourceCostpermissionMap?.['comments']?.edit,
+  },
   {
     name: 'Status',
     value: 'status_rid',
     type: 'enum',
     options: costStatusOptions,
     operatorOption: fiscalOptions,
+    hide:
+      !resourceCostpermissionMap?.['status_rid']?.read &&
+      !resourceCostpermissionMap?.['status_rid']?.edit,
   },
   {
     name: 'Cost ID',
@@ -88,6 +140,9 @@ export const getCostFilterFields = (
     type: 'textCostAndSkill',
     required: true,
     filterOptions: requiredFieldFilterOptionsForText,
+    hide:
+      !resourceCostpermissionMap?.['r_number']?.read &&
+      !resourceCostpermissionMap?.['r_number']?.edit,
   },
   {
     name: 'Sort Options',
@@ -99,7 +154,8 @@ export const getCostFilterFields = (
 export const getSkillFilterFields = (
   skillTypeOptions: any[],
   skillSubTypeOptions: any[],
-  skillLevelsOptions: { value: string; option: string }[]
+  skillLevelsOptions: { value: string; option: string }[],
+  resourceSkillpermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -108,6 +164,9 @@ export const getSkillFilterFields = (
       type: 'date',
       minDate: new Date('1950-01-01'),
       maxDate: new Date(),
+      hide:
+        !resourceSkillpermissionMap?.['start_date']?.read &&
+        !resourceSkillpermissionMap?.['start_date']?.edit,
     },
     {
       name: 'Skill Type',
@@ -116,6 +175,9 @@ export const getSkillFilterFields = (
       required: true,
       options: skillTypeOptions,
       filterOptions: requiredFieldFilterOptionsForEnum,
+      hide:
+        !resourceSkillpermissionMap?.['skill_type_rid']?.read &&
+        !resourceSkillpermissionMap?.['skill_type_rid']?.edit,
     },
     {
       name: 'Skill SubType',
@@ -125,12 +187,18 @@ export const getSkillFilterFields = (
       options: skillSubTypeOptions,
       filterOptions: requiredFieldFilterOptionsForEnum,
       dependsOn: 'skill_type_rid',
+      hide:
+        !resourceSkillpermissionMap?.['skill_subtype_rid']?.read &&
+        !resourceSkillpermissionMap?.['skill_subtype_rid']?.edit,
     },
     {
       name: 'Skill Level',
       value: 'skill_level_rid',
       type: 'enum',
       options: skillLevelsOptions,
+      hide:
+        !resourceSkillpermissionMap?.['skill_level_rid']?.read &&
+        !resourceSkillpermissionMap?.['skill_level_rid']?.edit,
     },
     {
       name: 'Skill Details',
@@ -138,6 +206,9 @@ export const getSkillFilterFields = (
       type: 'textCostAndSkill',
       required: true,
       filterOptions: requiredFieldFilterOptionsForText,
+      hide:
+        !resourceSkillpermissionMap?.['skill_details']?.read &&
+        !resourceSkillpermissionMap?.['skill_details']?.edit,
     },
     {
       name: 'Skill ID',
@@ -145,6 +216,9 @@ export const getSkillFilterFields = (
       type: 'textCostAndSkill',
       required: true,
       filterOptions: requiredFieldFilterOptionsForText,
+      hide:
+        !resourceSkillpermissionMap?.['r_number']?.read &&
+        !resourceSkillpermissionMap?.['r_number']?.edit,
     },
     {
       name: 'Sort Options',
@@ -158,7 +232,8 @@ export const resourceFilterFields = (
   country: { option: string; value: string }[],
   region: { option: string; value: string }[],
   memoizedStatus: { option: string; value: string }[],
-  resourceTypeOptions: { option: string; value: string }[]
+  resourceTypeOptions: { option: string; value: string }[],
+  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -166,6 +241,9 @@ export const resourceFilterFields = (
     type: 'text',
     required: true,
     filterOptions: requiredFieldFilterOptionsForText,
+    hide:
+      !resourcepermissionMap?.['resource_code']?.read &&
+      !resourcepermissionMap?.['resource_code']?.edit,
   },
   { name: 'Name', value: 'resource_name', type: 'text' },
   {
@@ -175,25 +253,69 @@ export const resourceFilterFields = (
     required: true,
     options: resourceTypeOptions,
     filterOptions: requiredFieldFilterOptionsForEnum,
+    hide:
+      !resourcepermissionMap?.['resource_code']?.read &&
+      !resourcepermissionMap?.['resource_code']?.edit,
   },
-  { name: 'Org Name', value: 'resource_orgname', type: 'text' },
-  { name: 'Designation', value: 'resource_designation', type: 'text' },
-  { name: 'Role', value: 'resource_role', type: 'text' },
+  {
+    name: 'Org Name',
+    value: 'resource_orgname',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['resource_orgname']?.read &&
+      !resourcepermissionMap?.['resource_orgname']?.edit,
+  },
+  {
+    name: 'Designation',
+    value: 'resource_designation',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['resource_designation']?.read &&
+      !resourcepermissionMap?.['resource_designation']?.edit,
+  },
+  {
+    name: 'Role',
+    value: 'resource_role',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['resource_role']?.read &&
+      !resourcepermissionMap?.['resource_role']?.edit,
+  },
   {
     name: 'Region',
     value: 'region_rid',
     type: 'enum',
     options: region,
     dependsOn: 'country_rid',
+    hide:
+      !resourcepermissionMap?.['region_rid']?.read &&
+      !resourcepermissionMap?.['region_rid']?.edit,
   },
   {
     name: 'Country',
     value: 'country_rid',
     type: 'enum',
     options: country,
+    hide:
+      !resourcepermissionMap?.['country_rid']?.read &&
+      !resourcepermissionMap?.['country_rid']?.edit,
   },
-  { name: 'Total Project Hours', value: 'total_project_hours', type: 'number' },
-  { name: 'Estimated R&D Hours', value: 'estimated_rd_hours', type: 'number' },
+  {
+    name: 'Total Project Hours',
+    value: 'total_project_hours',
+    type: 'number',
+    hide:
+      !resourcepermissionMap?.['total_project_hours']?.read &&
+      !resourcepermissionMap?.['total_project_hours']?.edit,
+  },
+  {
+    name: 'Estimated R&D Hours',
+    value: 'estimated_rd_hours',
+    type: 'number',
+    hide:
+      !resourcepermissionMap?.['estimated_rd_hours']?.read &&
+      !resourcepermissionMap?.['estimated_rd_hours']?.edit,
+  },
   {
     name: 'Status',
     value: 'status_rid',
@@ -201,14 +323,27 @@ export const resourceFilterFields = (
     required: true,
     options: memoizedStatus,
     filterOptions: requiredFieldFilterOptionsForEnum,
+    hide:
+      !resourcepermissionMap?.['status_rid']?.read &&
+      !resourcepermissionMap?.['status_rid']?.edit,
   },
-  { name: 'Comments', value: 'comments', type: 'text' },
+  {
+    name: 'Comments',
+    value: 'comments',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['comments']?.read &&
+      !resourcepermissionMap?.['comments']?.edit,
+  },
   {
     name: 'Resource ID',
     value: 'r_number',
     type: 'text',
     required: true,
     filterOptions: requiredFieldFilterOptionsForText,
+    hide:
+      !resourcepermissionMap?.['r_number']?.read &&
+      !resourcepermissionMap?.['r_number']?.edit,
   },
   {
     name: 'Sort Options',

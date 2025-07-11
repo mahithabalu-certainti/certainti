@@ -995,7 +995,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         name: 'account_name',
         desc: 'Name',
         read: true,
-        edit: true,
+        edit: false,
         is_read_only: false,
       },
       {

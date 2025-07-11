@@ -167,6 +167,7 @@ export const Projects: React.FC = () => {
     memoizedProjectTypes,
     memoizedStatus
   );
+
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (setToggleEnabled) {
       setToggleEnabled(event.target.checked);

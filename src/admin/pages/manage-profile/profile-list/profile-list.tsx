@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
@@ -78,7 +78,19 @@ export const ProfileList: React.FC = () => {
     permission,
     AllPermissions.PROFILE_PERMISSION_VIEW_EDIT
   );
-
+  const profileViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    profileViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [profileViewEditFields]);
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
@@ -134,7 +146,8 @@ export const ProfileList: React.FC = () => {
       setIsExporting(false);
     }
   };
-
+  console.log(permissionMap, 'permissionMap');
+  const profileFIlterFeilds = getManageProfileFilterfields(permissionMap);
   if (!isProfileEnable || !isProfileViewEnable) return <AccessRestricted />;
 
   return (
@@ -209,7 +222,7 @@ export const ProfileList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={getManageProfileFilterfields()}
+                filterFields={profileFIlterFeilds}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
