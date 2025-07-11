@@ -2,7 +2,9 @@ import { getDateFormat } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { ManageProfileList } from '../../../types';
 
-export const profileColumns: ListTableColumn<ManageProfileList>[] = [
+export const getProfileColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<ManageProfileList>[] => [
   {
     id: 'profile_name',
     editId: 'profile_name',
@@ -10,7 +12,12 @@ export const profileColumns: ListTableColumn<ManageProfileList>[] = [
     label: 'Profile Name',
     width: 300,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['profile_name']?.read &&
+      permissionMap?.['profile_name']?.edit,
+    hide:
+      !permissionMap?.['profile_name']?.read &&
+      !permissionMap?.['profile_name']?.edit,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -54,7 +61,12 @@ export const profileColumns: ListTableColumn<ManageProfileList>[] = [
     label: 'Profile Description',
     width: 500,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['profile_description']?.read &&
+      permissionMap?.['profile_description']?.edit,
+    hide:
+      !permissionMap?.['profile_description']?.read &&
+      !permissionMap?.['profile_description']?.edit,
     field: {
       type: 'textarea',
       required: true,
@@ -78,6 +90,9 @@ export const profileColumns: ListTableColumn<ManageProfileList>[] = [
     label: 'Created On',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['created_on']?.read &&
+      !permissionMap?.['created_on']?.edit,
     render: (row: ManageProfileList) => getDateFormat(row.created_datetime),
   },
   {
@@ -86,5 +101,8 @@ export const profileColumns: ListTableColumn<ManageProfileList>[] = [
     label: 'Created By',
     width: 250,
     sortable: true,
+    hide:
+      !permissionMap?.['created_by']?.read &&
+      !permissionMap?.['created_by']?.edit,
   },
 ];

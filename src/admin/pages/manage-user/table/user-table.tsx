@@ -16,11 +16,13 @@ import {
   FieldChangeValue,
 } from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
-import { useGetStatus } from '../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
 import { UPDATE_USER } from '../../../../api/graphql/queries/user-query';
 import { useMutation } from '@apollo/client';
 import { userClient } from '../../../../api/graphql/clients/client';
 import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -49,6 +51,22 @@ export const UserTable: React.FC<IUserTableProps> = ({
   const navigate = useNavigate();
   const { errorToast } = useToast();
   const [updateUserMutation] = useMutation(UPDATE_USER, { client: userClient });
+
+  //permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -161,7 +179,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
     handleView,
     profileOptions,
     roleOptions,
-    memoizedStatus
+    memoizedStatus,
+    permissionMap
   );
 
   const actionButtons: ActionItem<ManageUser>[] = [

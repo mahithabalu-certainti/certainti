@@ -34,7 +34,8 @@ export const getProjectColumns = (
   onClick: (row: Project) => void,
   memoizedProjectTypes: ListOption[],
   memoizedClassification: ListOption[],
-  handleEdit: (row: Project) => void
+  handleEdit: (row: Project) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
@@ -44,7 +45,12 @@ export const getProjectColumns = (
     sortId: 'project_code',
     width: 260,
     sticky: true,
-    editable: true,
+    editable:
+      permissionMap?.['project_code']?.read &&
+      permissionMap?.['project_code']?.edit,
+    hide:
+      !permissionMap?.['project_code']?.read &&
+      !permissionMap?.['project_code']?.edit,
     sx: {
       position: 'sticky',
       left: 0,
@@ -101,7 +107,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_name',
     width: 160,
-    editable: true,
+    editable:
+      permissionMap?.['project_name']?.read &&
+      permissionMap?.['project_name']?.edit,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
     field: {
       type: 'text',
       required: false,
@@ -130,7 +141,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_type_rid',
     width: 160,
-    editable: true,
+    editable:
+      permissionMap?.['project_type_rid']?.read &&
+      permissionMap?.['project_type_rid']?.edit,
+    hide:
+      !permissionMap?.['project_type_rid']?.read &&
+      !permissionMap?.['project_type_rid']?.edit,
     field: {
       type: 'select',
       required: true,
@@ -143,7 +159,12 @@ export const getProjectColumns = (
     editId: 'fiscal_year',
     label: 'Fiscal Year',
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['fiscal_year']?.read &&
+      permissionMap?.['fiscal_year']?.edit,
+    hide:
+      !permissionMap?.['fiscal_year']?.read &&
+      !permissionMap?.['fiscal_year']?.edit,
     sortId: 'fiscal_year',
     width: 130,
     sx: {
@@ -166,7 +187,12 @@ export const getProjectColumns = (
     label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
-    editable: true,
+    editable:
+      permissionMap?.['project_classification_rid']?.read &&
+      permissionMap?.['project_classification_rid']?.edit,
+    hide:
+      !permissionMap?.['project_classification_rid']?.read &&
+      !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
     render: (row: Project) =>
       row.project_classification_other
@@ -226,7 +252,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_client_group',
     width: 160,
-    editable: true,
+    editable:
+      permissionMap?.['project_client_group']?.read &&
+      permissionMap?.['project_client_group']?.edit,
+    hide:
+      !permissionMap?.['project_client_group']?.read &&
+      !permissionMap?.['project_client_group']?.edit,
     field: {
       type: 'text',
       required: false,
@@ -254,7 +285,12 @@ export const getProjectColumns = (
     label: 'Project Group',
     sortable: true,
     sortId: 'project_group',
-    editable: true,
+    editable:
+      permissionMap?.['project_group']?.read &&
+      permissionMap?.['project_group']?.edit,
+    hide:
+      !permissionMap?.['project_group']?.read &&
+      !permissionMap?.['project_group']?.edit,
     width: 160,
     field: {
       type: 'text',
@@ -284,7 +320,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_effort',
     width: 170,
-    editable: true,
+    editable:
+      permissionMap?.['total_effort']?.read &&
+      permissionMap?.['total_effort']?.edit,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -310,7 +351,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_cost',
     width: 130,
-    editable: true,
+    editable:
+      permissionMap?.['total_cost']?.read &&
+      permissionMap?.['total_cost']?.edit,
+    hide:
+      !permissionMap?.['total_cost']?.read &&
+      !permissionMap?.['total_cost']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -336,7 +382,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_cost_fte',
     width: 140,
-    editable: true,
+    editable:
+      permissionMap?.['total_cost_fte']?.read &&
+      permissionMap?.['total_cost_fte']?.edit,
+    hide:
+      !permissionMap?.['total_cost_fte']?.read &&
+      !permissionMap?.['total_cost_fte']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -364,7 +415,12 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_cost_subcon',
     width: 140,
-    editable: true,
+    editable:
+      permissionMap?.['total_cost_subcon']?.read &&
+      permissionMap?.['total_cost_subcon']?.edit,
+    hide:
+      !permissionMap?.['total_cost_subcon']?.read &&
+      !permissionMap?.['total_cost_subcon']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -391,7 +447,12 @@ export const getProjectColumns = (
     label: 'Non-Labor Cost',
     sortable: true,
     sortId: 'total_cost_nonlabor',
-    editable: true,
+    editable:
+      permissionMap?.['total_cost_nonlabor']?.read &&
+      permissionMap?.['total_cost_nonlabor']?.edit,
+    hide:
+      !permissionMap?.['total_cost_nonlabor']?.read &&
+      !permissionMap?.['total_cost_nonlabor']?.edit,
     width: 140,
     sx: {
       textAlign: 'right',
@@ -419,6 +480,9 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'assessment_status',
     width: 180,
+    hide:
+      !permissionMap?.['assessment_status']?.read &&
+      !permissionMap?.['assessment_status']?.edit,
   },
   {
     id: 'qre',
@@ -430,6 +494,7 @@ export const getProjectColumns = (
       textAlign: 'right',
     },
     render: (row: Project) => (row.qre ? row.qre : '-'),
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
   },
   {
     id: 'qre_final',
@@ -440,6 +505,9 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
     render: (row: Project) =>
       row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
   },
@@ -449,6 +517,9 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'project_point_of_contact',
     width: 200,
+    hide:
+      !permissionMap?.['project_point_of_contact']?.read &&
+      !permissionMap?.['project_point_of_contact']?.edit,
     render: (row: Project & { _level?: number }) => {
       const isClickable = row._level !== undefined && row._level === 1;
       return isClickable ? (
@@ -469,6 +540,9 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'technical_point_of_contact',
     width: 210,
+    hide:
+      !permissionMap?.['technical_point_of_contact']?.read &&
+      !permissionMap?.['technical_point_of_contact']?.edit,
     render: (row: Project & { _level?: number }) => {
       const isClickable = row._level !== undefined && row._level === 1;
       return isClickable ? (
@@ -490,7 +564,10 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'comments',
     width: 200,
-    editable: true,
+    editable:
+      permissionMap?.['comments']?.read && permissionMap?.['comments']?.edit,
+    hide:
+      !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
     field: {
       type: 'textarea',
       required: false,
@@ -509,6 +586,9 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'modified_datetime',
     width: 190,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
     render: (row: Project) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
@@ -520,5 +600,7 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'r_number',
     width: 140,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
 ];

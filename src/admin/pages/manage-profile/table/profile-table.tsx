@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
 import {
@@ -6,7 +6,7 @@ import {
   Profiles,
   UserListParams,
 } from '../../../types/manage-user';
-import { profileColumns } from './';
+import { getProfileColumns } from './columns';
 import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
 import { MANAGE_PROFILE } from '../../../../routes/routes';
@@ -20,6 +20,9 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_USER_PROFILE } from '../../../../api/graphql/queries/profile-query';
 import { userClient } from '../../../../api/graphql/clients/client';
 import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { AllPermissions } from '../../../../common-service';
 
 interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -48,6 +51,22 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   const [updateUserProfile] = useMutation(UPDATE_USER_PROFILE, {
     client: userClient,
   });
+
+  //permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const profileViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    profileViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [profileViewEditFields]);
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -181,6 +200,8 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       setProfileList(previousProfileList);
     }
   };
+
+  const profileColumns = getProfileColumns(permissionMap);
 
   return (
     <ListTable

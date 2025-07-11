@@ -116,6 +116,21 @@ const Projects: React.FC<ProjectsProps> = ({
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
+
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   // const projectEditIsEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_PROJECTS_EDIT
@@ -343,7 +358,8 @@ const Projects: React.FC<ProjectsProps> = ({
     handleProject,
     memoizedProjectTypes,
     memoizedClassification,
-    handleEdit
+    handleEdit,
+    permissionMap
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {

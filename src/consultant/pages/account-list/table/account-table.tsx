@@ -22,6 +22,7 @@ import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
 import { UPDATE_ACCOUNT } from '../../../../api/graphql/queries/account-query';
 import { useToast } from '../../../../hooks';
+import { AllPermissions } from '../../../../common-service';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -65,6 +66,22 @@ const AccountTable: React.FC<Record<string, any>> = ({
   );
   const colorCodes = useFetchColorCodes();
   const [updateAccountMutation] = useMutation(UPDATE_ACCOUNT);
+
+  //permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   useEffect(() => {
     if (data) {
@@ -122,7 +139,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
     handleAccountNameClick,
     countryOptions,
     industryOptions,
-    handleEdit
+    handleEdit,
+    permissionMap
   );
 
   const isSkeletonLoading = loading || colorCodes.isLoading;

@@ -24,6 +24,7 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import { AllPermissions } from '../../../../../common-service';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -63,6 +64,22 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const [updateProjectMutation] = useMutation(UPDATE_PROJECT, {
     client: resourceClient,
   });
+
+  //permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -169,7 +186,8 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     handleAccountName,
     memoizedProjectTypes,
     memoizedClassification,
-    handleEdit
+    handleEdit,
+    permissionMap
   );
 
   const actionButtons: ActionItem<Project>[] = [

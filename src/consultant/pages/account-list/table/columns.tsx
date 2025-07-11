@@ -11,7 +11,8 @@ export const getAccountColumns = (
   onClick: (row: AccountList) => void,
   countryOptions: ListOption[],
   industryOptions: ListOption[],
-  handleEdit: (row: AccountList) => void
+  handleEdit: (row: AccountList) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<AccountList>[] => [
   {
     id: 'account_name',
@@ -20,7 +21,12 @@ export const getAccountColumns = (
     label: 'Account Name',
     width: 250,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['account_name']?.read &&
+      permissionMap?.['account_name']?.edit,
+    hide:
+      !permissionMap?.['account_name']?.read &&
+      !permissionMap?.['account_name']?.edit,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -73,7 +79,12 @@ export const getAccountColumns = (
     label: 'Industry',
     width: 200,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['industry_rid']?.read &&
+      permissionMap?.['industry_rid']?.edit,
+    hide:
+      !permissionMap?.['industry_rid']?.read &&
+      !permissionMap?.['industry_rid']?.edit,
     field: {
       type: 'select',
       required: true,
@@ -136,7 +147,12 @@ export const getAccountColumns = (
     label: 'Country',
     width: 150,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['country_rid']?.read &&
+      permissionMap?.['country_rid']?.edit,
+    hide:
+      !permissionMap?.['country_rid']?.read &&
+      !permissionMap?.['country_rid']?.edit,
     field: {
       type: 'select',
       required: false,
@@ -160,6 +176,9 @@ export const getAccountColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['total_projects']?.read &&
+      !permissionMap?.['total_projects']?.edit,
   },
   {
     id: 'total_project_hours',
@@ -170,6 +189,9 @@ export const getAccountColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['total_project_hours']?.read &&
+      !permissionMap?.['total_project_hours']?.edit,
     render: (row: AccountList) =>
       formatNumberWithCommas(row.total_project_hours),
   },
@@ -182,6 +204,10 @@ export const getAccountColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['total_project_cost']?.read &&
+      !permissionMap?.['total_project_cost']?.edit,
+
     render: (row: AccountList) =>
       costDisplay(row.total_project_cost, row.currency?.currency_symbol),
   },
@@ -191,6 +217,9 @@ export const getAccountColumns = (
     label: 'Estimated R&D Hours',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['qualifying_project_hours_fed']?.read &&
+      !permissionMap?.['qualifying_project_hours_fed']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -201,6 +230,9 @@ export const getAccountColumns = (
     label: 'QRE',
     width: 140,
     sortable: true,
+    hide:
+      !permissionMap?.['qualifying_project_qre_fed']?.read &&
+      !permissionMap?.['qualifying_project_qre_fed']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -219,6 +251,9 @@ export const getAccountColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qualifying_project_rd_credits_fed']?.read &&
+      !permissionMap?.['qualifying_project_rd_credits_fed']?.edit,
     render: (row: AccountList) =>
       costDisplay(
         row.qualifying_project_rd_credits_fed,
@@ -234,6 +269,9 @@ export const getAccountColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['total_projects_rd_credits']?.read &&
+      !permissionMap?.['total_projects_rd_credits']?.edit,
     render: (row: AccountList) =>
       costDisplay(row.total_projects_rd_credits, row.currency?.currency_symbol),
   },
@@ -243,6 +281,9 @@ export const getAccountColumns = (
     label: 'Finance Executive',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['finance_executive']?.read &&
+      !permissionMap?.['finance_executive']?.edit,
     render: (row: AccountList & { _level?: number }) => {
       const isClickable = row._level === undefined || row._level < 2;
       return isClickable ? (
@@ -263,6 +304,9 @@ export const getAccountColumns = (
     label: 'Finance Lead',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['finance_lead']?.read &&
+      !permissionMap?.['finance_lead']?.edit,
     render: (row: AccountList & { _level?: number }) => {
       const isClickable = row._level === undefined || row._level < 2;
       return isClickable ? (
@@ -283,6 +327,9 @@ export const getAccountColumns = (
     label: 'Professional Services Consultant',
     width: 250,
     sortable: true,
+    hide:
+      !permissionMap?.['professional_services_consultant']?.read &&
+      !permissionMap?.['professional_services_consultant']?.edit,
     render: (row: AccountList & { _level?: number }) => {
       const isClickable = row._level === undefined || row._level < 2;
       return isClickable ? (
@@ -303,5 +350,7 @@ export const getAccountColumns = (
     label: 'Account ID',
     width: 120,
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
 ];

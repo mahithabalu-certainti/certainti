@@ -13,7 +13,8 @@ export const getUserColumns = (
   onClick: (row: ManageUser) => void,
   profileOptions: ListOption[],
   roleOptions: ListOption[],
-  statusOptions: ListOption[]
+  statusOptions: ListOption[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ManageUser>[] => [
   {
     id: 'username',
@@ -23,7 +24,12 @@ export const getUserColumns = (
     width: 200,
     sortable: true,
     sticky: true,
-    editable: true,
+    editable:
+      permissionMap?.['first_name']?.read &&
+      permissionMap?.['first_name']?.edit,
+    hide:
+      !permissionMap?.['first_name']?.read &&
+      !permissionMap?.['first_name']?.edit,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -70,6 +76,9 @@ export const getUserColumns = (
     label: 'Email',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['first_name']?.read &&
+      !permissionMap?.['first_name']?.edit,
   },
   {
     id: 'profile',
@@ -78,7 +87,12 @@ export const getUserColumns = (
     label: 'Profile',
     width: 200,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['profile_rid']?.read &&
+      permissionMap?.['profile_rid']?.edit,
+    hide:
+      !permissionMap?.['profile_rid']?.read &&
+      !permissionMap?.['profile_rid']?.edit,
     field: {
       type: 'select',
       required: true,
@@ -96,7 +110,12 @@ export const getUserColumns = (
     label: 'Role',
     width: 200,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['business_teams']?.read &&
+      permissionMap?.['business_teams']?.edit,
+    hide:
+      !permissionMap?.['business_teams']?.read &&
+      !permissionMap?.['business_teams']?.edit,
     field: {
       type: 'select',
       required: true,
@@ -113,6 +132,9 @@ export const getUserColumns = (
     label: 'Created On',
     width: 190,
     sortable: true,
+    hide:
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
     render: (row: ManageUser) =>
       row.created_datetime
         ? formatDateToYYYYMMDDWithTime(row.created_datetime)
@@ -124,6 +146,9 @@ export const getUserColumns = (
     label: 'Updated On',
     width: 190,
     sortable: true,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
     render: (row: ManageUser) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
@@ -136,7 +161,12 @@ export const getUserColumns = (
     label: 'Status',
     width: 100,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['status_rid']?.read &&
+      permissionMap?.['status_rid']?.edit,
+    hide:
+      !permissionMap?.['status_rid']?.read &&
+      !permissionMap?.['status_rid']?.edit,
     field: {
       type: 'select',
       required: true,
