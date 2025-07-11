@@ -347,10 +347,16 @@ class ResourceCostSchemaService {
     limit: number,
     offset: number,
     search: string,
-    account_rid: string
+    account_rid: string,
+    graphqlData : any
   ) {
     try {
       const sequelize = await this.getDbConnection(schemaName);
+      let resource_cost_rid = ``
+      if(graphqlData.is_graphQl) {
+        resource_cost_rid = graphqlData.rid
+        resource_cost_rid = ` AND rc.rid = '${resource_cost_rid}'`
+      }
 
       //Build the base query without sorting or pagination
       let query = `
@@ -360,7 +366,7 @@ class ResourceCostSchemaService {
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid ${resource_cost_rid}
         ${filterConditions}
         ${searchCondition}
       `;

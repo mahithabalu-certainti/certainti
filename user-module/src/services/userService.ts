@@ -1,6 +1,6 @@
 import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
-import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME, rawQuery } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
 import ExcelJS from "exceljs";
@@ -229,6 +229,7 @@ class UserService {
     data?: { user: any };
   }> {
     try {
+      const mainSequelize = await initSequelize()
       const { ...fieldsToUpdate } = userData;
 
       if (Object.keys(fieldsToUpdate).length === 0) {
@@ -261,11 +262,34 @@ class UserService {
         { where: { rid: userId } }
       );
 
+      let userDetails = await mainSequelize.query(rawQuery.fetchUserByIdForGraphql(userId))
+      let d : any = userDetails[0][0]
+      let finalData = {
+        rid : d.rid,
+        email : d.email,
+        status_rid : d.status_rid,
+        first_name : d.first_name,
+        created_datetime : d.created_datetime,
+        modified_datetime : d.modified_datetime,
+        azure_id : d.azure_id,
+        profile : d.profile == null ? null : {
+          rid : d.profile.rid,
+          profile_name : d.profile.profile_name
+        },
+        business_teams : d.business_teams == null ? null : {
+          rid : d.business_teams.rid,
+          business_teams : d.business_teams.business_teams
+        },
+        status : d.status == null ? null : {
+          status_name : d.status.status_name,
+          status_description : d.status.status_description
+        }
+      }
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          user: updatedData,
+          user: finalData,
         },
       };
     } catch (err) {
@@ -816,7 +840,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     const uniqueByNameType: { [key: string]: any } = {};
 
     merged.forEach((item) => {
-      const key = `${item.type}::${item.name}`;
+      const key = getPermissionKey(item);
       const existingItem = uniqueByNameType[key];
 
       if (!existingItem) {
@@ -876,22 +900,39 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
   // Create lookup maps for dependencies
   const dependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
   
-   if (includeDependencies) {
-    allDependencies.forEach((dep: any) => {
-      const key = `${dep.dependent_id}`;
-      if (!dependencyMap!.has(key)) {
-        dependencyMap!.set(key, []);
-      }
-      dependencyMap!.get(key)!.push({
-        id: dep.depends_on_id,
-        type: dep.depends_on_type
-      });
+  const reverseDependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
+
+if (includeDependencies) {
+  allDependencies.forEach((dep: any) => {
+    const key = `${dep.dependent_id}`;
+    const reverseKey = `${dep.depends_on_id}`;
+
+    if (!dependencyMap!.has(key)) {
+      dependencyMap!.set(key, []);
+    }
+    dependencyMap!.get(key)!.push({
+      id: dep.depends_on_id,
+      type: dep.depends_on_type
     });
-  }
+
+    // Populate reverse dependency map (parenting_on)
+    if (!reverseDependencyMap!.has(reverseKey)) {
+      reverseDependencyMap!.set(reverseKey, []);
+    }
+    reverseDependencyMap!.get(reverseKey)!.push({
+      id: dep.dependent_id,
+      type: dep.dependent_type
+    });
+  });
+}
+
 
   // Process menus with dependencies
   menuAccess.forEach((ma: any) => {
       const maWithMenu = ma as any;
+      const deps = includeDependencies ? dependencyMap?.get(`${maWithMenu.menu.rid}`) || [] : [];
+      const parents = includeDependencies ? reverseDependencyMap?.get(`${maWithMenu.menu.rid}`) || [] : [];
+
       if (maWithMenu.menu) {
         permissions.push({
           rid: maWithMenu.rid,
@@ -900,7 +941,12 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
           is_enabled: maWithMenu.is_enabled,
-          depends_on: includeDependencies ? (dependencyMap?.get(`${maWithMenu.menu.rid}`) || []) : undefined
+          depends_on_menu:includeDependencies ?  deps.filter(d => d.type === 'menu').map(d => d.id) : undefined,
+          depends_on_module: includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depends_on_permission :includeDependencies ?  deps.filter(d => d.type === 'permission').map(d => d.id) : undefined,
+          depended_by_menu :includeDependencies ?  parents.filter(d => d.type === 'menu').map(d => d.id):undefined,
+          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depended_by_permission :includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
         });
       }
     });
@@ -908,6 +954,8 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
   // Process modules with dependencies
   moduleAccess.forEach((mo: any) => {
       const moWithModule = mo as any;
+       const deps = includeDependencies ? dependencyMap?.get(`${moWithModule.menu_module.rid}`) || [] : [];
+      const parents = includeDependencies ? reverseDependencyMap?.get(`${moWithModule.menu_module.rid}`) || [] : [];
       if (moWithModule.menu_module) {
         permissions.push({
           rid: moWithModule.rid,
@@ -917,7 +965,12 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled,
-          depends_on: includeDependencies ? (dependencyMap?.get(`${moWithModule.menu_module.rid}`) || []) : undefined
+          depends_on_menu:includeDependencies ? deps.filter(d => d.type === 'menu').map(d => d.id) :undefined,
+          depends_on_module:includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depends_on_permission :includeDependencies ? deps.filter(d => d.type === 'permission').map(d => d.id):undefined,
+          depended_by_menu : includeDependencies ? parents.filter(d => d.type === 'menu').map(d => d.id):undefined,
+          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depended_by_permission : includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
         });
       }
     });
@@ -925,6 +978,8 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
   // Process permissions (unchanged)
   permissionAccess.forEach((pa: any) => {
       const paWithPerm = pa as any;
+       const deps = includeDependencies ? dependencyMap?.get(`${paWithPerm.module_permission.rid}`) || [] : [];
+      const parents = includeDependencies ? reverseDependencyMap?.get(`${paWithPerm.module_permission.rid}`) || [] : [];
       if (paWithPerm.module_permission) {
         permissions.push({
           rid: paWithPerm.rid,
@@ -935,7 +990,12 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
           desc: paWithPerm.module_permission.permission_desc,
           is_field_available: paWithPerm.module_permission.is_field_available,
           is_enabled: paWithPerm.is_enabled,
-          depends_on: includeDependencies ? (dependencyMap?.get(paWithPerm.module_permission.rid) || []) : undefined
+          depends_on_menu:includeDependencies ? deps.filter(d => d.type === 'menu').map(d => d.id):undefined,
+          depends_on_module:includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id) :undefined,
+          depends_on_permission :includeDependencies ?  deps.filter(d => d.type === 'permission').map(d => d.id) :undefined,
+          depended_by_menu : includeDependencies ? parents.filter(d => d.type === 'menu').map(d => d.id) :undefined,
+          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
+          depended_by_permission :includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
         });
       }
     });
@@ -1120,6 +1180,7 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
         "first_name",
         "created_datetime",
         "modified_datetime",
+        "azure_id"
       ],
       limit,
       offset,
@@ -1128,13 +1189,13 @@ async getProfilePermission(profileId: string,includeDependencies: boolean = fals
         {
           model: Profile,
           as: "profile",
-          attributes: ["profile_name"],
+          attributes: ["profile_name", "rid"],
           required: true,
         },
         {
           model: BusinessTeams,
           as: "business_teams",
-          attributes: ["business_teams"],
+          attributes: ["business_teams", "rid"],
           required: true,
         },
         {

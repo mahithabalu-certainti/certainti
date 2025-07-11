@@ -144,21 +144,24 @@ const resourceCostResolvers: IResolvers = {
         return {
           statusCode : HttpStatus.NOT_FOUND,
           statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-          statusMessage : result.statusMessage
+          statusMessage : result.statusMessage,
+          data : result.data
         }
       }
       else if(result.statusCode == HttpStatus.SUCCESS) {
         return {
           statusCode : HttpStatus.SUCCESS,
           statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-          statusMessage : result.statusMessage
+          statusMessage : result.statusMessage,
+          data : result.data
         }       
       }
       } catch (error : any) {
         return {
           statusCode : HttpStatus.FAILED,
           statusCodeValue : HttpStatus.FAILED_MESSAGE,
-          statusMessage : error.message
+          statusMessage : error.message,
+          data : null
         }
       }
     }

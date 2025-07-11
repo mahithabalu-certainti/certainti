@@ -83,7 +83,7 @@ const updateAccountTypeDefs = gql
       is_primary_contact : Boolean
       include_in_communication : Boolean
       interaction_cc_recipient : Boolean
-      status_rid : String,
+      status_rid : String
       rid : String
     }
 
@@ -110,18 +110,129 @@ const updateAccountTypeDefs = gql
       business_details : String
       country_rid : String
       region_rid : String
+      currency_rid : String
+      finance_lead : String
+      finance_executive : String
+      professional_services_consultant : String
+      key_contacts : [keyContactDetails]
+    }
+
+    type country {
+    rid : String
+    country_name: String
+    }
+
+    type region_details {
+    state_name : String
+    }
+
+    type industry {
+    rid : String
+    industry_name: String
+    }
+
+    type status {
+    status_name: String
+    }
+
+    type currency {
+      rid : String
+      currency_code: String
+      currency_symbol: String
+    }
+
+    type projectFiscalYearResponse {
+      fiscal_year: String
+      account_rid: String
+      total_projects: String
+      total_project_hours: String
+      total_project_cost: String
+      qualifying_project_hours_fed: String
+      qualifying_project_qre_fed: String
+      qualifying_project_rd_credits_fed: String
+      total_projects_rd_credits: String
+    }
+    
+    type parent_account {
+      rid : String
+      account_name : String
+    }
+
+    type childAccountsResponse {
+      rid: String
+      account_name: String
+      parent_account_rid: String
+      currency_rid: String
+      total_project_hours: String
+      total_projects: Int
+      total_project_cost: String
+      total_projects_rd_credits: String
+      qualifying_project_hours_fed: String
+      qualifying_project_qre_fed: String
+      qualifying_project_rd_credits_fed: String
+      r_number: String
+      storage_type: String
+      professional_services_consultant: String
+      finance_lead: String
+      finance_executive: String
+      industry_name_other : String
+      country: country
+      currency: currency
+      parent_account: parent_account
+      industry: industry
+      status: status
+    }
+    
+    type updatedAccountResponse {
+      rid : String,
+      r_number : String,
+      eid : String,
+      created_by : String,
+      modified_by : String,
+      created_datetime : Date,
+      modified_datetime : Date,
+      comments : String,
+      account_name : String,
+      status_rid : String,
+      is_parent : Boolean,
+      annual_revenue : String,
+      region_rid : String,
+      storage_type : String,
+      logo_url : String,
+      organisation_name : String,
+      parent_account_rid : String,
+      database_connection_rid : String,
+      country_rid : String,
       currency_rid : String,
+      industry_rid : String,
+      industry_name_other : String,
+      is_file_drop_enabled : Boolean,
+      file_drop_medium : String,
+      file_drop_config_id : String,
+      professional_services_consultant : String,
       finance_lead : String,
       finance_executive : String,
-      professional_services_consultant : String,
-      key_contacts : [keyContactDetails]
+      total_project_hours : String,
+      total_projects : Int,
+      total_project_cost : String,
+      total_projects_rd_credits : String,
+      qualifying_project_hours_fed : String,
+      qualifying_project_qre_fed : String,
+      qualifying_project_rd_credits_fed : String,
+      industry_rid_name : String,
+      country : country,
+      currency : currency,
+      status : status,
+      industry : industry,
+      parent_account : parent_account
+      
     }
 
     type updateAccountResponse {
       statusCode : Int
       statusCodeValue : String
       statusMessage : String
-      data : String
+      data : childAccountsResponse
     }
 
     type Mutation {

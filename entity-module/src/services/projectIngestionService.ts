@@ -66,9 +66,9 @@ class ProjectIngestionService {
   }
 
   private async getModels(accountNumber: string) {
-    this.logger.info(`Before account number transfer | ${accountNumber}`)
+    // this.logger.info(`Before account number transfer | ${accountNumber}`)
     const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
-    this.logger.info(`After account number transferr | ${schemaName}`);
+    // this.logger.info(`After account number transferr | ${schemaName}`);
     // if (this.modelCache.has(schemaName)) {
     //   return this.modelCache.get(schemaName)!;
     // }
@@ -946,7 +946,8 @@ class ProjectIngestionService {
     bothParentAndChild: boolean,
     rawFilters: Record<string, any> = {},
     finalMetaDataSortBy: string,
-    finalMetaDataSortOrder: string
+    finalMetaDataSortOrder: string,
+    graphqlData : any
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1010,14 +1011,31 @@ class ProjectIngestionService {
       }
     }
 
-    const whereProject: Record<string, any> = {
+    let whereProject : Record<string, any>
+    let whereFiscal: Record<string, any>
+    if(graphqlData.type == 'graphql') {
+      whereProject = {
+      account_rid: accountData.rid,
+      ...(bothParentAndChild ? parentFilters : {}),
+      rid : graphqlData.project_rid
+    };
+      whereFiscal = {
+        account_rid: accountData.rid,
+        rid : graphqlData.fiscal_rid
+      }
+    } else {
+      whereProject = {
       account_rid: accountData.rid,
       ...(bothParentAndChild ? parentFilters : {}),
     };
+      whereFiscal = {
+        account_rid: accountData.rid,
+      }
+    }
 
-    const whereFiscal: Record<string, any> = {
-      account_rid: accountData.rid,
-    };
+    // const whereFiscal: Record<string, any> = {
+    //   account_rid: accountData.rid,
+    // };
 
     for (const key in filters) {
       const dbField = fiscalFieldMap[key];
@@ -1592,10 +1610,8 @@ class ProjectIngestionService {
           ...(typeof project.toJSON === "function"
             ? project.toJSON()
             : project),
-          classification_name: project.project_classification_other
-            ? project.project_classification_other
-            : classificationMap[project.project_classification_rid]
-                ?.classification_name || null,
+          classification_name: classificationMap[project.project_classification_rid]
+          ?.classification_name || null,
           is_other_classification: !!project.project_classification_other,
           project_type_name: projectTypeMap[project.project_type_rid]?.project_type_name || null,
           status_name:statusMap[project.status_rid]?.status_name
@@ -1605,9 +1621,7 @@ class ProjectIngestionService {
           updatedProject.ProjectFiscal = project.ProjectFiscal.map(
             (child: any) => ({
               ...(typeof child.toJSON === "function" ? child.toJSON() : child),
-              classification_name: child.project_classification_other
-                ? child.project_classification_other
-                : classificationMap[child.project_classification_rid]
+              classification_name: classificationMap[child.project_classification_rid]
                     ?.classification_name || null,
               is_other_classification: !!child.project_classification_other,
               project_type_name: projectTypeMap[child.project_type_rid]?.project_type_name || null,

@@ -123,21 +123,24 @@ const resourceSkillResolvers = {
         return {
           statusCode : HttpStatus.SUCCESS,
           statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-          statusMessage : result.statusMessage
+          statusMessage : result.statusMessage,
+          data : result.data
         }
       }
       else {
         return {
           statusCode : HttpStatus.NOT_FOUND,
           statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-          statusMessage : result.statusMessage
+          statusMessage : result.statusMessage,
+          data : result.data
         }
       } 
       } catch (error : any) {
         return {
           statusCode : HttpStatus.NOT_FOUND,
           statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-          statusMessage : error.message
+          statusMessage : error.message,
+          data : null
         }
       }
     }

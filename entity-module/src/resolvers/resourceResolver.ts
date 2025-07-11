@@ -99,28 +99,32 @@ const resourceResolvers: IResolvers = {
           return {
             statusCode : HttpStatus.SUCCESS,
             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-            statusMessage : STATUS_MESSAGE.resourceUpdateSuccess
+            statusMessage : STATUS_MESSAGE.resourceUpdateSuccess,
+            data : result.data
           }
         } 
         else if(result.statusCode == HttpStatus.NOT_FOUND) {
           return {
             statusCode : HttpStatus.NOT_FOUND,
             statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-            statusMessage : result.statusMessage
+            statusMessage : result.statusMessage,
+            data : result.data
           }
         }
         else if(result.statusCode == HttpStatus.BAD_REQUEST) {
           return {
             statusCode : HttpStatus.BAD_REQUEST,
             statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
-            statusMessage : result.statusMessage
+            statusMessage : result.statusMessage,
+            data : result.data
           }
         }
       } catch (error : any) {
         return {
             statusCode : HttpStatus.FAILED,
             statusCodeValue : HttpStatus.FAILED_MESSAGE,
-            statusMessage : error.message
+            statusMessage : error.message,
+            data : null
           }
       }
     }

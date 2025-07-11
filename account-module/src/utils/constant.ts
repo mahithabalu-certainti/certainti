@@ -73,5 +73,56 @@ export const rawQueries = {
                 ${updatedKeyData.join(',')}
               WHERE 
                  rid = '${keyContactDetailsRid}'`
+  },
+  fetchAccountForInlineRespone (account_rid : string) {
+    return `
+    WITH fetch_parent_account AS (
+      SELECT a.parent_account_rid, aa.account_name 
+      FROM ${MAIN_SCHEMA_NAME}.account a 
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account aa ON aa.rid = a.parent_account_rid
+      WHERE 
+      a.rid = '${account_rid}')
+    SELECT 
+        a.rid, a.account_name, a.currency_rid, a.total_project_hours,
+        a.total_projects, a.total_project_cost, a.total_projects_rd_credits,
+        a.qualifying_project_hours_fed, a.qualifying_project_qre_fed,
+        a.qualifying_project_rd_credits_fed, a.r_number, a.storage_type,
+        a.professional_services_consultant, a.finance_lead, a.finance_executive,
+        a.industry_name_other,
+        jsonb_build_object(
+        'rid', c.rid,
+        'country_name', c.country_name
+        ) AS country,
+        jsonb_build_object(
+        'rid', cu.rid,
+        'created_by', cu.created_by,
+        'modified_by', cu.modified_by,
+        'created_datetime', cu.created_datetime,
+        'modified_datetime', cu.modified_datetime,
+        'currency_code', cu.currency_code,
+        'currency_name', cu.currency_name,
+        'currency_symbol', cu.currency_symbol
+        ) AS currency,
+        jsonb_build_object(
+        'rid', i.rid,
+        'industry_name', i.industry_name
+        ) AS industry,
+        jsonb_build_object(
+        'status_name', s.status_name
+        ) AS status,
+        jsonb_build_object(
+        'rid', a.parent_account_rid,
+        'account_name', aa.account_name
+        ) AS parent_account
+
+        FROM ${MAIN_SCHEMA_NAME}.account a
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON c.rid = a.country_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency cu ON cu.rid = a.currency_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry i ON i.rid = a.industry_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = a.status_rid
+        LEFT JOIN fetch_parent_account aa ON a.parent_account_rid = aa.parent_account_rid
+        WHERE
+        a.rid = '${account_rid}'
+        `
   }
 }

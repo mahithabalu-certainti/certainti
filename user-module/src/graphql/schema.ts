@@ -1,6 +1,9 @@
 import { gql } from "graphql-tag";
 
 const typeDefs = gql`
+
+  scalar Date
+  
   type Permission {
     type: String
     name: String
@@ -24,14 +27,33 @@ const typeDefs = gql`
     profile_rid: String
     role_rid: String
   }
+  
+  type profile_user {
+  rid : String
+  profile_name : String
+  }
+
+  type business_teams_user {
+  rid : String
+  business_teams : String
+  }
+
+  type status_user {
+  status_name : String
+  status_description : String
+  }
 
   type User {
-    rid: ID!
-    email: String!
-    first_name: String!
+    rid: ID
+    email: String
+    first_name: String
     status_rid: String
-    created_datetime: String
-    modified_datetime: String
+    created_datetime: Date
+    modified_datetime: Date
+    azure_id : String
+    profile : profile_user
+    business_teams : business_teams_user
+    status : status_user
   }
 
   type UpdateUserResponse {
@@ -47,9 +69,16 @@ const typeDefs = gql`
   }
 
   type Profile {
-    rid: ID!
-    profile_name: String
-    profile_description: String
+    rid: String,
+    r_number: String,
+    profile_name: String,
+    profile_description: String,
+    profile_type: String,
+    profile_status: String,
+    created_datetime: Date,
+    modified_datetime: Date,
+    created_by: String,
+    modified_by: String
   }
 
   type UpdateUserProfileResponse {

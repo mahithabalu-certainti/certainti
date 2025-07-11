@@ -1,4 +1,4 @@
-import { gql } from "graphql-tag";
+import { gql } from "graphql-tag"
 import {mergeTypeDefs} from '@graphql-tools/merge'
 
 const listDefs = gql`
@@ -99,14 +99,49 @@ type Mutation {
 
  # Add scalar type for JSON
   scalar JSON
-`;
+`
 
 const inlineEditDefs = gql`
+
+  type resourceSkillResponse {
+  rid: String
+  r_number: String
+  eid: String
+  created_by: String
+  modified_by: String
+  created_datetime: Date
+  modified_datetime: Date
+  account_rid: String
+  resource_rid: String
+  resource_number: String
+  start_date: String
+  skill_description: String
+  skill_type_others: String
+  skill_subtype_others: String
+  resource_code: String
+  skill_type_rid: String
+  skill_subtype_rid: String
+  skill_details: String
+  comments: String
+  status_rid: String
+  resource_type_rid: String
+  skill_level_rid: String
+  resource_name: String
+  resource_role: String
+  resource_orgname: String
+  resource_designation: String
+  years_of_experience: String
+  account_name: String
+  skill_type_name: String
+  skill_subtype_name: String
+  skill_level_name: String
+  }
 
   type updateSkillResponse {
     statusCode : Int,
     statusCodeValue : String,
     statusMessage : String
+    data : resourceSkillResponse
   }
 
   input updateResourceSkillInline {
@@ -115,7 +150,9 @@ const inlineEditDefs = gql`
     resource_skill_rid : String!,
     start_date : String,
     skill_type_rid : String,
+    skill_type_others : String,
     skill_subtype_rid : String,
+    skill_subtype_others : String,
     skill_level_rid : String,
     skill_details : String
   }
@@ -127,4 +164,4 @@ const inlineEditDefs = gql`
 
 const typeDefs = mergeTypeDefs([inlineEditDefs, listDefs])
 
-export default typeDefs;
+export default typeDefs
