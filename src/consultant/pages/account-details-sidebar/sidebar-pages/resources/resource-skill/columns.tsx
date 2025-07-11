@@ -14,7 +14,8 @@ export const getResourceSkillColumns = (
   skillSubTypeOptions: ListOption[],
   handleSkillType: (rid: string) => void,
   skillTypeLoading: boolean,
-  subTypeLoading: boolean
+  subTypeLoading: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -35,7 +36,12 @@ export const getResourceSkillColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    editable: true,
+    editable:
+      permissionMap?.['start_date']?.edit &&
+      permissionMap?.['start_date']?.read,
+    hide:
+      !permissionMap?.['start_date']?.edit &&
+      !permissionMap?.['start_date']?.read,
     field: {
       type: 'date',
       required: false,
@@ -53,7 +59,12 @@ export const getResourceSkillColumns = (
     label: 'Skill Type',
     width: 180,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['skill_type_rid']?.edit &&
+      permissionMap?.['skill_type_rid']?.read,
+    hide:
+      !permissionMap?.['skill_type_rid']?.edit &&
+      !permissionMap?.['skill_type_rid']?.read,
     render: (row: ResourceSkillList) =>
       row.skill_type_others
         ? `${row.skill_type_name} - ${row.skill_type_others}`
@@ -79,7 +90,12 @@ export const getResourceSkillColumns = (
     label: 'Skill SubType',
     width: 180,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['skill_subtype_rid']?.edit &&
+      permissionMap?.['skill_subtype_rid']?.read,
+    hide:
+      !permissionMap?.['skill_subtype_rid']?.edit &&
+      !permissionMap?.['skill_subtype_rid']?.read,
     render: (row: ResourceSkillList) =>
       row.skill_subtype_others
         ? `${row.skill_subtype_name} - ${row.skill_subtype_others}`
@@ -200,7 +216,12 @@ export const getResourceSkillColumns = (
     label: 'Skill Level',
     width: 140,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['skill_level_rid']?.edit &&
+      permissionMap?.['skill_level_rid']?.read,
+    hide:
+      !permissionMap?.['skill_level_rid']?.edit &&
+      !permissionMap?.['skill_level_rid']?.read,
     field: {
       type: 'select',
       required: false,
@@ -215,7 +236,12 @@ export const getResourceSkillColumns = (
     label: 'Skill Details',
     width: 180,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['skill_details']?.edit &&
+      permissionMap?.['skill_details']?.read,
+    hide:
+      !permissionMap?.['skill_details']?.edit &&
+      !permissionMap?.['skill_details']?.read,
     field: {
       type: 'textarea',
       required: true,
@@ -234,5 +260,7 @@ export const getResourceSkillColumns = (
     label: 'Skill ID',
     width: 130,
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
 ];

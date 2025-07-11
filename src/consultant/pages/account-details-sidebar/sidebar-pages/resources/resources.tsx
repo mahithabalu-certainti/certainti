@@ -199,6 +199,23 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.ACCOUNT_RESOURCES_SKILL_CREATE
   );
 
+  //permissions
+  const resourceViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceViewEditFields]);
+
   const {
     data: ResourceList,
     isLoading,
@@ -593,6 +610,7 @@ const Resource: React.FC<ResourceProps> = ({
     regionOptions,
     handleCountry,
     region.isPending,
+    permissionMap,
     handleResourceClick
   );
 

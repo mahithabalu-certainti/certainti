@@ -24,6 +24,9 @@ import {
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -68,6 +71,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const {
     data: skillList,
     isLoading,
@@ -96,6 +101,23 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(skillList.resourceSkill);
     }
   }, [skillList]);
+
+  //permissions
+  const skillViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    skillViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [skillViewEditFields]);
 
   const handleEdit = (skill: ResourceSkillList) => {
     const data = convertResourceSkill(skill);
@@ -200,7 +222,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     memoizedSkillSubType,
     handleSkillType,
     skillTypeLoading,
-    subTypeLoading
+    subTypeLoading,
+    permissionMap
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {

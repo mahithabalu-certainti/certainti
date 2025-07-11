@@ -30,7 +30,8 @@ const { currentDate, previousDate } = getDateConstraints(
 
 export const getResourceCostColumns = (
   currencyOptions: ListOption[],
-  isFullTime: boolean
+  isFullTime: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -55,7 +56,12 @@ export const getResourceCostColumns = (
       }
       return '-';
     },
-    editable: true,
+    editable:
+      permissionMap?.['fiscal_year']?.edit &&
+      permissionMap?.['fiscal_year']?.read,
+    hide:
+      !permissionMap?.['fiscal_year']?.edit &&
+      !permissionMap?.['fiscal_year']?.read,
     field: {
       type: 'select',
       required: true,
@@ -76,7 +82,12 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{dateFormatToYYYYMMDD(row.effective_from as string) || '-'}</span>
     ),
-    editable: true,
+    editable:
+      permissionMap?.['effective_from']?.edit &&
+      permissionMap?.['effective_from']?.read,
+    hide:
+      !permissionMap?.['effective_from']?.edit &&
+      !permissionMap?.['effective_from']?.read,
     field: {
       type: 'date',
       required: false,
@@ -114,7 +125,10 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{dateFormatToYYYYMMDD(row.end_date as string) || '-'}</span>
     ),
-    editable: true,
+    editable:
+      permissionMap?.['end_date']?.edit && permissionMap?.['end_date']?.read,
+    hide:
+      !permissionMap?.['end_date']?.edit && !permissionMap?.['end_date']?.read,
     field: {
       type: 'date',
       required: false,
@@ -145,7 +159,12 @@ export const getResourceCostColumns = (
     label: 'Currency',
     width: 130,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['currency_rid']?.edit &&
+      permissionMap?.['currency_rid']?.read,
+    hide:
+      !permissionMap?.['currency_rid']?.edit &&
+      !permissionMap?.['currency_rid']?.read,
     field: {
       type: 'select',
       required: true,
@@ -166,7 +185,12 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{valueDisplay(row.effort_in_hrs)}</span>
     ),
-    editable: true,
+    editable:
+      permissionMap?.['effort_in_hrs']?.edit &&
+      permissionMap?.['effort_in_hrs']?.read,
+    hide:
+      !permissionMap?.['effort_in_hrs']?.edit &&
+      !permissionMap?.['effort_in_hrs']?.read,
     field: {
       type: 'number',
       required: true,
@@ -193,7 +217,11 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.salary, row.currency_symbol)}</span>
     ),
-    editable: isFullTime ? true : false,
+    editable:
+      permissionMap?.['salary']?.edit &&
+      permissionMap?.['salary']?.read &&
+      isFullTime,
+    hide: !permissionMap?.['salary']?.edit && !permissionMap?.['salary']?.read,
     field: {
       type: 'number',
       required: false,
@@ -228,7 +256,12 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.resource_cost, row.currency_symbol)}</span>
     ),
-    editable: true,
+    editable:
+      permissionMap?.['resource_cost']?.edit &&
+      permissionMap?.['resource_cost']?.read,
+    hide:
+      !permissionMap?.['resource_cost']?.edit &&
+      !permissionMap?.['resource_cost']?.read,
     field: {
       type: 'number',
       required: !isFullTime,
@@ -263,7 +296,11 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.bonus, row.currency_symbol)}</span>
     ),
-    editable: isFullTime ? true : false,
+    editable:
+      permissionMap?.['bonus']?.edit &&
+      permissionMap?.['bonus']?.read &&
+      isFullTime,
+    hide: !permissionMap?.['bonus']?.edit && !permissionMap?.['bonus']?.read,
     field: {
       type: 'number',
       required: false,
@@ -290,7 +327,13 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.insurance, row.currency_symbol)}</span>
     ),
-    editable: isFullTime ? true : false,
+    editable:
+      permissionMap?.['insurance']?.edit &&
+      permissionMap?.['insurance']?.read &&
+      isFullTime,
+    hide:
+      !permissionMap?.['insurance']?.edit &&
+      !permissionMap?.['insurance']?.read,
     field: {
       type: 'number',
       required: false,
@@ -317,7 +360,12 @@ export const getResourceCostColumns = (
     render: (row: ResourceCostList) => (
       <span>{costDisplay(row.deductions, row.currency_symbol)}</span>
     ),
-    editable: true,
+    editable:
+      permissionMap?.['deductions']?.edit &&
+      permissionMap?.['deductions']?.read,
+    hide:
+      !permissionMap?.['deductions']?.edit &&
+      !permissionMap?.['deductions']?.read,
     field: {
       type: 'number',
       required: false,
@@ -338,7 +386,10 @@ export const getResourceCostColumns = (
     label: 'Comments',
     width: 130,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['comments']?.edit && permissionMap?.['comments']?.read,
+    hide:
+      !permissionMap?.['comments']?.edit && !permissionMap?.['comments']?.read,
     field: {
       type: 'textarea',
       required: false,
@@ -357,6 +408,9 @@ export const getResourceCostColumns = (
     label: 'Status',
     width: 130,
     sortable: true,
+    hide:
+      !permissionMap?.['status_rid']?.edit &&
+      !permissionMap?.['status_rid']?.read,
     render: (row: ResourceCostList) => (
       <span
         className={`${
@@ -377,5 +431,7 @@ export const getResourceCostColumns = (
     label: 'Cost ID',
     width: 130,
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
 ];

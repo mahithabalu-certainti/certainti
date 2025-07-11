@@ -20,6 +20,9 @@ import { useToast } from '../../../../../../hooks';
 import { useFetchCurrency } from '../../../../../services/account';
 import { CellEditData } from '../../../../../../components/table/types';
 import { ResourceTypeEnum } from '../../../../resource-form/utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -68,6 +71,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const {
     data: costList,
     isLoading,
@@ -109,6 +114,23 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       })) || [],
     [currency.data?.data.currency]
   );
+
+  //permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
@@ -214,7 +236,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const getRowId = (row: ResourceCostList) => row?.rid || '';
   const resourceCostColumns = getResourceCostColumns(
     memoizedCurrency,
-    isFullTime
+    isFullTime,
+    permissionMap
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -256,6 +279,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     }
   };
 
+  const hideStatusAction =
+    !permissionMap?.['status_action']?.edit &&
+    !permissionMap?.['status_action']?.read;
+
   return (
     <div>
       <ListTable
@@ -275,8 +302,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}
-        conditionMenuItems={(row: ResourceCostList) =>
-          getConditionMenuItems(row) || undefined
+        conditionMenuItems={
+          !hideStatusAction
+            ? (row: ResourceCostList) => getConditionMenuItems(row)
+            : undefined
         }
         loading={isLoading}
         error={error ? 'Failed to load resource cost data' : undefined}

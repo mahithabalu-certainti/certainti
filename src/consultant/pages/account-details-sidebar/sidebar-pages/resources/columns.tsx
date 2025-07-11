@@ -14,6 +14,7 @@ export const getResourceColumns = (
   regionOptions: ListOption[],
   onCountryClick: (country: string) => void,
   regionLoading: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
   onResourceIdClick?: (row: ResourceList) => void
 ): ListTableColumn<ResourceList>[] => [
   {
@@ -43,7 +44,12 @@ export const getResourceColumns = (
       ) : (
         row.resource_code
       ),
-    editable: true,
+    editable:
+      permissionMap?.['resource_code']?.edit &&
+      permissionMap?.['resource_code']?.read,
+    hide:
+      !permissionMap?.['resource_code']?.edit &&
+      !permissionMap?.['resource_code']?.read,
     field: {
       type: 'text',
       required: true,
@@ -76,7 +82,12 @@ export const getResourceColumns = (
     label: 'Name',
     width: 200,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['resource_name']?.edit &&
+      permissionMap?.['resource_name']?.read,
+    hide:
+      !permissionMap?.['resource_name']?.edit &&
+      !permissionMap?.['resource_name']?.read,
     field: {
       type: 'text',
       required: false,
@@ -115,7 +126,12 @@ export const getResourceColumns = (
     label: 'Resource Type',
     width: 140,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['resource_type_rid']?.edit &&
+      permissionMap?.['resource_type_rid']?.read,
+    hide:
+      !permissionMap?.['resource_type_rid']?.edit &&
+      !permissionMap?.['resource_type_rid']?.read,
     field: {
       type: 'select',
       required: true,
@@ -139,7 +155,12 @@ export const getResourceColumns = (
     label: 'Org Name',
     width: 140,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['resource_orgname']?.edit &&
+      permissionMap?.['resource_orgname']?.read,
+    hide:
+      !permissionMap?.['resource_orgname']?.edit &&
+      !permissionMap?.['resource_orgname']?.read,
     field: {
       type: 'text',
       required: false,
@@ -179,7 +200,12 @@ export const getResourceColumns = (
     label: 'Designation',
     width: 200,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['resource_designation']?.edit &&
+      permissionMap?.['resource_designation']?.read,
+    hide:
+      !permissionMap?.['resource_designation']?.edit &&
+      !permissionMap?.['resource_designation']?.read,
     field: {
       type: 'text',
       required: false,
@@ -212,7 +238,12 @@ export const getResourceColumns = (
     label: 'Role',
     width: 200,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['resource_role']?.edit &&
+      permissionMap?.['resource_role']?.read,
+    hide:
+      !permissionMap?.['resource_role']?.edit &&
+      !permissionMap?.['resource_role']?.read,
     field: {
       type: 'text',
       required: false,
@@ -241,7 +272,12 @@ export const getResourceColumns = (
     label: 'Country',
     width: 160,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['country_rid']?.edit &&
+      permissionMap?.['country_rid']?.read,
+    hide:
+      !permissionMap?.['country_rid']?.edit &&
+      !permissionMap?.['country_rid']?.read,
     field: {
       type: 'select',
       required: false,
@@ -264,7 +300,12 @@ export const getResourceColumns = (
     label: 'Region',
     width: 150,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['region_rid']?.edit &&
+      permissionMap?.['region_rid']?.read,
+    hide:
+      !permissionMap?.['region_rid']?.edit &&
+      !permissionMap?.['region_rid']?.read,
     field: {
       type: 'select',
       required: false,
@@ -293,6 +334,9 @@ export const getResourceColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['total_project_hours']?.edit &&
+      !permissionMap?.['total_project_hours']?.read,
   },
   {
     id: 'estimated_rd_hours',
@@ -303,6 +347,9 @@ export const getResourceColumns = (
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['estimated_rd_hours']?.edit &&
+      !permissionMap?.['estimated_rd_hours']?.read,
   },
   {
     id: 'status_name',
@@ -320,7 +367,12 @@ export const getResourceColumns = (
         {row.status_name || '-'}
       </span>
     ),
-    editable: true,
+    editable:
+      permissionMap?.['status_rid']?.edit &&
+      permissionMap?.['status_rid']?.read,
+    hide:
+      !permissionMap?.['status_rid']?.edit &&
+      !permissionMap?.['status_rid']?.read,
     field: {
       type: 'select',
       required: true,
@@ -335,7 +387,10 @@ export const getResourceColumns = (
     label: 'Comments',
     width: 160,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['comments']?.edit && permissionMap?.['comments']?.read,
+    hide:
+      !permissionMap?.['comments']?.edit && !permissionMap?.['comments']?.read,
     field: {
       type: 'textarea',
       required: false,
@@ -354,5 +409,7 @@ export const getResourceColumns = (
     label: 'Resource ID',
     width: 150,
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
 ];
