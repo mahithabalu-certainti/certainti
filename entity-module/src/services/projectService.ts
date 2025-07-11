@@ -30,6 +30,8 @@ import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import Decimal from "decimal.js";
+import { setupProjectFiscalRegion } from "../models/projectFiscalRegion";
+import { AccountFiscalRegion, setupAccountFiscalRegionSequence } from "../models/accountFiscalRegion";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -142,6 +144,10 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
+      const AccountFiscalRegionModel = await AccountFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await ProjectModel.sync({ force: false });
       await ProjectFiscalModel.sync({ force: false });
@@ -150,12 +156,16 @@ export class ProjectService {
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
       await AccountFiscalModel.sync({ force: false });
+      await AccountFiscalRegionModel.sync({ force: false });
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
+      await setupProjectFiscalRegion(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       return this.throwServiceError(err as Error);
     }
@@ -198,6 +208,15 @@ export class ProjectService {
               userId
             );
 
+            if(projectData.region_rid){
+              await this.projectIngestion.addProjectFiscalRegion(
+                accountNumber,
+                projectData,
+                existingProject.rid,
+                userId
+              );
+            }
+
           if (createdProjectFiscal && createdProjectFiscal.rid) {
             createdProjectId = createdProjectFiscal.rid;
             await this.projectIngestion.addProjectFiscalSummary(
@@ -225,6 +244,13 @@ export class ProjectService {
               accountNumber,
               projectData
             );
+
+            if(projectData.region_rid){
+              await this.projectIngestion.addAccountFiscalRegion(
+                accountNumber,
+                projectData
+              );
+            }
 
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
               accountNumber,
@@ -263,6 +289,15 @@ export class ProjectService {
               userId
             );
 
+          if(projectData.region_rid){
+            await this.projectIngestion.addProjectFiscalRegion(
+              accountNumber,
+              projectData,
+              createdProject.rid,
+              userId
+            );
+          }
+
           const startDate = projectData.project_startdate
           ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
           : null;
@@ -293,6 +328,13 @@ export class ProjectService {
             accountNumber,
             projectData
           );
+
+          if(projectData.region_rid){
+            await this.projectIngestion.addAccountFiscalRegion(
+              accountNumber,
+              projectData
+            );
+          }
 
           await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
             accountNumber,
@@ -426,6 +468,12 @@ export class ProjectService {
       );
 
     await this.projectIngestion.updateProjectFiscal(
+      accountNumber,
+      projectData,
+      existingFiscalData?.project_code || ""
+    );
+
+    await this.projectIngestion.updateProjectFiscalRegion(
       accountNumber,
       projectData,
       existingFiscalData?.project_code || ""

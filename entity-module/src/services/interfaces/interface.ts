@@ -1,10 +1,12 @@
 import { Project } from "../../models/project";
 import {
   ICreateProject,
+  ICreateProjectResource,
   ICreateResource,
   IResourceCost,
   IResourceSkill,
   IUpdateProject,
+  IUpdateProjectResource,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
@@ -317,5 +319,43 @@ export interface IProjectService {
     message: string;
     errorMessage?: string;
     data?: { projects: any, count: number };
+  }>;
+}
+export interface IProjectResourceService {
+  createProjectResource(projectResourceData: ICreateProjectResource, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
+  }>;
+  updateProjectResource(projectResourceData: IUpdateProjectResource, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
+  }>;
+  projectResourceDetails(projectResourceId: string, accountId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
+  }>;
+  getResourceCodes(accountId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }>;
+  getResourceSkillRoles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRoles: any };
+  }>;
+  getResourceSkillRolesSubtype(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
   }>;
 }

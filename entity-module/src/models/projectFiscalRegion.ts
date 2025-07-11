@@ -1,6 +1,7 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
-export interface ProjectFiscalAttributes {
+
+export interface ProjectFiscalRegionAttributes {
   rid: string;
   r_number?: string;
   project_rid: string;
@@ -138,12 +139,12 @@ export interface ProjectFiscalAttributes {
   project_description?: string | null;
 }
 
-interface ProjectFiscalCreationAttributes
-  extends Optional<ProjectFiscalAttributes, "rid"> {}
+interface ProjectFiscalRegionCreationAttributes
+  extends Optional<ProjectFiscalRegionAttributes, "rid"> {}
 
-export class ProjectFiscal
-  extends Model<ProjectFiscalAttributes, ProjectFiscalCreationAttributes>
-  implements ProjectFiscalAttributes
+export class ProjectFiscalRegion
+  extends Model<ProjectFiscalRegionAttributes, ProjectFiscalRegionCreationAttributes>
+  implements ProjectFiscalRegionAttributes
 {
   public rid!: string;
   public r_number?: string;
@@ -280,11 +281,13 @@ export class ProjectFiscal
   public project_description?: string | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
-    ProjectFiscal.init(
+    ProjectFiscalRegion.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
         r_number: {
@@ -292,7 +295,7 @@ export class ProjectFiscal
           allowNull: true,
           unique: true,
         },
-         eid: {
+        eid: {
           type: DataTypes.STRING(120),
           allowNull: true,
         },
@@ -487,11 +490,11 @@ export class ProjectFiscal
 
         effective_metric_type: {
           type: DataTypes.STRING(50),
-          allowNull: true
+          allowNull: true,
         },
         default_metric_type: {
           type: DataTypes.STRING(50),
-          allowNull: true
+          allowNull: true,
         },
 
         // Misc
@@ -519,27 +522,27 @@ export class ProjectFiscal
       {
         sequelize,
         schema,
-        tableName: "project_fiscal",
+        tableName: "project_fiscal_region",
         timestamps: false,
         underscored: true,
       }
     );
 
-    return ProjectFiscal;
+    return ProjectFiscalRegion;
   }
 }
 
-export async function setupProjectFiscal(
+export async function setupProjectFiscalRegion(
   sequelize: Sequelize,
   schemaName: string
 ) {
   try {
     await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_seq START 1`
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_region_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL}-' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal_region
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL_REGION}-' || LPAD(nextval('"${schemaName}".project_fiscal_region_seq')::text, 10, '0')`);
 
     console.log("Project fiscal sequence setup complete");
   } catch (error) {

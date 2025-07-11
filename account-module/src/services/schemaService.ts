@@ -51,14 +51,19 @@ class SchemaService {
 
       await this.createAccountDetailsTable(schemaName, sequelize);
       await this.createAccountFiscalTable(schemaName, sequelize);
+      await this.createAccountFiscalRegionTable(schemaName, sequelize);
+
       await this.createProjectTable(schemaName, sequelize);
       await this.createProjectHistoryTable(schemaName, sequelize);
       await this.createProjectFiscalTable(schemaName, sequelize);
+      await this.createProjectFiscalRegionTable(schemaName, sequelize);
       await this.createProjectTimelineTable(schemaName, sequelize);
 
       await this.createProjectResourcesTable(schemaName, sequelize);
       await this.createProjectResourcesTimelineTable(schemaName, sequelize);
       await this.createProjectResourcesHistoryTable(schemaName, sequelize);
+      await this.createProjectResourceFiscalTable(schemaName, sequelize);
+      await this.createProjectResourceFiscalRegionTable(schemaName, sequelize);
 
       await this.createDocumentTable(schemaName, sequelize);
       await this.createImportTable(schemaName, sequelize);
@@ -81,6 +86,7 @@ class SchemaService {
       await this.createResourceSkillTimelineTable(schemaName, sequelize);
       await this.createResourceSkillHistoryTable(schemaName, sequelize);
       await this.createResourceFiscalTable(schemaName, sequelize);
+      await this.createResourceFiscalRegionTable(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
@@ -216,6 +222,60 @@ class SchemaService {
       ON "${schemaName}"."account_fiscal"("${field}");
     `);
   }
+  }
+
+  private async createAccountFiscalRegionTable(schemaName: string, sequelize: any){
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_fiscal_region_seq START 1;
+    `);
+ 
+     await sequelize.query(`
+      CREATE TABLE "${schemaName}".account_fiscal_region (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) DEFAULT 'ACFR ' || LPAD(nextval('"${schemaName}".account_fiscal_region_seq')::text, 10, '0'),        
+        eid varchar(120) NULL,
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50) NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NULL,
+        account_rid varchar(50) NOT NULL,
+        fiscal_year int4 NOT NULL,
+        total_projects int4 NULL,
+        total_fte int4 NULL,
+        total_subcon int4 NULL,
+        total_project_hours_fte numeric(18, 2) NULL,
+        total_project_hours_subcon numeric(18, 2) NULL,
+        total_project_hours numeric(18, 2) NULL,
+        total_project_cost_fte numeric(18, 2) NULL,
+        total_project_cost_subcon numeric(18, 2) NULL,
+        total_project_cost_nonlabor numeric(18, 2) NULL,
+        total_project_cost numeric(18, 2) NULL,
+        total_project_qre_fte numeric NULL,
+        total_project_qre_subcon numeric NULL,
+        total_projects_qre numeric NULL,
+        total_projects_rd_credits_fte numeric(18, 2) NULL,
+        total_projects_rd_credits_subcon numeric(18, 2) NULL,
+        total_projects_rd_credits numeric(18, 2) NULL,
+        total_qualifying_projects_fed numeric(18, 2) NULL,
+        qualifying_fte_fed numeric(18, 2) NULL,
+        qualifying_subcon_fed numeric(18, 2) NULL,
+        qualifying_project_hours_fte_fed numeric(18, 2) NULL,
+        qualifying_project_hours_subcon_fed numeric(18, 2) NULL,
+        qualifying_project_hours_fed numeric(18, 2) NULL,
+        qualifying_project_cost_fte_fed numeric(18, 2) NULL,
+        qualifying_project_cost_subcon_fed numeric(18, 2) NULL,
+        qualifying_project_cost_nonlabor_fed numeric(18, 2) NULL,
+        qualifying_project_cost_fed numeric(18, 2) NULL,
+        qualifying_project_qre_fte_fed numeric(18, 2) NULL,
+        qualifying_project_qre_subcon_fed numeric(18, 2) NULL,
+        qualifying_project_qre_fed numeric(18, 2) NULL,
+        qualifying_project_rd_credits_fte_fed numeric(18, 2) NULL,
+        qualifying_project_rd_credits_subcon_fed numeric(18, 2) NULL,
+        qualifying_project_rd_credits_fed numeric(18, 2) NULL,
+        region_rid varchar(50) NULL,
+        CONSTRAINT account_fiscal_region_r_number_key UNIQUE (r_number)
+      );
+    `);
   }
 
   private async createProjectTable(schemaName: string, sequelize: any) {
@@ -432,6 +492,19 @@ class SchemaService {
       rd_credits_fed_level DECIMAL(18,2),
       rd_credits_total DECIMAL(18,2),
 
+      effective_total_fte int4 NULL,
+      effective_total_subcon int4 NULL,
+      effective_total_nonlabor int4 NULL,
+      effective_cost numeric(18, 2) NULL,
+      effective_effort numeric(18, 2) NULL,
+      effective_fte_cost numeric(18, 2) NULL,
+      effective_fte_effort numeric(18, 2) NULL,
+      effective_subcon_cost numeric(18, 2) NULL,
+      effective_subcon_effort numeric(18, 2) NULL,
+      effective_nonlabor_cost numeric(18, 2) NULL,
+      effective_metric_type varchar(50) NULL,
+      default_metric_type varchar(50) NULL,
+
       -- Misc
       interaction_cc_list TEXT,
       assessment_status TEXT,
@@ -457,6 +530,119 @@ class SchemaService {
       ON "${schemaName}"."project_fiscal"("${field}");
     `);
   }
+  }
+
+  private async createProjectFiscalRegionTable(schemaName: string, sequelize: any){
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_region_seq START 1;
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".project_fiscal_region (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'PFIR-' || LPAD(nextval('"${schemaName}".project_fiscal_region_seq')::TEXT, 10, '0'),
+        eid varchar(120) NULL,
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50) NULL,
+        created_datetime timestamptz NULL,
+        modified_datetime timestamptz NULL,
+        project_rid varchar(50) NOT NULL,
+        project_code varchar(120) NOT NULL,
+        industry_rid varchar(50) NULL,
+        industry_name varchar(100) NULL,
+        fiscal_year int4 NOT NULL,
+        project_name varchar(200) NULL,
+        program_name varchar(255) NULL,
+        project_type_rid varchar(50) NOT NULL,
+        project_classification_rid varchar(50) NULL,
+        project_classification_other varchar(255) NULL,
+        project_client_group varchar(255) NULL,
+        project_group varchar(255) NULL,
+        auto_send_ai_interaction bool DEFAULT false NOT NULL,
+        account_rid varchar(50) NOT NULL,
+        country_rid varchar(50) NULL,
+        region_rid varchar(50) NULL,
+        currency_rid varchar(50) NULL,
+        max_ai_interaction int4 NOT NULL,
+        expiry_duration int4 NULL,
+        auto_access_rd bool NULL,
+        status_rid varchar(255) NOT NULL,
+        project_startdate timestamptz NULL,
+        project_enddate timestamptz NULL,
+        total_fte_prj int4 NULL,
+        total_fte_from_prj_res int4 NULL,
+        total_fte_from_tasks int4 NULL,
+        total_subcon_prj int4 NULL,
+        total_subcon_from_prj_res int4 NULL,
+        total_subcon_from_tasks int4 NULL,
+        total_nonlabor_prj numeric(18, 2) NULL,
+        total_nonlabor_from_prj_res numeric(18, 2) NULL,
+        total_resources_prj int4 NULL,
+        total_resources_from_prj_res int4 NULL,
+        total_resources_from_tasks int4 NULL,
+        total_effort_prj numeric(18, 2) NULL,
+        total_effort_fte_prj numeric(18, 2) NULL,
+        total_effort_subcon_prj numeric(18, 2) NULL,
+        total_effort_from_prj_res numeric(18, 2) NULL,
+        total_effort_fte_from_prj_res numeric(18, 2) NULL,
+        total_effort_subcon_from_prj_res numeric(18, 2) NULL,
+        total_effort_from_tasks numeric(18, 2) NULL,
+        total_effort_fte_from_tasks numeric(18, 2) NULL,
+        total_effort_subcon_from_tasks numeric(18, 2) NULL,
+        total_cost_prj numeric(18, 2) NULL,
+        total_cost_fte_prj numeric(18, 2) NULL,
+        total_cost_subcon_prj numeric(18, 2) NULL,
+        total_cost_nonlabor_prj numeric(18, 2) NULL,
+        total_cost_from_prj_res numeric(18, 2) NULL,
+        total_cost_fte_from_prj_res numeric(18, 2) NULL,
+        total_cost_subcon_from_prj_res numeric(18, 2) NULL,
+        total_cost_nonlabor_from_prj_res numeric(18, 2) NULL,
+        total_cost_from_tasks numeric(18, 2) NULL,
+        total_cost_fte_from_tasks numeric(18, 2) NULL,
+        total_cost_subcon_from_tasks numeric(18, 2) NULL,
+        total_cost_prj_blended numeric(18, 2) NULL,
+        total_cost_fte_prj_blended numeric(18, 2) NULL,
+        total_cost_subcon_prj_blended numeric(18, 2) NULL,
+        total_cost_from_prj_res_blended numeric(18, 2) NULL,
+        total_cost_fte_from_prj_res_blended numeric(18, 2) NULL,
+        total_cost_subcon_from_prj_res_blended numeric(18, 2) NULL,
+        total_cost_from_tasks_blended numeric(18, 2) NULL,
+        total_cost_fte_from_tasks_blended numeric(18, 2) NULL,
+        total_cost_subcon_from_tasks_blended numeric(18, 2) NULL,
+        blended_rate_fte numeric(18, 2) NULL,
+        blended_rate_subcon numeric(18, 2) NULL,
+        rd_percent_potential_ai numeric(18, 2) NULL,
+        rd_percent_adjustment numeric(18, 2) NULL,
+        rd_percent_final numeric(18, 2) NULL,
+        qre_fte numeric(18, 2) NULL,
+        qre_subcon numeric(18, 2) NULL,
+        qre_nonlabor numeric(18, 2) NULL,
+        qre_final numeric(18, 2) NULL,
+        rd_credits_fte_fed_level numeric(18, 2) NULL,
+        rd_credits_subcon_fed_level numeric(18, 2) NULL,
+        rd_credits_nonlabor_fed_level numeric(18, 2) NULL,
+        rd_credits_fed_level numeric(18, 2) NULL,
+        rd_credits_total numeric(18, 2) NULL,
+        effective_total_fte int4 NULL,
+        effective_total_subcon int4 NULL,
+        effective_total_nonlabor int4 NULL,
+        effective_cost numeric(18, 2) NULL,
+        effective_effort numeric(18, 2) NULL,
+        effective_fte_cost numeric(18, 2) NULL,
+        effective_fte_effort numeric(18, 2) NULL,
+        effective_subcon_cost numeric(18, 2) NULL,
+        effective_subcon_effort numeric(18, 2) NULL,
+        effective_nonlabor_cost numeric(18, 2) NULL,
+        effective_metric_type varchar(50) NULL,
+        default_metric_type varchar(50) NULL,
+        interaction_cc_list varchar(255) NULL,
+        assessment_status varchar(255) NULL,
+        claim_status varchar(255) NULL,
+        "comments" varchar(2000) NULL,
+        project_description varchar(2000) NULL,
+        CONSTRAINT project_fiscal_region_r_number_key UNIQUE (r_number)
+      );
+    `);
   }
 
   private async createProjectTimelineTable(schemaName: string, sequelize: any) {
@@ -499,7 +685,12 @@ class SchemaService {
         modified_by VARCHAR(50),
         created_datetime TIMESTAMP DEFAULT NOW(),
         modified_datetime TIMESTAMP,
-        project_code VARCHAR(50) NOT NULL UNIQUE,
+        eid VARCHAR(120),
+        project_code VARCHAR(50) NOT NULL,
+        project_rid VARCHAR(50) NOT NULL,
+        resource_rid VARCHAR(50) NOT NULL,
+        fiscal_year integer NOT NULL,
+        project_resource_code VARCHAR(100) NOT NULL,
         start_date DATE,
         end_date DATE,
         resource_code VARCHAR(100),
@@ -514,6 +705,7 @@ class SchemaService {
         currency_rid varchar(50),
         description TEXT,
         country_rid varchar(50),
+        region_rid varchar(50),
   
         resource_orgname VARCHAR(200),
         resource_firstname VARCHAR(100),
@@ -539,6 +731,7 @@ class SchemaService {
         qre_subcon NUMERIC(18, 2),
         qre_nonlabor NUMERIC(18, 2),
         qre_final NUMERIC(18, 2),
+        qre_percent numeric(5, 2),
   
         rd_credits_fte_region_level NUMERIC(18, 2),
         rd_credits_subcon_region_level NUMERIC(18, 2),
@@ -549,7 +742,13 @@ class SchemaService {
         rd_credits_subcon_fed_level NUMERIC(18, 2),
         rd_credits_nonlabor_fed_level NUMERIC(18, 2),
         rd_credits_fed_level NUMERIC(18, 2),
-        rd_credits_total NUMERIC(18, 2)
+        rd_credits_total NUMERIC(18, 2),
+
+        salary NUMERIC(18, 2),
+        bonus NUMERIC(18, 2),
+        insurance NUMERIC(18, 2),
+        deductions NUMERIC(18, 2),
+        assigned_skill_role_type_rid varchar(50)
       );
     `);
   }
@@ -559,13 +758,13 @@ class SchemaService {
     sequelize: any
   ) {
     await sequelize.query(`
-      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_timline_seq START 1;
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resources_timeline START 1;
     `);
 
     await sequelize.query(`
       CREATE TABLE "${schemaName}".project_resource_timeline (
       rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-      r_number varchar(20) DEFAULT (('PRRT-'::text || lpad(nextval('"${schemaName}".project_resource_timline_seq'::regclass)::text, 10, '0'::text))) NULL,
+      r_number varchar(20) DEFAULT (('PRRT-'::text || lpad(nextval('"${schemaName}".project_resources_timeline'::regclass)::text, 10, '0'::text))) NULL,
       created_by VARCHAR(50) NOT NULL,
       modified_by VARCHAR(50),
       created_datetime TIMESTAMP DEFAULT NOW(),
@@ -826,6 +1025,7 @@ class SchemaService {
     modified_datetime timestamp with time zone,
     account_rid varchar(50) NOT NULL,
     resource_rid varchar(50) NOT NULL,
+    resource_code varchar(50) NOT NULL,
     resource_type_rid VARCHAR(50),
     fiscal_year integer,
     country_rid varchar(50),
@@ -872,6 +1072,48 @@ class SchemaService {
       ON "${schemaName}".resource_fiscal (${field});
     `);
   }
+  }
+
+  private async createResourceFiscalRegionTable(schemaName: string, sequelize: any){
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_region_seq START 1`
+    );
+  
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".resource_fiscal_region (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) DEFAULT (('RSFR-'::text || lpad(nextval('"${schemaName}".resource_fiscal_region_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid varchar(120) NULL,
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50) NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NULL,
+        account_rid varchar(50) NOT NULL,
+        resource_rid varchar(50) NOT NULL,
+        resource_type_rid varchar(50) NOT NULL,
+        resource_code varchar(50) NOT NULL,
+        fiscal_year int4 NULL,
+        country_rid varchar(50) NULL,
+        country_region_rid varchar(50) NULL,
+        cost_type trd365_00339."enum_resource_fiscal_region_cost_type" NULL,
+        annual_cost numeric(18, 2) NULL,
+        monthly_cost numeric(18, 2) NULL,
+        weekly_cost numeric(18, 2) NULL,
+        bi_weekly_cost numeric(18, 2) NULL,
+        daily_cost numeric(18, 2) NULL,
+        hourly_cost numeric(18, 2) NULL,
+        total_cost_for_year_project numeric(14, 2) NULL,
+        total_cost_for_year_project_resource_level numeric(14, 2) NULL,
+        total_cost_for_year_project_task_level numeric(14, 2) NULL,
+        total_effort_for_year_project numeric(14, 2) NULL,
+        total_effort_for_year_project_resource_level numeric(14, 2) NULL,
+        total_effort_for_year_project_task_level numeric(14, 2) NULL,
+        estimated_rd_hours numeric(14, 2) NULL,
+        effective_date timestamptz NULL,
+        end_date timestamptz NULL,
+        CONSTRAINT resource_fiscal_region_r_number_key UNIQUE (r_number)
+      );
+    `);
   }
 
   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
@@ -1131,6 +1373,137 @@ class SchemaService {
           attribute_name varchar(255) NOT NULL,
           old_value varchar(255),
           new_value varchar(255) NOT NULL
+      );
+    `);
+  }
+
+  async createProjectResourceFiscalTable(
+    schemaName: string,
+    sequelize: any
+  ){
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_fiscal_seq START 1`
+    );
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".project_resource_fiscal (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) DEFAULT (('PRSF-'::text || lpad(nextval('"${schemaName}".project_resource_fiscal_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid varchar(120) NULL,
+        created_by varchar(255) NOT NULL,
+        modified_by varchar(255) NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NULL,
+        project_resource_rid varchar(50) NOT NULL,
+        account_rid varchar(50) NOT NULL,
+        project_rid varchar(50) NOT NULL,
+        resource_rid varchar(50) NOT NULL,
+        fiscal_year int4 NOT NULL,
+        project_code varchar(50) NOT NULL,
+        resource_code varchar(100) NOT NULL,
+        resource_name varchar(200) NULL,
+        resource_type_rid varchar(100) NULL,
+        designation varchar(200) NULL,
+        resource_role varchar(200) NULL,
+        total_hours_pro_res numeric(18, 2) NULL,
+        total_cost_pro_res numeric(18, 2) NULL,
+        status_rid varchar(50) NULL,
+        country_rid varchar(50) NULL,
+        region_rid varchar(50) NULL,
+        currency_rid varchar(50) NULL,
+        resource_orgname varchar(200) NULL,
+        effort_project_resource_level numeric(18, 2) NULL,
+        cost_project_resource_level numeric(18, 2) NULL,
+        cost_project_task_level numeric(18, 2) NULL,
+        blended_cost_project_task_level numeric(18, 2) NULL,
+        blended_cost_project_resource_level numeric(18, 2) NULL,
+        effort_project_task_level numeric(18, 2) NULL,
+        total_hours_from_tasks numeric(18, 2) NULL,
+        total_cost_from_tasks numeric(18, 2) NULL,
+        total_cost_from_tasks_blended numeric(18, 2) NULL,
+        rd_percent_potential_ai numeric(18, 2) NULL,
+        rd_percent_adjustment numeric(18, 2) NULL,
+        rd_percent_final numeric(18, 2) NULL,
+        qre_fte numeric(18, 2) NULL,
+        qre_subcon numeric(18, 2) NULL,
+        qre_nonlabor numeric(18, 2) NULL,
+        qre_final numeric(18, 2) NULL,
+        rd_credits_fte_region_level numeric(18, 2) NULL,
+        rd_credits_subcon_region_level numeric(18, 2) NULL,
+        rd_credits_nonlabor_region_level numeric(18, 2) NULL,
+        rd_credits_region_level numeric(18, 2) NULL,
+        rd_credits_fte_fed_level numeric(18, 2) NULL,
+        rd_credits_subcon_fed_level numeric(18, 2) NULL,
+        rd_credits_nonlabor_fed_level numeric(18, 2) NULL,
+        rd_credits_fed_level numeric(18, 2) NULL,
+        rd_credits_total numeric(18, 2) NULL,
+        description varchar(2000) NULL,
+        CONSTRAINT project_resources_fiscal_r_number_key UNIQUE (r_number)
+      );  
+    `);
+  }
+
+  async createProjectResourceFiscalRegionTable(
+    schemaName: string,
+    sequelize: any
+  ){
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_fiscal_region_seq START 1`
+    );
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".project_resource_fiscal_region (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) DEFAULT (('PRSFR-'::text || lpad(nextval('"${schemaName}".project_resource_fiscal_region_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid varchar(120) NULL,
+        created_by varchar(255) NOT NULL,
+        modified_by varchar(255) NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NULL,
+        account_rid varchar(50) NOT NULL,
+        project_rid varchar(50) NOT NULL,
+        resource_rid varchar(50) NOT NULL,
+        fiscal_year int4 NOT NULL,
+        project_code varchar(50) NOT NULL,
+        resource_code varchar(100) NOT NULL,
+        resource_name varchar(200) NULL,
+        resource_type_rid varchar(100) NULL,
+        designation varchar(200) NULL,
+        resource_role varchar(200) NULL,
+        total_hours_pro_res numeric(18, 2) NULL,
+        total_cost_pro_res numeric(18, 2) NULL,
+        status_rid varchar(50) NULL,
+        country_rid varchar(50) NULL,
+        region_rid varchar(50) NULL,
+        currency_rid varchar(50) NULL,
+        resource_orgname varchar(200) NULL,
+        effort_project_resource_level numeric(18, 2) NULL,
+        cost_project_resource_level numeric(18, 2) NULL,
+        cost_project_task_level numeric(18, 2) NULL,
+        blended_cost_project_task_level numeric(18, 2) NULL,
+        blended_cost_project_resource_level numeric(18, 2) NULL,
+        effort_project_task_level numeric(18, 2) NULL,
+        total_hours_from_tasks numeric(18, 2) NULL,
+        total_cost_from_tasks numeric(18, 2) NULL,
+        total_cost_from_tasks_blended numeric(18, 2) NULL,
+        rd_percent_potential_ai numeric(18, 2) NULL,
+        rd_percent_adjustment numeric(18, 2) NULL,
+        rd_percent_final numeric(18, 2) NULL,
+        qre_fte numeric(18, 2) NULL,
+        qre_subcon numeric(18, 2) NULL,
+        qre_nonlabor numeric(18, 2) NULL,
+        qre_final numeric(18, 2) NULL,
+        rd_credits_fte_region_level numeric(18, 2) NULL,
+        rd_credits_subcon_region_level numeric(18, 2) NULL,
+        rd_credits_nonlabor_region_level numeric(18, 2) NULL,
+        rd_credits_region_level numeric(18, 2) NULL,
+        rd_credits_fte_fed_level numeric(18, 2) NULL,
+        rd_credits_subcon_fed_level numeric(18, 2) NULL,
+        rd_credits_nonlabor_fed_level numeric(18, 2) NULL,
+        rd_credits_fed_level numeric(18, 2) NULL,
+        rd_credits_total numeric(18, 2) NULL,
+        description varchar(2000) NULL,
+        CONSTRAINT project_resources_fiscal_region_r_number_key UNIQUE (r_number)
       );
     `);
   }
@@ -2085,3 +2458,15 @@ async insertFiscalInfoOnly(
   }
 }
 export default SchemaService;
+
+
+
+/*
+1. project resource
+2. project resource fiscal
+3. project resource fiscal region
+4. resource fiscal region
+5. project fiscal region
+6. account fiscal region
+
+*/

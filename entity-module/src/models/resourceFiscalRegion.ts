@@ -1,7 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
-interface ResourceFiscalAttributes {
+interface ResourceFiscalRegionAttributes {
   rid?: string;
   eid?: string;
   account_rid: string;
@@ -43,12 +43,12 @@ interface ResourceFiscalAttributes {
   modified_by?: string | null;
 }
 
-interface ResourceFiscalCreationAttributes
-  extends Optional<ResourceFiscalAttributes, "rid"> {}
+interface ResourceFiscalRegionCreationAttributes
+  extends Optional<ResourceFiscalRegionAttributes, "rid"> {}
 
-export class ResourceFiscal
-  extends Model<ResourceFiscalAttributes, ResourceFiscalCreationAttributes>
-  implements ResourceFiscalAttributes
+export class ResourceFiscalRegion
+  extends Model<ResourceFiscalRegionAttributes, ResourceFiscalRegionCreationAttributes>
+  implements ResourceFiscalRegionAttributes
 {
   public rid?: string;
   public eid?: string;
@@ -91,15 +91,17 @@ export class ResourceFiscal
   public modified_by?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    const model = ResourceFiscal.init(
+    const model = ResourceFiscalRegion.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           allowNull: false,
           primaryKey: true,
         },
-         r_number: {
+        r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
           unique: true,
@@ -129,7 +131,7 @@ export class ResourceFiscal
           type: DataTypes.STRING(50),
           allowNull: false,
         },
-       
+
         resource_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
@@ -203,7 +205,7 @@ export class ResourceFiscal
           allowNull: true,
           validate: {
             isPositive(value: number) {
-              if (value!== null && value < 0) {
+              if (value !== null && value < 0) {
                 throw new Error("Compensation must be a positive number");
               }
             },
@@ -302,7 +304,7 @@ export class ResourceFiscal
           allowNull: true,
           validate: {
             isPositive(value: number) {
-              if (value!== null && value < 0) {
+              if (value !== null && value < 0) {
                 throw new Error("Compensation must be a positive number");
               }
             },
@@ -316,19 +318,16 @@ export class ResourceFiscal
           type: DataTypes.DATE,
           allowNull: true,
         },
-        
-        
       },
       {
         sequelize,
         schema: schemaName,
-        tableName: "resource_fiscal",
+        tableName: "resource_fiscal_region",
         timestamps: false,
         underscored: true,
         hooks: {
           beforeUpdate: (resources) => {
             resources.setDataValue("created_datetime", new Date());
-            resources.setDataValue("modified_datetime", new Date());
           },
         },
       }
@@ -337,19 +336,23 @@ export class ResourceFiscal
   }
 }
 
-
-export async function setupResourceFiscalSeq(sequelize: Sequelize, schemaName: string) {
+export async function setupResourceFiscalRegionSeq(
+  sequelize: Sequelize,
+  schemaName: string
+) {
   try {
     // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_seq START 1`);
-    
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_region_seq START 1`
+    );
+
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE "${schemaName}".resource_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_FISCAL}-' || LPAD(nextval('"${schemaName}".resource_fiscal_seq')::text, 10, '0')`);
-    
-    console.log('Resource fiscal sequence setup complete');
+    await sequelize.query(`ALTER TABLE "${schemaName}".resource_fiscal_region
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_FISCAL_REGION}-' || LPAD(nextval('"${schemaName}".resource_fiscal_region_seq')::text, 10, '0')`);
+
+    console.log("Resource fiscal sequence setup complete");
   } catch (error) {
-    console.error('Error setting up Resource fiscal sequence:', error);
+    console.error("Error setting up Resource fiscal sequence:", error);
     // Don't throw the error to allow the application to continue starting up
     // The sequence setup can be handled separately if needed
   }

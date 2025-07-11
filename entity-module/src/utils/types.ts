@@ -285,3 +285,74 @@ export interface IUpdateKeyContactDetail {
   include_in_communication: boolean;
   status_rid: string;
 }
+
+export interface ICreateProjectResource {
+  project_rid: string;
+  account_rid: string;
+  resource_id: string;
+  project_code: string;
+  resource_code: string;
+  resource_name: string;
+  manager_name?: string;
+  manager_ref_id?: string;
+  resource_type_rid: string;
+  resource_orgname?: string | null;
+  resource_role?: string | null;
+  assigned_skill_role_type_rid: string | null;
+  skill_role_rid: string | null;
+  skill_role_others: string | null;
+  status_rid?: string | null;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  designation?: string | null;
+  effort_project_resource_level?: number | null;
+  cost_project_resource_level?: number | null;
+  salary?: number | null;
+  bonus?: number | null;
+  deductions?: number | null;
+  insurance?: number | null;
+  description?: string | null;
+  created_by: string;
+  modified_by?: string;
+}
+export interface IUpdateProjectResource {
+  project_resource_rid: string;
+  project_rid: string;
+  account_rid: string;
+  resource_id: string;
+  project_code: string;
+  resource_code: string;
+  resource_name: string;
+  manager_name?: string;
+  manager_ref_id?: string;
+  resource_type_rid: string;
+  resource_orgname?: string | null;
+  resource_role?: string | null;
+  assigned_skill_role_type_rid: string | null;
+  skill_role_rid: string | null;
+  skill_role_others: string | null;
+  status_rid?: string | null;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  fiscal_year: number;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  designation?: string | null;
+  effort_project_resource_level?: number | null;
+  cost_project_resource_level?: number | null;
+  salary?: number | null;
+  bonus?: number | null;
+  deductions?: number | null;
+  insurance?: number | null;
+  description?: string | null;
+  modified_by?: string;
+}
