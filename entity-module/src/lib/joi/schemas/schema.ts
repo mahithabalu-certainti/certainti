@@ -1730,12 +1730,12 @@ const createAttachmentSchema = Joi.object({
     //     }),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
-        .valid('project', 'account', 'case')
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be either project, account or case'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
         }),
     // document_name: Joi.string()
     //     .required()
@@ -1851,13 +1851,13 @@ const createAttachmentSchema = Joi.object({
 });
 
 const listAttachmentsSchema = Joi.object({
-    level: Joi.string()
-        .valid('account', 'project', 'case')
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
         .messages({
-            'any.required': 'Level is required',
-            'string.base': 'Level must be a string',
-            'any.only': 'Level must be one of: account, project, case'
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -1905,6 +1905,18 @@ const listAttachmentsSchema = Joi.object({
             'string.max': 'Search cannot exceed 255 characters'
         }),
     filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
@@ -1942,6 +1954,19 @@ const listAttachmentSummarySchema = Joi.object({
             'string.max': 'Search cannot exceed 255 characters'
         }),
     filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })

@@ -100,7 +100,7 @@ async function getAllAttachments(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await attachmentService.getAttachments(userId,value.level,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder);
+    const attachments = await attachmentService.getAttachments(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -192,7 +192,7 @@ async function getAllAttachments(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await attachmentService.getAttachmentSummary(userId,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder);
+    const attachments = await attachmentService.getAttachmentSummary(userId,value.page,value.limit,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
