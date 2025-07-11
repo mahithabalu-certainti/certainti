@@ -24,8 +24,8 @@ export const getAllProjectFilterFields = (
     type: 'text',
     operatorOption: textOptions,
     hide:
-      !projectPermissionMap?.['profile_code']?.read &&
-      !projectPermissionMap?.['profile_code']?.edit,
+      !projectPermissionMap?.['project_code']?.read &&
+      !projectPermissionMap?.['project_code']?.edit,
   },
   {
     name: 'Name',
