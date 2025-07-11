@@ -202,10 +202,6 @@ const ResourceForm: React.FC = () => {
     return map;
   }, [viewResourceSkillEditFields]);
 
-  console.log('resourcePermissionMap', resourcePermissionMap);
-  console.log('resourceCostPermissionMap', resourceCostPermissionMap);
-  console.log('resourceSKillPermissionMap', resourceSKillPermissionMap);
-
   const currency = useFetchCurrency();
   const statusOptions = useGetStatus();
   const resourceStatusOptions = useGetResourceStatus();
@@ -272,6 +268,7 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const resourceDetailsData = resource?.data?.resourceDetails;
+    console.log('resourceDetailsData', resourceDetailsData);
     if (resourceDetailsData) {
       const finalResourceDetails = {
         ...resourceDetailsData,
