@@ -277,12 +277,12 @@ export const FormData = (
             placeholder: 'Choose Project Type',
             disabled:
               isEditView &&
-              permissionMap?.['project_type']?.read &&
-              !permissionMap?.['project_type']?.edit,
+              permissionMap?.['project_type_rid']?.read &&
+              !permissionMap?.['project_type_rid']?.edit,
             hide:
               isEditView &&
-              !permissionMap?.['project_type']?.read &&
-              !permissionMap?.['project_type']?.edit,
+              !permissionMap?.['project_type_rid']?.read &&
+              !permissionMap?.['project_type_rid']?.edit,
           }),
           createDateField('project_startdate', 'Start Date', {
             required: false,
@@ -488,12 +488,12 @@ export const FormData = (
             placeholder: 'Choose Status',
             disabled:
               isEditView &&
-              permissionMap?.['project_status']?.read &&
-              !permissionMap?.['project_status']?.edit,
+              permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
             hide:
               isEditView &&
-              !permissionMap?.['project_status']?.read &&
-              !permissionMap?.['project_status']?.edit,
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
           }),
         ],
       },
@@ -546,10 +546,9 @@ export const FormData = (
               permissionMap?.['region']?.read &&
               !permissionMap?.['region']?.edit,
             hide:
-              (isEditView &&
-                !permissionMap?.['region']?.read &&
-                !permissionMap?.['region']?.edit) ||
-              !showOthersField,
+              isEditView &&
+              !permissionMap?.['region']?.read &&
+              !permissionMap?.['region']?.edit,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
@@ -798,12 +797,12 @@ export const FormData = (
               radioOptions: PROJECT_YES_NO_OPTIONS,
               disabled:
                 isEditView &&
-                permissionMap?.['auto_send_ai_interaction']?.read &&
-                !permissionMap?.['auto_send_ai_interaction']?.edit,
+                permissionMap?.['autosend_interaction']?.read &&
+                !permissionMap?.['autosend_interaction']?.edit,
               hide:
                 isEditView &&
-                !permissionMap?.['auto_send_ai_interaction']?.read &&
-                !permissionMap?.['auto_send_ai_interaction']?.edit,
+                !permissionMap?.['autosend_interaction']?.read &&
+                !permissionMap?.['autosend_interaction']?.edit,
             }
           ),
           createTextField('max_ai_interaction', 'Max Interaction Follow Up', {
@@ -814,18 +813,22 @@ export const FormData = (
               ' Max Interaction follow up must be a positive integer between 1 and 10.',
             disabled:
               isEditView &&
-              permissionMap?.['max_ai_interaction']?.read &&
-              !permissionMap?.['max_ai_interaction']?.edit,
+              permissionMap?.['max_ai_interactions']?.read &&
+              !permissionMap?.['max_ai_interactions']?.edit,
             hide:
               isEditView &&
-              !permissionMap?.['max_ai_interaction']?.read &&
-              !permissionMap?.['max_ai_interaction']?.edit,
+              !permissionMap?.['max_ai_interactions']?.read &&
+              !permissionMap?.['max_ai_interactions']?.edit,
           }),
         ],
       },
       {
         sectionName: 'Comments',
         fillType: 'full',
+        hide:
+          isEditView &&
+          !permissionMap?.['comments']?.read &&
+          !permissionMap?.['comments']?.edit,
         fields: [
           createTextAreaField('comments', 'Comments', {
             required: false,
@@ -860,40 +863,40 @@ export const FormData = (
             disabled: isEditView,
             hide:
               isEditView &&
-              !permissionMap?.['rid']?.read &&
-              !permissionMap?.['rid']?.edit,
+              !permissionMap?.['created_datetime']?.read &&
+              !permissionMap?.['created_datetime']?.edit,
           }),
           createTextField('created_name', 'Created By', {
             required: false,
             disabled: isEditView,
             hide:
               isEditView &&
-              !permissionMap?.['rid']?.read &&
-              !permissionMap?.['rid']?.edit,
+              !permissionMap?.['created_by']?.read &&
+              !permissionMap?.['created_by']?.edit,
           }),
           createTextField('r_number', 'Project ID', {
             required: false,
             disabled: isEditView,
             hide:
               isEditView &&
-              !permissionMap?.['rid']?.read &&
-              !permissionMap?.['rid']?.edit,
+              !permissionMap?.['r_number']?.read &&
+              !permissionMap?.['r_number']?.edit,
           }),
           createTextField('updated_on', 'Updated On', {
             required: false,
             disabled: isEditView,
             hide:
               isEditView &&
-              !permissionMap?.['rid']?.read &&
-              !permissionMap?.['rid']?.edit,
+              !permissionMap?.['modified_datetime']?.read &&
+              !permissionMap?.['modified_datetime']?.edit,
           }),
           createTextField('modified_name', 'Updated By', {
             required: false,
             disabled: isEditView,
             hide:
               isEditView &&
-              !permissionMap?.['rid']?.read &&
-              !permissionMap?.['rid']?.edit,
+              !permissionMap?.['modified_by']?.read &&
+              !permissionMap?.['modified_by']?.edit,
           }),
         ],
       },
