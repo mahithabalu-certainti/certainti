@@ -118,15 +118,6 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
-export interface AccountColumn {
-  id: string;
-  label: string;
-  width: string;
-  sortId: string;
-  sortable?: boolean;
-  sx?: React.CSSProperties;
-}
-
 export enum Storagetype {
   SeperateDB = 'separate_db',
   StoredDB = 'store_in_parent',
@@ -378,6 +369,8 @@ export type AccountList = {
   professional_services_consultant: string;
   finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
+  color?: string;
+  bgColor?: string;
 };
 
 export interface ConvertedAccount {

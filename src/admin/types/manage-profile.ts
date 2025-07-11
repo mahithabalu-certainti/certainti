@@ -18,16 +18,6 @@ export type ManageProfileList = {
   created_by: string | null;
   modified_by: string | null;
 };
-export interface ProfileTableColumn<T> {
-  id: string;
-  label: string;
-  width?: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-}
 
 export interface ProfileDetail {
   source_profile_id: string;

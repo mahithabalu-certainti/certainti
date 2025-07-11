@@ -181,6 +181,24 @@ export const Accounts: React.FC = () => {
       })) || [],
     [industry.data?.data.industries]
   );
+
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const industryOptions = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
+      })) || [],
+    [industry.data?.data.industries]
+  );
   console.log('allIndustries', permissionMap);
   const accountFilterFields = getAccountFilterFields(
     allCountries,
@@ -289,6 +307,9 @@ export const Accounts: React.FC = () => {
           isAccountEditEnable={true}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
+          countryOptions={countryOptions}
+          industryOptions={industryOptions}
+          onRefreshClick={onRefreshClick}
         />
       </div>
     </div>

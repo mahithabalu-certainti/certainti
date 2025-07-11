@@ -16,6 +16,7 @@ import { checkPermission } from '../../../../../common-utils';
 import { TabMenus } from './resources';
 import { InfoSection } from '../../../../../components';
 import { useResourceDetail } from '../../../../services/resource-details';
+import { ResourceTypeEnum } from '../../../resource-form/utils';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -186,6 +187,10 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
               refreshCostTrigger={refreshCostTrigger}
               setCount={setCount}
+              resourceType={
+                resource?.data?.resourceDetails
+                  ?.resource_type_name as ResourceTypeEnum
+              }
             />
           </Box>
         )}

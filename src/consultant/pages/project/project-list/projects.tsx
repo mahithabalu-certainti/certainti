@@ -174,6 +174,11 @@ export const Projects: React.FC = () => {
     }
   };
 
+  const dropdownOptions = {
+    classification: Classification?.data,
+    projectType: projectTypeOptions?.data,
+  };
+
   if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
 
   return (
@@ -273,6 +278,7 @@ export const Projects: React.FC = () => {
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
           toggleEnabled={toggleEnabled}
+          dropdownOptions={dropdownOptions}
         />
       </div>
     </div>
