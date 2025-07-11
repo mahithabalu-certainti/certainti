@@ -344,6 +344,11 @@ const ListTable = <T extends RowData>({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (modalState.open) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Escape') {
       handleCancel();
     } else if (e.key === 'Enter') {

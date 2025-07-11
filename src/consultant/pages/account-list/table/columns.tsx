@@ -80,7 +80,9 @@ export const getAccountColumns = (
       placeholder: 'Choose Industry',
       options: industryOptions,
       getFieldData: (rowData: DependencyRowData) => {
-        const industryId = (rowData.industry as { rid: string }).rid;
+        const industryId = rowData.industry
+          ? (rowData.industry as { rid: string }).rid
+          : '';
         return String(industryId);
       },
       dependencies: [
@@ -141,7 +143,9 @@ export const getAccountColumns = (
       placeholder: 'Choose Country',
       options: countryOptions,
       getFieldData: (rowData: DependencyRowData) => {
-        const countryId = (rowData.country as { rid: string }).rid;
+        const countryId = rowData.country
+          ? (rowData.country as { rid: string }).rid
+          : '';
         return String(countryId);
       },
     },
