@@ -245,7 +245,14 @@ export const resourceFilterFields = (
       !resourcepermissionMap?.['resource_code']?.read &&
       !resourcepermissionMap?.['resource_code']?.edit,
   },
-  { name: 'Name', value: 'resource_name', type: 'text' },
+  {
+    name: 'Name',
+    value: 'resource_name',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['resource_name']?.read &&
+      !resourcepermissionMap?.['resource_name']?.edit,
+  },
   {
     name: 'Resource Type',
     value: 'resource_type_rid',
@@ -254,8 +261,8 @@ export const resourceFilterFields = (
     options: resourceTypeOptions,
     filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
-      !resourcepermissionMap?.['resource_code']?.read &&
-      !resourcepermissionMap?.['resource_code']?.edit,
+      !resourcepermissionMap?.['resource_type_rid']?.read &&
+      !resourcepermissionMap?.['resource_type_rid']?.edit,
   },
   {
     name: 'Org Name',
