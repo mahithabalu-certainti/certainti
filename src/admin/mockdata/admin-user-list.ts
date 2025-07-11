@@ -18,12 +18,16 @@ export const ManageUserMockData: ManageUserApiResponse = {
         first_name: 'KK',
         profile: {
           profile_name: 'Technical Consultant',
+          rid: '',
         },
         business_teams: {
           business_teams: 'Account Administration',
+          rid: '',
         },
         created_datetime: '',
         modified_datetime: '',
+        status_rid: '',
+        azure_id: '',
       },
       {
         rid: '001891c0-ddfe-4521-a806-e489916616ad',
@@ -36,12 +40,16 @@ export const ManageUserMockData: ManageUserApiResponse = {
         first_name: 'Rahul',
         profile: {
           profile_name: 'Administrator',
+          rid: '',
         },
         business_teams: {
           business_teams: 'Case Administration',
+          rid: '',
         },
         created_datetime: '',
         modified_datetime: '',
+        status_rid: '',
+        azure_id: '',
       },
     ],
   },

@@ -1,13 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
-import { useResourceSkill } from '../../../../../services/resource-skill/resource-skill-service';
+import {
+  useFetchResourceSkillSubType,
+  useFetchResourceSkillType,
+  useGetSkillLevel,
+  useResourceSkill,
+} from '../../../../../services/resource-skill/resource-skill-service';
+import { useMutation } from '@apollo/client';
+import { UPDATE_RESOURCE_SKILL } from '../../../../../../api/graphql/queries/resource-query';
+import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCESKILL } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
-import { resourceSkillColumns } from './columns';
+import { getResourceSkillColumns } from './columns';
+import { SkillSubtype, SkillType } from '../../../../../types/resource';
+import {
+  CellEditData,
+  FieldChangeEvent,
+  FieldChangeValue,
+} from '../../../../../../components/table/types';
+import { OthersEnum } from '../../../../../types';
+import { useToast } from '../../../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -40,11 +59,20 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   setCount,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const [resourceSkillList, setResourceSkillList] = useState<
+    ResourceSkillList[]
+  >([]);
+  const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
+    client: resourceClient,
+  });
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const {
     data: skillList,
     isLoading,
@@ -67,6 +95,29 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setCount(skillList?.count || 0);
     }
   }, [skillList, setCount]);
+
+  useEffect(() => {
+    if (skillList?.resourceSkill) {
+      setResourceSkillList(skillList.resourceSkill);
+    }
+  }, [skillList]);
+
+  //permissions
+  const skillViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    skillViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [skillViewEditFields]);
 
   const handleEdit = (skill: ResourceSkillList) => {
     const data = convertResourceSkill(skill);
@@ -105,13 +156,148 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       hide: true,
     },
   ];
+  const [currentSkillType, setCurrentSkillType] = useState<string>('');
+  const skillLevelOptions = useGetSkillLevel();
+  const { data: skillType, isLoading: skillTypeLoading } =
+    useFetchResourceSkillType(true);
+  const { data: skillSubType, isLoading: subTypeLoading } =
+    useFetchResourceSkillSubType(
+      currentSkillType ? ([currentSkillType] as string[]) : []
+    );
+
+  const memoizedSkillLevels = useMemo(
+    () =>
+      skillLevelOptions?.data?.data?.skillLevel.map((item) => ({
+        label: item.skill_level_name,
+        value: item.rid,
+      })) || [],
+    [skillLevelOptions?.data?.data?.skillLevel]
+  );
+
+  const memoizedSkillType = useMemo(() => {
+    const data = skillType as SkillType[];
+    const convertData =
+      data?.map((skill: SkillType) => ({
+        label: skill.skill_type_name,
+        value: skill.rid,
+      })) || [];
+    return convertData;
+  }, [skillType]);
+
+  const memoizedSkillSubType = useMemo(() => {
+    const data = skillSubType as SkillSubtype[];
+    const finalData =
+      data?.map((skill: SkillSubtype) => ({
+        label: skill.skill_subtype_name,
+        value: skill.rid,
+      })) || [];
+    return finalData;
+  }, [skillSubType]);
+
+  const othersSkillTypeId = useMemo(() => {
+    const data = skillType as SkillType[];
+    const others = data?.find(
+      (item) => item.skill_type_name.toLowerCase() === OthersEnum.Others
+    );
+    return others?.rid || null;
+  }, [skillType]);
+
+  const othersSkillSubTypeId = useMemo(() => {
+    const data = skillSubType as SkillSubtype[];
+    const others = data?.find(
+      (item) => item.skill_subtype_name?.toLowerCase() === OthersEnum.Others
+    );
+    return others?.rid || null;
+  }, [skillSubType]);
 
   const getRowId = (row: ResourceSkillList) => row?.rid || '';
 
+  const handleSkillType = (rid: string) => {
+    setCurrentSkillType(rid);
+  };
+
+  const resourceSkillColumns = getResourceSkillColumns(
+    memoizedSkillLevels,
+    memoizedSkillType,
+    memoizedSkillSubType,
+    handleSkillType,
+    skillTypeLoading,
+    subTypeLoading,
+    permissionMap
+  );
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'skill_type_name' && event.value) {
+      setCurrentSkillType(String(event.value));
+    }
+  };
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousSkillList = [...resourceSkillList];
+
+    // Flags
+    let hasSkillType = false;
+    let hasSkillTypeOther = false;
+    let hasSkillSubType = false;
+    let hasSkillSubTypeOther = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (skill, item) => {
+        const key = item.editId || item.columnId;
+        skill[key] = item.value;
+
+        if (item.columnId === 'skill_type_name') hasSkillType = true;
+        if (item.columnId === 'skill_type_others') hasSkillTypeOther = true;
+        if (item.columnId === 'skill_subtype_name') hasSkillSubType = true;
+        if (item.columnId === 'skill_subtype_others')
+          hasSkillSubTypeOther = true;
+
+        return skill;
+      },
+      {
+        resource_skill_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
+        resource_rid: resourceRid,
+      }
+    );
+
+    if (
+      hasSkillType &&
+      hasSkillSubType &&
+      !hasSkillTypeOther &&
+      !hasSkillSubTypeOther
+    ) {
+      updateData['skill_type_others'] = '';
+      updateData['skill_subtype_others'] = '';
+    }
+
+    try {
+      const res = await updateResourceSkill({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateResourceSkillInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResourceSkill = result.data;
+        setResourceSkillList((prevSkill) =>
+          prevSkill.map((skill) =>
+            skill.rid === updatedResourceSkill.rid
+              ? updatedResourceSkill
+              : skill
+          )
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setResourceSkillList(previousSkillList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setResourceSkillList(previousSkillList);
+    }
+  };
   return (
     <div>
       <ListTable
-        data={skillList?.resourceSkill as any}
+        data={resourceSkillList}
         columns={resourceSkillColumns}
         getRowId={getRowId}
         hoverHighlight={false}
@@ -123,7 +309,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
           maxHeight: 'calc(100vh - 410px)',
           overflow: 'auto',
         }}
-        selectable={false}
+        selectable={true}
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}
@@ -138,6 +324,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         sortBy={skillOrderBy}
         sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
+        onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
+        skillTypeIds={{
+          othersSkillTypeId,
+          othersSkillSubTypeId,
+        }}
       />
     </div>
   );

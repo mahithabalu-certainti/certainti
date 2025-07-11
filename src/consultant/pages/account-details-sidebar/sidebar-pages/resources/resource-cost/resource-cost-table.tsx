@@ -1,18 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
+import { UPDATE_RESOURCE_COST } from '../../../../../../api/graphql/queries/resource-query';
 import { ResourceCostList } from '../../../../../types/resource-cost';
 import {
   useResourceCost,
   useUpdateCostAccept,
 } from '../../../../../services/resource-cost/resource-cost-service';
+import { FieldChangeValue } from '../../../../../../components/table/types';
+import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCECOST } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
-import { resourceCostColumns } from './columns';
+import { getResourceCostColumns } from './columns';
 import { convertResourceCost } from './resource-cost-type';
 import { AcceptIcon, RejectIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
+import { useFetchCurrency } from '../../../../../services/account';
+import { CellEditData } from '../../../../../../components/table/types';
+import { ResourceTypeEnum } from '../../../../resource-form/utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -29,6 +39,7 @@ interface ResourceCostTableProps {
   isResourceCostEditEnable?: boolean;
   refreshCostTrigger?: number;
   setCount?: (count: number) => void;
+  resourceType: ResourceTypeEnum;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -45,14 +56,23 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   isResourceCostEditEnable,
   refreshCostTrigger,
   setCount,
+  resourceType,
 }) => {
   const navigate = useNavigate();
-  const { successToast } = useToast();
+  const { successToast, errorToast } = useToast();
+  const [resourceCostList, setResourceCostList] = useState<ResourceCostList[]>(
+    []
+  );
+  const [updateResourceCost] = useMutation(UPDATE_RESOURCE_COST, {
+    client: resourceClient,
+  });
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const {
     data: costList,
     isLoading,
@@ -77,6 +97,40 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       setCount(costList?.count || 0);
     }
   }, [costList, setCount]);
+
+  useEffect(() => {
+    if (costList?.resourceCost) {
+      setResourceCostList(costList.resourceCost);
+    }
+  }, [costList]);
+
+  const currency = useFetchCurrency();
+
+  const memoizedCurrency = useMemo(
+    () =>
+      currency.data?.data.currency.map((account) => ({
+        label: account.currency_code,
+        value: account.rid,
+      })) || [],
+    [currency.data?.data.currency]
+  );
+
+  //permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
@@ -177,12 +231,62 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     ];
   };
 
+  const isFullTime = resourceType?.toLowerCase() === ResourceTypeEnum.FULL_TIME;
+
   const getRowId = (row: ResourceCostList) => row?.rid || '';
+  const resourceCostColumns = getResourceCostColumns(
+    memoizedCurrency,
+    isFullTime,
+    permissionMap
+  );
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousCostList = [...resourceCostList];
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (cost, item) => {
+        const key = item.editId || item.columnId;
+        cost[key] = item.value;
+        return cost;
+      },
+      {
+        resource_cost_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
+        resource_rid: resourceRid,
+      }
+    );
+
+    try {
+      const res = await updateResourceCost({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateResourceCostInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResourceCost = result.data;
+        setResourceCostList((prevCost) =>
+          prevCost.map((cost) =>
+            cost.rid === updatedResourceCost.rid ? updatedResourceCost : cost
+          )
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setResourceCostList(previousCostList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setResourceCostList(previousCostList);
+    }
+  };
+
+  const hideStatusAction =
+    !permissionMap?.['status_action']?.edit &&
+    !permissionMap?.['status_action']?.read;
 
   return (
     <div>
       <ListTable
-        data={costList?.resourceCost as any}
+        data={resourceCostList}
         columns={resourceCostColumns}
         getRowId={getRowId}
         hoverHighlight={false}
@@ -192,14 +296,16 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
           maxHeight: 'calc(100vh - 410px)',
           overflow: 'auto',
         }}
-        stickyHeader={false}
+        stickyHeader={true}
         stickyColumnsCount={1}
         selectable={false}
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}
-        conditionMenuItems={(row: ResourceCostList) =>
-          getConditionMenuItems(row) || undefined
+        conditionMenuItems={
+          !hideStatusAction
+            ? (row: ResourceCostList) => getConditionMenuItems(row)
+            : undefined
         }
         loading={isLoading}
         error={error ? 'Failed to load resource cost data' : undefined}
@@ -212,6 +318,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         sortBy={costorderBy}
         sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
+        onCellEdit={handleCellEdit}
       />
     </div>
   );
