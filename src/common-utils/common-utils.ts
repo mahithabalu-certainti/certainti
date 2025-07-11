@@ -26,6 +26,7 @@ import {
   YesNo,
 } from '../consultant/types';
 import { PermissionState } from '../store/type';
+import { DetailItem } from '../components/details-section/details';
 
 export const createTextField = (
   name: string,
@@ -81,6 +82,7 @@ export const createPhoneInputField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
+    hide?: boolean;
   } = {}
 ): FieldType => ({
   type: 'phone',
@@ -90,6 +92,7 @@ export const createPhoneInputField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
+  hide: options.hide,
 });
 
 export const createTextAreaField = (
@@ -140,6 +143,7 @@ export const createRadioField = (
     defaultValue?: string;
     disabled?: boolean;
     onChange?: boolean;
+    hide?: boolean;
     resetDependsFields?: string[];
     dependantLabel?: string;
     clearValue?: Record<string, string>;
@@ -161,6 +165,7 @@ export const createRadioField = (
   onChange: options.onChange,
   defaultSelect: options.defaultSelect,
   defaultValue: options.defaultValue,
+  hide: options.hide,
   resetDependsFields: options.resetDependsFields,
   dependantLabel: options.dependantLabel,
   clearValue: options.clearValue,
@@ -576,6 +581,21 @@ export const checkPermission = (
     );
   }
   return data?.find((item) => item?.name === condition)?.is_enabled;
+};
+
+export const applyHidePermission = (
+  items: DetailItem[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): DetailItem[] => {
+  return items.map((item) => {
+    const permission = item.key
+      ? permissionMap[item.key]
+      : { read: true, edit: true };
+    return {
+      ...item,
+      hide: !(permission?.read || permission?.edit),
+    };
+  });
 };
 
 export const DONT_HAVE_ACCESS =
