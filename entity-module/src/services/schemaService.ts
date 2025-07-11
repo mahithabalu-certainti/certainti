@@ -1570,6 +1570,7 @@ class SchemaService {
           type: "SELECT",
         }
       );
+
       return accountData;
     } catch (err) {
       throw new Error("Error fetching Accounts: " + (err as Error).message);
@@ -1662,8 +1663,9 @@ async fetchAllProjects(
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, 
+        ps.project_classification_other,
         pt.project_type_name, ps.account_rid,
-        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        pc.classification_name AS classification_name,
         ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
         ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
@@ -1706,8 +1708,12 @@ async fetchAllProjects(
         ? `
           SELECT DISTINCT ps.project_rid
           ${commonJoins}
+          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
           ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
           ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+          ${fiscalYearClause}
         `
         : `
           SELECT DISTINCT ps.project_rid
@@ -1723,7 +1729,8 @@ async fetchAllProjects(
       const projectIdsReplacements = bothParentAndChild
         ? [
             ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsParent
+            ...whereReplacementsParent,
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : [])
           ]
         : [
             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
@@ -1759,9 +1766,11 @@ async fetchAllProjects(
         pfs.project_type_rid, 
         pfs.fiscal_year, 
         pfs.project_client_group, 
+        pfs.project_classification_rid,
         acc.account_name, 
         ps.qre,
-        COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
+        pc.classification_name AS classification_name,
+        pfs.project_classification_other,
         CAST(pfs.total_effort_prj AS TEXT) as total_effort, 
         CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
         CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
@@ -1961,8 +1970,12 @@ async fetchAllProjects(
         ? `
           SELECT DISTINCT ps.project_rid
           ${commonJoins}
+          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
           ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
           ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+          ${fiscalYearClause}
         `
         : `
           SELECT DISTINCT ps.project_rid
@@ -1978,7 +1991,8 @@ async fetchAllProjects(
       const projectIdsReplacements = bothParentAndChild
         ? [
             ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsParent
+            ...whereReplacementsParent,
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
           ]
         : [
             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
@@ -3284,6 +3298,32 @@ async fetchAllProjects(
       throw new Error("Error adding user details" + (err as Error).message);
     }
   }
+
+/**
+ * Gets all child accounts for a given entity ID
+ * @param schemaName - The schema name to query
+ * @param entityId - The parent entity ID to find children for
+ * @returns Promise containing array of child account records
+ */
+async getChildAccounts(entityId: string) {
+  try {
+    const mainDbSequelize = await initMainDbSequelize();
+    
+    const childAccounts = await mainDbSequelize.query(
+      `SELECT * FROM ${MAIN_SCHEMA_NAME}.account 
+       WHERE parent_account_rid = :entityId`,
+      {
+        replacements: { entityId },
+        type: "SELECT"
+      }
+    );
+
+    return childAccounts;
+  } catch (err) {
+    throw new Error("Error getting child accounts: " + (err as Error).message);
+  }
+}
+
 }
 
 export default SchemaService;

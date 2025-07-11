@@ -1,5 +1,6 @@
 import { Project } from "../../models/project";
 import {
+  ICreateAttachment,
   ICreateProject,
   ICreateProjectResource,
   ICreateResource,
@@ -11,6 +12,13 @@ import {
   IUpdateResourceCost,
   IUpdateResourceSkill,
 } from "../../utils/types";
+
+export interface IProjectGraphQlServices {
+  inLineEditProject(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}> 
+}
 
 export interface IResourceService {
   createResource(
@@ -321,6 +329,64 @@ export interface IProjectService {
     data?: { projects: any, count: number };
   }>;
 }
+
+export interface IResourceGraphQlServices {
+  inLineEditResources(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
+}
+
+export interface IResourceCostGraphQlService {
+  inlineEditResourceCost(data : any) : Promise<{
+    statusCode: number;
+    statusMesage: string;
+    statusMessage?: undefined;
+} | {
+    statusCode: number;
+    statusMessage: string;
+    statusMesage?: undefined;
+} | undefined>
+}
+
+export interface IResourceSkillGraphQlService {
+  updateInlineResourceSkill(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
+}
+export interface IAttachmentService {
+   createAttachment(attachmentData: ICreateAttachment, userId: string, file: Express.Multer.File): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { attachment: any };
+  }>;
+
+  getAttachments(userId: string,
+  level: string,
+  entityId: string,
+  accountRid: string,
+  page:number,
+  limit:number,
+  search: string,
+  filters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string):Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[]; totalCount: number };
+}>
+
+  getDocumentTypeAndCategory(category_rid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { documentTypes: any[]; documentCategories: any[] };
+  }>;
+}
+
 export interface IProjectResourceService {
   createProjectResource(projectResourceData: ICreateProjectResource, userId: string): Promise<{
     statusCode: number;

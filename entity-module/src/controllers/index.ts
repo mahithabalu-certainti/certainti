@@ -2,6 +2,7 @@ import resoucesController from './resourceController';
 import resourceCostController from "./resourceCostController";
 import resourceSkillController from "./resourceSkillController";
 import projectController from "./projectController";
+import attachmentController from "./attachmentController";
 import projectResourcesController from "./projectResourcesController";
 
 const controller = {
@@ -9,6 +10,7 @@ const controller = {
     resourceCostController,
     resourceSkillController,
     projectController,
+    attachmentController,
     projectResourcesController
 };
 

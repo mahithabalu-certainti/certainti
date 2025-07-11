@@ -1,5 +1,8 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { initOrgSequelize } from "../config/orgDataSource";
+import { Resources } from "../models/resource";
+import { ResourceFiscal } from "../models/resourceFiscal";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
 import moment from "moment";

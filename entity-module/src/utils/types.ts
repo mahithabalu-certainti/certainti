@@ -286,6 +286,23 @@ export interface IUpdateKeyContactDetail {
   status_rid: string;
 }
 
+export interface ICreateAttachment {
+  browse_file: string,
+  account_rid: string,
+  document_name: string,
+  attach_to: string,
+  attachment_level: string,
+  fiscal_year: number,
+  format: string,
+  size_in_mb: number,
+  document_type_rid: string,
+  document_category_rid: string,
+  document_category_others: string,
+  document_type_others: string,
+  comments: string,
+}
+
+
 export interface ICreateProjectResource {
   project_rid: string;
   account_rid: string;

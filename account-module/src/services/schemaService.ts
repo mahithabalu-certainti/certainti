@@ -1,4 +1,4 @@
-import { QueryTypes } from "sequelize";
+import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
@@ -86,6 +86,8 @@ class SchemaService {
       await this.createResourceSkillTimelineTable(schemaName, sequelize);
       await this.createResourceSkillHistoryTable(schemaName, sequelize);
       await this.createResourceFiscalTable(schemaName, sequelize);
+      await this.createAttachmentTable(schemaName, sequelize);
+      await this.createAttachmentTimeline(schemaName, sequelize);
       await this.createResourceFiscalRegionTable(schemaName, sequelize);
 
       await transaction.commit();
@@ -93,6 +95,70 @@ class SchemaService {
       console.log("Ta ble createng err", Err);
     }
   }
+
+  private async createAttachmentTimeline(schemaName: string, sequelize: Sequelize) {
+
+    await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_timeline_seq START 1;
+   `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".attachment_timeline
+(
+    rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number character varying(20) COLLATE pg_catalog."default" DEFAULT ('ATI-'::text || lpad((nextval('"${schemaName}".attachment_timeline_seq'::regclass))::text, 10, '0'::text)),
+    created_by character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    modified_by character varying(50) COLLATE pg_catalog."default",
+    document_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    document_category_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_type_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attachment_level character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_type character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_status character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_name character varying(255) COLLATE pg_catalog."default",
+    event_datetime timestamp with time zone NOT NULL,
+    CONSTRAINT attachment_timeline_pkey PRIMARY KEY (rid),
+    CONSTRAINT attachment_timeline_r_number_key UNIQUE (r_number)
+)
+      `);
+  };
+
+
+  private async createAttachmentTable(schemaName: string, sequelize: Sequelize) {
+
+     await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_seq START 1;
+   `);
+
+     await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."attachments"
+   (
+    rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number character varying(20) COLLATE pg_catalog."default" DEFAULT ('ATT-'::text || lpad((nextval('"${schemaName}".attachment_seq'::regclass))::text, 10, '0'::text)),
+    created_datetime timestamp with time zone NOT NULL,
+    created_by character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    modified_datetime timestamp with time zone,
+    modified_by character varying(50) COLLATE pg_catalog."default",
+    account_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    browse_file character varying(1000) COLLATE pg_catalog."default" NOT NULL,
+    document_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attachment_level character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    fiscal_year integer NOT NULL,
+    format character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    size_in_mb numeric(10,2) NOT NULL,
+    document_category_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_type_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    document_category_others character varying(120) COLLATE pg_catalog."default",
+    document_type_others character varying(120) COLLATE pg_catalog."default",
+    comments character varying(2000) COLLATE pg_catalog."default",
+    CONSTRAINT attachments_pkey PRIMARY KEY (rid),
+    CONSTRAINT attachments_r_number_key UNIQUE (r_number)
+   )`
+  );
+  };
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
     await sequelize.query(`
@@ -2341,7 +2407,8 @@ async insertFiscalInfoOnly(
   offset?: number,
   sortBy?: string,
   sortOrder?: string,
-  type?: string
+  type?: string,
+  fiscalYear?:any
 ) {
   try {
     const orgDbSequelize = await initOrgSequelize();
@@ -2380,8 +2447,10 @@ async insertFiscalInfoOnly(
         async ([schema, accountRids]) => {
           try {
             const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
-            return await orgDbSequelize.query(
-              `SELECT CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
+            
+            // Build the base query
+            let query = `
+              SELECT CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
                 SUM(total_projects::NUMERIC) AS total_projects,
                 SUM(total_project_hours::NUMERIC) AS total_project_hours,
                 SUM(total_project_cost::NUMERIC) AS total_project_cost,
@@ -2391,9 +2460,21 @@ async insertFiscalInfoOnly(
                 SUM(total_projects_rd_credits::NUMERIC) AS total_projects_rd_credits
               FROM "${schemaName}".account_fiscal
               WHERE account_rid IN (:accountRids)
-              GROUP BY account_rid, fiscal_year`,
-              { replacements: { accountRids }, type: "SELECT" }
-            );
+            `;
+            
+            // Add fiscal year condition only if it's provided
+            const replacements: any = { accountRids };
+            if (fiscalYear != null && fiscalYear != "FY-All") {
+              query += ` AND fiscal_year = :fiscal_year`;
+              replacements.fiscal_year = fiscalYear;
+            }
+            
+            query += ` GROUP BY account_rid, fiscal_year`;
+            
+            return await orgDbSequelize.query(query, {
+              replacements,
+              type: "SELECT"
+            });
           } catch (error) {
             console.warn(`Fiscal data skipped for schema ${schema}:`, error);
             return [];
@@ -2421,7 +2502,7 @@ async insertFiscalInfoOnly(
       };
     };
 
-    const enrichedAccounts = accountData.map((account: any) => {
+    let enrichedAccounts = accountData.map((account: any) => {
       const parent = enrichAccount(account.dataValues, false);
       const children = (account.dataValues?.child_accounts || []).map(
         (c: any) => enrichAccount(c.dataValues, true)
@@ -2430,8 +2511,29 @@ async insertFiscalInfoOnly(
       parent.child_accounts = children;
       return parent;
     });
+    // After enriching accounts with fiscal data, apply filtering
+    let filteredAccounts = enrichedAccounts;
+    if (fiscalYear != null && fiscalYear != "FY-All") {
+      filteredAccounts = filteredAccounts
+        .map((parent: any) => {
+          // Filter child accounts - keep only those with fiscal data
+          const filteredChildren = parent.child_accounts?.filter(
+          (child: any) => child.projects_by_fiscal_year?.length > 0
+          ) || [];
+          // Return a copy of parent with filtered children
+          return {
+            ...parent,
+            child_accounts: filteredChildren
+          };
+        })
+        // Filter out parents that have no children left after filtering
+        .filter((parent: any) => parent.child_accounts?.length > 0);
+      }
 
-    return { data: enrichedAccounts, total: enrichedAccounts.length };
+    return {
+      data: filteredAccounts,
+      total: filteredAccounts.length
+  };
   } catch (err) {
     throw new Error("Error fetching fiscal data.");
   }

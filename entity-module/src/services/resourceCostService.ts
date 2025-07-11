@@ -1,7 +1,7 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
@@ -128,7 +128,8 @@ class ResourceCostService {
         limit,
         offset,
         search,
-        accountId
+        accountId,
+        {}
       );
     } catch (err) {
       console.log("Error ", err);

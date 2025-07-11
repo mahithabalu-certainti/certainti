@@ -12,6 +12,7 @@ interface PermissionFieldAttributes {
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
+  is_read_only?:boolean;
 }
 
 interface PermissionFieldCreationAttributes extends Optional<PermissionFieldAttributes, "rid"> {}
@@ -29,6 +30,7 @@ export class PermissionField
   public modified_datetime?: Date;
   public created_by?: string;
   public modified_by?: string;
+  public is_read_only?: boolean;
 
   static initialize(sequelize: Sequelize) {
     PermissionField.init(
@@ -80,6 +82,10 @@ export class PermissionField
           allowNull: false,
           defaultValue: "active",
         },
+        is_read_only:{
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+        }
       },
       {
         sequelize,

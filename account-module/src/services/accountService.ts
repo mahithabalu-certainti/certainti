@@ -1,5 +1,5 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { HttpStatus } from "../utils/constant";
+import { HttpStatus, STATUS, STATUS_MESSAGE } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -8,6 +8,10 @@ import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
+import { Account as AccountModel } from "../models/accountModel";
+import AccountDetails from "../models/accountDetailsModel";
+import { KeyContact } from "../models/keyContactDetails";
+import { initOrgSequelize } from "../config/orgdbDataSource";
 
 const { Account, Country, Currency,Industry } = models;
 
@@ -95,7 +99,7 @@ async accountList(
       where: parentWhereClause,
       order: [["account_name", "ASC"]],
       include: this.buildBaseIncludes(),
-      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','professional_services_consultant', 'finance_lead', 'finance_executive'] // Only select needed fields initially
+      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'] // Only select needed fields initially
     };
 
     // Only apply pagination if key_contact filter is NOT present
@@ -126,7 +130,7 @@ async accountList(
         order,
         attributes: ['rid', 
           'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-          'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive'
+          'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'
         ] // Only select needed fields
       });
 
@@ -169,7 +173,8 @@ async accountList(
       offset,
       finalSortBy,
       finalSortOrder,
-      'create'
+      'create',
+      fiscalYear
     );
 
     // Optimize count query
@@ -429,7 +434,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
             order,
             attributes: ['rid', 
               'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-              'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive'
+              'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'
             ] // Only select needed fields
           });
 
@@ -469,8 +474,13 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         parentAccounts.forEach((account: any) => {
           account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
         });
-          
-        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,0,0,finalSortBy,finalSortOrder,'download');
+        // Get full account data only for the needed records
+        const updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
+          finalSortBy,
+          finalSortOrder,
+          'download',
+          fiscalYear
+        );
         const rawResult = updatedAccount?.data || [];
         const cleanedUsers = rawResult;
         const emptyRow = {
@@ -575,8 +585,8 @@ private async getOptimizedCount(repository: any, whereClause: any) {
                    child.projects_by_fiscal_year.forEach((fiscalData: any) => {
                   exportDetails.push({
                       "Account Name": fiscalData?.fiscal_year || "-",
-                      "Industry": child?.industry?.industry_name || "-",
-                      "Country": child?.country?.country_name || "-",
+                      "Industry": "-",
+                      "Country":  "-",
                       "Total Projects": fiscalData?.total_projects || '-',
                       "Total Project Hours": fiscalData?.total_project_hours || "-",
                       "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
@@ -1511,12 +1521,11 @@ async insertClientTemplateDetails(
     `Account.${columnName}`;
   const column = Sequelize.col(qualifiedColumn);
 
-  if (is_empty !== undefined) {
+if (is_empty !== undefined) {
     return {
       [Op.or]: [
-        { [columnName]: null },
-        { [columnName]: '' },
-        Sequelize.where(column, Op.is, null)
+        Sequelize.where(column, Op.is, null),
+        Sequelize.where(column, Op.eq, 0)
       ]
     };
   }
@@ -1768,7 +1777,7 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
   private async getUSDCurrency() {
     return Currency.findOne({ where: { currency_code: 'USD' } });
   }
-    
 }
+
 
 export default AccountService;

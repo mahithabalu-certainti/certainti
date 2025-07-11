@@ -357,7 +357,7 @@ async exportResoucreSkill(
       "Resource Code": rs.resource_code || "-",
       "Name": rs.resource_name || "-",
       "Resource Type": rs.resource_type || "-",
-      "Effective From": rs.start_date || "-",
+      "Effective Date": rs.start_date || "-",
       "Skill Type": rs.skill_type_name || "-",
       "Skill SubType": rs.skill_subtype_name || "-",
       "Skill Level": rs.skill_level_name || "-",
@@ -414,19 +414,25 @@ async executeQueries(
   limit: number,
   offset: number,
   search: string,
-  account_rid: string
+  account_rid: string,
+  graphqlData : any
 ) {
   const sequelize = await this.getDbConnection(schemaName);
+  let resource_skill_rid = ``
+  if(graphqlData.is_graphQl) {
+    resource_skill_rid = graphqlData.rid
+    resource_skill_rid = ` AND rs.rid = '${resource_skill_rid}'`
+  }
 
   // Build the query to get data from the account-specific schema
   const query = `
     SELECT rs.*,
     TO_CHAR(rs.start_date, 'YYYY-MM-DD') as start_date,
     r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
-    FROM "${schemaName}"."resource_skill" rs
-    INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-    INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
+    FROM ${schemaName}.resource_skill rs
+    INNER JOIN ${schemaName}.resources r ON rs.resource_rid = r.rid
+    INNER JOIN ${schemaName}.account_details ad ON r.account_rid = ad.account_rid
+    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid ${resource_skill_rid}
     ${filterConditions}
     ${searchCondition}
     ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
@@ -434,12 +440,14 @@ async executeQueries(
     LIMIT :limit OFFSET :offset
   `;
 
+  console.log(query)
+
   // Count query to get total records
   const countQuery = `
     SELECT COUNT(*) as total
-    FROM "${schemaName}"."resource_skill" rs
-    INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-    INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
+    FROM ${schemaName}.resource_skill rs
+    INNER JOIN ${schemaName}.resources r ON rs.resource_rid = r.rid
+    INNER JOIN ${schemaName}.account_details ad ON r.account_rid = ad.account_rid
     WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}

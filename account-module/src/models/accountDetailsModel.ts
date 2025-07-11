@@ -1,6 +1,10 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ENV_PREFIX } from "../utils/constant";
 
+function fetchSchameName (schemaName : string) {
+  return schemaName
+}
+
 interface AccountDetailsAttributes {
   rid: number;
   account_rid?: number;
@@ -58,117 +62,116 @@ class AccountDetails
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
-}
-
-const sequelize = new Sequelize("database", "username", "password", {
-  host: "localhost",
-  dialect: "mysql", // Change to your dialect, e.g., 'postgres'
-});
-
-AccountDetails.init(
-  {
-    rid: {
-      type: DataTypes.STRING(50),
-      defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
-      primaryKey: true,
-    },
-    created_by: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    modified_by: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    account_rid: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-    account_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-    tax_claim_level: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-    max_ai_interactions: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        min: 3,
-        max: 5,
+static initialise (schemaName : string, sequelize : Sequelize) {
+  AccountDetails.init(
+    {
+      rid: {
+        type: DataTypes.STRING(50),
+        defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+        primaryKey: true,
+      },
+      created_by: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      modified_by: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      created_datetime: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      modified_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
+      account_rid: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+      },
+      account_name: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
+      tax_claim_level: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+      },
+      max_ai_interactions: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          min: 3,
+          max: 5,
+        },
+      },
+      expiry_duration: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      autosend_interaction: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
+      fiscal_start_date: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+      },
+      fiscal_end_date: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+      },
+      interaction_cc_list: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      blended_rate_fte: {
+        type: DataTypes.DECIMAL(18, 2),
+        allowNull: true,
+      },
+      blended_rate_subcon: {
+        type: DataTypes.DECIMAL(18, 2),
+        allowNull: true,
+      },
+    
+    
+      website: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      database_level: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
+      data_residency: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      business_details: {
+        type: DataTypes.STRING(2000),
+        allowNull: false,
+      },
+      data_storage: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        validate: {
+          isIn: [["separate_db", "store_in_parent"]],
+        },
       },
     },
-    expiry_duration: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    autosend_interaction: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    fiscal_start_date: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-    },
-    fiscal_end_date: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-    },
-    interaction_cc_list: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    blended_rate_fte: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: true,
-    },
-    blended_rate_subcon: {
-      type: DataTypes.DECIMAL(18, 2),
-      allowNull: true,
-    },
-   
-  
-    website: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    database_level: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    data_residency: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    business_details: {
-      type: DataTypes.STRING(2000),
-      allowNull: false,
-    },
-    data_storage: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      validate: {
-        isIn: [["separate_db", "store_in_parent"]],
-      },
-    },
-  },
-  {
-    sequelize,
-    modelName: "AccountDetails",
-    tableName: "account_details",
-    timestamps: false,
+    {
+      sequelize,
+      schema : schemaName,
+      modelName: "AccountDetails",
+      tableName: "account_details",
+      timestamps: false,
+    }
+  );
+  return AccountDetails
   }
-);
+  
+}
 
 export default AccountDetails;

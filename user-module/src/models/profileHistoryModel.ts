@@ -52,7 +52,7 @@ export class ProfileHistory
         },
         modified_datetime: { 
           type: DataTypes.DATE, 
-          allowNull: false
+          allowNull: true
         },
         profile_rid: {
           type: DataTypes.STRING(50),

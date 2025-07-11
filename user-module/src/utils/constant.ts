@@ -4,9 +4,9 @@ export const constants = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
   NOT_FOUND: 404,
-  FORBIDDEN: 403,
+  FORBIDDEN: 403,//For inactive_users
   FAILED: 500,
-  UNAUTHORIZED: 401,
+  UNAUTHORIZED: 401,//For users with no permssion_access
   SUCCESS_MESSAGE: "Success",
   BAD_REQUEST_MESSAGE: "BadRequest",
   NOT_FOUND_MESSAGE: "NotFound",
@@ -36,5 +36,34 @@ export const R_NUMBER_PREFIX = {
   PROFILE: 'PRF',
 }
 
+export const rawQuery = {
+  fetchUserByIdForGraphql (user_rid : string) {
+    return `
+    SELECT u.rid, u.email, u.status_rid, u.first_name, u.created_datetime, 
+    u.modified_datetime, u.azure_id,
+    jsonb_build_object(
+    'rid', p.rid,
+    'profile_name', p.profile_name
+    ) AS profile,
+    jsonb_build_object(
+    'rid', b.rid,
+    'business_teams', b.business_teams
+    ) AS business_teams,
+    jsonb_build_object(
+    'status_name', s.status_name,
+    'status_description', s.status_description
+    ) AS status
+    
+    FROM 
+    ${MAIN_SCHEMA_NAME}.user u
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.business_teams b ON b.rid = u.role_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.profile p ON p.rid = u.profile_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = u.status_rid
+
+    WHERE
+    u.rid = '${user_rid}'
+    `
+  }
+}
 
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
