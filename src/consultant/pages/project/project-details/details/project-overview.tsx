@@ -79,6 +79,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const keycontactVisable =
     !permissionMap['key_contacts']?.read &&
     !permissionMap['key_contacts']?.edit;
+  const commentsHide =
+    !permissionMap['comments']?.read && !permissionMap['comments']?.edit;
+
   console.log('permissionMap', permissionMap);
   const basicInfo: DetailItem[] = [
     {
@@ -396,10 +399,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             title='Project Settings'
             data={settingInfoInfoDetails as DetailItem[]}
           />
-          <DetailsSection
-            title='Comments'
-            data={commentsDetails as DetailItem[]}
-          />
+          {!commentsHide && (
+            <DetailsSection
+              title='Comments'
+              data={commentsDetails as DetailItem[]}
+            />
+          )}
           <DetailsSection
             title='Audit Information'
             data={auditInfoDetails as DetailItem[]}
