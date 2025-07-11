@@ -159,17 +159,29 @@ export const Accounts: React.FC = () => {
     );
   }, [countriesList]);
 
-  // const allCurrencies = useMemo(() => {
-  //   return (
-  //     currencyList.data?.data.currency.map((item) => item.currency_code) || []
-  //   );
-  // }, [currencyList]);
-
   const allIndustries: SelectOption[] = useMemo(
     () =>
       industry.data?.data.industries.map((industry) => ({
         label: industry.industry_name,
         value: industry.industry_name,
+      })) || [],
+    [industry.data?.data.industries]
+  );
+
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const industryOptions = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
       })) || [],
     [industry.data?.data.industries]
   );
@@ -280,6 +292,9 @@ export const Accounts: React.FC = () => {
           isAccountEditEnable={true}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
+          countryOptions={countryOptions}
+          industryOptions={industryOptions}
+          onRefreshClick={onRefreshClick}
         />
       </div>
     </div>
