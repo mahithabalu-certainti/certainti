@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
   valueDisplay,
 } from '../../../../../common-utils';
-import { Project } from '../../../../../components/table/types';
+import { ProjectTaskListType } from '../../../../types/project-task';
 interface TableColumn<T> {
   id: string;
   sortId: string;
@@ -23,14 +22,23 @@ export const formatDateToYMD = (dateString: string): string => {
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-export const getProjectTaskColumns = () // onClick: (row: Project) => void
-: TableColumn<Project>[] => [
+export const getProjectTaskColumns = (
+  onClick: (row: ProjectTaskListType) => void // onClick: (row: Project) => void
+): TableColumn<ProjectTaskListType>[] => [
   {
-    id: 'project_resource_code',
-    label: 'Project Resource Code',
+    id: 'project_task_id',
+    label: 'Project Task ID',
     sortable: true,
-    sortId: 'project_resource_code',
+    sortId: 'project_task_id',
     width: 180,
+    render: (row: ProjectTaskListType) => (
+      <span
+        className='cursor-pointer hover:!text-blue-600 hover:underline'
+        onClick={() => onClick(row)}
+      >
+        {row.project_task_id}
+      </span>
+    ),
   },
   {
     id: 'resource_code',
@@ -39,13 +47,13 @@ export const getProjectTaskColumns = () // onClick: (row: Project) => void
     sortId: 'resource_code',
     width: 160,
   },
-  // {
-  //   id: 'project_type_name',
-  //   label: 'Project Type',
-  //   sortable: true,
-  //   sortId: 'project_type_rid',
-  //   width: 160,
-  // },
+  {
+    id: 'project_resource_code',
+    label: 'Project Resource Code',
+    sortable: true,
+    sortId: 'project_resource_code',
+    width: 160,
+  },
   {
     id: 'fiscal_year',
     label: 'Fiscal Year',
@@ -55,7 +63,7 @@ export const getProjectTaskColumns = () // onClick: (row: Project) => void
     sx: {
       textAlign: 'left',
     },
-    render: (row: Project) => {
+    render: (row: ProjectTaskListType) => {
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
       return displayYear;
     },
@@ -87,7 +95,7 @@ export const getProjectTaskColumns = () // onClick: (row: Project) => void
     sortable: true,
     sortId: 'start_date',
     width: 190,
-    render: (row: any) =>
+    render: (row: ProjectTaskListType) =>
       row.start_date ? formatDateToYYYYMMDDWithTime(row.start_date) : '-',
   },
   {
@@ -96,7 +104,7 @@ export const getProjectTaskColumns = () // onClick: (row: Project) => void
     sortable: true,
     sortId: 'end_date',
     width: 190,
-    render: (row: any) =>
+    render: (row: ProjectTaskListType) =>
       row.end_date ? formatDateToYYYYMMDDWithTime(row.end_date) : '-',
   },
   {
@@ -108,7 +116,8 @@ export const getProjectTaskColumns = () // onClick: (row: Project) => void
     sx: {
       textAlign: 'right',
     },
-    render: (row: any) => (row.effort ? valueDisplay(row.effort) : '-'),
+    render: (row: ProjectTaskListType) =>
+      row.effort ? valueDisplay(row.effort) : '-',
   },
   {
     id: 'cost',
@@ -119,7 +128,7 @@ export const getProjectTaskColumns = () // onClick: (row: Project) => void
     sx: {
       textAlign: 'right',
     },
-    render: (row: any) =>
+    render: (row: ProjectTaskListType) =>
       row.cost ? costDisplay(row.cost, row.currency_symbol) : '-',
   },
   {

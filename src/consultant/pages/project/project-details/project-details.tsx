@@ -36,7 +36,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
-import ProjectTask from './project-task/project-task';
+import { ProjectTask } from './project-task/project-task';
+// import ProjectTask from './project-task/project-task';
 
 const sideMenuItems: MenuItem[] = [
   {

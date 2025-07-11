@@ -27,6 +27,9 @@ import {
   PROJECT_CREATE,
   PROJECT_DETAILS,
   PROJECT_EDIT,
+  // PROJECT_TASK,
+  PROJECT_TASK_CREATE,
+  PROJECT_TASK_EDIT,
   ProtectedRoute,
   RESOURCE,
   RESOURCE_CREATE,
@@ -38,6 +41,8 @@ import {
   USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState } from './store/store';
+import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
+// import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -139,6 +144,11 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                 <Route path={RESOURCE} element={<Resource />} />
                 <Route path={PROFILE} element={<Profile />} />
+                <Route
+                  path={PROJECT_TASK_CREATE}
+                  element={<ProjectTaskForm />}
+                />
+                <Route path={PROJECT_TASK_EDIT} element={<ProjectTaskForm />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>
