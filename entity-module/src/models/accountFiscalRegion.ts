@@ -1,7 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
-export interface AccountFiscalAttributes {
+export interface AccountFiscalRegionAttributes {
   rid: string;
   r_number?: string;
   eid?: string;
@@ -9,6 +9,7 @@ export interface AccountFiscalAttributes {
   account_rid: string;
   parent_account_rid?: string | null;
   tax_claim_level?: string | null;
+  region_rid?: string | null;
   blended_rate_fte?: number | null;
   blended_rate_subcon?: number | null;
   total_projects: number | null;
@@ -49,12 +50,15 @@ export interface AccountFiscalAttributes {
   modified_by?: string;
 }
 
-interface AccountFiscalCreationAttributes
-  extends Optional<AccountFiscalAttributes, "rid"> {}
+interface AccountFiscalRegionCreationAttributes
+  extends Optional<AccountFiscalRegionAttributes, "rid"> {}
 
-export class AccountFiscal
-  extends Model<AccountFiscalAttributes, AccountFiscalCreationAttributes>
-  implements AccountFiscalAttributes
+export class AccountFiscalRegion
+  extends Model<
+    AccountFiscalRegionAttributes,
+    AccountFiscalRegionCreationAttributes
+  >
+  implements AccountFiscalRegionAttributes
 {
   public rid!: string;
   public r_number!: string;
@@ -63,6 +67,7 @@ export class AccountFiscal
   public account_rid!: string;
   public parent_account_rid?: string | null;
   public tax_claim_level?: string | null;
+  public region_rid?: string | null;
 
   public blended_rate_fte?: number | null;
   public blended_rate_subcon?: number | null;
@@ -116,11 +121,13 @@ export class AccountFiscal
   public modified_by?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    const model = AccountFiscal.init(
+    const model = AccountFiscalRegion.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           allowNull: false,
           primaryKey: true,
         },
@@ -133,7 +140,7 @@ export class AccountFiscal
           type: DataTypes.STRING(120),
           allowNull: true,
         },
-         created_by: {
+        created_by: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },
@@ -157,6 +164,10 @@ export class AccountFiscal
         fiscal_year: {
           type: DataTypes.INTEGER,
           allowNull: false,
+        },
+        region_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         total_projects: {
           type: DataTypes.INTEGER,
@@ -286,13 +297,11 @@ export class AccountFiscal
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-       
-       
       },
       {
         sequelize,
         schema: schemaName,
-        tableName: "account_fiscal",
+        tableName: "account_fiscal_region",
         timestamps: false,
         underscored: true,
       }
@@ -301,17 +310,17 @@ export class AccountFiscal
   }
 }
 
-export async function setupAccountFiscalSequence(
+export async function setupAccountFiscalRegionSequence(
   sequelize: Sequelize,
   schemaName: string
 ) {
   try {
     await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_fiscal_seq START 1`
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_fiscal_region_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE "${schemaName}".account_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT_FISCAL}-' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE "${schemaName}".account_fiscal_region
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT_FISCAL_REGION}-' || LPAD(nextval('"${schemaName}".account_fiscal_region_seq')::text, 10, '0')`);
 
     console.log("Project sequence setup complete");
   } catch (error) {

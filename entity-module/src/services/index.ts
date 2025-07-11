@@ -1,6 +1,7 @@
 import { Logger } from "winston";
 import {
   IProjectGraphQlServices,
+  IProjectResourceService,
   IProjectService,
   IResourceCostGraphQlService,
   IResourceCostService,
@@ -15,6 +16,7 @@ import ResourceCostService from "./resourceCostService";
 import { ResourceService } from "./resourceServices";
 import ResourceSkillService from "./resourceSkillService";
 import { AttachmentService } from "./attachmentService";
+import { ProjectResourceService } from "./projectResource/projectResourceService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -27,6 +29,7 @@ class Services implements IServiceContainer {
   projectServices: IProjectService;
   private _projectGraphQlServices?: IProjectGraphQlServices;
   attachmentServices: IAttachmentService;
+  projectResourceServices: IProjectResourceService;
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
@@ -36,7 +39,8 @@ class Services implements IServiceContainer {
     logger: Logger,
     resourceService: IResourceService = new ResourceService(),
     resourceCostServices: IResourceCostService = new ResourceCostService(),
-    resourceSkillServices: IResourceSkillService = new ResourceSkillService()
+    resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
+    projectResourceServices: IProjectResourceService = new ProjectResourceService()
   ) {
     try {
       this.logger = logger;
@@ -45,6 +49,7 @@ class Services implements IServiceContainer {
       this.resourceSkillServices = resourceSkillServices;
       this.projectServices = new ProjectService(this.logger);
       this.attachmentServices = new AttachmentService(this.logger);
+      this.projectResourceServices = projectResourceServices;
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");

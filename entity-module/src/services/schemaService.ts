@@ -43,6 +43,7 @@ import {
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
 import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { ResourceFiscalRegion, setupResourceFiscalRegionSeq } from "../models/resourceFiscalRegion";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -157,9 +158,16 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceFiscalRegionModel = await ResourceFiscalRegion.initialize(
+        sequelize,
+        schemaName
+      );
+      
+
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
       await ResourcesTimelineModel.sync({ force: false });
+      await ResourceFiscalRegionModel.sync({ force: false });
       await ResourceCostModel.sync({ force: false });
       await ResourceCostTimelineModel.sync({ force: false });
       await ResourceCostHistoryModel.sync({ force: false });
@@ -170,6 +178,7 @@ class SchemaService {
       await setupResourceSeq(sequelize, schemaName);
       await setupResourceHistorySeq(sequelize, schemaName);
       await setupResourceTimelineSeq(sequelize, schemaName);
+      await setupResourceFiscalRegionSeq(sequelize, schemaName);
       await setupResourceCostSeq(sequelize, schemaName);
       await setupResourceCostTimelineSeq(sequelize, schemaName);
       await setupResourceCostHistorySeq(sequelize, schemaName);
@@ -439,14 +448,24 @@ class SchemaService {
       const resource = await Resource.create(resourceObject);
 
       if (resource && resource.rid) {
-        this.insertResourceFiscalTable(
-          sequelize,
-          schemaName,
-          resourceData,
-          resource.rid,
-          startDate,
-          endDate
-        );
+        // this.insertResourceFiscalTable(
+        //   sequelize,
+        //   schemaName,
+        //   resourceData,
+        //   resource.rid,
+        //   startDate,
+        //   endDate
+        // );
+        // if(resourceData.region_rid)
+        // this.insertResourceFiscalRegionTable(
+        //   sequelize,
+        //   schemaName,
+        //   resourceData,
+        //   resource.rid,
+        //   startDate,
+        //   endDate
+        // );
+
         this.addTimeline(
           accountNumber,
           resourceData,
@@ -710,6 +729,7 @@ class SchemaService {
         account_rid: resourceData.account_id,
         resource_type_rid: resourceData.resource_type_rid,
         resource_rid: resourceId,
+        resource_code: resourceData.resource_code,
         country_rid: resourceData.country_rid || null,
         country_region_rid: resourceData.region_rid || null,
         effective_date: moment(startDate).isValid()
@@ -721,6 +741,43 @@ class SchemaService {
     } catch (err) {
       throw new Error(
         "Error inserting records into resources fiscal :" +
+          (err as Error).message
+      );
+    }
+  }
+
+  async insertResourceFiscalRegionTable(
+    sequelize: Sequelize,
+    schemaName: string,
+    resourceData: ICreateResource,
+    resourceId: string,
+    startDate: Moment,
+    endDate: Moment
+  ){
+    try {
+      const ResourceFiscalRegionModel = await ResourceFiscalRegion.initialize(
+        sequelize,
+        schemaName
+      );
+      await ResourceFiscalRegionModel.sync({ force: false });
+      await setupResourceFiscalRegionSeq(sequelize, schemaName);
+
+      await ResourceFiscalRegionModel.create({
+        account_rid: resourceData.account_id,
+        resource_type_rid: resourceData.resource_type_rid,
+        resource_code: resourceData.resource_code,
+        resource_rid: resourceId,
+        country_rid: resourceData.country_rid || null,
+        country_region_rid: resourceData.region_rid || null,
+        effective_date: moment(startDate).isValid()
+          ? moment(startDate).toDate()
+          : null,
+        end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
+        created_by: resourceData.created_by || "",
+      });
+    } catch (err) {
+      throw new Error(
+        "Error inserting records into resources fiscal region :" +
           (err as Error).message
       );
     }
@@ -867,12 +924,20 @@ class SchemaService {
         }
       );
 
-      await this.updateResourceFiscal(
-        resourceData,
-        startDate,
-        endDate,
-        accountNumber
-      );
+      // await this.updateResourceFiscal(
+      //   resourceData,
+      //   startDate,
+      //   endDate,
+      //   accountNumber
+      // );
+
+      // await this.updateResourceFiscalRegion(
+      //   resourceData,
+      //   startDate,
+      //   endDate,
+      //   accountNumber,
+      //   accountId
+      // );
 
       await this.updateResourceHistory(
         accountNumber,
@@ -930,6 +995,48 @@ class SchemaService {
         {
           where: {
             resource_rid: resourceData.resource_id,
+          },
+        }
+      );
+    } catch (err) {
+      throw new Error(
+        "Error updating resource fiscal: " + (err as Error).message
+      );
+    }
+  }
+
+  async updateResourceFiscalRegion(
+    resourceData: IUpdateResource,
+    startDate: Moment,
+    endDate: Moment,
+    accountNumber: string,
+    accountId: string
+  ) {
+    try {
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const sequelize = await initOrgSequelize();
+
+      const ResourceFiscalRegionModel = ResourceFiscalRegion.initialize(
+        sequelize,
+        schemaName
+      );
+      await ResourceFiscalRegionModel.update(
+        {
+          resource_type_rid: resourceData.resource_type_rid || "",
+          country_rid: resourceData.country_rid || null,
+          country_region_rid: resourceData.region_rid || null,
+          effective_date: moment(startDate).isValid()
+            ? moment(startDate).toDate()
+            : null,
+          end_date: moment(endDate).isValid() ? moment(endDate).toDate() : null,
+          modified_by: resourceData.modified_by,
+          modified_datetime: new Date()
+        },
+        {
+          where: {
+            account_rid: accountId,
+            resource_code: resourceData.resource_code,
+            country_region_rid: resourceData.region_rid,
           },
         }
       );

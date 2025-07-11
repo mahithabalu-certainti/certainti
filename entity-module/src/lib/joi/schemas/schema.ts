@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import Joi from "joi";
+import moment from "moment";
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
@@ -113,6 +114,53 @@ const isEndDateAfterStartDateForProject = (
   // Parse dates in MM/DD/YYYY format
   const [endYear, endMonth, endDay] = value.split("-").map(Number);
   const [startYear, startMonth, startDay] = context.project_startdate
+    .split("-")
+    .map(Number);
+
+  // Create date objects with time set to noon UTC to avoid timezone issues
+  const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay, 12, 0, 0));
+  const startDate = new Date(
+    Date.UTC(startYear, startMonth - 1, startDay, 12, 0, 0)
+  );
+
+  // Check if the end date is valid
+  if (isNaN(endDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective end date.",
+    });
+  }
+
+  // Check if the start date is valid
+  if (isNaN(startDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective start date.",
+    });
+  }
+
+  // Compare dates
+  if (endDate <= startDate) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
+  }
+
+  return value;
+};
+
+const isProjectResEndDateAfterStartDate = (
+  value: string,
+  helpers: Joi.CustomHelpers
+): any => {
+  const context = helpers.state?.ancestors[0];
+
+  // If either value or effective_from_date is missing, return the value as-is
+  if (!context?.start_date || !value) {
+    return value;
+  }
+
+  // Parse dates in yyyy-mm-dd format
+  const [ endYear, endMonth, endDay ] = value.split("-").map(Number);
+  const [startYear,startMonth, startDay] = context.start_date
     .split("-")
     .map(Number);
 
@@ -1975,6 +2023,197 @@ const getDocumentTypeAndCategorySchema = Joi.object({
    category_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional()
 })
 
+const createProjectResourceSchema = Joi.object({
+  project_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  resource_code: Joi.string().min(3).max(50).required(),
+  resource_type_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_orgname: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  designation: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  resource_role: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  status_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  country_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  region_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the format YYYY-MM-DD",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid start_date date.",
+    }),
+  end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isProjectResEndDateAfterStartDate, "End Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the formatYYYY-MM-DD",
+      "any.invalid": "Effective end date must be after the start date.",
+      "date.invalidFormat":
+        "Invalid end_date. Please use the format YYYY-MM-DD",
+    }),
+
+  total_hours_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_cost_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+
+  salary: costFieldValidator('salary'),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  
+  description: Joi.string().max(2000).optional().allow("").allow(null),
+});
+
+const updateProjectResourceSchema = Joi.object({
+  project_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_resource_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  resource_code: Joi.string().min(3).max(50).required(),
+  resource_type_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_orgname: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  designation: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  resource_role: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  status_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  country_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  region_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the format YYYY-MM-DD",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid start_date date.",
+    }),
+  end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isProjectResEndDateAfterStartDate, "End Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the formatYYYY-MM-DD",
+      "any.invalid": "Effective end date must be after the start date.",
+      "date.invalidFormat":
+        "Invalid end_date. Please use the format YYYY-MM-DD",
+    }),
+
+  total_hours_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_cost_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+
+  salary: costFieldValidator('salary'),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  
+  description: Joi.string().max(2000).optional().allow("").allow(null),
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -1996,5 +2235,7 @@ export {
   createAttachmentSchema,
   listAttachmentsSchema,
   getDocumentTypeAndCategorySchema,
-  listAttachmentSummarySchema
+  listAttachmentSummarySchema,
+  createProjectResourceSchema,
+  updateProjectResourceSchema
 };
