@@ -6,7 +6,7 @@ import {
 } from '../../types/manage-user';
 import { getProfileExportUrl, getProfileListUrl } from '../urls';
 import { generateFile } from '../helpers';
-import { CommonProfileApiResponse } from '../../../common-service';
+import { CommonProfileApiResponse, ProfileApiResponse } from '../../../common-service';
 import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Privilege as _Privilege,
@@ -132,9 +132,9 @@ export const getCreateProfilePermissionUrl = (): string => {
  */
 export const getProfileDetails = async (
   profileId: string
-): Promise<CommonProfileApiResponse> => {
+): Promise<ProfileApiResponse> => {
   try {
-    // const { data } = await userServiceApi.get<CommonProfileApiResponse>(
+    // const { data } = await userServiceApi.get<ProfileApiResponse>(
     //   getProfileDetailsUrl(profileId)
     // );
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -151,7 +151,7 @@ export const getProfileDetails = async (
  * @returns UseQueryResult for profile details
  */
 export const useGetProfileDetails = (profileId: string) => {
-  return useQuery<CommonProfileApiResponse, Error>({
+  return useQuery<ProfileApiResponse, Error>({
     queryKey: ['profileDetail', profileId], // Unique query key
     queryFn: () => getProfileDetails(profileId),
     enabled: !!profileId, // Only fetch if userId exists

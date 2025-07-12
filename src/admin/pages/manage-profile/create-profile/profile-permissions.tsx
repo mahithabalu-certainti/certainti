@@ -70,12 +70,12 @@ interface GroupedPrivileges {
 
 const CustomCheckbox: React.FC<{
   checked: boolean;
-  onChange: (e: React.MouseEvent) => void;
+  onChange: (e: React.MouseEvent, checkBox: boolean) => void;
   disabled?: boolean;
 }> = ({ checked, onChange, disabled }) => (
   <div
     className={`cursor-${disabled ? 'not-allowed' : 'pointer'} ${disabled ? 'opacity-50' : ''}`}
-    onClick={(e) => !disabled && onChange(e)}
+    onClick={(e) => !disabled && onChange(e, !checked)}
   >
     {checked ? (
       <CheckboxChecked alt='checkbox' className='h-6 w-6' />
@@ -85,11 +85,21 @@ const CustomCheckbox: React.FC<{
   </div>
 );
 
+interface CheckBoxUpdateData {
+  type: 'menu' | 'module' | 'permission' | 'field';
+  isEnabled: boolean;
+  menuId: string;
+  moduleId?: string;
+  permissionId?: string;
+  fieldId?: string;
+  fieldType?: 'read' | 'edit';
+}
+
 const PrivilegeAccordion: React.FC<{
   groupedPrivilege: GroupedPrivileges;
   onPrivilegesChange: (privileges: Privilege[]) => void;
   viewProfileDisabled?: boolean;
-  checkBoxUpdate: (data: GroupedPrivileges) => void;
+  checkBoxUpdate: (data: CheckBoxUpdateData) => void;
 }> = ({
   groupedPrivilege,
   onPrivilegesChange,
@@ -249,7 +259,11 @@ const PrivilegeAccordion: React.FC<{
       })),
     };
     setPrivileges(newData);
-    checkBoxUpdate(newData);
+    checkBoxUpdate({
+      type: 'menu',
+      isEnabled: newMenuState,
+      menuId: privileges.menu.rid,
+    });
     onPrivilegesChange(getFlattenedPrivileges(newData));
   };
 
@@ -279,39 +293,16 @@ const PrivilegeAccordion: React.FC<{
         message:
           'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
         onConfirm: () => {
-          setPrivileges((prev) => ({
-            ...prev,
-            modules: prev.modules.map((mod) => {
-              if (mod.module.module_id === moduleId) {
-                return {
-                  ...mod,
-                  module: {
-                    ...mod.module,
-                    is_enabled: false,
-                    is_modified: true,
-                  },
-                  permissions: mod.permissions.map((perm) => ({
-                    ...perm,
-                    is_enabled: false,
-                    is_modified: true,
-                    fields: perm.fields?.map((field) => ({
-                      ...field,
-                      read: false,
-                      edit: false,
-                      is_modified: true,
-                    })),
-                  })),
-                };
-              }
-              return mod;
-            }),
-          }));
+          updateModulePrivilegesState(newState, moduleId);
           setConfirmationState((prev) => ({ ...prev, isOpen: false }));
         },
       });
       return;
     }
+    updateModulePrivilegesState(newState, moduleId);
+  };
 
+  const updateModulePrivilegesState = (newState: boolean, moduleId: string) => {
     setPrivileges((prev) => ({
       ...prev,
       modules: prev.modules.map((mod) => {
@@ -320,17 +311,17 @@ const PrivilegeAccordion: React.FC<{
             ...mod,
             module: {
               ...mod.module,
-              is_enabled: true,
+              is_enabled: newState,
               is_modified: true,
             },
             permissions: mod.permissions.map((perm) => ({
               ...perm,
-              is_enabled: true,
+              is_enabled: newState,
               is_modified: true,
               fields: perm.fields?.map((field) => ({
                 ...field,
-                read: field.read,
-                edit: field.edit,
+                read: newState ? field.read : false,
+                edit: newState ? field.edit : false,
                 is_modified: true,
               })),
             })),
@@ -339,6 +330,12 @@ const PrivilegeAccordion: React.FC<{
         return mod;
       }),
     }));
+    checkBoxUpdate({
+      type: 'module',
+      isEnabled: newState,
+      menuId: privileges.menu.menu_id,
+      moduleId: moduleId,
+    });
   };
 
   const handlePermissionCheck =
@@ -435,6 +432,13 @@ const PrivilegeAccordion: React.FC<{
         modules: updatedModules,
       };
     });
+    checkBoxUpdate({
+      type: 'permission',
+      isEnabled: newPermissionState,
+      menuId: privileges.menu.menu_id,
+      moduleId,
+      permissionId: permissionId,
+    });
   };
 
   const handleFieldChange =
@@ -442,11 +446,11 @@ const PrivilegeAccordion: React.FC<{
       moduleId: string,
       permissionId: string,
       fieldId: string,
-      type: 'read' | 'edit'
+      type: 'read' | 'edit',
+      selectedAll?: boolean
     ) =>
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent, checked?: boolean) => {
       e.stopPropagation();
-
       setPrivileges((prev) => {
         const updatedModules = prev.modules.map((mod) => {
           if (mod.module.module_id !== moduleId) return mod;
@@ -518,6 +522,18 @@ const PrivilegeAccordion: React.FC<{
           modules: updatedModules,
         };
       });
+      if (selectedAll === undefined) {
+        //Avoid select all click
+        checkBoxUpdate({
+          type: 'field',
+          isEnabled: checked ?? false,
+          menuId: privileges.menu.menu_id,
+          moduleId,
+          permissionId,
+          fieldId,
+          fieldType: type,
+        });
+      }
     };
 
   const togglePermission = (permissionId: string) => {
@@ -691,7 +707,8 @@ const PrivilegeAccordion: React.FC<{
                                                 module.module_id!,
                                                 permission.permission_id!,
                                                 field.field_id,
-                                                'read'
+                                                'read',
+                                                true
                                               )(e);
                                             }
                                           });
@@ -735,7 +752,8 @@ const PrivilegeAccordion: React.FC<{
                                                 module.module_id!,
                                                 permission.permission_id!,
                                                 field.field_id,
-                                                'edit'
+                                                'edit',
+                                                true
                                               )(e);
                                             }
                                           });
@@ -847,7 +865,8 @@ const PrivilegeAccordion: React.FC<{
                                                 module.module_id!,
                                                 permission.permission_id!,
                                                 field.field_id,
-                                                'read'
+                                                'read',
+                                                true
                                               )(e);
                                             }
                                           });
@@ -889,7 +908,8 @@ const PrivilegeAccordion: React.FC<{
                                                 module.module_id!,
                                                 permission.permission_id!,
                                                 field.field_id,
-                                                'edit'
+                                                'edit',
+                                                true
                                               )(e);
                                             }
                                           });
@@ -1049,12 +1069,13 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
     onPrivilegesChange(merged);
   };
 
-  const checkBoxUpdate = (data: GroupedPrivileges) => {
-    // update checkbox changes into groupedPrivileges
+  const checkBoxUpdate = (data: CheckBoxUpdateData) => {
+    console.log('Checkbox Update', data);
+    // update checkbox Parent to child level
     const updatedData = groupedPrivileges.map((it) => {
-      if (it.menu.rid === data.menu.rid) {
+      if (data.type === 'menu' && it.menu.rid === data.menuId) {
         //If Menu was changed
-        const newMenuState = data.menu.is_enabled
+        const newMenuState = data.isEnabled;
         return {
           menu: {
             ...it.menu,
@@ -1073,13 +1094,109 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
                 ...field,
                 read: newMenuState ? field.read : false,
                 edit: newMenuState ? field.edit : false,
-                is_modified: true,
               })),
             })),
           })),
         };
       }
+      if (data.type === 'module') {
+        const newModuleState = data.isEnabled;
+        return {
+          menu: it.menu,
+          modules: it.modules.map((mod) => {
+            if (mod.module.module_id === data.moduleId) {
+              return {
+                ...mod,
+                module: {
+                  ...mod.module,
+                  is_enabled: newModuleState,
+                },
+                permissions: mod.permissions.map((perm) => ({
+                  ...perm,
+                  is_enabled: newModuleState,
+                  fields: perm.fields?.map((field) => ({
+                    ...field,
+                    read: newModuleState ? field.read : false,
+                    edit: newModuleState ? field.edit : false,
+                  })),
+                })),
+              };
+            }
+            return mod;
+          }),
+        };
+      }
+      if (data.type === 'permission') {
+        return {
+          menu: it.menu,
+          modules: it.modules.map((mod) => {
+            return {
+              ...mod,
+              permissions: mod.permissions.map((perm) => {
+                if (perm.permission_id === data.permissionId) {
+                  return {
+                    ...perm,
+                    is_enabled: data.isEnabled,
+                    fields: perm.fields?.map((field) => ({
+                      ...field,
+                      read: data.isEnabled ? field.read : false,
+                      edit: data.isEnabled ? field.edit : false,
+                    })),
+                  };
+                }
+                return perm;
+              }),
+            };
+          }),
+        };
+      }
+      if (data.type === 'field') {
+        return {
+          menu: it.menu,
+          modules: it.modules.map((mod) => {
+            return {
+              ...mod,
+              permissions: mod.permissions.map((perm) => {
+                return {
+                  ...perm,
+                  is_enabled: data.isEnabled,
+                  fields: perm.fields?.map((field) => {
+                    if (field.field_id === data.fieldId) {
+                      return {
+                        ...field,
+                        read:
+                          data.fieldType === 'read'
+                            ? data.isEnabled
+                            : field.read,
+                        edit:
+                          data.fieldType === 'edit'
+                            ? data.isEnabled
+                            : field.edit,
+                      };
+                    }
+                    return field;
+                  }),
+                };
+              }),
+            };
+          }),
+        };
+      }
       return it;
+    });
+    // update checkbox Child to Parent level
+    const updateData1 = updatedData.map((it) => {
+      const isModulesSelected =
+        it.modules.length > 0
+          ? it.modules.some((mod) => mod.module.is_enabled)
+          : it.menu.is_enabled;
+      return {
+        ...it,
+        menu: {
+          ...it.menu,
+          is_enabled: isModulesSelected,
+        },
+      };
     });
 
     // const currentMenu = data.menu;
@@ -1141,10 +1258,10 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
     //   updatedData = newData;
     //   // console.log('checkBox update', newData, currentMenu.depends_on);
     // }
-    setGroupedPrivileges(updatedData);
+    setGroupedPrivileges(updateData1);
   };
 
-  console.log('groupedPrivileges', groupedPrivileges);
+console.log('createProfilePermissionsData', groupedPrivileges);
 
   if (loading) {
     return (

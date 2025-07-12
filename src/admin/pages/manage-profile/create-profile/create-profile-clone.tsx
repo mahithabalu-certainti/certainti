@@ -11,6 +11,7 @@ import {
 } from '../../../service';
 import { useToast } from '../../../../hooks';
 import { Privilege, ProfileDetail } from '../../../types';
+import { ProfilePermissions } from './profile-permissions';
 import { ProfileHeaderDetail } from './profile-header-details';
 import { MANAGE_PROFILE } from '../../../../routes';
 import { AccessRestricted } from '../../../../components/account-restricted';
@@ -18,9 +19,8 @@ import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../common-utils';
 import { RootState } from '../../../../store/store';
 import { AllModules, AllPermissions } from '../../../../common-service';
-import { ProfilePermissionForm } from './profile-permission-form';
 
-export const CreateProfile: React.FC = () => {
+export const CreateProfileClone: React.FC = () => {
   const [privileges, setPrivileges] = useState<Privilege[]>([]);
   const { profileId } = useParams();
   const { successToast, errorToast } = useToast();
@@ -166,10 +166,16 @@ export const CreateProfile: React.FC = () => {
             isEditView={isEditView}
             profileLoading={getProfileDetails.isLoading}
           />
+          CLONE
           <Suspense fallback={null}>
-            <ProfilePermissionForm
-              formData={getProfileDetails.data?.data.privileges || []}
-              loading={getProfileDetails.isPending}
+            <ProfilePermissions
+              createProfilePermissionsData={
+                isEditView
+                  ? getProfileDetails?.data?.data.privileges
+                  : createProfile?.data?.data.privileges
+              }
+              loading={getProfileDetails.isLoading}
+              onPrivilegesChange={handlePrivilegesChange}
             />
           </Suspense>
         </>
@@ -178,4 +184,4 @@ export const CreateProfile: React.FC = () => {
   );
 };
 
-export default CreateProfile;
+export default CreateProfileClone;

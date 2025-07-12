@@ -7,13 +7,47 @@ export interface CommonApiResponse {
   statusCodeValue: string;
   statusMessage: string;
 }
+export interface ProfileApiResponse extends CommonApiResponse {
+  data: ManageProfileResponse;
+}
+export interface ManageProfileResponse {
+  profile_id: string;
+  profile_number: string;
+  profile_name: string;
+  source_profile_id: string;
+  privileges: ProfileResponse[];
+}
+export type ProfileType = 'menu' | 'module' | 'permission' | 'field';
+export interface ProfileResponse {
+  rid: string;
+  type: ProfileType;
+  name: string;
+  desc: string;
+  is_enabled?: boolean;
+  menu_id?: string;
+  module_id?: string;
+  permission_id?: string;
+  field_id?: string;
+  is_field_available?: boolean;
+  read?: boolean;
+  edit?: boolean;
+  is_read_only?: boolean;
+  depends_on_menu?: string[];
+  depends_on_module?: string[];
+  depends_on_permission?: string[];
+  depended_by_menu?: string[];
+  depended_by_module?: string[];
+  depended_by_permission?: string[];
+  updatedByDependsOn?: boolean
+}
+
 export interface CommonProfileApiResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: createProfileData;
+  data: CreateProfileData;
 }
-export interface createProfileData {
+export interface CreateProfileData {
   profile_id: string;
   profile_number: string;
   profile_name: string;
