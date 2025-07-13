@@ -38,8 +38,6 @@ import {
   USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState } from './store/store';
-import { Test } from './admin/pages/test';
-import CreateProfileClone from './admin/pages/manage-profile/create-profile/create-profile-clone';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -167,11 +165,6 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 />
                 <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
                 <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
-                <Route path='/admin/test' element={<Test />} />
-                <Route
-                  path='/admin/profileclone/:profileId'
-                  element={<CreateProfileClone />}
-                />
               </Route>
               {/* Page not found */}
               <Route path={NOT_MATCH} element={<NotFound />} />

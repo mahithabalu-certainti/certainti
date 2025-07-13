@@ -38,7 +38,8 @@ export interface ProfileResponse {
   depended_by_menu?: string[];
   depended_by_module?: string[];
   depended_by_permission?: string[];
-  updatedByDependsOn?: boolean
+  updatedByDependsOn?: boolean;
+  is_modified?: boolean
 }
 
 export interface CommonProfileApiResponse {

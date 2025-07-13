@@ -1,5 +1,6 @@
 import { CircularProgress } from '@mui/material';
 import { ProfileResponse, ProfileType } from '../../../../common-service';
+
 import { Suspense, useEffect, useRef, useState } from 'react';
 import {
   CheckboxChecked,
@@ -13,6 +14,8 @@ import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 interface ProfilePermissionFormProps {
   loading: boolean;
   formData: ProfileResponse[];
+  formRef: React.RefObject<HTMLFormElement>;
+  outData: (e: object[]) => void;
 }
 
 export type Field = {
@@ -81,8 +84,9 @@ interface ConfirmationState {
 export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
   loading,
   formData,
+  formRef,
+  outData,
 }) => {
-  //   const [formData, setAll] = useState<ProfileResponse[]>(formData || []);
   const [menus, setMenus] = useState<TransformForRender[]>([]);
   const [expandMenus, setExpandMenus] = useState<string[]>([]);
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>(
@@ -200,6 +204,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         // all modules under this menu
         getModulesForMenu(id).forEach((m) => {
           m.is_enabled = isEnabled;
+          m.is_modified = true; //set flag for indentify changes(For API)
           if (!isEnabled) m['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
           propagateDown('module', m.module_id as string, isEnabled);
         });
@@ -208,6 +213,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       case 'module': {
         getPermissionsForModule(id).forEach((p) => {
           p.is_enabled = isEnabled;
+          p.is_modified = true; //set flag for indentify changes(For API)
           if (!isEnabled) p['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
           if (!collectPermissionsRef.current.includes(p.permission_id!)) {
             //add only that id not in the array
@@ -221,6 +227,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       case 'permission': {
         getFieldsForPermission(id).forEach((f) => {
           f.read = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
           if (!isEnabled) f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
           if (!f.is_read_only) f.edit = isEnabled; //Only update when 'is_read_only' false
         });
@@ -248,6 +255,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         }
         if (!newValue) module['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
         module.is_enabled = newValue;
+        module.is_modified = true; //set flag for indentify changes(For API)
         recalcUp('menu', module.menu_id as string);
       }
     } else if (type === 'permission') {
@@ -269,6 +277,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
           }
           if (!newValue) perm['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
           perm.is_enabled = newValue;
+          perm.is_modified = true; //set flag for indentify changes(For API)
         }
       }
       if (perm) recalcUp('module', perm.module_id as string);
@@ -279,6 +288,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       if (menu) {
         if (!newValue) menu['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
         menu.is_enabled = newValue;
+        menu.is_modified = true; //set flag for indentify changes(For API)
       }
     }
   }
@@ -301,6 +311,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       const findMenu = formData.find((data) => data.menu_id === menu);
       if (findMenu) {
         findMenu.is_enabled = isEnabled;
+        findMenu.is_modified = true; //set flag for indentify changes(For API)
       }
     });
     // Removed all Relvant module
@@ -308,6 +319,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       const findModule = formData.find((data) => data.module_id === module);
       if (findModule) {
         findModule.is_enabled = isEnabled;
+        findModule.is_modified = true; //set flag for indentify changes(For API)
       }
     });
     // Removed all Relvant permissions
@@ -317,12 +329,14 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       );
       if (findPermission) {
         findPermission.is_enabled = isEnabled;
+        findPermission.is_modified = true; //set flag for indentify changes(For API)
       }
       // Remove all Fields when permission Remove
       getFieldsForPermission(findPermission?.permission_id || '').forEach(
         (f) => {
           f.read = isEnabled;
           f.edit = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
         }
       );
     });
@@ -343,6 +357,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         // for checkbox color change - update only if value newly change
         if (!findMenu.is_enabled) findMenu['updatedByDependsOn'] = isEnabled;
         findMenu.is_enabled = isEnabled;
+        findMenu.is_modified = true; //set flag for indentify changes(For API)
       }
     });
     // Enabled all Relvant module
@@ -355,6 +370,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         if (!findModule.is_enabled)
           findModule['updatedByDependsOn'] = isEnabled;
         findModule.is_enabled = isEnabled;
+        findModule.is_modified = true; //set flag for indentify changes(For API)
       }
     });
     // Enabled all Relvant permissions
@@ -368,6 +384,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         if (!findPermission.is_enabled)
           findPermission['updatedByDependsOn'] = isEnabled;
         findPermission.is_enabled = isEnabled;
+        findPermission.is_modified = true; //set flag for indentify changes(For API)
       }
       // Enable all Fields when permission enabled
       getFieldsForPermission(findPermission?.permission_id as string).forEach(
@@ -375,6 +392,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
           // for checkbox color change - update only if value newly change
           if (!f.read) f['updatedByDependsOn'] = isEnabled;
           f.read = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
         }
       );
     });
@@ -426,6 +444,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       });
       menu['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
     }
+    menu.is_modified = true; //set flag for indentify changes(For API)
     propagateDown('menu', menu_id, isEnabled);
     dependsOnByImplement(isEnabled);
     return formData;
@@ -446,6 +465,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       });
       mod['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
     }
+    mod.is_modified = true; //set flag for indentify changes(For API)
     propagateDown('module', module_id, isEnabled);
     recalcUp('menu', mod.menu_id as string);
     dependsOnByImplement(isEnabled);
@@ -466,6 +486,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       menuExpand(permission_id, undefined, true);
       perm['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
     }
+    perm.is_modified = true; //set flag for indentify changes(For API)
     propagateDown('permission', permission_id, isEnabled);
     recalcUp('permission', permission_id as string); // always recalc upward, regardless of children
     dependsOnByImplement(isEnabled);
@@ -493,6 +514,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         field['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
       }
     }
+    field.is_modified = true; //set flag for indentify changes(For API)
     recalcUp('permission', field.permission_id as string);
     dependsOnByImplement(isEnabled);
     return formData;
@@ -508,17 +530,29 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     if (selectType === 'leftReadAll') {
       allFields?.slice(0, Math.ceil(partialData)).forEach((f) => {
         f.read = isEnabled;
-        if (!isEnabled) f.edit = false; // Disabling read always disables edit
+        f.is_modified = true; //set flag for indentify changes(For API)
+        if (!isEnabled) {
+          f.edit = false; // Disabling read always disables edit
+          f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
+        }
       });
     } else if (selectType === 'leftEditAll') {
-      allFields?.slice(0, Math.ceil(partialData)).forEach((f) => {
-        f.edit = isEnabled;
-        if (isEnabled) f.read = true; // Enabling edit always enables read
-      });
+      allFields
+        ?.slice(0, Math.ceil(partialData))
+        .filter((item) => !item.is_read_only) //ignore is_read_only data
+        .forEach((f) => {
+          f.edit = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
+          if (isEnabled) f.read = true; // Enabling edit always enables read
+        });
     } else if (selectType === 'rightReadAll') {
       allFields?.slice(Math.ceil(partialData)).forEach((f) => {
         f.read = isEnabled;
-        if (!isEnabled) f.edit = false; // Disabling read always disables edit
+        f.is_modified = true; //set flag for indentify changes(For API)
+        if (!isEnabled) {
+          f.edit = false; // Disabling read always disables edit
+          f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
+        }
       });
     } else if (selectType === 'rightEditAll') {
       allFields
@@ -526,6 +560,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         .filter((item) => !item.is_read_only) //ignore is_read_only data
         .forEach((f) => {
           f.edit = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
           if (isEnabled) f.read = true; // Enabling edit always enables read
         });
     }
@@ -595,7 +630,53 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     }
   };
 
-  console.log('menus', menus);
+  // interface OutputRes{
+  //             desc: string,
+  //         is_enabled: item.is_enabled,
+  //         is_modified: item.is_modified,
+  //         menu_id: item.menu_id,
+  //         name: item.name,
+  //         rid: item.rid,
+  //         type: item.type,
+  // }
+
+  const submitData = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const modifiedData: object[] = [];
+    formData.forEach((item) => {
+      if (item.is_modified) {
+        const updateData: ProfileResponse = {
+          rid: item.rid,
+          name: item.name,
+          desc: item.desc,
+          is_modified: item.is_modified,
+          type: item.type,
+        };
+        if (item.type === 'menu') {
+          updateData['menu_id'] = item.menu_id;
+          updateData['is_enabled'] = item.is_enabled;
+        }
+        if (item.type === 'module') {
+          updateData['menu_id'] = item.menu_id;
+          updateData['module_id'] = item.module_id;
+          updateData['is_enabled'] = item.is_enabled;
+        }
+        if (item.type === 'permission') {
+          updateData['module_id'] = item.module_id;
+          updateData['permission_id'] = item.permission_id;
+          updateData['is_enabled'] = item.is_enabled;
+        }
+        if (item.type === 'field') {
+          updateData['permission_id'] = item.permission_id;
+          updateData['field_id'] = item.field_id;
+          updateData['read'] = item.read;
+          updateData['edit'] = item.edit;
+        }
+        modifiedData.push(updateData);
+      }
+    });
+    outData(modifiedData);
+  };
 
   if (loading) {
     return (
@@ -609,431 +690,441 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
   }
 
   return (
-    <div className='px-10 pb-5'>
-      <div className='border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex justify-between items-center bg-[#EAF0F5] border-b border-[#CBD6E2] h-[38px]'>
-          <div className='w-[75%] px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
-            Profile Permissions
-          </div>
-          <div className='w-[25%] px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
-            Enable
-          </div>
-        </div>
-        {/* Menu Level */}
-        {menus?.map((menu, i) => {
-          const isMenuExpand = expandMenus.includes(menu.menu_id);
-          return (
-            <div className='border-b border-[#CBD6E2]' key={i}>
-              <div
-                className='flex justify-between items-center px-4 py-2 bg-[#FCFCFC] cursor-pointer hover:bg-[#F5F8FA]'
-                onClick={(e) => menuExpand(menu.menu_id, e)}
-              >
-                <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
-                  <span className='transform transition-transform duration-200'>
-                    <Suspense fallback={null}>
-                      {isMenuExpand ? (
-                        <MenuArrowRightHover
-                          alt='menu arrow'
-                          className='h-4 w-4 rounded'
-                        />
-                      ) : (
-                        <MenuArrowRight
-                          alt='menu arrow'
-                          className='h-4 w-4 rounded'
-                        />
-                      )}
-                    </Suspense>
-                  </span>
-                  {menu.desc}
-                </div>
-                <div className='w-[25%] flex justify-start px-8'>
-                  <CheckBox
-                    id={menu.menu_id}
-                    key={i}
-                    handleChange={(e) =>
-                      handleChange(
-                        e,
-                        menu.menu_id,
-                        'menu',
-                        menu.modules.length > 0
-                      )
-                    }
-                    value={menu.is_enabled}
-                    dependsOn={menu.updatedByDependsOn}
-                  />
-                </div>
-              </div>
-              {/* Module Level */}
-              {isMenuExpand &&
-                menu.modules.map((module, j) => {
-                  const isModuelExpand = expandMenus.includes(module.module_id);
-                  return (
-                    <div key={j} className='border-t border-[#CBD6E2]'>
-                      <div
-                        className='flex justify-between items-center px-8 py-2 bg-white cursor-pointer hover:bg-[#F5F8FA]'
-                        onClick={(e) => menuExpand(module.module_id, e)}
-                      >
-                        <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
-                          <span
-                            className={`transform transition-transform duration-200 ${isModuelExpand ? 'rotate-90' : ''}`}
-                          >
-                            <ModuleArrowRight
-                              alt='module arrow'
-                              className='h-4 w-4 rounded'
-                            />
-                          </span>
-                          {module.desc}
-                        </div>
-                        <div className='w-[25%] flex justify-start px-10'>
-                          <CheckBox
-                            id={module.module_id}
-                            key={j}
-                            handleChange={(e) =>
-                              handleChange(
-                                e,
-                                module.module_id,
-                                'module',
-                                module.permission.length > 0
-                              )
-                            }
-                            value={module.is_enabled}
-                            dependsOn={module.updatedByDependsOn}
-                          />
-                        </div>
-                      </div>
-                      {/* Permission Level */}
-                      {isModuelExpand &&
-                        module.permission.map((permission, k) => {
-                          const ishasPermission = permission.field.length > 0;
-                          const firstHalfFields = permission.field?.slice(
-                            0,
-                            Math.ceil(permission.field.length / 2)
-                          );
-                          const secondHalfFields = permission.field?.slice(
-                            Math.ceil(permission.field.length / 2)
-                          );
-                          const isPermissionExpand = expandMenus.includes(
-                            permission.permission_id
-                          );
-                          return (
-                            <div key={k}>
-                              <div
-                                className='flex justify-between items-center px-12 py-2 bg-white border-t border-[#CBD6E2] cursor-pointer hover:bg-[#F5F8FA]'
-                                onClick={(e) =>
-                                  menuExpand(permission.permission_id, e)
-                                }
-                              >
-                                <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
-                                  <span
-                                    className={`transform transition-transform duration-200 ${isPermissionExpand ? 'rotate-90' : ''}`}
-                                  >
-                                    <ModuleArrowRight
-                                      alt='permission arrow'
-                                      className='h-4 w-4 rounded'
-                                    />
-                                  </span>
-                                  {permission.desc}
-                                </div>
-                                <div className='w-[25%] flex justify-start px-12'>
-                                  <CheckBox
-                                    id={permission.permission_id}
-                                    key={k}
-                                    handleChange={(e) =>
-                                      handleChange(
-                                        e,
-                                        permission.permission_id,
-                                        'permission',
-                                        ishasPermission
-                                      )
-                                    }
-                                    value={permission.is_enabled}
-                                    dependsOn={permission.updatedByDependsOn}
-                                  />
-                                </div>
-                              </div>
-                              {/* Field Level */}
-                              <div className='grid grid-cols-2 divide-x divide-[#CBD6E2]'>
-                                {/* Left Column */}
-                                <div className='border-r border-[#CBD6E2]'>
-                                  {ishasPermission && isPermissionExpand && (
-                                    <div className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'>
-                                      <div className='w-[65%] text-[13px] text-[#425A76] font-semibold' />
-                                      <div className='w-[35%] flex justify-start gap-4'>
-                                        <div className='flex items-center gap-6'>
-                                          <span className='text-[13px] text-[#425A76]'>
-                                            All
-                                          </span>
-                                          <CheckBox
-                                            value={
-                                              firstHalfFields.every(
-                                                (field) => field.read
-                                              ) ?? false
-                                            }
-                                            id={
-                                              'leftReadAll-' + permission.name
-                                            }
-                                            handleChange={(e) =>
-                                              handleChange(
-                                                e,
-                                                permission.permission_id,
-                                                'field',
-                                                false,
-                                                undefined,
-                                                'leftReadAll'
-                                              )
-                                            }
-                                          />
-                                        </div>
-                                        <div className='flex items-center gap-3'>
-                                          <span className='text-[13px] text-[#425A76]'>
-                                            All
-                                          </span>
-                                          <CheckBox
-                                            value={
-                                              firstHalfFields
-                                                .filter(
-                                                  (item) => !item.is_read_only
-                                                )
-                                                .every((field) => field.edit) ??
-                                              false
-                                            }
-                                            id={
-                                              'leftEditAll-' + permission.name
-                                            }
-                                            handleChange={(e) =>
-                                              handleChange(
-                                                e,
-                                                permission.permission_id,
-                                                'field',
-                                                false,
-                                                undefined,
-                                                'leftEditAll'
-                                              )
-                                            }
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {isPermissionExpand &&
-                                    firstHalfFields.map((field, l) => {
-                                      return (
-                                        <div
-                                          key={l}
-                                          className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'
-                                        >
-                                          <div className='w-[65%] text-[13px] text-[#425A76]'>
-                                            {field.desc}
-                                          </div>
-                                          <div className='w-[35%] flex justify-start gap-4'>
-                                            <div className='flex items-center gap-2'>
-                                              <span className='text-[13px] text-[#425A76]'>
-                                                Read
-                                              </span>
-                                              <CheckBox
-                                                id={
-                                                  'leftRead-' + field.field_id
-                                                }
-                                                key={l}
-                                                handleChange={(e) =>
-                                                  handleChange(
-                                                    e,
-                                                    field.field_id,
-                                                    'field',
-                                                    false,
-                                                    'read'
-                                                  )
-                                                }
-                                                value={field.read}
-                                                dependsOn={
-                                                  field.updatedByDependsOn
-                                                }
-                                              />
-                                            </div>
-                                            <div className='flex items-center gap-2'>
-                                              <span
-                                                className={`text-[13px] text-[#425A76] ${field.is_read_only ? 'opacity-50' : ''}`}
-                                              >
-                                                Edit
-                                              </span>
-                                              <CheckBox
-                                                id={
-                                                  'leftEdit-' + field.field_id
-                                                }
-                                                key={l}
-                                                handleChange={(e) =>
-                                                  handleChange(
-                                                    e,
-                                                    field.field_id,
-                                                    'field',
-                                                    false,
-                                                    'edit'
-                                                  )
-                                                }
-                                                value={field.edit}
-                                                disabled={field.is_read_only}
-                                                dependsOn={
-                                                  field.updatedByDependsOn
-                                                }
-                                              />
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                </div>
-                                {/* Right Column */}
-                                <div>
-                                  {ishasPermission && isPermissionExpand && (
-                                    <div className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'>
-                                      <div className='w-[55%] text-[13px] text-[#425A76] font-semibold'></div>
-                                      <div className='w-[45%] flex justify-start gap-4'>
-                                        <div className='flex items-center gap-6'>
-                                          <span className='text-[13px] text-[#425A76]'>
-                                            All
-                                          </span>
-                                          <CheckBox
-                                            value={
-                                              secondHalfFields.every(
-                                                (field) => field.read
-                                              ) ?? false
-                                            }
-                                            id={
-                                              'rightReadAll-' + permission.name
-                                            }
-                                            handleChange={(e) =>
-                                              handleChange(
-                                                e,
-                                                permission.permission_id,
-                                                'field',
-                                                false,
-                                                undefined,
-                                                'rightReadAll'
-                                              )
-                                            }
-                                          />
-                                        </div>
-                                        <div className='flex items-center gap-3'>
-                                          <span className='text-[13px] text-[#425A76]'>
-                                            All
-                                          </span>
-                                          <CheckBox
-                                            value={
-                                              secondHalfFields
-                                                .filter(
-                                                  (item) => !item.is_read_only
-                                                )
-                                                .every((field) => field.edit) ??
-                                              false
-                                            }
-                                            id={
-                                              'rightEditAll-' + permission.name
-                                            }
-                                            handleChange={(e) =>
-                                              handleChange(
-                                                e,
-                                                permission.permission_id,
-                                                'field',
-                                                false,
-                                                undefined,
-                                                'rightEditAll'
-                                              )
-                                            }
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {isPermissionExpand &&
-                                    secondHalfFields.map((field, l) => {
-                                      return (
-                                        <div
-                                          key={l}
-                                          className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'
-                                        >
-                                          <div className='w-[55%] text-[13px] text-[#425A76]'>
-                                            {field.desc}
-                                          </div>
-                                          <div className='w-[45%] flex justify-start gap-4'>
-                                            <div className='flex items-center gap-2'>
-                                              <span className='text-[13px] text-[#425A76]'>
-                                                Read
-                                              </span>
-                                              <CheckBox
-                                                id={
-                                                  'rightRead-' + field.field_id
-                                                }
-                                                key={l}
-                                                handleChange={(e) =>
-                                                  handleChange(
-                                                    e,
-                                                    field.field_id,
-                                                    'field',
-                                                    false,
-                                                    'read'
-                                                  )
-                                                }
-                                                value={field.read}
-                                                dependsOn={
-                                                  field.updatedByDependsOn
-                                                }
-                                              />
-                                            </div>
-                                            <div className='flex items-center gap-2'>
-                                              <span
-                                                className={`text-[13px] text-[#425A76] ${field.is_read_only ? 'opacity-50' : ''}`}
-                                              >
-                                                Edit
-                                              </span>
-                                              <CheckBox
-                                                id={
-                                                  'rightEdit-' + field.field_id
-                                                }
-                                                key={l}
-                                                handleChange={(e) =>
-                                                  handleChange(
-                                                    e,
-                                                    field.field_id,
-                                                    'field',
-                                                    false,
-                                                    'edit'
-                                                  )
-                                                }
-                                                value={field.edit}
-                                                disabled={field.is_read_only}
-                                                dependsOn={
-                                                  field.updatedByDependsOn
-                                                }
-                                              />
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  );
-                })}
+    <form onSubmit={submitData} ref={formRef}>
+      <div className='px-10 pb-5'>
+        <div className='border border-[#CBD6E2] rounded-[4px]'>
+          <div className='flex justify-between items-center bg-[#EAF0F5] border-b border-[#CBD6E2] h-[38px]'>
+            <div className='w-[75%] px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
+              Profile Permissions
             </div>
-          );
-        })}
+            <div className='w-[25%] px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
+              Enable
+            </div>
+          </div>
+          {/* Menu Level */}
+          {menus?.map((menu, i) => {
+            const isMenuExpand = expandMenus.includes(menu.menu_id);
+            return (
+              <div className='border-b border-[#CBD6E2]' key={i}>
+                <div
+                  className='flex justify-between items-center px-4 py-2 bg-[#FCFCFC] cursor-pointer hover:bg-[#F5F8FA]'
+                  onClick={(e) => menuExpand(menu.menu_id, e)}
+                >
+                  <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
+                    <span className='transform transition-transform duration-200'>
+                      <Suspense fallback={null}>
+                        {isMenuExpand ? (
+                          <MenuArrowRightHover
+                            alt='menu arrow'
+                            className='h-4 w-4 rounded'
+                          />
+                        ) : (
+                          <MenuArrowRight
+                            alt='menu arrow'
+                            className='h-4 w-4 rounded'
+                          />
+                        )}
+                      </Suspense>
+                    </span>
+                    {menu.desc}
+                  </div>
+                  <div className='w-[25%] flex justify-start px-8'>
+                    <CheckBox
+                      id={menu.menu_id}
+                      key={i}
+                      handleChange={(e) =>
+                        handleChange(
+                          e,
+                          menu.menu_id,
+                          'menu',
+                          menu.modules.length > 0
+                        )
+                      }
+                      value={menu.is_enabled}
+                      dependsOn={menu.updatedByDependsOn}
+                    />
+                  </div>
+                </div>
+                {/* Module Level */}
+                {isMenuExpand &&
+                  menu.modules.map((module, j) => {
+                    const isModuelExpand = expandMenus.includes(
+                      module.module_id
+                    );
+                    return (
+                      <div key={j} className='border-t border-[#CBD6E2]'>
+                        <div
+                          className='flex justify-between items-center px-8 py-2 bg-white cursor-pointer hover:bg-[#F5F8FA]'
+                          onClick={(e) => menuExpand(module.module_id, e)}
+                        >
+                          <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
+                            <span
+                              className={`transform transition-transform duration-200 ${isModuelExpand ? 'rotate-90' : ''}`}
+                            >
+                              <ModuleArrowRight
+                                alt='module arrow'
+                                className='h-4 w-4 rounded'
+                              />
+                            </span>
+                            {module.desc}
+                          </div>
+                          <div className='w-[25%] flex justify-start px-10'>
+                            <CheckBox
+                              id={module.module_id}
+                              key={j}
+                              handleChange={(e) =>
+                                handleChange(
+                                  e,
+                                  module.module_id,
+                                  'module',
+                                  module.permission.length > 0
+                                )
+                              }
+                              value={module.is_enabled}
+                              dependsOn={module.updatedByDependsOn}
+                            />
+                          </div>
+                        </div>
+                        {/* Permission Level */}
+                        {isModuelExpand &&
+                          module.permission.map((permission, k) => {
+                            const ishasPermission = permission.field.length > 0;
+                            const firstHalfFields = permission.field?.slice(
+                              0,
+                              Math.ceil(permission.field.length / 2)
+                            );
+                            const secondHalfFields = permission.field?.slice(
+                              Math.ceil(permission.field.length / 2)
+                            );
+                            const isPermissionExpand = expandMenus.includes(
+                              permission.permission_id
+                            );
+                            return (
+                              <div key={k}>
+                                <div
+                                  className='flex justify-between items-center px-12 py-2 bg-white border-t border-[#CBD6E2] cursor-pointer hover:bg-[#F5F8FA]'
+                                  onClick={(e) =>
+                                    menuExpand(permission.permission_id, e)
+                                  }
+                                >
+                                  <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
+                                    <span
+                                      className={`transform transition-transform duration-200 ${isPermissionExpand ? 'rotate-90' : ''}`}
+                                    >
+                                      <ModuleArrowRight
+                                        alt='permission arrow'
+                                        className='h-4 w-4 rounded'
+                                      />
+                                    </span>
+                                    {permission.desc}
+                                  </div>
+                                  <div className='w-[25%] flex justify-start px-12'>
+                                    <CheckBox
+                                      id={permission.permission_id}
+                                      key={k}
+                                      handleChange={(e) =>
+                                        handleChange(
+                                          e,
+                                          permission.permission_id,
+                                          'permission',
+                                          ishasPermission
+                                        )
+                                      }
+                                      value={permission.is_enabled}
+                                      dependsOn={permission.updatedByDependsOn}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Field Level */}
+                                <div className='grid grid-cols-2 divide-x divide-[#CBD6E2]'>
+                                  {/* Left Column */}
+                                  <div className='border-r border-[#CBD6E2]'>
+                                    {ishasPermission && isPermissionExpand && (
+                                      <div className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'>
+                                        <div className='w-[65%] text-[13px] text-[#425A76] font-semibold' />
+                                        <div className='w-[35%] flex justify-start gap-4'>
+                                          <div className='flex items-center gap-6'>
+                                            <span className='text-[13px] text-[#425A76]'>
+                                              All
+                                            </span>
+                                            <CheckBox
+                                              value={
+                                                firstHalfFields.every(
+                                                  (field) => field.read
+                                                ) ?? false
+                                              }
+                                              id={
+                                                'leftReadAll-' + permission.name
+                                              }
+                                              handleChange={(e) =>
+                                                handleChange(
+                                                  e,
+                                                  permission.permission_id,
+                                                  'field',
+                                                  false,
+                                                  undefined,
+                                                  'leftReadAll'
+                                                )
+                                              }
+                                            />
+                                          </div>
+                                          <div className='flex items-center gap-3'>
+                                            <span className='text-[13px] text-[#425A76]'>
+                                              All
+                                            </span>
+                                            <CheckBox
+                                              value={
+                                                firstHalfFields
+                                                  .filter(
+                                                    (item) => !item.is_read_only
+                                                  )
+                                                  .every(
+                                                    (field) => field.edit
+                                                  ) ?? false
+                                              }
+                                              id={
+                                                'leftEditAll-' + permission.name
+                                              }
+                                              handleChange={(e) =>
+                                                handleChange(
+                                                  e,
+                                                  permission.permission_id,
+                                                  'field',
+                                                  false,
+                                                  undefined,
+                                                  'leftEditAll'
+                                                )
+                                              }
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {isPermissionExpand &&
+                                      firstHalfFields.map((field, l) => {
+                                        return (
+                                          <div
+                                            key={l}
+                                            className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'
+                                          >
+                                            <div className='w-[65%] text-[13px] text-[#425A76]'>
+                                              {field.desc}
+                                            </div>
+                                            <div className='w-[35%] flex justify-start gap-4'>
+                                              <div className='flex items-center gap-2'>
+                                                <span className='text-[13px] text-[#425A76]'>
+                                                  Read
+                                                </span>
+                                                <CheckBox
+                                                  id={
+                                                    'leftRead-' + field.field_id
+                                                  }
+                                                  key={l}
+                                                  handleChange={(e) =>
+                                                    handleChange(
+                                                      e,
+                                                      field.field_id,
+                                                      'field',
+                                                      false,
+                                                      'read'
+                                                    )
+                                                  }
+                                                  value={field.read}
+                                                  dependsOn={
+                                                    field.updatedByDependsOn
+                                                  }
+                                                />
+                                              </div>
+                                              <div className='flex items-center gap-2'>
+                                                <span
+                                                  className={`text-[13px] text-[#425A76] ${field.is_read_only ? 'opacity-50' : ''}`}
+                                                >
+                                                  Edit
+                                                </span>
+                                                <CheckBox
+                                                  id={
+                                                    'leftEdit-' + field.field_id
+                                                  }
+                                                  key={l}
+                                                  handleChange={(e) =>
+                                                    handleChange(
+                                                      e,
+                                                      field.field_id,
+                                                      'field',
+                                                      false,
+                                                      'edit'
+                                                    )
+                                                  }
+                                                  value={field.edit}
+                                                  disabled={field.is_read_only}
+                                                  dependsOn={
+                                                    field.updatedByDependsOn
+                                                  }
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+                                  {/* Right Column */}
+                                  <div>
+                                    {ishasPermission && isPermissionExpand && (
+                                      <div className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'>
+                                        <div className='w-[55%] text-[13px] text-[#425A76] font-semibold'></div>
+                                        <div className='w-[45%] flex justify-start gap-4'>
+                                          <div className='flex items-center gap-6'>
+                                            <span className='text-[13px] text-[#425A76]'>
+                                              All
+                                            </span>
+                                            <CheckBox
+                                              value={
+                                                secondHalfFields.every(
+                                                  (field) => field.read
+                                                ) ?? false
+                                              }
+                                              id={
+                                                'rightReadAll-' +
+                                                permission.name
+                                              }
+                                              handleChange={(e) =>
+                                                handleChange(
+                                                  e,
+                                                  permission.permission_id,
+                                                  'field',
+                                                  false,
+                                                  undefined,
+                                                  'rightReadAll'
+                                                )
+                                              }
+                                            />
+                                          </div>
+                                          <div className='flex items-center gap-3'>
+                                            <span className='text-[13px] text-[#425A76]'>
+                                              All
+                                            </span>
+                                            <CheckBox
+                                              value={
+                                                secondHalfFields
+                                                  .filter(
+                                                    (item) => !item.is_read_only
+                                                  )
+                                                  .every(
+                                                    (field) => field.edit
+                                                  ) ?? false
+                                              }
+                                              id={
+                                                'rightEditAll-' +
+                                                permission.name
+                                              }
+                                              handleChange={(e) =>
+                                                handleChange(
+                                                  e,
+                                                  permission.permission_id,
+                                                  'field',
+                                                  false,
+                                                  undefined,
+                                                  'rightEditAll'
+                                                )
+                                              }
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {isPermissionExpand &&
+                                      secondHalfFields.map((field, l) => {
+                                        return (
+                                          <div
+                                            key={l}
+                                            className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'
+                                          >
+                                            <div className='w-[55%] text-[13px] text-[#425A76]'>
+                                              {field.desc}
+                                            </div>
+                                            <div className='w-[45%] flex justify-start gap-4'>
+                                              <div className='flex items-center gap-2'>
+                                                <span className='text-[13px] text-[#425A76]'>
+                                                  Read
+                                                </span>
+                                                <CheckBox
+                                                  id={
+                                                    'rightRead-' +
+                                                    field.field_id
+                                                  }
+                                                  key={l}
+                                                  handleChange={(e) =>
+                                                    handleChange(
+                                                      e,
+                                                      field.field_id,
+                                                      'field',
+                                                      false,
+                                                      'read'
+                                                    )
+                                                  }
+                                                  value={field.read}
+                                                  dependsOn={
+                                                    field.updatedByDependsOn
+                                                  }
+                                                />
+                                              </div>
+                                              <div className='flex items-center gap-2'>
+                                                <span
+                                                  className={`text-[13px] text-[#425A76] ${field.is_read_only ? 'opacity-50' : ''}`}
+                                                >
+                                                  Edit
+                                                </span>
+                                                <CheckBox
+                                                  id={
+                                                    'rightEdit-' +
+                                                    field.field_id
+                                                  }
+                                                  key={l}
+                                                  handleChange={(e) =>
+                                                    handleChange(
+                                                      e,
+                                                      field.field_id,
+                                                      'field',
+                                                      false,
+                                                      'edit'
+                                                    )
+                                                  }
+                                                  value={field.edit}
+                                                  disabled={field.is_read_only}
+                                                  dependsOn={
+                                                    field.updatedByDependsOn
+                                                  }
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    );
+                  })}
+              </div>
+            );
+          })}
+        </div>
+        <ConfirmationPopup
+          isOpen={confirmationState.isOpen}
+          message={confirmationState.message}
+          onConfirm={() => {
+            confirmationState.onConfirm();
+            setConfirmationState((prev) => ({ ...prev, isOpen: false }));
+          }}
+          onCancel={() =>
+            setConfirmationState((prev) => ({ ...prev, isOpen: false }))
+          }
+        />
       </div>
-      <ConfirmationPopup
-        isOpen={confirmationState.isOpen}
-        message={confirmationState.message}
-        onConfirm={() => {
-          confirmationState.onConfirm();
-          setConfirmationState((prev) => ({ ...prev, isOpen: false }));
-        }}
-        onCancel={() =>
-          setConfirmationState((prev) => ({ ...prev, isOpen: false }))
-        }
-      />
-    </div>
+    </form>
   );
 };
 

@@ -6,15 +6,15 @@ import {
 } from '../../types/manage-user';
 import { getProfileExportUrl, getProfileListUrl } from '../urls';
 import { generateFile } from '../helpers';
-import { CommonProfileApiResponse, ProfileApiResponse } from '../../../common-service';
+import {
+  ManageProfileResponse,
+  ProfileApiResponse,
+} from '../../../common-service';
 import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Privilege as _Privilege,
   ProfileDetail,
-  CommonProfilePermissionApiResponse,
-  ProfilePermission,
 } from '../../types/manage-profile';
-import { profileDetailsMockData } from '../../mockdata';
 
 export const fetchManageProfileList = async (params: UserListParams = {}) => {
   const queryParams = {
@@ -61,9 +61,9 @@ export const exportProfileList = async (profileId: string) => {
  */
 export const createProfileDetails = async (
   body: Partial<ProfileDetail>
-): Promise<CommonProfileApiResponse> => {
+): Promise<ProfileApiResponse> => {
   try {
-    const { data } = await userServiceApi.post<CommonProfileApiResponse>(
+    const { data } = await userServiceApi.post<ProfileApiResponse>(
       getCreateProfileUrl(),
       body
     );
@@ -79,7 +79,7 @@ export const createProfileDetails = async (
  * @returns UseMutationResult for create profile details
  */
 export const useCreateProfileDetails = () => {
-  return useMutation<CommonProfileApiResponse, Error, Partial<ProfileDetail>>({
+  return useMutation<ProfileApiResponse, Error, Partial<ProfileDetail>>({
     mutationFn: (body) => createProfileDetails({ ...body }),
   });
 };
@@ -92,15 +92,15 @@ export const getCreateProfileUrl = (): string => {
  * Create detailed information for a profile permission
  * @returns Promise with user details
  */
+
 export const createProfilePermission = async (
-  body: Partial<ProfilePermission>
-): Promise<CommonProfilePermissionApiResponse> => {
+  body: ManageProfileResponse
+): Promise<ProfileApiResponse> => {
   try {
-    const { data } =
-      await userServiceApi.put<CommonProfilePermissionApiResponse>(
-        getCreateProfilePermissionUrl(),
-        body
-      );
+    const { data } = await userServiceApi.put<ProfileApiResponse>(
+      getCreateProfilePermissionUrl(),
+      body
+    );
     return data;
   } catch (error) {
     console.error('Error fetching user details:', error);
@@ -113,11 +113,7 @@ export const createProfilePermission = async (
  * @returns UseMutationResult for create profile details
  */
 export const useCreateProfilePermission = () => {
-  return useMutation<
-    CommonProfilePermissionApiResponse,
-    Error,
-    Partial<ProfilePermission>
-  >({
+  return useMutation<ProfileApiResponse, Error, ManageProfileResponse>({
     mutationFn: (body) => createProfilePermission({ ...body }),
   });
 };
@@ -134,11 +130,10 @@ export const getProfileDetails = async (
   profileId: string
 ): Promise<ProfileApiResponse> => {
   try {
-    // const { data } = await userServiceApi.get<ProfileApiResponse>(
-    //   getProfileDetailsUrl(profileId)
-    // );
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return profileDetailsMockData;
+    const { data } = await userServiceApi.get<ProfileApiResponse>(
+      getProfileDetailsUrl(profileId)
+    );
+    return data;
   } catch (error) {
     console.error('Error fetching user details:', error);
     throw error;
@@ -170,10 +165,10 @@ export const getProfileDetailsUrl = (profileId: string): string => {
  * @returns Promise with user details
  */
 export const updateProfilePermission = async (
-  body: Partial<ProfilePermission>
-): Promise<CommonProfileApiResponse> => {
+  body: ManageProfileResponse
+): Promise<ProfileApiResponse> => {
   try {
-    const { data } = await userServiceApi.put<CommonProfileApiResponse>(
+    const { data } = await userServiceApi.put<ProfileApiResponse>(
       updateProfilePermissionUrl(),
       body
     );
@@ -189,11 +184,7 @@ export const updateProfilePermission = async (
  * @returns UseMutationResult for update profile details
  */
 export const useUpdateProfilePermission = () => {
-  return useMutation<
-    CommonProfileApiResponse,
-    Error,
-    Partial<ProfilePermission>
-  >({
+  return useMutation<ProfileApiResponse, Error, ManageProfileResponse>({
     mutationFn: (body) => updateProfilePermission({ ...body }),
   });
 };

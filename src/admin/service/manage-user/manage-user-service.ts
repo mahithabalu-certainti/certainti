@@ -16,7 +16,6 @@ import {
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
 import { generateFile } from '../helpers';
-import { manageProfileMockData } from '../../mockdata';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const fetchManageUserList = async (params: UserListParams = {}) => {
@@ -106,10 +105,9 @@ export const getUserProfileUrl = (): string => {
  */
 export const fetchUserProfile = async (): Promise<UserProfileApiResponse> => {
   try {
-    // const { data } =
-    //   await userServiceApi.get<UserProfileApiResponse>(getUserProfileUrl());
-       await new Promise((resolve) => setTimeout(resolve, 1000));
-    return manageProfileMockData;
+    const { data } =
+      await userServiceApi.get<UserProfileApiResponse>(getUserProfileUrl());
+    return data;
   } catch (error) {
     console.error('Error fetching user details:', error);
     throw error;
