@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
 import {
+  AllModules,
   AllPermissions,
   Layout,
   OnChange,
@@ -32,13 +33,14 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useGetProjectType, useProjectDetail } from '../../services/project';
-import { getDateFormat } from '../../../common-utils';
+import { checkPermission, getDateFormat } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
@@ -120,7 +122,9 @@ const ProjectForm: React.FC = () => {
   const updateProject = useUpdateProject();
 
   // Permission Mangement
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   const projectViewEditFields = useMemo(
     () =>
@@ -145,7 +149,11 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
-
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const accountViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNTS_VIEW_EDIT
+  );
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
       (option) => option.label.toLowerCase() === 'active'
@@ -414,6 +422,8 @@ const ProjectForm: React.FC = () => {
     projectTypeOptions.isLoading ||
     keyContactRoles.isLoading;
 
+  if (!accountIsEnable || !accountViewEnable || projectViewEditFields)
+    return <AccessRestricted />;
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
