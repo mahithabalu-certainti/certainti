@@ -362,6 +362,12 @@ export const validateInlineEditPayload = (data : any) => {
     }
     if(requestData.currency_rid != undefined)
       newDbData.currency_rid = requestData.currency_rid !== dbData.currency_rid ? requestData.currency_rid : dbData.currency_rid
+    
+    if(Object.keys(newDbData).length == 0 && Object.keys(newDbAccDetailsData).length == 0) {
+      return {
+        newDbData, newDbAccDetailsData
+      }
+    } else {
       newDbData.modified_by = requestData.userId
       newDbAccDetailsData.modified_by = requestData.userId
       newDbData.modified_datetime = new Date().toISOString()
@@ -369,6 +375,7 @@ export const validateInlineEditPayload = (data : any) => {
       return {
         newDbData, newDbAccDetailsData
       }
+    }
   }
 
   export const setKeyContact = (dbData : any, d : any) => {

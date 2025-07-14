@@ -40,11 +40,28 @@ class AccountGraphQlServices {
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 }
                 const setAccountData = setInlineValues(fetchAccountById, data, accountDetails[0])
+                if (
+                    Object.keys(setAccountData.newDbData).length === 0 &&
+                    Object.keys(setAccountData.newDbAccDetailsData).length === 0 
+                    ) {
+                    return {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusMessage: STATUS_MESSAGE.noDataToUpdate,
+                        data: null
+                    };
+                    }
                 let updateAccount = await Account.update(setAccountData.newDbData, {
                     where: {
                         rid: fetchAccountById.rid
                     }
                 })
+                if (updateAccount[0] === 0) {
+                    return {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusMessage: STATUS_MESSAGE.accountUpdateFailed,
+                        data: null
+                    };
+                    }
                 let accDetailsData = setAccountData.newDbAccDetailsData;
                 await setAccountDetails(accDetailsData, schemaName, fetchAccountById.rid, sequelize)
                 if (data.key_contacts !== undefined) {
@@ -108,6 +125,12 @@ class AccountGraphQlServices {
                     data : null
                 }
             }
+        } else {
+                return {
+                    statusCode: HttpStatus.NOT_FOUND,
+                    statusMessage: STATUS_MESSAGE.invalidStatus,
+                    data : null
+                }
         }
     } else {
         return {
