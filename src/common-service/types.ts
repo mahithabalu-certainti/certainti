@@ -40,6 +40,9 @@ export interface ProfileResponse {
   depended_by_permission?: string[];
   updatedByDependsOn?: boolean;
   is_modified?: boolean
+  has_extended_permission?: boolean
+  hasReadExtendedPermsission?: boolean;
+  hasEditExtendedPermsission?: boolean;
 }
 
 export interface CommonProfileApiResponse {
@@ -59,7 +62,7 @@ export interface UpdateExtendedPermission {
   profile_id?: string;
   user_id: string;
   profile_name?: string;
-  privileges: Privilege[];
+  privileges: ProfileResponse[];
 }
 export interface GetAllCountriesApiResponse extends CommonApiResponse {
   data: {

@@ -21,6 +21,7 @@ import {
   AllModules,
   AllPermissions,
   ManageProfileResponse,
+  ProfileResponse,
 } from '../../../../common-service';
 import { ProfilePermissionForm } from './profile-permission-form';
 
@@ -107,7 +108,7 @@ export const CreateProfile: React.FC = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
   };
 
-  const outData = (data: object[]) => {
+  const outData = (data: ProfileResponse[]) => {
     if (data.length === 0) {
       errorToast('No modifications detected');
     } else {
@@ -164,7 +165,7 @@ export const CreateProfile: React.FC = () => {
                   ? getProfileDetails.data?.data.privileges || []
                   : createProfile.data?.data.privileges || []
               }
-              loading={getProfileDetails.isPending}
+              loading={getProfileDetails.isLoading}
               formRef={formRef}
               outData={outData}
             />

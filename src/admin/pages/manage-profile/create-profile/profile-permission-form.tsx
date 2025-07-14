@@ -1,6 +1,5 @@
 import { CircularProgress } from '@mui/material';
 import { ProfileResponse, ProfileType } from '../../../../common-service';
-
 import { Suspense, useEffect, useRef, useState } from 'react';
 import {
   CheckboxChecked,
@@ -11,11 +10,15 @@ import {
 } from '../../../../assets';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 
+/* Flow Diagram [Depended - Remove/Add checkbox]
+
+[Progation/Bubling]  =>  [collect Modules/Permissions]  =>  [Take Permissions Depended by/Depended On(Menus,Modules,Permissions) If no permissoins then take Modules Depended by/Depended On(Menus,Modules,Permissions)]  =>  [Iterate all (permissoins/Modules) and Remove/Add Relevent data]  =>  [Remove/Enabled all fields Relevent to permissoins]  =>  [Transform render]  =>  [clear collect Modules/Permissions] */
+
 interface ProfilePermissionFormProps {
   loading: boolean;
   formData: ProfileResponse[];
   formRef: React.RefObject<HTMLFormElement>;
-  outData: (e: object[]) => void;
+  outData: (e: ProfileResponse[]) => void;
 }
 
 export type Field = {
@@ -29,6 +32,8 @@ export type Field = {
   edit: boolean;
   is_read_only: boolean;
   updatedByDependsOn?: boolean;
+  hasReadExtendedPermsission?: boolean;
+  hasEditExtendedPermsission?: boolean;
 };
 
 export type Permission = {
@@ -42,6 +47,7 @@ export type Permission = {
   is_enabled: boolean;
   field: Field[];
   updatedByDependsOn?: boolean;
+  has_extended_permission?: boolean;
 };
 
 export type Module = {
@@ -54,6 +60,7 @@ export type Module = {
   is_enabled: boolean;
   permission: Permission[];
   updatedByDependsOn?: boolean;
+  has_extended_permission?: boolean;
 };
 
 export type TransformForRender = {
@@ -64,6 +71,7 @@ export type TransformForRender = {
   desc: string;
   is_enabled: boolean;
   modules: Module[];
+  has_extended_permission?: boolean;
   updatedByDependsOn?: boolean;
 };
 
@@ -528,36 +536,52 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     const allFields = getFieldsForPermission(permission_id);
     const partialData = allFields?.length / 2;
     if (selectType === 'leftReadAll') {
-      allFields?.slice(0, Math.ceil(partialData)).forEach((f) => {
-        f.read = isEnabled;
-        f.is_modified = true; //set flag for indentify changes(For API)
-        if (!isEnabled) {
-          f.edit = false; // Disabling read always disables edit
-          f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
-        }
-      });
+      allFields
+        ?.slice(0, Math.ceil(partialData))
+        .filter(
+          (item) => !(item.hasReadExtendedPermsission === false && item.read) // ignore Extended permission data
+        )
+        .forEach((f) => {
+          f.read = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
+          if (!isEnabled) {
+            f.edit = false; // Disabling read always disables edit
+            f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
+          }
+        });
     } else if (selectType === 'leftEditAll') {
       allFields
         ?.slice(0, Math.ceil(partialData))
         .filter((item) => !item.is_read_only) //ignore is_read_only data
+        .filter(
+          (item) => !(item.hasEditExtendedPermsission === false && item.edit) // ignore Extended permission data
+        )
         .forEach((f) => {
           f.edit = isEnabled;
           f.is_modified = true; //set flag for indentify changes(For API)
           if (isEnabled) f.read = true; // Enabling edit always enables read
         });
     } else if (selectType === 'rightReadAll') {
-      allFields?.slice(Math.ceil(partialData)).forEach((f) => {
-        f.read = isEnabled;
-        f.is_modified = true; //set flag for indentify changes(For API)
-        if (!isEnabled) {
-          f.edit = false; // Disabling read always disables edit
-          f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
-        }
-      });
+      allFields
+        ?.slice(Math.ceil(partialData))
+        .filter(
+          (item) => !(item.hasReadExtendedPermsission === false && item.read) // ignore Extended permission data
+        )
+        .forEach((f) => {
+          f.read = isEnabled;
+          f.is_modified = true; //set flag for indentify changes(For API)
+          if (!isEnabled) {
+            f.edit = false; // Disabling read always disables edit
+            f['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
+          }
+        });
     } else if (selectType === 'rightEditAll') {
       allFields
         ?.slice(Math.ceil(partialData))
         .filter((item) => !item.is_read_only) //ignore is_read_only data
+        .filter(
+          (item) => !(item.hasEditExtendedPermsission === false && item.edit) // ignore Extended permission data
+        )
         .forEach((f) => {
           f.edit = isEnabled;
           f.is_modified = true; //set flag for indentify changes(For API)
@@ -630,19 +654,9 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     }
   };
 
-  // interface OutputRes{
-  //             desc: string,
-  //         is_enabled: item.is_enabled,
-  //         is_modified: item.is_modified,
-  //         menu_id: item.menu_id,
-  //         name: item.name,
-  //         rid: item.rid,
-  //         type: item.type,
-  // }
-
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const modifiedData: object[] = [];
+    const modifiedData: ProfileResponse[] = [];
     formData.forEach((item) => {
       if (item.is_modified) {
         const updateData: ProfileResponse = {
@@ -704,6 +718,9 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
           {/* Menu Level */}
           {menus?.map((menu, i) => {
             const isMenuExpand = expandMenus.includes(menu.menu_id);
+            // Disabled checkbox for Extended permission
+            const isDisabled =
+              menu.has_extended_permission === false && menu.is_enabled;
             return (
               <div className='border-b border-[#CBD6E2]' key={i}>
                 <div
@@ -742,6 +759,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                       }
                       value={menu.is_enabled}
                       dependsOn={menu.updatedByDependsOn}
+                      disabled={isDisabled}
                     />
                   </div>
                 </div>
@@ -751,6 +769,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                     const isModuelExpand = expandMenus.includes(
                       module.module_id
                     );
+                    // Disabled checkbox for Extended permission
+                    const isDisabled =
+                      module.has_extended_permission === false &&
+                      module.is_enabled;
                     return (
                       <div key={j} className='border-t border-[#CBD6E2]'>
                         <div
@@ -782,6 +804,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                               }
                               value={module.is_enabled}
                               dependsOn={module.updatedByDependsOn}
+                              disabled={isDisabled}
                             />
                           </div>
                         </div>
@@ -799,6 +822,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                             const isPermissionExpand = expandMenus.includes(
                               permission.permission_id
                             );
+                            // Disabled checkbox for Extended permission
+                            const isDisabled =
+                              permission.has_extended_permission === false &&
+                              permission.is_enabled;
                             return (
                               <div key={k}>
                                 <div
@@ -832,6 +859,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                       }
                                       value={permission.is_enabled}
                                       dependsOn={permission.updatedByDependsOn}
+                                      disabled={isDisabled}
                                     />
                                   </div>
                                 </div>
@@ -902,6 +930,13 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                     )}
                                     {isPermissionExpand &&
                                       firstHalfFields.map((field, l) => {
+                                        // Disabled checkbox for Extended permission
+                                        const isDisabledRead =
+                                          field.hasReadExtendedPermsission ===
+                                            false && field.read;
+                                        const isDisabledEdit =
+                                          field.hasEditExtendedPermsission ===
+                                            false && field.edit;
                                         return (
                                           <div
                                             key={l}
@@ -933,6 +968,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                   dependsOn={
                                                     field.updatedByDependsOn
                                                   }
+                                                  disabled={isDisabledRead}
                                                 />
                                               </div>
                                               <div className='flex items-center gap-2'>
@@ -956,7 +992,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     )
                                                   }
                                                   value={field.edit}
-                                                  disabled={field.is_read_only}
+                                                  disabled={
+                                                    isDisabledEdit ||
+                                                    field.is_read_only
+                                                  }
                                                   dependsOn={
                                                     field.updatedByDependsOn
                                                   }
@@ -1034,6 +1073,13 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                     )}
                                     {isPermissionExpand &&
                                       secondHalfFields.map((field, l) => {
+                                        // Disabled checkbox for Extended permission
+                                        const isDisabledRead =
+                                          field.hasReadExtendedPermsission ===
+                                            false && field.read;
+                                        const isDisabledEdit =
+                                          field.hasEditExtendedPermsission ===
+                                            false && field.edit;
                                         return (
                                           <div
                                             key={l}
@@ -1066,6 +1112,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                   dependsOn={
                                                     field.updatedByDependsOn
                                                   }
+                                                  disabled={isDisabledRead}
                                                 />
                                               </div>
                                               <div className='flex items-center gap-2'>
@@ -1090,7 +1137,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     )
                                                   }
                                                   value={field.edit}
-                                                  disabled={field.is_read_only}
+                                                  disabled={
+                                                    isDisabledEdit ||
+                                                    field.is_read_only
+                                                  }
                                                   dependsOn={
                                                     field.updatedByDependsOn
                                                   }
