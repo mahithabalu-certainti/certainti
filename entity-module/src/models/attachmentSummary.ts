@@ -65,6 +65,10 @@ export class AttachmentSummary extends Model {
           type: DataTypes.STRING(100),
           allowNull: false,
         },
+        document_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
         attach_to: {
           type: DataTypes.STRING(50),
           allowNull: false,

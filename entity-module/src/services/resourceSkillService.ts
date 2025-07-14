@@ -1062,37 +1062,41 @@ class ResourceSkillService {
   }
 
     /**
-   * Fetches resource skills for a given resource ID using raw SQL query
-   * 
-   * @param {string} resourceId - ID of the resource
-   * @param {string} accountNumber - Account number to determine schema
-   * @returns {Promise<any>} - Resource skills data
-   */
-  async getResourceSkillsByResourceId(accountNumber: string, resourceId: string): Promise<any> {
-    try {
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+ * Fetches resource skills for multiple resource IDs using a single SQL query
+ * 
+ * @param {string} accountNumber - Account number to determine schema
+ * @param {string[]} resourceIds - Array of resource IDs
+ * @returns {Promise<any[]>} - Resource skills data
+ */
+async getResourceSkillsByResourceIds(accountNumber: string, resourceIds: string[]): Promise<any[]> {
+  try {
+    if (resourceIds.length === 0) return [];
 
-      const query = `
-        SELECT 
-          rs.rid
-        FROM "${schemaName}".resource_skill rs
-        WHERE rs.resource_rid = :resourceId
-        ORDER BY rs.created_datetime DESC
-      `;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
 
-      const sequelize = await initOrgSequelize();
-      const results = await sequelize.query(query, {
-        replacements: { resourceId },
-        type: 'SELECT'
-      });
+    const query = `
+      SELECT 
+        rs.rid,
+        rs.resource_rid
+      FROM "${schemaName}".resource_skill rs
+      WHERE rs.resource_rid IN (:resourceIds)
+      ORDER BY rs.created_datetime DESC
+    `;
 
-      return results;
+    const sequelize = await initOrgSequelize();
+    const results = await sequelize.query(query, {
+      replacements: { resourceIds },
+      type: 'SELECT'
+    });
 
-    } catch (error) {
-      console.error('Error fetching resource skills:', error);
-      throw error;
-    }
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching resource skills (bulk):', error);
+    throw error;
   }
+}
+
 }
 
 export default ResourceSkillService;

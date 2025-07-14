@@ -2453,70 +2453,76 @@ async getProjectsByAccountId(schemaNumber: string, accountRid: string) {
 
 
  /**
-   * Fetches project resources for a given project ID using raw SQL query
-   * 
-   * @param {string} projectId - ID of the resource
-   * @param {string} accountNumber - Account number to determine schema
-   * @returns {Promise<any>} - Project_resources data
-   */
-  async getProjectResourcesByProjectId(accountNumber: string, projectId: string): Promise<any> {
-    try {
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+ * Fetches project resources for multiple project IDs using a single SQL query
+ * 
+ * @param {string} accountNumber - Account number to determine schema
+ * @param {string[]} projectIds - Array of project IDs
+ * @returns {Promise<any[]>} - Project_resources data
+ */
+async getProjectResourcesByProjectIds(accountNumber: string, projectIds: string[]): Promise<any[]> {
+  try {
+    if (projectIds.length === 0) return [];
 
-      const query = `
-        SELECT 
-          ps.rid
-        FROM "${schemaName}".project_resource ps
-        WHERE ps.project_rid = :projectId
-        ORDER BY ps.created_datetime DESC
-      `;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
 
-      const sequelize = await initOrgSequelize();
-      const results = await sequelize.query(query, {
-        replacements: { projectId },
-        type: 'SELECT'
-      });
+    const query = `
+      SELECT 
+        ps.rid,
+        ps.project_rid
+      FROM "${schemaName}".project_resource ps
+      WHERE ps.project_rid IN (:projectIds)
+      ORDER BY ps.created_datetime DESC
+    `;
 
-      return results;
+    const sequelize = await initOrgSequelize();
+    const results = await sequelize.query(query, {
+      replacements: { projectIds },
+      type: 'SELECT'
+    });
 
-    } catch (error) {
-      console.error('Error fetching project resources:', error);
-      throw error;
-    }
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching project resources (bulk):', error);
+    throw error;
   }
+}
 
   /**
-   * Fetches project tasks for a given project resource ID using raw SQL query
-   * 
-   * @param {string} projectResourceId - ID of the resource
-   * @param {string} accountNumber - Account number to determine schema
-   * @returns {Promise<any>} - Project_task data
-   */
-  async getProjectTasksByProjectResourceId(accountNumber: string, projectResourceId: string): Promise<any> {
-    try {
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+ * Fetches project tasks for multiple project resource IDs using a single SQL query
+ * 
+ * @param {string} accountNumber - Account number to determine schema
+ * @param {string[]} projectResourceIds - Array of project resource IDs
+ * @returns {Promise<any[]>} - Project_task data
+ */
+async getProjectTasksByProjectResourceIds(accountNumber: string, projectResourceIds: string[]): Promise<any[]> {
+  try {
+    if (projectResourceIds.length === 0) return [];
 
-      const query = `
-        SELECT 
-          pt.rid
-        FROM "${schemaName}".project_task pt
-        WHERE pt.project_resource_rid = :projectResourceId
-        ORDER BY pt.created_datetime DESC
-      `;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
 
-      const sequelize = await initOrgSequelize();
-      const results = await sequelize.query(query, {
-        replacements: { projectResourceId },
-        type: 'SELECT'
-      });
+    const query = `
+      SELECT 
+        pt.rid,
+        pt.project_resource_rid
+      FROM "${schemaName}".project_task pt
+      WHERE pt.project_resource_rid IN (:projectResourceIds)
+      ORDER BY pt.created_datetime DESC
+    `;
 
-      return results;
+    const sequelize = await initOrgSequelize();
+    const results = await sequelize.query(query, {
+      replacements: { projectResourceIds },
+      type: 'SELECT'
+    });
 
-    } catch (error) {
-      console.error('Error fetching project tasks:', error);
-      throw error;
-    }
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching project tasks (bulk):', error);
+    throw error;
   }
+}
 
 }
 

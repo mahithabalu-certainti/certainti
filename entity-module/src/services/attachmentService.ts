@@ -120,6 +120,7 @@ async createAttachment(
             r_number: attachmentModel.r_number,
             browse_file: attachmentModel.browse_file,
             document_name: attachmentModel.document_name,
+            document_rid: attachmentModel.rid,
             attach_to: attachmentModel.attach_to,
             attachment_level: attachmentModel.attachment_level,
             fiscal_year: attachmentModel.fiscal_year,
@@ -220,7 +221,7 @@ async getAttachments(
     if (!accountData) throw new Error("Invalid account ID");
 
     let schemaNumber = accountData.r_number;
-    if (accountData.storage_type === "store_in_parent" && accountData.is_parent) {
+    if (accountData.storage_type === "store_in_parent") {
       schemaNumber = await this.schemaService.fetchParentAccount(accountData.parent_account_rid);
     }
 
@@ -245,7 +246,8 @@ async getAttachments(
       whereClause[Op.and].push({ fiscal_year: fiscalYear });
     }
 
-    // ---------- 🔷 Helper functions ----------
+    // 🔷 Helper functions
+
     const fetchAttachments = async (model: any, level: string, attachToIds: string[]) => {
       if (attachToIds.length === 0) return [];
       const where = {
@@ -258,146 +260,123 @@ async getAttachments(
       return model.findAll({ where });
     };
 
-    const fetchResourceCostSkillAttachments = async (model: any, resourceId: string) => {
+    // 🔷 Optimized resource cost and skill attachments fetch for multiple resources
+    const fetchResourceCostSkillAttachmentsBulk = async (model: any, resourceIds: string[]) => {
       let resourceCostSkillAttachments: any[] = [];
+      if (resourceIds.length === 0) return resourceCostSkillAttachments;
 
-      // 🔹 Fetch resource_costs
-      const resourceCosts = await this.resourceCostService.getResourceCostsByResourceId(schemaNumber, resourceId);
-      const resourceCostIds = resourceCosts.map((rc: { rid: string }) => rc.rid);
-      if (resourceCostIds.length > 0) {
-        const resourceCostAttachments = await fetchAttachments(model, 'resource_cost', resourceCostIds);
+      // 🔹 Fetch all resource_costs in one call
+      const resourceCosts = await this.resourceCostService.getResourceCostsByResourceIds(schemaNumber, resourceIds);
+      const allResourceCostIds = resourceCosts.map(rc => rc.rid);
+      if (allResourceCostIds.length > 0) {
+        const resourceCostAttachments = await fetchAttachments(model, 'resource_cost', allResourceCostIds);
         resourceCostSkillAttachments.push(...resourceCostAttachments);
       }
 
-      // 🔹 Fetch resource_skills
-      const resourceSkills = await this.resourceSkillService.getResourceSkillsByResourceId(
-        schemaNumber,
-        resourceId
-      );
-
-      console.log("resource_skill :",resourceSkills);
-      const resourceSkillIds = resourceSkills.map((rs: { rid: string }) => rs.rid);
-      if (resourceSkillIds.length > 0) {
-        const resourceSkillAttachments = await fetchAttachments(model, 'resource_skill', resourceSkillIds);
+      // 🔹 Fetch all resource_skills in one call
+      const resourceSkills = await this.resourceSkillService.getResourceSkillsByResourceIds(schemaNumber, resourceIds);
+      const allResourceSkillIds = resourceSkills.map(rs => rs.rid);
+      if (allResourceSkillIds.length > 0) {
+        const resourceSkillAttachments = await fetchAttachments(model, 'resource_skill', allResourceSkillIds);
         resourceCostSkillAttachments.push(...resourceSkillAttachments);
       }
 
       return resourceCostSkillAttachments;
     };
 
-    const fetchProjectResourceTaskAttachments = async (model: any, projectId: string) => {
+    // 🔷 Optimized project resource + task attachments fetch for multiple projects
+    const fetchProjectResourceTaskAttachmentsBulk = async (model: any, projectIds: string[]) => {
       let projectChildAttachments: any[] = [];
+      if (projectIds.length === 0) return projectChildAttachments;
 
-      // 🔹 Fetch project_resources under project
-      const projectResources = await this.projectIngestionService.getProjectResourcesByProjectId(
-        schemaNumber,
-        projectId
-      );
-      const projectResourceIds = projectResources.map((r: { rid: string }) => r.rid);
+      // 🔹 Fetch all project_resources under projects in one call
+      const projectResources = await this.projectIngestionService.getProjectResourcesByProjectIds(schemaNumber, projectIds);
+      const projectResourceIds = projectResources.map(r => r.rid);
 
       if (projectResourceIds.length > 0) {
-        // Project_resource attachments
         const projectResourceAttachments = await fetchAttachments(model, 'project_resource', projectResourceIds);
         projectChildAttachments.push(...projectResourceAttachments);
 
-        // 🔹 Fetch project_tasks under each project_resource
-        for (const resourceId of projectResourceIds) {
-          const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceId(
-            schemaNumber,
-            resourceId
-          );
-          const projectTaskIds = projectTasks.map((t: { rid: string }) => t.rid);
+        // 🔹 Fetch all project_tasks under project_resources in one call
+        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, projectResourceIds);
+        const projectTaskIds = projectTasks.map(t => t.rid);
 
-          if (projectTaskIds.length > 0) {
-            const projectTaskAttachments = await fetchAttachments(model, 'project_task', projectTaskIds);
-            projectChildAttachments.push(...projectTaskAttachments);
-          }
+        if (projectTaskIds.length > 0) {
+          const projectTaskAttachments = await fetchAttachments(model, 'project_task', projectTaskIds);
+          projectChildAttachments.push(...projectTaskAttachments);
         }
       }
 
       return projectChildAttachments;
     };
 
+    // 🔷 Non-parent account logic with batched optimized fetches
+    if (attachmentLevel === 'account' && entityId) {
+      const accountAttachments = await fetchAttachments(AttachmentModel, 'account', [entityId]);
+      allAttachments.push(...accountAttachments);
 
-      // ---------- 🔷 Non-parent account logic ----------
-      if (attachmentLevel === 'account' && entityId) {
-        const accountAttachments = await fetchAttachments(AttachmentModel, 'account', [entityId]);
-        allAttachments.push(...accountAttachments);
-
-        // 🔷 Fetch projects
-        const projects = await this.projectIngestionService.getProjectsByAccountId(
-          schemaNumber,
-          entityId
-        );
-        const projectIds = projects.map(p => p.rid);
-        if (projectIds.length > 0) {
-          const projectAttachments = await fetchAttachments(AttachmentModel, 'project', projectIds);
-          allAttachments.push(...projectAttachments);
-
-          for (const projectId of projectIds) {
-            const projectChildAttachments = await fetchProjectResourceTaskAttachments(AttachmentModel, projectId);
-            allAttachments.push(...projectChildAttachments);
-          }
-        }
-
-        // 🔷 Fetch resources
-        const resources = await this.resourceService.getResourcesByAccountId(
-          schemaNumber,
-          entityId
-        );
-        const resourceIds = resources.map(r => (r as { rid: string }).rid);
-        if (resourceIds.length > 0) {
-          const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', resourceIds);
-          allAttachments.push(...resourceAttachments);
-
-          for (const resourceId of resourceIds) {
-            const resourceCostSkillAttachments = await fetchResourceCostSkillAttachments(AttachmentModel, resourceId);
-            allAttachments.push(...resourceCostSkillAttachments);
-          }
-        }
-      }
-      // 🔷 Project, project_resource, resource specific logic (reuse previous clean version)
-      // 🔷 Project
-      else if (attachmentLevel === 'project' && entityId) {
-        const projectAttachments = await fetchAttachments(AttachmentModel, 'project', [entityId]);
+      const projects = await this.projectIngestionService.getProjectsByAccountId(schemaNumber, entityId);
+      const projectIds = projects.map(p => p.rid);
+      if (projectIds.length > 0) {
+        const projectAttachments = await fetchAttachments(AttachmentModel, 'project', projectIds);
         allAttachments.push(...projectAttachments);
 
-        const projectChildAttachments = await fetchProjectResourceTaskAttachments(AttachmentModel, entityId);
+        const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, projectIds);
         allAttachments.push(...projectChildAttachments);
       }
-      // 🔷 Project_resource
-      else if (attachmentLevel === 'project_resource' && entityId) {
-        const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
-        allAttachments.push(...projectResourceAttachments);
 
-        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceId(
-          schemaNumber,
-          entityId
-        );
-        const projectTaskIds = projectTasks.map((t: { rid: string }) => t.rid);
-        if (projectTaskIds.length > 0) {
-          const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
-          allAttachments.push(...projectTaskAttachments);
-        }
-      }
-      // 🔷 Resource
-      else if (attachmentLevel === 'resource' && entityId) {
-        const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', [entityId]);
+      const resources = await this.resourceService.getResourcesByAccountId(schemaNumber, entityId);
+      const resourceIds = resources.map(r => (r as { rid: string }).rid);
+      if (resourceIds.length > 0) {
+        const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', resourceIds);
         allAttachments.push(...resourceAttachments);
 
-        const resourceCostSkillAttachments = await fetchResourceCostSkillAttachments(AttachmentModel, entityId);
+        const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, resourceIds);
         allAttachments.push(...resourceCostSkillAttachments);
       }
-      // 🔷 Other direct levels
-      else {
-        if (entityId) {
-          whereClause[Op.and].push({ attach_to: entityId });
-        } else if (attachmentLevel) {
-          whereClause[Op.and].push({ attachment_level: attachmentLevel });
-        }
-        const result = await AttachmentModel.findAll({ where: whereClause });
-        allAttachments.push(...result);
+    }
+
+    // 🔷 Project logic
+    else if (attachmentLevel === 'project' && entityId) {
+      const projectAttachments = await fetchAttachments(AttachmentModel, 'project', [entityId]);
+      allAttachments.push(...projectAttachments);
+
+      const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [entityId]);
+      allAttachments.push(...projectChildAttachments);
+    }
+
+    // 🔷 Project_resource logic
+    else if (attachmentLevel === 'project_resource' && entityId) {
+      const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
+      allAttachments.push(...projectResourceAttachments);
+
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, [entityId]);
+      const projectTaskIds = projectTasks.map(t => t.rid);
+      if (projectTaskIds.length > 0) {
+        const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
+        allAttachments.push(...projectTaskAttachments);
       }
+    }
+
+    // 🔷 Resource logic
+    else if (attachmentLevel === 'resource' && entityId) {
+      const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', [entityId]);
+      allAttachments.push(...resourceAttachments);
+
+      const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, [entityId]);
+      allAttachments.push(...resourceCostSkillAttachments);
+    }
+
+    // 🔷 Other direct levels
+    else {
+      if (entityId) {
+        whereClause[Op.and].push({ attach_to: entityId });
+      } else if (attachmentLevel) {
+        whereClause[Op.and].push({ attachment_level: attachmentLevel });
+      }
+      const result = await AttachmentModel.findAll({ where: whereClause });
+      allAttachments.push(...result);
+    }
 
     // 🔷 Fetch display names
     const attachmentDisplayNames = await this.getAttachmentDisplayNames(allAttachments, schemaNumber);
@@ -419,7 +398,7 @@ async getAttachments(
     }
 
     // 🔷 Sort
-    const validSortFields = ['document_name', 'document_type', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'created_by', 'created_datetime', 'fiscal_year'];
+    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'created_by', 'created_datetime', 'fiscal_year'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -435,13 +414,18 @@ async getAttachments(
 
     // 🔷 Map document types and users
     const documentTypeIds = [...new Set(paginatedAttachments.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(paginatedAttachments.map(att => att.document_category_rid))]
     const userIds = [...new Set(paginatedAttachments.map(att => att.created_by))];
 
     const mainSequelize = await initMainDbSequelize();
-    const [documentTypes, users] = await Promise.all([
+    const [documentTypes, documentCategories, users] = await Promise.all([
       documentTypeIds.length > 0 ? mainSequelize.query(
         `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
         { replacements: { documentTypeIds }, type: 'SELECT' }
+      ) : Promise.resolve([]),
+      documentCategoryIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
       ) : Promise.resolve([]),
       userIds.length > 0 ? mainSequelize.query(
         `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
@@ -450,12 +434,14 @@ async getAttachments(
     ]);
 
     const documentTypeMap = new Map(documentTypes.map((dt: any) => [dt.rid, dt.type_name]));
+    const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
     // 🔷 Map final results
     const attachments = paginatedAttachments.map(attachment => ({
       ...attachment.get({ plain: true }),
       document_type: documentTypeMap.get(attachment.document_type_rid) || null,
+      document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
       uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
       attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
     }));
@@ -469,7 +455,15 @@ async getAttachments(
       });
     }
 
-    // 🔷 Return
+    // Handle document_category sorting
+    if (sortBy === 'document_category') {
+      attachments.sort((a, b) => {
+        const aType = a.document_category || '';
+        const bType = b.document_category || '';
+        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+      });
+    }
+
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
@@ -486,6 +480,7 @@ async getAttachments(
     };
   }
 }
+
 
 
 
@@ -550,7 +545,7 @@ async getAttachmentSummary(
 
     // Determine final sortBy and sortOrder
     const validSortFields = [
-      'document_name', 'document_type', 'r_number', 'format',
+      'document_name', 'document_type', 'document_category', 'r_number', 'format',
       'attachment_level', 'size_in_mb', 'attached_to',
       'comments', 'created_by', 'created_datetime', 'fiscal_year'
     ];
@@ -577,7 +572,7 @@ async getAttachmentSummary(
       if (!accountData) throw new Error("Invalid account ID");
 
       let schemaNumber = accountData.r_number;
-      if (accountData.storage_type === "store_in_parent" && accountData.is_parent) {
+      if (accountData.storage_type === "store_in_parent") {
         schemaNumber = await this.schemaService.fetchParentAccount(accountData.parent_account_rid);
       }
 
@@ -627,15 +622,20 @@ async getAttachmentSummary(
     // Map document type & user
     const paginatedAttachments = filteredAttachments.slice((page - 1) * limit, page * limit);
     const documentTypeIds = [...new Set(paginatedAttachments.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(paginatedAttachments.map(att => att.document_category_rid))];
     const userIds = [...new Set(paginatedAttachments.map(att => att.created_by))];
 
-    const [documentTypes, users] = await Promise.all([
+    const [documentTypes, documentCategories, users] = await Promise.all([
       documentTypeIds.length > 0
         ? mainSequelize.query(
             `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
             { replacements: { documentTypeIds }, type: 'SELECT' }
           )
         : Promise.resolve([]),
+        documentCategoryIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
+      ) : Promise.resolve([]),
       userIds.length > 0
         ? mainSequelize.query(
             `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
@@ -645,12 +645,14 @@ async getAttachmentSummary(
     ]);
 
     const documentTypeMap = new Map(documentTypes.map((dt: any) => [dt.rid, dt.type_name]));
+    const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
     // Final mapping
     const attachments = paginatedAttachments.map(attachment => ({
       ...attachment.get({ plain: true }),
       document_type: documentTypeMap.get(attachment.document_type_rid) || null,
+      document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
       uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
       attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to
     }));
@@ -660,6 +662,17 @@ async getAttachmentSummary(
       attachments.sort((a, b) => {
         const aType = a.document_type || '';
         const bType = b.document_type || '';
+        return finalSortOrder === 'ASC'
+          ? aType.localeCompare(bType)
+          : bType.localeCompare(aType);
+      });
+    }
+
+    // 🔷 Additional sorting for document_category if needed
+    if (finalSortBy === 'document_category') {
+      attachments.sort((a, b) => {
+        const aType = a.document_category || '';
+        const bType = b.document_category || '';
         return finalSortOrder === 'ASC'
           ? aType.localeCompare(bType)
           : bType.localeCompare(aType);
@@ -892,6 +905,7 @@ private buildRawWhereClause(
         break;
 
       case 'document_type_rid':
+      case 'document_category_rid':  
       case 'fiscal_year':  
         switch (operator.toLowerCase()) {
           case 'equals': condition[field] = { [Op.eq]: value }; break;
