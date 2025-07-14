@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Autocomplete,
   Checkbox,
@@ -307,7 +306,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     setConstructFormData((prevData) => {
       if (!prevData) return prevData;
 
-      const newData: Record<string, any> = {};
+      const newData: Record<string, FieldTypes> = {};
 
       Object.entries(prevData).forEach(([key, value]) => {
         const match = key.match(/_(\d+)$/);
@@ -1243,14 +1242,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       }
       case 'date': {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const startDateValue: string | undefined | any = keyStart
+        const startDateValue: FieldTypes | undefined = keyStart
           ? constructFormData[keyStart]
           : undefined;
         const today: Dayjs = dayjs();
         const isEndDateField = field.name === keyEnd;
         const parsedStartDate = startDateValue
-          ? dayjs(startDateValue, 'YYYY-MM-DD')
+          ? dayjs(startDateValue as string, 'YYYY-MM-DD')
           : undefined;
 
         // Get the selected fiscal year from form data

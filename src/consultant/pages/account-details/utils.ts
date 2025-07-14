@@ -1,3 +1,5 @@
+import { AccountDetailsResponse } from '../../types';
+
 export interface AccountData {
   accountById: {
     rid: string;
@@ -98,7 +100,9 @@ const getValueOrDefault = (
   return value?.toString() || defaultValue;
 };
 
-export const transformAccountData = (data: AccountData): DisplayColumn[] => {
+export const transformAccountData = (
+  data: AccountDetailsResponse
+): DisplayColumn[] => {
   const account = data?.accountById;
   const status = account?.status?.status_name?.toLowerCase();
 

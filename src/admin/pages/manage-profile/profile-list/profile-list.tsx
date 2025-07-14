@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
 import { FilterModal } from '../../../../components';
 import { getManageProfileFilterfields } from './';
-import { UserListParams } from '../../../types/manage-user';
+import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
@@ -68,19 +68,19 @@ export const ProfileList: React.FC = () => {
   );
   const isProfileViewEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_VIEW
+    AllPermissions.PROFILE_VIEW_EDIT
   );
-  const isProfileEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_EDIT
-  );
+  // const isProfileEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROFILE_EDIT
+  // );
   const isProfileDeleteEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_DELETE
   );
   const isProfileViewAllEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_VIEW_ALL
+    AllPermissions.PROFILE_PERMISSION_VIEW_EDIT
   );
 
   const handleCloseFilter = () => {
@@ -241,12 +241,12 @@ export const ProfileList: React.FC = () => {
       <div className='border border-[#CBD6E2]'>
         <Suspense fallback={null}>
           <ProfileTable
-            appliedFilters={appliedFilters}
+            appliedFilters={appliedFilters as Record<string, FilterCondition>}
             tableParams={tableParams}
             setTableParams={setTableParams}
             onSelectionChange={handleSelectionChange}
             isProfileViewEnable={isProfileViewEnable}
-            isProfileEditEnable={isProfileEditEnable}
+            isProfileEditEnable={true}
             isProfileDeleteEnable={isProfileDeleteEnable}
             refreshProfileTrigger={refreshProfileTrigger}
           />

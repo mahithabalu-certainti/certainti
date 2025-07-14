@@ -10,9 +10,10 @@ import DetailsInfo from './details-info';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { ACCOUNT } from '../../../../../routes';
 import { useNavigate } from 'react-router-dom';
-import { AllPermissions } from '../../../../../common-service';
+import { AllMenus, AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
+import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 // import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
@@ -22,7 +23,7 @@ const BUTTON_STYLES = {
 };
 
 export interface DetailsTabs {
-  id: AllPermissions;
+  id: AllPermissions | AllMenus;
   name: string;
   hide: boolean;
   disable?: boolean;
@@ -30,23 +31,20 @@ export interface DetailsTabs {
 
 const detailsTabs: DetailsTabs[] = [
   {
-    id: AllPermissions.ACCOUNT_DETAILS_OVERVIEW,
+    id: AllPermissions.ACCOUNTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
   },
   {
-    id: AllPermissions.ACCOUNT_DETAILS_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,
   },
 ];
 
-// interface ErrorProps {
-//   message?: string;
-// }
 interface DetailsProps {
-  accountDetails?: accountDetailsProps; // need to change once api info is availableRecord<string, any>
+  accountDetails?: accountDetailsProps;
   isLoading?: boolean;
   isError?: boolean; // ErrorProps | null | undefined;
   isAccountEditEnable?: boolean;
@@ -57,7 +55,6 @@ const Details: React.FC<DetailsProps> = ({
   accountDetails,
   isLoading,
   isError,
-  isAccountEditEnable,
 }) => {
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
@@ -127,7 +124,7 @@ const Details: React.FC<DetailsProps> = ({
       disabled: false, //accountInActive,
       onClick: handleEdit,
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: !isAccountEditEnable,
+      hide: false,
     },
   ];
 
@@ -184,12 +181,16 @@ const Details: React.FC<DetailsProps> = ({
               </Box>
             </Box>
             <Box>
-              <DetailsInfo
-                detailsInfo={accountDetails}
-                isDetailsLoading={isLoading}
-                detailsError={isError}
-                isKeyContactAvailable={isKeyContactAvailable}
-              />
+              {isLoading ? (
+                <DetailsSectionSkeleton />
+              ) : (
+                <DetailsInfo
+                  detailsInfo={accountDetails}
+                  isDetailsLoading={isLoading}
+                  detailsError={isError}
+                  isKeyContactAvailable={isKeyContactAvailable}
+                />
+              )}
             </Box>
           </div>
         )}

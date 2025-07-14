@@ -42,11 +42,13 @@ export interface CitysApiResponse extends CommonApiResponse {
   };
 }
 
+export interface AccountDetailsResponse {
+  accountById: AccountById;
+  accountDetails: AccountFieldsTypes;
+}
+
 export interface AccountFieldsApiResponse extends CommonApiResponse {
-  data: {
-    accountById: AccountById;
-    accountDetails: AccountFieldsTypes;
-  };
+  data: AccountDetailsResponse;
 }
 
 export interface States {
@@ -116,15 +118,6 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
-export interface AccountColumn {
-  id: string;
-  label: string;
-  width: string;
-  sortId: string;
-  sortable?: boolean;
-  sx?: React.CSSProperties;
-}
-
 export enum Storagetype {
   SeperateDB = 'separate_db',
   StoredDB = 'store_in_parent',
@@ -134,6 +127,10 @@ export enum Status {
   Active = 'active',
   InActive = 'inactive',
 }
+
+type NewStatus = {
+  status_name: string;
+};
 
 export enum YesNo {
   Yes = 'yes',
@@ -162,10 +159,11 @@ export interface AccountById {
   account_name: string;
   industry: string;
   industry_rid: string;
+  industry_rid_name: string;
   business_details: string;
   country_rid: string | null;
   currency_rid: string | null;
-  status: Status;
+  status: NewStatus;
   primary_contact_name: string;
   status_rid: string;
   is_parent: boolean;
@@ -176,6 +174,14 @@ export interface AccountById {
   created_datetime: string;
   modified_datetime: string;
   logo_url: string;
+  parent_account: {
+    account_name: string;
+  };
+  country: { country_name: string; country_code: string };
+  currency: {
+    currency_code: string;
+    currency_symbol: string;
+  };
 }
 
 export interface KeyContacts {
@@ -214,6 +220,7 @@ export interface AccountFieldsTypes {
   keyContacts: KeyContacts[];
   modified_by: string;
   created_by: string;
+  account_rid: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -362,6 +369,8 @@ export type AccountList = {
   professional_services_consultant: string;
   finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
+  color?: string;
+  bgColor?: string;
 };
 
 export interface ConvertedAccount {

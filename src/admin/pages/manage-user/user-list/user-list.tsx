@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,7 +16,7 @@ import {
   useManageUserProfile,
   useManageUserRole,
 } from '../../../service';
-import { UserListParams } from '../../../types/manage-user';
+import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
@@ -28,6 +27,7 @@ import {
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
 import { useToast } from '../../../../hooks';
+import { FilterState } from '../../../../consultant/types/account-filter';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -37,7 +37,9 @@ const BUTTON_STYLES = {
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, FilterCondition>
+  >({});
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
@@ -63,7 +65,7 @@ const UserList: React.FC = () => {
   );
   const isUserEditEnable = checkPermission(
     permission,
-    AllPermissions.USER_EDIT_UPDATE
+    AllPermissions.USER_VIEW_EDIT
   );
   const isUserDeleteEnable = checkPermission(
     permission,
@@ -71,20 +73,20 @@ const UserList: React.FC = () => {
   );
   const isUserViewEnable = checkPermission(
     permission,
-    AllPermissions.USER_VIEW
+    AllPermissions.USER_VIEW_EDIT
   );
   const isUserViewAllEnable = checkPermission(
     permission,
-    AllPermissions.USER_VIEW_ALL
+    AllPermissions.USER_VIEW_EDIT
   );
-  const isUserSuspendEnable = checkPermission(
-    permission,
-    AllPermissions.USER_SUSPEND
-  );
-  const isUserResetPasswordEnable = checkPermission(
-    permission,
-    AllPermissions.USER_RESET_PASSWORD
-  );
+  // const isUserSuspendEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_SUSPEND
+  // );
+  // const isUserResetPasswordEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_RESET_PASSWORD
+  // );
   const isUserExportEnable = checkPermission(
     permission,
     AllPermissions.USER_EXPORT
@@ -99,12 +101,12 @@ const UserList: React.FC = () => {
   );
 
   const userActionButtons = [
-    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Suspend User', width: '104px', hide: false },
     { label: 'Reinstate User', width: '116px', hide: false },
     {
       label: 'Reset Password',
       width: '118px',
-      hide: !isUserResetPasswordEnable,
+      hide: false,
     },
     { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];
@@ -198,12 +200,32 @@ const UserList: React.FC = () => {
     [userRoles.data?.data.roles]
   );
 
+  const profileOptions = useMemo(() => {
+    return (
+      profileList.data?.data.profiles.map((item) => ({
+        label: item.profile_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [profileList]);
+
+  const roleOptions = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.rid,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
+
   const userFilterfields = getUserFilterFields(userProfiles, memoizeRole);
 
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {
-      setAppliedFilters(formatFilterForApi(saved as Record<string, any>));
+      setAppliedFilters(
+        formatFilterForApi(saved as Record<string, FilterState>)
+      );
     }
   }, []);
 
@@ -299,7 +321,9 @@ const UserList: React.FC = () => {
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
                 filterFields={userFilterfields}
-                setAppliedFilters={setAppliedFilters}
+                setAppliedFilters={(filters) =>
+                  setAppliedFilters(filters as Record<string, FilterCondition>)
+                }
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
@@ -339,6 +363,8 @@ const UserList: React.FC = () => {
           isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}
           refreshUserTrigger={refreshUserTrigger}
+          profileOptions={profileOptions}
+          roleOptions={roleOptions}
         />
       </div>
     </div>

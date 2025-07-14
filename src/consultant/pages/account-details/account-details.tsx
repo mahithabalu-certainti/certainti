@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
@@ -36,17 +35,24 @@ import {
   Resources,
   Timesheet,
 } from '../account-details-sidebar';
-import { transformAccountData } from './utils';
-import { CircularProgress } from '@mui/material';
+import {
+  accountDetailsProps,
+  DisplayColumn,
+  transformAccountData,
+} from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
 import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
-import { AllModules, AllPermissions } from '../../../common-service';
+import { AllMenus, AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
-import { MenuItem } from '../../types';
+import {
+  AccountDetailsResponse,
+  AccountFieldsApiResponse,
+  MenuItem,
+} from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 
@@ -54,8 +60,9 @@ export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [accountDetails, setAccountDetails] = useState<any>(null);
-  const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
+  const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [accountDetailsForEdit, setAccountDetailsForEdit] =
+    useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -69,27 +76,23 @@ export const AccountDetails = () => {
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const isAccountDetailsEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_DETAILS_VIEW
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
-  const isAccountDetailsDownloadEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
-  );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+  // const isAccountDetailsDownloadEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
+  // );
   // const isAccountExportEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_EXPORT
   // );
   const isResourcesExportEnable = checkPermission(
     permission,
-    AllPermissions.RESOURCES_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+    AllPermissions.PROFILE_EXPORT
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -103,7 +106,7 @@ export const AccountDetails = () => {
     sortBy: 'created_datetime',
     sortOrder: 'DESC',
     fiscalYear: String(convertedFiscalYear),
-    rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    rNumber: accountDetailsForEdit?.accountById?.r_number || '',
     resourceRid: '',
     filter: {},
   });
@@ -112,7 +115,7 @@ export const AccountDetails = () => {
     sortOrder: 'DESC',
     filters: {},
     fiscalYear: String(convertedFiscalYear),
-    accountNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
   const [exportType, setExportType] = useState<
     'resource' | 'cost' | 'skill' | 'project'
@@ -186,7 +189,7 @@ export const AccountDetails = () => {
 
   useEffect(() => {
     if (data?.data) {
-      setAccountDetails(transformAccountData(data.data));
+      setAccountDetails(transformAccountData(data?.data));
       setAccountDetailsForEdit(data.data);
     }
   }, [data]);
@@ -225,7 +228,7 @@ export const AccountDetails = () => {
   ];
 
   const handleEditAccount = () => {
-    navigate(ACCOUNT + '/edit/' + data.data.accountById.rid, {
+    navigate(ACCOUNT + '/edit/' + data?.data?.accountById?.rid, {
       state: { accountDetailsForEdit },
     });
   };
@@ -253,11 +256,9 @@ export const AccountDetails = () => {
       case 'details':
         return (
           <Details
-            accountDetails={{ ...data?.data }}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
             isLoading={isPending}
             isError={isError}
-            isAccountEditEnable={isAccountEditEnable}
-            isAccountDetailsDownloadEnable={isAccountDetailsDownloadEnable}
           />
         );
       case 'resources':
@@ -274,7 +275,10 @@ export const AccountDetails = () => {
       case 'projects':
         return (
           <Projects
-            accountDetails={{ ...data, activeKey: 'Projects' }}
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'Projects',
+            }}
             setExportType={setExportType}
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
@@ -292,7 +296,14 @@ export const AccountDetails = () => {
       case 'timesheet':
         return <Timesheet />;
       case 'imports':
-        return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
+        return (
+          <Import
+            data={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'imports',
+            }}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -309,7 +320,7 @@ export const AccountDetails = () => {
       {
         name: 'Details',
         key: 'details',
-        id: AllModules.DETAILS,
+        id: AllModules.ACCOUNTS,
         disabled: false,
         icon: DetailsIcon,
       },
@@ -323,7 +334,7 @@ export const AccountDetails = () => {
       {
         name: 'Projects',
         key: 'projects',
-        id: AllModules.PROJECTS,
+        id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
       },
@@ -337,7 +348,7 @@ export const AccountDetails = () => {
       {
         name: 'Cases',
         key: 'cases',
-        id: AllModules.CASES,
+        id: AllMenus.CASES,
         disabled: disable,
         icon: CasesIcon,
       },
@@ -351,35 +362,35 @@ export const AccountDetails = () => {
       {
         name: 'Notes',
         key: 'notes',
-        id: AllModules.NOTES,
+        id: AllMenus.NOTES,
         disabled: disable,
         icon: NotesSideIcon,
       },
       {
         name: 'Attachments',
         key: 'attachments',
-        id: AllModules.ATTACHMENTS,
+        id: AllMenus.ATTACHMENTS,
         disabled: disable,
         icon: AttachmentsSideIcon,
       },
       {
         name: 'Checklist',
         key: 'checklist',
-        id: AllModules.CHECKLISTS,
+        id: AllMenus.CHECKLISTS,
         disabled: disable,
         icon: ChecklistIcon,
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
-        id: AllModules.TIMESHEETS,
+        id: AllMenus.TIMESHEETS,
         disabled: disable,
         icon: TimeSheetIcon,
       },
       {
         name: 'Imports',
         key: 'imports',
-        id: AllModules.IMPORTS,
+        id: AllMenus.IMPORTS,
         disabled: disable,
         icon: ImportsIcon,
       },
@@ -392,7 +403,6 @@ export const AccountDetails = () => {
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
-
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
@@ -408,14 +418,10 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={
-            isAccountEditEnable
-              ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                }
-              : undefined
-          }
+          primaryButton={{
+            label: 'Edit',
+            onClick: handleEditAccount,
+          }}
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}
@@ -451,13 +457,7 @@ export const AccountDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
         >
-          {isPending ? (
-            <div className='flex items-center justify-center w-full h-full'>
-              <CircularProgress />
-            </div>
-          ) : (
-            <Suspense fallback={null}>{renderContent()}</Suspense>
-          )}
+          <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
     </div>

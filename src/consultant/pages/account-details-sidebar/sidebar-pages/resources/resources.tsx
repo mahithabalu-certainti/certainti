@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   useLocation,
@@ -10,9 +10,14 @@ import {
 import { ResourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
-import { useResourceList } from '../../../../services/resource-list';
+import {
+  useGetResourceType,
+  useResourceList,
+} from '../../../../services/resource-list';
 import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
+import { useMutation } from '@apollo/client';
+import { UPDATE_RESOURCE } from '../../../../../api/graphql/queries/resource-query';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
@@ -22,11 +27,25 @@ import {
   ResourceSkillList,
 } from '../../../../types/resource-skill';
 import { ResourceList } from '../../../../types/resource';
-import { AllPermissions, Permissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllPermissions,
+  Permissions,
+  useGetAllCountries,
+  useGetStatus,
+} from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import {
+  CellEditData,
+  FieldChangeEvent,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
+import { useFetchState } from '../../../../services/account';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -44,7 +63,7 @@ interface ResourceProps {
 }
 
 export interface ResourceTabs {
-  id: AllPermissions;
+  id: AllPermissions | AllMenus;
   name: string;
   hide: boolean;
   disable?: boolean;
@@ -58,9 +77,9 @@ export interface TabMenus {
 }
 
 const resourceTabs: ResourceTabs[] = [
-  { id: AllPermissions.RESOURCES_OVERVIEW, name: 'Overview', hide: false },
+  { id: AllPermissions.ACCOUNTS_VIEW_EDIT, name: 'Overview', hide: false },
   {
-    id: AllPermissions.RESOURCE_VIEW_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,
@@ -72,19 +91,19 @@ const tabs: TabMenus[] = [
     label: 'Details',
     value: 'details',
     hide: false,
-    id: AllPermissions.RESOURCE_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT,
   },
   {
     label: 'Resource Cost',
     value: 'cost',
     hide: false,
-    id: AllPermissions.RESOURCE_COST_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW,
   },
   {
     label: 'Resource Skills',
     value: 'skill',
     hide: false,
-    id: AllPermissions.RESOURCE_SKILL_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
   },
 ];
 
@@ -131,7 +150,13 @@ const Resource: React.FC<ResourceProps> = ({
     Date.now()
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
+  const [updateResource] = useMutation(UPDATE_RESOURCE, {
+    client: resourceClient,
+  });
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
@@ -139,40 +164,57 @@ const Resource: React.FC<ResourceProps> = ({
   // Permission Mangement
   const isResourceDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCES_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
   const isResourceCostDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_COST_EXPORT
   );
   const isResourceSkillDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_EXPORT
   );
   const isResourceViewAllEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_VIEW_ALL
+    AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
   );
   const isResourceCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_CREATE
   );
   const isResourceDeleteEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_DELETE
+    AllPermissions.ACCOUNT_RESOURCES_DELETE
   );
-  const isResourceEditEnable = checkPermission(
-    permission || [],
-    AllPermissions.RESOURCE_EDIT
-  );
+  // const isResourceEditEnable = checkPermission(
+  //   permission || [],
+  //   AllPermissions.RESOURCE_EDIT
+  // );
   const isResourceCostCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_COST_CREATE
   );
   const isResourceSkillCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_CREATE
   );
+
+  //permissions
+  const resourceViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceViewEditFields]);
 
   const {
     data: ResourceList,
@@ -192,6 +234,46 @@ const Resource: React.FC<ResourceProps> = ({
   );
 
   const isResoureceOverviewHide = resourceTab[0].hide;
+  const statusOptions = useGetStatus();
+  const resourceTypeOptions = useGetResourceType();
+  const countriesList = useGetAllCountries();
+  const region = useFetchState(currentCountry);
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const regionOptions = useMemo(
+    () =>
+      region.data?.data.states.map((region) => ({
+        label: region.state_name,
+        value: region.rid,
+      })) || [],
+    [region.data?.data.states]
+  );
 
   useEffect(() => {
     const isHide = (tab: ResourceTabs | TabMenus) => {
@@ -230,6 +312,12 @@ const Resource: React.FC<ResourceProps> = ({
       setCount(ResourceList?.count || 0);
     }
   }, [ResourceList, setCount]);
+
+  useEffect(() => {
+    if (ResourceList?.resource) {
+      setResourcesList(ResourceList.resource);
+    }
+  }, [ResourceList]);
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -297,7 +385,7 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
-      hide: !isResourceEditEnable,
+      hide: false,
     },
     {
       label: 'Delete',
@@ -503,9 +591,28 @@ const Resource: React.FC<ResourceProps> = ({
     setSortField(property);
   };
 
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'country_name' && event.value) {
+      setCurrentCountry(String(event.value));
+    }
+  };
+
   const getRowId = (row: ResourceList) => row.rid;
 
-  const resourceColumns = getResourceColumns(handleResourceClick);
+  const handleCountry = (country: string) => {
+    setCurrentCountry(country);
+  };
+
+  const resourceColumns = getResourceColumns(
+    memoizedStatus,
+    memoizedResourceType,
+    countryOptions,
+    regionOptions,
+    handleCountry,
+    region.isPending,
+    permissionMap,
+    handleResourceClick
+  );
 
   const onRefreshClick = () => {
     if (value === 'cost') {
@@ -541,6 +648,54 @@ const Resource: React.FC<ResourceProps> = ({
       setSortField(apiSortBy);
     }
   };
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousResourceList = [...resourcesList];
+    let hasCountry = false;
+    let hasRegion = false;
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (res, item) => {
+        const key = item.editId || item.columnId;
+        res[key] = item.value;
+        if (item.columnId === 'country_name') hasCountry = true;
+        if (item.columnId === 'region_name') hasRegion = true;
+        return res;
+      },
+      {
+        resource_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
+      }
+    );
+
+    if (hasCountry && !hasRegion) {
+      updateData['region_rid'] = '';
+    }
+
+    if (hasCountry) {
+      updateData['city_rid'] = '';
+    }
+
+    try {
+      const res = await updateResource({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateResourceInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResource = result.data;
+        setResourcesList((prevList) =>
+          prevList.map((resource) =>
+            resource.rid === updatedResource.rid ? updatedResource : resource
+          )
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setResourcesList(previousResourceList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setResourcesList(previousResourceList);
+    }
+  };
+
   return (
     <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
@@ -609,7 +764,7 @@ const Resource: React.FC<ResourceProps> = ({
           {viewResourceList && !value && (
             <div className='border border-[#CBD6E2]'>
               <ListTable
-                data={ResourceList?.resource as any}
+                data={resourcesList}
                 columns={resourceColumns}
                 getRowId={getRowId}
                 hoverHighlight={false}
@@ -619,7 +774,7 @@ const Resource: React.FC<ResourceProps> = ({
                   maxHeight: 'calc(100vh - 290px)',
                   overflow: 'auto',
                 }}
-                stickyHeader={false}
+                stickyHeader={true}
                 stickyColumnsCount={1}
                 selectable={false}
                 actionWidth={80}
@@ -636,6 +791,8 @@ const Resource: React.FC<ResourceProps> = ({
                 sortBy={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSortRequest}
+                onCellEdit={handleCellEdit}
+                onFieldChange={handleFieldChange}
               />
             </div>
           )}

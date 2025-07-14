@@ -14,11 +14,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { ArrowIcon, CalendarIcon } from '../../../../../assets';
 import { FilterState } from './filterType';
-import {
-  MENU_PROPS,
-  OPERATOR_STYLE,
-  SELECT_STYLES,
-} from '../../../../../components/filter-component/helpers';
+import { MENU_PROPS, OPERATOR_STYLE, SELECT_STYLES } from '../../../../../components';
 
 function formatString(str: string | undefined): string {
   if (!str) return '';

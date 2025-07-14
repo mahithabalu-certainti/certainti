@@ -7,22 +7,15 @@ export type ManageUser = {
   fullName: string;
   email: string;
   profile: string;
+  profile_rid: string;
   status: string;
+  status_rid: string;
   created_datetime: string;
   modified_datetime: string;
   role: string;
+  role_rid: string;
+  azure_id: string;
 };
-
-export interface UserTableColumn<T> {
-  id: string;
-  label: string;
-  width: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-}
 
 export type SortOrder = 'ASC' | 'DESC';
 
@@ -49,11 +42,13 @@ export interface UserListParams {
 
 // User Profile Type
 export interface UserProfile {
+  rid: string;
   profile_name: string;
 }
 
 // Business Teams Type
 export interface BusinessTeams {
+  rid: string;
   business_teams: string;
 }
 
@@ -67,12 +62,14 @@ export interface User {
   rid: string;
   email: string;
   status: Status;
+  status_rid: string;
   full_name: string;
   first_name: string;
   profile: UserProfile;
   business_teams: BusinessTeams;
   created_datetime: string;
   modified_datetime: string;
+  azure_id: string;
 }
 
 export interface Profile {

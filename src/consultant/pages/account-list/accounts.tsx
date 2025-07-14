@@ -85,16 +85,16 @@ export const Accounts: React.FC = () => {
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const isAccountViewAllEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_VIEW_ALL
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
   const isAccountCreateEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_CREATE
+    AllPermissions.ACCOUNTS_CREATE
   );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+  // const isAccountEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EDIT
+  // );
   // Delete functionality will be implemented later
   // const isAccountDeleteEnable = checkPermission(
   //   permission,
@@ -103,7 +103,7 @@ export const Accounts: React.FC = () => {
   const isAccountDeleteEnable = false;
   const isAccountExportEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_EXPORT
+    AllPermissions.ACCOUNTS_EXPORT
   );
 
   const menuItems: ActionsDropdownItem[] = [
@@ -159,17 +159,29 @@ export const Accounts: React.FC = () => {
     );
   }, [countriesList]);
 
-  // const allCurrencies = useMemo(() => {
-  //   return (
-  //     currencyList.data?.data.currency.map((item) => item.currency_code) || []
-  //   );
-  // }, [currencyList]);
-
   const allIndustries: SelectOption[] = useMemo(
     () =>
       industry.data?.data.industries.map((industry) => ({
         label: industry.industry_name,
         value: industry.industry_name,
+      })) || [],
+    [industry.data?.data.industries]
+  );
+
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const industryOptions = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
       })) || [],
     [industry.data?.data.industries]
   );
@@ -277,9 +289,12 @@ export const Accounts: React.FC = () => {
           setOrderBy={setOrderBy}
           setPage={setPage}
           page={page}
-          isAccountEditEnable={isAccountEditEnable}
+          isAccountEditEnable={true}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
+          countryOptions={countryOptions}
+          industryOptions={industryOptions}
+          onRefreshClick={onRefreshClick}
         />
       </div>
     </div>

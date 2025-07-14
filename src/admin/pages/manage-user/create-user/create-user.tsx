@@ -75,19 +75,28 @@ export const CreateUser: React.FC = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
   const isUserCreateEnable = checkPermission(
     permission,
     AllPermissions.USER_CREATE
   );
-  const isUserEditEnable = checkPermission(
-    permission,
-    AllPermissions.USER_EDIT_UPDATE
+
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
   );
-  const isUserActivateEnable = checkPermission(
-    permission,
-    AllPermissions.USER_ACTIVATE
-  );
+
+  // const isUserEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_EDIT_UPDATE
+  // );
+  // const isUserActivateEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_ACTIVATE
+  // );
   // const isUserDeleteEnable = checkPermission(
   //   permission,
   //   AllPermissions.USER_DELETE
@@ -125,6 +134,15 @@ export const CreateUser: React.FC = () => {
     }
   }, [userData?.country_rid, userData?.region_rid]);
 
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
+
+  // Memoized Options
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
@@ -259,9 +277,10 @@ export const CreateUser: React.FC = () => {
     isEditView,
     states.isLoading,
     city.isLoading,
-    isEditView ? !isUserActivateEnable : false,
+    // isEditView ? !isUserActivateEnable : false,
     isConsultantFirm.isConsultantFirm,
-    isConsultantFirm.org_id
+    isConsultantFirm.org_id,
+    permissionMap
   );
 
   const formLoading =
@@ -271,8 +290,7 @@ export const CreateUser: React.FC = () => {
     statusOptions.isLoading ||
     userRoles.isLoading;
 
-  if (!userIsEnable || (isEditView ? !isUserEditEnable : !isUserCreateEnable))
-    return <AccessRestricted />;
+  if (!userIsEnable || !isUserCreateEnable) return <AccessRestricted />;
 
   return (
     <>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // filterUtils.ts
 import {
   FieldConfig,
@@ -44,7 +43,7 @@ export const fields: FieldConfig[] = [
 
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
-): FilterState | any => {
+): FilterState => {
   switch (fieldConfig.type) {
     case 'text':
       return { text: { option: 'contains', value: '' } };
@@ -76,6 +75,7 @@ function formatString(str: string | undefined): string {
 export const formatFilterForApi = (
   filterStates: Record<string, FilterState>
 ) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formattedFilters: Record<string, any> = {};
 
   Object.entries(filterStates).forEach(([fieldName, state]) => {
@@ -85,7 +85,7 @@ export const formatFilterForApi = (
       const boolOptions = formatString(option) === 'Is Empty';
       if (value?.from || value?.to || boolOptions) {
         formattedFilters[fieldName] = {
-          [option]:
+          [option as string]:
             formatString(option) === 'Between'
               ? { from: value.from?.toString(), to: value.to?.toString() }
               : boolOptions
@@ -214,7 +214,8 @@ export const validateFilters = (
       const { option, value } = state.date;
       const isEmptyCheck = formatString(option) === 'Is Empty';
       const isFromEmpty = !value.from?.trim();
-      const isToEmpty = option.toLowerCase() === 'between' && !value.to?.trim();
+      const isToEmpty =
+        option?.toLowerCase() === 'between' && !value.to?.trim();
       if (!isEmptyCheck) {
         if (isFromEmpty || isToEmpty) {
           hasInvalid = true;
