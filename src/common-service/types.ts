@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import { User } from '../admin/types/admin-user-detail';
-import { Privilege } from '../admin/types';
 
 export interface CommonApiResponse {
   statusCode: number;
@@ -45,19 +44,6 @@ export interface ProfileResponse {
   hasEditExtendedPermsission?: boolean;
 }
 
-export interface CommonProfileApiResponse {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data: CreateProfileData;
-}
-export interface CreateProfileData {
-  profile_id: string;
-  profile_number: string;
-  profile_name: string;
-  source_profile_id: string;
-  privileges: Privilege[];
-}
 export interface UpdateExtendedPermission {
   profile_id?: string;
   user_id: string;

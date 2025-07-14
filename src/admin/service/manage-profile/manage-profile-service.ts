@@ -10,11 +10,7 @@ import {
   ManageProfileResponse,
   ProfileApiResponse,
 } from '../../../common-service';
-import {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Privilege as _Privilege,
-  ProfileDetail,
-} from '../../types/manage-profile';
+import { ProfileDetail } from '../../types/manage-profile';
 
 export const fetchManageProfileList = async (params: UserListParams = {}) => {
   const queryParams = {
