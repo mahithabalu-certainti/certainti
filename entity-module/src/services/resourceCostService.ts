@@ -1318,34 +1318,37 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
   }
 
   /**
- * Fetches resource costs for a given resource ID using raw SQL query
+ * Fetches resource costs for multiple resource IDs using a single SQL query
  * 
- * @param {string} resourceId - ID of the resource
  * @param {string} accountNumber - Account number to determine schema
- * @returns {Promise<any>} - Resource costs data
+ * @param {string[]} resourceIds - Array of resource IDs
+ * @returns {Promise<any[]>} - Resource costs data
  */
- async getResourceCostsByResourceId(accountNumber: string, resourceId: string): Promise<any> {
+async getResourceCostsByResourceIds(accountNumber: string, resourceIds: string[]): Promise<any[]> {
   try {
+    if (resourceIds.length === 0) return [];
+
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
 
     const query = `
       SELECT 
-        rc.rid
+        rc.rid,
+        rc.resource_rid
       FROM "${schemaName}".resource_cost rc
-      WHERE rc.resource_rid = :resourceId
+      WHERE rc.resource_rid IN (:resourceIds)
       ORDER BY rc.created_datetime DESC
     `;
 
     const sequelize = await initOrgSequelize();
     const results = await sequelize.query(query, {
-      replacements: { resourceId },
+      replacements: { resourceIds },
       type: 'SELECT'
     });
 
     return results;
 
   } catch (error) {
-    console.error('Error fetching resource costs:', error);
+    console.error('Error fetching resource costs (bulk):', error);
     throw error;
   }
 }

@@ -12,6 +12,7 @@ import {
 } from "../utils/types";
 import Decimal from "decimal.js";
 class SchemaService {
+  
   async getKeyContactRoleById(key_contact_role: string): Promise<any> {
   try {
     const sequelize = await initSequelize();
@@ -395,7 +396,7 @@ class SchemaService {
       project_startdate TIMESTAMP,
       project_enddate TIMESTAMP,
 
-      project_type_rid VARCHAR(50) NOT NULL,
+      project_type_rid VARCHAR(50),
       project_classification_rid VARCHAR(50),
       project_classification_other VARCHAR(300),
 
@@ -499,7 +500,7 @@ class SchemaService {
       fiscal_year INTEGER NOT NULL,
       project_name VARCHAR(200),
       program_name TEXT,
-      project_type_rid VARCHAR(50) NOT NULL,
+      project_type_rid VARCHAR(50),
       project_classification_rid VARCHAR(50),
       project_classification_other TEXT,
       project_client_group TEXT,
@@ -751,6 +752,7 @@ class SchemaService {
       created_datetime TIMESTAMP DEFAULT NOW(),
       modified_datetime TIMESTAMP,
       account_rid varchar(50) NOT NULL,
+      document_rid  varchar(50),
       entity_rid varchar(50) NOT NULL,
       event_name varchar(100) NOT NULL,
       event_type varchar(100) NOT NULL,
@@ -863,6 +865,7 @@ class SchemaService {
       modified_datetime TIMESTAMP,
       account_rid varchar(50) NOT NULL,
       entity_rid varchar(50) NOT NULL,
+      document_rid  varchar(50),
       event_name varchar(100) NOT NULL,
       event_type varchar(100) NOT NULL,
       event_status varchar(100) NOT NULL,
@@ -1250,6 +1253,7 @@ class SchemaService {
         modified_datetime timestamptz,
         account_rid varchar(50) NOT NULL,
         entity_rid varchar(50) NOT NULL,
+        document_rid  varchar(50),
         event_name varchar(100) NOT NULL,
         event_type varchar(100) NOT NULL,
         event_status varchar(100) NOT NULL,
@@ -1275,7 +1279,7 @@ class SchemaService {
 	       created_datetime timestamp with time zone,
          modified_datetime timestamp with time zone,
          account_rid varchar(50) NOT NULL,
-         resource_type_rid character varying(50) NOT NULL,
+         resource_type_rid character varying(50),
          resource_rid varchar(50),
          resource_code character varying(255) NOT NULL,
          resource_number character varying(255) NOT NULL,
@@ -1331,6 +1335,7 @@ class SchemaService {
         created_datetime timestamptz,
         modified_datetime timestamptz,
         account_rid varchar(50) NOT NULL,
+        document_rid  varchar(50),
         event_name varchar(255) NOT NULL,
         event_status varchar(255) NOT NULL,
         event_type varchar(255) DEFAULT 'Ui Handler',
@@ -1383,7 +1388,7 @@ class SchemaService {
     created_datetime timestamptz,
     modified_datetime timestamptz,
     account_rid varchar(50) NOT NULL,
-    resource_type_rid varchar(50) NOT NULL,
+    resource_type_rid varchar(50),
     resource_rid varchar(50) NOT NULL,
     resource_number varchar(255) NOT NULL,
     start_date DATE,
@@ -1434,6 +1439,7 @@ class SchemaService {
           created_datetime timestamptz,
           modified_datetime timestamptz,
           account_rid varchar(50) NOT NULL,
+          document_rid  varchar(50),
           event_name varchar(255) NOT NULL,
           event_status varchar(255) NOT NULL,
           event_type varchar(255) DEFAULT 'Ui Handler',
@@ -2584,6 +2590,28 @@ async insertFiscalInfoOnly(
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
+
+async fetchAttachments(account_rid: string): Promise<any[]> {
+  try {
+    const sequelize = await initSequelize();
+    
+    const result = await sequelize.query(`
+      SELECT 
+        a.*
+      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
+      WHERE a.attach_to = :account_rid
+      ORDER BY a.created_datetime DESC
+    `, {
+      replacements: { account_rid },
+      type: QueryTypes.SELECT
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching attachments:', error);
+    throw new Error('Failed to fetch attachments');
+  }
+}
 }
 export default SchemaService;
 
