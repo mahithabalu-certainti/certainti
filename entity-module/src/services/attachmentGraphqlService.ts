@@ -1,7 +1,11 @@
+import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource"
 import { initOrgSequelize } from "../config/orgDataSource"
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
 import { setInlineForAttachments } from "../utils/helpers"
+
+const services = Configurations.getInstance().getServices();
+const attachmentService = services.attachmentServices;
 
 export default class AttachmentGraphqlServies {
     async updateInlineGraphqlDetails(data : any) {
@@ -59,8 +63,10 @@ export default class AttachmentGraphqlServies {
                     
                     const updatedAttachmentSummary = await mainSequelize.query(rawQueries.updateAttachmentSummary(getSetData, data))
                     if(updatedAttachmentSummary && updatedAttachments) {
-                        let fetchLatestUpdatedData = await orgSequelize.query(rawQueries.findAttachementDetails(schemaName, data.rid, data.account_rid))
-                        let latestData : any = fetchLatestUpdatedData[0][0]
+                        let graphqlData : any = {}
+                        graphqlData.document_rid = data.rid
+                        let fetchLatestUpdatedData = await attachmentService.getAttachments(data.userId, checkForExistingData[0][0].attachment_level, checkForExistingData[0][0].attach_to, data.account_rid, 1, 1, '', {}, 'created_datetime', 'DESC', 0, graphqlData)
+                        let latestData : any = fetchLatestUpdatedData.data?.attachments[0]
                         await orgSequelize.query(rawQueries.insertAttachementTimeline(schemaName, data, latestData))
                         return {
                             statusCode : HttpStatus.SUCCESS,

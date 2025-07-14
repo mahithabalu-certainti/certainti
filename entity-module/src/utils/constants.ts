@@ -384,7 +384,7 @@ export const rawQueries = {
   },
   findAttachementDetails (schemaName : string, rid : string, account_rid : string) {
     return `
-      SELECT * FROM ${schemaName}.attachments WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
+      SELECT attachment_level, attach_to FROM ${schemaName}.attachments WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
   },
   fetchSchemaName(r_number : string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace('ACC-', '')}`

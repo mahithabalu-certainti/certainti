@@ -373,7 +373,7 @@ export interface IAttachmentService {
   filters: Record<string, any>,
   sortBy: string,
   sortOrder: string,
-  fiscalYear:number):Promise<{
+  fiscalYear:number, graphqlData : any):Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;

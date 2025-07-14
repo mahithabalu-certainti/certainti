@@ -4,13 +4,17 @@ const typeDefs = gql
 `
 type attachmentResponse {
 rid: String
-created_datetime: Date
+r_number: String
+created_datetime: String
+created_by: String
+modified_datetime: Date
+modified_by: String
+account_rid: String
 browse_file: String
 document_name: String
 attach_to: String
 attachment_level: String
 fiscal_year: Int
-account_rid: String
 format: String
 size_in_mb: String
 document_category_rid: String
@@ -18,10 +22,10 @@ document_type_rid: String
 document_category_others: String
 document_type_others: String
 comments: String
-created_by: String
-r_number: String
-modified_datetime: Date
-modified_by: String 
+document_type: String
+document_category: String
+uploaded_by: String
+attached_to: String
 }
 
 type response {
