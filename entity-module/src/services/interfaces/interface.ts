@@ -440,4 +440,32 @@ export interface IProjectResourceService {
     errorMessage?: string;
     data?: { resourceRolesSubType: any };
   }>;
+  listProjectResources(
+    accountId: string,
+    projectId: string,
+    fiscal_year: number,
+    page: number,
+    limit: number,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResources: any };
+  }>;
+  exportProjectResources(
+    accountId: string,
+    projectId: string,
+    fiscal_year: number,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResources: any };
+  }>;
 }
