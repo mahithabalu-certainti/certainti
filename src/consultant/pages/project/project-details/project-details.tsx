@@ -36,6 +36,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
+import { Attachments } from './attachments';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -220,7 +221,10 @@ export const ProjectDetails = () => {
         return (
           <ProjectDetailsData
             accountInActive={accountInActive}
-            projectDetails={projectData}
+            projectDetails={{
+              ...projectData!,
+              attachment: data?.data?.attachment || [],
+            }}
             isDetailsLoading={isLoading}
             detailsError={isError}
             projectDownloadIsEnable={projectDownloadIsEnable}
@@ -243,7 +247,7 @@ export const ProjectDetails = () => {
       case 'notes':
         return <NotFound />;
       case 'attachments':
-        return <NotFound />;
+        return <Attachments />;
       case 'checklists':
         return <NotFound />;
       default:

@@ -118,10 +118,10 @@ export const AccountDetails = () => {
     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
   const [exportType, setExportType] = useState<
-    'resource' | 'cost' | 'skill' | 'project'
+    'resource' | 'cost' | 'skill' | 'project' | 'attachments'
   >('resource');
   const handleExport = (
-    exportType: 'resource' | 'cost' | 'skill' | 'project'
+    exportType: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
   ) => {
     if (
       searchParams.get('list') !== 'resources' &&

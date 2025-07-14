@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ActionImportDropdown from '../../consultant/pages/account-details-sidebar/sidebar-pages/imports/importdropdown';
 import { ImportIcon, UploadIcon } from '../../assets';
-import { useToast } from '../../hooks';
 import TextButton from '../button/text-button';
 
 interface UploadsProps {
@@ -22,12 +21,9 @@ const Uploads: React.FC<UploadsProps> = ({
     type: 'error' | 'success';
     text: string;
   } | null>(null);
-  const auth = localStorage.getItem('auth');
-  const { userId } = auth ? JSON.parse(auth) : {};
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entityType, setEntityType] = useState<string>('Select Type');
   const [fiscalYear, setFiscalYear] = useState<string>('Year');
-  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (
@@ -40,7 +36,6 @@ const Uploads: React.FC<UploadsProps> = ({
     }
   }, [entityType, fiscalYear, selectedFiles]);
 
-  const { successToast, errorToast } = useToast();
   const menuItems = [
     { label: 'Resource', onClick: () => setEntityType('Resource') },
     { label: 'Resource Cost', onClick: () => setEntityType('Resource Cost') },
@@ -218,7 +213,7 @@ const Uploads: React.FC<UploadsProps> = ({
           />
           <TextButton
             label='Save'
-            loading={loading}
+            loading={false}
             onClick={handleSubmit}
             disabled={accountInActive}
             sx={{

@@ -1,19 +1,8 @@
-import { AttachmentList } from '../../../../types/attchment';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import { ListTableColumn } from '../../../../../components/table/types';
+import { AttachmentList } from '../../../../types/attachment';
 
-export interface ResourceTableColumn<T> {
-  id: string;
-  label: string;
-  width: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-}
-
-export const getAttachmentColumns = (
-  onResourceIdClick?: (row: AttachmentList) => void
-): ResourceTableColumn<AttachmentList>[] => [
+export const getAttachmentColumns = (): ListTableColumn<AttachmentList>[] => [
   {
     id: 'document_name',
     sortId: 'document_name',
@@ -29,51 +18,84 @@ export const getAttachmentColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: AttachmentList) =>
-      onResourceIdClick ? (
-        <span
-          onClick={() => onResourceIdClick(row)}
-          className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
-        >
-          {row.document_name}
-        </span>
-      ) : (
-        row.document_name
-      ),
   },
   {
-    id: 'document_id',
-    sortId: 'document_id',
-    label: 'Document ID',
-    width: 160,
+    id: 'format',
+    sortId: 'format',
+    label: 'Format',
+    width: 140,
+    sortable: false,
+  },
+  {
+    id: 'size_in_mb',
+    sortId: 'size_in_mb',
+    label: 'Size',
+    width: 140,
     sortable: true,
   },
   {
-    id: 'document_number',
-    sortId: 'document_number',
-    label: 'Document Number',
+    id: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal',
     width: 140,
+    sortable: true,
+  },
+  {
+    id: 'document_category',
+    sortId: 'document_category',
+    label: 'Document Category',
+    width: 250,
+    sortable: true,
+  },
+  {
+    id: 'document_type',
+    sortId: 'document_type',
+    label: 'Document Type',
+    width: 300,
     sortable: true,
   },
   {
     id: 'attachment_level',
     sortId: 'attachment_level',
-    label: 'Attachment Level',
+    label: 'Related Entity',
     width: 140,
     sortable: true,
   },
   {
-    id: 'attachment_to_id',
-    sortId: 'attachment_to_id',
-    label: 'Attachment To ID',
-    width: 160,
+    id: 'attach_to',
+    sortId: 'attach_to',
+    label: 'Related To ID',
+    width: 180,
     sortable: true,
   },
   {
-    id: 'attachment_description',
-    sortId: 'attachment_description',
-    label: 'Attachment Description',
+    id: 'attached_to',
+    sortId: 'attached_to',
+    label: 'Related To Name',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'uploaded_by',
+    sortId: 'uploaded_by',
+    label: 'Attached By',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'created_datetime',
+    sortId: 'created_datetime',
+    label: 'Attached On',
     width: 200,
+    sortable: true,
+    render: (row: AttachmentList) =>
+      formatDateToYYYYMMDDWithTime(row.created_datetime),
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Attachment ID',
+    width: 160,
     sortable: true,
   },
 ];

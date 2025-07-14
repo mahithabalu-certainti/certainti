@@ -14,6 +14,8 @@ import { costDisplay, getDateFormat } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+import DetailsTable from '../../../../../components/details-section/details-table';
+import { attachmentColumns } from '../../../../../components/details-section/helpers';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
@@ -338,6 +340,14 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             data={settingInfo as DetailItem[]}
           />
           <DetailsSection title='Comments' data={comments as DetailItem[]} />
+          {projectDetails?.attachment &&
+            projectDetails?.attachment.length > 0 && (
+              <DetailsTable
+                title='Attachments'
+                columns={attachmentColumns}
+                data={projectDetails?.attachment || []}
+              />
+            )}
           <DetailsSection
             title='Audit Information'
             data={auditInfo as DetailItem[]}

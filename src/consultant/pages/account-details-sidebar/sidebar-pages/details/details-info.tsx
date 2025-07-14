@@ -11,6 +11,8 @@ import {
 import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
+import DetailsTable from '../../../../../components/details-section/details-table';
+import { attachmentColumns } from '../../../../../components/details-section/helpers';
 
 interface DetailsInfoProps {
   detailsInfo?: accountDetailsProps;
@@ -215,6 +217,14 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
       <DetailsSection title='Account Settings' data={accountSettings} />
       <DetailsSection title='Comments' data={description} fullColumn={true} />
+      {accountDetails?.attachments &&
+        accountDetails?.attachments.length > 0 && (
+          <DetailsTable
+            title='Attachments'
+            columns={attachmentColumns}
+            data={accountDetails?.attachments || []}
+          />
+        )}
       <DetailsSection
         title='Audit Information'
         data={auditInfo}

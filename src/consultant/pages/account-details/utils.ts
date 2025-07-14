@@ -1,4 +1,5 @@
 import { AccountDetailsResponse } from '../../types';
+import { AttachmentList } from '../../types/attachment';
 
 export interface AccountData {
   accountById: {
@@ -293,6 +294,7 @@ export interface accountByDetailsProps {
   keyContacts: KeyContactProps[];
   business_details: string;
   data_storage: string;
+  attachments: AttachmentList[];
 }
 
 export interface KeyContactProps {

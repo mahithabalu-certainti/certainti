@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
-import { Attachment } from '../../../../../assets';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { AllPermissions } from '../../../../../common-service';
-import { ResourceTabs } from '../resources/resources';
-import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
-import ResourceTableHeader from '../resources/resource-table-header';
-import { ListTable } from '../../../../../components/table';
-import { getAttachmentColumns } from './column';
-import { useAttachmentList } from '../../../../services/attachments/attachments-service';
+import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
+import { useEffect, useState } from 'react';
 import { AttachmentList } from '../../../../types/attachment';
-import { useParams } from 'react-router-dom';
-import { attachmentsFilterFields } from './utils';
+import { useAttachmentList } from '../../../../services/attachments/attachments-service';
+import { getProjectAttachmentColumns } from './column';
+import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
+import { Attachment } from '../../../../../assets';
+import { ListTable } from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
+import { attachmentsFilterFields } from './utils';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -28,7 +27,9 @@ const AttachmentTabs: ResourceTabs[] = [
 ];
 
 const Attachments: React.FC = () => {
-  const { accountid } = useParams();
+  const { projectid } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountID = searchParams.get('accountID');
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -49,9 +50,9 @@ const Attachments: React.FC = () => {
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'account',
-      accountRid: accountid || '',
-      entityId: accountid || '',
+      attachmentLevel: 'project',
+      accountRid: accountID || '',
+      entityId: projectid || '',
     },
     refreshAttachments
   );
@@ -92,7 +93,7 @@ const Attachments: React.FC = () => {
       variant: 'outlined' as const,
       disabled: false,
       onClick: () => console.log('clicked'),
-      sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
+      sx: { width: '90px', minWidth: '90px' },
       hide: false,
     },
   ];
@@ -111,7 +112,7 @@ const Attachments: React.FC = () => {
     setSortField(property);
   };
 
-  const attachmentColumns = getAttachmentColumns();
+  const attachmentColumns = getProjectAttachmentColumns();
   const getRowId = (row: AttachmentList) => row.rid;
 
   return (
@@ -121,7 +122,7 @@ const Attachments: React.FC = () => {
         filterMenu={attachmentsFilterFields()}
         filterVisibility={true}
         showFilter={showFilter}
-        contextKey='account-attachments'
+        contextKey='project-attachments'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
@@ -129,9 +130,10 @@ const Attachments: React.FC = () => {
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={true}
+        showRefresh
         onRefreshClick={onRefreshClick}
       />
+
       <ResourceTableHeader
         value={'attachments'}
         title='Attachments'

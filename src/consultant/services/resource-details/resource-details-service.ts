@@ -31,7 +31,7 @@ export const useResourceDetail = (
   });
 };
 
-type ExportType = 'resource' | 'cost' | 'skill' | 'project';
+type ExportType = 'resource' | 'cost' | 'skill' | 'project' | 'attachments';
 export const exportData = async (
   type: ExportType,
   params: ExportModule = {}

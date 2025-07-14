@@ -30,6 +30,7 @@ import {
 } from '../../../services/resource-list';
 import { useGetProjectType } from '../../../services/project';
 import { FilterType } from '../../../../admin/types';
+import { attachmentsFilterFields } from '../sidebar-pages/attachments/utils';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -73,7 +74,7 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: [] as string[],
     skill_subtype_rid: [] as string[] | undefined[],
   });
-  console.log('currentSkillType', tabValue);
+
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
@@ -299,6 +300,8 @@ const TabPanel: React.FC<TabProps> = ({
         memoizedProjectTypes,
         memoizedStatus
       );
+    if (value === 'attachments' || value === 'project-attachments')
+      return attachmentsFilterFields();
     return value === 'cost'
       ? getCostFilterFields(memoizedCurrency, memoizedResourceStatus)
       : getSkillFilterFields(

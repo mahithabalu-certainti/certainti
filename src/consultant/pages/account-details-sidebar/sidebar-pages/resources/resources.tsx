@@ -59,7 +59,7 @@ interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
-  setExportType?: (type: 'resource' | 'cost' | 'skill') => void;
+  setExportType?: (type: 'resource' | 'cost' | 'skill' | 'attachments') => void;
 }
 
 export interface ResourceTabs {
@@ -102,6 +102,12 @@ const tabs: TabMenus[] = [
   {
     label: 'Resource Skills',
     value: 'skill',
+    hide: false,
+    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
+  },
+  {
+    label: 'Attachments',
+    value: 'attachments',
     hide: false,
     id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
   },
@@ -149,6 +155,15 @@ const Resource: React.FC<ResourceProps> = ({
   const [refreshSkillTrigger, setRefreshSkillTrigger] = useState<number>(
     Date.now()
   );
+  const [refreshAttachments, setRefreshAttachments] = useState<number>(
+    Date.now()
+  );
+  const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
+    'ASC'
+  );
+  const [attachmentsOrderBy, setAttachmentsOrderBy] =
+    useState<string>('document_name');
+
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
@@ -551,6 +566,10 @@ const Resource: React.FC<ResourceProps> = ({
       updatedParams.sortBy = skillOrderBy;
       updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
       setExportType?.('skill');
+    } else if (value === 'attachments') {
+      updatedParams.sortBy = attachmentsOrderBy;
+      updatedParams.sortOrder = attachmentsOrder;
+      setExportType?.('attachments');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;
@@ -574,6 +593,8 @@ const Resource: React.FC<ResourceProps> = ({
     setTableParams,
     setExportType,
     accountDetails?.data?.accountById?.r_number,
+    attachmentsOrderBy,
+    attachmentsOrder,
   ]);
 
   const handlePageChange = (newPage: number) => {
@@ -619,6 +640,8 @@ const Resource: React.FC<ResourceProps> = ({
       setRefreshCostTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     } else if (value === 'skill') {
       setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else if (value === 'attachments') {
+      setRefreshAttachments(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -643,6 +666,11 @@ const Resource: React.FC<ResourceProps> = ({
     } else if (value === 'cost') {
       setCostOrder(isSortByEmpty ? 'asc' : sortOrder);
       setCostOrderBy(apiSortBy as keyof ResourceCostList);
+    } else if (value === 'attachments') {
+      setAttachmentsOrder(
+        isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
+      );
+      setAttachmentsOrderBy(apiSortBy);
     } else {
       setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
       setSortField(apiSortBy);
@@ -758,6 +786,11 @@ const Resource: React.FC<ResourceProps> = ({
               setSkillOrderBy={setSkillOrderBy}
               refreshCostTrigger={refreshCostTrigger}
               refreshSkillTrigger={refreshSkillTrigger}
+              attachmentsOrder={attachmentsOrder}
+              setAttachmentsOrder={setAttachmentsOrder}
+              attachmentsOrderBy={attachmentsOrderBy}
+              setAttachmentsOrderBy={setAttachmentsOrderBy}
+              refreshAttachments={refreshAttachments}
               setCount={setCount}
             />
           )}

@@ -7,6 +7,8 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import DetailsTable from '../../../../../../components/details-section/details-table';
+import { attachmentColumns } from '../../../../../../components/details-section/helpers';
 
 interface ResourceDetailsProps {
   resource: ResourceData | null;
@@ -209,6 +211,13 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='Comments' data={description} />
+      {resourceData?.attachment.length > 0 && (
+        <DetailsTable
+          title='Attachments'
+          columns={attachmentColumns}
+          data={resourceData.attachment || []}
+        />
+      )}
       <DetailsSection
         title='Audit Information'
         data={auditInfo}
