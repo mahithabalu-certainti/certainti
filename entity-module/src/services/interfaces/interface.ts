@@ -441,3 +441,12 @@ export interface IProjectResourceService {
     data?: { resourceRolesSubType: any };
   }>;
 }
+
+export interface IAttachmentGraphqlServices {
+  updateInlineAttachment (data : any) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
+  }>;
+}
