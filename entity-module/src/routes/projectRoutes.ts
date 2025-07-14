@@ -1,7 +1,6 @@
 import { Router } from "express";
 import controller from "../controllers";
 import { checkUserStatusMiddleware } from "../middlewares/authMiddleware";
-import projectResourceRoutes from "./projectResourceRoutes";
 
 const routes: Router = Router();
 
@@ -45,7 +44,5 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.projectController.projectClassification
 );
-
-routes.use("/resources", projectResourceRoutes);
 
 export default routes;
