@@ -1060,6 +1060,39 @@ class ResourceSkillService {
       return this.throwServiceError(err as Error);
     }
   }
+
+    /**
+   * Fetches resource skills for a given resource ID using raw SQL query
+   * 
+   * @param {string} resourceId - ID of the resource
+   * @param {string} accountNumber - Account number to determine schema
+   * @returns {Promise<any>} - Resource skills data
+   */
+  async getResourceSkillsByResourceId(accountNumber: string, resourceId: string): Promise<any> {
+    try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+      const query = `
+        SELECT 
+          rs.rid
+        FROM "${schemaName}".resource_skill rs
+        WHERE rs.resource_rid = :resourceId
+        ORDER BY rs.created_datetime DESC
+      `;
+
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { resourceId },
+        type: 'SELECT'
+      });
+
+      return results;
+
+    } catch (error) {
+      console.error('Error fetching resource skills:', error);
+      throw error;
+    }
+  }
 }
 
 export default ResourceSkillService;

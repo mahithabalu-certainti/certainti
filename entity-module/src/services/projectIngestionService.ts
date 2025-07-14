@@ -71,7 +71,7 @@ class ProjectIngestionService {
 
   private async getModels(accountNumber: string) {
     // this.logger.info(`Before account number transfer | ${accountNumber}`)
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
     // this.logger.info(`After account number transferr | ${schemaName}`);
     // if (this.modelCache.has(schemaName)) {
     //   return this.modelCache.get(schemaName)!;
@@ -1745,6 +1745,115 @@ class ProjectIngestionService {
     return projectData;
   }
 
+async fetchProjectInfoById(accountNumber: string, projectId: string) {
+  const { Project } = await this.getModels(accountNumber);
+
+  const projectData = await Project.findOne({
+    where: {
+      rid: projectId
+    },
+    attributes: ['rid','project_code']
+  });
+
+  return projectData;
+}
+
+async fetchProjectResourceById(accountNumber: string, projectResourceId: string) {
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+  const query = `
+    SELECT rid,r_number 
+    FROM "${schemaName}".project_resource
+    WHERE rid = :projectResourceId
+  `;
+
+  const sequelize = await this.getSequelize();
+  const result = await sequelize.query(query, {
+    replacements: { projectResourceId },
+    type: 'SELECT',
+    raw: true
+  });
+
+  return result[0];
+}
+
+async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+  const query = `
+    SELECT rid,r_number 
+    FROM "${schemaName}".project_task
+    WHERE rid = :projectTaskId
+  `;
+
+  const sequelize = await this.getSequelize();
+  const result = await sequelize.query(query, {
+    replacements: { projectTaskId },
+    type: 'SELECT',
+    raw: true
+  });
+
+  return result[0];
+}
+
+async fetchResourceById(accountNumber: string, resourceId: string) {
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+  const query = `
+    SELECT rid,resource_code 
+    FROM "${schemaName}".resources
+    WHERE rid = :resourceId
+  `;
+
+  const sequelize = await this.getSequelize();
+  const result = await sequelize.query(query, {
+    replacements: { resourceId },
+    type: 'SELECT',
+    raw: true
+  });
+
+  return result[0];
+}
+
+
+async fetchResourceCostById(accountNumber: string, resourceCostId: string) {
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+  const query = `
+    SELECT rid,r_number 
+    FROM "${schemaName}".resource_cost
+    WHERE rid = :resourceCostId
+  `;
+
+  const sequelize = await this.getSequelize();
+  const result = await sequelize.query(query, {
+    replacements: { resourceCostId },
+    type: 'SELECT',
+    raw: true
+  });
+
+  return result[0];
+}
+
+async fetchResourceSkillById(accountNumber: string, resourceSkillId: string) {
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+  const query = `
+    SELECT rid,r_number 
+    FROM "${schemaName}".resource_skill
+    WHERE rid = :resourceSkillId
+  `;
+
+  const sequelize = await this.getSequelize();
+  const result = await sequelize.query(query, {
+    replacements: { resourceSkillId },
+    type: 'SELECT',
+    raw: true
+  });
+
+  return result[0];
+}
+
   async insertProjectClassification(
     projects: any[],
     mainDbSequelize: Sequelize
@@ -2341,6 +2450,73 @@ async getProjectsByAccountId(schemaNumber: string, accountRid: string) {
     ]
   });
 }
+
+
+ /**
+   * Fetches project resources for a given project ID using raw SQL query
+   * 
+   * @param {string} projectId - ID of the resource
+   * @param {string} accountNumber - Account number to determine schema
+   * @returns {Promise<any>} - Project_resources data
+   */
+  async getProjectResourcesByProjectId(accountNumber: string, projectId: string): Promise<any> {
+    try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+      const query = `
+        SELECT 
+          ps.rid
+        FROM "${schemaName}".project_resource ps
+        WHERE ps.project_rid = :projectId
+        ORDER BY ps.created_datetime DESC
+      `;
+
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { projectId },
+        type: 'SELECT'
+      });
+
+      return results;
+
+    } catch (error) {
+      console.error('Error fetching project resources:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches project tasks for a given project resource ID using raw SQL query
+   * 
+   * @param {string} projectResourceId - ID of the resource
+   * @param {string} accountNumber - Account number to determine schema
+   * @returns {Promise<any>} - Project_task data
+   */
+  async getProjectTasksByProjectResourceId(accountNumber: string, projectResourceId: string): Promise<any> {
+    try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+      const query = `
+        SELECT 
+          pt.rid
+        FROM "${schemaName}".project_task pt
+        WHERE pt.project_resource_rid = :projectResourceId
+        ORDER BY pt.created_datetime DESC
+      `;
+
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { projectResourceId },
+        type: 'SELECT'
+      });
+
+      return results;
+
+    } catch (error) {
+      console.error('Error fetching project tasks:', error);
+      throw error;
+    }
+  }
 
 }
 

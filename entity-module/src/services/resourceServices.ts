@@ -799,4 +799,32 @@ export class ResourceService {
 
     return result;
   }
+
+
+  async getResourcesByAccountId(accountNumber: string, accountRid: string) {
+    try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+      const query = `
+        SELECT 
+          r.rid
+        FROM "${schemaName}".resources r
+        WHERE r.account_rid = :accountRid
+        ORDER BY r.created_datetime DESC
+      `;
+
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { accountRid },
+        type: 'SELECT'
+      });
+
+      return results;
+
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      throw error;
+    }
+  }
+
 }
