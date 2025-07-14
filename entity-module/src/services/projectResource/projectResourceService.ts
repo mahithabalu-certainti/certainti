@@ -1,3 +1,4 @@
+import { Op, Order, Sequelize } from "sequelize";
 import { HttpStatus } from "../../utils/constants";
 import {
   ICreateProjectResource,
@@ -544,6 +545,127 @@ export class ProjectResourceService {
     }
   }
 
+  async listProjectResources(
+    accountId: string,
+    projectId: string,
+    fiscal_year: number,
+    page: number,
+    limit: number,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResources: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      const offset = (page - 1) * limit;
+
+      // construct sorting
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const order: Order = [[finalSortBy, finalSortOrder]];
+
+      // construct filters
+      const { whereClause } = this.buildWhereClause(filters);
+      console.log("whereClause", whereClause);
+
+      const projectResources =
+        await this.projectResourceSchema.listProjectResourceSchema(
+          accountNumber,
+          accountId,
+          projectId,
+          filters,
+          whereClause,
+          fiscal_year,
+          offset,
+          limit,
+          order,
+          sortBy,
+          sortOrder
+        );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projectResources,
+        },
+      };
+    } catch (err) {
+      console.log("Error fetching project ressouce", err);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+  async exportProjectResources(
+    accountId: string,
+    projectId: string,
+    fiscal_year: number,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResources: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      // construct sorting
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const order: Order = [[finalSortBy, finalSortOrder]];
+
+      // construct filters
+      const { whereClause } = this.buildWhereClause(filters);
+
+      const projectResources =
+        await this.projectResourceSchema.exportProjectResourceSchema(
+          accountNumber,
+          accountId,
+          projectId,
+          filters,
+          whereClause,
+          fiscal_year,
+          order,
+          sortBy,
+          sortOrder
+        );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projectResources,
+        },
+      };
+    } catch (err) {
+      console.log("Error fetching project ressouce", err);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   async projectResourceDetails(
     projectResourceId: string,
     accountId: string
@@ -900,6 +1022,190 @@ export class ProjectResourceService {
       userId,
       transaction
     );
+  }
+
+  getSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "resource_code",
+      "resource_name",
+      "fiscal_year",
+      "resource_role",
+      "total_hours_pro_res",
+      "total_cost_pro_res",
+      "qre_percent",
+      "qre_final",
+      "description",
+      "project_resource_code",
+    ];
+
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
+
+  buildWhereClause(filters: Record<string, any>): {
+    whereClause: Record<string, any>;
+  } {
+    let whereClause: Record<string, any> = {};
+
+    whereClause = this.applyFilters(filters, whereClause);
+
+    return { whereClause };
+  }
+
+  private applyFilters(
+    filters: Record<string, any>,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    const castToTextFields = [
+      "rid",
+      "project_startdate",
+      "project_enddate",
+      "total_effort",
+      "total_cost",
+      "fiscal_year",
+    ];
+
+    const numberFields = [
+      "total_hours_pro_res",
+      "total_cost_pro_res",
+      "qre_percent",
+      "qre_final",
+    ];
+
+    const enumFields = ["resource_code"];
+
+    const filterFields = this.getFilterFields();
+
+    filterFields.forEach(({ clientField, dbField }) => {
+      if (filters[clientField]) {
+        const fieldFilter = filters[clientField];
+        const isNumber = numberFields.includes(dbField);
+        const isEnum = enumFields.includes(dbField);
+        const isTextCastNeeded =
+          castToTextFields.includes(clientField) && !isNumber;
+
+        if (isTextCastNeeded) {
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+            this.getFieldFilter(fieldFilter, isNumber, isEnum)
+          );
+        } else {
+          whereClause[dbField] = this.getFieldFilter(
+            fieldFilter,
+            isNumber,
+            isEnum
+          );
+        }
+      }
+    });
+
+    return whereClause;
+  }
+
+  getFilterFields(): { clientField: string; dbField: string }[] {
+    const projectFilterFields = [
+      { clientField: "resource_code", dbField: "resource_code" },
+      { clientField: "resource_name", dbField: "resource_name" },
+      // { clientField: "region_rid", dbField: "region_rid" },
+      // { clientField: "resource_type", dbField: "resource_type" },
+      { clientField: "resource_role", dbField: "resource_role" },
+      { clientField: "total_hours_pro_res", dbField: "total_hours_pro_res" },
+      { clientField: "total_cost_pro_res", dbField: "total_cost_pro_res" },
+      { clientField: "qre_final", dbField: "qre_final" },
+      { clientField: "qre_percent", dbField: "qre_percent" },
+      { clientField: "description", dbField: "description" },
+      {
+        clientField: "project_resource_code",
+        dbField: "project_resource_code",
+      },
+    ];
+
+    return projectFilterFields;
+  }
+
+  private getFieldFilter(
+    fieldFilter: any,
+    isNumberField: boolean,
+    isEnumField: boolean
+  ): any {
+    if (isNumberField) {
+      if (fieldFilter.equals !== undefined) {
+        return { [Op.eq]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        return {
+          [Op.or]: [{ [Op.ne]: fieldFilter.not_equals }, { [Op.is]: null }],
+        };
+      }
+      if (fieldFilter.less_than !== undefined) {
+        return { [Op.lt]: fieldFilter.less_than };
+      }
+      if (fieldFilter.greater_than !== undefined) {
+        return { [Op.gt]: fieldFilter.greater_than };
+      }
+      if (
+        fieldFilter.between &&
+        Array.isArray(fieldFilter.between) &&
+        fieldFilter.between.length === 2
+      ) {
+        return {
+          [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
+        };
+      }
+      if (fieldFilter.is_empty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+
+    if (isEnumField) {
+      if (fieldFilter.equals !== undefined) {
+        return { [Op.eq]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        return {
+          [Op.or]: [{ [Op.ne]: fieldFilter.not_equals }, { [Op.is]: null }],
+        };
+      }
+      if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+        return { [Op.in]: fieldFilter.in };
+      }
+      if (fieldFilter.is_empty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+
+    // String (default)
+    if (fieldFilter.equals) {
+      return { [Op.iLike]: fieldFilter.equals };
+    }
+    if (fieldFilter.not_equals) {
+      return {
+        [Op.or]: [{ [Op.notILike]: fieldFilter.not_equals }, { [Op.is]: null }],
+      };
+    }
+    if (fieldFilter.contains) {
+      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+    }
+    if (fieldFilter.not_contains) {
+      return {
+        [Op.or]: [
+          { [Op.notILike]: `%${fieldFilter.not_contains}%` },
+          { [Op.is]: null },
+        ],
+      };
+    }
+    if (fieldFilter.is_empty === true) {
+      return { [Op.or]: [null, ""] };
+    }
+    if (fieldFilter.value) {
+      return fieldFilter.value;
+    }
+
+    return undefined;
   }
 
   /**

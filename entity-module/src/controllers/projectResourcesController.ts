@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   errorLog,
+  generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
@@ -10,6 +11,8 @@ import configurations from "../config/config";
 import { HttpStatus } from "../utils/constants";
 import {
   createProjectResourceSchema,
+  exportListProjectResourceSchema,
+  listResourceSchema,
   updateProjectResourceSchema,
 } from "../lib/joi/schemas/schema";
 
@@ -124,6 +127,86 @@ async function updateProjectResource(
   }
 }
 
+async function listProjectResource(req: Request, res: Response): Promise<void> {
+  const methodName = "Get project resource list";
+  try {
+    const { accountId, projectId } = req.params;
+
+    const userId = req.headers["x-user-id"] as string;
+
+    const value = await validateRequest(req, listResourceSchema, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const pageNum: number = parseInt(value.page, 10) || 1;
+    const limitNum: number = parseInt(value.limit, 10) || 25;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const projectResourceDetails =
+      await projectResourceServices.listProjectResources(
+        accountId,
+        projectId,
+        value.fiscalYear !== "" && value.fiscalYear !== null
+          ? value.fiscalYear
+          : 0,
+        pageNum,
+        limitNum,
+        parsedFilters,
+        value.sortBy,
+        value.sortOrder
+      );
+
+    if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectResourceDetails.data);
+      return;
+    } else {
+      errorLog(methodName, projectResourceDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectResourceDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 async function projectResourceDetails(
   req: Request,
   res: Response
@@ -143,13 +226,103 @@ async function projectResourceDetails(
       return;
     }
 
-    const projectResourceDetails = await projectResourceServices.projectResourceDetails(
-      projectResourceId,
-      accountId
-    );
+    const projectResourceDetails =
+      await projectResourceServices.projectResourceDetails(
+        projectResourceId,
+        accountId
+      );
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, projectResourceDetails.data);
+      return;
+    } else {
+      errorLog(methodName, projectResourceDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectResourceDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function exportProjectResource(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Export project resource list";
+  try {
+    const { accountId, projectId } = req.params;
+
+    const userId = req.headers["x-user-id"] as string;
+
+    const value = await validateRequest(
+      req,
+      exportListProjectResourceSchema,
+      res,
+      "GET"
+    );
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const projectResourceDetails =
+      await projectResourceServices.exportProjectResources(
+        accountId,
+        projectId,
+        value.fiscalYear !== "" && value.fiscalYear !== null
+          ? value.fiscalYear
+          : 0,
+        parsedFilters,
+        value.sortBy,
+        value.sortOrder
+      );
+
+    if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(
+          projectResourceDetails.data?.projectResources,
+          "Project Resource"
+        )
+      );
       return;
     } else {
       errorLog(methodName, projectResourceDetails.errorMessage);
@@ -206,7 +379,10 @@ async function resourceSkillRoles(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function resourceSkillRolesSubtype(req: Request, res: Response): Promise<void> {
+async function resourceSkillRolesSubtype(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Get resource roles";
   try {
     const projectResourceRolesSubtype =
@@ -278,5 +454,7 @@ export default {
   projectResourceDetails,
   resourceCodes,
   resourceSkillRoles,
-  resourceSkillRolesSubtype
+  resourceSkillRolesSubtype,
+  listProjectResource,
+  exportProjectResource,
 };

@@ -1,5 +1,8 @@
-import { Op, Sequelize, Transaction } from "sequelize";
-import { ProjectResource, setupProjectResourceSequence } from "../../models/projectResource";
+import { Op, Order, Sequelize, Transaction, literal } from "sequelize";
+import {
+  ProjectResource,
+  setupProjectResourceSequence,
+} from "../../models/projectResource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import {
@@ -10,8 +13,14 @@ import moment from "moment";
 import { Project } from "../../models/project";
 import { ProjectResourceMapper } from "../../utils/projectMapper";
 import { ProjectFiscal } from "../../models/projectFiscal";
-import { ProjectResourceTimeline, setupProjectResourceTimelineSequence } from "../../models/projectResourceTimeline";
-import { ProjectResourceHistory, setupProjectResourceHistorySequence } from "../../models/projectResourceHistory";
+import {
+  ProjectResourceTimeline,
+  setupProjectResourceTimelineSequence,
+} from "../../models/projectResourceTimeline";
+import {
+  ProjectResourceHistory,
+  setupProjectResourceHistorySequence,
+} from "../../models/projectResourceHistory";
 import {
   ProjectResourceFiscal,
   setupProjectResourceFiscalSequence,
@@ -169,10 +178,7 @@ export class ProjectResourceSchemaService {
       await AccountFiscalRegion.sync({ force: false });
       if (this.orgDbSequelize) {
         const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
-        await setupProjectResourceSequence(
-          this.orgDbSequelize,
-          schemaName
-        );
+        await setupProjectResourceSequence(this.orgDbSequelize, schemaName);
         await setupProjectResourceFiscalSequence(
           this.orgDbSequelize,
           schemaName
@@ -184,11 +190,11 @@ export class ProjectResourceSchemaService {
         await setupProjectResourceHistorySequence(
           this.orgDbSequelize,
           schemaName
-        )
+        );
         await setupProjectResourceTimelineSequence(
           this.orgDbSequelize,
           schemaName
-        )
+        );
       }
     } catch (err) {
       throw new Error("Error creating project resources table");
@@ -271,7 +277,6 @@ export class ProjectResourceSchemaService {
     startDate?: string | null,
     endDate?: string | null
   ): Promise<boolean> {
-
     const { ProjectResource } = await this.getModels(accountNumber);
 
     const startDateTocheck = startDate
@@ -1549,8 +1554,7 @@ export class ProjectResourceSchemaService {
         transaction,
       });
 
-      const newData =
-      ProjectResourceMapper.mapToProjectResourceFiscalRegion(
+      const newData = ProjectResourceMapper.mapToProjectResourceFiscalRegion(
         projectResourceData,
         fiscalYear,
         userId,
@@ -1616,7 +1620,7 @@ export class ProjectResourceSchemaService {
       transaction,
     });
 
-    if(fiscalRegionRecord){
+    if (fiscalRegionRecord) {
       await ProjectResourceFiscalRegion.update(
         {
           ...basedata,
@@ -1644,17 +1648,15 @@ export class ProjectResourceSchemaService {
     try {
       const { ProjectResourceTimeline } = await this.getModels(accountNumber);
 
-      await ProjectResourceTimeline.create(
-        {
-          account_rid: projectResourceData.account_rid,
-          event_name: eventName,
-          event_status: "success",
-          event_type: "ui handler",
-          entity_rid: projectResourceId,
-          created_by: userId,
-          created_datetime: new Date(),
-        }
-      );
+      await ProjectResourceTimeline.create({
+        account_rid: projectResourceData.account_rid,
+        event_name: eventName,
+        event_status: "success",
+        event_type: "ui handler",
+        entity_rid: projectResourceId,
+        created_by: userId,
+        created_datetime: new Date(),
+      });
     } catch (err) {
       console.log("Error addinng timelne", err);
       throw new Error("Error creating project resource timline");
@@ -3238,6 +3240,297 @@ export class ProjectResourceSchemaService {
     } catch (err) {
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
+  }
+
+  async listProjectResourceSchema(
+    accountNumber: string,
+    accountId: string,
+    projectId: string,
+    rawFilters: Record<string, any> = {},
+    filters: Record<string, any> = {},
+    fiscalYear: number,
+    offset: number,
+    limit: number,
+    order: Order,
+    sortBy: string,
+    sortOrder: string
+  ) {
+    const { ProjectResource } = await this.getModels(accountNumber);
+
+    const whereFilters: any = {
+      account_rid: accountId,
+      project_rid: projectId,
+      ...filters,
+    };
+
+    if (fiscalYear) {
+      whereFilters.fiscal_year = fiscalYear;
+    }
+
+    const isDbField = !["region_name", "resource_type_name"].includes(sortBy);
+    const dbOrder =
+      isDbField && sortBy && sortOrder
+        ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
+        : order;
+
+    let projectResource = await ProjectResource.findAll({
+      offset,
+      limit,
+      order: dbOrder,
+      where: {
+        ...whereFilters,
+      },
+    });
+
+    if (projectResource && projectResource.length > 0) {
+      projectResource = await this.insertProjectRegionData(projectResource);
+      projectResource = await this.insertResourceTypeData(projectResource);
+
+      projectResource = await this.inMemorySortAndFilter(
+        projectResource,
+        sortBy,
+        sortOrder,
+        rawFilters
+      );
+    }
+
+    return projectResource;
+  }
+
+  async exportProjectResourceSchema(
+    accountNumber: string,
+    accountId: string,
+    projectId: string,
+    rawFilters: Record<string, any> = {},
+    filters: Record<string, any> = {},
+    fiscalYear: number,
+    order: Order,
+    sortBy: string,
+    sortOrder: string
+  ) {
+    const { ProjectResource } = await this.getModels(accountNumber);
+
+    const whereFilters: any = {
+      account_rid: accountId,
+      project_rid: projectId,
+      ...filters,
+    };
+
+    if (fiscalYear) {
+      whereFilters.fiscal_year = fiscalYear;
+    }
+
+    const isDbField = !["region_name", "resource_type_name"].includes(sortBy);
+    const dbOrder =
+      isDbField && sortBy && sortOrder
+        ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
+        : order;
+
+    let projectResource = await ProjectResource.findAll({
+      order: dbOrder,
+      where: {
+        ...whereFilters,
+      },
+    });
+
+    if (projectResource && projectResource.length > 0) {
+      projectResource = await this.insertProjectRegionData(projectResource);
+      projectResource = await this.insertResourceTypeData(projectResource);
+
+      projectResource = await this.inMemorySortAndFilter(
+        projectResource,
+        sortBy,
+        sortOrder,
+        rawFilters
+      );
+    }
+
+    let exportData = projectResource.map((resource: any) => {
+      return {
+        "Resource Code": resource.resource_code || "-",
+        "Resource Name": resource.resource_name || "-",
+        Region: resource.region_name || "-",
+        "Fiscal Year": resource.fiscal_year || "-",
+        "Resource Type": resource?.resource_type_name || "-",
+        Role: resource.resource_role || "-",
+        "Effort (Hours)": resource.total_hours_pro_res || "-",
+        Cost: resource.total_cost_pro_res || "-",
+        "QRE%": resource.qre_percent || "-",
+        QRE: resource.qre_final || "-",
+        Comments: resource.description || "-",
+        "Project Resource ID": resource.project_resource_code || "-",
+      };
+    });
+
+    return exportData;
+  }
+
+  async insertProjectRegionData(projectResources: any[]): Promise<any[]> {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.getMainSequelize();
+      }
+
+      // Get unique region_rids from all project resources
+      const uniqueRegionIds = [
+        ...new Set(
+          projectResources
+            .map((res) => res.region_rid)
+            .filter((id) => id !== null && id !== undefined)
+        ),
+      ];
+
+      // Fetch all regions in one query
+      const regionsResult: any = await this.mainDbSequelize.query(
+        `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: uniqueRegionIds },
+          type: "SELECT",
+        }
+      );
+
+      // Convert result array to a map for fast lookup
+      const regionMap = new Map<string, string>();
+      for (const region of regionsResult) {
+        regionMap.set(region.rid, region.state_name);
+      }
+
+      // Enrich each project resource object with region name
+      const enrichedResources = projectResources.map((resource) => {
+        const regionName = regionMap.get(resource.region_rid) || null;
+        return {
+          ...(resource.dataValues ?? resource),
+          region_name: regionName,
+        };
+      });
+
+      return enrichedResources;
+    } catch (err) {
+      throw new Error("Error fetching region data: " + (err as Error).message);
+    }
+  }
+
+  async insertResourceTypeData(projectResources: any[]): Promise<any[]> {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.getMainSequelize();
+      }
+
+      // Get unique resource_type_rids from all project resources
+      const uniqueTypeIds = [
+        ...new Set(
+          projectResources
+            .map((res) => res.resource_type_rid)
+            .filter((id) => id !== null && id !== undefined)
+        ),
+      ];
+
+      // Fetch all resource types in one query
+      const typeResult: any = await this.mainDbSequelize.query(
+        `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: uniqueTypeIds },
+          type: "SELECT",
+        }
+      );
+
+      // Convert result array to a map for fast lookup
+      const typeMap = new Map<string, string>();
+      for (const type of typeResult) {
+        typeMap.set(type.rid, type.resource_type_name);
+      }
+
+      // Enrich each project resource object with resource_type_name
+      const enrichedResources = projectResources.map((resource) => {
+        const typeName = typeMap.get(resource.resource_type_rid) || null;
+        return {
+          ...(resource.dataValues ?? resource),
+          resource_type_name: typeName,
+        };
+      });
+
+      return enrichedResources;
+    } catch (err) {
+      throw new Error(
+        "Error fetching resource type data: " + (err as Error).message
+      );
+    }
+  }
+
+  async inMemorySortAndFilter(
+    projectResources: any[],
+    sortBy: string,
+    sortOrder: string,
+    filters?: Record<string, any>
+  ): Promise<any[]> {
+    const enumFields = ["region_name", "resource_type_name"];
+
+    const matchFilter = (record: any, key: string, filter: any): boolean => {
+      const value = record[key];
+
+      // Enum field logic (exact/in list)
+      if (enumFields.includes(key)) {
+        if (filter.equals !== undefined) return value === filter.equals;
+        if (filter.not_equals !== undefined) return value !== filter.not_equals;
+        if (filter.is_empty === true) return value === null || value === "";
+        if (Array.isArray(filter.in)) return filter.in.includes(value);
+      }
+
+      // Text fields (contains / not contains)
+      if (typeof value === "string") {
+        if (filter.contains !== undefined) {
+          return value.toLowerCase().includes(filter.contains.toLowerCase());
+        }
+        if (filter.not_contains !== undefined) {
+          return !value
+            .toLowerCase()
+            .includes(filter.not_contains.toLowerCase());
+        }
+      }
+
+      // Generic field equality
+      if (filter.equals !== undefined) return value === filter.equals;
+      if (filter.not_equals !== undefined) return value !== filter.not_equals;
+      if (filter.is_empty === true) return value === null || value === "";
+
+      return true;
+    };
+
+    let filtered = projectResources.filter((record) => {
+      if (!filters) return true;
+
+      return Object.entries(filters).every(([key, filterValue]) => {
+        if (!filterValue || Object.keys(filterValue).length === 0) return true;
+        return matchFilter(record, key, filterValue);
+      });
+    });
+
+    if (!sortBy || sortBy === "created_datetime") {
+      return filtered;
+    }
+
+    if (sortBy && enumFields.includes(sortBy)) {
+      filtered.sort((a, b) => {
+        const aVal = a[sortBy];
+        const bVal = b[sortBy];
+
+        const aIsNull = aVal === null || aVal === undefined;
+        const bIsNull = bVal === null || bVal === undefined;
+
+        if (aIsNull && bIsNull) return 0;
+        if (aIsNull) return 1;
+        if (bIsNull) return -1;
+
+        const valA = typeof aVal === "string" ? aVal.toLowerCase() : aVal;
+        const valB = typeof bVal === "string" ? bVal.toLowerCase() : bVal;
+
+        if (valA < valB) return sortOrder === "DESC" ? 1 : -1;
+        if (valA > valB) return sortOrder === "DESC" ? -1 : 1;
+        return 0;
+      });
+    }
+
+    return filtered;
   }
 
   async listResourceCodes(accountNumber: string, accountId: string) {

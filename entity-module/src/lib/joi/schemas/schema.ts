@@ -2152,6 +2152,23 @@ const updateProjectResourceSchema = Joi.object({
   description: Joi.string().max(2000).optional().allow("").allow(null),
 });
 
+const exportListProjectResourceSchema = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  timezone: Joi.string().optional()
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2174,5 +2191,6 @@ export {
   listAttachmentsSchema,
   getDocumentTypeAndCategorySchema,
   createProjectResourceSchema,
-  updateProjectResourceSchema
+  updateProjectResourceSchema,
+  exportListProjectResourceSchema
 };
