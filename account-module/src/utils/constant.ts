@@ -54,7 +54,10 @@ export const STATUS_MESSAGE = {
   accountUpdateSuccess : "Account updated successfully",
   accountIdMissing : "Account Id mising",
   oneFieldRequired : "Atleast one field is required to update",
-  keyContactIdMissing : "Key-Contact Id is missing"
+  keyContactIdMissing : "Key-Contact Id is missing",
+  accountUpdateFailed : "Account updation failed",
+  invalidStatus : "Invalid Status. Status should either Active/In-Active.",
+  noDataToUpdate : "Data is requried to update"
 }
 
 export const rawQueries = {

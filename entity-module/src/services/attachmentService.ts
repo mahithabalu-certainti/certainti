@@ -205,6 +205,7 @@ async getAttachments(
   sortBy: string = 'created_datetime',
   sortOrder: string = 'DESC',
   fiscalYear: number = 0,
+  graphqlData? : any
 ): Promise<{
   statusCode: number;
   message: string;
@@ -250,7 +251,20 @@ async getAttachments(
 
     const fetchAttachments = async (model: any, level: string, attachToIds: string[]) => {
       if (attachToIds.length === 0) return [];
-      const where = {
+      let where;
+      if(graphqlData.document_rid) {
+        console.log("Doc Id : ", graphqlData.document_rid)
+        where = {
+          rid : graphqlData.document_rid,
+          attachment_level : level,
+          attach_to : { [Op.in]: attachToIds }
+      };
+      
+      let arrayData = []
+      arrayData.push(await model.findOne({ where }))
+      return arrayData
+      } else {
+        where = {
         [Op.and]: [
           { attachment_level: level },
           { attach_to: { [Op.in]: attachToIds } },
@@ -259,6 +273,7 @@ async getAttachments(
       };
       return model.findAll({ where });
     };
+      }
 
     // 🔷 Optimized resource cost and skill attachments fetch for multiple resources
     const fetchResourceCostSkillAttachmentsBulk = async (model: any, resourceIds: string[]) => {
@@ -379,6 +394,9 @@ async getAttachments(
     }
 
     // 🔷 Fetch display names
+    if(graphqlData.document_rid) {
+      allAttachments = allAttachments.filter((d : any) => d != null)
+    }
     const attachmentDisplayNames = await this.getAttachmentDisplayNames(allAttachments, schemaNumber);
 
     // 🔷 Apply attached_to filter if present
@@ -463,7 +481,6 @@ async getAttachments(
         return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
       });
     }
-
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,

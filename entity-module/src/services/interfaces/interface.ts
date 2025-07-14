@@ -373,7 +373,7 @@ export interface IAttachmentService {
   filters: Record<string, any>,
   sortBy: string,
   sortOrder: string,
-  fiscalYear:number):Promise<{
+  fiscalYear:number, graphqlData : any):Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
@@ -467,5 +467,14 @@ export interface IProjectResourceService {
     message: string;
     errorMessage?: string;
     data?: { projectResources: any };
+  }>;
+}
+
+export interface IAttachmentGraphqlServices {
+  updateInlineAttachment (data : any) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
   }>;
 }

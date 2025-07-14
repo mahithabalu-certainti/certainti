@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs';
 import { ResourceSkill } from "../models/resourceSkill";
 import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "./azureSecrets";
+import { Attachment } from "../models/attachments";
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -153,6 +154,11 @@ export const validateResourceSkill = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.resource_rid) return STATUS_MESSAGE.resourceIdMissing
   if(!data.resource_skill_rid) return STATUS_MESSAGE.skillIdMissing
+}
+
+export const validateAttachment = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.rid) return STATUS_MESSAGE.attachmentIdMissing
 }
 
 export const setProject = (dbData : any, requestData : any) => {
@@ -779,5 +785,56 @@ export async function uploadToAzureBlob(
   } catch (error) {
     console.error('Azure Blob upload failed:', error);
     throw new Error(`File upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export const setInlineForAttachments = (dbData : Attachment, requestData : any) => {
+  let newData : any = {}
+  let dataStorage;
+  let newDataArray = []
+  if(requestData.fiscal_year != undefined) {
+    newData.fiscal_year = dbData.fiscal_year != requestData.fiscal_year ? requestData.fiscal_year : dbData.fiscal_year
+    dataStorage = `fiscal_year = ${newData.fiscal_year}`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.document_category_rid != undefined) {
+    newData.document_category_rid = requestData.document_category_rid != dbData.document_category_rid ? requestData.document_category_rid : dbData.document_category_rid
+    dataStorage = `document_category_rid = '${newData.document_category_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.document_type_rid != undefined) {
+    newData.document_type_rid = requestData.document_type_rid != dbData.document_type_rid ? requestData.document_type_rid : dbData.document_type_rid
+    dataStorage = `document_type_rid = '${newData.document_type_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.document_category_others != undefined) {
+    newData.document_category_others = requestData.document_category_others != dbData.document_category_others ? requestData.document_category_others : dbData.document_category_others
+    dataStorage = `document_category_others = '${newData.document_category_others}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.document_type_others != undefined) {
+    newData.document_type_others = requestData.document_type_others != dbData.document_type_others ? requestData.document_type_others : dbData.document_type_others
+    dataStorage = `document_type_others = '${newData.document_type_others}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.comments != undefined) {
+    newData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
+    dataStorage = `comments = '${newData.comments}'`
+    newDataArray.push(dataStorage)
+  }
+  if(newDataArray.length < 1) {
+    return {
+      statusMessage : STATUS_MESSAGE.noDataToUpdate,
+      data : newDataArray
+    }
+  } else {
+    dataStorage = `modified_by = '${requestData.userId}'`
+    newDataArray.push(dataStorage)
+    dataStorage = `modified_datetime = NOW()`
+    newDataArray.push(dataStorage)
+    return {
+      statusMessage : null,
+      data : newDataArray
+    }
   }
 }
