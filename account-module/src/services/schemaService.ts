@@ -12,6 +12,7 @@ import {
 } from "../utils/types";
 import Decimal from "decimal.js";
 class SchemaService {
+  
   async getKeyContactRoleById(key_contact_role: string): Promise<any> {
   try {
     const sequelize = await initSequelize();
@@ -2589,6 +2590,28 @@ async insertFiscalInfoOnly(
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
+
+async fetchAttachments(account_rid: string): Promise<any[]> {
+  try {
+    const sequelize = await initSequelize();
+    
+    const result = await sequelize.query(`
+      SELECT 
+        a.*
+      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
+      WHERE a.attach_to = :account_rid
+      ORDER BY a.created_datetime DESC
+    `, {
+      replacements: { account_rid },
+      type: QueryTypes.SELECT
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching attachments:', error);
+    throw new Error('Failed to fetch attachments');
+  }
+}
 }
 export default SchemaService;
 
