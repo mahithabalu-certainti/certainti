@@ -255,7 +255,7 @@ export interface IProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any, attachment: any };
   }>;
   projectList(
     accountId: string,
@@ -420,7 +420,7 @@ export interface IProjectResourceService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResource: any };
+    data?: { projectResource: any, attachment: any };
   }>;
   getResourceCodes(accountId: string): Promise<{
     statusCode: number;

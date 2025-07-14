@@ -528,7 +528,7 @@ export class ProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any, attachment: any };
   }> {
     try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
@@ -562,6 +562,7 @@ export class ProjectService {
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
             project: [],
+            attachment: [],
           },
         };
       }
@@ -591,6 +592,7 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+
         projectData = await this.schemaService.projectClassificationData(
           projectData,
           mainDbInit
@@ -599,13 +601,19 @@ export class ProjectService {
         projectData = this.insertAccount(projectData, accountData);
 
         projectData = await this.schemaService.insertUserDetails(projectData);
-      }
+        }
+
+        // Fetch attachments for the project
+        const attachments = await this.schemaService.fetchAttachmentsByProjectId(
+          projectId
+        );
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           project: projectData,
+          attachment: attachments || []
         },
       };
     } catch (err) {
