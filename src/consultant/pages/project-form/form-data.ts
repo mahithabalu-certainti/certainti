@@ -197,7 +197,7 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MIN_5,
                 errorMessage:
-                  'Porject code must be more than 4 characters long',
+                  'Project code must be more than 4 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_50,
