@@ -738,7 +738,18 @@ async function assignEntityAccessToProject(req: Request, res: Response): Promise
 async function getUserGroupType(req: Request, res: Response): Promise<void> {
   const methodName = "List User Group Type";
   try {
-    const groupTypes = await services.userGroupService.getUserGroupType();
+     const validatedData = await validateRequest(
+      req,
+      listActiveUserGroupSchema,
+      "",
+      res,
+      "GET"
+    );
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+
+    const { is_consultant_only_group} = validatedData;
+    const groupTypes = await services.userGroupService.getUserGroupType(is_consultant_only_group);
     if (groupTypes.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, groupTypes.data);

@@ -2110,7 +2110,7 @@ async  getProjectsWithUserAccessFlag(
   }
 }
 
-async getUserGroupType(): Promise<{
+async getUserGroupType(is_consultant_only_group:boolean): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -2119,7 +2119,8 @@ async getUserGroupType(): Promise<{
     try {
       const groupTypes = await UserGroupType.findAll({
           where: {
-    type: 'custom'
+    type: 'CUSTOM',
+    is_consultant_only_group:is_consultant_only_group
   },
       order: [
         ['group_type_name', 'ASC']
