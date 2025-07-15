@@ -51,7 +51,7 @@ export class ProjectResourceHistory
           unique: true,
         },
         project_resource_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         attribute_name: {
@@ -77,11 +77,11 @@ export class ProjectResourceHistory
           defaultValue: DataTypes.NOW,
         },
         modified_by: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         created_by: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
       },

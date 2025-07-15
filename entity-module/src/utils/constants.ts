@@ -1,3 +1,4 @@
+import { Sequelize } from "sequelize";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -107,8 +108,9 @@ export const STATUS_MESSAGE = {
   userIdEmpty : "User-Id is missing",
   attachmentIdMissing : "Attachment RID missing",
   docCatInvalid : "Document category you are trying to update is invalid",
-  docTypeInvalid : "Document Type you are trying to update is invalid"
-    
+  docTypeInvalid : "Document Type you are trying to update is invalid",
+  NoResourceFound : "No Resource found",
+  separateDb : "separate_db"
 }
 
 export const TYPES = {
@@ -118,7 +120,11 @@ export const TYPES = {
 }
 
 export const rawQueries = {
-  fetchParentAccount (accountRid : string) {
+  async fetchParentAccount (accountRid : any, mainSequelize : Sequelize) : Promise <any> {
+    let checkIsSeparateDb : any = await mainSequelize.query(`SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`)
+    if(checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    } else {
       return `
       with fetch_account_details AS (
       SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
@@ -127,6 +133,7 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`
+    }
   },
   findProject (schemaName : string, projectRid : string, accountRid : string) {
     return `

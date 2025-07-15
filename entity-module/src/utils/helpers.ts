@@ -161,6 +161,12 @@ export const validateAttachment = (data : any) => {
   if(!data.rid) return STATUS_MESSAGE.attachmentIdMissing
 }
 
+export const validateProjectResourceRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.project_resource_rid) return STATUS_MESSAGE.fiscalIdMissing
+}
+
 export const setProject = (dbData : any, requestData : any) => {
   let newPrjData : any = {}
   let newPrjArray = []
