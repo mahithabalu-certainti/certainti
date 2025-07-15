@@ -175,7 +175,7 @@ export const setProject = (dbData : any, requestData : any) => {
   let data = `project_name = '${newPrjData.project_name}'`
   newPrjArray.push(data)
   }
-  if(requestData.project_code != undefined) {
+  if(requestData.project_code) {
   newPrjData.project_code = requestData.project_code !== dbData.project_code ? requestData.project_code : dbData.project_code
   let data = `project_code = '${newPrjData.project_code}'`
   newPrjArray.push(data)
@@ -245,19 +245,20 @@ export const setProject = (dbData : any, requestData : any) => {
   let datas = `modified_datetime = NOW()`
   newPrjArray.push(datas)
   return newPrjArray
-    }
+  }
+
 
 export const setPrjFiscalData = (dbData : any, requestData : any) => {
   let newPrjFisData : any = {}
   let newPrjFisArray = []
   if(requestData.project_name != undefined) {
   newPrjFisData.project_name = requestData.project_name != dbData.project_name ? requestData.project_name : dbData.project_name
-  let data = `project_name = '${newPrjFisData.project_name}'`
+  let data = `project_name = '${newPrjFisData.project_name.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
-  if(requestData.project_code != undefined) {
+  if(requestData.project_code) {
   newPrjFisData.project_code = requestData.project_code != dbData.project_code ? requestData.project_code : dbData.project_code
-  let data = `project_code = '${newPrjFisData.project_code}'`
+  let data = `project_code = '${newPrjFisData.project_code.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
   if(requestData.project_type_rid != undefined) {
@@ -277,27 +278,27 @@ export const setPrjFiscalData = (dbData : any, requestData : any) => {
   }
   if(requestData.project_classification_other != undefined) {
   newPrjFisData.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
-  let data = `project_classification_other = '${newPrjFisData.project_classification_other}'`
+  let data = `project_classification_other = '${newPrjFisData.project_classification_other.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
   if(requestData.project_client_group != undefined) {
   newPrjFisData.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
-  let data = `project_client_group = '${newPrjFisData.project_client_group}'`
+  let data = `project_client_group = '${newPrjFisData.project_client_group.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
   if(requestData.project_group != undefined) {
   newPrjFisData.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
-  let data = `project_group = '${newPrjFisData.project_group}'`
+  let data = `project_group = '${newPrjFisData.project_group.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
   if(requestData.assessment_status != undefined) {
   newPrjFisData.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
-  let data = `assessment_status = '${newPrjFisData.assessment_status}'`
+  let data = `assessment_status = '${newPrjFisData.assessment_status.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
   if(requestData.comments != undefined) {
   newPrjFisData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
-  let data = `comments = '${newPrjFisData.comments}'`
+  let data = `comments = '${newPrjFisData.comments.replace(/'/g, "''")}'`
   newPrjFisArray.push(data)
   }
   if(requestData.total_effort != undefined) {
@@ -337,12 +338,12 @@ export const setProjectSummary = (dbData : any, requestData : any) => {
   let newDbPrjSummaryArray = []
   if(requestData.project_name != undefined) {
   newDbPrjSummary.project_name = requestData.project_name != dbData.project_name ? requestData.project_name : dbData.project_name
-  let data = `project_name = '${newDbPrjSummary.project_name}'`
+  let data = `project_name = '${newDbPrjSummary.project_name.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
-  if(requestData.project_code != undefined) {
+  if(requestData.project_code) {
   newDbPrjSummary.project_code = requestData.project_code != dbData.project_code ? requestData.project_code : dbData.project_code
-  let data = `project_code = '${newDbPrjSummary.project_code}'`
+  let data = `project_code = '${newDbPrjSummary.project_code.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
   if(requestData.project_type_rid != undefined) {
@@ -357,27 +358,27 @@ export const setProjectSummary = (dbData : any, requestData : any) => {
   }
   if(requestData.project_classification_other != undefined) {
   newDbPrjSummary.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
-  let data = `project_classification_other = '${newDbPrjSummary.project_classification_other}'`
+  let data = `project_classification_other = '${newDbPrjSummary.project_classification_other.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
   if(requestData.project_client_group != undefined) {
   newDbPrjSummary.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
-  let data = `project_client_group = '${newDbPrjSummary.project_client_group}'`
+  let data = `project_client_group = '${newDbPrjSummary.project_client_group.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
   if(requestData.project_group != undefined) {
   newDbPrjSummary.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
-  let data = `project_group = '${newDbPrjSummary.project_group}'`
+  let data = `project_group = '${newDbPrjSummary.project_group.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
   if(requestData.assessment_status != undefined) {
   newDbPrjSummary.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
-  let data = `assessment_status = '${newDbPrjSummary.assessment_status}'`
+  let data = `assessment_status = '${newDbPrjSummary.assessment_status.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
   if(requestData.comments != undefined) {
   newDbPrjSummary.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
-  let data = `comments = '${newDbPrjSummary.comments}'`
+  let data = `comments = '${newDbPrjSummary.comments.replace(/'/g, "''")}'`
   newDbPrjSummaryArray.push(data)
   }
   if(requestData.total_effort != undefined) {
@@ -417,12 +418,12 @@ export const setProjectFiscalSummary = (dbData : any, requestData : any) => {
   let newFisSummaryArray = []
   if(requestData.project_name != undefined) {
   newFisSummary.project_name = requestData.project_name !== dbData.project_name ? requestData.project_name : dbData.project_name
-  let data = `project_name = '${newFisSummary.project_name}'`
+  let data = `project_name = '${newFisSummary.project_name.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
-  if(requestData.project_code != undefined) {
+  if(requestData.project_code) {
   newFisSummary.project_code = requestData.project_code !== dbData.project_code ? requestData.project_code : dbData.project_code
-  let data = `project_code = '${newFisSummary.project_code}'`
+  let data = `project_code = '${newFisSummary.project_code.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
   if(requestData.project_type_rid != undefined) {
@@ -437,27 +438,27 @@ export const setProjectFiscalSummary = (dbData : any, requestData : any) => {
   }
   if(requestData.project_classification_other != undefined) {
   newFisSummary.project_classification_other = requestData.project_classification_other != dbData.project_classification_other ? requestData.project_classification_other : dbData.project_classification_other
-  let data = `project_classification_other = '${newFisSummary.project_classification_other}'`
+  let data = `project_classification_other = '${newFisSummary.project_classification_other.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
   if(requestData.project_client_group != undefined) {
   newFisSummary.project_client_group = requestData.project_client_group != dbData.project_client_group ? requestData.project_client_group : dbData.project_client_group
-  let data = `project_client_group = '${newFisSummary.project_client_group}'`
+  let data = `project_client_group = '${newFisSummary.project_client_group.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
   if(requestData.project_group != undefined) {
   newFisSummary.project_group = requestData.project_group != dbData.project_group ? requestData.project_group : dbData.project_group
-  let data = `project_group = '${newFisSummary.project_group}'`
+  let data = `project_group = '${newFisSummary.project_group.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
   if(requestData.assessment_status != undefined) {
   newFisSummary.assessment_status = requestData.assessment_status != dbData.assessment_status ? requestData.assessment_status : dbData.assessment_status
-  let data = `assessment_status = '${newFisSummary.assessment_status}'`
+  let data = `assessment_status = '${newFisSummary.assessment_status.project_code.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
   if(requestData.comments != undefined) {
   newFisSummary.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
-  let data = `comments = '${newFisSummary.comments}'`
+  let data = `comments = '${newFisSummary.comments.replace(/'/g, "''")}'`
   newFisSummaryArray.push(data)
   }
   if(requestData.total_effort != undefined) {
@@ -533,11 +534,11 @@ export const setResourcesData = (dbData : any, requestData : any) => {
     newData.resource_name = requestData.resource_name !== dbData.resource_name ? requestData.resource_name : dbData.resource_name
     newData.first_name = newData.resource_name.split(' ')[0]
     newData.last_name = newData.resource_name.split(' ')[1]
-    dataStorage = `resource_name = '${newData.resource_name}'`
+    dataStorage = `resource_name = '${newData.resource_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
-    dataStorage = `resource_firstname = '${newData.first_name}'`
+    dataStorage = `resource_firstname = '${newData.first_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
-    dataStorage = `resource_lastname = '${newData.last_name}'`
+    dataStorage = `resource_lastname = '${newData.last_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.resource_type_rid != undefined) {
@@ -547,22 +548,22 @@ export const setResourcesData = (dbData : any, requestData : any) => {
   }
   if(requestData.resource_code != undefined) {
     newData.resource_code = requestData.resource_code !== dbData.resource_code ? requestData.resource_code : dbData.resource_code
-    dataStorage = `resource_code = '${newData.resource_code}'`
+    dataStorage = `resource_code = '${newData.resource_code.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.resource_orgname != undefined) {
     newData.resource_orgname = requestData.resource_orgname !== dbData.resource_orgname ? requestData.resource_orgname : dbData.resource_orgname
-    dataStorage = `resource_orgname = '${newData.resource_orgname}'`
+    dataStorage = `resource_orgname = '${newData.resource_orgname.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.resource_designation != undefined) {
     newData.resource_designation = requestData.resource_designation != dbData.resource_designation ? requestData.resource_designation : dbData.resource_designation
-    dataStorage = `resource_designation = '${newData.resource_designation}'`
+    dataStorage = `resource_designation = '${newData.resource_designation.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.resource_role != undefined) {
     newData.resource_role = requestData.resource_role !== dbData.resource_role ? requestData.resource_role : dbData.resource_role
-    dataStorage = `resource_role = '${newData.resource_role}'`
+    dataStorage = `resource_role = '${newData.resource_role.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.region_rid != undefined) {
@@ -587,7 +588,7 @@ export const setResourcesData = (dbData : any, requestData : any) => {
   }
   if(requestData.comments != undefined) {
     newData.comments = requestData.comments !== dbData.comments ? requestData.comments : dbData.comments
-    dataStorage = `comments = '${newData.comments}'`
+    dataStorage = `comments = '${newData.comments.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   dataStorage = `modified_datetime = NOW()`
@@ -687,7 +688,7 @@ export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) 
   }
   if(requestData.skill_type_others != undefined) {
     newData.skill_type_others = requestData.skill_type_others != dbData.skill_type_others ? requestData.skill_type_others : dbData.skill_type_others
-    dataStorage = `skill_type_others = '${newData.skill_type_others}'`
+    dataStorage = `skill_type_others = '${newData.skill_type_others.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.skill_subtype_rid != undefined) {
@@ -697,7 +698,7 @@ export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) 
   }
   if(requestData.skill_subtype_others != undefined) {
     newData.skill_subtype_others = requestData.skill_subtype_others != dbData.skill_subtype_others ? requestData.skill_subtype_others : dbData.skill_subtype_others
-    dataStorage = `skill_subtype_others = '${newData.skill_subtype_others}'`
+    dataStorage = `skill_subtype_others = '${newData.skill_subtype_others.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.skill_level_rid != undefined) {
@@ -707,7 +708,7 @@ export const setResourceSkillData = (dbData : ResourceSkill, requestData : any) 
   }
   if(requestData.skill_details != undefined) {
     newData.skill_details = requestData.skill_details != dbData.skill_details ? requestData.skill_details : dbData.skill_details
-    dataStorage = `skill_details = '${newData.skill_details}'`
+    dataStorage = `skill_details = '${newData.skill_details.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   dataStorage = `modified_by = '${requestData.userId}'`
@@ -815,17 +816,17 @@ export const setInlineForAttachments = (dbData : Attachment, requestData : any) 
   }
   if(requestData.document_category_others != undefined) {
     newData.document_category_others = requestData.document_category_others != dbData.document_category_others ? requestData.document_category_others : dbData.document_category_others
-    dataStorage = `document_category_others = '${newData.document_category_others}'`
+    dataStorage = `document_category_others = '${newData.document_category_others.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.document_type_others != undefined) {
     newData.document_type_others = requestData.document_type_others != dbData.document_type_others ? requestData.document_type_others : dbData.document_type_others
-    dataStorage = `document_type_others = '${newData.document_type_others}'`
+    dataStorage = `document_type_others = '${newData.document_type_others.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.comments != undefined) {
     newData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
-    dataStorage = `comments = '${newData.comments}'`
+    dataStorage = `comments = '${newData.comments.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(newDataArray.length < 1) {
@@ -844,3 +845,66 @@ export const setInlineForAttachments = (dbData : Attachment, requestData : any) 
     }
   }
 }
+
+// export const mapPrjToPrjFiscal = (requestData : any) => {
+//   let newPrjArray = []
+//   let newPrjData : any = {}
+
+//   if(requestData.project_name != undefined) {
+//   newPrjData.project_name = requestData.project_name
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.project_code) {
+//   newPrjData.project_code = requestData.project_code
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.project_type_rid != undefined) {
+//   newPrjData.project_type_rid = requestData.project_type_rid
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.project_classification_rid != undefined) {
+//   newPrjData.project_classification_rid = requestData.project_classification_rid 
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.project_classification_other != undefined) {
+//   newPrjData.project_classification_other = requestData.project_classification_other
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.project_client_group != undefined) {
+//   newPrjData.project_client_group = requestData.project_client_group
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.project_group != undefined) {
+//   newPrjData.project_group = requestData.project_group 
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.assessment_status != undefined) {
+//   newPrjData.assessment_status = requestData.assessment_status
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.comments != undefined) {
+//   newPrjData.comments = requestData.comments
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.total_cost != undefined) {
+//   newPrjData.total_cost_prj = requestData.total_cost
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.total_effort != undefined) {
+//   newPrjData.total_effort_prj = requestData.total_effort
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.total_cost_fte != undefined) {
+//   newPrjData.total_cost_fte_prj = requestData.total_cost_fte 
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.total_cost_subcon != undefined) {
+//   newPrjData.total_cost_subcon_prj = requestData.total_cost_subcon 
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(requestData.total_cost_nonlabor != undefined) {
+//   newPrjData.total_cost_nonlabor_prj = requestData.total_cost_nonlabor 
+//   newPrjArray.push(newPrjData)
+//   }
+//   if(request)
+// }

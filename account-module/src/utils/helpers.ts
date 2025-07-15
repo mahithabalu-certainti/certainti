@@ -314,26 +314,45 @@ export const validateInlineEditPayload = (data : any) => {
   export const setInlineValues = (dbData : any, requestData : any, dbDataDetails : any) => {
     let newDbData : any = {};
     let newDbAccDetailsData : any = {}
-    if(requestData.organisation_name != undefined) 
+    if(requestData.organisation_name != undefined) {
       newDbData.organisation_name = requestData.organisation_name !== dbData.organisation_name ? requestData.organisation_name : dbData.organisation_name
-    if(requestData.finance_lead)
+      newDbData.organisation_name = newDbData.organisation_name == null ? '' : newDbData.organisation_name.replace(/'/g, "''")
+    }
+    if(requestData.finance_lead) {
       newDbData.finance_lead = requestData.finance_lead !== dbData.finance_lead ? requestData.finance_lead : dbData.finance_lead
-    if(requestData.finance_executive != undefined)
+      newDbData.finance_lead = newDbData.finance_lead == null ? '' : newDbData.finance_lead.replace(/'/g, "''")
+    }
+      
+    if(requestData.finance_executive != undefined) {
       newDbData.finance_executive = requestData.finance_executive !== dbData.finance_executive ? requestData.finance_executive : dbData.finance_executive
-    if(requestData.professional_services_consultant != undefined)
+      newDbData.finance_executive = newDbData.finance_executive == null ? '' : newDbData.finance_executive.replace(/'/g, "''")
+    }
+      
+    if(requestData.professional_services_consultant != undefined) {
       newDbData.professional_services_consultant = requestData.professional_services_consultant !== dbData.professional_services_consultant ? requestData.professional_services_consultant : dbData.professional_services_consultant
-    if(requestData.account_name != undefined) 
+      newDbData.professional_services_consultant = newDbData.professional_services_consultant == null ? '' : newDbData.professional_services_consultant.replace(/'/g, "''")
+    }
+      
+    if(requestData.account_name != undefined) {
       newDbData.account_name = requestData.account_name !== dbData.account_name ? requestData.account_name : dbData.account_name
-    if(requestData.comments != undefined) 
+      newDbData.account_name = newDbData.account_name == null ? '' : newDbData.account_name.replace(/'/g, "''")
+    }
+    if(requestData.comments != undefined) {
       newDbData.comments = requestData.comments !== dbData.comments ? requestData.comments : dbData.comments
+      newDbData.comments = newDbData.comments == null ? '' : newDbData.comments.replace(/'/g, "''")
+    } 
+      
     if(requestData.status_rid != undefined)
       newDbData.status_rid = requestData.status_rid !== dbData.status_rid ? requestData.status_rid : dbData.status_rid
     if(typeof requestData.is_parent == 'boolean')
       newDbData.is_parent = requestData.is_parent !== dbData.is_parent ? requestData.is_parent : dbData.is_parent
     if(requestData.parent_account_rid != undefined)
       newDbData.parent_account_rid = requestData.parent_account_rid !== dbData.parent_account_rid ? requestData.parent_account_rid : dbData.parent_account_rid
-    if(requestData.account_name != undefined)
+    if(requestData.account_name != undefined) {
       newDbAccDetailsData.account_name = requestData.account_name !== dbDataDetails.account_name ? requestData.account_name : dbDataDetails.account_name
+      newDbAccDetailsData.account_name = newDbAccDetailsData.account_name == null ? '' : newDbAccDetailsData.account_name.replace(/'/g, "''")
+    }
+      
     if(requestData.max_ai_interactions != undefined)
       newDbAccDetailsData.max_ai_interactions = requestData.max_ai_interactions !== dbDataDetails.max_ai_interactions ? requestData.max_ai_interactions : dbDataDetails.max_ai_interactions
     if(typeof requestData.autosend_interaction == 'boolean')
@@ -348,14 +367,22 @@ export const validateInlineEditPayload = (data : any) => {
       newDbAccDetailsData.blended_rate_subcon = requestData.blended_rate_subcon !== dbDataDetails.blended_rate_subcon ? requestData.blended_rate_subcon : dbDataDetails.blended_rate_subcon
     if(requestData.industry_rid != undefined)
       newDbData.industry_rid = requestData.industry_rid !== dbData.industry_rid ? requestData.industry_rid : dbData.industry_rid
-    if(requestData.industry_name_other != undefined)
+    if(requestData.industry_name_other != undefined) {
       newDbData.industry_name_other = requestData.industry_name_other !== dbData.industry_name_other ? requestData.industry_name_other : dbData.industry_name_other
-    if(requestData.website != undefined)
+      newDbData.industry_name_other = newDbData.industry_name_other == null ? '' : newDbData.industry_name_other.replace(/'/g, "''")
+    }
+    if(requestData.website != undefined) {
       newDbAccDetailsData.website = requestData.website !== dbDataDetails.website ? requestData.website : dbDataDetails.website
-    if(requestData.annual_revenue != undefined)
+      newDbAccDetailsData.website = newDbAccDetailsData.website == null ? '' : newDbAccDetailsData.website.replace(/'/g, "''")
+    }
+    if(requestData.annual_revenue != undefined) {
       newDbData.annual_revenue = requestData.annual_revenue !== dbData.annual_revenue ? requestData.annual_revenue : dbData.annual_revenue
-    if(requestData.business_details != undefined)
+      newDbData.annual_revenue = newDbData.annual_revenue == null ? '' : newDbData.annual_revenue.replace(/'/g, "''")
+    }
+    if(requestData.business_details != undefined) {
       newDbAccDetailsData.business_details = requestData.business_details !== dbDataDetails.business_details ? requestData.business_details : dbDataDetails.business_details
+      newDbAccDetailsData.business_details = newDbAccDetailsData.business_details == null ? '' : newDbAccDetailsData.business_details.replace(/'/g, "''")
+    }
     if(requestData.country_rid != undefined) {
        newDbData.country_rid = requestData.country_rid !== dbData.country_rid ? requestData.country_rid : dbData.country_rid
        newDbData.region_rid = requestData.country_rid != dbData.country_rid ? null : dbData.region_rid
@@ -413,7 +440,7 @@ export const validateInlineEditPayload = (data : any) => {
     let updatedColumns: any = []
     if (accDetailsData.account_name != undefined) {
         account_name = accDetailsData.account_name
-        let name = `account_name = '${account_name}'`
+        let name = `account_name = '${account_name.replace(/'/g, "''")}'`
         updatedColumns.push(name)
     }
     if (accDetailsData.max_ai_interactions !== undefined) {
@@ -448,7 +475,7 @@ export const validateInlineEditPayload = (data : any) => {
     }
     if (accDetailsData.website !== undefined) {
         website = accDetailsData.website
-        let web = `website = '${website}'`
+        let web = `website = '${website.replace(/'/g, "''")}'`
         updatedColumns.push(web)
     }
     if (accDetailsData.modified_by !== undefined) {

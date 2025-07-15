@@ -3,7 +3,7 @@ import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
-import { setPrjFiscalData, setProject, setProjectFiscalSummary, setProjectSummary } from "../utils/helpers";
+import { setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
 
 const services = Configurations.getInstance().getServices();
@@ -29,11 +29,10 @@ class ProjectGraphQlServices {
         }
         else {
             let schemaName = `"${MAIN_SCHEMA_NAME}_${checkAccountExists[0][0].r_number.replace('ACC-', '')}"`
-            let findProject = await orgSequelize.query(rawQueries.findProject(schemaName, data.project_rid, data.account_rid))
-            let findProjectFiscal = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
-            let findProjectSummary = await mainSequelize.query(rawQueries.findProjectSummary(data))
-            let findProjectFisSummary = await mainSequelize.query(rawQueries.findProjectFiscalSummary(data))
-            if(findProject[0].length > 0 && findProjectSummary[0].length > 0 && findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
+            let findProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
+            let findProjectSummary : any = await mainSequelize.query(rawQueries.findProjectSummary(data))
+            let findProjectFisSummary : any = await mainSequelize.query(rawQueries.findProjectFiscalSummary(data))
+            if(findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
             if(data.project_code) {
                 let checkDuplicateCode = await orgSequelize.query(rawQueries.checkProjectIdDuplicate(schemaName, data))
                 if(checkDuplicateCode[0].length > 0) {
@@ -42,25 +41,64 @@ class ProjectGraphQlServices {
                 statusMessage : STATUS_MESSAGE.projectCodeDuplicate
                 }            
             }
+        }
+            if(data.fiscal_year) {
+                let checkDuplicateYear = await orgSequelize.query(rawQueries.checkForDuplicateFiscalYear(schemaName, data))
+                if(checkDuplicateYear[0].length > 0) {
+                return {
+                statusCode : HttpStatus.BAD_REQUEST,
+                statusMessage : STATUS_MESSAGE.fiscalYearAlreadyExists
+                } 
             }
-            let setProjectData = setProject(findProject[0][0], data);
+        }
             let setProjectFiscalData = setPrjFiscalData(findProjectFiscal[0][0], data);
-            let setProjectsSummary = setProjectSummary(findProjectSummary[0][0], data);
             let setProjectsFiscalSummary = setProjectFiscalSummary(findProjectFisSummary[0][0], data)
-            
-            if(setProjectData.length > 0) {
-            await orgSequelize.query(rawQueries.updateProject(schemaName, setProjectData, data))
-            }
             if(setProjectFiscalData.length > 0) {
-            await orgSequelize.query(rawQueries.updateProjectFiscal(schemaName, setProjectFiscalData, data)) 
+                if(data.project_code) {
+                    if(data.project_code !== '') {
+                    await orgSequelize.query(rawQueries.updateProjectFiscalPrjCode(schemaName, data.project_code, data.account_rid, data.project_rid, findProjectFiscal[0][0].project_code))
+                    await orgSequelize.query(rawQueries.updateProject(schemaName, data.project_code, data))
+                    await mainSequelize.query(rawQueries.updateProjectSummary(data.project_code, data))
+                    } 
+                }
+                await orgSequelize.query(rawQueries.updateProjectFiscal(schemaName, setProjectFiscalData, data))
             }
-
-            if(setProjectSummary.length > 0) {
-            await mainSequelize.query(rawQueries.updateProjectSummary(setProjectsSummary, data))
-            }
-
             if(setProjectFiscalSummary.length > 0) {
+                if(data.project_code) {
+                    if(data.project_code !== '') {
+                    await mainSequelize.query(rawQueries.updateProjectFiscalSummaryPrjCode(data.project_code, data.account_rid, data.project_rid, findProjectFisSummary[0][0].project_code))
+                    } 
+                }
             await mainSequelize.query(rawQueries.updateProjectFiscalSummary(setProjectsFiscalSummary, data))
+            }
+            let findProject : any = await orgSequelize.query(rawQueries.findProject(schemaName, data.project_rid, data.account_rid))
+            let updatedProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
+            await this.projectIngestion.updateProjectAggregatesFromFiscal(checkAccountExists[0][0].r_number, data.account_rid, findProject[0][0].project_code)
+            await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProjectSummary[0][0].project_code, data.account_rid)
+            await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, data))
+            let attributeName;
+            let newValue;
+            let oldValue;
+            if(setProjectFiscalData.length > 0) {
+                for(let items of setProjectFiscalData) {
+                    let splittedKey = items.split('=')[0]
+                    let trimmedKey = splittedKey.trim()
+                    if(trimmedKey != 'modified_by' && trimmedKey != 'modified_datetime') {
+                        attributeName = trimmedKey
+                        newValue = updatedProjectFiscal[0][0][trimmedKey]
+                        oldValue = findProjectFiscal[0][0][trimmedKey]
+                    if (oldValue !== null && oldValue !== undefined && typeof oldValue === 'string') {
+                        oldValue = oldValue.replace(/'/g, "''");
+                    }
+                    if (newValue !== null && newValue !== undefined && typeof newValue === 'string') {
+                        newValue = newValue.replace(/'/g, "''");
+                    }
+                        
+                        if(newValue !== oldValue) {
+                            await orgSequelize.query(rawQueries.insertProjectHistory(schemaName, data, attributeName, newValue, oldValue))
+                        }
+                    }
+                }
             }
             let accountData : any = {}
             accountData.rid = data.account_rid
@@ -71,10 +109,10 @@ class ProjectGraphQlServices {
             graphqlData.fiscal_rid = data.project_fiscal_rid
             
             let fetchUpdatedProjectResponse : any = await this.projectIngestion.fetchProjectList
-            (checkAccountExists[0][0].r_number, accountData, {}, 0, 0, 1,[], false, {}, 'project_code', 'ASC',graphqlData)
+            (checkAccountExists[0][0].r_number, accountData, {}, 0, 0, 2,[], false, {}, 'project_code', 'ASC',graphqlData)
+            
             if(fetchUpdatedProjectResponse.projects.length > 0) {
                 let data : any = fetchUpdatedProjectResponse.projects[0]
-                let d : any = data.ProjectFiscal[0]
                 let finalData = {
                     rid: data.rid,
                     r_number: data.r_number,
@@ -130,7 +168,8 @@ class ProjectGraphQlServices {
                     is_other_classification: data.is_other_classification,
                     project_type_name: data.project_type_name,
                     status_name: data.status_name,
-                    ProjectFiscal : {
+                    ProjectFiscal : data.ProjectFiscal.map((d : any) => {
+                        return {
                             rid: d.rid,
                             r_number: d.r_number,
                             eid: d.eid,
@@ -229,6 +268,7 @@ class ProjectGraphQlServices {
                             total_cost_nonlabor: d.total_cost_nonlabor,
                             project_type_name: d.project_type_name,
                         }
+                    })
                     }
             return {
                 statusCode : HttpStatus.SUCCESS,

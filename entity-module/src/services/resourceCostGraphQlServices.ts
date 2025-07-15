@@ -56,7 +56,13 @@ export default class ResourceCostGraphQlService {
               let newValue;
               let attribute_name;
               oldValue = checkResourceCostExists[0][0][finalData]
+              if (oldValue !== null && oldValue !== undefined && typeof oldValue === 'string') {
+                oldValue = oldValue.replace(/'/g, "''");
+              }
               newValue = data[finalData]
+              if (newValue !== null && newValue !== undefined && typeof newValue === 'string') {
+                newValue = newValue.replace(/'/g, "''");
+              }
               attribute_name = finalData
               if(newValue == undefined) newValue = ''
               else newValue = newValue
