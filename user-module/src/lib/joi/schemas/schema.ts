@@ -53,8 +53,7 @@ const updateUserGroupSchema = Joi.object({
         is_modified: Joi.boolean().required(),
       })
     )
-    .min(1)
-    .required()
+    .optional()
     .label("Users"),
   accounts: Joi.array()
     .items(
