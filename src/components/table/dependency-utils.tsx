@@ -251,16 +251,12 @@ export const validateDependentFields = <T extends RowData>(
     }
 
     // Custom validation rules
-    if (column.field?.validation) {
+    if (column.field?.validation && cellValue) {
       const stringValue = String(cellValue);
-      if (stringValue.trim() === '' && column.field.required !== true) {
-        // Skip validation when not required and empty
-      } else {
-        for (const validation of column.field.validation) {
-          if (validateRegex(validation.regex, stringValue)) {
-            errors[cellKey] = validation.errorMessage;
-            break;
-          }
+      for (const validation of column.field.validation) {
+        if (validateRegex(validation.regex, stringValue)) {
+          errors[cellKey] = validation.errorMessage;
+          break;
         }
       }
     }
