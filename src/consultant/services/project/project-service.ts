@@ -32,7 +32,7 @@ export const useAccountProjects = (
     queryKey: ['accountProjects', params, refreshProjectsTrigger],
     queryFn: () => fetchProjects(params),
     retry: 0,
-    enabled: projectOverviewIsEnable,
+    enabled: !!params.accountNumber && projectOverviewIsEnable,
   });
 };
 export const useAllProjects = (

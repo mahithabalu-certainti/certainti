@@ -143,6 +143,16 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
     }
   }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
 
+  const getPlacement = () => {
+    if (anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      return spaceBelow < 320 && spaceAbove > spaceBelow ? 'top' : 'bottom';
+    }
+    return 'bottom';
+  };
+
   if (!open) {
     return null;
   }
@@ -153,26 +163,27 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
       open={open && Boolean(anchorEl)}
       anchorEl={open ? anchorEl : null}
       anchorOrigin={{
-        vertical: 'bottom',
+        vertical: getPlacement(),
         horizontal: 'left',
       }}
       transformOrigin={{
-        vertical: 'top',
+        vertical: getPlacement() === 'bottom' ? 'top' : 'bottom',
         horizontal: 'left',
       }}
-      disableRestoreFocus
-      disableAutoFocus
-      disableEnforceFocus
+      disableRestoreFocus={false}
+      disableAutoFocus={false}
+      disableEnforceFocus={false}
       sx={{ pointerEvents: 'none' }}
       PaperProps={{
         sx: {
           width: 300,
           minWidth: 300,
-          marginTop: '1px',
+          marginTop: getPlacement() === 'bottom' ? '1px' : '-3px',
           borderRadius: '2px',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
           border: '1px solid #E5E7EB',
         },
+        'aria-hidden': false,
       }}
     >
       <Box sx={{ p: 2, pointerEvents: 'all !important' }}>
