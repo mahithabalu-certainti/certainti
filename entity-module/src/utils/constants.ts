@@ -298,7 +298,7 @@ export const rawQueries = {
     return `INSERT INTO ${schemaName}.resources_history
       (created_by, created_datetime, resource_rid, attribute_name, old_value, new_value)
       VALUES ('${data.userId}', NOW(), '${data.resource_rid}', '${attributeName}',
-      '${oldValue}', '${newValue.replace(/'/g, "''")}')`
+      '${oldValue}', '${newValue}')`
   },
   isResourceCostExists (schemaName : string, data : any) {
     return `
@@ -344,7 +344,7 @@ export const rawQueries = {
       INSERT INTO ${schemaName}.resource_cost_history
       (created_by, created_datetime, resource_cost_rid, attribute_name, old_value, new_value)
       VALUES
-      ('${data.userId}', NOW(), '${data.resource_cost_rid}', '${attribute_name}', '${oldValue}', '${newValue.replace(/'/g, "''")}')`
+      ('${data.userId}', NOW(), '${data.resource_cost_rid}', '${attribute_name}', '${oldValue}', '${newValue}')`
   },
   setFiscalYear(schemaName : string, setFiscal : any, data : any) {
     return `UPDATE ${schemaName}.resource_fiscal 
@@ -384,7 +384,7 @@ export const rawQueries = {
           INSERT INTO ${schemaName}.resource_skill_history
               (created_by, created_datetime, resource_skill_rid, attribute_name, old_value, new_value)
           VALUES
-              ('${data.userId}', NOW(), '${data.resource_skill_rid}', '${attributeName}', '${oldValue}', '${newValue.replace(/'/g, "''")}')
+              ('${data.userId}', NOW(), '${data.resource_skill_rid}', '${attributeName}', '${oldValue}', '${newValue}')
           `
   },
   fetchQreFromPrjSum (project_rid : string, account_rid : string) {
@@ -461,7 +461,7 @@ export const rawQueries = {
     INSERT INTO ${schemaName}.project_history
     (created_by, created_datetime, project_rid, attribute_name, old_value, new_value)
     VALUES
-    ('${data.userId}', NOW(), '${data.project_rid}', '${attributeName}', '${oldValue}', '${newValue.replace(/'/g, "''")}')
+    ('${data.userId}', NOW(), '${data.project_rid}', '${attributeName}', '${oldValue}', '${newValue}')
     `
   },
   checkForDuplicateFiscalYear (schemaName : string, data : any) {
