@@ -13,7 +13,7 @@ const dateOptions: { label: string; value: string }[] = [
   { label: 'Between', value: 'between' },
 ];
 
-export const getManageProfileFilterfields = (
+export const getManageProfileFilterFields = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {

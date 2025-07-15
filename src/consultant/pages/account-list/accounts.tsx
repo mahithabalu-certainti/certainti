@@ -119,7 +119,6 @@ export const Accounts: React.FC = () => {
     });
     return map;
   }, [userViewEditFields]);
-  console.log('isAccountViewAllEnable', permissionMap);
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
@@ -199,7 +198,6 @@ export const Accounts: React.FC = () => {
       })) || [],
     [industry.data?.data.industries]
   );
-  console.log('allIndustries', permissionMap);
   const accountFilterFields = getAccountFilterFields(
     allCountries,
     allIndustries,

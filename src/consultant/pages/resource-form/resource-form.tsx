@@ -268,7 +268,6 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const resourceDetailsData = resource?.data?.resourceDetails;
-    console.log('resourceDetailsData', resourceDetailsData);
     if (resourceDetailsData) {
       const finalResourceDetails = {
         ...resourceDetailsData,

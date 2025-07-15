@@ -4,7 +4,7 @@ import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
 import { FilterModal } from '../../../../components';
-import { getManageProfileFilterfields } from './';
+import { getManageProfileFilterFields } from './';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
@@ -146,8 +146,7 @@ export const ProfileList: React.FC = () => {
       setIsExporting(false);
     }
   };
-  console.log(permissionMap, 'permissionMap');
-  const profileFIlterFeilds = getManageProfileFilterfields(permissionMap);
+  const profileFilterFeilds = getManageProfileFilterFields(permissionMap);
   if (!isProfileEnable || !isProfileViewEnable) return <AccessRestricted />;
 
   return (
@@ -222,7 +221,7 @@ export const ProfileList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={profileFIlterFeilds}
+                filterFields={profileFilterFeilds}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
