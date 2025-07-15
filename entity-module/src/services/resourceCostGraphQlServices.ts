@@ -56,6 +56,7 @@ export default class ResourceCostGraphQlService {
               let newValue;
               let attribute_name;
               oldValue = checkResourceCostExists[0][0][finalData]
+              oldValue = oldValue == null ? '' : oldValue.replace(/'/g, "''")
               newValue = data[finalData]
               attribute_name = finalData
               if(newValue == undefined) newValue = ''

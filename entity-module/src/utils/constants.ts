@@ -110,7 +110,8 @@ export const STATUS_MESSAGE = {
   docCatInvalid : "Document category you are trying to update is invalid",
   docTypeInvalid : "Document Type you are trying to update is invalid",
   NoResourceFound : "No Resource found",
-  separateDb : "separate_db"
+  separateDb : "separate_db",
+  fiscalYearAlreadyExists : "Duplicate fiscal year not allowed"
 }
 
 export const TYPES = {
@@ -175,12 +176,12 @@ export const rawQueries = {
                 )
                 `
   },
-  updateProject(schemaName : string, setProjectData : any, data : any) {
+  updateProject(schemaName : string, project_code : string, data : any) {
     return `
             UPDATE 
                 ${schemaName}.project 
                 SET 
-                ${setProjectData.join(',')} 
+                project_code = '${project_code}' 
                 WHERE 
                     rid = '${data.project_rid}'
                     AND
@@ -200,12 +201,12 @@ export const rawQueries = {
                 project_rid = '${data.project_rid}'
             `
   },
-  updateProjectSummary(setProjectSummary : any, data : any) {
+  updateProjectSummary(project_code : string, data : any) {
     return `
             UPDATE
                 ${MAIN_SCHEMA_NAME}.project_summary
             SET
-                ${setProjectSummary.join(',')}
+                project_code = '${project_code}'
             WHERE 
                 account_rid = '${data.account_rid}'
                 AND
@@ -297,7 +298,7 @@ export const rawQueries = {
     return `INSERT INTO ${schemaName}.resources_history
       (created_by, created_datetime, resource_rid, attribute_name, old_value, new_value)
       VALUES ('${data.userId}', NOW(), '${data.resource_rid}', '${attributeName}',
-      '${oldValue}', '${newValue}')`
+      '${oldValue}', '${newValue.replace(/'/g, "''")}')`
   },
   isResourceCostExists (schemaName : string, data : any) {
     return `
@@ -343,7 +344,7 @@ export const rawQueries = {
       INSERT INTO ${schemaName}.resource_cost_history
       (created_by, created_datetime, resource_cost_rid, attribute_name, old_value, new_value)
       VALUES
-      ('${data.userId}', NOW(), '${data.resource_cost_rid}', '${attribute_name}', '${oldValue}', '${newValue}')`
+      ('${data.userId}', NOW(), '${data.resource_cost_rid}', '${attribute_name}', '${oldValue}', '${newValue.replace(/'/g, "''")}')`
   },
   setFiscalYear(schemaName : string, setFiscal : any, data : any) {
     return `UPDATE ${schemaName}.resource_fiscal 
@@ -383,7 +384,7 @@ export const rawQueries = {
           INSERT INTO ${schemaName}.resource_skill_history
               (created_by, created_datetime, resource_skill_rid, attribute_name, old_value, new_value)
           VALUES
-              ('${data.userId}', NOW(), '${data.resource_skill_rid}', '${attributeName}', '${oldValue}', '${newValue}')
+              ('${data.userId}', NOW(), '${data.resource_skill_rid}', '${attributeName}', '${oldValue}', '${newValue.replace(/'/g, "''")}')
           `
   },
   fetchQreFromPrjSum (project_rid : string, account_rid : string) {
@@ -433,5 +434,54 @@ export const rawQueries = {
   },
   checkDocTypeExists(rid : string) {
     return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.document_type where rid = '${rid}'`
+  },
+  updateProjectFiscalPrjCode (schemaName : string, newProject_code : string, account_rid : string, project_rid : string, existing_project_code : string) {
+    return `
+    UPDATE ${schemaName}.project_fiscal SET project_code = '${newProject_code}'
+    WHERE
+    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code}'
+    `
+  },
+    updateProjectFiscalSummaryPrjCode (newProject_code : string, account_rid : string, project_rid : string, existing_project_code : string) {
+    return `
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET project_code = '${newProject_code}'
+    WHERE
+    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code}'
+    `
+  },
+  insertProjectTimeline(schemaName : string, data : any) {
+    return `INSERT INTO ${schemaName}.project_timeline
+                (created_by, created_datetime, account_rid, entity_rid, event_name, event_type, event_status, event_datetime)
+                VALUES
+                ('${data.userId}', NOW(), '${data.account_rid}', '${data.project_rid}', '${STATUS_MESSAGE.eventUpdate}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', NOW())
+       `
+  },
+  insertProjectHistory(schemaName : string, data : any, attributeName : string, newValue : string, oldValue : string) {
+    return `
+    INSERT INTO ${schemaName}.project_history
+    (created_by, created_datetime, project_rid, attribute_name, old_value, new_value)
+    VALUES
+    ('${data.userId}', NOW(), '${data.project_rid}', '${attributeName}', '${oldValue}', '${newValue.replace(/'/g, "''")}')
+    `
+  },
+  checkForDuplicateFiscalYear (schemaName : string, data : any) {
+    return `
+    SELECT p.rid, p.project_code, p.fiscal_year 
+    FROM 
+      ${schemaName}.project_fiscal p
+    WHERE
+      p.account_rid = '${data.account_rid}'
+      AND
+      p.rid = '${data.project_fiscal_rid}'
+      AND
+      p.project_code IN (
+      SELECT project_code FROM ${schemaName}.project_fiscal pf
+      WHERE 
+      pf.account_rid = '${data.account_rid}'
+      AND
+      pf.fiscal_year = ${data.fiscal_year}
+      AND
+      pf.rid != p.rid
+      )`
   }
 }

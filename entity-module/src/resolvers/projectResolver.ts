@@ -22,7 +22,15 @@ export const projectResolver : IResolvers = {
                         statusMessage : result.statusMessage,
                         data : result.data
                     }
-                } else {
+                } else if(result.statusCode == HttpStatus.BAD_REQUEST) {
+                    return {
+                        statusCode : HttpStatus.BAD_REQUEST,
+                        statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+                        statusMessage : result.statusMessage,
+                        data : result.data
+                    }
+                }
+                else {
                     return {
                         statusCode : HttpStatus.NOT_FOUND,
                         statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
