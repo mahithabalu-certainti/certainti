@@ -1,5 +1,5 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { HttpStatus, STATUS, STATUS_MESSAGE } from "../utils/constant";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS, STATUS_MESSAGE } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -12,6 +12,7 @@ import { Account as AccountModel } from "../models/accountModel";
 import AccountDetails from "../models/accountDetailsModel";
 import { KeyContact } from "../models/keyContactDetails";
 import { initOrgSequelize } from "../config/orgdbDataSource";
+import { initSequelize } from "../config/maindbDataSource";
 
 const { Account, Country, Currency,Industry } = models;
 
@@ -1173,11 +1174,58 @@ async accountById(account_id: string): Promise<{
     
       accountById = await this.schemaService.insertIndustyName(accountById);
 
+      const sequelize = await initSequelize();
+      
+      // Get document types
+      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
+      const documentTypes = await sequelize.query(
+        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+        { replacements: { documentTypeIds }, type: 'SELECT' }
+      );
+
+      // Get document categories  
+      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
+      const documentCategories = await sequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
+      );
+
+      // Get uploaders
+      const userIds = attachments.map(attachment => attachment.created_by);
+      const users = await sequelize.query(
+        `SELECT rid, concat(first_name,' ',last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+        { replacements: { userIds }, type: 'SELECT' }
+      );
+
+      // Get attached accounts
+      const attachmentIds = attachments.map(attachment => attachment.attach_to);
+      const accounts = await sequelize.query(
+        `SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:attachmentIds)`,
+        { replacements: { attachmentIds }, type: 'SELECT' }
+      );
+
+      // Enhance attachments with related data
+      const mappedAttachments = attachments.map(attachment => {
+        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
+        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
+        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
+        const attachedTo = accounts.find((a: any) => a.rid === attachment.attach_to);
+
+        return {
+          ...attachment,
+          document_type: (documentType as any)?.type_name || '',
+          document_category: (documentCategory as any)?.category_name || '',
+          uploaded_by: (uploadedBy as any)?.full_name || '',
+          attached_to: (attachedTo as any) ?.account_name || ''
+        };
+      });
+
+
       // Add key contacts and attachments to account details
       const accountData = {
         ...accountDetails.length > 0 ? accountDetails[0] : {},
         keyContacts: keyContacts.length > 0 ? keyContacts : [],
-        attachments: attachments.length > 0 ? attachments : [],
+        attachments: mappedAttachments.length > 0 ? mappedAttachments : [],
         created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };

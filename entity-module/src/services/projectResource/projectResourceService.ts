@@ -1,5 +1,5 @@
 import { Op, Order, Sequelize } from "sequelize";
-import { HttpStatus } from "../../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME } from "../../utils/constants";
 import {
   ICreateProjectResource,
   IUpdateInlineProjectResource,
@@ -8,6 +8,8 @@ import {
 import { ProjectResourceSchemaService } from "./schemaService";
 import constants from "constants";
 import { ProjectResourceMapper } from "../../utils/projectMapper";
+import { initMainDbSequelize } from "../../config/mainDataSource";
+import { initOrgSequelize } from "../../config/orgDataSource";
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
@@ -697,12 +699,59 @@ export class ProjectResourceService {
           projectResourceId
         );
 
+        const sequelize = await initMainDbSequelize();
+      const orgDbSequelize = await initOrgSequelize();
+      // Get document types
+      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
+      const documentTypes = await sequelize.query(
+        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+        { replacements: { documentTypeIds }, type: 'SELECT' }
+      );
+
+      // Get document categories  
+      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
+      const documentCategories = await sequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
+      );
+
+      // Get uploaders
+      const userIds = attachments.map(attachment => attachment.created_by);
+      const users = await sequelize.query(
+        `SELECT rid, concat(first_name,' ',last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+        { replacements: { userIds }, type: 'SELECT' }
+      );
+
+      
+      const projectResourceIds = attachments.map(attachment => attachment.attach_to);
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const projectResources = await orgDbSequelize.query(
+        `SELECT rid, r_number FROM ${schemaName}.project_resource WHERE rid IN (:projectResourceIds)`,
+        { replacements: { projectResourceIds }, type: 'SELECT' }
+      );
+
+      // Enhance attachments with related data
+      const mappedAttachments = attachments.map(attachment => {
+        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
+        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
+        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
+        const attachedTo = projectResources.find((a: any) => a.rid === attachment.attach_to);
+
+        return {
+          ...attachment,
+          document_type: (documentType as any)?.type_name || '',
+          document_category: (documentCategory as any)?.category_name || '',
+          uploaded_by: (uploadedBy as any)?.full_name || '',
+          attached_to: (attachedTo as any) ?.r_number || ''
+        };
+      });        
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           projectResource,
-          attachment: attachments || []
+          attachment: mappedAttachments || []
         },
       };
     } catch (err) {

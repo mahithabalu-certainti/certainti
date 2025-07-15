@@ -394,7 +394,54 @@ export class ResourceService {
       }
 
       const attachments = await this.schemaService.fetchAttachmentsByResourceId(resourceId);
-      resourceDetails.attachment = attachments || [];
+      const sequelize = await initMainDbSequelize();
+      const orgDbSequelize = await initOrgSequelize();
+      // Get document types
+      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
+      const documentTypes = await sequelize.query(
+        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+        { replacements: { documentTypeIds }, type: 'SELECT' }
+      );
+
+      // Get document categories  
+      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
+      const documentCategories = await sequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
+      );
+
+      // Get uploaders
+      const userIds = attachments.map(attachment => attachment.created_by);
+      const users = await sequelize.query(
+        `SELECT rid, concat(first_name,' ',last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+        { replacements: { userIds }, type: 'SELECT' }
+      );
+
+      
+      const resourceIds = attachments.map(attachment => attachment.attach_to);
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const resources = await orgDbSequelize.query(
+        `SELECT rid, resource_code FROM ${schemaName}.resources WHERE rid IN (:resourceIds)`,
+        { replacements: { resourceIds }, type: 'SELECT' }
+      );
+
+      // Enhance attachments with related data
+      const mappedAttachments = attachments.map(attachment => {
+        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
+        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
+        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
+        const attachedTo = resources.find((a: any) => a.rid === attachment.attach_to);
+
+        return {
+          ...attachment,
+          document_type: (documentType as any)?.type_name || '',
+          document_category: (documentCategory as any)?.category_name || '',
+          uploaded_by: (uploadedBy as any)?.full_name || '',
+          attached_to: (attachedTo as any) ?.resource_code || ''
+        };
+      });
+
+      resourceDetails.attachment = mappedAttachments || [];
 
       return {
         statusCode: HttpStatus.SUCCESS,
