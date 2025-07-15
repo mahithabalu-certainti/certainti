@@ -1226,6 +1226,60 @@ private createUserCountCondition(operator: string, value: number): any {
   }
 
   
+ async listUserGroupDetailsById(user_group_id: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { userGroupById: any };
+}> {
+  try {
+    const userGroupById = await UserGroup.findOne({
+      where: { rid: user_group_id },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["first_name", "last_name"],
+        },
+        {
+          model: UserGroupType,
+          as: "usergrouptype",
+          attributes: ["rid", "group_type_name", "type"]
+        }
+      ],
+    });
+
+    if (!userGroupById) {
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: { userGroupById: null },
+      };
+    }
+
+    const groupData = userGroupById.toJSON() as any;
+
+    // Add created_by info
+    if (groupData.user) {
+      groupData.created_by = `${groupData.user.first_name || ""} ${groupData.user.last_name || ""}`.trim();
+    }
+    delete groupData.user;
+    const groupType = groupData.usergrouptype?.type;
+    delete groupData.usergrouptype;
+    const usersList = await this.getFormattedUsersForGroup(groupData, user_group_id);
+    groupData.users = usersList;
+    const accountsList = await this.getFormattedAccountsForGroup(groupType, user_group_id);
+    groupData.accounts = accountsList;
+   
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: { userGroupById: groupData },
+    };
+  } catch (err) {
+    return this.throwServiceError(err as Error);
+  }
+}
 
  async listAccountGroupById(user_group_id: string): Promise<{
   statusCode: number;
@@ -1243,20 +1297,8 @@ private createUserCountCondition(operator: string, value: number): any {
           attributes: ["first_name", "last_name"],
         },
         {
-          model: UserGroupMapping,
-          as: "user_mappings",
-          attributes: ["rid", "user_rid", "group_rid"],
-          include: [
-            {
-              model: User,
-              as: "user",
-              attributes: ["rid", "first_name", "last_name", "email"],
-            },
-          ],
-        },
-        {
           model: UserGroupType,
-          as: "group_type",
+          as: "usergrouptype",
           attributes: ["rid", "group_type_name", "type"]
         }
       ],
@@ -1271,51 +1313,15 @@ private createUserCountCondition(operator: string, value: number): any {
     }
 
     const groupData = userGroupById.toJSON() as any;
+    console.log(groupData)
     
     // Add created_by info
     if (groupData.user) {
       groupData.created_by = `${groupData.user.first_name || ""} ${groupData.user.last_name || ""}`.trim();
     }
     delete groupData.user;
-
-    // Simplify assigned users
-    const simplifiedUsers = (groupData.user_mappings || []).map((mapping: any) => ({
-      rid: mapping.user?.rid,
-      name: `${mapping.user?.first_name || ""} ${mapping.user?.last_name || ""}`.trim(),
-    }));
-    groupData.assigned_users = simplifiedUsers;
-    delete groupData.user_mappings;
-
-    // Handle accounts based on group type
-    const sequelize = await initSequelize();
-    const isDefaultGroup = groupData.group_type?.type === "default";
-
-    if (isDefaultGroup) {
-      // For default groups, all accounts have has_access: false
-      const accounts = await sequelize.query(
-        `SELECT rid, account_name, true as has_access FROM ${MAIN_SCHEMA_NAME}.account`,
-        { type: QueryTypes.SELECT }
-      );
-      groupData.assigned_accounts = accounts;
-    } else {
-      // For non-default groups, fetch accounts with actual access status
-      const accounts = await sequelize.query(
-        `SELECT 
-          a.rid, 
-          a.account_name, 
-          CASE WHEN uga.account_rid IS NOT NULL THEN true ELSE false END as has_access
-        FROM ${MAIN_SCHEMA_NAME}.account a
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
-          ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
-        {
-          replacements: { group_rid: user_group_id },
-          type: QueryTypes.SELECT
-        }
-      );
-      groupData.assigned_accounts = accounts;
-    }
-
-    delete groupData.group_type;
+     const accountsList = await this.getFormattedAccountsForGroup(groupData.usergrouptype?.type, user_group_id);
+    groupData.accounts = accountsList;
 
     return {
       statusCode: constants.SUCCESS,
@@ -1350,7 +1356,7 @@ async listUserGroupById(
         },
         {
           model: UserGroupType,
-          as: "group_type",
+          as: "usergrouptype",
           attributes: ["rid", "group_type_name", "type"]
         }
       ],
@@ -1371,50 +1377,7 @@ async listUserGroupById(
       groupData.created_by = `${groupData.user.first_name || ""} ${groupData.user.last_name || ""}`.trim();
     }
     delete groupData.user;
-    console.log(groupData)
-    // Step 2: Build user filter based on group type
-    const whereClause: any = {};
-    
-    if (groupData?.is_consultant_only_group) {
-      whereClause.is_consultant_firm = true;
-    } else {
-        whereClause.is_consultant_firm = false;
-    }
-
-    // Step 3: Get users (all consultants or all active users)
-    const allUsers = await User.findAll({
-      where: whereClause,
-      attributes: ["rid", "email", "first_name", "last_name", "is_consultant_firm"],
-       include: [
-        {
-          model: Status,
-          as: "status",
-          where: { status_description: "active" },
-          attributes: [],
-        },
-      ],
-      order: [["first_name", "ASC"]],
-    });
-
-    // Step 4: Get users already in this group
-    const assignedMappings = await UserGroupMapping.findAll({
-      where: { group_rid: user_group_id },
-      attributes: ["user_rid"],
-    });
-    const assignedUserRids = new Set(assignedMappings.map(m => m.user_rid));
-
-    // Step 5: Format user data with access info
-    const formattedUsers = allUsers.map(user => {
-      const userJson = user.toJSON();
-      return {
-        rid: userJson.rid,
-        email: userJson.email,
-        name: `${userJson.first_name || ""} ${userJson.last_name || ""}`.trim(),
-        is_consultant: userJson.is_consultant_firm,
-        has_access: assignedUserRids.has(userJson.rid)
-      };
-    });
-
+    const formattedUsers = await this.getFormattedUsersForGroup(groupData, user_group_id);
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
@@ -1430,6 +1393,113 @@ async listUserGroupById(
     return this.throwServiceError(err as Error);
   }
 }
+
+private async getFormattedAccountsForGroup(groupType: string, groupRid: string): Promise<any[]> {
+  const sequelize = await initSequelize();
+  console.log("groupType",groupType)
+
+  if (groupType === "DEFAULT") {
+    return await sequelize.query(
+      `SELECT rid, account_name, true as has_access FROM ${MAIN_SCHEMA_NAME}.account`,
+      { type: QueryTypes.SELECT }
+    );
+  }
+
+  if (groupType === "AUTO_ASSIGNED") {
+    return await sequelize.query(
+      `SELECT a.rid, a.account_name, true as has_access
+       FROM ${MAIN_SCHEMA_NAME}.account a
+       INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+       ON uga.account_rid = a.rid
+       WHERE uga.group_rid = :group_rid`,
+      {
+        replacements: { group_rid: groupRid },
+        type: QueryTypes.SELECT
+      }
+    );
+  }
+
+  // Else: Custom group with dynamic access
+  return await sequelize.query(
+    `SELECT a.rid, a.account_name,
+            CASE WHEN uga.account_rid IS NOT NULL THEN true ELSE false END as has_access
+     FROM ${MAIN_SCHEMA_NAME}.account a
+     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+     ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
+    {
+      replacements: { group_rid: groupRid },
+      type: QueryTypes.SELECT
+    }
+  );
+}
+
+
+private async getFormattedUsersForGroup(groupData: any, groupRid: string): Promise<any[]> {
+  // Step 1: Get assigned account_rids using the model
+  const assignedAccounts = await UserGroupAccountMapping.findAll({
+    where: { group_rid: groupRid },
+    attributes: ["account_rid"],
+    raw: true,
+  });
+
+  const accountRids = assignedAccounts.map(acc => acc.account_rid);
+  if (accountRids.length === 0) return [];
+
+  // Step 2: Build user filter from those accounts
+  const userWhereClause: any = {
+    org_id: { [Op.in]: accountRids },
+  };
+
+  // Apply consultant-only filter
+  if (groupData?.is_consultant_only_group) {
+    userWhereClause.is_consultant_firm = true;
+  } else {
+    userWhereClause.is_consultant_firm = false;
+  }
+
+  // Step 3: Get all users from those accounts
+  const allUsers = await User.findAll({
+    where: userWhereClause,
+    attributes: ["rid", "email", "first_name", "last_name", "org_id", "is_consultant_firm"],
+    include: [
+      {
+        model: Status,
+        as: "status",
+        where: { status_description: "active" },
+        attributes: [],
+      },
+    ],
+    order: [["first_name", "ASC"]],
+  });
+
+  const userRids = allUsers.map(u => u.rid);
+
+  // Step 4: Get user mappings in the group
+  const assignedMappings = await UserGroupMapping.findAll({
+    where: {
+      group_rid: groupRid,
+      user_rid: { [Op.in]: userRids },
+    },
+    attributes: ["user_rid"],
+    raw: true,
+  });
+
+  const assignedUserSet = new Set(assignedMappings.map(m => m.user_rid));
+
+  // Step 5: Format and return users with has_access flag
+  return allUsers.map(user => {
+    const u = user.toJSON();
+    return {
+      rid: u.rid,
+      email: u.email,
+      name: `${u.first_name || ""} ${u.last_name || ""}`.trim(),
+      account_rid: u.org_id,
+      is_consultant: u.is_consultant_firm,
+      has_access: assignedUserSet.has(u.rid),
+    };
+  });
+}
+
 
 /**
  * Assigns or revokes access to an account for a user or a group based on a `has_access` flag.
