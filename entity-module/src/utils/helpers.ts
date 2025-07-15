@@ -155,6 +155,12 @@ export const validateResourceSkill = (data : any) => {
   if(!data.resource_skill_rid) return STATUS_MESSAGE.skillIdMissing
 }
 
+export const validateProjectResourceRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.project_resource_rid) return STATUS_MESSAGE.fiscalIdMissing
+}
+
 export const setProject = (dbData : any, requestData : any) => {
   let newPrjData : any = {}
   let newPrjArray = []

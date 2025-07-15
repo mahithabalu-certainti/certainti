@@ -453,7 +453,7 @@ export interface IProjectResourceService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResources: any };
+    data?: { projectResources: any , count: number };
   }>;
   exportProjectResources(
     accountId: string,

@@ -1,3 +1,4 @@
+import { ProjectResource } from "../models/projectResource";
 import {
   ICreateProject,
   ICreateProjectResource,
@@ -815,7 +816,7 @@ export class ProjectResourceMapper {
       modified_by: userId,
 
       resource_rid: projectResource.resource_id,
-      project_resource_code: projectResourceCode, 
+      project_resource_code: projectResourceCode,
       fiscal_year: projectResource.fiscal_year,
 
       start_date: startDate ? startDate.toDate() : null,
@@ -850,6 +851,48 @@ export class ProjectResourceMapper {
       insurance: projectResource.insurance || null,
 
       description: projectResource.description || null,
+    };
+  }
+
+  static mapToProjectResourceUpload(
+    updateProjectResource: ProjectResource,
+    userId: string
+  ) {
+    return {
+      project_resource_rid: updateProjectResource.rid,
+      project_rid: updateProjectResource.project_rid,
+      account_rid: updateProjectResource.account_rid,
+      resource_id: updateProjectResource.resource_rid,
+      project_code: updateProjectResource.project_code,
+      resource_code: updateProjectResource.resource_code,
+      resource_name: updateProjectResource.resource_name ?? "",
+      resource_type_rid: updateProjectResource.resource_type_rid ?? "",
+      resource_orgname: updateProjectResource.resource_orgname ?? null,
+      resource_role: updateProjectResource.resource_role ?? null,
+      assigned_skill_role_type_rid:
+        updateProjectResource.assigned_skill_role_type_rid ?? null,
+      status_rid: updateProjectResource.status_rid ?? null,
+      skill_role_rid: null,
+      skill_role_others: null,
+      total_hours_pro_res: updateProjectResource.total_hours_pro_res ?? 0,
+      total_cost_pro_res: updateProjectResource.total_cost_pro_res ?? 0,
+      fiscal_year: updateProjectResource.fiscal_year,
+      country_rid: updateProjectResource.country_rid ?? null,
+      region_rid: updateProjectResource.region_rid ?? null,
+      currency_rid: updateProjectResource.currency_rid ?? null,
+      start_date: updateProjectResource.start_date?.toISOString() ?? null,
+      end_date: updateProjectResource.end_date?.toISOString() ?? null,
+      designation: updateProjectResource.designation ?? null,
+      effort_project_resource_level:
+        updateProjectResource.effort_project_resource_level ?? null,
+      cost_project_resource_level:
+        updateProjectResource.cost_project_resource_level ?? null,
+      salary: updateProjectResource.salary ?? null,
+      bonus: updateProjectResource.bonus ?? null,
+      deductions: updateProjectResource.deductions ?? null,
+      insurance: updateProjectResource.insurance ?? null,
+      description: updateProjectResource.description ?? null,
+      modified_by: userId,
     };
   }
 }
