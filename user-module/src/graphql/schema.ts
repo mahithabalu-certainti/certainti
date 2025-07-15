@@ -86,6 +86,31 @@ const typeDefs = gql`
     message: String
     profile: Profile
   }
+  type UserGroup {
+    rid: String,
+    r_number: String,
+    group_name: String,
+    is_consultant_only_group: Boolean,
+    group_type_rid: String,
+    status_rid: String,
+    created_datetime: Date,
+    modified_datetime: Date,
+    created_by: String,
+    modified_by: String
+  }
+
+  type updateUserGroupResponse {
+      statusCode : Int
+      statusCodeValue : String
+      statusMessage : String
+      data : UserGroup
+    }
+
+   input UserGroupUpdate {
+    group_rid: ID!
+    group_name: String!
+    status_rid : String!
+  }
 
   type Query {
     permissionById(azureId: String!): PermissionByIdResponse
@@ -94,6 +119,7 @@ const typeDefs = gql`
   type Mutation {
     updateUser(input: UpdateUserInput!): UpdateUserResponse!
     updateUserProfile(input: UpdateUserProfileInput!): UpdateUserProfileResponse!
+    userGroupUpdate(data: UserGroupUpdate!): updateUserGroupResponse!
   }
 `;
 

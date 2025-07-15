@@ -167,7 +167,7 @@ async createUserGroup(
     statusCode: number;
     message: string;
     errorMessage?: string;
-     data?: { usergroup: any };
+     data?: { affectedGroupCount: any };
   }> {
     try {
       const { group_name, users, accounts, status_rid,group_rid,is_consultant_only_group,projects } = userGroup;
@@ -186,7 +186,7 @@ async createUserGroup(
           errorMessage: `Group name already exists. Please choose a different name.`
         };
       }
-      await UserGroup.update(
+      const [affectedGroupCount] = await UserGroup.update(
       {
         group_name,
         status_rid,
@@ -197,9 +197,6 @@ async createUserGroup(
       { where: { rid: group_rid } }
       );
 
-      // Step 2: Fetch existing user mappings
-     
-    // Step 2: Create user mappings
   //Assign users to group
    const userresult = await this.assignUsersToGroup({
          users,
@@ -243,7 +240,62 @@ if(projects)
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          usergroup:null,
+          affectedGroupCount:affectedGroupCount,
+        },
+      };
+    } catch (err: any) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+   /**
+   * Updates the user group in the database
+   * 
+   * @param {Object} userGroup - The user group data to create
+   * @param {string} userId - The ID of the user creating the profile
+   * @returns {Promise<Object>} - Response object with status and message
+   */
+  async updateUserGroupInline(
+    data:any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+     data?: { affectedGroupCount: any };
+  }> {
+    try {
+      console.log(data)
+      const isExistingGrp = await UserGroup.findOne({
+      where: {
+        [Op.and]: [
+          where(fn('LOWER', col('group_name')), Op.eq, data.group_name.toLowerCase()),
+          { rid: { [Op.ne]: data.group_rid } }
+        ]
+        }
+      });
+        if (isExistingGrp) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: `Group name already exists. Please choose a different name.`
+        };
+      }
+      const [affectedGroupCount] = await UserGroup.update(
+      {
+        group_name:data.group_name,
+        status_rid:data.status_rid,
+        modified_by: data.userId,
+        modified_datetime: new Date(),
+      },
+      { where: { rid: data.group_rid } }
+      );
+
+
+       return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          affectedGroupCount:affectedGroupCount,
         },
       };
     } catch (err: any) {
