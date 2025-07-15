@@ -2612,54 +2612,114 @@ async fetchAttachments(account_rid: string): Promise<any[]> {
   }
 }
 
-async createUserGroup( accountData: IAccount,userId: string,
-  is_parent:boolean,
-    account_rid: string,
-    ){
-      const sequelize = await initSequelize();
-      // Step 1: Determine group_type_name based on is_parent
-      const groupTypeName = is_parent ? 'Client Firm Global' : 'Client Firm Child';
+async createUserGroup(
+  accountData: IAccount,
+  userId: string,
+  is_parent: boolean,
+  account_rid: string
+) {
+  const sequelize = await initSequelize();
+  const transaction = await sequelize.transaction();
 
-      // Step 2: Fetch group_type_rid from user_group_type table
-      const result = await sequelize.query<{ rid: string }>(
-        `
-          SELECT rid
-          FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
-          WHERE group_type_name = :group_type_name
-          LIMIT 1
-        `,
-        {
-          replacements: { group_type_name: groupTypeName },
-          type: QueryTypes.SELECT,
-        }
-      );
+  try {
+    // Step 1: Determine group_type_name based on is_parent
+    const groupTypeName = is_parent ? 'Client Firm Global' : 'Client Firm Child';
 
-      const groupTypeResult = result[0]; 
-      if (!groupTypeResult?.rid) {
-        throw new Error(`Group type '${groupTypeName}' not found in user_group_type table.`);
+    // Step 2: Fetch group_type_rid from user_group_type table
+    const result = await sequelize.query<{ rid: string }>(
+      `
+      SELECT rid
+      FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
+      WHERE group_type_name = :group_type_name
+      LIMIT 1
+    `,
+      {
+        replacements: { group_type_name: groupTypeName },
+        type: QueryTypes.SELECT,
+        transaction,
       }
-      const group_type_rid = groupTypeResult.rid;
-  // Step 3: Insert into user_groups
-      await sequelize.query(
-        `
-          INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
-             group_name, group_type_rid, created_by
-          ) 
-          VALUES (
-            :group_name, 
-            :group_type_rid, 
-            :created_by
-          );
-        `,
-        {
-          replacements: {
-            group_name: 'G-' + accountData.account_name,
-            group_type_rid,
-            created_by: userId,
-          },
-        }
-      );
+    );
+
+    const groupTypeResult = result[0];
+    if (!groupTypeResult?.rid) {
+      throw new Error(`Group type '${groupTypeName}' not found in user_group_type table.`);
     }
+
+    const group_type_rid = groupTypeResult.rid;
+
+    // Step 3: Insert into user_groups
+    const newGroupInsert = await sequelize.query<{ rid: string }>(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
+        group_name, group_type_rid, created_by
+      )
+      VALUES (
+        :group_name, :group_type_rid, :created_by
+      )
+      RETURNING rid
+    `,
+      {
+        replacements: {
+          group_name: 'G-' + accountData.account_name,
+          group_type_rid,
+          created_by: userId,
+        },
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    const groupRid = (newGroupInsert[0] as any).rid || (newGroupInsert as any)[0]?.[0]?.rid;
+    if (!groupRid) throw new Error("Failed to retrieve newly created group RID.");
+
+    // Step 4: Insert into user_group_account_mapping
+    await sequelize.query(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
+        group_rid, account_rid, created_by
+      )
+      VALUES (
+        :group_rid, :account_rid, :created_by
+      )
+    `,
+      {
+        replacements: {
+          group_rid: groupRid,
+          account_rid,
+          created_by: userId,
+        },
+        transaction,
+      }
+    );
+
+    // Step 5: Insert into user_group_entity_access (entity_type = 'ACCOUNT')
+    await sequelize.query(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
+        group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
+      )
+      VALUES (
+        :group_rid, 'ACCOUNT', :account_rid, 'INCLUDE', :created_by, NOW()
+      )
+    `,
+      {
+        replacements: {
+          group_rid: groupRid,
+          account_rid,
+          created_by: userId,
+        },
+        transaction,
+      }
+    );
+
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    console.error("Error creating user group with account mapping:", err);
+    throw err;
+  }
+}
+
 async getUserGroupType(userRid: string): Promise<string | null>   {
   const mainDbSequelize = await initSequelize();
   

@@ -8,43 +8,72 @@ const userReqSchema = Joi.object({
 const createUserGroupSchema = Joi.object({
   group_name: Joi.string().min(3).max(64).required().label("Group Name"),
   users: Joi.array()
-    .items(Joi.string().trim().min(1).required().label("User ID"))
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
     .min(1)
     .required()
     .label("Users"),
   group_type_rid: Joi.string().required().label("Group Type"),
-  account_rid: Joi.alternatives()
-    .try(
-      Joi.string(), // single account
-      Joi.array().items(
-        Joi.object({
-          rid: Joi.string().required(),
-          is_enabled: Joi.boolean().required(),
-          is_modified: Joi.boolean().required()
-        })
-      )
+  accounts: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("Account RID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
     )
+    .min(1)
     .optional()
-    .label("Account"),
+    .label("Accounts"),
   status_rid: Joi.string().required().label("Status"),
   is_consultant_only_group: Joi.boolean().required(),
   projects: Joi.object()
     .pattern(
-      Joi.string().min(1), // project_rid as key
-      Joi.boolean()         // access flag as value
+      Joi.string().min(1), // project_rid
+      Joi.boolean()        // has_access_enabled
     )
     .optional()
-    .label("Projects")
+    .label("Projects"),
 });
+
 
 const updateUserGroupSchema = Joi.object({
   group_name: Joi.string().min(3).max(64).required().label("Group Name"),
-   group_rid: Joi.string().required().label("Group Id"),
-  users: Joi.array().items(Joi.string().trim().min(1).required().label("User ID"))
+  group_rid: Joi.string().required().label("Group Id"),
+  users: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
     .min(1)
     .required()
     .label("Users"),
-  account_rid: Joi.string().required().label("Account Name"),
+  accounts: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("Account RID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .min(1)
+    .optional()
+    .label("Accounts"),
+    projects: Joi.object()
+    .pattern(
+      Joi.string().min(1), // project_rid
+      Joi.boolean()        // has_access_enabled
+    )
+    .optional()
+    .label("Projects"),
   status_rid: Joi.string().required().label("Status"),
   is_consultant_only_group:Joi.boolean().required()
 });

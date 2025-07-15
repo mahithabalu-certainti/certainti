@@ -45,8 +45,9 @@ class UserGroupService {
 async createUserGroup(
   userGroup: {
     group_name: string;
-    users: string[];
-    account_rid: any;
+    users: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+    accounts:  Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+    projects:any;
     status_rid: string;
     is_consultant_only_group: boolean;
   },
@@ -61,7 +62,8 @@ async createUserGroup(
     const {
       group_name,
       users,
-      account_rid,
+      accounts,
+      projects,
       status_rid,
       is_consultant_only_group,
     } = userGroup;
@@ -87,16 +89,16 @@ async createUserGroup(
     // Step 2: Create user mappings
   //Assign users to group
    const userresult = await this.assignUsersToGroup({
-         user_rid:users,
+         users,
          group_rid:groupRid,
-         has_access:true,
          userId
        } );
   
   //Assign Accounts to group
-
-   const aacountresult = await this.assignAccountsToGroup({
-        account_rid,
+  if(accounts)
+  {
+    const acountresult = await this.assignAccountsToGroup({
+        accounts,
         group_rid:groupRid,
         userId
       } );
@@ -105,16 +107,22 @@ async createUserGroup(
 
   const result = await this.assignEntityAccessToAccount({
         group_rid:groupRid,
-        account_rid,
+        accounts,
         userId
       } );
+  }
+  if(projects)
+  {
+    //assign access to projects
+      const result1 = await this.assignEntityAccessToProjects({
+          group_rid:groupRid,
+          project_access_list:[],
+          userId
+        } );
+  }
+   
 
-  //assign access to projects
-   const result1 = await this.assignEntityAccessToProjects({
-      group_rid:groupRid,
-      project_access_list:[],
-      userId
-    } );
+  
 
     return {
       statusCode: constants.SUCCESS,
@@ -147,8 +155,9 @@ async createUserGroup(
   async updateUserGroup(
     userGroup: {
       group_name: string;
-      users: string[];
-      account_rid: string;
+      users: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+      accounts: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+      projects:any;
       group_rid: string;
       status_rid:string;
       is_consultant_only_group:boolean;
@@ -161,7 +170,7 @@ async createUserGroup(
      data?: { usergroup: any };
   }> {
     try {
-      const { group_name, users, account_rid, status_rid,group_rid,is_consultant_only_group } = userGroup;
+      const { group_name, users, accounts, status_rid,group_rid,is_consultant_only_group,projects } = userGroup;
       const isExistingGrp = await UserGroup.findOne({
       where: {
         [Op.and]: [
@@ -181,7 +190,7 @@ async createUserGroup(
       {
         group_name,
         status_rid,
-        is_consultant_only_group,
+      //  is_consultant_only_group,
         modified_by: userId,
         modified_datetime: new Date(),
       },
@@ -189,37 +198,45 @@ async createUserGroup(
       );
 
       // Step 2: Fetch existing user mappings
-      const existingMappings = await UserGroupMapping.findAll({
-            where: { group_rid: group_rid },
-            attributes: ['user_rid'],
-          });
-        const existingUserIds = existingMappings.map((m) => m.user_rid);
+     
+    // Step 2: Create user mappings
+  //Assign users to group
+   const userresult = await this.assignUsersToGroup({
+         users,
+         group_rid:group_rid,
+         userId
+       } );
+  
+  //Assign Accounts to group
+if(accounts)
+{
+  const aacountresult = await this.assignAccountsToGroup({
+        accounts,
+        group_rid:group_rid,
+        userId
+      } );
+      //assign access to all account
 
-    // Step 3: Determine differences
-    const usersToAdd = users.filter((u) => !existingUserIds.includes(u));
-    const usersToRemove = existingUserIds.filter((u) => !users.includes(u));
+  const result = await this.assignEntityAccessToAccount({
+        group_rid:group_rid,
+        accounts,
+        userId
+      } );
 
-    // Step 4: Remove deleted users
-    if (usersToRemove.length > 0) {
-      await UserGroupMapping.destroy({
-        where: {
-          group_rid: group_rid,
-          user_rid: usersToRemove,
-        },
-      });
-    }
+}
+if(projects)
+{
+  //assign access to projects
+   const result1 = await this.assignEntityAccessToProjects({
+      group_rid:group_rid,
+      project_access_list:projects,
+      userId
+    } );
+}
+   
 
-    // Step 5: Add new users
-    if (usersToAdd.length > 0) {
-      const newMappings = usersToAdd.map((user_rid) => ({
-        group_rid: group_rid,
-        account_rid,
-        user_rid,
-        created_by: userId,
-      }));
+  
 
-      await UserGroupMapping.bulkCreate(newMappings);
-    }
 
 
        return {
@@ -1430,78 +1447,86 @@ async listUserGroupById(
  * @returns {Promise<Object>} - Result with status and message
  */
 async assignUsersToGroup({
-  user_rid,
+  users,
   group_rid,
-  has_access,
   userId,
 }: {
-  user_rid?: string | string[];
+  users?: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
   group_rid?: string;
-  has_access: boolean;
   userId: string;
 }): Promise<{
   statusCode: number;
   message: string;
-  data?: { usergroup: any };
+  data?: { added: string[]; removed: string[] };
   errorMessage?: string;
 }> {
   try {
-    if (!user_rid || !group_rid) {
+    if (!users || !users.length || !group_rid) {
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
-        errorMessage: "Both user_rid and group_rid are required.",
+        errorMessage: "Both user_rid list and group_rid are required.",
       };
     }
 
-    const userRids: string[] = Array.isArray(user_rid)
-      ? user_rid
-      : [user_rid];
+    const toAdd: string[] = [];
+    const toRemove: string[] = [];
 
-    if (has_access) {
-      // Assign users to the group (create mappings)
-      const mappings = userRids.map((uid) => ({
-        group_rid,
-        user_rid: uid,
-        created_by: userId
-      }));
+    for (const user of users) {
+      if (!user.is_modified) continue;
 
-      // Avoid duplicates: check existing mappings
+      if (user.is_enabled) {
+        toAdd.push(user.rid);
+      } else {
+        toRemove.push(user.rid);
+      }
+    }
+
+    const added: string[] = [];
+    const removed: string[] = [];
+
+    // ➕ Create new mappings (avoid duplicates)
+    if (toAdd.length > 0) {
       const existing = await UserGroupMapping.findAll({
         where: {
           group_rid,
-          user_rid: { [Op.in]: userRids },
+          user_rid: { [Op.in]: toAdd },
         },
         attributes: ["user_rid"],
       });
 
       const alreadyAssigned = new Set(existing.map((e) => e.user_rid));
-      const toCreate = mappings.filter((m) => !alreadyAssigned.has(m.user_rid));
+      const toCreate = toAdd
+        .filter((rid) => !alreadyAssigned.has(rid))
+        .map((rid) => ({
+          group_rid,
+          user_rid: rid,
+          created_by: userId,
+        }));
 
       if (toCreate.length > 0) {
         await UserGroupMapping.bulkCreate(toCreate);
+        added.push(...toCreate.map((u) => u.user_rid));
       }
+    }
 
-      return {
-        statusCode: constants.SUCCESS,
-        message: `Assigned ${toCreate.length} user(s) to the group.`,
-        data: { usergroup: toCreate },
-      };
-    } else {
-      // Remove users from the group
+    // ➖ Delete mappings
+    if (toRemove.length > 0) {
       const deleted = await UserGroupMapping.destroy({
         where: {
           group_rid,
-          user_rid: { [Op.in]: userRids },
+          user_rid: { [Op.in]: toRemove },
         },
       });
 
-      return {
-        statusCode: constants.SUCCESS,
-        message: `Revoked group access for ${deleted} user(s).`,
-        data: { usergroup: [] },
-      };
+      removed.push(...toRemove);
     }
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: `Group access updated. Added: ${added.length}, Removed: ${removed.length}`,
+      data: { added, removed },
+    };
   } catch (err: any) {
     console.error("Error assigning users to group:", err);
     return {
@@ -1511,6 +1536,7 @@ async assignUsersToGroup({
     };
   }
 }
+
 
 /**
  * Assigns or revokes access to an account for a user or a group based on a `has_access` flag.
@@ -1528,11 +1554,11 @@ async assignUsersToGroup({
  * @returns {Promise<Object>} - Result with status and message
  */
 async assignAccountsToGroup({
-  account_rid,
+  accounts,
   group_rid,
   userId,
 }: {
-  account_rid?: { rid: string; is_enabled: boolean; is_modified: boolean }[];
+  accounts?: { rid: string; is_enabled: boolean; is_modified: boolean }[];
   group_rid?: string;
   userId: string;
 }): Promise<{
@@ -1542,7 +1568,7 @@ async assignAccountsToGroup({
   errorMessage?: string;
 }> {
   try {
-    if (!account_rid || !group_rid) {
+    if (!accounts || !group_rid) {
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
@@ -1553,7 +1579,7 @@ async assignAccountsToGroup({
     const toAssign: string[] = [];
     const toRevoke: string[] = [];
 
-    for (const account of account_rid) {
+    for (const account of accounts) {
       if (!account.is_modified) continue;
 
       if (account.is_enabled) {
@@ -1637,12 +1663,12 @@ async assignAccountsToGroup({
 async assignEntityAccessToAccount({
   user_rid,
   group_rid,
-  account_rid,
+  accounts,
   userId,
 }: {
   user_rid?: string;
   group_rid?: string;
-  account_rid: Array<{
+  accounts: Array<{
     rid: string;
     is_enabled: boolean;
     is_modified: boolean;
@@ -1655,7 +1681,7 @@ async assignEntityAccessToAccount({
   errorMessage?: string;
 }> {
   try {
-    if (!account_rid || (!user_rid && !group_rid)) {
+    if (!accounts || (!user_rid && !group_rid)) {
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
@@ -1668,7 +1694,7 @@ async assignEntityAccessToAccount({
     const created: string[] = [];
     const updated: string[] = [];
 
-    for (const acc of account_rid) {
+    for (const acc of accounts) {
       if (!acc.is_modified) continue;
 
       const access_type = acc.is_enabled ? "INCLUDE" : "EXCLUDE";

@@ -50,7 +50,7 @@ async function createUserGroup(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { group_name, users, account_rid,status_rid ,is_consultant_only_group} = validatedData;
+    const { group_name, users, accounts,status_rid ,is_consultant_only_group,projects} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -58,7 +58,8 @@ async function createUserGroup(req: Request, res: Response): Promise<void> {
     const result = await services.userGroupService.createUserGroup({
       group_name,
       users,
-      account_rid,
+      accounts,
+      projects,
       status_rid,
       is_consultant_only_group
     }, userId);
@@ -109,7 +110,7 @@ async function updateUserGroup(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { group_name, users, account_rid,group_rid ,status_rid,is_consultant_only_group} = validatedData;
+    const { group_name, users, accounts,group_rid ,status_rid,is_consultant_only_group,projects} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -117,7 +118,8 @@ async function updateUserGroup(req: Request, res: Response): Promise<void> {
     const result = await services.userGroupService.updateUserGroup({
       group_name,
       users,
-      account_rid,
+      accounts,
+      projects,
       group_rid,
       status_rid,
       is_consultant_only_group
@@ -597,7 +599,7 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { user_rid, account_rid,group_rid,has_access_enabled} = validatedData;
+    const { user_rid, accounts,group_rid} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -606,7 +608,7 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
     const result = await services.userGroupService.assignEntityAccessToAccount({
       user_rid,
       group_rid,
-      account_rid,
+      accounts,
       userId
     } );
     
@@ -741,16 +743,15 @@ async function assignUsersToGroup(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { user_rid,group_rid,has_access} = validatedData;
+    const { users,group_rid} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
 
     
     const result = await services.userGroupService.assignUsersToGroup({
-      user_rid,
+      users,
       group_rid,
-      has_access,
       userId
     } );
     
@@ -794,14 +795,14 @@ async function assignAccountsToGroup(req: Request, res: Response): Promise<void>
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { account_rid,group_rid,has_access} = validatedData;
+    const { accounts,group_rid} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
 
     
     const result = await services.userGroupService.assignAccountsToGroup({
-      account_rid,
+      accounts,
       group_rid,
       userId
     } );
