@@ -422,8 +422,7 @@ const ProjectForm: React.FC = () => {
     projectTypeOptions.isLoading ||
     keyContactRoles.isLoading;
 
-  if (!accountIsEnable || !accountViewEnable || projectViewEditFields)
-    return <AccessRestricted />;
+  if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
