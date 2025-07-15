@@ -1160,14 +1160,14 @@ private createUserCountCondition(operator: string, value: number): any {
                   )`),
                   'user_count'
                 ],
-                [
-                literal(`(
-                  SELECT account_name
-                  FROM "${MAIN_SCHEMA_NAME}".account AS acc
-                  WHERE acc.rid = "UserGroup".account_rid
-                )`),
-                'account_name'
-               ],
+              //   [
+              //   literal(`(
+              //     SELECT account_name
+              //     FROM "${MAIN_SCHEMA_NAME}".account AS acc
+              //     WHERE acc.rid = "UserGroup".account_rid
+              //   )`),
+              //   'account_name'
+              //  ],
               ]
             },
           include: [
