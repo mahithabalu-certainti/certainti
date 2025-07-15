@@ -8,7 +8,7 @@ export default class ResourceCostGraphQlService {
       async inlineEditResourceCost (data : any) {
     const mainDbSequelize = await initMainDbSequelize();
     const orgDbSequelize = await initOrgSequelize();
-    let fetchParentAcc : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid))
+    let fetchParentAcc : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize))
     
     if(fetchParentAcc[0].length < 1) {
       return {

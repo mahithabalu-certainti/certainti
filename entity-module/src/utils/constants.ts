@@ -1,5 +1,4 @@
-import { initMainDbSequelize } from "../config/mainDataSource";
-
+import { Sequelize } from "sequelize";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -121,8 +120,7 @@ export const TYPES = {
 }
 
 export const rawQueries = {
-  async fetchParentAccount (accountRid : any) : Promise <any> {
-    const mainSequelize = await initMainDbSequelize();
+  async fetchParentAccount (accountRid : any, mainSequelize : Sequelize) : Promise <any> {
     let checkIsSeparateDb : any = await mainSequelize.query(`SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`)
     if(checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
       return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`

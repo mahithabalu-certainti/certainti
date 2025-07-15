@@ -16,7 +16,7 @@ export default class ResourceGraphQlServices {
     const orgSequelize = await initOrgSequelize();
 
     const checkAccountExists: any = await mainSequelize.query(
-      await rawQueries.fetchParentAccount(data.account_rid)
+      await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)
     );
 
     if (checkAccountExists.length < 1) {
