@@ -187,6 +187,7 @@ export type FilterState = {
 export type FieldConfig = {
   name: string;
   value: string;
+  hide?: boolean;
   type:
     | 'text'
     | 'number'

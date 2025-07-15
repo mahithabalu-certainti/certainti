@@ -87,6 +87,7 @@ export const Accounts: React.FC = () => {
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
   );
+
   const isAccountCreateEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNTS_CREATE
@@ -105,7 +106,19 @@ export const Accounts: React.FC = () => {
     permission,
     AllPermissions.ACCOUNTS_EXPORT
   );
-
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
@@ -185,10 +198,10 @@ export const Accounts: React.FC = () => {
       })) || [],
     [industry.data?.data.industries]
   );
-
   const accountFilterFields = getAccountFilterFields(
     allCountries,
-    allIndustries
+    allIndustries,
+    permissionMap
   );
 
   const [totalCount, setTotalCount] = useState<number>(0);

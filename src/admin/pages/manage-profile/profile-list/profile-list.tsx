@@ -1,10 +1,10 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
 import { FilterModal } from '../../../../components';
-import { getManageProfileFilterfields } from './';
+import { getManageProfileFilterFields } from './';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
@@ -70,19 +70,27 @@ export const ProfileList: React.FC = () => {
     permission,
     AllPermissions.PROFILE_VIEW_EDIT
   );
-  // const isProfileEditEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.PROFILE_EDIT
-  // );
   const isProfileDeleteEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_DELETE
   );
-  const isProfileViewAllEnable = checkPermission(
+  const isProfileEditEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_PERMISSION_VIEW_EDIT
   );
-
+  const profileViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    profileViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [profileViewEditFields]);
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
@@ -138,8 +146,8 @@ export const ProfileList: React.FC = () => {
       setIsExporting(false);
     }
   };
-
-  if (!isProfileEnable || !isProfileViewAllEnable) return <AccessRestricted />;
+  const profileFilterFields = getManageProfileFilterFields(permissionMap);
+  if (!isProfileEnable || !isProfileViewEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -213,7 +221,7 @@ export const ProfileList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={getManageProfileFilterfields()}
+                filterFields={profileFilterFields}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
@@ -246,7 +254,7 @@ export const ProfileList: React.FC = () => {
             setTableParams={setTableParams}
             onSelectionChange={handleSelectionChange}
             isProfileViewEnable={isProfileViewEnable}
-            isProfileEditEnable={true}
+            isProfileEditEnable={isProfileEditEnable}
             isProfileDeleteEnable={isProfileDeleteEnable}
             refreshProfileTrigger={refreshProfileTrigger}
           />

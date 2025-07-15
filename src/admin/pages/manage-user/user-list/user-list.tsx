@@ -79,14 +79,6 @@ const UserList: React.FC = () => {
     permission,
     AllPermissions.USER_VIEW_EDIT
   );
-  // const isUserSuspendEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.USER_SUSPEND
-  // );
-  // const isUserResetPasswordEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.USER_RESET_PASSWORD
-  // );
   const isUserExportEnable = checkPermission(
     permission,
     AllPermissions.USER_EXPORT
@@ -99,7 +91,19 @@ const UserList: React.FC = () => {
     permission,
     AllPermissions.USER_ASSIGN_PERMISSION
   );
-
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
   const userActionButtons = [
     { label: 'Suspend User', width: '104px', hide: false },
     { label: 'Reinstate User', width: '116px', hide: false },
@@ -217,8 +221,11 @@ const UserList: React.FC = () => {
       })) || [],
     [userRoles.data?.data.roles]
   );
-
-  const userFilterfields = getUserFilterFields(userProfiles, memoizeRole);
+  const userFilterfields = getUserFilterFields(
+    userProfiles,
+    memoizeRole,
+    permissionMap
+  );
 
   useEffect(() => {
     const saved = getStoredFilters();

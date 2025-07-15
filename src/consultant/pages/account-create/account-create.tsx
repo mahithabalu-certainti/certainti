@@ -95,6 +95,20 @@ export const AccountForm: React.FC = () => {
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
   );
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
+
   // const isAccountCreateEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNTS_CREATE
@@ -285,7 +299,11 @@ export const AccountForm: React.FC = () => {
 
   useEffect(() => {
     const existingContacts = account?.accountDetails?.keyContacts || [];
-    const newKeyData = newKeyContactFields(memoizedRole);
+    const disabled =
+      isEditView &&
+      permissionMap?.['keyContacts']?.read &&
+      !permissionMap?.['keyContacts']?.edit;
+    const newKeyData = newKeyContactFields(memoizedRole, disabled);
 
     let fields: FieldType[] = [];
 
@@ -421,7 +439,8 @@ export const AccountForm: React.FC = () => {
     removeKeyContactInfo,
     isEditView,
     states.isLoading,
-    showOthersField
+    showOthersField,
+    permissionMap
   );
 
   const formLoading =

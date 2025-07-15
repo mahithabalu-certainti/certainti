@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */ import {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
   useEffect,
   useState,
 } from 'react';
@@ -165,6 +166,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             isDetailsLoading={isDetailsLoading}
             detailsError={detailsError}
             isKeyContactAvailable={isKeyContactAvailable}
+            permission={permission}
           />
         )}
       </Box>

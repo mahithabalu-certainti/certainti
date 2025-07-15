@@ -16,12 +16,16 @@ import {
 } from '../../../common-utils';
 import { CloseIcon } from '../../../assets';
 
-export const newKeyContactFields = (roles: SelectOption[]) => [
+export const newKeyContactFields = (
+  roles: SelectOption[],
+  disabled?: boolean
+) => [
   createTextField('key_contact_name', 'Key Contact Name', {
     required: false,
     width: '190px',
     placeholder: 'Enter Key Contact Name',
     onChange: true,
+    disabled: disabled || false,
     errorHandling: [
       {
         regex: REGEX_PATTERNS.MIN_2,
@@ -54,12 +58,14 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
     required: false,
     placeholder: 'Choose Key Contact Role',
     onChange: true,
+    disabled: disabled || false,
   }),
   createTextField('key_contact_email', 'Key Contact Email', {
     required: false,
     width: '180px',
     placeholder: 'Enter Key Contact Email',
     onChange: true,
+    disabled: disabled || false,
     errorHandling: [
       {
         regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
@@ -75,29 +81,35 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
     required: false,
     hide: true,
     placeholder: '',
+    disabled: disabled || false,
   }),
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
     required: true,
+    disabled: disabled || false,
   }),
   createRadioField('include_in_communication', 'Interaction Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
     required: true,
+    disabled: disabled || false,
   }),
   createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
     required: true,
+    disabled: disabled || false,
   }),
   createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
+    disabled: disabled || false,
   }),
   createImgButton('button', CloseIcon, {
     width: '30px',
+    disabled: disabled || false,
   }),
 ];
 
@@ -142,6 +154,7 @@ const createDynamicField = (
     fieldsArr.push(
       createImgButton(dynamicName, '', {
         width: rest.width,
+        disabled: rest.disabled,
         onClick: () => removeKeyContact(index),
       })
     );
@@ -162,9 +175,10 @@ export const AccFormData = (
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
-  disableFields?: boolean,
+  isEditView?: boolean,
   stateLoading?: boolean,
-  showOthersField?: boolean
+  showOthersField?: boolean,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
     () => [
@@ -175,6 +189,14 @@ export const AccFormData = (
           createTextField('account_name', 'Name', {
             required: true,
             placeholder: 'Enter Name',
+            disabled:
+              isEditView &&
+              permissionMap?.['account_name']?.read &&
+              !permissionMap?.['account_name']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['account_name']?.read &&
+              !permissionMap?.['account_name']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
@@ -193,7 +215,11 @@ export const AccFormData = (
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
-            disabled: disableFields,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['is_parent']?.read &&
+              !permissionMap?.['is_parent']?.edit,
             required: true,
             onChange: true,
             defaultSelect: {
@@ -207,7 +233,11 @@ export const AccFormData = (
             options: parentAccount,
             placeholder: 'Choose Parent Account',
             required: isParentAccountRequired,
-            disabled: !isParentAccountRequired || disableFields,
+            disabled: !isParentAccountRequired || isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['parent_account_rid']?.read &&
+              !permissionMap?.['parent_account_rid']?.edit,
             clearValue: {
               key: 'is_parent',
               matchedValue: YesNo.Yes,
@@ -218,11 +248,28 @@ export const AccFormData = (
             placeholder: 'Choose Industry',
             required: true,
             onChange: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['industry_rid']?.read &&
+              !permissionMap?.['industry_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['industry_rid']?.read &&
+              !permissionMap?.['industry_rid']?.edit,
           }),
           createTextField('industry_name_other', 'Industry-other', {
             required: true,
             placeholder: 'Enter Industry-other',
-            hide: !showOthersField,
+            disabled:
+              isEditView &&
+              permissionMap?.['industry_rid']?.read &&
+              !permissionMap?.['industry_rid']?.edit,
+            hide:
+              (isEditView &&
+                !permissionMap?.['industry_rid']?.read &&
+                !permissionMap?.['industry_rid']?.edit) ||
+              !showOthersField,
+
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -244,6 +291,14 @@ export const AccFormData = (
             type: 'text',
             required: false,
             placeholder: 'Enter Website',
+            hide:
+              isEditView &&
+              !permissionMap?.['website']?.read &&
+              !permissionMap?.['website']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['website']?.read &&
+              !permissionMap?.['website']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_WEBSITE,
@@ -262,6 +317,14 @@ export const AccFormData = (
           createTextField('annual_revenue', 'Annual Revenue', {
             required: false,
             regex: REGEX_PATTERNS.ANNUAL_REVENUE,
+            hide:
+              isEditView &&
+              !permissionMap?.['annual_revenue']?.read &&
+              !permissionMap?.['annual_revenue']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['annual_revenue']?.read &&
+              !permissionMap?.['annual_revenue']?.edit,
             regexErrorMessage:
               'Only positive numbers allowed, up to 12 digits and 2 decimal places',
             placeholder: 'Enter Annual Revenue',
@@ -276,10 +339,26 @@ export const AccFormData = (
             required: true,
             options: statusOptions,
             placeholder: 'Choose Status',
+            hide:
+              isEditView &&
+              !permissionMap?.['status']?.read &&
+              !permissionMap?.['status']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['status']?.read &&
+              !permissionMap?.['status']?.edit,
           }),
           createTextField('organisation_name', 'Org Name', {
             required: true,
             placeholder: 'Enter Org Name',
+            hide:
+              isEditView &&
+              !permissionMap?.['organisation_name']?.read &&
+              !permissionMap?.['organisation_name']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['organisation_name']?.read &&
+              !permissionMap?.['organisation_name']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
@@ -301,6 +380,14 @@ export const AccFormData = (
             onChange: true,
             required: false,
             placeholder: 'Browse Image',
+            hide:
+              isEditView &&
+              !permissionMap?.['logo']?.read &&
+              !permissionMap?.['logo']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['logo']?.read &&
+              !permissionMap?.['logo']?.edit,
           }),
         ],
       },
@@ -311,6 +398,14 @@ export const AccFormData = (
           createTextAreaField('business_details', 'Business Details', {
             required: true,
             regex: REGEX_PATTERNS.MAX_2000,
+            hide:
+              isEditView &&
+              !permissionMap?.['business_details']?.read &&
+              !permissionMap?.['business_details']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['business_details']?.read &&
+              !permissionMap?.['business_details']?.edit,
             regexErrorMessage:
               'Business Details must be within 2000 characters',
             placeholder: 'Enter Business Details',
@@ -327,17 +422,41 @@ export const AccFormData = (
             required: false,
             onChange: true,
             resetDependsFields: ['region_rid'],
+            hide:
+              isEditView &&
+              !permissionMap?.['country_rid']?.read &&
+              !permissionMap?.['country_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['country_rid']?.read &&
+              !permissionMap?.['country_rid']?.edit,
           }),
           createSelectField('region_rid', 'Region', {
             options: state,
             placeholder: 'Choose Region',
             required: false,
             isLoading: stateLoading,
+            hide:
+              isEditView &&
+              !permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,
             required: false,
             placeholder: 'Choose Currency',
+            hide:
+              isEditView &&
+              !permissionMap?.['currency_rid']?.read &&
+              !permissionMap?.['currency_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['currency_rid']?.read &&
+              !permissionMap?.['currency_rid']?.edit,
           }),
         ],
       },
@@ -345,6 +464,10 @@ export const AccFormData = (
         sectionName: 'key_contacts_list',
         fillType: 'half',
         from: 'account',
+        hide:
+          isEditView &&
+          !permissionMap?.['keyContacts']?.read &&
+          !permissionMap?.['keyContacts']?.edit,
         fields: [
           ...keyContacts
             .map((contacts, index) => [
@@ -356,10 +479,18 @@ export const AccFormData = (
       {
         sectionName: '',
         fillType: 'full',
+        hide:
+          isEditView &&
+          !permissionMap?.['keyContacts']?.read &&
+          !permissionMap?.['keyContacts']?.edit,
         fields: [
           createButton('Add Key Contact', '', {
             iconUrl: '',
             onClick: addNewKeyContact,
+            disabled:
+              isEditView &&
+              permissionMap?.['keyContacts']?.read &&
+              !permissionMap?.['keyContacts']?.edit,
           }),
         ],
       },
@@ -369,10 +500,18 @@ export const AccFormData = (
         fields: [
           createFiscalDateField('fiscal_start_date', 'Fiscal Start', {
             required: true,
-            disabled: disableFields,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['fiscal_start_date']?.read &&
+              !permissionMap?.['fiscal_start_date']?.edit,
           }),
           createFiscalDateField('fiscal_end_date', 'Fiscal End', {
-            disabled: disableFields,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['fiscal_end_date']?.read &&
+              !permissionMap?.['fiscal_end_date']?.edit,
             required: true,
             toBeNotSame: {
               key: 'fiscal_start_date',
@@ -389,6 +528,14 @@ export const AccFormData = (
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            disabled:
+              isEditView &&
+              permissionMap?.['blended_rate_fte']?.read &&
+              !permissionMap?.['blended_rate_fte']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['blended_rate_fte']?.read &&
+              !permissionMap?.['blended_rate_fte']?.edit,
             regexErrorMessage:
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - FTE',
@@ -396,6 +543,14 @@ export const AccFormData = (
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            disabled:
+              isEditView &&
+              permissionMap?.['blended_rate_subcon']?.read &&
+              !permissionMap?.['blended_rate_subcon']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['blended_rate_subcon']?.read &&
+              !permissionMap?.['blended_rate_subcon']?.edit,
             regexErrorMessage:
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
@@ -409,10 +564,26 @@ export const AccFormData = (
           createRadioField('auto_access_rd', 'Auto Assessment', {
             radioOptions: YES_NO_OPTIONS,
             required: true,
+            disabled:
+              isEditView &&
+              permissionMap?.['auto_access_rd']?.read &&
+              !permissionMap?.['auto_access_rd']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['auto_access_rd']?.read &&
+              !permissionMap?.['auto_access_rd']?.edit,
           }),
           createRadioField('autosend_interaction', 'Auto Send Interaction', {
             radioOptions: YES_NO_OPTIONS,
             required: true,
+            disabled:
+              isEditView &&
+              permissionMap?.['autosend_interaction']?.read &&
+              !permissionMap?.['autosend_interaction']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['autosend_interaction']?.read &&
+              !permissionMap?.['autosend_interaction']?.edit,
           }),
           createTextField('max_ai_interactions', 'Max Interaction Follow Up', {
             required: true,
@@ -420,11 +591,23 @@ export const AccFormData = (
             regexErrorMessage:
               'Max Interaction Follow Up must be between 1 and 10',
             placeholder: 'Enter Max Interaction Follow Up',
+            disabled:
+              isEditView &&
+              permissionMap?.['max_ai_interactions']?.read &&
+              !permissionMap?.['max_ai_interactions']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['max_ai_interactions']?.read &&
+              !permissionMap?.['max_ai_interactions']?.edit,
           }),
           createRadioField('data_storage', 'Data Residency', {
             required: true,
             radioOptions: dataResidency,
-            disabled: disableFields,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['data_storage']?.read &&
+              !permissionMap?.['data_storage']?.edit,
           }),
         ],
       },
@@ -437,37 +620,69 @@ export const AccFormData = (
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
             regexErrorMessage: 'Comments must be within 2000 characters',
             placeholder: 'Enter Comments',
+            disabled:
+              isEditView &&
+              permissionMap?.['comments']?.read &&
+              !permissionMap?.['comments']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['comments']?.read &&
+              !permissionMap?.['comments']?.edit,
           }),
         ],
       },
       {
         sectionName: 'Audit Information',
         fillType: 'half',
-        hide: !disableFields,
+        hide: !isEditView,
         fields: [
           createTextField('record_id', 'Record ID', {
             required: false,
             disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['rid']?.read &&
+              !permissionMap?.['rid']?.edit,
           }),
           createTextField('created_on', 'Created On', {
             required: false,
             disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_datetime']?.read &&
+              !permissionMap?.['created_datetime']?.edit,
           }),
           createTextField('created_by', 'Created By', {
             required: false,
             disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_by']?.read &&
+              !permissionMap?.['created_by']?.edit,
           }),
           createTextField('account_id', 'Account ID', {
             required: false,
             disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['r_number']?.read &&
+              !permissionMap?.['r_number']?.edit,
           }),
           createTextField('updated_on', 'Updated On', {
             required: false,
             disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_by']?.read &&
+              !permissionMap?.['modified_by']?.edit,
           }),
           createTextField('updated_by', 'Updated By', {
             required: false,
             disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_datetime']?.read &&
+              !permissionMap?.['modified_datetime']?.edit,
           }),
         ],
       },
@@ -475,7 +690,7 @@ export const AccFormData = (
     [
       statusOptions,
       industrys,
-      disableFields,
+      isEditView,
       parentAccount,
       isParentAccountRequired,
       country,
@@ -487,6 +702,7 @@ export const AccFormData = (
       keyContacts,
       addNewKeyContact,
       removeKeyContact,
+      permissionMap,
     ]
   );
 };
