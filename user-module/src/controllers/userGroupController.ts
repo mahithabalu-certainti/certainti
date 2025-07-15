@@ -607,7 +607,6 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
       user_rid,
       group_rid,
       account_rid,
-      has_access_enabled,
       userId
     } );
     
@@ -804,7 +803,6 @@ async function assignAccountsToGroup(req: Request, res: Response): Promise<void>
     const result = await services.userGroupService.assignAccountsToGroup({
       account_rid,
       group_rid,
-      has_access,
       userId
     } );
     
