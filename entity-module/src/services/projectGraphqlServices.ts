@@ -20,7 +20,7 @@ class ProjectGraphQlServices {
     async inLineEditProject (data : any) {
         const mainSequelize = await initMainDbSequelize();
         const orgSequelize = await initOrgSequelize();
-        const checkAccountExists : any = await mainSequelize.query(rawQueries.fetchParentAccount(data.account_rid))
+        const checkAccountExists : any = await mainSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainSequelize))
         if(checkAccountExists[0].length < 1) {
             return {
             statusCode : HttpStatus.NOT_FOUND,

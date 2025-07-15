@@ -1,3 +1,4 @@
+import { Sequelize } from "sequelize";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -101,7 +102,15 @@ export const STATUS_MESSAGE = {
   resourceSkillSubTypeNoFound : "Resource Skill SubType you are trying to update is invalid",
   resourceSkillLevelNoFound : "Resource Skill level you are trying to update is invalid",
   resourceSkillUpdSuccess : "Resource Skill updated successfully",
-    
+  noAttachmentRecordFound : "No Attachment record found",
+  noDataToUpdate : "Data is requried to update",
+  attachmentUpdatedSuccess : "Attachment details updated successfully",
+  userIdEmpty : "User-Id is missing",
+  attachmentIdMissing : "Attachment RID missing",
+  docCatInvalid : "Document category you are trying to update is invalid",
+  docTypeInvalid : "Document Type you are trying to update is invalid",
+  NoResourceFound : "No Resource found",
+  separateDb : "separate_db"
 }
 
 export const TYPES = {
@@ -111,7 +120,11 @@ export const TYPES = {
 }
 
 export const rawQueries = {
-  fetchParentAccount (accountRid : string) {
+  async fetchParentAccount (accountRid : any, mainSequelize : Sequelize) : Promise <any> {
+    let checkIsSeparateDb : any = await mainSequelize.query(`SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`)
+    if(checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    } else {
       return `
       with fetch_account_details AS (
       SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
@@ -120,6 +133,7 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`
+    }
   },
   findProject (schemaName : string, projectRid : string, accountRid : string) {
     return `
@@ -374,5 +388,50 @@ export const rawQueries = {
   },
   fetchQreFromPrjSum (project_rid : string, account_rid : string) {
     return `SELECT qre FROM ${MAIN_SCHEMA_NAME}.project_summary WHERE project_rid = '${project_rid}' AND account_rid = '${account_rid}'`
+  },
+  findAttachementDetails (schemaName : string, rid : string, account_rid : string) {
+    return `
+      SELECT attachment_level, attach_to FROM ${schemaName}.attachments WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
+  },
+  fetchSchemaName(r_number : string) {
+    return `${MAIN_SCHEMA_NAME}_${r_number.replace('ACC-', '')}`
+  },
+  updateAttachmentQuery (schemaName : string, getSetData : any, data : any) {
+    return `
+    UPDATE 
+        ${schemaName}.attachments 
+    SET 
+        ${getSetData.data.join(',')}
+    WHERE
+        rid = '${data.rid}'
+        AND
+        account_rid = '${data.account_rid}'`
+  },
+  updateAttachmentSummary (getSetData : any, data : any) {
+    return `
+          UPDATE
+              ${MAIN_SCHEMA_NAME}.attachment_summary
+          SET
+              ${getSetData.data.join(',')}
+          WHERE
+              document_rid = '${data.rid}'
+              AND
+              account_rid = '${data.account_rid}'
+          `
+  },
+  insertAttachementTimeline (schemaName : string, data : any, latestData : any) {
+    return `
+          INSERT INTO ${schemaName}.attachment_timeline
+          (created_by, modified_by, document_rid, document_name, document_category_rid, document_type_rid, attach_to, attachment_level, event_type, event_status, event_name, event_datetime)
+          VALUES
+          ('${data.userId}', '${data.userId}', '${latestData.rid}', '${latestData.document_name}', '${latestData.document_category_rid}', '${latestData.document_type_rid}', '${latestData.attach_to}',
+          '${latestData.attachment_level}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', '${STATUS_MESSAGE.eventUpdate}', NOW()
+          )`
+  },
+  checkDocCategoryExists(rid : string) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.document_category where rid = '${rid}'`
+  },
+  checkDocTypeExists(rid : string) {
+    return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.document_type where rid = '${rid}'`
   }
 }

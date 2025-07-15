@@ -676,7 +676,7 @@ export class ProjectResourceService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResource: any };
+    data?: { projectResource: any, attachment: any };
   }> {
     try {
       const { accountNumber } =
@@ -692,11 +692,17 @@ export class ProjectResourceService {
           projectResourceId
         );
 
+      // Fetch attachments for the project resource
+        const attachments = await this.projectResourceSchema.fetchAttachmentsByProjectResourceId(
+          projectResourceId
+        );
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           projectResource,
+          attachment: attachments || []
         },
       };
     } catch (err) {

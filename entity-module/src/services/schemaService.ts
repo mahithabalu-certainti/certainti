@@ -3324,6 +3324,50 @@ async getChildAccounts(entityId: string) {
   }
 }
 
+async fetchAttachmentsByProjectId(project_rid: string): Promise<any[]> {
+  try {
+    const sequelize = await initMainDbSequelize();
+    
+    const result = await sequelize.query(`
+      SELECT 
+        a.*
+      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
+      WHERE a.attach_to = :project_rid
+      ORDER BY a.created_datetime DESC
+    `, {
+      replacements: { project_rid },
+      type: "SELECT"
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching attachments:', error);
+    throw new Error('Failed to fetch attachments');
+  }
+}
+
+async fetchAttachmentsByResourceId(resource_rid: string): Promise<any[]> {
+  try {
+    const sequelize = await initMainDbSequelize();
+    
+    const result = await sequelize.query(`
+      SELECT 
+        a.*
+      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
+      WHERE a.attach_to = :resource_rid
+      ORDER BY a.created_datetime DESC
+    `, {
+      replacements: { resource_rid },
+      type: "SELECT"
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching attachments:', error);
+    throw new Error('Failed to fetch attachments');
+  }
+}
+
 }
 
 export default SchemaService;

@@ -393,6 +393,9 @@ export class ResourceService {
         resourceDetails.modified_by = userNames.modified_by_name;
       }
 
+      const attachments = await this.schemaService.fetchAttachmentsByResourceId(resourceId);
+      resourceDetails.attachment = attachments || [];
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

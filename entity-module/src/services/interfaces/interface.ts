@@ -255,7 +255,7 @@ export interface IProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any, attachment: any };
   }>;
   projectList(
     accountId: string,
@@ -373,7 +373,7 @@ export interface IAttachmentService {
   filters: Record<string, any>,
   sortBy: string,
   sortOrder: string,
-  fiscalYear:number):Promise<{
+  fiscalYear:number, graphqlData : any):Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
@@ -420,7 +420,7 @@ export interface IProjectResourceService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResource: any };
+    data?: { projectResource: any, attachment: any };
   }>;
   getResourceCodes(accountId: string): Promise<{
     statusCode: number;
@@ -467,5 +467,14 @@ export interface IProjectResourceService {
     message: string;
     errorMessage?: string;
     data?: { projectResources: any };
+  }>;
+}
+
+export interface IAttachmentGraphqlServices {
+  updateInlineAttachment (data : any) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
   }>;
 }

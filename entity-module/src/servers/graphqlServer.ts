@@ -12,6 +12,8 @@ import configurations from "../config/config";
 import { Application } from "express";
 import { projectSchema } from "../graphql/projectSchema";
 import { projectResolver } from "../resolvers/projectResolver";
+import attachmentSchema from '../graphql/attachmentSchema'
+import { attachmentResolver } from "../resolvers/attachmentResolver";
 import { projectResourceSchema } from "../graphql/projectResourceSchema";
 import { projectResourceResolver } from "../resolvers/projectResourceResolver";
 
@@ -29,6 +31,7 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
       resourceSkillGraphQlSchema,
       resourceSchema,
       projectSchema,
+      attachmentSchema,
       projectResourceSchema
     ],
     resolvers: [
@@ -36,6 +39,7 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
       resourceSkillResolvers,
       resourceResolver,
       projectResolver,
+      attachmentResolver,
       projectResourceResolver
     ],
   });

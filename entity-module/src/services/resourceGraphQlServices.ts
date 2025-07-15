@@ -16,7 +16,7 @@ export default class ResourceGraphQlServices {
     const orgSequelize = await initOrgSequelize();
 
     const checkAccountExists: any = await mainSequelize.query(
-      rawQueries.fetchParentAccount(data.account_rid)
+      await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)
     );
 
     if (checkAccountExists.length < 1) {
@@ -36,7 +36,7 @@ export default class ResourceGraphQlServices {
       if (fetchResources[0].length < 1) {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          statusMessage: STATUS_MESSAGE.accountNoFound,
+          statusMessage: STATUS_MESSAGE.NoResourceFound,
           data : null
         };
       }
