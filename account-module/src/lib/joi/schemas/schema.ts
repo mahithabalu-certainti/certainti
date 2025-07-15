@@ -304,7 +304,7 @@ const listOrgAccountSchema = Joi.object({
  
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC")
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
 const listAccountSchema = Joi.object({
   page: Joi.string()
