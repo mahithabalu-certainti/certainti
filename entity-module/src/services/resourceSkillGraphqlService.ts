@@ -72,6 +72,7 @@ async updateInlineResourceSkill (data : any) {
 
                     attributeName = trimmedData
                     oldValue = getResourceSkill[0][0][trimmedData]
+                    oldValue = oldValue == null ? '' : oldValue.replace(/'/g, "''")
                     newValue = data[trimmedData]
                     if(newValue == undefined) newValue = ''
                     else newValue = newValue
