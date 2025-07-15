@@ -314,54 +314,60 @@ export const validateInlineEditPayload = (data : any) => {
   export const setInlineValues = (dbData : any, requestData : any, dbDataDetails : any) => {
     let newDbData : any = {};
     let newDbAccDetailsData : any = {}
-    if(requestData.organisation_name) 
+    if(requestData.organisation_name != undefined) 
       newDbData.organisation_name = requestData.organisation_name !== dbData.organisation_name ? requestData.organisation_name : dbData.organisation_name
     if(requestData.finance_lead)
       newDbData.finance_lead = requestData.finance_lead !== dbData.finance_lead ? requestData.finance_lead : dbData.finance_lead
-    if(requestData.finance_executive)
+    if(requestData.finance_executive != undefined)
       newDbData.finance_executive = requestData.finance_executive !== dbData.finance_executive ? requestData.finance_executive : dbData.finance_executive
-    if(requestData.professional_services_consultant)
+    if(requestData.professional_services_consultant != undefined)
       newDbData.professional_services_consultant = requestData.professional_services_consultant !== dbData.professional_services_consultant ? requestData.professional_services_consultant : dbData.professional_services_consultant
-    if(requestData.account_name) 
+    if(requestData.account_name != undefined) 
       newDbData.account_name = requestData.account_name !== dbData.account_name ? requestData.account_name : dbData.account_name
-    if(requestData.comments) 
+    if(requestData.comments != undefined) 
       newDbData.comments = requestData.comments !== dbData.comments ? requestData.comments : dbData.comments
-    if(requestData.status_rid)
+    if(requestData.status_rid != undefined)
       newDbData.status_rid = requestData.status_rid !== dbData.status_rid ? requestData.status_rid : dbData.status_rid
     if(typeof requestData.is_parent == 'boolean')
       newDbData.is_parent = requestData.is_parent !== dbData.is_parent ? requestData.is_parent : dbData.is_parent
-    if(requestData.parent_account_rid)
+    if(requestData.parent_account_rid != undefined)
       newDbData.parent_account_rid = requestData.parent_account_rid !== dbData.parent_account_rid ? requestData.parent_account_rid : dbData.parent_account_rid
-    if(requestData.account_name)
+    if(requestData.account_name != undefined)
       newDbAccDetailsData.account_name = requestData.account_name !== dbDataDetails.account_name ? requestData.account_name : dbDataDetails.account_name
-    if(requestData.max_ai_interactions)
+    if(requestData.max_ai_interactions != undefined)
       newDbAccDetailsData.max_ai_interactions = requestData.max_ai_interactions !== dbDataDetails.max_ai_interactions ? requestData.max_ai_interactions : dbDataDetails.max_ai_interactions
     if(typeof requestData.autosend_interaction == 'boolean')
       newDbAccDetailsData.autosend_interaction = requestData.autosend_interaction !== dbDataDetails.autosend_interaction ? requestData.autosend_interaction : dbDataDetails.autosend_interaction
-    if(requestData.fiscal_start_date)
+    if(requestData.fiscal_start_date != undefined)
       newDbAccDetailsData.fiscal_start_date = requestData.fiscal_start_date !== dbDataDetails.fiscal_start_date ? requestData.fiscal_start_date : dbDataDetails.fiscal_start_date
-    if(requestData.fiscal_end_date)
+    if(requestData.fiscal_end_date != undefined)
       newDbAccDetailsData.fiscal_end_date = requestData.fiscal_end_date !== dbDataDetails.fiscal_end_date ? requestData.fiscal_end_date : dbDataDetails.fiscal_end_date
-    if(requestData.blended_rate_fte)
+    if(requestData.blended_rate_fte != undefined)
       newDbAccDetailsData.blended_rate_fte = requestData.blended_rate_fte !== dbDataDetails.blended_rate_fte ? requestData.blended_rate_fte : dbDataDetails.blended_rate_fte
-    if(requestData.blended_rate_subcon)
+    if(requestData.blended_rate_subcon != undefined)
       newDbAccDetailsData.blended_rate_subcon = requestData.blended_rate_subcon !== dbDataDetails.blended_rate_subcon ? requestData.blended_rate_subcon : dbDataDetails.blended_rate_subcon
-    if(requestData.industry_rid)
+    if(requestData.industry_rid != undefined)
       newDbData.industry_rid = requestData.industry_rid !== dbData.industry_rid ? requestData.industry_rid : dbData.industry_rid
-    if(requestData.industry_name_other)
+    if(requestData.industry_name_other != undefined)
       newDbData.industry_name_other = requestData.industry_name_other !== dbData.industry_name_other ? requestData.industry_name_other : dbData.industry_name_other
-    if(requestData.website)
+    if(requestData.website != undefined)
       newDbAccDetailsData.website = requestData.website !== dbDataDetails.website ? requestData.website : dbDataDetails.website
-    if(requestData.annual_revenue)
+    if(requestData.annual_revenue != undefined)
       newDbData.annual_revenue = requestData.annual_revenue !== dbData.annual_revenue ? requestData.annual_revenue : dbData.annual_revenue
-    if(requestData.business_details)
+    if(requestData.business_details != undefined)
       newDbAccDetailsData.business_details = requestData.business_details !== dbDataDetails.business_details ? requestData.business_details : dbDataDetails.business_details
-    if(requestData.country_rid) {
+    if(requestData.country_rid != undefined) {
        newDbData.country_rid = requestData.country_rid !== dbData.country_rid ? requestData.country_rid : dbData.country_rid
        newDbData.region_rid = requestData.country_rid != dbData.country_rid ? null : dbData.region_rid
     }
-    if(requestData.currency_rid)
+    if(requestData.currency_rid != undefined)
       newDbData.currency_rid = requestData.currency_rid !== dbData.currency_rid ? requestData.currency_rid : dbData.currency_rid
+    
+    if(Object.keys(newDbData).length == 0 && Object.keys(newDbAccDetailsData).length == 0) {
+      return {
+        newDbData, newDbAccDetailsData
+      }
+    } else {
       newDbData.modified_by = requestData.userId
       newDbAccDetailsData.modified_by = requestData.userId
       newDbData.modified_datetime = new Date().toISOString()
@@ -369,6 +375,7 @@ export const validateInlineEditPayload = (data : any) => {
       return {
         newDbData, newDbAccDetailsData
       }
+    }
   }
 
   export const setKeyContact = (dbData : any, d : any) => {

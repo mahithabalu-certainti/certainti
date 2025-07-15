@@ -1060,7 +1060,7 @@ async insertClientTemplateDetails(
     }
   }
 
-  async accountById(account_id: string): Promise<{
+async accountById(account_id: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -1148,11 +1148,18 @@ async insertClientTemplateDetails(
         acconuntNumber,
         accountById?.rid || "",
       );
+
       // Fetch key contacts for the account
       const keyContacts = await this.schemaService.fetchKeyContacts(
         accountById?.rid || "",
         acconuntNumber
       );
+
+      // Fetch attachments for the account
+      const attachments = await this.schemaService.fetchAttachments(
+        account_id,
+      );
+
       let userNames;
       if(accountById)
       {
@@ -1164,16 +1171,17 @@ async insertClientTemplateDetails(
         (accountById as any).dataValues.modified_by = userNames.modified_by_name;
       }
     
-
       accountById = await this.schemaService.insertIndustyName(accountById);
 
-      // Add key contacts to account details
+      // Add key contacts and attachments to account details
       const accountData = {
         ...accountDetails.length > 0 ? accountDetails[0] : {},
         keyContacts: keyContacts.length > 0 ? keyContacts : [],
+        attachments: attachments.length > 0 ? attachments : [],
         created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

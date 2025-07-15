@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import Joi from "joi";
+import moment from "moment";
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
@@ -113,6 +114,53 @@ const isEndDateAfterStartDateForProject = (
   // Parse dates in MM/DD/YYYY format
   const [endYear, endMonth, endDay] = value.split("-").map(Number);
   const [startYear, startMonth, startDay] = context.project_startdate
+    .split("-")
+    .map(Number);
+
+  // Create date objects with time set to noon UTC to avoid timezone issues
+  const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay, 12, 0, 0));
+  const startDate = new Date(
+    Date.UTC(startYear, startMonth - 1, startDay, 12, 0, 0)
+  );
+
+  // Check if the end date is valid
+  if (isNaN(endDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective end date.",
+    });
+  }
+
+  // Check if the start date is valid
+  if (isNaN(startDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective start date.",
+    });
+  }
+
+  // Compare dates
+  if (endDate <= startDate) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
+  }
+
+  return value;
+};
+
+const isProjectResEndDateAfterStartDate = (
+  value: string,
+  helpers: Joi.CustomHelpers
+): any => {
+  const context = helpers.state?.ancestors[0];
+
+  // If either value or effective_from_date is missing, return the value as-is
+  if (!context?.start_date || !value) {
+    return value;
+  }
+
+  // Parse dates in yyyy-mm-dd format
+  const [ endYear, endMonth, endDay ] = value.split("-").map(Number);
+  const [startYear,startMonth, startDay] = context.start_date
     .split("-")
     .map(Number);
 
@@ -1730,12 +1778,12 @@ const createAttachmentSchema = Joi.object({
     //     }),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
-        .valid('project', 'account', 'case')
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be either project, account or case'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
         }),
     // document_name: Joi.string()
     //     .required()
@@ -1851,13 +1899,13 @@ const createAttachmentSchema = Joi.object({
 });
 
 const listAttachmentsSchema = Joi.object({
-    level: Joi.string()
-        .valid('account', 'project', 'case')
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
         .messages({
-            'any.required': 'Level is required',
-            'string.base': 'Level must be a string',
-            'any.only': 'Level must be one of: account, project, case'
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -1905,6 +1953,68 @@ const listAttachmentsSchema = Joi.object({
             'string.max': 'Search cannot exceed 255 characters'
         }),
     filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const listAttachmentSummarySchema = Joi.object({
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
@@ -1912,6 +2022,214 @@ const listAttachmentsSchema = Joi.object({
 const getDocumentTypeAndCategorySchema = Joi.object({
    category_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional()
 })
+
+const createProjectResourceSchema = Joi.object({
+  project_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  resource_code: Joi.string().min(3).max(50).required(),
+  resource_type_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_orgname: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  designation: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  resource_role: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  status_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  country_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  region_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the format YYYY-MM-DD",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid start_date date.",
+    }),
+  end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isProjectResEndDateAfterStartDate, "End Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the formatYYYY-MM-DD",
+      "any.invalid": "Effective end date must be after the start date.",
+      "date.invalidFormat":
+        "Invalid end_date. Please use the format YYYY-MM-DD",
+    }),
+
+  total_hours_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_cost_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+
+  salary: costFieldValidator('salary'),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  
+  description: Joi.string().max(2000).optional().allow("").allow(null),
+});
+
+const updateProjectResourceSchema = Joi.object({
+  project_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_resource_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  resource_code: Joi.string().min(3).max(50).required(),
+  resource_type_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_orgname: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  designation: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  resource_role: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  status_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  country_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  region_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the format YYYY-MM-DD",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid start_date date.",
+    }),
+  end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isProjectResEndDateAfterStartDate, "End Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the formatYYYY-MM-DD",
+      "any.invalid": "Effective end date must be after the start date.",
+      "date.invalidFormat":
+        "Invalid end_date. Please use the format YYYY-MM-DD",
+    }),
+
+  total_hours_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_cost_pro_res: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+
+  salary: costFieldValidator('salary'),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  
+  description: Joi.string().max(2000).optional().allow("").allow(null),
+});
+
+const exportListProjectResourceSchema = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  timezone: Joi.string().optional()
+});
 
 export {
   listResourceSkillSchema,
@@ -1933,5 +2251,9 @@ export {
   exportListResourceSchema,
   createAttachmentSchema,
   listAttachmentsSchema,
-  getDocumentTypeAndCategorySchema
+  getDocumentTypeAndCategorySchema,
+  listAttachmentSummarySchema,
+  createProjectResourceSchema,
+  updateProjectResourceSchema,
+  exportListProjectResourceSchema
 };

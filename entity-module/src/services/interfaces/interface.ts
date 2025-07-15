@@ -2,10 +2,12 @@ import { Project } from "../../models/project";
 import {
   ICreateAttachment,
   ICreateProject,
+  ICreateProjectResource,
   ICreateResource,
   IResourceCost,
   IResourceSkill,
   IUpdateProject,
+  IUpdateProjectResource,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
@@ -253,7 +255,7 @@ export interface IProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any, attachment: any };
   }>;
   projectList(
     accountId: string,
@@ -362,7 +364,7 @@ export interface IAttachmentService {
   }>;
 
   getAttachments(userId: string,
-  level: string,
+  attachmentLevel: string,
   entityId: string,
   accountRid: string,
   page:number,
@@ -370,17 +372,109 @@ export interface IAttachmentService {
   search: string,
   filters: Record<string, any>,
   sortBy: string,
-  sortOrder: string):Promise<{
+  sortOrder: string,
+  fiscalYear:number, graphqlData : any):Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
   data?: { attachments: any[]; totalCount: number };
-}>
+  }>
+
+  getAttachmentSummary(userId: string,
+  page:number,
+  limit:number,
+  search: string,
+  filters: Record<string, any>,
+  globalFilters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string,
+  fiscalYear:number):Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[]; totalCount: number };
+  }>
 
   getDocumentTypeAndCategory(category_rid: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { documentTypes: any[]; documentCategories: any[] };
+  }>;
+}
+
+export interface IProjectResourceService {
+  createProjectResource(projectResourceData: ICreateProjectResource, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
+  }>;
+  updateProjectResource(projectResourceData: IUpdateProjectResource, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
+  }>;
+  projectResourceDetails(projectResourceId: string, accountId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any, attachment: any };
+  }>;
+  getResourceCodes(accountId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }>;
+  getResourceSkillRoles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRoles: any };
+  }>;
+  getResourceSkillRolesSubtype(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
+  }>;
+  listProjectResources(
+    accountId: string,
+    projectId: string,
+    fiscal_year: number,
+    page: number,
+    limit: number,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResources: any };
+  }>;
+  exportProjectResources(
+    accountId: string,
+    projectId: string,
+    fiscal_year: number,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResources: any };
+  }>;
+}
+
+export interface IAttachmentGraphqlServices {
+  updateInlineAttachment (data : any) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
   }>;
 }

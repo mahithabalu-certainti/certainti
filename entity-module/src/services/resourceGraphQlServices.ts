@@ -1,3 +1,4 @@
+import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
@@ -6,6 +7,8 @@ import {
   STATUS_MESSAGE,
 } from "../utils/constants";
 import { setResourceFiscal, setResourcesData } from "../utils/helpers";
+const services = Configurations.getInstance().getServices()
+const resourceServices = services.resourceService
 
 export default class ResourceGraphQlServices {
   async inLineEditResources(data: any) {
@@ -20,6 +23,7 @@ export default class ResourceGraphQlServices {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         statusMessage: STATUS_MESSAGE.accountNoFound,
+        data : null
       };
     } else {
       let schemaName = `"trd365_${checkAccountExists[0][0].r_number.replace(
@@ -33,6 +37,7 @@ export default class ResourceGraphQlServices {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           statusMessage: STATUS_MESSAGE.accountNoFound,
+          data : null
         };
       }
       if (data.resource_type_rid) {
@@ -43,6 +48,7 @@ export default class ResourceGraphQlServices {
           return {
             statusCode: HttpStatus.NOT_FOUND,
             statusMessage: STATUS_MESSAGE.resourceTypeNotFound,
+            data : null
           };
         }
       }
@@ -54,6 +60,7 @@ export default class ResourceGraphQlServices {
           return {
             statusCode: HttpStatus.NOT_FOUND,
             statusMessage: STATUS_MESSAGE.countryNotFound,
+            data : null
           };
         }
       }
@@ -65,6 +72,7 @@ export default class ResourceGraphQlServices {
           return {
             statusCode: HttpStatus.NOT_FOUND,
             statusMessage: STATUS_MESSAGE.stateNotFound,
+            data : null
           };
         }
       }
@@ -76,6 +84,7 @@ export default class ResourceGraphQlServices {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
             statusMessage: STATUS_MESSAGE.resourceCodeDuplicate,
+            data : null
           };
         }
       }
@@ -122,6 +131,9 @@ export default class ResourceGraphQlServices {
             else newValue = data[finalTrimmedKey];
             attributeName = finalTrimmedKey;
             oldValue = fetchResources[0][0][finalTrimmedKey];
+            
+            if(newValue == undefined) newValue = ''
+            else newValue = newValue
             if (oldValue !== newValue) {
               let query = rawQueries.insertQueryResHistory(
                 schemaName,
@@ -134,10 +146,41 @@ export default class ResourceGraphQlServices {
             }
           }
         }
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          statusMessage: STATUS_MESSAGE.resourceUpdateSuccess,
-        };
+        let fetchResourcesList = await resourceServices.resourceById(checkAccountExists[0][0].r_number, data.resource_rid)
+        if(fetchResourcesList.data?.resourceDetails) {
+          let data = fetchResourcesList.data?.resourceDetails
+          let finalData = {
+            rid : data.rid, 
+            r_number : data.r_number,
+            resource_code : data.resource_code,
+            resource_name : data.resource_name,
+            resource_firstname : data.resource_firstname,
+            resource_lastname : data.resource_lastname,
+            resource_type_rid : data.resource_type_rid,
+            status_rid : data.status_rid,
+            resource_role : data.resource_role,
+            resource_designation : data.resource_designation,
+            resource_orgname : data.resource_orgname,
+            comments : data.comments,
+            resource_total_experience : data.resource_total_experience,
+            country_rid : data.country_rid,
+            region_rid : data.region_rid,
+            city_rid : data.city_rid,
+            account_name : checkAccountExists[0][0].account_name,
+            total_project_hours : data.total_effort_for_year_project,
+            estimated_rd_hours : data.estimated_rd_hours,
+            country_name : data.country_name,
+            region_name : data.region_name,
+            city_name : data.city_name,
+            resource_type_name : data.resource_type_name,
+            status_name : data.status_name
+          }
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: STATUS_MESSAGE.resourceUpdateSuccess,
+            data : finalData
+        }
+        }
       }
     }
   }

@@ -100,7 +100,7 @@ export class Attachment
           allowNull: false,
         },
         attachment_level: {
-          type: DataTypes.STRING(100),
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         fiscal_year: {

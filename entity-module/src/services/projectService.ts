@@ -31,6 +31,8 @@ import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import Decimal from "decimal.js";
 import { ProjectSummary } from "../models/projectSummary";
+import { setupProjectFiscalRegion } from "../models/projectFiscalRegion";
+import { AccountFiscalRegion, setupAccountFiscalRegionSequence } from "../models/accountFiscalRegion";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -143,6 +145,10 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
+      const AccountFiscalRegionModel = await AccountFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await ProjectModel.sync({ force: false });
       await ProjectFiscalModel.sync({ force: false });
@@ -151,12 +157,16 @@ export class ProjectService {
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
       await AccountFiscalModel.sync({ force: false });
+      await AccountFiscalRegionModel.sync({ force: false });
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
+      await setupProjectFiscalRegion(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       return this.throwServiceError(err as Error);
     }
@@ -199,6 +209,15 @@ export class ProjectService {
               userId
             );
 
+            if(projectData.region_rid){
+              await this.projectIngestion.addProjectFiscalRegion(
+                accountNumber,
+                projectData,
+                existingProject.rid,
+                userId
+              );
+            }
+
           if (createdProjectFiscal && createdProjectFiscal.rid) {
             createdProjectId = createdProjectFiscal.rid;
             await this.projectIngestion.addProjectFiscalSummary(
@@ -226,6 +245,13 @@ export class ProjectService {
               accountNumber,
               projectData
             );
+
+            if(projectData.region_rid){
+              await this.projectIngestion.addAccountFiscalRegion(
+                accountNumber,
+                projectData
+              );
+            }
 
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
               accountNumber,
@@ -264,6 +290,15 @@ export class ProjectService {
               userId
             );
 
+          if(projectData.region_rid){
+            await this.projectIngestion.addProjectFiscalRegion(
+              accountNumber,
+              projectData,
+              createdProject.rid,
+              userId
+            );
+          }
+
           const startDate = projectData.project_startdate
           ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
           : null;
@@ -294,6 +329,13 @@ export class ProjectService {
             accountNumber,
             projectData
           );
+
+          if(projectData.region_rid){
+            await this.projectIngestion.addAccountFiscalRegion(
+              accountNumber,
+              projectData
+            );
+          }
 
           await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
             accountNumber,
@@ -432,6 +474,12 @@ export class ProjectService {
       existingFiscalData?.project_code || ""
     );
 
+    await this.projectIngestion.updateProjectFiscalRegion(
+      accountNumber,
+      projectData,
+      existingFiscalData?.project_code || ""
+    );
+
     if (projectData.key_contacts) {
       await this.projectIngestion.manageKeyContacts(
         projectData.key_contacts,
@@ -480,7 +528,7 @@ export class ProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any, attachment: any };
   }> {
     try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
@@ -514,6 +562,7 @@ export class ProjectService {
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
             project: [],
+            attachment: [],
           },
         };
       }
@@ -543,6 +592,7 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+
         projectData = await this.schemaService.projectClassificationData(
           projectData,
           mainDbInit
@@ -551,13 +601,19 @@ export class ProjectService {
         projectData = this.insertAccount(projectData, accountData);
 
         projectData = await this.schemaService.insertUserDetails(projectData);
-      }
+        }
+
+        // Fetch attachments for the project
+        const attachments = await this.schemaService.fetchAttachmentsByProjectId(
+          projectId
+        );
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           project: projectData,
+          attachment: attachments || []
         },
       };
     } catch (err) {
@@ -653,7 +709,8 @@ export class ProjectService {
         bothParentAndChild,
         filters,
         finalMetaDataSortBy,
-        finalMetaDataSortOrder
+        finalMetaDataSortOrder,
+        {}
       );
 
       return {
