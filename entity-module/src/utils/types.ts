@@ -373,3 +373,18 @@ export interface IUpdateProjectResource {
   description?: string | null;
   modified_by?: string;
 }
+
+export interface IUpdateInlineProjectResource {
+  project_resource_rid: string;
+  project_rid: string;
+  account_rid: string;
+  resource_code?: string;
+  resource_name?: string;
+  resource_type_rid: string;
+  resource_role?: string | null;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  region_rid?: string | null;
+  description?: string | null;
+  modified_by?: string;
+}
