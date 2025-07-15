@@ -146,7 +146,7 @@ export const ProfileList: React.FC = () => {
       setIsExporting(false);
     }
   };
-  const profileFilterFeilds = getManageProfileFilterFields(permissionMap);
+  const profileFilterFields = getManageProfileFilterFields(permissionMap);
   if (!isProfileEnable || !isProfileViewEnable) return <AccessRestricted />;
 
   return (
@@ -221,7 +221,7 @@ export const ProfileList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={profileFilterFeilds}
+                filterFields={profileFilterFields}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
