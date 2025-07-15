@@ -2617,29 +2617,49 @@ async createUserGroup( accountData: IAccount,userId: string,
     account_rid: string,
     ){
       const sequelize = await initSequelize();
-    await sequelize.query(
-      `
-        INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
-          account_rid,group_name,group_type,created_by
-        ) 
-        VALUES (
-          :account_rid, 
-          :group_name, 
-          :group_type, 
-          :created_by
-        );
-      `,
-      {
-        replacements: {
-          account_rid: account_rid,
-          group_name: 'G-'+accountData.account_name,
-          group_type: is_parent ? 'Client Firm Global' :'Client Firm Child',
-          created_by: userId,
-        },
-      }
-    );
+      // Step 1: Determine group_type_name based on is_parent
+      const groupTypeName = is_parent ? 'Client Firm Global' : 'Client Firm Child';
 
-}
+      // Step 2: Fetch group_type_rid from user_group_type table
+      const result = await sequelize.query<{ rid: string }>(
+        `
+          SELECT rid
+          FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
+          WHERE group_type_name = :group_type_name
+          LIMIT 1
+        `,
+        {
+          replacements: { group_type_name: groupTypeName },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      const groupTypeResult = result[0]; 
+      if (!groupTypeResult?.rid) {
+        throw new Error(`Group type '${groupTypeName}' not found in user_group_type table.`);
+      }
+      const group_type_rid = groupTypeResult.rid;
+  // Step 3: Insert into user_groups
+      await sequelize.query(
+        `
+          INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
+             group_name, group_type_rid, created_by
+          ) 
+          VALUES (
+            :group_name, 
+            :group_type_rid, 
+            :created_by
+          );
+        `,
+        {
+          replacements: {
+            group_name: 'G-' + accountData.account_name,
+            group_type_rid,
+            created_by: userId,
+          },
+        }
+      );
+    }
 async getUserGroupType(userRid: string): Promise<string | null>   {
   const mainDbSequelize = await initSequelize();
   
