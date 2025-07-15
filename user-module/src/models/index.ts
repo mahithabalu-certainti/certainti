@@ -37,6 +37,8 @@ import { UserGroup } from "./userGroupModel";
 import { UserGroupMapping } from "./userGroupMappingModel";
 import { UserGroupEntityAccess } from "./UserGroupEntityAccessModel";
 import { PermissionObjectMapping } from "./permissionObjectMappingModel";
+import { UserGroupType } from "./userGroupTypesModel";
+import { UserGroupAccountMapping } from "./userGroupAccountMappingModel";
 
 
 export const models: {
@@ -76,6 +78,8 @@ export const models: {
   UserGroup:typeof UserGroup;
   UserGroupMapping:typeof UserGroupMapping;
   UserGroupEntityAccess:typeof UserGroupEntityAccess;
+  UserGroupType:typeof UserGroupType;
+  UserGroupAccountMapping:typeof UserGroupAccountMapping;
 } = {
   BusinessTeams: BusinessTeams,
   Department: Department,
@@ -112,7 +116,9 @@ export const models: {
   PermissionObjectMapping:PermissionObjectMapping,
   UserGroup:UserGroup,
   UserGroupMapping:UserGroupMapping,
-  UserGroupEntityAccess:UserGroupEntityAccess
+  UserGroupEntityAccess:UserGroupEntityAccess,
+  UserGroupType:UserGroupType,
+  UserGroupAccountMapping:UserGroupAccountMapping
 };
 
 export async function initModels() {
@@ -154,6 +160,8 @@ export async function initModels() {
     UserGroup.initialize(sequelize)
     UserGroupMapping.initialize(sequelize)
     UserGroupEntityAccess.initialize(sequelize)
+    UserGroupType.initialize(sequelize)
+    UserGroupAccountMapping.initialize(sequelize)
   
     Object.values(models).forEach((model: any) => { 
       if (model.associate) { 

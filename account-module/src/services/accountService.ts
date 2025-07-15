@@ -747,6 +747,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
               })
             }
       }
+      await this.schemaService.createUserGroup(accountData,userId,account.is_parent,account.rid);
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number || '',

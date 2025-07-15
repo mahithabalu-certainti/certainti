@@ -4,60 +4,48 @@ import { Status } from "./statusModel";
 import { User } from "./userModel";
 import { UserGroupMapping } from "./userGroupMappingModel";
 import { UserGroupType } from "./userGroupTypesModel";
+import { UserGroup } from "./userGroupModel";
 
 // Import User model
 // import { User } from "./userModel";
 
-interface UserGroupAttributes {
+interface UserGroupAccountMappingAttributes {
   rid: string;
-  r_number?: string;
-  group_name: string;
-  status_rid?: string;
   created_by?: string;
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  is_consultant_only_group:boolean;
-  user_count?:number;
-   account_name?: string
+  group_rid: string;
+  account_rid: string;
 }
 
 // Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
-interface UserGroupCreationAttributes
-  extends Optional<UserGroupAttributes, "rid"> {}
+interface UserGroupAccountMappingCreationAttributes
+  extends Optional<UserGroupAccountMappingAttributes, "rid"> {}
 
 // Define the Profile model class extending Sequelize's Model class
-export class UserGroup
-  extends Model<UserGroupAttributes, UserGroupCreationAttributes>
-  implements UserGroupAttributes
+export class UserGroupAccountMapping
+  extends Model<UserGroupAccountMappingAttributes, UserGroupAccountMappingCreationAttributes>
+  implements UserGroupAccountMappingAttributes
 {
   public rid!: string;
-  public r_number?:string;
-  public group_name!: string;
-  public status_rid!: string;
   public created_by?: string;
   public modified_by?: string;
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
-  public is_consultant_only_group!:boolean;
-  public account_name?: string
-  public user_count?:number;
+  public group_rid!: string;
+  public account_rid!: string;
 
 
   static initialize(sequelize: Sequelize) {
     // Initialize the model
-    UserGroup.init(
+    UserGroupAccountMapping.init(
       {
         rid: {
           type: DataTypes.STRING(50), 
           defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
-        },
-         r_number: {
-          type: DataTypes.STRING(20),
-          allowNull: true,
-          unique: true,
         },
          created_by: {
           type: DataTypes.STRING,
@@ -76,55 +64,33 @@ export class UserGroup
           type: DataTypes.DATE,
           allowNull: true
         },
-        group_name: {
+        group_rid: {
           type: DataTypes.STRING,
            allowNull: false,
         },
-         is_consultant_only_group: {
-          type: DataTypes.BOOLEAN,
-           allowNull: false,
-        },
-        status_rid: {
+        account_rid: {
           type: DataTypes.STRING,
-           references: {
-            model: {
-              tableName : "status",
-              schema : `${MAIN_SCHEMA_NAME}`
-            },
-            key: "rid",
-          },
+          allowNull: false,
         }
         
       },
       {
         sequelize,
-        modelName: "UserGroup",
-        tableName: "user_groups",
+        modelName: "UserGroupAccountMapping",
+        tableName: "user_group_account_mapping",
         timestamps: false,
         schema : `${MAIN_SCHEMA_NAME}`,
       }
     );
   }
   static associate(models: any) {
-    
-    UserGroup.belongsTo(Status, {
-         foreignKey: "status_rid",
-         as: "status",
-       });
-     UserGroup.belongsTo(User, {
-         foreignKey: "created_by",
-         as: "user",
-       });
-    UserGroup.hasMany(UserGroupMapping, {
-        foreignKey: "group_rid",
-        as: "user_mappings"
-      });
-    UserGroup.belongsTo(UserGroupType, {
-        foreignKey: 'group_type_rid',
-        as: 'usergrouptype',
+  
+    UserGroupAccountMapping.belongsTo(UserGroup, {
+        foreignKey: 'group_rid',
+        as: 'usergroupaccount',
     });
 
-    return UserGroup;
+    return UserGroupAccountMapping;
   }
 }
 

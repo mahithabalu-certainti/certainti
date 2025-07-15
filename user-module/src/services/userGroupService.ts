@@ -11,6 +11,8 @@ import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import moment from "moment";
 import { isValidTimezone } from "../utils/helpers";
 import { ProjectAccessView } from "../utils/types";
+import { UserGroupType } from "../models/userGroupTypesModel";
+import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
 
 
 
@@ -40,60 +42,95 @@ class UserGroupService {
    * @param {string} userId - The ID of the user creating the profile
    * @returns {Promise<Object>} - Response object with status and message
    */
-  async createUserGroup(
-    userGroup: {
-      group_name: string;
-      users: string[];
-      account_rid: string;
-      status_rid:string;
-      is_consultant_only_group:boolean;
-    },
-    userId: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-     data?: { usergroup: any };
-  }> {
-    
-    
-    try {
-      const { group_name, users, account_rid, status_rid,is_consultant_only_group } = userGroup;
-      const isUniqueGroup = await this.checkIsGroupNameUnique(group_name);
-      if(!isUniqueGroup){
-        return {
-          statusCode: constants.BAD_REQUEST,
-          message: constants.BAD_REQUEST_MESSAGE,
-          errorMessage: `Group name already exists. Please choose a different name.`
-        };
-      }
-      const result = await UserGroup.create({
-        group_name: group_name,
-        account_rid: account_rid ,
-        status_rid: status_rid,
-        is_consultant_only_group,
-        created_by: userId
-      });
-      const groupRid = result.rid;
-      const userGroupMappings = users.map((user_rid) => ({
-      group_rid: groupRid,
-      user_rid: user_rid,
-      account_rid: account_rid ,
-      created_by: userId,
-      }));
+async createUserGroup(
+  userGroup: {
+    group_name: string;
+    users: string[];
+    account_rid: string | string[];
+    status_rid: string;
+    is_consultant_only_group: boolean;
+  },
+  userId: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { usergroup: any };
+}> {
+  try {
+    const {
+      group_name,
+      users,
+      account_rid,
+      status_rid,
+      is_consultant_only_group,
+    } = userGroup;
 
-      await UserGroupMapping.bulkCreate(userGroupMappings);
-       return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          usergroup:result,
-        },
+    const isUniqueGroup = await this.checkIsGroupNameUnique(group_name);
+    if (!isUniqueGroup) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: `Group name already exists. Please choose a different name.`,
       };
-    } catch (err: any) {
-      return this.throwServiceError(err as Error);
     }
+    // Step 1: Create the group (only once)
+    const newGroup = await UserGroup.create({
+      group_name,
+      status_rid,
+      is_consultant_only_group,
+      created_by: userId,
+    });
+
+    const groupRid = newGroup.rid;
+
+    // Step 2: Create user mappings
+  //Assign users to group
+   const userresult = await this.assignUsersToGroup({
+         user_rid:users,
+         group_rid:groupRid,
+         has_access:true,
+         userId
+       } );
+  
+  //Assign Accounts to group
+
+   const aacountresult = await this.assignAccountsToGroup({
+        account_rid,
+        group_rid:groupRid,
+        has_access:true,
+        userId
+      } );
+
+  //assign access to all account
+
+  const result = await this.assignEntityAccessToAccount({
+        group_rid:groupRid,
+        account_rid,
+        has_access_enabled:true,
+        userId
+      } );
+
+  //assign access to projects
+   const result1 = await this.assignEntityAccessToProjects({
+      group_rid:groupRid,
+      project_access_list:[],
+      userId
+    } );
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        usergroup: newGroup,
+      },
+    };
+  } catch (err: any) {
+    return this.throwServiceError(err as Error);
   }
+}
+
+
 
   private async checkIsGroupNameUnique(group_name: string): Promise<boolean> {
   const response = await UserGroup.findOne({
@@ -145,7 +182,6 @@ class UserGroupService {
       await UserGroup.update(
       {
         group_name,
-        account_rid,
         status_rid,
         is_consultant_only_group,
         modified_by: userId,
@@ -210,9 +246,9 @@ class UserGroupService {
    * @param {string} [account_rid] - The RID of the account to filter users by org or parent org.
    * @returns {Promise<Object>} - Response with list of eligible users and status metadata.
    */
- async getActiveUsersForGrouping(
+async getActiveUsersForGrouping(
   is_consultant_only_group?: boolean,
-  account_rid?: string
+  account_rid?: string | string[]
 ): Promise<{
   statusCode: number;
   message: string;
@@ -223,20 +259,19 @@ class UserGroupService {
     const whereClause: any = {};
     let orgIdsToFilter: string[] = [];
 
+    // Step 1: If consultant-only group, filter directly
     if (is_consultant_only_group) {
       whereClause.is_consultant_firm = true;
     } else if (account_rid) {
       const sequelize = await initSequelize();
-      const accwhereClause = 'rid = :account_rid';
-      const account = await sequelize.query(
-        constants.SQL_GET_ACCOUNT.replace("{whereClause}", accwhereClause),
-        {
-          replacements: { account_rid },
-          type: constants.SELECT,
-        }
-      ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
 
-      if (!account?.length) {
+      const accountRidArray: string[] = Array.isArray(account_rid)
+        ? account_rid
+        : typeof account_rid === 'string' && account_rid.trim() !== ''
+          ? account_rid.split(',').map((r) => r.trim())
+          : [];
+
+      if (!accountRidArray.length) {
         return {
           statusCode: constants.BAD_REQUEST,
           message: constants.BAD_REQUEST_MESSAGE,
@@ -244,23 +279,38 @@ class UserGroupService {
         };
       }
 
-      const accountResult = account[0];
-      if (accountResult.is_parent) {
-        orgIdsToFilter = [accountResult.rid];
-      } else {
-        orgIdsToFilter = [
-          accountResult.parent_account_rid,
-          accountResult.rid,
-        ];
+      // Fetch account details
+      const accWhereClause = accountRidArray.length > 1
+        ? 'rid IN (:account_rid)'
+        : 'rid = :account_rid';
+
+      const accounts = await sequelize.query(
+        constants.SQL_GET_ACCOUNT.replace("{whereClause}", accWhereClause),
+        {
+          replacements: { account_rid: accountRidArray },
+          type: constants.SELECT,
+        }
+      ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
+
+      if (!accounts?.length) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid account_rid provided.",
+        };
       }
 
+      // Collect org_ids (handle parent/child later if needed)
+      orgIdsToFilter = accounts.map(acc => acc.rid);
+
+      // Filter users belonging to these orgs or consultants
       whereClause[Op.or] = [
         { is_consultant_firm: true },
         { org_id: { [Op.in]: orgIdsToFilter } },
       ];
     }
 
-    // Step 1: Get all ACTIVE users filtered by consultant/org rules
+    // Step 2: Get ACTIVE users
     const allUsers = await User.findAll({
       where: whereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
@@ -275,29 +325,35 @@ class UserGroupService {
       order: [["first_name", "ASC"]],
     });
 
-    const allUserRids = allUsers.map(user => user.rid);
+    const allUserRids = allUsers.map(u => u.rid);
 
-    // Step 2: Get all user group IDs for the given account
-    const userGroups = await UserGroup.findAll({
-      where: { account_rid },
-      attributes: ["rid"]
-    });
+    // Step 3: Get group RIDs for the given accounts from mapping table
+    let groupRids: string[] = [];
+    if (!is_consultant_only_group && orgIdsToFilter.length) {
+      const groupAccountMappings = await UserGroupAccountMapping.findAll({
+        where: {
+          account_rid: {
+            [Op.in]: orgIdsToFilter,
+          }
+        },
+        attributes: ['group_rid'],
+      });
+      groupRids = groupAccountMappings.map(g => g.group_rid);
+    }
 
-    const groupRids = userGroups.map(g => g.rid);
-
-    // Step 3: Get all user_rids already assigned to groups in this account
-    const assignedMappings = await UserGroupMapping.findAll({
-      where: {
-        group_rid: {
-          [Op.in]: groupRids
-        }
-      },
-      attributes: ["user_rid"]
-    });
+    // Step 4: Get already-assigned user_rids
+    const assignedMappings = groupRids.length
+      ? await UserGroupMapping.findAll({
+          where: {
+            group_rid: { [Op.in]: groupRids },
+          },
+          attributes: ["user_rid"]
+        })
+      : [];
 
     const assignedUserRids = assignedMappings.map(m => m.user_rid);
 
-    // Step 4: Filter unassigned users
+    // Step 5: Filter out assigned users
     const unassignedUsers = allUsers.filter(
       user => !assignedUserRids.includes(user.rid)
     );
@@ -312,6 +368,7 @@ class UserGroupService {
     return this.throwServiceError(err as Error);
   }
 }
+
 
 /**
  * Retrieves all active users related to the given account and enriches them with access and grouping flags.
@@ -418,7 +475,7 @@ async getAccountUsers(
     if (account_rid) {
       // Step 5: Get groups for this account
       const groups = await UserGroup.findAll({
-        where: { account_rid },
+    //    where: { account_rid },
         attributes: ["rid"],
       });
 
@@ -579,7 +636,7 @@ async getAccountGroups(
     
     // Step 2: Fetch all groups for the account
     const groups = await UserGroup.findAll({
-      where: { account_rid ,...whereClause},
+    //  where: { account_rid ,...whereClause},
       limit:limit,
       offset:offset,
       attributes: [
@@ -1003,14 +1060,14 @@ private createUserCountCondition(operator: string, value: number): any {
                   )`),
                   'user_count'
                 ],
-                [
-                literal(`(
-                  SELECT account_name
-                  FROM "${MAIN_SCHEMA_NAME}".account AS acc
-                  WHERE acc.rid = "UserGroup".account_rid
-                )`),
-                'account_name'
-               ],
+              //   [
+              //   literal(`(
+              //     SELECT account_name
+              //     FROM "${MAIN_SCHEMA_NAME}".account AS acc
+              //     WHERE acc.rid = "UserGroup".account_rid
+              //   )`),
+              //   'account_name'
+              //  ],
               ]
             },
           include: [
@@ -1018,6 +1075,11 @@ private createUserCountCondition(operator: string, value: number): any {
             model: User,
              as: "user",
             attributes: ['first_name','last_name'],
+          },
+        {
+            model: UserGroupType,
+             as: "usergrouptype",
+            attributes: ['group_type_name','type'],
           }],
         }
       );
@@ -1027,11 +1089,10 @@ private createUserCountCondition(operator: string, value: number): any {
       const result = userGrp.get({ plain: true });
       return {
           ...result,
-         account_name: result?.account_name ?? null,
-           user_count: result.user_count ?? 0,
+          account_name: result?.account_name ?? null,
+          user_count: result.user_count ?? 0,
           creator: undefined,
           modifier: undefined,
-          account_view: undefined, // remove nested object if needed
         };
       });
        return {
@@ -1151,62 +1212,95 @@ private createUserCountCondition(operator: string, value: number): any {
 
   
 
-  async listUserGroupById(user_group_id: string): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { userGroupById: any };
-  }> {
-    try {
-      const userGroupById = await UserGroup.findOne({
-        where: {
-          rid: user_group_id,
+ async listAccountGroupById(user_group_id: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { userGroupById: any };
+}> {
+  try {
+    const userGroupById = await UserGroup.findOne({
+      where: { rid: user_group_id },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["first_name", "last_name"],
         },
-        include: [
-          {
-            model: User, // Group creator
-            as: "user",
-            attributes: ["first_name", "last_name"],
-          },
-          {
-            model: UserGroupMapping,
-            as: "user_mappings",
-            attributes: ["rid", "user_rid", "group_rid"],
-            include: [
-              {
-                model: User,
-                as: "user", // Actual user in the group
-                attributes: ["rid", "first_name", "last_name", "email"],
-              },
-            ],
-          },
-       ],
-      });
-      if (!userGroupById) {
-        return {
-          statusCode: constants.SUCCESS,
-          message: constants.SUCCESS_MESSAGE,
-          data: { userGroupById: null },
-        };
-      }
+        {
+          model: UserGroupMapping,
+          as: "user_mappings",
+          attributes: ["rid", "user_rid", "group_rid"],
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["rid", "first_name", "last_name", "email"],
+            },
+          ],
+        },
+        {
+          model: UserGroupType,
+          as: "group_type",
+          attributes: ["rid", "group_type_name", "type"]
+        }
+      ],
+    });
 
-     
-      const groupData = userGroupById.toJSON() as any;
+    if (!userGroupById) {
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: { userGroupById: null },
+      };
+    }
+
+    const groupData = userGroupById.toJSON() as any;
+    
+    // Add created_by info
     if (groupData.user) {
       groupData.created_by = `${groupData.user.first_name || ""} ${groupData.user.last_name || ""}`.trim();
     }
     delete groupData.user;
-    const simplifiedUsers =
-      (groupData.user_mappings || []).map((mapping: any) => ({
-        rid: mapping.user?.rid,
-        name: `${mapping.user?.first_name || ""} ${mapping.user?.last_name || ""}`.trim(),
-      })) || [];
 
-    // ✅ Remove user_mappings before returning
+    // Simplify assigned users
+    const simplifiedUsers = (groupData.user_mappings || []).map((mapping: any) => ({
+      rid: mapping.user?.rid,
+      name: `${mapping.user?.first_name || ""} ${mapping.user?.last_name || ""}`.trim(),
+    }));
+    groupData.assigned_users = simplifiedUsers;
     delete groupData.user_mappings;
 
-    // ✅ Add simplified users
-    groupData.assigned_users = simplifiedUsers;
+    // Handle accounts based on group type
+    const sequelize = await initSequelize();
+    const isDefaultGroup = groupData.group_type?.type === "default";
+
+    if (isDefaultGroup) {
+      // For default groups, all accounts have has_access: false
+      const accounts = await sequelize.query(
+        `SELECT rid, account_name, true as has_access FROM ${MAIN_SCHEMA_NAME}.account`,
+        { type: QueryTypes.SELECT }
+      );
+      groupData.assigned_accounts = accounts;
+    } else {
+      // For non-default groups, fetch accounts with actual access status
+      const accounts = await sequelize.query(
+        `SELECT 
+          a.rid, 
+          a.account_name, 
+          CASE WHEN uga.account_rid IS NOT NULL THEN true ELSE false END as has_access
+        FROM ${MAIN_SCHEMA_NAME}.account a
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+          ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
+        {
+          replacements: { group_rid: user_group_id },
+          type: QueryTypes.SELECT
+        }
+      );
+      groupData.assigned_accounts = accounts;
+    }
+
+    delete groupData.group_type;
 
     return {
       statusCode: constants.SUCCESS,
@@ -1215,6 +1309,306 @@ private createUserCountCondition(operator: string, value: number): any {
     };
   } catch (err) {
     return this.throwServiceError(err as Error);
+  }
+}
+
+async listUserGroupById(
+  user_group_id: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: {
+    groupInfo: any;
+    users: any[];
+  };
+}> {
+  try {
+    // Step 1: Get basic group information
+    const userGroup = await UserGroup.findOne({
+      where: { rid: user_group_id },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["first_name", "last_name"],
+        },
+        {
+          model: UserGroupType,
+          as: "group_type",
+          attributes: ["rid", "group_type_name", "type"]
+        }
+      ],
+    });
+
+    if (!userGroup) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        errorMessage: "Group not found",
+      };
+    }
+
+    const groupData = userGroup.toJSON() as any;
+    
+    // Add created_by info
+    if (groupData.user) {
+      groupData.created_by = `${groupData.user.first_name || ""} ${groupData.user.last_name || ""}`.trim();
+    }
+    delete groupData.user;
+    console.log(groupData)
+    // Step 2: Build user filter based on group type
+    const whereClause: any = {};
+    
+    if (groupData?.is_consultant_only_group) {
+      whereClause.is_consultant_firm = true;
+    } else {
+        whereClause.is_consultant_firm = false;
+    }
+
+    // Step 3: Get users (all consultants or all active users)
+    const allUsers = await User.findAll({
+      where: whereClause,
+      attributes: ["rid", "email", "first_name", "last_name", "is_consultant_firm"],
+       include: [
+        {
+          model: Status,
+          as: "status",
+          where: { status_description: "active" },
+          attributes: [],
+        },
+      ],
+      order: [["first_name", "ASC"]],
+    });
+
+    // Step 4: Get users already in this group
+    const assignedMappings = await UserGroupMapping.findAll({
+      where: { group_rid: user_group_id },
+      attributes: ["user_rid"],
+    });
+    const assignedUserRids = new Set(assignedMappings.map(m => m.user_rid));
+
+    // Step 5: Format user data with access info
+    const formattedUsers = allUsers.map(user => {
+      const userJson = user.toJSON();
+      return {
+        rid: userJson.rid,
+        email: userJson.email,
+        name: `${userJson.first_name || ""} ${userJson.last_name || ""}`.trim(),
+        is_consultant: userJson.is_consultant_firm,
+        has_access: assignedUserRids.has(userJson.rid)
+      };
+    });
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        groupInfo: {
+          ...groupData
+        },
+        users: formattedUsers
+      },
+    };
+  } catch (err) {
+    console.error(err);
+    return this.throwServiceError(err as Error);
+  }
+}
+
+/**
+ * Assigns or revokes access to an account for a user or a group based on a `has_access` flag.
+ *
+ * - Accepts either a `user_rid` or a `group_id` (but not both).
+ * - If `has_access` is true → access_type = 'INCLUDE'
+ * - If `has_access` is false → access_type = 'EXCLUDE'
+ *
+ * @param {Object} params - Access assignment input
+ * @param {string} [params.user_rid] - RID of the user (optional)
+ * @param {string} [params.group_id] - RID of the group (optional)
+ * @param {string} params.account_rid - RID of the account
+ * @param {boolean} params.has_access - Flag indicating whether access should be granted
+ * @param {string} params.modified_by - RID of the user performing the operation
+ * @returns {Promise<Object>} - Result with status and message
+ */
+async assignUsersToGroup({
+  user_rid,
+  group_rid,
+  has_access,
+  userId,
+}: {
+  user_rid?: string | string[];
+  group_rid?: string;
+  has_access: boolean;
+  userId: string;
+}): Promise<{
+  statusCode: number;
+  message: string;
+  data?: { usergroup: any };
+  errorMessage?: string;
+}> {
+  try {
+    if (!user_rid || !group_rid) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: "Both user_rid and group_rid are required.",
+      };
+    }
+
+    const userRids: string[] = Array.isArray(user_rid)
+      ? user_rid
+      : [user_rid];
+
+    if (has_access) {
+      // Assign users to the group (create mappings)
+      const mappings = userRids.map((uid) => ({
+        group_rid,
+        user_rid: uid,
+        created_by: userId
+      }));
+
+      // Avoid duplicates: check existing mappings
+      const existing = await UserGroupMapping.findAll({
+        where: {
+          group_rid,
+          user_rid: { [Op.in]: userRids },
+        },
+        attributes: ["user_rid"],
+      });
+
+      const alreadyAssigned = new Set(existing.map((e) => e.user_rid));
+      const toCreate = mappings.filter((m) => !alreadyAssigned.has(m.user_rid));
+
+      if (toCreate.length > 0) {
+        await UserGroupMapping.bulkCreate(toCreate);
+      }
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: `Assigned ${toCreate.length} user(s) to the group.`,
+        data: { usergroup: toCreate },
+      };
+    } else {
+      // Remove users from the group
+      const deleted = await UserGroupMapping.destroy({
+        where: {
+          group_rid,
+          user_rid: { [Op.in]: userRids },
+        },
+      });
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: `Revoked group access for ${deleted} user(s).`,
+        data: { usergroup: [] },
+      };
+    }
+  } catch (err: any) {
+    console.error("Error assigning users to group:", err);
+    return {
+      statusCode: constants.FAILED,
+      message: constants.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
+  }
+}
+
+/**
+ * Assigns or revokes access to an account for a user or a group based on a `has_access` flag.
+ *
+ * - Accepts either a `user_rid` or a `group_id` (but not both).
+ * - If `has_access` is true → access_type = 'INCLUDE'
+ * - If `has_access` is false → access_type = 'EXCLUDE'
+ *
+ * @param {Object} params - Access assignment input
+ * @param {string} [params.user_rid] - RID of the user (optional)
+ * @param {string} [params.group_id] - RID of the group (optional)
+ * @param {string} params.account_rid - RID of the account
+ * @param {boolean} params.has_access - Flag indicating whether access should be granted
+ * @param {string} params.modified_by - RID of the user performing the operation
+ * @returns {Promise<Object>} - Result with status and message
+ */
+async assignAccountsToGroup({
+  account_rid,
+  group_rid,
+  has_access,
+  userId,
+}: {
+  account_rid?: string | string[];
+  group_rid?: string;
+  has_access: boolean;
+  userId: string;
+}): Promise<{
+  statusCode: number;
+  message: string;
+  data?: { usergroup: any };
+  errorMessage?: string;
+}> {
+  try {
+    if (!account_rid || !group_rid) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: "Both user_rid and group_rid are required.",
+      };
+    }
+
+    const accountRids: string[] = Array.isArray(account_rid)
+      ? account_rid
+      : [account_rid];
+
+    if (has_access) {
+      // Assign users to the group (create mappings)
+      const mappings = accountRids.map((uid) => ({
+        group_rid,
+        account_rid: uid,
+        created_by: userId
+      }));
+
+      // Avoid duplicates: check existing mappings
+      const existing = await UserGroupAccountMapping.findAll({
+        where: {
+          group_rid,
+          account_rid: { [Op.in]: accountRids },
+        },
+        attributes: ["account_rid"],
+      });
+
+      const alreadyAssigned = new Set(existing.map((e) => e.account_rid));
+      const toCreate = mappings.filter((m) => !alreadyAssigned.has(m.account_rid));
+
+      if (toCreate.length > 0) {
+        await UserGroupAccountMapping.bulkCreate(toCreate);
+      }
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: `Assigned ${toCreate.length} user(s) to the group.`,
+        data: { usergroup: toCreate },
+      };
+    } else {
+      // Remove users from the group
+      const deleted = await UserGroupAccountMapping.destroy({
+        where: {
+          group_rid,
+          account_rid: { [Op.in]: accountRids },
+        },
+      });
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: `Revoked group access for ${deleted} user(s).`,
+        data: { usergroup: [] },
+      };
+    }
+  } catch (err: any) {
+    console.error("Error assigning users to group:", err);
+    return {
+      statusCode: constants.FAILED,
+      message: constants.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
   }
 }
 
@@ -1242,7 +1636,7 @@ async  assignEntityAccessToAccount({
 }: {
   user_rid?: string;
   group_rid?: string;
-  account_rid: string;
+  account_rid: string | string[];  // accepts string, array, or 'ALL'
   has_access_enabled: boolean;
   userId: string;
 }): Promise<{
@@ -1256,45 +1650,64 @@ async  assignEntityAccessToAccount({
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
-        errorMessage: "Missing required identifiers (user_rid/group_id or account_rid)",
+        errorMessage: "Missing required identifiers (user_rid/group_rid or account_rid)",
       };
     }
 
     const access_type = has_access_enabled ? 'INCLUDE' : 'EXCLUDE';
+    const now = new Date();
 
-    const whereClause: any = {
-      entity_type: 'ACCOUNT',
-      entity_rid: account_rid,
-    };
-    if (user_rid) whereClause.user_rid = user_rid;
-    if (group_rid) whereClause.group_rid = group_rid;
+    let accountRids: string[] = [];
+    accountRids = Array.isArray(account_rid) ? account_rid : [account_rid];
 
-    const existing = await UserGroupEntityAccess.findOne({ where: whereClause });
+    // If 'ALL', fetch all account RIDs from the database
+    // if (account_rid === 'ALL') {
+    //   const allAccounts = await Account.findAll({
+    //     attributes: ['rid'],
+    //     where: {
+    //       is_active: true, // Add your own filters if needed
+    //     },
+    //   });
+    //   accountRids = allAccounts.map((acc) => acc.rid);
+    // } else {
+    //   accountRids = Array.isArray(account_rid) ? account_rid : [account_rid];
+    // }
 
-    if (existing) {
-      await existing.update({
-        access_type,
-        modified_by:userId,
-        modified_datetime: new Date(),
-      });
-    } else {
-      await UserGroupEntityAccess.create({
-        user_rid: user_rid ?? null,
-        group_rid: group_rid ?? null,
+    for (const accRid of accountRids) {
+      const whereClause: any = {
         entity_type: 'ACCOUNT',
-        entity_rid: account_rid,
-        access_type,
-        created_by: userId,
-        created_datetime: new Date(),
-      });
+        entity_rid: accRid,
+      };
+      if (user_rid) whereClause.user_rid = user_rid;
+      if (group_rid) whereClause.group_rid = group_rid;
+
+      const existing = await UserGroupEntityAccess.findOne({ where: whereClause });
+
+      if (existing) {
+        await existing.update({
+          access_type,
+          modified_by: userId,
+          modified_datetime: now,
+        });
+      } else {
+        await UserGroupEntityAccess.create({
+          user_rid: user_rid ?? null,
+          group_rid: group_rid ?? null,
+          entity_type: 'ACCOUNT',
+          entity_rid: accRid,
+          access_type,
+          created_by: userId,
+          created_datetime: now,
+        });
+      }
     }
 
     return {
       statusCode: constants.SUCCESS,
-      message: `Access ${has_access_enabled ? 'granted' : 'revoked'} successfully.`,
-       data: {
-          usergroup:null,
-        },
+      message: `Access ${has_access_enabled ? 'granted' : 'revoked'} successfully for ${accountRids.length} account(s).`,
+      data: {
+        usergroup: null,
+      },
     };
   } catch (err: any) {
     console.error("Error assigning access to entity:", err);
@@ -1305,6 +1718,7 @@ async  assignEntityAccessToAccount({
     };
   }
 }
+
 /**
  * Assigns or revokes access to a project for a user or a group based on `has_access` flag.
  *
@@ -1347,7 +1761,7 @@ async  assignEntityAccessToProjects({
     let updated = 0;
     let failed = 0;
 
-    for (const { project_rid, has_access_enabled } of project_access_list) {
+      for (const [project_rid, has_access_enabled] of Object.entries(project_access_list)) {
       if (!project_rid) {
         failed++;
         continue;
@@ -1542,6 +1956,34 @@ async  getProjectsWithUserAccessFlag(
     };
   }
 }
+
+async getUserGroupType(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { groupTypes: any; count: number };
+  }> {
+    try {
+      const groupTypes = await UserGroupType.findAll({
+          where: {
+    type: 'custom'
+  },
+      order: [
+        ['group_type_name', 'ASC']
+      ]
+    });
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          groupTypes,
+          count: groupTypes.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
 
 
 private buildSQLConditions(filters: Record<string, any>): string | null {

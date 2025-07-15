@@ -7,13 +7,34 @@ const userReqSchema = Joi.object({
 
 const createUserGroupSchema = Joi.object({
   group_name: Joi.string().min(3).max(64).required().label("Group Name"),
-  users: Joi.array().items(Joi.string().trim().min(1).required().label("User ID"))
+  users: Joi.array()
+    .items(Joi.string().trim().min(1).required().label("User ID"))
     .min(1)
     .required()
     .label("Users"),
-  account_rid: Joi.string().min(3).max(64).required().label("Account Name"),
-  status_rid: Joi.string().required().label("Account Name"),
-  is_consultant_only_group:Joi.boolean().required()
+  group_type_rid: Joi.string().required().label("Group Type"),
+  account_rid: Joi.alternatives()
+    .try(
+      Joi.string(), // single account
+      Joi.array().items(
+        Joi.object({
+          rid: Joi.string().required(),
+          is_enabled: Joi.boolean().required(),
+          is_modified: Joi.boolean().required()
+        })
+      )
+    )
+    .optional()
+    .label("Account"),
+  status_rid: Joi.string().required().label("Status"),
+  is_consultant_only_group: Joi.boolean().required(),
+  projects: Joi.object()
+    .pattern(
+      Joi.string().min(1), // project_rid as key
+      Joi.boolean()         // access flag as value
+    )
+    .optional()
+    .label("Projects")
 });
 
 const updateUserGroupSchema = Joi.object({
@@ -31,8 +52,26 @@ const updateUserGroupSchema = Joi.object({
 const assignUserToAccountSchema = Joi.object({
   group_rid: Joi.string().optional().label("Group Id"),
   user_rid: Joi.string().optional().label("User Id"),
-  account_rid: Joi.string().required().label("Account Name"),
+  account_rid: Joi.array().required().label("Account Name"),
   has_access_enabled:Joi.boolean().required()
+});
+
+const assignUserToGroupSchema = Joi.object({
+  group_rid: Joi.string().optional().label("Group Id"),
+  user_rid: Joi.alternatives()
+    .try(Joi.string(), Joi.array().items(Joi.string()))
+    .optional()
+    .label("User Id"),
+  has_access:Joi.boolean().required()
+});
+
+const assignAccountToGroupSchema = Joi.object({
+  group_rid: Joi.string().optional().label("Group Id"),
+  account_rid: Joi.alternatives()
+    .try(Joi.string(), Joi.array().items(Joi.string()))
+    .optional()
+    .label("User Id"),
+  has_access:Joi.boolean().required()
 });
 
 const listProjectUserGroupSchema = Joi.object({
@@ -63,7 +102,11 @@ const assignUserToProjectSchema = Joi.object({
 const listActiveUserGroupSchema = Joi.object({
  
   is_consultant_only_group:Joi.boolean().optional().allow('',null),
-  account_rid :Joi.string().optional().allow('',null)
+  group_rid:Joi.string().optional().allow('',null),
+    account_rid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional()
 });
 
 const listAccountUserSchema = Joi.object({
@@ -385,4 +428,5 @@ export { createUserSchema, updateUserSchema, enterpriseUserSchema,
     editProfilePermissionsSchema, listProfileSchema,updateUserExtendedPermissionsSchema,
   createUserGroupSchema,updateUserGroupSchema,listUserGroupSchema,
 listActiveUserGroupSchema,assignUserToAccountSchema,assignUserToProjectSchema,
-listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema };
+listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,assignUserToGroupSchema,
+assignAccountToGroupSchema};

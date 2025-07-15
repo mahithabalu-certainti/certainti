@@ -13,11 +13,15 @@ import {
   exportUserGroup,
   getActiveUsersForGrouping,
   listUserGroupById,
+  listAccountGroupById,
   getAccountUsers,
   getProjectUsers,
   getAccountGroups,
   assignEntityAccessToAccount,
-  assignEntityAccessToProject
+  assignEntityAccessToProject,
+  assignUsersToGroup,
+  assignAccountsToGroup,
+  getUserGroupType
 
 
 } from "./userGroupController";
@@ -50,11 +54,15 @@ const controller = {
     listUserGroup,
     exportUserGroup,
     listUserGroupById,
+    listAccountGroupById,
     getAccountUsers,
     getAccountGroups,
     getProjectUsers,
     assignEntityAccessToAccount,
-    assignEntityAccessToProject
+    assignEntityAccessToProject,
+    assignUsersToGroup,
+    assignAccountsToGroup,
+    getUserGroupType
   }
 };
 

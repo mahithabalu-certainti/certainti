@@ -12,7 +12,9 @@ import {
   generateExcelBase64
 } from "../utils/helpers";
 import {
+  assignAccountToGroupSchema,
   assignUserToAccountSchema,
+  assignUserToGroupSchema,
   assignUserToProjectSchema,
   createUserGroupSchema,
   exportUserGroupSchema,
@@ -503,11 +505,11 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Promise representing the completion of the operation
  */
-async function listUserGroupById(req: Request, res: Response): Promise<void> {
-  const methodName = "List User Group By Id";
+async function listAccountGroupById(req: Request, res: Response): Promise<void> {
+  const methodName = "List Account Group By Id";
   try {
     const { id } = req.params;
-    const account = await services.userGroupService.listUserGroupById(id);
+    const account = await services.userGroupService.listAccountGroupById(id);
 
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);
@@ -532,6 +534,46 @@ async function listUserGroupById(req: Request, res: Response): Promise<void> {
     );
   }
 }
+
+/**
+ * Retrieves details of a specific user group by its ID
+ * 
+ * @param {Request} req - Express request object containing group ID in params
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Promise representing the completion of the operation
+ */
+async function listUserGroupById(req: Request, res: Response): Promise<void> {
+  const methodName = "List User Group By Id";
+  try {
+    const { groupId } = req.params;
+    const account = await services.userGroupService.listUserGroupById(groupId);
+   // const account = await services.userGroupService.listUserGroupById(id);
+
+    if (account.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, account?.data);
+    } else {
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        account.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+
 
 /**
  * Assigns or revokes account access for a user or group
@@ -653,6 +695,145 @@ async function assignEntityAccessToProject(req: Request, res: Response): Promise
   }
 }
 
+async function getUserGroupType(req: Request, res: Response): Promise<void> {
+  const methodName = "List User Group Type";
+  try {
+    const groupTypes = await services.userGroupService.getUserGroupType();
+    if (groupTypes.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, groupTypes.data);
+      return;
+    } else {
+      errorLog(methodName, groupTypes.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        groupTypes.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function assignUsersToGroup(req: Request, res: Response): Promise<void> {
+  const methodName = "Assign Users Access To Group";
+  console.log(methodName)
+  try {
+    const validatedData = await validateRequest(
+      req,
+      assignUserToGroupSchema,
+      "",
+      res,
+      "POST"
+    );
+    
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+    
+    // Use the validated data instead of req.body
+    const { user_rid,group_rid,has_access} = validatedData;
+    
+    // Get user ID from request (assuming it's set by auth middleware)
+    const userId = req.headers["x-user-id"] as string || "";
+
+    
+    const result = await services.userGroupService.assignUsersToGroup({
+      user_rid,
+      group_rid,
+      has_access,
+      userId
+    } );
+    
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result?.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+
+async function assignAccountsToGroup(req: Request, res: Response): Promise<void> {
+  const methodName = "Assign Accounts  To Group";
+  console.log(methodName)
+  try {
+    const validatedData = await validateRequest(
+      req,
+      assignAccountToGroupSchema,
+      "",
+      res,
+      "POST"
+    );
+    
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+    
+    // Use the validated data instead of req.body
+    const { account_rid,group_rid,has_access} = validatedData;
+    
+    // Get user ID from request (assuming it's set by auth middleware)
+    const userId = req.headers["x-user-id"] as string || "";
+
+    
+    const result = await services.userGroupService.assignAccountsToGroup({
+      account_rid,
+      group_rid,
+      has_access,
+      userId
+    } );
+    
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result?.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+
+
+
 
 
 export { 
@@ -662,9 +843,13 @@ export {
    listUserGroup,
    exportUserGroup,
    listUserGroupById,
+   listAccountGroupById,
    getAccountUsers,
    getProjectUsers,
    getAccountGroups,
    assignEntityAccessToAccount,
-   assignEntityAccessToProject
+   assignEntityAccessToProject,
+   assignUsersToGroup,
+   assignAccountsToGroup,
+   getUserGroupType
   };
