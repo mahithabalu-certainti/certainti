@@ -57,7 +57,8 @@ export const STATUS_MESSAGE = {
   keyContactIdMissing : "Key-Contact Id is missing",
   accountUpdateFailed : "Account updation failed",
   invalidStatus : "Invalid Status. Status should either Active/In-Active.",
-  noDataToUpdate : "Data is requried to update"
+  noDataToUpdate : "Data is requried to update",
+  storeInParent : "store_in_parent"
 }
 
 export const rawQueries = {

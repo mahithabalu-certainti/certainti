@@ -27,7 +27,7 @@ class AccountGraphQlServices {
         })
         if (isAccountActive) {
             if (isAccountActive.status_name == STATUS.active) {
-                if (fetchAccountById.parent_account_rid != null) {
+                if (fetchAccountById.storage_type == STATUS_MESSAGE.storeInParent) {
                     parentAccount = await Account.findOne({
                         where: {
                             rid: fetchAccountById.parent_account_rid
