@@ -12,7 +12,7 @@ export default class AttachmentGraphqlServies {
         const orgSequelize = await initOrgSequelize()
         const mainSequelize = await initMainDbSequelize()
 
-        const checkAccountExists : any = await mainSequelize.query(rawQueries.fetchParentAccount(data.account_rid))
+        const checkAccountExists : any = await mainSequelize.query(await rawQueries.fetchParentAccount(data.account_rid))
         if(checkAccountExists[0].length < 1) {
             return {
                 statusCode : HttpStatus.NOT_FOUND,
