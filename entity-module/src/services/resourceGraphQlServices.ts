@@ -131,6 +131,7 @@ export default class ResourceGraphQlServices {
             else newValue = data[finalTrimmedKey];
             attributeName = finalTrimmedKey;
             oldValue = fetchResources[0][0][finalTrimmedKey];
+            oldValue = oldValue == null ? '' : oldValue.replace(/'/g, "''")
             
             if(newValue == undefined) newValue = ''
             else newValue = newValue

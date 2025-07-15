@@ -179,7 +179,7 @@ type projectNewResponse {
     is_other_classification: String
     project_type_name: String
     status_name: String
-    ProjectFiscal : ProjectFiscalDetails
+    ProjectFiscal : [ProjectFiscalDetails]
 }
 
 
