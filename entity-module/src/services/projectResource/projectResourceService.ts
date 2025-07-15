@@ -2,9 +2,12 @@ import { Op, Order, Sequelize } from "sequelize";
 import { HttpStatus } from "../../utils/constants";
 import {
   ICreateProjectResource,
+  IUpdateInlineProjectResource,
   IUpdateProjectResource,
 } from "../../utils/types";
 import { ProjectResourceSchemaService } from "./schemaService";
+import constants from "constants";
+import { ProjectResourceMapper } from "../../utils/projectMapper";
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
@@ -558,7 +561,7 @@ export class ProjectResourceService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResources: any };
+    data?: { projectResources: any, count: number };
   }> {
     try {
       const { accountNumber } =
@@ -579,9 +582,8 @@ export class ProjectResourceService {
 
       // construct filters
       const { whereClause } = this.buildWhereClause(filters);
-      console.log("whereClause", whereClause);
 
-      const projectResources =
+      const { data: projectResources, count } =
         await this.projectResourceSchema.listProjectResourceSchema(
           accountNumber,
           accountId,
@@ -601,6 +603,7 @@ export class ProjectResourceService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           projectResources,
+          count
         },
       };
     } catch (err) {
@@ -704,6 +707,148 @@ export class ProjectResourceService {
       };
     } catch (err) {
       console.log("Error fetching project ressouce", err);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+  async inLineEditProjectResource(
+    projectResourceData: IUpdateInlineProjectResource,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
+    const dbInit = await this.projectResourceSchema.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      const {
+        account_rid,
+        project_rid,
+        project_resource_rid,
+        total_cost_pro_res,
+        total_hours_pro_res,
+      } = projectResourceData;
+
+      const { accountNumber: validAccountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(
+          account_rid
+        );
+
+      if (!validAccountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      const projectData = await this.projectResourceSchema.validateProjectById(
+        validAccountNumber,
+        project_rid
+      );
+
+      const updateProjectResource = await this.projectResourceSchema.updateInlineProjectResourceRecords(
+        validAccountNumber,
+        projectResourceData,
+        userId,
+        projectData,
+        transaction
+      );
+
+      if (updateProjectResource && total_cost_pro_res && total_hours_pro_res) {
+        const resourceUpdatePayload =
+          ProjectResourceMapper.mapToProjectResourceUpload(
+            updateProjectResource,
+            userId
+          );
+
+        // project resources
+        await this.updateFiscalTables(
+          validAccountNumber,
+          resourceUpdatePayload,
+          projectData,
+          userId,
+          transaction
+        );
+
+        // resources fiscal region
+        await this.updateResourceFiscalRegion(
+          validAccountNumber,
+          account_rid,
+          resourceUpdatePayload,
+          projectData,
+          userId,
+          transaction
+        );
+
+        // project fiscal region
+        await this.updateProjectFiscalRegion(
+          validAccountNumber,
+          account_rid,
+          resourceUpdatePayload,
+          projectData,
+          userId,
+          transaction
+        );
+
+        // account fiscal region
+        await this.updateAccountFiscalRegion(
+          validAccountNumber,
+          account_rid,
+          resourceUpdatePayload,
+          projectData,
+          userId,
+          transaction
+        );
+
+        // resources
+        await this.aggregateResource(
+          validAccountNumber,
+          account_rid,
+          resourceUpdatePayload,
+          projectData,
+          transaction
+        );
+
+        // projects
+        await this.aggregateProject(
+          validAccountNumber,
+          account_rid,
+          projectData,
+          transaction
+        );
+
+        // accounts
+        await this.aggregateAccount(
+          validAccountNumber,
+          account_rid,
+          projectData.fiscal_year,
+          transaction
+        );
+      }
+
+      await this.recordTimelineAndHistory(
+        validAccountNumber,
+        projectResourceData,
+        projectResourceData,
+        userId,
+        transaction
+      );
+
+      await transaction.commit();
+
+      const updateProjectResourceRecord =
+        await this.projectResourceSchema.fetchProjectResourceDetails(
+          validAccountNumber,
+          project_resource_rid,
+        );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: updateProjectResourceRecord,
+      };
+    } catch (err) {
+      console.log("Error updating project resource", err);
+      await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
   }
@@ -998,7 +1143,7 @@ export class ProjectResourceService {
   private async recordTimelineAndHistory(
     accountNumber: string,
     updatedProjectResource: any,
-    projectResourceData: IUpdateProjectResource,
+    projectResourceData: IUpdateProjectResource | IUpdateInlineProjectResource,
     userId: string,
     transaction: any
   ) {

@@ -12,7 +12,6 @@ import {
 } from "../utils/types";
 import Decimal from "decimal.js";
 class SchemaService {
-  
   async getKeyContactRoleById(key_contact_role: string): Promise<any> {
   try {
     const sequelize = await initSequelize();
@@ -2612,6 +2611,273 @@ async fetchAttachments(account_rid: string): Promise<any[]> {
     throw new Error('Failed to fetch attachments');
   }
 }
+
+async createUserGroup(
+  accountData: IAccount,
+  userId: string,
+  is_parent: boolean,
+  account_rid: string
+) {
+  const sequelize = await initSequelize();
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Step 1: Determine group_type_name based on is_parent
+    const groupTypeName = is_parent ? 'Client Firm Global' : 'Client Firm Child';
+
+    // Step 2: Fetch group_type_rid from user_group_type table
+    const result = await sequelize.query<{ rid: string }>(
+      `
+      SELECT rid
+      FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
+      WHERE group_type_name = :group_type_name
+      LIMIT 1
+    `,
+      {
+        replacements: { group_type_name: groupTypeName },
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    const groupTypeResult = result[0];
+    if (!groupTypeResult?.rid) {
+      throw new Error(`Group type '${groupTypeName}' not found in user_group_type table.`);
+    }
+
+    const group_type_rid = groupTypeResult.rid;
+
+    // Step 3: Insert into user_groups
+    const newGroupInsert = await sequelize.query<{ rid: string }>(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
+        group_name, group_type_rid, created_by
+      )
+      VALUES (
+        :group_name, :group_type_rid, :created_by
+      )
+      RETURNING rid
+    `,
+      {
+        replacements: {
+          group_name: 'G-' + accountData.account_name,
+          group_type_rid,
+          created_by: userId,
+        },
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    const groupRid = (newGroupInsert[0] as any).rid || (newGroupInsert as any)[0]?.[0]?.rid;
+    if (!groupRid) throw new Error("Failed to retrieve newly created group RID.");
+
+    // Step 4: Insert into user_group_account_mapping
+    await sequelize.query(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
+        group_rid, account_rid, created_by
+      )
+      VALUES (
+        :group_rid, :account_rid, :created_by
+      )
+    `,
+      {
+        replacements: {
+          group_rid: groupRid,
+          account_rid,
+          created_by: userId,
+        },
+        transaction,
+      }
+    );
+
+    // Step 5: Insert into user_group_entity_access (entity_type = 'ACCOUNT')
+    await sequelize.query(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
+        group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
+      )
+      VALUES (
+        :group_rid, 'ACCOUNT', :account_rid, 'INCLUDE', :created_by, NOW()
+      )
+    `,
+      {
+        replacements: {
+          group_rid: groupRid,
+          account_rid,
+          created_by: userId,
+        },
+        transaction,
+      }
+    );
+
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    console.error("Error creating user group with account mapping:", err);
+    throw err;
+  }
+}
+
+async getUserGroupType(userRid: string): Promise<string | null>   {
+  const mainDbSequelize = await initSequelize();
+  
+  try {
+    const results = await mainDbSequelize.query<{ group_type: string }>(`
+      SELECT group_type 
+      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      WHERE ugm.user_rid = :userRid
+      LIMIT 1`,  // Important if user can only have one group type
+    {
+      replacements: { userRid },
+      type: QueryTypes.SELECT
+    });
+
+    if (!results || results.length === 0) {
+     return null;
+    }
+
+    return results[0]?.group_type;
+  } catch (error) {
+    // Log the error for debugging
+    console.error('Error fetching user group type:', error);
+    throw new Error('Failed to get user group type');
+  }
+}
+async getAccessibleAccountInfo(userRid: string): Promise<Array<{
+  id: string;
+  isChild: boolean;
+  parentId: string | null;
+}>> {
+  const mainDbSequelize = await initSequelize();
+
+  try {
+    // 1. Direct access with account info
+    const directAccess = await mainDbSequelize.query<{ 
+      entity_rid: string;
+      parent_account_rid: string | null;
+      is_child: boolean;
+    }>(
+      `
+      SELECT 
+        ugea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'INCLUDE'
+      `,
+      {
+        replacements: { userRid },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // 2. Group access with account info
+    const groupAccess = await mainDbSequelize.query<{ 
+      entity_rid: string;
+      parent_account_rid: string | null;
+      is_child: boolean;
+    }>(
+      `
+      WITH user_groups AS (
+        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+        WHERE user_rid = :userRid
+      )
+      SELECT DISTINCT 
+        gea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
+      JOIN user_groups ug ON gea.group_rid = ug.group_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
+      WHERE gea.entity_type = 'ACCOUNT'
+        AND gea.access_type = 'INCLUDE'
+      `,
+      {
+        replacements: { userRid },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // 3. Combine and deduplicate
+    const allAccess = [...directAccess, ...groupAccess];
+    const uniqueAccess = new Map<string, {
+      id: string;
+      isChild: boolean;
+      parentId: string | null;
+    }>();
+
+    allAccess.forEach(access => {
+      if (!uniqueAccess.has(access.entity_rid)) {
+        uniqueAccess.set(access.entity_rid, {
+          id: access.entity_rid,
+          isChild: access.is_child,
+          parentId: access.parent_account_rid
+        });
+      }
+    });
+
+    return Array.from(uniqueAccess.values());
+  } catch (err) {
+    console.error("Error in getAccessibleAccountInfo:", err);
+    return [];
+  }
+}
+// async  getAccessibleAccountIds(userRid: string): Promise<string[]> {
+//   const mainDbSequelize = await initSequelize();
+
+//   try {
+//     // 1. Direct access
+//     const directAccess = await mainDbSequelize.query<{ entity_rid: string }>(
+//       `
+//       SELECT entity_rid FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access
+//       WHERE user_rid = :userRid 
+//         AND entity_type = 'ACCOUNT'
+//         AND access_type = 'INCLUDE'
+//       `,
+//       {
+//         replacements: { userRid },
+//         type: QueryTypes.SELECT
+//       }
+//     );
+
+//     // 2. Group access
+//     const groupAccess = await mainDbSequelize.query<{ entity_rid: string }>(
+//       `
+//       WITH user_groups AS (
+//         SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+//         WHERE user_rid = :userRid
+//       )
+//       SELECT DISTINCT gea.entity_rid
+//       FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
+//       JOIN user_groups ug ON gea.group_rid = ug.group_rid
+//       WHERE gea.entity_type = 'ACCOUNT'
+//         AND gea.access_type = 'INCLUDE'
+//       `,
+//       {
+//         replacements: { userRid },
+//         type: QueryTypes.SELECT
+//       }
+//     );
+
+//     // 3. Combine and deduplicate
+//     const allEntityRids = [
+//       ...directAccess.map(a => a.entity_rid),
+//       ...groupAccess.map(a => a.entity_rid)
+//     ];
+
+//     return Array.from(new Set(allEntityRids)); // Dedupe
+//   } catch (err) {
+//     console.error("Error in getAccessibleAccountIds:", err);
+//     return [];
+//   }
+// }
+
 }
 export default SchemaService;
 

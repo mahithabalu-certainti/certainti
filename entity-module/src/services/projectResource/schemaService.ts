@@ -7,6 +7,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import {
   ICreateProjectResource,
+  IUpdateInlineProjectResource,
   IUpdateProjectResource,
 } from "../../utils/types";
 import moment from "moment";
@@ -256,7 +257,7 @@ export class ProjectResourceSchemaService {
   }
 
   async validateProjectById(accountNumber: string, projectId: string) {
-    const { ProjectFiscal } = await this.getModels(accountNumber);
+    const { Project } = await this.getModels(accountNumber);
     const projectData = await ProjectFiscal.findOne({
       where: {
         rid: projectId,
@@ -1666,7 +1667,7 @@ export class ProjectResourceSchemaService {
   async updateProjectResourceTimeline(
     accountNumber: string,
     eventName: string,
-    projectResourceData: IUpdateProjectResource,
+    projectResourceData: IUpdateProjectResource | IUpdateInlineProjectResource,
     projectResourceId: string,
     userId: string,
     transaction: Transaction
@@ -3029,6 +3030,48 @@ export class ProjectResourceSchemaService {
     return updateProjectResource;
   }
 
+  async updateInlineProjectResourceRecords(
+    accountNumber: string,
+    projectResourceData: IUpdateInlineProjectResource,
+    userId: string,
+    projectData: any,
+    transaction: Transaction
+  ) {
+    const { ProjectResource } = await this.getModels(accountNumber);
+
+    const projectResourceCode =
+      projectData.project_code + "-" + projectResourceData.resource_code;
+
+    const {
+      project_resource_rid,
+      account_rid,
+      project_rid,
+      ...fieldsToUpdate
+    } = projectResourceData;
+
+    const updateProjectResource = await ProjectResource.update(
+      {
+        ...fieldsToUpdate,
+        project_resource_code: projectResourceCode,
+        modified_datetime: new Date(),
+        modified_by: userId,
+      },
+      {
+        where: {
+          rid: project_resource_rid,
+        },
+        transaction,
+      }
+    );
+
+    const updatedResource = await ProjectResource.findOne({
+      where: { rid: project_resource_rid },
+      transaction,
+    });
+
+    return updatedResource;
+  }
+
   async fetchExistingProjectResource(
     accountNumber: string,
     projectId: string,
@@ -3282,6 +3325,12 @@ export class ProjectResourceSchemaService {
       },
     });
 
+    let totalCount = await ProjectResource.count({
+      where: {
+        ...whereFilters,
+      },
+    });
+
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
       projectResource = await this.insertResourceTypeData(projectResource);
@@ -3294,7 +3343,14 @@ export class ProjectResourceSchemaService {
       );
     }
 
-    return projectResource;
+    if(totalCount > projectResource.length){
+      totalCount = projectResource.length;
+    }
+
+    return {
+      data: projectResource,
+      count: totalCount,
+    };
   }
 
   async exportProjectResourceSchema(

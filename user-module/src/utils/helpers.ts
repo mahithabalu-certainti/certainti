@@ -4,9 +4,11 @@ import { constants } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
+import moment from "moment";
 
-const logger = configurations.getInstance().getLogger();
-
+function getLogger() {
+  return configurations.getInstance().getLogger();
+}
 /**
  * Validates the incoming request data against a Joi schema.
  * 
@@ -35,7 +37,7 @@ export async function validateRequest(
   const { error, value } = schema.validate(requestValidationType, { abortEarly: false });
   if (error) {
     const errorMessages = requestErrorMessages(error);
-    logger.error("Validation failed:", {
+    getLogger().error("Validation failed:", {
       timestamp: new Date().toISOString(),
       method: "API method",
       message: "Request validation failed",
@@ -74,14 +76,14 @@ export function requestErrorMessages(error: any): Record<string, string> {
 
 
 export function successLog(methodName: string): void {
-  logger.info(`Successfully retrieved ${methodName} data `, {
+  getLogger().info(`Successfully retrieved ${methodName} data `, {
     timestamp: new Date().toISOString(),
     method: methodName,
   });
 }
 
 export function errorLog(methodName: string, errorMessage?: string): void {
-  logger.error("Failed log: ", {
+  getLogger().error("Failed log: ", {
     timestamp: new Date().toISOString(),
     method: methodName,
     message: errorMessage,
@@ -121,6 +123,11 @@ export async function generateExcelBase64(
   });
 
   // Generate buffer
+  await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString('base64');
+}
+
+export  function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
 }
