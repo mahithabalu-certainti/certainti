@@ -747,6 +747,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
               })
             }
       }
+      await this.schemaService.createUserGroup(accountData,userId,account.is_parent,account.rid);
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number || '',
@@ -1251,34 +1252,55 @@ async accountById(account_id: string): Promise<{
     
     return result;
   }
-  async listAllAccounts(): Promise<{
+ async listAllAccounts({
+  page,
+  limit,
+  sortBy = 'organisation_name',
+  sortOrder = 'ASC',
+  filters = {},
+}: {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  filters?: Record<string, any>;
+} = {}): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { accountData: any; orgData: any };
-  }> {
-    try {
-      const repository = await this.getAccountRepository();
-      const accountData = await repository.findAll({
-        where: {
-          organisation_name: {
-            [Op.ne]: '',
-          },
+    data?: { accountData: any; orgData: any; count?: number };
+}> {
+  try {
+    const repository = await this.getAccountRepository();
+
+    const parsedFilters = typeof filters === 'string' ? 
+      (filters === '{}' ? {} : JSON.parse(filters)) : filters;
+    const { whereClause } = this.buildWhereClause(parsedFilters, '');
+  
+    const queryOptions: any = {
+      where: whereClause,
+      include: [
+        {
+          model: Status,
+          as: 'status',
+          where: { status_description: 'active' },
+          attributes: [],
+          required: true,
         },
-        include: [
-          {
-            model: Status,
-            as: 'status',
-            where: {
-              status_description: 'active',
-            },
-            attributes: [],
-            required: true,
-          },
-        ],
-        attributes: ['rid', 'account_name', 'organisation_name'],
-        order: [['organisation_name', 'ASC']],
-      });
+      ],
+      attributes: ['rid', 'account_name', 'organisation_name', 'r_number'],
+      order: [[sortBy, sortOrder.toUpperCase()]],
+    };
+    if (page && limit) {
+      const offset = (page - 1) * limit;
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const [accountData, count] = await Promise.all([
+      repository.findAll(queryOptions),
+      page && limit ? repository.count({ where: whereClause }) : Promise.resolve(0),
+    ]);
 
       const orgData = await this.schemaService.getOrgInfo();
       return {
@@ -1286,7 +1308,8 @@ async accountById(account_id: string): Promise<{
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           accountData,
-          orgData
+          orgData,
+          ...(page && limit ? { count } : {}),
         },
       };
     } catch (err) {

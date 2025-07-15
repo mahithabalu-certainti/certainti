@@ -294,6 +294,18 @@ const updateAccountSchema = Joi.object({
     .optional()
 });
 
+const listOrgAccountSchema = Joi.object({
+  page: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+  ,
+  limit: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+    ,
+ 
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC")
+});
 const listAccountSchema = Joi.object({
   page: Joi.string()
     .pattern(/^[0-9]+$/)
@@ -330,4 +342,6 @@ const colorCodesSchema = Joi.object({
   status: Joi.string().valid("Active", "Inactive", "All").default("All"),
 })
 
-export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema, colorCodesSchema };
+export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema, colorCodesSchema ,
+  listOrgAccountSchema
+};

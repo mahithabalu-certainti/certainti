@@ -22,6 +22,33 @@ export const constants = {
   SQL_GET_PROFILE_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."profile_permission_access" WHERE profile_id = :profileId AND module_permission_id = :permissionId LIMIT 1`,
   SQL_GET_USER_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."user_permission_access" WHERE user_id = :userId AND module_permission_id = :permissionId LIMIT 1`,
   SQL_INSERT_API_DENIAL: `INSERT INTO ${MAIN_SCHEMA_NAME}."user_api_access_denials" (rid, user_id, permission_id, permission_name, api_endpoint, created_datetime, updated_datetime) VALUES (:rid, :userId, :permissionId, :permissionName, :apiEndpoint, NOW(), NOW())`,
+  SQL_GET_ACCOUNT: `SELECT rid,parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}."account" WHERE {whereClause}  LIMIT 1`,
+  SQL_GET_PROJECTS : `
+      SELECT 
+        ps.rid,
+        ps.project_name,
+        ps.account_rid,
+        uga.access_type,
+        (uga.access_type = 'INCLUDE') AS has_access
+        {isGroupedSelect}
+      FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+      {extraJoin}
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
+        ON uga.entity_rid = ps.rid
+        AND uga.entity_type = 'PROJECT'
+        AND {joinCondition}
+      WHERE {whereClauses}
+      {orderByClause}
+      LIMIT :limit OFFSET :offset
+`,
+SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
+    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+    {extraJoin}
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
+      ON uga.entity_rid = ps.rid
+      AND uga.entity_type = 'PROJECT'
+     AND {joinCondition}
+    WHERE {whereClauses}`,
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 } as const;

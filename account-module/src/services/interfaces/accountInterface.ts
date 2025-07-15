@@ -37,7 +37,13 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { account: any };
   }>;
-  listAllAccounts(): Promise<{
+  listAllAccounts(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    filters?: Record<string, any>;
+  }): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
