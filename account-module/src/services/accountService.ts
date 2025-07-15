@@ -1278,7 +1278,8 @@ async accountById(account_id: string): Promise<{
     const { whereClause } = this.buildWhereClause(parsedFilters, '');
   
     const queryOptions: any = {
-      where: whereClause,
+      where: {...whereClause,
+              organisation_name: { [Op.ne]: null }},
       include: [
         {
           model: Status,
