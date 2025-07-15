@@ -3343,7 +3343,7 @@ export class ProjectResourceSchemaService {
       );
     }
 
-    if(totalCount > projectResource.length){
+    if (totalCount > projectResource.length) {
       totalCount = projectResource.length;
     }
 
@@ -3427,7 +3427,7 @@ export class ProjectResourceSchemaService {
         this.mainDbSequelize = await this.getMainSequelize();
       }
 
-      // Get unique region_rids from all project resources
+      // Get unique region_rids
       const uniqueRegionIds = [
         ...new Set(
           projectResources
@@ -3436,22 +3436,22 @@ export class ProjectResourceSchemaService {
         ),
       ];
 
-      // Fetch all regions in one query
-      const regionsResult: any = await this.mainDbSequelize.query(
-        `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
-        {
-          replacements: { ids: uniqueRegionIds },
-          type: "SELECT",
-        }
-      );
-
-      // Convert result array to a map for fast lookup
       const regionMap = new Map<string, string>();
-      for (const region of regionsResult) {
-        regionMap.set(region.rid, region.state_name);
+
+      if (uniqueRegionIds.length > 0) {
+        const regionsResult: any = await this.mainDbSequelize.query(
+          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: uniqueRegionIds },
+            type: "SELECT",
+          }
+        );
+
+        for (const region of regionsResult) {
+          regionMap.set(region.rid, region.state_name);
+        }
       }
 
-      // Enrich each project resource object with region name
       const enrichedResources = projectResources.map((resource) => {
         const regionName = regionMap.get(resource.region_rid) || null;
         return {
@@ -3462,6 +3462,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
+      console.log(err);
       throw new Error("Error fetching region data: " + (err as Error).message);
     }
   }
@@ -3651,25 +3652,30 @@ export class ProjectResourceSchemaService {
     return results;
   }
 
-  async fetchAttachmentsByProjectResourceId(project_resource_rid: string): Promise<any[]> {
-  try {
-    const sequelize = await initMainDbSequelize();
-    
-    const result = await sequelize.query(`
+  async fetchAttachmentsByProjectResourceId(
+    project_resource_rid: string
+  ): Promise<any[]> {
+    try {
+      const sequelize = await initMainDbSequelize();
+
+      const result = await sequelize.query(
+        `
       SELECT 
         a.*
       FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
       WHERE a.attach_to = :project_resource_rid
       ORDER BY a.created_datetime DESC
-    `, {
-      replacements: { project_resource_rid },
-      type: "SELECT"
-    });
+    `,
+        {
+          replacements: { project_resource_rid },
+          type: "SELECT",
+        }
+      );
 
-    return result;
-  } catch (error) {
-    console.error('Error fetching attachments:', error);
-    throw new Error('Failed to fetch attachments');
+      return result;
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      throw new Error("Failed to fetch attachments");
+    }
   }
-}
 }
