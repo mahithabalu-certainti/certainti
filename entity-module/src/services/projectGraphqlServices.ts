@@ -87,7 +87,13 @@ class ProjectGraphQlServices {
                         attributeName = trimmedKey
                         newValue = updatedProjectFiscal[0][0][trimmedKey]
                         oldValue = findProjectFiscal[0][0][trimmedKey]
-                        oldValue = oldValue == null ? '' : oldValue.replace(/'/g, "''")
+                    if (oldValue !== null && oldValue !== undefined && typeof oldValue === 'string') {
+                        oldValue = oldValue.replace(/'/g, "''");
+                    }
+                    if (newValue !== null && newValue !== undefined && typeof newValue === 'string') {
+                        newValue = newValue.replace(/'/g, "''");
+                    }
+                        
                         if(newValue !== oldValue) {
                             await orgSequelize.query(rawQueries.insertProjectHistory(schemaName, data, attributeName, newValue, oldValue))
                         }
