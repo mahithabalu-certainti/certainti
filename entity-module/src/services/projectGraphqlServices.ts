@@ -62,6 +62,8 @@ class ProjectGraphQlServices {
                     } 
                 }
                 await orgSequelize.query(rawQueries.updateProjectFiscal(schemaName, setProjectFiscalData, data))
+                findProjectFiscal[0][0].project_fiscal_id = findProjectFiscal[0][0].rid
+                await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, findProjectFiscal[0][0], findProjectFiscal[0][0].project_code)
             }
             if(setProjectFiscalSummary.length > 0) {
                 if(data.project_code) {
@@ -74,7 +76,14 @@ class ProjectGraphQlServices {
             let findProject : any = await orgSequelize.query(rawQueries.findProject(schemaName, data.project_rid, data.account_rid))
             let updatedProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
             await this.projectIngestion.updateProjectAggregatesFromFiscal(checkAccountExists[0][0].r_number, data.account_rid, findProject[0][0].project_code)
-            await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProjectSummary[0][0].project_code, data.account_rid)
+            await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProject[0][0].project_code, data.account_rid)
+            updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid
+            await this.projectIngestion.updateAccountFiscalAggregatesFromFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0])
+            await this.projectIngestion.addAccountFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
+            await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
+                checkAccountExists[0][0].r_number,
+                checkAccountExists[0][0].rid
+                );
             await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, data))
             let attributeName;
             let newValue;
