@@ -16,10 +16,9 @@ export const useGetProjectResourceCode = (accountId: string) => {
     },
     enabled: !!accountId,
     retry: 0,
-    staleTime: Infinity, // Cache data forever until manually invalidated
-    gcTime: Infinity, // Never delete from cache
-    refetchOnMount: false, // Don't refetch on component mount
-    refetchOnReconnect: false, // Don't refetch on reconnect
+    gcTime: 0, // Never delete from cache
+    refetchOnMount: true, // Don't refetch on component mount
+    refetchOnReconnect: true, // Don't refetch on reconnect
   });
 };
 
@@ -49,10 +48,9 @@ export const useGetProjectResourceSkillType = () => {
       return fetchProjectResourceSkillType();
     },
     retry: 0,
-    staleTime: Infinity, // Cache data forever until manually invalidated
-    gcTime: Infinity, // Never delete from cache
-    refetchOnMount: false, // Don't refetch on component mount
-    refetchOnReconnect: false, // Don't refetch on reconnect
+    gcTime: 0, // Never delete from cache
+    refetchOnMount: true, // Don't refetch on component mount
+    refetchOnReconnect: true, // Don't refetch on reconnect
   });
 };
 
@@ -81,10 +79,9 @@ export const useGetProjectResourceRollSkill = () => {
       return fetchProjectResourceRollSkill();
     },
     retry: 0,
-    staleTime: Infinity, // Cache data forever until manually invalidated
-    gcTime: Infinity, // Never delete from cache
-    refetchOnMount: false, // Don't refetch on component mount
-    refetchOnReconnect: false, // Don't refetch on reconnect
+    gcTime: 0, // Never delete from cache
+    refetchOnMount: true, // Don't refetch on component mount
+    refetchOnReconnect: true, // Don't refetch on reconnect
   });
 };
 

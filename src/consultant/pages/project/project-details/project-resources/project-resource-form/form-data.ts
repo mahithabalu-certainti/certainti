@@ -95,7 +95,7 @@ export const ProjectResourceFormData = (
           createSelectField('resource_type_rid', 'Resource Type', {
             options: projectTypes,
             placeholder: 'Choose Resource Type',
-            required: false,
+            required: true,
             onChange: true,
             resetDependsFields: [
               'salary',
@@ -105,7 +105,7 @@ export const ProjectResourceFormData = (
             ],
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
-            required: isResourceType ? false : true,
+            required: false,
             regex: PROJECT_RESOURCE_REGEX.ORG_NAME,
             regexErrorMessage:
               'Please enter 3-100 characters, including at least one letter. Special characters other than ampersand, hyphen, period, comma are not allowed.',
