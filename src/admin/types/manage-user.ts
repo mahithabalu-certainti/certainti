@@ -1,5 +1,4 @@
-import { CommonApiResponse, UserRoles } from '../../common-service';
-import { Privilege } from './manage-profile';
+import { CommonApiResponse, ProfileResponse, UserRoles } from '../../common-service';
 
 export type ManageUser = {
   id: string;
@@ -189,7 +188,7 @@ interface UserPermissionData {
   user_role: string;
   user_id: string;
   user_name: string;
-  permissions: Privilege[];
+  permissions: ProfileResponse[];
 }
 
 export interface UserPermissionApiResponse {

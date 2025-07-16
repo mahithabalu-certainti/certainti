@@ -130,7 +130,7 @@ const Details: React.FC<DetailsProps> = ({
 
   return (
     <div className='w-full'>
-      {!isKeyContactAvailable && (
+      {!isKeyContactAvailable && !isLoading && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <DetailsKeyContactErrorIcon alt='key-contact' />

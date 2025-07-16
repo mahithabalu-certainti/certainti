@@ -33,19 +33,24 @@ const requiredDateOptions: { label: string; value: string }[] = [
 
 export const getUserFilterFields = (
   userProfiles: FilterSelectOption[],
-  roleOptions: FilterSelectOption[]
+  roleOptions: FilterSelectOption[],
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
     label: 'Username',
     name: 'username',
     type: 'text',
     operatorOption: textfieldOptions,
+    // hide:
+    //   !permissionMap?.['username']?.read &&
+    //   !permissionMap?.['username']?.edit,
   },
   {
     label: 'Email',
     name: 'email',
     type: 'text',
     operatorOption: textfieldOptions,
+    hide: !permissionMap?.['email']?.read && !permissionMap?.['email']?.edit,
   },
   {
     label: 'Profile',
@@ -53,6 +58,9 @@ export const getUserFilterFields = (
     type: 'enumSelect',
     options: userProfiles,
     operatorOption: enumOperator,
+    hide:
+      !permissionMap?.['profile_rid']?.read &&
+      !permissionMap?.['profile_rid']?.edit,
   },
   {
     label: 'Role',
@@ -60,18 +68,27 @@ export const getUserFilterFields = (
     type: 'enumSelect',
     options: roleOptions,
     operatorOption: enumOperator,
+    hide:
+      !permissionMap?.['business_teams']?.read &&
+      !permissionMap?.['business_teams']?.edit,
   },
   {
     label: 'Created On',
     name: 'created_datetime',
     type: 'date',
     operatorOption: requiredDateOptions,
+    hide:
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
   },
   {
     label: 'Updated On',
     name: 'modified_datetime',
     type: 'date',
     operatorOption: dateOptions,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
   },
   {
     label: 'Status',
@@ -79,6 +96,9 @@ export const getUserFilterFields = (
     type: 'enumSelect',
     options: StatusOptions,
     operatorOption: enumOperator,
+    hide:
+      !permissionMap?.['status_rid']?.read &&
+      !permissionMap?.['status_rid']?.edit,
   },
   {
     label: 'Sort Options',

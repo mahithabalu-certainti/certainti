@@ -77,7 +77,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
     (field) => field.type === 'system' || field.type === 'system-sort'
   );
   const regularFilters = filterFields.filter(
-    (field) => field.type !== 'system' && field.type !== 'system-sort'
+    (field) =>
+      field.type !== 'system' && field.type !== 'system-sort' && !field.hide
   );
 
   const handleModalClose = () => {
@@ -114,20 +115,20 @@ const FilterModal: React.FC<FilterModalProps> = ({
         formatFilterForApi(saved as Record<string, FilterState>)
       );
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const saved = getStoredFilters();
-    if (filterFields.length > 0 && !saved) {
+    if (regularFilters.length > 0 && !saved) {
       // Automatically select the first field if no saved filters exist
-      const firstField = filterFields[0];
+      const firstField = regularFilters[0];
       setSelectedFilters([firstField.name]);
       setFilterStates({
         [firstField.name]: getInitialStateForField(firstField),
       });
     }
-  }, [filterFields]);
+  }, [isOpen]);
 
   useEffect(() => {
     const hasInvalid = validateFilters(filterStates);
@@ -154,7 +155,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     };
 
     return unListen;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const handleFilterSelect = (field: string) => {

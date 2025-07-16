@@ -92,7 +92,7 @@ export const AccountDetails = () => {
   );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_EXPORT
+    AllPermissions.PROJECTS_EXPORT
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -186,13 +186,26 @@ export const AccountDetails = () => {
     accountid as string,
     isAccountDetailsEnable
   );
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   useEffect(() => {
     if (data?.data) {
-      setAccountDetails(transformAccountData(data?.data));
+      setAccountDetails(transformAccountData(data?.data, permissionMap));
       setAccountDetailsForEdit(data.data);
     }
-  }, [data]);
+  }, [data, permissionMap]);
 
   const accountInActive =
     data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';

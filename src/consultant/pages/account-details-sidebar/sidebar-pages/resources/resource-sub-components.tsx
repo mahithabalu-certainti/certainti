@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   AccountData,
   DisplayColumn,
@@ -19,6 +19,8 @@ import { useResourceDetail } from '../../../../services/resource-details';
 import { ResourceTypeEnum } from '../../../resource-form/utils';
 import ResourceAttachmentsTable from './resource-attachment/resource-attachment-table';
 import { AttachmentList } from '../../../../types/attachment';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -120,10 +122,28 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     error,
   } = useResourceDetail(resourceId, accountId);
   const [resourceDetails, setResourceDetails] = useState<DisplayColumn[]>([]);
-
+  const { permission: permissionvalue } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountViewEditFields = useMemo(
+    () =>
+      permissionvalue.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permissionvalue]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
   useEffect(() => {
-    setResourceDetails(resource ? transformResourceData(resource) : []);
-  }, [resource]);
+    setResourceDetails(
+      resource ? transformResourceData(resource, permissionMap) : []
+    );
+  }, [resource, permissionMap]);
 
   return (
     <Fragment>

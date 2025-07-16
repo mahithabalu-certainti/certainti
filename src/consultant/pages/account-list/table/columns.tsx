@@ -11,7 +11,7 @@ export const getAccountColumns = (
   onClick: (row: AccountList) => void,
   countryOptions: ListOption[],
   industryOptions: ListOption[],
-  handleEdit: (row: AccountList) => void,
+  handleEdit: (row: AccountList, field?: string, section?: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<AccountList>[] => [
   {
@@ -21,6 +21,7 @@ export const getAccountColumns = (
     label: 'Account Name',
     width: 250,
     sortable: true,
+    sticky: true,
     editable:
       permissionMap?.['account_name']?.read &&
       permissionMap?.['account_name']?.edit,
@@ -288,7 +289,9 @@ export const getAccountColumns = (
       const isClickable = row._level === undefined || row._level < 2;
       return isClickable ? (
         <div
-          onDoubleClick={() => handleEdit(row)}
+          onDoubleClick={() =>
+            handleEdit(row, row.finance_executive, 'key_contacts_list')
+          }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.finance_executive}
@@ -311,7 +314,9 @@ export const getAccountColumns = (
       const isClickable = row._level === undefined || row._level < 2;
       return isClickable ? (
         <div
-          onDoubleClick={() => handleEdit(row)}
+          onDoubleClick={() =>
+            handleEdit(row, row.finance_lead, 'key_contacts_list')
+          }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.finance_lead}
@@ -334,7 +339,13 @@ export const getAccountColumns = (
       const isClickable = row._level === undefined || row._level < 2;
       return isClickable ? (
         <div
-          onDoubleClick={() => handleEdit(row)}
+          onDoubleClick={() =>
+            handleEdit(
+              row,
+              row.professional_services_consultant,
+              'key_contacts_list'
+            )
+          }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.professional_services_consultant}

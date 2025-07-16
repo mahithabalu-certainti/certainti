@@ -750,7 +750,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         type: 'permission',
         permission_id: 'D001-0625ae7b-aefb-4e06-aaed-0d6af5dcf85f',
         module_id: 'D001-1a64c50f-8af2-4246-b472-0378182eeb74',
-        name: 'profile_permission_edit_update',
+        name: 'profile_permission_view_edit',
         desc: 'Edit Profile Permission',
         is_field_available: false,
         is_enabled: true,
@@ -995,7 +995,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         name: 'account_name',
         desc: 'Name',
         read: true,
-        edit: true,
+        edit: false,
         is_read_only: false,
       },
       {

@@ -21,7 +21,6 @@ import {
   MANAGE_PROFILE,
   MANAGE_PROFILE_CREATE,
   MANAGE_PROFILE_EDIT,
-  MANAGE_PROFILE_VIEW,
   NOT_MATCH,
   PROFILE,
   PROJECT,
@@ -54,9 +53,6 @@ const Resource = lazy(
 );
 const Login = lazy(() => import('./pages/login/login'));
 const Profile = lazy(() => import('./pages/profile/profile'));
-const ViewProfile = lazy(
-  () => import('./admin/pages/manage-profile/view-profile/view-profile')
-);
 const HomePage = lazy(() => import('./consultant/pages/home/Home'));
 const NotFound = lazy(() => import('./pages/not-found/NotFound'));
 const Accounts = lazy(() => import('./consultant/pages/account-list/accounts'));
@@ -167,7 +163,6 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<CreateProfile />}
                 />
                 <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
-                <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
               </Route>
               {/* Page not found */}
               <Route path={NOT_MATCH} element={<NotFound />} />
