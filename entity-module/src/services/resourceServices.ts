@@ -2,7 +2,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
 import { ResourceFiscal } from "../models/resourceFiscal";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
 import moment from "moment";
@@ -394,36 +394,46 @@ export class ResourceService {
       }
 
       const attachments = await this.schemaService.fetchAttachmentsByResourceId(resourceId);
+      if(attachments.length>0){
       const sequelize = await initMainDbSequelize();
       const orgDbSequelize = await initOrgSequelize();
-      // Get document types
+      // Extract IDs from attachments
       const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
-      const documentTypes = await sequelize.query(
-        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
-        { replacements: { documentTypeIds }, type: 'SELECT' }
-      );
-
-      // Get document categories  
       const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
-      const documentCategories = await sequelize.query(
-        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
-        { replacements: { documentCategoryIds }, type: 'SELECT' }
-      );
-
-      // Get uploaders
       const userIds = attachments.map(attachment => attachment.created_by);
-      const users = await sequelize.query(
-        `SELECT rid, concat(first_name,' ',last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
-        { replacements: { userIds }, type: 'SELECT' }
-      );
-
-      
       const resourceIds = attachments.map(attachment => attachment.attach_to);
       const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
-      const resources = await orgDbSequelize.query(
-        `SELECT rid, resource_code FROM ${schemaName}.resources WHERE rid IN (:resourceIds)`,
-        { replacements: { resourceIds }, type: 'SELECT' }
-      );
+
+      // Execute all queries in parallel
+      const [documentTypes, documentCategories, users, resources] = await Promise.all([
+        documentTypeIds.length > 0 
+          ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
+              replacements: { documentTypeIds }, 
+              type: 'SELECT' 
+            })
+          : Promise.resolve([]),
+
+        documentCategoryIds.length > 0
+          ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
+              replacements: { documentCategoryIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([]),
+
+        userIds.length > 0
+          ? sequelize.query(rawQueries.GET_USERS, {
+              replacements: { userIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([]),
+
+        resourceIds.length > 0
+          ? orgDbSequelize.query(rawQueries.fetchResourcesByIds(schemaName), {
+              replacements: { resourceIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([])
+      ]);
 
       // Enhance attachments with related data
       const mappedAttachments = attachments.map(attachment => {
@@ -442,7 +452,7 @@ export class ResourceService {
       });
 
       resourceDetails.attachment = mappedAttachments || [];
-
+    }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

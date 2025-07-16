@@ -128,5 +128,28 @@ export const rawQueries = {
         WHERE
         a.rid = '${account_rid}'
         `
-  }
+  },
+   GET_DOCUMENT_TYPES: `
+    SELECT rid, type_name 
+    FROM ${MAIN_SCHEMA_NAME}.document_type 
+    WHERE rid IN (:documentTypeIds)
+  `,
+
+  GET_DOCUMENT_CATEGORIES: `
+    SELECT rid, category_name 
+    FROM ${MAIN_SCHEMA_NAME}.document_category 
+    WHERE rid IN (:documentCategoryIds)
+  `,
+
+  GET_USERS: `
+    SELECT rid, concat(first_name,' ',last_name) as full_name 
+    FROM ${MAIN_SCHEMA_NAME}.user 
+    WHERE rid IN (:userIds)
+  `,
+
+  GET_ACCOUNTS: `
+    SELECT rid, account_name 
+    FROM ${MAIN_SCHEMA_NAME}.account 
+    WHERE rid IN (:attachmentIds)
+  `,
 }

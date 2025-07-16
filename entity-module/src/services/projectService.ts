@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE,rawQueries } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -607,40 +607,38 @@ export class ProjectService {
         const attachments = await this.schemaService.fetchAttachmentsByProjectId(
           projectId
         );
-
+        let mappedAttachments = [];
+        if(attachments.length>0){
         const sequelize = await initMainDbSequelize();
       const orgDbSequelize = await initOrgSequelize();
-      // Get document types
+      // Get document types, categories, users and projects in parallel
       const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
-      const documentTypes = await sequelize.query(
-        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
-        { replacements: { documentTypeIds }, type: 'SELECT' }
-      );
-
-      // Get document categories  
       const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
-      const documentCategories = await sequelize.query(
-        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
-        { replacements: { documentCategoryIds }, type: 'SELECT' }
-      );
-
-      // Get uploaders
       const userIds = attachments.map(attachment => attachment.created_by);
-      const users = await sequelize.query(
-        `SELECT rid, concat(first_name,' ',last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
-        { replacements: { userIds }, type: 'SELECT' }
-      );
-
-      
       const projectIds = attachments.map(attachment => attachment.attach_to);
       const schemaName = `trd365_${accountRNumber.replace(/\D/g, '')}`;
-      const projects = await orgDbSequelize.query(
-        `SELECT rid, project_code FROM ${schemaName}.project WHERE rid IN (:projectIds)`,
-        { replacements: { projectIds }, type: 'SELECT' }
-      );
+
+      const [documentTypes, documentCategories, users, projects] = await Promise.all([
+        documentTypeIds.length > 0 
+          ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, 
+              { replacements: { documentTypeIds }, type: 'SELECT' })
+          : [],
+        documentCategoryIds.length > 0
+          ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES,
+              { replacements: { documentCategoryIds }, type: 'SELECT' })
+          : [],
+        userIds.length > 0
+          ? sequelize.query(rawQueries.GET_USERS,
+              { replacements: { userIds }, type: 'SELECT' })
+          : [],
+        projectIds.length > 0
+          ? orgDbSequelize.query(rawQueries.fetchProjectsByIds(schemaName),
+              { replacements: { projectIds }, type: 'SELECT' })
+          : []
+      ]);
 
       // Enhance attachments with related data
-      const mappedAttachments = attachments.map(attachment => {
+        mappedAttachments = attachments.map(attachment => {
         const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
         const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
         const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
@@ -654,13 +652,14 @@ export class ProjectService {
           attached_to: (attachedTo as any) ?.project_code || ''
         };
       });
+    }
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           project: projectData,
-          attachment: mappedAttachments || []
+          attachment: mappedAttachments
         },
       };
     } catch (err) {

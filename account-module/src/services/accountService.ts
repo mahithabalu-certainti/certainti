@@ -1,5 +1,5 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS, STATUS_MESSAGE } from "../utils/constant";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS, STATUS_MESSAGE, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -1068,11 +1068,9 @@ async accountById(account_id: string): Promise<{
     data?: { accountById: any; accountDetails: any };
   }> {
     try {
-      const repository = await this.getAccountRepository();
+      const repository = this.getAccountRepository();
       let accountById = await repository.findOne({
-        where: {
-          rid: account_id,
-        },
+        where: { rid: account_id },
         include: [
           {
             model: Account,
@@ -1081,8 +1079,8 @@ async accountById(account_id: string): Promise<{
           },
           {
             model: Country,
-            as: "country",
-            attributes: ["country_name","country_code"],
+            as: "country", 
+            attributes: ["country_name", "country_code"],
             required: false,
           },
           {
@@ -1100,7 +1098,7 @@ async accountById(account_id: string): Promise<{
           {
             model: Industry,
             as: "industry",
-            attributes: ["industry_name"],
+            attributes: ["rid", "industry_name"],
             required: false,
           },
           {
@@ -1110,122 +1108,94 @@ async accountById(account_id: string): Promise<{
             required: false,
           },
           {
-            model: Industry,
-            as: "industry",
-            attributes: ["rid", "industry_name"],
-            required: false,
-          },
-          {
             model: Status,
             as: 'status',
             attributes: [['status_description','status_name']],
             required: false,
-        }
+          }
         ],
       });
 
-      // Get USD currency_rid
+      // Handle USD currency assignment
       const usdCurrency = await this.getUSDCurrency();
-
-      // If currency_rid is null or empty, assign USD currency
-      if (!accountById?.currency_rid || accountById.currency_rid === '') {
-        if (accountById) {
-          accountById.currency_rid = usdCurrency?.rid;
-          (accountById as any).setDataValue('currency', usdCurrency);
-        }
+      if (accountById && (!accountById.currency_rid || accountById.currency_rid === '')) {
+        accountById.currency_rid = usdCurrency?.rid;
+        (accountById as any).setDataValue('currency', usdCurrency);
       }
 
-      let acconuntNumber = accountById?.r_number || "";
-      if(accountById?.storage_type === "store_in_parent"){
+      // Get account number
+      let accountNumber = accountById?.r_number || "";
+      if (accountById?.storage_type === "store_in_parent") {
         const parentAccount = await repository.findOne({
-          where: {
-            rid: accountById.parent_account_rid || ""
-          }
-        })
-        acconuntNumber = parentAccount?.r_number || "";
+          where: { rid: accountById.parent_account_rid || "" }
+        });
+        accountNumber = parentAccount?.r_number || "";
       }
 
-      const accountDetails = await this.schemaService.fetchAccountDetails(
-        acconuntNumber,
-        accountById?.rid || "",
-      );
+      // Fetch related data in parallel
+      const [accountDetails, keyContacts, attachments, userNames] = await Promise.all([
+        this.schemaService.fetchAccountDetails(accountNumber, accountById?.rid || ""),
+        this.schemaService.fetchKeyContacts(accountById?.rid || "", accountNumber),
+        this.schemaService.fetchAttachments(account_id),
+        accountById ? this.fetchUserNames({
+          created_by: accountById.created_by || "",
+          modified_by: accountById.modified_by || "",
+        }) : null
+      ]);
 
-      // Fetch key contacts for the account
-      const keyContacts = await this.schemaService.fetchKeyContacts(
-        accountById?.rid || "",
-        acconuntNumber
-      );
-
-      // Fetch attachments for the account
-      const attachments = await this.schemaService.fetchAttachments(
-        account_id,
-      );
-
-      let userNames;
-      if(accountById)
-      {
-         userNames = await this.fetchUserNames({
-            created_by: accountById?.created_by || "",
-            modified_by: accountById?.modified_by || "",
-          });
+      // Update account user names
+      if (accountById && userNames) {
         (accountById as any).dataValues.created_by = userNames.created_by_name;
         (accountById as any).dataValues.modified_by = userNames.modified_by_name;
       }
-    
+
       accountById = await this.schemaService.insertIndustyName(accountById);
 
+      // Process attachments
       const sequelize = await initSequelize();
-      
-      // Get document types
-      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
-      const documentTypes = await sequelize.query(
-        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
-        { replacements: { documentTypeIds }, type: 'SELECT' }
-      );
+      const documentTypeIds = attachments.map(a => a.document_type_rid);
+      const documentCategoryIds = attachments.map(a => a.document_category_rid);
+      const userIds = attachments.map(a => a.created_by);
+      const attachmentIds = attachments.map(a => a.attach_to);
 
-      // Get document categories  
-      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
-      const documentCategories = await sequelize.query(
-        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
-        { replacements: { documentCategoryIds }, type: 'SELECT' }
-      );
+      // Fetch attachment related data in parallel
+      const [documentTypes, documentCategories, users, accounts] = await Promise.all([
+        documentTypeIds.length > 0 ? 
+          sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
+            replacements: { documentTypeIds }, 
+            type: 'SELECT' 
+          }) : [],
+        documentCategoryIds.length>0 ?
+          sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, { 
+          replacements: { documentCategoryIds }, 
+          type: 'SELECT' 
+        }) : [],
+        userIds.length>0 ?
+          sequelize.query(rawQueries.GET_USERS, { 
+          replacements: { userIds }, 
+          type: 'SELECT' 
+        }) : [],
+        attachmentIds.length>0 ?
+          sequelize.query(rawQueries.GET_ACCOUNTS, { 
+          replacements: { attachmentIds }, 
+          type: 'SELECT' 
+        }) : []
+      ]);
 
-      // Get uploaders
-      const userIds = attachments.map(attachment => attachment.created_by);
-      const users = await sequelize.query(
-        `SELECT rid, concat(first_name,' ',last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
-        { replacements: { userIds }, type: 'SELECT' }
-      );
+      // Map attachments with related data
+      const mappedAttachments = attachments.map(attachment => ({
+        ...attachment,
+        document_type: (documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid) as any)?.type_name || '',
+        document_category: (documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid) as any)?.category_name || '',
+        uploaded_by: (users.find((u: any) => u.rid === attachment.created_by) as any)?.full_name || '',
+        attached_to: (accounts.find((a: any) => a.rid === attachment.attach_to) as any)?.account_name || ''
+      }));
 
-      // Get attached accounts
-      const attachmentIds = attachments.map(attachment => attachment.attach_to);
-      const accounts = await sequelize.query(
-        `SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:attachmentIds)`,
-        { replacements: { attachmentIds }, type: 'SELECT' }
-      );
-
-      // Enhance attachments with related data
-      const mappedAttachments = attachments.map(attachment => {
-        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
-        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
-        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
-        const attachedTo = accounts.find((a: any) => a.rid === attachment.attach_to);
-
-        return {
-          ...attachment,
-          document_type: (documentType as any)?.type_name || '',
-          document_category: (documentCategory as any)?.category_name || '',
-          uploaded_by: (uploadedBy as any)?.full_name || '',
-          attached_to: (attachedTo as any) ?.account_name || ''
-        };
-      });
-
-
-      // Add key contacts and attachments to account details
+      // Construct final account data
       const accountData = {
-        ...accountDetails.length > 0 ? accountDetails[0] : {},
-        keyContacts: keyContacts.length > 0 ? keyContacts : [],
-        attachments: mappedAttachments.length > 0 ? mappedAttachments : [],
+        ...(accountDetails[0] || {}),
+        keyContacts: keyContacts || [],
+        attachments: mappedAttachments || [],
         created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };
