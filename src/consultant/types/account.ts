@@ -435,3 +435,11 @@ export interface FormField {
     errorMessage: string;
   }>;
 }
+
+export type ExportType =
+  | 'resource'
+  | 'cost'
+  | 'skill'
+  | 'project'
+  | 'attachments'
+  | 'resource_attachments';

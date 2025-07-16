@@ -5,7 +5,10 @@ import {
 } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { useEffect, useMemo, useState } from 'react';
-import { AttachmentList } from '../../../../types/attachment';
+import {
+  AttachmentList,
+  AttachmentsListExportParams,
+} from '../../../../types/attachment';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import { getProjectAttachmentColumns } from './column';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
@@ -38,8 +41,19 @@ const AttachmentTabs: ResourceTabs[] = [
     disable: true,
   },
 ];
+interface AttachmentsProps {
+  setExportType?: (
+    type: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
+  ) => void;
+  setAttachmentParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
+}
 
-const Attachments: React.FC = () => {
+const Attachments: React.FC<AttachmentsProps> = ({
+  setExportType,
+  setAttachmentParams,
+}) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
   const { projectid } = useParams();
@@ -83,6 +97,18 @@ const Attachments: React.FC = () => {
       setAttachmentList(data.attachments || []);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('attachments');
+    }
+    setAttachmentParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortField, sortOrder, appliedFilters]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);

@@ -1,13 +1,16 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { resourceServiceApi } from '../../../api/api';
-import { uploadAttachmentUrl } from '../urls/attachment-url';
+import {
+  AttachmentExportListURL,
+  uploadAttachmentUrl,
+} from '../urls/attachment-url';
 import { AttachmentListURL } from '../urls/attachment-url';
 import {
   AttachmentList,
   AttachmentListResponse,
+  AttachmentsListExportParams,
   AttachmentsListURLParams,
 } from '../../types/attachment';
-import { attachmentUploadUrl } from '../urls';
 
 export const fetchAttachmentList = async (
   params: AttachmentsListURLParams
@@ -35,21 +38,6 @@ export const useAttachmentList = (
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const uploadAttachmentFile = async (payload: any) => {
-  const response = await resourceServiceApi.post(
-    attachmentUploadUrl(),
-    payload,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
-  );
-
-  return response;
-};
-
 export const useAllAttachmentList = (
   params: AttachmentsListURLParams,
   refreshTrigger?: number
@@ -62,6 +50,7 @@ export const useAllAttachmentList = (
   });
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const attachmentFileUpload = async (payload: any) => {
   const formData = new FormData();
   formData.append('attachment', payload.attachment);
@@ -88,4 +77,56 @@ export const attachmentFileUpload = async (payload: any) => {
     }
   );
   return response;
+};
+
+type ExportType = 'attachments' | 'all_attachments';
+export const exportAttachmentsData = async (
+  type: ExportType,
+  params: AttachmentsListExportParams
+) => {
+  let url = '';
+  let filename = '';
+
+  switch (type) {
+    case 'attachments':
+      url = AttachmentExportListURL(params);
+      filename = `${params.attachmentLevel}_attachments_records.xlsx`;
+      break;
+    case 'all_attachments':
+      url = AttachmentExportListURL(params);
+      filename = 'all_attachments_records.xlsx';
+      break;
+    default:
+      console.error('Invalid export type');
+      return;
+  }
+
+  try {
+    const response = await resourceServiceApi.get(url);
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };

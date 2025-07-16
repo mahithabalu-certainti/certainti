@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/api';
-import { ResourceDetailsApiResponse } from '../../types';
+import { ExportType, ResourceDetailsApiResponse } from '../../types';
 import { ExportResourcelUrl, ResourceDetailURL } from '../urls';
 import { ExportModule } from '../../types/resource-skill';
 import {
@@ -31,7 +31,6 @@ export const useResourceDetail = (
   });
 };
 
-type ExportType = 'resource' | 'cost' | 'skill' | 'project' | 'attachments';
 export const exportData = async (
   type: ExportType,
   params: ExportModule = {}

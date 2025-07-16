@@ -15,6 +15,7 @@ import { useGetAllDocumentInfo } from '../../../../common-service';
 import { getFiscalYears } from '../../../../common-utils';
 import { SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 
 export const Attachments: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -80,6 +81,17 @@ export const Attachments: React.FC = () => {
     }
   };
 
+  const handleExport = () => {
+    const projectParams = {
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      filters: appliedFilters,
+      fiscalYear: tableParams.fiscalYear,
+      globalFilters: tableParams.globalFilters,
+    };
+    exportAttachmentsData('all_attachments', projectParams);
+  };
+
   const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
 
@@ -111,12 +123,13 @@ export const Attachments: React.FC = () => {
 
   const menuItems = [
     {
-      label: 'Manage user',
-      onClick: () => console.log('manage user clicked'),
+      label: 'Manage attachments',
+      onClick: () => console.log('Manage attachments clicked'),
+      hide: true,
     },
     {
       label: 'Export',
-      onClick: () => console.log('manage user clicked'),
+      onClick: () => handleExport(),
     },
   ];
 

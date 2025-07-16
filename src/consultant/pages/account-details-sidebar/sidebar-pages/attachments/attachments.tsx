@@ -15,7 +15,10 @@ import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { SelectOption } from '../../../../types';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
-import { AttachmentList } from '../../../../types/attachment';
+import {
+  AttachmentList,
+  AttachmentsListExportParams,
+} from '../../../../types/attachment';
 import { SectionTabPanel } from '../../../../../components';
 import { getFiscalYears } from '../../../../../common-utils';
 import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
@@ -42,7 +45,19 @@ const AttachmentTabs: ResourceTabs[] = [
   },
 ];
 
-const Attachments: React.FC = () => {
+interface AttachmentsProps {
+  setExportType?: (
+    type: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
+  ) => void;
+  setAttachmentParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
+}
+
+const Attachments: React.FC<AttachmentsProps> = ({
+  setExportType,
+  setAttachmentParams,
+}) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
   const location = useLocation();
@@ -84,6 +99,18 @@ const Attachments: React.FC = () => {
       setAttachmentList(data.attachments || []);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('attachments');
+    }
+    setAttachmentParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortField, sortOrder, appliedFilters]);
 
   const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);

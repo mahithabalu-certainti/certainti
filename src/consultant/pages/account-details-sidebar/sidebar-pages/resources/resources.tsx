@@ -48,7 +48,7 @@ import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
-import { SelectOption } from '../../../../types';
+import { ExportType, SelectOption } from '../../../../types';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -62,7 +62,7 @@ interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
-  setExportType?: (type: 'resource' | 'cost' | 'skill' | 'attachments') => void;
+  setExportType?: (type: ExportType) => void;
 }
 
 export interface ResourceTabs {
@@ -588,7 +588,7 @@ const Resource: React.FC<ResourceProps> = ({
     } else if (value === 'attachments') {
       updatedParams.sortBy = attachmentsOrderBy;
       updatedParams.sortOrder = attachmentsOrder;
-      setExportType?.('attachments');
+      setExportType?.('resource_attachments');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;

@@ -35,7 +35,7 @@ export const getAttachmentColumns = (
     sortId: 'format',
     label: 'Format',
     width: 140,
-    sortable: false,
+    sortable: true,
   },
   {
     id: 'size_in_mb',

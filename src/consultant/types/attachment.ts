@@ -53,3 +53,15 @@ export type AttachmentListResponse = {
     totalCount: number;
   };
 };
+
+export interface AttachmentsListExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  globalFilters?: globalFilters;
+  timezone?: string;
+  attachmentLevel?: string;
+  entityId?: string;
+  accountRid?: string;
+}
