@@ -202,12 +202,12 @@ const Attachments: React.FC<AttachmentsProps> = ({
     memoizedDocumentTypes
   );
 
-  const getRowId = (row: AttachmentList) => row.document_rid;
+  const getRowId = (row: AttachmentList) => row.rid;
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousAttachments = [...attachmentList];
     // Find account_id
-    const rowData = attachmentList.find((att) => att.document_rid === rowId);
+    const rowData = attachmentList.find((att) => att.rid === rowId);
     if (!rowData) {
       errorToast('Row not found.');
       return;
@@ -252,7 +252,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
         const updateAttachment = result.data;
         setAttachmentList((prev) =>
           prev.map((att) => {
-            if (att.document_rid === updateAttachment.document_rid) {
+            if (att.rid === updateAttachment.document_rid) {
               return {
                 ...att,
                 ...updateAttachment,
