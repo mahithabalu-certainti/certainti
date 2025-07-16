@@ -483,5 +483,40 @@ export const rawQueries = {
       AND
       pf.rid != p.rid
       )`
-  }
+  },
+  fetchResourcesByIds(schemaName:string){ 
+    return `SELECT rid, resource_code 
+    FROM ${schemaName}.resources 
+    WHERE rid IN (:resourceIds)
+  `
+  },
+  fetchProjectsByIds(schemaName: string){
+    return `SELECT rid, project_code 
+    FROM ${schemaName}.project 
+    WHERE rid IN (:projectIds)
+  `
+  },
+  fetchProjectResourcesByIds(schemaName: string){
+    return `SELECT rid, r_number 
+    FROM ${schemaName}.project_resource 
+    WHERE rid IN (:projectResourceIds)
+  `
+  },
+  GET_DOCUMENT_TYPES: `
+    SELECT rid, type_name 
+    FROM ${MAIN_SCHEMA_NAME}.document_type 
+    WHERE rid IN (:documentTypeIds)
+  `,
+
+  GET_DOCUMENT_CATEGORIES: `
+    SELECT rid, category_name 
+    FROM ${MAIN_SCHEMA_NAME}.document_category 
+    WHERE rid IN (:documentCategoryIds)
+  `,
+
+  GET_USERS: `
+    SELECT rid, concat(first_name,' ',last_name) as full_name 
+    FROM ${MAIN_SCHEMA_NAME}.user 
+    WHERE rid IN (:userIds)
+  `,
 }

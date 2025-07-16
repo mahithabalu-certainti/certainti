@@ -575,6 +575,45 @@ async function listUserGroupById(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Retrieves details of a specific user group by its ID
+ * 
+ * @param {Request} req - Express request object containing group ID in params
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Promise representing the completion of the operation
+ */
+async function listGroupDetailsById(req: Request, res: Response): Promise<void> {
+  const methodName = "List User Group Details By Id";
+  try {
+    const { groupId } = req.params;
+    const account = await services.userGroupService.listUserGroupDetailsById(groupId);
+   // const account = await services.userGroupService.listUserGroupById(id);
+
+    if (account.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, account?.data);
+    } else {
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        account.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+
 
 
 /**
@@ -699,7 +738,18 @@ async function assignEntityAccessToProject(req: Request, res: Response): Promise
 async function getUserGroupType(req: Request, res: Response): Promise<void> {
   const methodName = "List User Group Type";
   try {
-    const groupTypes = await services.userGroupService.getUserGroupType();
+     const validatedData = await validateRequest(
+      req,
+      listActiveUserGroupSchema,
+      "",
+      res,
+      "GET"
+    );
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+
+    const { is_consultant_only_group} = validatedData;
+    const groupTypes = await services.userGroupService.getUserGroupType(is_consultant_only_group);
     if (groupTypes.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, groupTypes.data);
@@ -843,6 +893,7 @@ export {
    exportUserGroup,
    listUserGroupById,
    listAccountGroupById,
+   listGroupDetailsById,
    getAccountUsers,
    getProjectUsers,
    getAccountGroups,

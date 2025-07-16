@@ -1,5 +1,5 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { HttpStatus, STATUS, STATUS_MESSAGE } from "../utils/constant";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS, STATUS_MESSAGE, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
@@ -12,6 +12,7 @@ import { Account as AccountModel } from "../models/accountModel";
 import AccountDetails from "../models/accountDetailsModel";
 import { KeyContact } from "../models/keyContactDetails";
 import { initOrgSequelize } from "../config/orgdbDataSource";
+import { initSequelize } from "../config/maindbDataSource";
 
 const { Account, Country, Currency,Industry } = models;
 
@@ -1067,11 +1068,9 @@ async accountById(account_id: string): Promise<{
     data?: { accountById: any; accountDetails: any };
   }> {
     try {
-      const repository = await this.getAccountRepository();
+      const repository = this.getAccountRepository();
       let accountById = await repository.findOne({
-        where: {
-          rid: account_id,
-        },
+        where: { rid: account_id },
         include: [
           {
             model: Account,
@@ -1080,8 +1079,8 @@ async accountById(account_id: string): Promise<{
           },
           {
             model: Country,
-            as: "country",
-            attributes: ["country_name","country_code"],
+            as: "country", 
+            attributes: ["country_name", "country_code"],
             required: false,
           },
           {
@@ -1099,7 +1098,7 @@ async accountById(account_id: string): Promise<{
           {
             model: Industry,
             as: "industry",
-            attributes: ["industry_name"],
+            attributes: ["rid", "industry_name"],
             required: false,
           },
           {
@@ -1109,75 +1108,94 @@ async accountById(account_id: string): Promise<{
             required: false,
           },
           {
-            model: Industry,
-            as: "industry",
-            attributes: ["rid", "industry_name"],
-            required: false,
-          },
-          {
             model: Status,
             as: 'status',
             attributes: [['status_description','status_name']],
             required: false,
-        }
+          }
         ],
       });
 
-      // Get USD currency_rid
+      // Handle USD currency assignment
       const usdCurrency = await this.getUSDCurrency();
-
-      // If currency_rid is null or empty, assign USD currency
-      if (!accountById?.currency_rid || accountById.currency_rid === '') {
-        if (accountById) {
-          accountById.currency_rid = usdCurrency?.rid;
-          (accountById as any).setDataValue('currency', usdCurrency);
-        }
+      if (accountById && (!accountById.currency_rid || accountById.currency_rid === '')) {
+        accountById.currency_rid = usdCurrency?.rid;
+        (accountById as any).setDataValue('currency', usdCurrency);
       }
 
-      let acconuntNumber = accountById?.r_number || "";
-      if(accountById?.storage_type === "store_in_parent"){
+      // Get account number
+      let accountNumber = accountById?.r_number || "";
+      if (accountById?.storage_type === "store_in_parent") {
         const parentAccount = await repository.findOne({
-          where: {
-            rid: accountById.parent_account_rid || ""
-          }
-        })
-        acconuntNumber = parentAccount?.r_number || "";
+          where: { rid: accountById.parent_account_rid || "" }
+        });
+        accountNumber = parentAccount?.r_number || "";
       }
 
-      const accountDetails = await this.schemaService.fetchAccountDetails(
-        acconuntNumber,
-        accountById?.rid || "",
-      );
+      // Fetch related data in parallel
+      const [accountDetails, keyContacts, attachments, userNames] = await Promise.all([
+        this.schemaService.fetchAccountDetails(accountNumber, accountById?.rid || ""),
+        this.schemaService.fetchKeyContacts(accountById?.rid || "", accountNumber),
+        this.schemaService.fetchAttachments(account_id),
+        accountById ? this.fetchUserNames({
+          created_by: accountById.created_by || "",
+          modified_by: accountById.modified_by || "",
+        }) : null
+      ]);
 
-      // Fetch key contacts for the account
-      const keyContacts = await this.schemaService.fetchKeyContacts(
-        accountById?.rid || "",
-        acconuntNumber
-      );
-
-      // Fetch attachments for the account
-      const attachments = await this.schemaService.fetchAttachments(
-        account_id,
-      );
-
-      let userNames;
-      if(accountById)
-      {
-         userNames = await this.fetchUserNames({
-            created_by: accountById?.created_by || "",
-            modified_by: accountById?.modified_by || "",
-          });
+      // Update account user names
+      if (accountById && userNames) {
         (accountById as any).dataValues.created_by = userNames.created_by_name;
         (accountById as any).dataValues.modified_by = userNames.modified_by_name;
       }
-    
+
       accountById = await this.schemaService.insertIndustyName(accountById);
 
-      // Add key contacts and attachments to account details
+      // Process attachments
+      const sequelize = await initSequelize();
+      const documentTypeIds = attachments.map(a => a.document_type_rid);
+      const documentCategoryIds = attachments.map(a => a.document_category_rid);
+      const userIds = attachments.map(a => a.created_by);
+      const attachmentIds = attachments.map(a => a.attach_to);
+
+      // Fetch attachment related data in parallel
+      const [documentTypes, documentCategories, users, accounts] = await Promise.all([
+        documentTypeIds.length > 0 ? 
+          sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
+            replacements: { documentTypeIds }, 
+            type: 'SELECT' 
+          }) : [],
+        documentCategoryIds.length>0 ?
+          sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, { 
+          replacements: { documentCategoryIds }, 
+          type: 'SELECT' 
+        }) : [],
+        userIds.length>0 ?
+          sequelize.query(rawQueries.GET_USERS, { 
+          replacements: { userIds }, 
+          type: 'SELECT' 
+        }) : [],
+        attachmentIds.length>0 ?
+          sequelize.query(rawQueries.GET_ACCOUNTS, { 
+          replacements: { attachmentIds }, 
+          type: 'SELECT' 
+        }) : []
+      ]);
+
+      // Map attachments with related data
+      const mappedAttachments = attachments.map(attachment => ({
+        ...attachment,
+        document_type: (documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid) as any)?.type_name || '',
+        document_category: (documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid) as any)?.category_name || '',
+        uploaded_by: (users.find((u: any) => u.rid === attachment.created_by) as any)?.full_name || '',
+        attached_to: (accounts.find((a: any) => a.rid === attachment.attach_to) as any)?.account_name || ''
+      }));
+
+      // Construct final account data
       const accountData = {
-        ...accountDetails.length > 0 ? accountDetails[0] : {},
-        keyContacts: keyContacts.length > 0 ? keyContacts : [],
-        attachments: attachments.length > 0 ? attachments : [],
+        ...(accountDetails[0] || {}),
+        keyContacts: keyContacts || [],
+        attachments: mappedAttachments || [],
         created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };
@@ -1278,7 +1296,8 @@ async accountById(account_id: string): Promise<{
     const { whereClause } = this.buildWhereClause(parsedFilters, '');
   
     const queryOptions: any = {
-      where: whereClause,
+      where: {...whereClause,
+              organisation_name: { [Op.ne]: null }},
       include: [
         {
           model: Status,

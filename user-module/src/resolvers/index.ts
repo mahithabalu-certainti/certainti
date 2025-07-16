@@ -120,7 +120,33 @@ const userResolvers: IResolvers = {
           profile: null,
         };
       }
-    }
+    },
+    userGroupUpdate : async (_, {data} : {data : any}, ctx) => {
+      try {
+        
+        const response = await ctx.services.userGroupService.updateUserGroupInline(data);
+        console.log("User group graph ql update",response.statusCode)
+        if (response.statusCode === constants.SUCCESS) {
+          return {
+            success: true,
+            message: "User Group updated successfully",
+            userGroup: response.data.userGroup,
+          };
+        }
+
+        return {
+          success: false,
+          message: response.errorMessage || "Failed to update user group",
+          userGroup: null,
+        };
+      } catch (err) {
+        return {
+          success: false,
+          message: (err as Error).message,
+          profile: null,
+        };
+      }
+    },
   },
 };
 
