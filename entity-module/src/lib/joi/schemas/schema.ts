@@ -1969,6 +1969,55 @@ const listAttachmentsSchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
 
+const exportListAttachmentsSchema = Joi.object({
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+        }),
+    entityId: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+    accountRid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Account RID is required',
+            'string.pattern.base': 'Account RID must be a valid UUID'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
 const listAttachmentSummarySchema = Joi.object({
     page: Joi.number()
         .integer()
@@ -1992,6 +2041,34 @@ const listAttachmentSummarySchema = Joi.object({
             'number.min': 'Limit must be greater than or equal to 1',
             'number.max': 'Limit cannot exceed 100'
         }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    globalFilters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const exportListAttachmentSummarySchema = Joi.object({
     search: Joi.string()
         .max(255)
         .allow('')
@@ -2255,5 +2332,7 @@ export {
   listAttachmentSummarySchema,
   createProjectResourceSchema,
   updateProjectResourceSchema,
-  exportListProjectResourceSchema
+  exportListProjectResourceSchema,
+  exportListAttachmentsSchema,
+  exportListAttachmentSummarySchema
 };
