@@ -113,7 +113,13 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }
     return row.project_rid || '';
   };
-  const handleEdit = (account: Project) => {
+
+  const handleEdit = (
+    account: Project,
+    fieldValue?: string | null,
+    section?: string
+  ) => {
+    const sendState = fieldValue || section;
     const accountID = account?.account_rid ?? '';
     const projectID = account?.project_fiscal_rid ?? '';
     const queryParams = new URLSearchParams({
@@ -122,7 +128,17 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       source: 'project',
     });
 
-    navigate(`/project/edit/${projectID}?${queryParams.toString()}`);
+    navigate(
+      `/project/edit/${projectID}?${queryParams.toString()}`,
+      sendState
+        ? {
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
+        : undefined
+    );
   };
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -261,34 +277,10 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
       if (result?.statusCode === 200 && result.data) {
         const updatedParentData = result.data;
-        const updatedFiscalData = updatedParentData.ProjectFiscal;
-
-        if (!updatedFiscalData) {
-          errorToast('Failed to update project. Please try again.');
-          setAllProjectList(previousProject);
-          return;
-        }
 
         const newProjects = allProjectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            const mergedParent = {
-              ...project,
-              ...updatedParentData,
-              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
-                if (
-                  fiscal.project_fiscal_rid ===
-                  updatedFiscalData.project_fiscal_rid
-                ) {
-                  return {
-                    ...fiscal,
-                    ...updatedFiscalData,
-                  };
-                }
-                return fiscal;
-              }),
-            };
-
-            return mergedParent;
+            return updatedParentData;
           }
           return project;
         });

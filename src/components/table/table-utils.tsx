@@ -169,12 +169,14 @@ export const renderFields = <T extends RowData>({
         <TextField
           select
           {...commonProps}
+          key={`select-${editingCell.rowId}-${editingCell.columnId}-${isSaving}`}
           sx={{
             ...commonProps.sx,
             width:
               fieldError && typeof column.width === 'number'
                 ? column.width - 18
                 : '100%',
+            pointerEvents: isSaving ? 'none' : 'auto',
           }}
           SelectProps={{
             displayEmpty: true,
@@ -229,39 +231,37 @@ export const renderFields = <T extends RowData>({
 
     case 'textarea':
       return (
-        <div className='absolute top-0 left-0 w-full z-30 bg-white'>
-          <TextField
-            {...commonProps}
-            multiline
-            minRows={3}
-            maxRows={10}
-            autoFocus
-            sx={{
-              width: '100%',
-              '& .MuiOutlinedInput-root': {
-                padding: '4px 0px 4px 8px !important',
-                borderRadius: 0,
-                bgcolor: fieldError ? '#FEF2F2' : '#fff',
-                '& fieldset': {
-                  border: `1px solid ${fieldError ? '#ef4444' : '#60A5FA'}`,
-                },
-                '&:hover fieldset': {
-                  borderColor: fieldError ? '#ef4444' : '#60A5FA',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: fieldError ? '#ef4444' : '#60A5FA',
-                },
+        <TextField
+          {...commonProps}
+          multiline
+          minRows={3}
+          maxRows={10}
+          autoFocus
+          sx={{
+            width: '100%',
+            '& .MuiOutlinedInput-root': {
+              padding: '4px 0px 4px 8px !important',
+              borderRadius: 0,
+              bgcolor: fieldError ? '#FEF2F2' : '#fff',
+              '& fieldset': {
+                border: `1px solid ${fieldError ? '#ef4444' : '#60A5FA'}`,
               },
-              '& .MuiOutlinedInput-input': {
-                fontSize: '13px',
-                lineHeight: 1.4,
+              '&:hover fieldset': {
+                borderColor: fieldError ? '#ef4444' : '#60A5FA',
               },
-              '& textarea': {
-                resize: 'none',
+              '&.Mui-focused fieldset': {
+                borderColor: fieldError ? '#ef4444' : '#60A5FA',
               },
-            }}
-          />
-        </div>
+            },
+            '& .MuiOutlinedInput-input': {
+              fontSize: '13px',
+              lineHeight: 1.4,
+            },
+            '& textarea': {
+              resize: 'none',
+            },
+          }}
+        />
       );
 
     case 'number':

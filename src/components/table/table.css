@@ -1,26 +1,13 @@
-.text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.cell-content-wrapper {
+  position: relative;
 }
 
-.text-ellipsis:hover::after {
-  content: attr(title);
-  position: absolute;
-  background-color: #000;
-  color: #fff;
-  padding: 5px;
-  border-radius: 3px;
-  white-space: normal;
-  z-index: 1;
+/* hide by default */
+.cell-content-wrapper .edit-pencil-icon {
+  visibility: hidden;
 }
 
-.border-right {
-  border-right: 1px solid rgba(224, 224, 224, 1);
-}
-
-.MuiTableCell-root {
-  border-right: 1px solid rgba(224, 224, 224, 1);
-  border-bottom: 1px solid rgba(224, 224, 224, 1);
-  font-weight: 300;
+/* show when parent TableCell is hovered */
+.list-table-cell:hover .cell-content-wrapper .edit-pencil-icon {
+  visibility: visible;
 }

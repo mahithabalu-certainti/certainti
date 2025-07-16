@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 import { CreateResourceIcon, EditIcon } from '../../../assets';
 import {
+  AllPermissions,
   Layout,
   OnChange,
   useGetAllCountries,
@@ -54,6 +55,8 @@ import {
   useGetResourceType,
 } from '../../services/resource-list/resource-list-service.ts';
 import ConfirmationPopup from '../../../common-utils/confirmation-popup.tsx';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store.ts';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -155,6 +158,49 @@ const ResourceForm: React.FC = () => {
     const d = parseFloat(deductions) || 0;
     return s + b + i + r - d;
   };
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const viewResourceEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const viewResourceCostEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+  const viewResourceSkillEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const resourcePermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    viewResourceEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [viewResourceEditFields]);
+  const resourceCostPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    viewResourceCostEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [viewResourceCostEditFields]);
+  const resourceSKillPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    viewResourceSkillEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [viewResourceSkillEditFields]);
 
   const currency = useFetchCurrency();
   const statusOptions = useGetStatus();
@@ -827,7 +873,10 @@ const ResourceForm: React.FC = () => {
     isEditView,
     currentResource,
     autoCalculatedValue,
-    accountName
+    accountName,
+    resourcePermissionMap,
+    resourceCostPermissionMap,
+    resourceSKillPermissionMap
   );
 
   return (

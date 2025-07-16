@@ -12,6 +12,7 @@ export const getProfileColumns = (
     label: 'Profile Name',
     width: 300,
     sortable: true,
+    sticky: true,
     editable:
       permissionMap?.['profile_name']?.read &&
       permissionMap?.['profile_name']?.edit,

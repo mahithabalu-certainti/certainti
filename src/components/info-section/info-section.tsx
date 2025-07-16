@@ -7,6 +7,7 @@ interface InfoSectionColumn {
     label: string;
     value: string | React.ReactNode;
     className?: string;
+    hide?: boolean;
   }[];
 }
 
@@ -52,7 +53,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
   if (error) {
     return (
       <Box
-        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white max-h-[80px]  text-red-500 ${className}`}
+        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] text-red-500 ${className}`}
       >
         Failed to load details
       </Box>
@@ -62,14 +63,16 @@ const InfoSection: React.FC<InfoSectionProps> = ({
   if (loading) {
     return (
       <Box
-        className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px]   ${className}`}
+        className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
       >
         {[...Array(loadingRows)].map((_, rowIndex) => (
           <Box
             key={rowIndex}
             sx={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${totalColumns * 2}, ${singleLineView ? 'auto' : '1fr'})`,
+              gridTemplateColumns: `repeat(${totalColumns * 2}, ${
+                singleLineView ? 'auto' : '1fr'
+              })`,
               alignItems: 'center',
               mt: singleLineView ? 0 : 0.5,
             }}
@@ -91,7 +94,6 @@ const InfoSection: React.FC<InfoSectionProps> = ({
       ? columns[0].items.length
       : 0;
 
-  // Calculate grid size based on number of columns
   const getGridSize = (totalColumns: number) => {
     if (totalColumns <= 6) {
       return 12 / totalColumns;
@@ -101,13 +103,15 @@ const InfoSection: React.FC<InfoSectionProps> = ({
 
   return (
     <Box
-      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[80px]   ${className}`}
+      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
     >
       {[...Array(rowCount)].map((_, rowIndex) => (
         <React.Fragment key={rowIndex}>
           <Grid container spacing={2}>
             {columns.map((column, colIndex) => {
-              const item = column.items[rowIndex];
+              const item = column.items?.[rowIndex];
+              if (!item || item.hide) return null;
+
               return (
                 <Grid
                   item

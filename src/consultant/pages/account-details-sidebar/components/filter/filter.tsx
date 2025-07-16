@@ -86,7 +86,8 @@ const Filter: React.FC<FilterComponentProps> = ({
     (field) => field.type === 'system' || field.type === 'system-sort'
   );
   const regularFilters = filterMenu.filter(
-    (field) => field.type !== 'system' && field.type !== 'system-sort'
+    (field) =>
+      field.type !== 'system' && field.type !== 'system-sort' && !field.hide
   );
 
   useEffect(() => {
@@ -95,9 +96,9 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   useEffect(() => {
     const saved = getStoredFilters(value || 'resource');
-    if (filterMenu.length > 0 && !saved) {
+    if (regularFilters.length > 0 && !saved) {
       // Automatically select the first field if no saved filters exist
-      const firstField = filterMenu[0];
+      const firstField = regularFilters[0];
       setSelectedFilters([firstField.value]);
       setFilterStates({
         [firstField.value]: getInitialStateForField(firstField),

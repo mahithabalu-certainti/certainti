@@ -95,7 +95,7 @@ export const getResourceColumns = (
       validation: [
         {
           regex: REGEX_PATTERNS.MIN_2,
-          errorMessage: 'PLease enter more than 1 characters.',
+          errorMessage: 'Please enter more than 1 characters.',
         },
         {
           regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
@@ -153,7 +153,7 @@ export const getResourceColumns = (
     editId: 'resource_orgname',
     sortId: 'resource_orgname',
     label: 'Org Name',
-    width: 140,
+    width: 160,
     sortable: true,
     editable:
       permissionMap?.['resource_orgname']?.edit &&
@@ -164,7 +164,26 @@ export const getResourceColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Organization Name',
+      placeholder: 'Enter Org Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_100,
+          errorMessage: 'Max length exceeded.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+          errorMessage:
+            "Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (') and commas (,) are allowed.",
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+          errorMessage: 'Cannot start or end with a space or special character',
+        },
+      ],
       dependencies: [
         {
           dependsOn: 'resource_type_name',

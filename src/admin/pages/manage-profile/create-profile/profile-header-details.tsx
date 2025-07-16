@@ -96,39 +96,37 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
           )}
         </div>
       </div>
-      {!profileLoading && (
+      {!profileLoading && !extendedPermission && (
         <div className='px-10 py-2'>
           <div className='border border-[#CBD6E2] rounded-[4px]'>
-            {!extendedPermission && (
-              <div className='flex items-center p-4'>
-                {!isEditView && !viewProfile && (
-                  <>
-                    <div className='flex gap-2 items-center'>
-                      <div className='text-[14px] font-bold text-[#65686F]'>
-                        Exiting profile:
-                      </div>
-                      <div className='text-[13px] font-normal text-[#2D3E4F] pl-0 pr-5'>
-                        {sourceProfileName || 'Exiting profile'}
-                      </div>
+            <div className='flex items-center p-4'>
+              {!isEditView && !viewProfile && (
+                <>
+                  <div className='flex gap-2 items-center'>
+                    <div className='text-[14px] font-bold text-[#65686F]'>
+                      Exiting profile:
                     </div>
-                  </>
-                )}
-                <div className='flex gap-2 items-center'>
-                  <div
-                    className={`text-[14px] font-bold text-[#65686F] ${isEditView || viewProfile ? 'pl-0' : 'pl-8'}`}
-                  >
-                    Profile Name:
+                    <div className='text-[13px] font-normal text-[#2D3E4F] pl-0 pr-5'>
+                      {sourceProfileName || 'Exiting profile'}
+                    </div>
                   </div>
-                  <div className='text-[13px] font-normal text-[#2D3E4F] pl-0 pr-4'>
-                    {isEditView
-                      ? editProfileName
-                      : viewProfile
-                        ? viewProfileName
-                        : profileHeaderData?.profile_name}
-                  </div>
+                </>
+              )}
+              <div className='flex gap-2 items-center'>
+                <div
+                  className={`text-[14px] font-bold text-[#65686F] ${isEditView || viewProfile ? 'pl-0' : 'pl-8'}`}
+                >
+                  Profile Name:
+                </div>
+                <div className='text-[13px] font-normal text-[#2D3E4F] pl-0 pr-4'>
+                  {isEditView
+                    ? editProfileName
+                    : viewProfile
+                      ? viewProfileName
+                      : profileHeaderData?.profile_name}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

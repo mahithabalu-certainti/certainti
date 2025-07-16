@@ -27,7 +27,7 @@ export const getAllProjectListColumns = (
   onClick: (row: Project) => void,
   projectTypeOption: ListOption[],
   projectClassificationOption: ListOption[],
-  handleEdit: (row: Project) => void,
+  handleEdit: (row: Project, field?: string | null, section?: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<Project>[] => [
   {
@@ -528,7 +528,9 @@ export const getAllProjectListColumns = (
       const isClickable = row._level !== undefined && row._level === 1;
       return isClickable ? (
         <div
-          onDoubleClick={() => handleEdit(row)}
+          onDoubleClick={() =>
+            handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
+          }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.project_point_of_contact}
@@ -551,7 +553,13 @@ export const getAllProjectListColumns = (
       const isClickable = row._level !== undefined && row._level === 1;
       return isClickable ? (
         <div
-          onDoubleClick={() => handleEdit(row)}
+          onDoubleClick={() =>
+            handleEdit(
+              row,
+              row?.technical_point_of_contact,
+              'key_contacts_list'
+            )
+          }
           className='!h-[31px] !min-h[31px] pt-1.5'
         >
           {row.technical_point_of_contact}
