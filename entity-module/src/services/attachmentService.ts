@@ -231,11 +231,16 @@ async getAttachments(
 
     let allAttachments: any[] = [];
 
-    // Handle attached_to filter separately
+    // Handle attached_to and uploaded_by filters separately
     let attachedToFilter;
+    let uploadedByFilter;
     if (filters.attached_to) {
       attachedToFilter = filters.attached_to;
       delete filters.attached_to;
+    }
+    if (filters.uploaded_by) {
+      uploadedByFilter = filters.uploaded_by;
+      delete filters.uploaded_by;
     }
 
     const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -252,28 +257,28 @@ async getAttachments(
     const fetchAttachments = async (model: any, level: string, attachToIds: string[]) => {
       if (attachToIds.length === 0) return [];
       let where;
-      if(graphqlData.document_rid) {
+      if(graphqlData?.document_rid) {
         console.log("Doc Id : ", graphqlData.document_rid)
         where = {
           rid : graphqlData.document_rid,
           attachment_level : level,
           attach_to : { [Op.in]: attachToIds }
-      };
+        };
       
-      let arrayData = []
-      arrayData.push(await model.findOne({ where }))
-      return arrayData
+        let arrayData = []
+        arrayData.push(await model.findOne({ where }))
+        return arrayData
       } else {
         where = {
-        [Op.and]: [
-          { attachment_level: level },
-          { attach_to: { [Op.in]: attachToIds } },
-          ...(whereClause[Op.and] || [])
-        ]
-      };
-      return model.findAll({ where });
-    };
+          [Op.and]: [
+            { attachment_level: level },
+            { attach_to: { [Op.in]: attachToIds } },
+            ...(whereClause[Op.and] || [])
+          ]
+        };
+        return model.findAll({ where });
       }
+    };
 
     // 🔷 Optimized resource cost and skill attachments fetch for multiple resources
     const fetchResourceCostSkillAttachmentsBulk = async (model: any, resourceIds: string[]) => {
@@ -394,7 +399,7 @@ async getAttachments(
     }
 
     // 🔷 Fetch display names
-    if(graphqlData.document_rid) {
+    if(graphqlData?.document_rid) {
       allAttachments = allAttachments.filter((d : any) => d != null)
     }
     const attachmentDisplayNames = await this.getAttachmentDisplayNames(allAttachments, schemaNumber);
@@ -416,7 +421,7 @@ async getAttachments(
     }
 
     // 🔷 Sort
-    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'created_by', 'created_datetime', 'fiscal_year'];
+    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'uploaded_by', 'created_datetime', 'fiscal_year'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -464,6 +469,15 @@ async getAttachments(
       attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
     }));
 
+    // Handle uploaded_by sorting
+    if (sortBy === 'uploaded_by') {
+      attachments.sort((a, b) => {
+        const aType = a.uploaded_by || '';
+        const bType = b.uploaded_by || '';
+        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+      });
+    }
+
     // Handle document_type sorting
     if (sortBy === 'document_type') {
       attachments.sort((a, b) => {
@@ -481,6 +495,31 @@ async getAttachments(
         return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
       });
     }
+     
+    // Apply uploaded_by filter if present
+    if (uploadedByFilter) {
+      const filteredAttachments = attachments.filter(attachment => {
+        const uploadedBy = attachment.uploaded_by?.toLowerCase() || '';
+        const operator = Object.keys(uploadedByFilter)[0];
+        const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return uploadedBy.includes(filterValue);
+          case 'equals': return uploadedBy === filterValue;
+          case 'not_equals': return uploadedBy !== filterValue;
+          default: return false;
+        }
+      });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: { 
+          attachments: filteredAttachments,
+          totalCount: filteredAttachments.length
+        }
+      };
+    }
+
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
@@ -499,7 +538,364 @@ async getAttachments(
 }
 
 
+async exportAttachments(
+  userId: string,
+  attachmentLevel?: string,
+  entityId?: string,
+  accountRid?: string,
+  search?: string,
+  filters: Record<string, any> = {},
+  sortBy: string = 'created_datetime',
+  sortOrder: string = 'DESC',
+  fiscalYear: number = 0,
+  graphqlData? : any
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[] };
+}> {
+  try {
+    if (!accountRid) throw new Error("Account RID is required");
 
+    const orgDbSequelize = await initOrgSequelize();
+    if (!orgDbSequelize) throw new Error("Failed to initialize database connection");
+
+    const accountData = await this.schemaService.fetchAccountById(accountRid);
+    if (!accountData) throw new Error("Invalid account ID");
+
+    let schemaNumber = accountData.r_number;
+    if (accountData.storage_type === "store_in_parent") {
+      schemaNumber = await this.schemaService.fetchParentAccount(accountData.parent_account_rid);
+    }
+
+    const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, '')}`;
+    const AttachmentModel = Attachment.initialize(orgDbSequelize, schemaName);
+
+    let allAttachments: any[] = [];
+
+    // Handle attached_to and uploaded_by filters separately
+    let attachedToFilter;
+    let uploadedByFilter;
+    if (filters.attached_to) {
+      attachedToFilter = filters.attached_to;
+      delete filters.attached_to;
+    }
+    if (filters.uploaded_by) {
+      uploadedByFilter = filters.uploaded_by;
+      delete filters.uploaded_by;
+    }
+
+    const { whereClause } = this.buildRawWhereClause(filters, search);
+
+    if (fiscalYear !== 0) {
+      if (!whereClause[Op.and]) {
+        whereClause[Op.and] = [];
+      }
+      whereClause[Op.and].push({ fiscal_year: fiscalYear });
+    }
+
+    // 🔷 Helper functions
+
+    const fetchAttachments = async (model: any, level: string, attachToIds: string[]) => {
+      if (attachToIds.length === 0) return [];
+      let where;
+      if(graphqlData?.document_rid) {
+        console.log("Doc Id : ", graphqlData.document_rid)
+        where = {
+          rid : graphqlData.document_rid,
+          attachment_level : level,
+          attach_to : { [Op.in]: attachToIds }
+        };
+      
+        let arrayData = []
+        arrayData.push(await model.findOne({ where }))
+        return arrayData
+      } else {
+        where = {
+          [Op.and]: [
+            { attachment_level: level },
+            { attach_to: { [Op.in]: attachToIds } },
+            ...(whereClause[Op.and] || [])
+          ]
+        };
+        return model.findAll({ where });
+      }
+    };
+
+    // 🔷 Optimized resource cost and skill attachments fetch for multiple resources
+    const fetchResourceCostSkillAttachmentsBulk = async (model: any, resourceIds: string[]) => {
+      let resourceCostSkillAttachments: any[] = [];
+      if (resourceIds.length === 0) return resourceCostSkillAttachments;
+
+      // 🔹 Fetch all resource_costs in one call
+      const resourceCosts = await this.resourceCostService.getResourceCostsByResourceIds(schemaNumber, resourceIds);
+      const allResourceCostIds = resourceCosts.map(rc => rc.rid);
+      if (allResourceCostIds.length > 0) {
+        const resourceCostAttachments = await fetchAttachments(model, 'resource_cost', allResourceCostIds);
+        resourceCostSkillAttachments.push(...resourceCostAttachments);
+      }
+
+      // 🔹 Fetch all resource_skills in one call
+      const resourceSkills = await this.resourceSkillService.getResourceSkillsByResourceIds(schemaNumber, resourceIds);
+      const allResourceSkillIds = resourceSkills.map(rs => rs.rid);
+      if (allResourceSkillIds.length > 0) {
+        const resourceSkillAttachments = await fetchAttachments(model, 'resource_skill', allResourceSkillIds);
+        resourceCostSkillAttachments.push(...resourceSkillAttachments);
+      }
+
+      return resourceCostSkillAttachments;
+    };
+
+    // 🔷 Optimized project resource + task attachments fetch for multiple projects
+    const fetchProjectResourceTaskAttachmentsBulk = async (model: any, projectIds: string[]) => {
+      let projectChildAttachments: any[] = [];
+      if (projectIds.length === 0) return projectChildAttachments;
+
+      // 🔹 Fetch all project_resources under projects in one call
+      const projectResources = await this.projectIngestionService.getProjectResourcesByProjectIds(schemaNumber, projectIds);
+      const projectResourceIds = projectResources.map(r => r.rid);
+
+      if (projectResourceIds.length > 0) {
+        const projectResourceAttachments = await fetchAttachments(model, 'project_resource', projectResourceIds);
+        projectChildAttachments.push(...projectResourceAttachments);
+
+        // 🔹 Fetch all project_tasks under project_resources in one call
+        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, projectResourceIds);
+        const projectTaskIds = projectTasks.map(t => t.rid);
+
+        if (projectTaskIds.length > 0) {
+          const projectTaskAttachments = await fetchAttachments(model, 'project_task', projectTaskIds);
+          projectChildAttachments.push(...projectTaskAttachments);
+        }
+      }
+
+      return projectChildAttachments;
+    };
+
+    // 🔷 Non-parent account logic with batched optimized fetches
+    if (attachmentLevel === 'account' && entityId) {
+      const accountAttachments = await fetchAttachments(AttachmentModel, 'account', [entityId]);
+      allAttachments.push(...accountAttachments);
+
+      const projects = await this.projectIngestionService.getProjectsByAccountId(schemaNumber, entityId);
+      const projectIds = projects.map(p => p.rid);
+      if (projectIds.length > 0) {
+        const projectAttachments = await fetchAttachments(AttachmentModel, 'project', projectIds);
+        allAttachments.push(...projectAttachments);
+
+        const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, projectIds);
+        allAttachments.push(...projectChildAttachments);
+      }
+
+      const resources = await this.resourceService.getResourcesByAccountId(schemaNumber, entityId);
+      const resourceIds = resources.map(r => (r as { rid: string }).rid);
+      if (resourceIds.length > 0) {
+        const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', resourceIds);
+        allAttachments.push(...resourceAttachments);
+
+        const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, resourceIds);
+        allAttachments.push(...resourceCostSkillAttachments);
+      }
+    }
+
+    // 🔷 Project logic
+    else if (attachmentLevel === 'project' && entityId) {
+      const projectAttachments = await fetchAttachments(AttachmentModel, 'project', [entityId]);
+      allAttachments.push(...projectAttachments);
+
+      const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [entityId]);
+      allAttachments.push(...projectChildAttachments);
+    }
+
+    // 🔷 Project_resource logic
+    else if (attachmentLevel === 'project_resource' && entityId) {
+      const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
+      allAttachments.push(...projectResourceAttachments);
+
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, [entityId]);
+      const projectTaskIds = projectTasks.map(t => t.rid);
+      if (projectTaskIds.length > 0) {
+        const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
+        allAttachments.push(...projectTaskAttachments);
+      }
+    }
+
+    // 🔷 Resource logic
+    else if (attachmentLevel === 'resource' && entityId) {
+      const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', [entityId]);
+      allAttachments.push(...resourceAttachments);
+
+      const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, [entityId]);
+      allAttachments.push(...resourceCostSkillAttachments);
+    }
+
+    // 🔷 Other direct levels
+    else {
+      if (entityId) {
+        whereClause[Op.and].push({ attach_to: entityId });
+      } else if (attachmentLevel) {
+        whereClause[Op.and].push({ attachment_level: attachmentLevel });
+      }
+      const result = await AttachmentModel.findAll({ where: whereClause });
+      allAttachments.push(...result);
+    }
+
+    // 🔷 Fetch display names
+    if(graphqlData?.document_rid) {
+      allAttachments = allAttachments.filter((d : any) => d != null)
+    }
+    const attachmentDisplayNames = await this.getAttachmentDisplayNames(allAttachments, schemaNumber);
+
+    // 🔷 Apply attached_to filter if present
+    if (attachedToFilter) {
+      allAttachments = allAttachments.filter(attachment => {
+        let displayName = attachmentDisplayNames[attachment.rid] || String(attachment.attach_to) || '';
+        const displayValue = displayName.toLowerCase();
+        const operator = Object.keys(attachedToFilter)[0];
+        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return displayValue.includes(filterValue);
+          case 'equals': return displayValue === filterValue;
+          case 'not_equals': return displayValue !== filterValue;
+          default: return false;
+        }
+      });
+    }
+
+    // 🔷 Sort
+    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+    const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
+    const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    allAttachments.sort((a, b) => {
+      const aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] || '') : (a[finalSortBy] || '');
+      const bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] || '') : (b[finalSortBy] || '');
+      return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+
+    // 🔷 Map document types and users
+    const documentTypeIds = [...new Set(allAttachments.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(allAttachments.map(att => att.document_category_rid))]
+    const userIds = [...new Set(allAttachments.map(att => att.created_by))];
+
+    const mainSequelize = await initMainDbSequelize();
+    const [documentTypes, documentCategories, users] = await Promise.all([
+      documentTypeIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+        { replacements: { documentTypeIds }, type: 'SELECT' }
+      ) : Promise.resolve([]),
+      documentCategoryIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
+      ) : Promise.resolve([]),
+      userIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+        { replacements: { userIds }, type: 'SELECT' }
+      ) : Promise.resolve([]),
+    ]);
+
+    const documentTypeMap = new Map(documentTypes.map((dt: any) => [dt.rid, dt.type_name]));
+    const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
+    const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
+
+    // 🔷 Map final results
+    let attachments = allAttachments.map(attachment => ({
+      ...attachment.get({ plain: true }),
+      document_type: documentTypeMap.get(attachment.document_type_rid) || null,
+      document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
+      uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
+      attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
+    }));
+
+    // Handle uploaded_by sorting
+    if (sortBy === 'uploaded_by') {
+      attachments.sort((a, b) => {
+        const aType = a.uploaded_by || '';
+        const bType = b.uploaded_by || '';
+        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+      });
+    }
+
+    // Handle document_type sorting
+    if (sortBy === 'document_type') {
+      attachments.sort((a, b) => {
+        const aType = a.document_type || '';
+        const bType = b.document_type || '';
+        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+      });
+    }
+
+    // Handle document_category sorting
+    if (sortBy === 'document_category') {
+      attachments.sort((a, b) => {
+        const aType = a.document_category || '';
+        const bType = b.document_category || '';
+        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+      });
+    }
+     
+    // Apply uploaded_by filter if present
+    if (uploadedByFilter) {
+      let filteredAttachments = attachments.filter(attachment => {
+        const uploadedBy = attachment.uploaded_by?.toLowerCase() || '';
+        const operator = Object.keys(uploadedByFilter)[0];
+        const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return uploadedBy.includes(filterValue);
+          case 'equals': return uploadedBy === filterValue;
+          case 'not_equals': return uploadedBy !== filterValue;
+          default: return false;
+        }
+      });
+
+      // Add names to attachments and format for export
+      filteredAttachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: { 
+          attachments: filteredAttachments,
+        }
+      };
+    }
+
+    // Add names to attachments and format for export
+    attachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: { attachments }
+    };
+
+  } catch (error) {
+    console.error("getAttachments error:", error);
+    return {
+      statusCode: 500,
+      message: 'Failed to fetch attachments',
+      errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
+      data: { attachments: [] }
+    };
+  }
+}
+
+// Helper function to map attachment data to common format
+private mapAttachmentToCommonFormat(at: any) {
+  return {
+    "Document Name": at.document_name || "-",
+    "Format": at.format || "-", 
+    "Size": at.size_in_mb || "-",
+    "Fiscal": at.fiscal_year || "-",
+    "Document Category": at.document_category || "-",
+    "Document Type": at.document_type || "-",
+    "Related Entity": at.attachment_level || "-",
+    "Related To ID": at.attached_to || "-",
+    "Attached By": at.uploaded_by || "-",
+    "Attached On": moment(at.created_datetime).format('YYYY-MM-DD') || "-",
+    "Attachment ID": at.r_number || "-"
+  };
+}
 
 async getAttachmentSummary(
   userId: string,
@@ -523,176 +919,154 @@ async getAttachmentSummary(
 
     const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
 
-    // 🔷 Handle attached_to filter separately
-    let attachedToFilter;
+    // Handle filters
+    let attachedToFilter, uploadedByFilter;
     if (filters.attached_to) {
       attachedToFilter = filters.attached_to;
       delete filters.attached_to;
     }
+    if (filters.uploaded_by) {
+      uploadedByFilter = filters.uploaded_by;
+      delete filters.uploaded_by;
+    }
 
     // Build where clause
     const { whereClause } = this.buildRawWhereClause(filters, search);
+    if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
 
-    if (typeof globalFilters === 'string') {
-      globalFilters = JSON.parse(globalFilters);
-    }
-
-    // Handle global filters for account_rid filtering
+    // Global account_rid filters
     if (globalFilters && Object.keys(globalFilters).length > 0) {
       const parentAccountRid = Object.keys(globalFilters)[0];
       const childAccountRids = globalFilters[parentAccountRid];
-      
-      if (!whereClause[Op.and]) {
-        whereClause[Op.and] = [];
-      }
-      
+      whereClause[Op.and] = whereClause[Op.and] || [];
       whereClause[Op.and].push({
-        account_rid: {
-          [Op.in]: [...childAccountRids, parentAccountRid]
-        }
+        account_rid: { [Op.in]: [...childAccountRids, parentAccountRid] }
       });
     }
 
     if (fiscalYear !== 0) {
-      if (!whereClause[Op.and]) {
-        whereClause[Op.and] = [];
-      }
+      whereClause[Op.and] = whereClause[Op.and] || [];
       whereClause[Op.and].push({ fiscal_year: fiscalYear });
     }
 
-    // Determine final sortBy and sortOrder
-    const validSortFields = [
-      'document_name', 'document_type', 'document_category', 'r_number', 'format',
-      'attachment_level', 'size_in_mb', 'attached_to',
-      'comments', 'created_by', 'created_datetime', 'fiscal_year'
-    ];
-    const validOrder = ['ASC', 'DESC'];
-    const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
-    const finalSortOrder = validOrder.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+    const totalCount = await AttachmentSummaryModel.count({ where: whereClause });
 
-    // 🔷 Prepare order clause
-    let orderClause: any[] = [];
-    if (finalSortBy !== 'attached_to' && finalSortBy !== 'document_type') {
-      orderClause = [[finalSortBy, finalSortOrder]];
-    }
-
-    // 🔷 Fetch all attachments matching filters (DB sorting applied if applicable)
+    // Fetch attachments paginated (sorting other than attached_to/uploaded_by in DB)
     const attachmentsRaw = await AttachmentSummaryModel.findAll({
       where: whereClause,
-      order: orderClause
+      order: (sortBy !== 'attached_to' && sortBy !== 'uploaded_by')
+        ? [[sortBy, sortOrder]]
+        : [],
+      limit,
+      offset: (page - 1) * limit
     });
 
-    // Fetch display names for all attachments in result
+    // Batch fetch account data
+    const accountRids = [...new Set(attachmentsRaw.map(a => a.account_rid))];
+    const accounts = await this.schemaService.fetchAccountsByIds(accountRids);
+    const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
+
+    // Build schemaNumber map efficiently
+    const schemaNumberMap = new Map<string, string>();
+    await Promise.all(accounts.map(async acc => {
+      if ((acc as any).storage_type === "store_in_parent") {
+        const parent = await this.schemaService.fetchParentAccount((acc as { parent_account_rid: string }).parent_account_rid);
+        schemaNumberMap.set((acc as { rid: string }).rid, parent);
+      } else {
+        schemaNumberMap.set((acc as {rid: string; r_number: string}).rid, (acc as {rid: string; r_number: string}).r_number);
+      }
+    }));
+
+    // 🔷 Group attachments by schemaNumber for batch display name calls
+    const schemaAttachmentMap = new Map<string, any[]>();
+    attachmentsRaw.forEach(att => {
+      const schemaNumber = schemaNumberMap.get(att.account_rid);
+      if (schemaNumber && !schemaAttachmentMap.has(schemaNumber)) {
+        schemaAttachmentMap.set(schemaNumber, []);
+      }
+      const attachments = schemaAttachmentMap.get(schemaNumber || '');
+      if (attachments) {
+        attachments.push(att);
+      }
+    });
+
+    // Fetch display names in parallel per schemaNumber
     const attachmentDisplayNames: Record<string, string> = {};
-    for (const attachment of attachmentsRaw) {
-      const accountData = await this.schemaService.fetchAccountById(attachment.account_rid);
-      if (!accountData) throw new Error("Invalid account ID");
+    await Promise.all(Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
+      const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+      Object.assign(attachmentDisplayNames, displayNames);
+    }));
 
-      let schemaNumber = accountData.r_number;
-      if (accountData.storage_type === "store_in_parent") {
-        schemaNumber = await this.schemaService.fetchParentAccount(accountData.parent_account_rid);
-      }
-
-      try {
-        const displayName = await this.getAttachmentDisplayNames([attachment], schemaNumber || '');
-        attachmentDisplayNames[attachment.rid] = displayName[attachment.rid] || attachment.attach_to;
-      } catch (err) {
-        console.error(`Error fetching display name for attachment ${attachment.rid}:`, err);
-        attachmentDisplayNames[attachment.rid] = attachment.attach_to;
-      }
-    }
-
-    // Apply attached_to filter if present
+    // Apply attached_to filter if needed
     let filteredAttachments = attachmentsRaw;
     if (attachedToFilter) {
-      filteredAttachments = attachmentsRaw.filter(attachment => {
-        let displayName = attachmentDisplayNames[attachment.rid];
-        if (!displayName && attachment.attach_to) {
-          displayName = String(attachment.attach_to);
-        }
-        if (!displayName) return false;
-
-        const displayValue = displayName.toLowerCase();
+      filteredAttachments = attachmentsRaw.filter(att => {
+        const displayName = (attachmentDisplayNames[att.rid] || att.attach_to || '').toLowerCase();
         const operator = Object.keys(attachedToFilter)[0];
         const filterValue = (attachedToFilter[operator] || '').toLowerCase();
-
         switch (operator) {
-          case 'contains': return displayValue.includes(filterValue);
-          case 'equals': return displayValue === filterValue;
-          case 'not_equals': return displayValue !== filterValue;
+          case 'contains': return displayName.includes(filterValue);
+          case 'equals': return displayName === filterValue;
+          case 'not_equals': return displayName !== filterValue;
           default: return false;
         }
       });
     }
 
-    // 🔷 Sort in JS if sorting by attached_to or document_type
-    if (finalSortBy === 'attached_to') {
-      filteredAttachments.sort((a, b) => {
-        const aDisplay = attachmentDisplayNames[a.rid] || '';
-        const bDisplay = attachmentDisplayNames[b.rid] || '';
-        return finalSortOrder === 'ASC'
-          ? aDisplay.localeCompare(bDisplay)
-          : bDisplay.localeCompare(aDisplay);
-      });
-    }
-
-    // Map document type & user
-    const paginatedAttachments = filteredAttachments.slice((page - 1) * limit, page * limit);
-    const documentTypeIds = [...new Set(paginatedAttachments.map(att => att.document_type_rid))];
-    const documentCategoryIds = [...new Set(paginatedAttachments.map(att => att.document_category_rid))];
-    const userIds = [...new Set(paginatedAttachments.map(att => att.created_by))];
+    // Batch fetch document types, categories, users
+    const documentTypeIds = [...new Set(filteredAttachments.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(filteredAttachments.map(att => att.document_category_rid))];
+    const userIds = [...new Set(filteredAttachments.map(att => att.created_by))];
 
     const [documentTypes, documentCategories, users] = await Promise.all([
-      documentTypeIds.length > 0
-        ? mainSequelize.query(
-            `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
-            { replacements: { documentTypeIds }, type: 'SELECT' }
-          )
-        : Promise.resolve([]),
-        documentCategoryIds.length > 0 ? mainSequelize.query(
+      documentTypeIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+        { replacements: { documentTypeIds }, type: 'SELECT' }
+      ) : [],
+      documentCategoryIds.length > 0 ? mainSequelize.query(
         `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
         { replacements: { documentCategoryIds }, type: 'SELECT' }
-      ) : Promise.resolve([]),
-      userIds.length > 0
-        ? mainSequelize.query(
-            `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
-            { replacements: { userIds }, type: 'SELECT' }
-          )
-        : Promise.resolve([])
+      ) : [],
+      userIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+        { replacements: { userIds }, type: 'SELECT' }
+      ) : []
     ]);
 
     const documentTypeMap = new Map(documentTypes.map((dt: any) => [dt.rid, dt.type_name]));
     const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-    // Final mapping
-    const attachments = paginatedAttachments.map(attachment => ({
-      ...attachment.get({ plain: true }),
-      document_type: documentTypeMap.get(attachment.document_type_rid) || null,
-      document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
-      uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
-      attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to
+    // Map attachments with display names and metadata
+    let attachments = filteredAttachments.map(att => ({
+      ...att.get({ plain: true }),
+      document_type: documentTypeMap.get(att.document_type_rid) || null,
+      document_category: documentCategoryMap.get(att.document_category_rid) || null,
+      uploaded_by: userMap.get(att.created_by) || att.created_by,
+      attached_to: attachmentDisplayNames[att.rid] || att.attach_to
     }));
 
-    // 🔷 Additional sorting for document_type if needed
-    if (finalSortBy === 'document_type') {
-      attachments.sort((a, b) => {
-        const aType = a.document_type || '';
-        const bType = b.document_type || '';
-        return finalSortOrder === 'ASC'
-          ? aType.localeCompare(bType)
-          : bType.localeCompare(aType);
+    // Apply uploaded_by filter if present
+    if (uploadedByFilter) {
+      const operator = Object.keys(uploadedByFilter)[0];
+      const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+      attachments = attachments.filter(att => {
+        const uploadedBy = (att.uploaded_by || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return uploadedBy.includes(filterValue);
+          case 'equals': return uploadedBy === filterValue;
+          case 'not_equals': return uploadedBy !== filterValue;
+          default: return false;
+        }
       });
     }
 
-    // 🔷 Additional sorting for document_category if needed
-    if (finalSortBy === 'document_category') {
+    // Sort if needed for special fields
+    if (['attached_to', 'uploaded_by', 'document_type', 'document_category'].includes(sortBy)) {
       attachments.sort((a, b) => {
-        const aType = a.document_category || '';
-        const bType = b.document_category || '';
-        return finalSortOrder === 'ASC'
-          ? aType.localeCompare(bType)
-          : bType.localeCompare(aType);
+        const aVal = (a[sortBy] || '').toLowerCase();
+        const bVal = (b[sortBy] || '').toLowerCase();
+        return sortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       });
     }
 
@@ -701,7 +1075,7 @@ async getAttachmentSummary(
       message: HttpStatus.SUCCESS_MESSAGE,
       data: {
         attachments,
-        totalCount: filteredAttachments.length
+        totalCount: uploadedByFilter ? attachments.length : totalCount
       }
     };
 
@@ -709,12 +1083,198 @@ async getAttachmentSummary(
     console.error("getAttachmentSummary error:", error);
     return {
       statusCode: 500,
-      message: 'Failed to fetch attachment summary', 
+      message: 'Failed to fetch attachment summary',
       errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
-      data: {
-        attachments: [],
-        totalCount: 0
+      data: { attachments: [], totalCount: 0 }
+    };
+  }
+}
+
+
+async exportAttachmentSummary(
+  userId: string,
+  search?: string,
+  filters: Record<string, any> = {},
+  globalFilters: Record<string, any> = {},
+  sortBy: string = 'created_datetime',
+  sortOrder: string = 'DESC',
+  fiscalYear: number = 0
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[] };
+}> {
+  try {
+    const mainSequelize = await initMainDbSequelize();
+    if (!mainSequelize) throw new Error("Failed to initialize main DB connection");
+
+    const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
+
+    // Handle filters
+    let attachedToFilter, uploadedByFilter;
+    if (filters.attached_to) {
+      attachedToFilter = filters.attached_to;
+      delete filters.attached_to;
+    }
+    if (filters.uploaded_by) {
+      uploadedByFilter = filters.uploaded_by;
+      delete filters.uploaded_by;
+    }
+
+    // Build where clause
+    const { whereClause } = this.buildRawWhereClause(filters, search);
+    if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
+
+    // Global account_rid filters
+    if (globalFilters && Object.keys(globalFilters).length > 0) {
+      const parentAccountRid = Object.keys(globalFilters)[0];
+      const childAccountRids = globalFilters[parentAccountRid];
+      whereClause[Op.and] = whereClause[Op.and] || [];
+      whereClause[Op.and].push({
+        account_rid: { [Op.in]: [...childAccountRids, parentAccountRid] }
+      });
+    }
+
+    if (fiscalYear !== 0) {
+      whereClause[Op.and] = whereClause[Op.and] || [];
+      whereClause[Op.and].push({ fiscal_year: fiscalYear });
+    }
+
+    // Fetch attachments paginated (sorting other than attached_to/uploaded_by in DB)
+    const attachmentsRaw = await AttachmentSummaryModel.findAll({
+      where: whereClause,
+      order: (sortBy !== 'attached_to' && sortBy !== 'uploaded_by')
+        ? [[sortBy, sortOrder]]
+        : [],
+    });
+
+    // Batch fetch account data
+    const accountRids = [...new Set(attachmentsRaw.map(a => a.account_rid))];
+    const accounts = await this.schemaService.fetchAccountsByIds(accountRids);
+    const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
+
+    // Build schemaNumber map efficiently
+    const schemaNumberMap = new Map<string, string>();
+    await Promise.all(accounts.map(async acc => {
+      if ((acc as any).storage_type === "store_in_parent") {
+        const parent = await this.schemaService.fetchParentAccount((acc as { parent_account_rid: string }).parent_account_rid);
+        schemaNumberMap.set((acc as { rid: string }).rid, parent);
+      } else {
+        schemaNumberMap.set((acc as {rid: string; r_number: string}).rid, (acc as {rid: string; r_number: string}).r_number);
       }
+    }));
+
+    // 🔷 Group attachments by schemaNumber for batch display name calls
+    const schemaAttachmentMap = new Map<string, any[]>();
+    attachmentsRaw.forEach(att => {
+      const schemaNumber = schemaNumberMap.get(att.account_rid);
+      if (schemaNumber && !schemaAttachmentMap.has(schemaNumber)) {
+        schemaAttachmentMap.set(schemaNumber, []);
+      }
+      const attachments = schemaAttachmentMap.get(schemaNumber || '');
+      if (attachments) {
+        attachments.push(att);
+      }
+    });
+
+    // Fetch display names in parallel per schemaNumber
+    const attachmentDisplayNames: Record<string, string> = {};
+    await Promise.all(Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
+      const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+      Object.assign(attachmentDisplayNames, displayNames);
+    }));
+
+    // 🔷 Apply attached_to filter before mapping if needed
+    let filteredAttachments = attachmentsRaw;
+    if (attachedToFilter) {
+      filteredAttachments = attachmentsRaw.filter(att => {
+        const displayName = (attachmentDisplayNames[att.rid] || att.attach_to || '').toLowerCase();
+        const operator = Object.keys(attachedToFilter)[0];
+        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return displayName.includes(filterValue);
+          case 'equals': return displayName === filterValue;
+          case 'not_equals': return displayName !== filterValue;
+          default: return false;
+        }
+      });
+    }
+
+    // 🔷 Batch fetch document types, categories, users
+    const documentTypeIds = [...new Set(filteredAttachments.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(filteredAttachments.map(att => att.document_category_rid))];
+    const userIds = [...new Set(filteredAttachments.map(att => att.created_by))];
+
+    const [documentTypes, documentCategories, users] = await Promise.all([
+      documentTypeIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, type_name FROM ${MAIN_SCHEMA_NAME}.document_type WHERE rid IN (:documentTypeIds)`,
+        { replacements: { documentTypeIds }, type: 'SELECT' }
+      ) : [],
+      documentCategoryIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.document_category WHERE rid IN (:documentCategoryIds)`,
+        { replacements: { documentCategoryIds }, type: 'SELECT' }
+      ) : [],
+      userIds.length > 0 ? mainSequelize.query(
+        `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+        { replacements: { userIds }, type: 'SELECT' }
+      ) : []
+    ]);
+
+    const documentTypeMap = new Map(documentTypes.map((dt: any) => [dt.rid, dt.type_name]));
+    const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
+    const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
+
+    // 🔷 Map final attachments
+    let attachments = filteredAttachments.map(att => ({
+      ...att.get({ plain: true }),
+      document_type: documentTypeMap.get(att.document_type_rid) || null,
+      document_category: documentCategoryMap.get(att.document_category_rid) || null,
+      uploaded_by: userMap.get(att.created_by) || att.created_by,
+      attached_to: attachmentDisplayNames[att.rid] || att.attach_to
+    }));
+
+    // Apply uploaded_by filter if present
+    if (uploadedByFilter) {
+      const operator = Object.keys(uploadedByFilter)[0];
+      const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+      attachments = attachments.filter(att => {
+        const uploadedBy = (att.uploaded_by || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return uploadedBy.includes(filterValue);
+          case 'equals': return uploadedBy === filterValue;
+          case 'not_equals': return uploadedBy !== filterValue;
+          default: return false;
+        }
+      });
+    }
+
+    // 🔷 JS sorting if needed for attached_to, uploaded_by, document_type, document_category
+    if (['attached_to', 'uploaded_by', 'document_type', 'document_category'].includes(sortBy)) {
+      attachments.sort((a, b) => {
+        const aVal = (a[sortBy] || '').toLowerCase();
+        const bVal = (b[sortBy] || '').toLowerCase();
+        return sortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      });
+    }
+
+    attachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        attachments,
+      }
+    };
+
+  } catch (error) {
+    console.error("getAttachmentSummary error:", error);
+    return {
+      statusCode: 500,
+      message: 'Failed to fetch attachment summary',
+      errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
+      data: { attachments: [] }
     };
   }
 }
@@ -891,7 +1451,7 @@ private buildRawWhereClause(
       case 'comments':
       case 'attached_to':  
       case 'r_number':
-      case 'created_by':
+      case 'uploaded_by':
         switch (operator.toLowerCase()) {
           case 'equals': condition[field] = { [Op.eq]: value }; break;
           case 'not_equals': condition[field] = { [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }] }; break;          

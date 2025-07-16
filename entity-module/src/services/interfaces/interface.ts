@@ -380,6 +380,21 @@ export interface IAttachmentService {
   data?: { attachments: any[]; totalCount: number };
   }>
 
+  exportAttachments(userId: string,
+  attachmentLevel: string,
+  entityId: string,
+  accountRid: string,
+  search: string,
+  filters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string,
+  fiscalYear:number, graphqlData : any):Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[] };
+  }>
+
   getAttachmentSummary(userId: string,
   page:number,
   limit:number,
@@ -393,6 +408,19 @@ export interface IAttachmentService {
   message: string;
   errorMessage?: string;
   data?: { attachments: any[]; totalCount: number };
+  }>
+
+  exportAttachmentSummary(userId: string,
+  search: string,
+  filters: Record<string, any>,
+  globalFilters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string,
+  fiscalYear:number):Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { attachments: any[] };
   }>
 
   getDocumentTypeAndCategory(category_rid: string): Promise<{
