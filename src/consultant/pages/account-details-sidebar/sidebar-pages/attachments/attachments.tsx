@@ -1,17 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Attachment } from '../../../../../assets';
-import { AllPermissions } from '../../../../../common-service';
+import { fiscalYears } from '../../../resource-form/form-data';
 import { ResourceTabs } from '../resources/resources';
+import { useNavigate, useParams } from 'react-router-dom';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { ListTable } from '../../../../../components/table';
 import { getAttachmentColumns } from './column';
+import {
+  AllPermissions,
+  useGetAllDocumentTypes,
+} from '../../../../../common-service';
+import Uploads from '../../../../../components/Attachments/upload';
+import { useLocation, useSearchParams } from 'react-router-dom';
+import { FormField, SelectOption } from '../../../../types';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../types/attachment';
-import { useParams } from 'react-router-dom';
 import { attachmentsFilterFields } from './utils';
 import { SectionTabPanel } from '../../../../../components';
+import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -29,6 +37,11 @@ const AttachmentTabs: ResourceTabs[] = [
 
 const Attachments: React.FC = () => {
   const { accountid } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const auth = localStorage.getItem('auth');
+  const { userId } = auth ? JSON.parse(auth) : {};
+  const [searchParams] = useSearchParams();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -63,6 +76,27 @@ const Attachments: React.FC = () => {
     }
   }, [data]);
 
+  const allDocumentTypes = useGetAllDocumentTypes();
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentTypes.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentTypes.data?.data.documentCategories]
+  );
+
+  const showUploads = searchParams.get('attachment_entity') === 'account';
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -85,13 +119,21 @@ const Attachments: React.FC = () => {
       setSortField(sortBy);
     }
   };
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'account');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
 
   const headerButtons = [
     {
       label: 'Upload file',
       variant: 'outlined' as const,
       disabled: false,
-      onClick: () => console.log('clicked'),
+      onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: false,
     },
@@ -114,12 +156,89 @@ const Attachments: React.FC = () => {
   const attachmentColumns = getAttachmentColumns();
   const getRowId = (row: AttachmentList) => row.rid;
 
+  const formFields: FormField[] = [
+    {
+      id: 'fiscal_year',
+      label: 'Fiscal Year',
+      type: 'select',
+      required: true,
+      placeholder: 'Select Fiscal Year',
+      options: fiscalYears,
+    },
+    {
+      id: 'document_category_rid',
+      label: 'Document Category',
+      type: 'select',
+      required: true,
+      placeholder: 'Enter Document Category',
+      options: memoizedDocumentCategories,
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
+    {
+      id: 'document_type_rid',
+      label: 'Document Type',
+      type: 'select',
+      required: true,
+      placeholder: 'Enter Document Type',
+      options: memoizedDocumentTypes,
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
+    {
+      id: 'comments',
+      label: 'Comments',
+      type: 'textarea',
+      rows: 3,
+      fullWidth: true,
+      validation: [
+        {
+          regex: RESOURCE_REGEX.DESCRIPTION,
+          errorMessage: 'Max length exceeded.',
+        },
+      ],
+    },
+  ];
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={AttachmentTabs}
         filterMenu={attachmentsFilterFields()}
-        filterVisibility={true}
+        filterVisibility={showUploads ? false : true}
         showFilter={showFilter}
         contextKey='account-attachments'
         appliedFilters={appliedFilters}
@@ -129,47 +248,57 @@ const Attachments: React.FC = () => {
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={true}
+        showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
       />
-      <ResourceTableHeader
-        value={'attachments'}
-        title='Attachments'
-        count={totalItems}
-        titleIcon={<Attachment alt='attachment-header-icon' />}
-        headerButtons={headerButtons}
-      />
-      <div className='border border-[#CBD6E2]'>
-        <ListTable
-          data={attachmentList}
-          columns={attachmentColumns}
-          getRowId={getRowId}
-          hoverHighlight={false}
-          tableStyle={{
-            borderBottom: '1px solid #CBD6E2',
-            height: '100%',
-            maxHeight: 'calc(100vh - 290px)',
-            overflow: 'auto',
-          }}
-          stickyHeader={false}
-          stickyColumnsCount={1}
-          selectable={false}
-          actionWidth={80}
-          actionDisplayMode='dropdown'
-          actionMenuItems={[]}
-          loading={isLoading}
-          error={isError ? 'Failed to load Attachment data' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
-          totalItems={0}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortBy={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSortRequest}
+      {showUploads ? (
+        <Uploads
+          formFields={formFields}
+          accountId={accountid}
+          attachID={accountid}
         />
-      </div>
+      ) : (
+        <>
+          <ResourceTableHeader
+            value={'attachments'}
+            title='Attachments'
+            count={totalItems}
+            titleIcon={<Attachment alt='attachment-header-icon' />}
+            headerButtons={headerButtons}
+          />
+          <div className='border border-[#CBD6E2]'>
+            <ListTable
+              data={attachmentList}
+              columns={attachmentColumns}
+              getRowId={getRowId}
+              hoverHighlight={false}
+              tableStyle={{
+                borderBottom: '1px solid #CBD6E2',
+                height: '100%',
+                maxHeight: 'calc(100vh - 290px)',
+                overflow: 'auto',
+              }}
+              stickyHeader={false}
+              stickyColumnsCount={1}
+              selectable={false}
+              actionWidth={80}
+              actionDisplayMode='dropdown'
+              actionMenuItems={[]}
+              loading={isLoading}
+              error={isError ? 'Failed to load Attachment data' : undefined}
+              rowsPerPageOptions={[25, 50, 100]}
+              rowsPerPage={rowsPerPage}
+              currentPage={currentPage}
+              totalItems={0}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortBy={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSortRequest}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

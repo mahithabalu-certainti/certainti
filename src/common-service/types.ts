@@ -371,3 +371,28 @@ export interface GetStatusApiResponse extends CommonApiResponse {
     status: StatusItem[];
   };
 }
+
+export interface DocumentType {
+  rid: string;
+  type_name: string;
+  type_description: string | null;
+  category_rid: string;
+}
+
+export interface DocumentCategory {
+  rid: string;
+  category_name: string;
+  category_description: string | null;
+}
+
+export interface DocumentTypeResponseData {
+  documentTypes: DocumentType[];
+  documentCategories: DocumentCategory[];
+}
+
+export interface DocumentTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: DocumentTypeResponseData;
+}

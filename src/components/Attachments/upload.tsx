@@ -1,64 +1,48 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ActionImportDropdown from '../../consultant/pages/account-details-sidebar/sidebar-pages/imports/importdropdown';
-import { ImportIcon, UploadIcon } from '../../assets';
+import { useLocation } from 'react-router-dom';
+import { FormBuilder } from './formBuilder';
+import { Attachment, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
+import { useToast } from '../../hooks';
+import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
 
 interface UploadsProps {
   accountNo?: string | undefined;
-  accountId?: string | undefined;
+  accountId?: string | undefined | null;
+  attachID?: string | undefined | null;
   accountInActive?: boolean;
+  formFields?: any;
 }
 
-const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_MB = 20;
+const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 const Uploads: React.FC<UploadsProps> = ({
   accountNo,
+  attachID,
   accountId,
   accountInActive,
+  formFields,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [formData, setFormData] = useState<any>({});
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
     text: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [entityType, setEntityType] = useState<string>('Select Type');
-  const [fiscalYear, setFiscalYear] = useState<string>('Year');
+  const [entityType, setEntityType] = useState<string | null>('Select Type');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [hasFormErrors, setHasFormErrors] = useState(false);
+
+  const location = useLocation();
+  const { successToast, errorToast } = useToast();
 
   useEffect(() => {
-    if (
-      message?.type === 'error' &&
-      entityType !== 'Select Type' &&
-      fiscalYear !== 'Select Year' &&
-      selectedFiles.length > 0
-    ) {
-      setMessage(null);
-    }
-  }, [entityType, fiscalYear, selectedFiles]);
-
-  const menuItems = [
-    { label: 'Resource', onClick: () => setEntityType('Resource') },
-    { label: 'Resource Cost', onClick: () => setEntityType('Resource Cost') },
-    { label: 'Resource Skill', onClick: () => setEntityType('Resource Skill') },
-    { label: 'Project', onClick: () => setEntityType('Project') },
-    {
-      label: 'Project Resource',
-      onClick: () => setEntityType('Project Resource'),
-    },
-  ];
-
-  const currentYear = new Date().getFullYear();
-
-  const fiscalYears = Array.from(
-    { length: currentYear - 2000 + 1 },
-    (_, index) => {
-      const year = currentYear - index;
-      return {
-        label: `FY-${year}`,
-        onClick: () => setFiscalYear(year.toString()),
-      };
-    }
-  );
+    const params = new URLSearchParams(location.search);
+    const extractedEntityType = params.get('attachment_entity');
+    setEntityType(extractedEntityType);
+  }, [location.search]);
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
@@ -67,6 +51,7 @@ const Uploads: React.FC<UploadsProps> = ({
   const showSuccess = (text: string) => {
     setMessage({ type: 'success', text });
   };
+
   const ACCEPTED_FILE_TYPES = [
     'text/csv',
     'application/vnd.ms-excel', // .xls
@@ -89,7 +74,14 @@ const Uploads: React.FC<UploadsProps> = ({
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        showError(`"${file.name}" exceeds the 50MB limit.`);
+        showError(`"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB limit.`);
+        continue;
+      }
+
+      if (RESTRICTED_EXTENSIONS.test(file.name)) {
+        showError(
+          `"${file.name}" type is not allowed (.exe, .bat, .cmd, .sh, .bash).`
+        );
         continue;
       }
 
@@ -104,19 +96,24 @@ const Uploads: React.FC<UploadsProps> = ({
       showError('Please select an Entity Type.');
       return;
     }
-
-    if (fiscalYear === 'Year') {
+    if (!formData?.fiscal_year) {
       showError('Please select a Fiscal Year.');
       return;
     }
-
-    if (selectedFiles.length === 0) {
-      showError('Please select a file before submitting.');
+    if (!formData?.document_category_rid) {
+      showError('Please select a Document Category.');
       return;
     }
-
-    if (!accountId || !accountNo) {
+    if (!formData?.document_type_rid) {
+      showError('Please select a Document Type.');
+      return;
+    }
+    if (!accountId) {
       showError('Missing account information.');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      showError('Please select a file before submitting.');
       return;
     }
 
@@ -128,39 +125,37 @@ const Uploads: React.FC<UploadsProps> = ({
       return;
     }
 
-    // try {
-    //   const payload = {
-    //     entity_type: entityType,
-    //     file: selectedFiles[0],
-    //     fiscal_year: fiscalYear,
-    //     account_rid: accountId,
-    //     related_to: 'account',
-    //     related_to_rid: accountId,
-    //     uploaded_by_user_rid: userId,
-    //     account_r_number: accountNo,
-    //   };
-    //   setLoading(true);
-    //   const response = await uploadImportFile(payload);
-    //   if (
-    //     response?.data.statusCode === 201 ||
-    //     response?.data.statusCode === 200
-    //   ) {
-    //     successToast(response.data.message);
-    //     fileInputRef.current!.value = '';
-    //     setSelectedFiles([]);
-    //     setEntityType('Select Type');
-    //     setFiscalYear('Year');
-    //     setLoading(false);
-    //     setMessage(null);
-    //   } else if (response?.data.statusCode === 400) {
-    //     errorToast(response.data.message);
-    //     setLoading(false);
-    //   }
-    // } catch (error) {
-    //   console.error('Upload failed:', error);
-    //   showError('Failed to upload the file.');
-    //   setLoading(false);
-    // }
+    try {
+      const payload = {
+        attachment: selectedFiles[0],
+        account_rid: accountId,
+        attach_to: attachID,
+        attachment_level: entityType,
+        fiscal_year: formData?.fiscal_year,
+        document_category_rid: formData?.document_category_rid,
+        document_type_rid: formData?.document_type_rid,
+        document_category_others: formData?.document_category_rid_others || '',
+        document_type_others: formData?.document_type_rid_others || '',
+        comments: (formData?.comments || '').trim(),
+      };
+      setLoading(true);
+      const response = await attachmentFileUpload(payload);
+      if (response?.data.statusCode === 200) {
+        successToast(response.data.statusMessage);
+        fileInputRef.current!.value = '';
+        setSelectedFiles([]);
+        setFormData({});
+        setMessage(null);
+        setLoading(false);
+      } else if (response?.data.statusCode === 400) {
+        errorToast(response.data.statusMessage);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Uploads: Upload failed:', error);
+      showError('Failed to upload the file.');
+      setLoading(false);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,16 +183,18 @@ const Uploads: React.FC<UploadsProps> = ({
   const openFileDialog = () => {
     fileInputRef.current?.click();
   };
+
   const goBack = () => {
     window.history.back();
   };
+
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <ImportIcon alt='Import Icon' className='w-6 h-6' />
+        <div className='flex items-center gap-1'>
+          <Attachment alt='Import Icon' className='w-6 h-6' />
           <span className='text-[13px] text-[#2D3E4F] font-semibold'>
-            Import
+            Attachments
           </span>
         </div>
         <div className='flex gap-2'>
@@ -213,9 +210,9 @@ const Uploads: React.FC<UploadsProps> = ({
           />
           <TextButton
             label='Save'
-            loading={false}
+            loading={loading}
             onClick={handleSubmit}
-            disabled={accountInActive}
+            disabled={accountInActive || hasFormErrors}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -225,27 +222,19 @@ const Uploads: React.FC<UploadsProps> = ({
           />
         </div>
       </div>
-      <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center gap-6'>
-        <div className='flex items-center gap-2'>
-          <label className='font-normal text-[14px] text-[#2D3E4F]'>
-            Entity Type
-            <span className='text-red-500 ml-1'>*</span>
-          </label>
-          <ActionImportDropdown actions={menuItems} label={entityType} />
-        </div>
-        <div className='flex items-center gap-2'>
-          <label className='font-normal text-[14px] text-[#2D3E4F]'>
-            Fiscal Year
-            <span className='text-red-500 ml-1'>*</span>
-          </label>
-          <ActionImportDropdown
-            actions={fiscalYears}
-            label={`FY -${fiscalYear}`}
-          />
-        </div>
+      <div className='flex items-center align-middle px-4 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+        {'Document Info'}
       </div>
-
-      <div className='flex flex-col items-center justify-center gap-4 px-4 py-10'>
+      <FormBuilder
+        fields={formFields}
+        formData={formData}
+        setFormData={setFormData}
+        onFormChange={(data) => {
+          setFormData(data);
+        }}
+        onValidationChange={(hasErrors) => setHasFormErrors(hasErrors)}
+      />
+      <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -288,13 +277,6 @@ const Uploads: React.FC<UploadsProps> = ({
             {message.text}
           </div>
         )}
-
-        {/* {selectedFiles.length > 0 && (
-          <div className='flex items-center justify-center font-[14px]  text-[#2D3E4F]'>
-            <div className='pr-2'>Selected File:- </div>
-            <div>{selectedFiles[0].name}</div>
-          </div>
-        )} */}
       </div>
     </div>
   );

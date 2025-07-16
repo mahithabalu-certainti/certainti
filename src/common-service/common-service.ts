@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { accountServiceApi, userServiceApi } from '../api/api';
 import {
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+} from '../api/api';
+import {
+  DocumentTypeResponse,
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetStatusApiResponse,
@@ -9,7 +14,6 @@ import {
 export const getAllCountriesUrl = (): string => {
   return `/api/accounts/country`;
 };
-
 /**
  * Fetches detailed information for a all country
  * @returns Promise with user details
@@ -28,11 +32,14 @@ export const fetchAllCountries =
       throw error;
     }
   };
-
 /**
  * React Query hook for fetching country list (view only)
  * @returns UseQueryResult with user details and query state
  */
+export const getDocumentTypeUrl = (): string => {
+  return '/api/attachment/document-type-category?category_rid=D001-caa124b2-35f7-475f-bebc-6c436a4a1423';
+};
+
 export const useGetAllCountries = () => {
   return useQuery<GetAllCountriesApiResponse, Error>({
     queryKey: ['getAllCountry'], // Unique query key
@@ -42,6 +49,32 @@ export const useGetAllCountries = () => {
     gcTime: Infinity, // Never delete from cache
     refetchOnMount: false, // Don't refetch on component mount
     refetchOnReconnect: false, // Don't refetch on reconnect
+  });
+};
+
+export const fetchAllDocumentTypes =
+  async (): Promise<DocumentTypeResponse> => {
+    try {
+      const { data } = await resourceServiceApi.get<DocumentTypeResponse>(
+        getDocumentTypeUrl(),
+        {}
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching document types:', error);
+      throw error;
+    }
+  };
+
+export const useGetAllDocumentTypes = () => {
+  return useQuery<DocumentTypeResponse, Error>({
+    queryKey: ['getAllDocumentTypes'],
+    queryFn: () => fetchAllDocumentTypes(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };
 

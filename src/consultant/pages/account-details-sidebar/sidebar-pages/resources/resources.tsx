@@ -32,9 +32,14 @@ import {
   AllPermissions,
   Permissions,
   useGetAllCountries,
+  useGetAllDocumentTypes,
   useGetStatus,
 } from '../../../../../common-service';
-import { checkPermission } from '../../../../../common-utils';
+import {
+  checkPermission,
+  REGEX_PATTERNS,
+  RESOURCE_REGEX,
+} from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -46,6 +51,9 @@ import {
 import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import Uploads from '../../../../../components/Attachments/upload';
+import { fiscalYears } from '../../../resource-form/form-data';
+import { FormField, SelectOption } from '../../../../types';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -175,6 +183,7 @@ const Resource: React.FC<ResourceProps> = ({
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
+  const resId = searchParams.get('res_id');
 
   // Permission Mangement
   const isResourceDownloadEnable = checkPermission(
@@ -394,7 +403,15 @@ const Resource: React.FC<ResourceProps> = ({
       state: { resource, accountDetails, resources: true },
     });
   };
-
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
+  const showUploads = searchParams.get('attachment_entity') === 'resource';
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -449,6 +466,13 @@ const Resource: React.FC<ResourceProps> = ({
   };
 
   const headerButtons = [
+    {
+      label: 'Add Attachment',
+      variant: 'outlined' as const,
+      onClick: () => handleOpen(),
+      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
+      hide: value !== 'details',
+    },
     {
       label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
@@ -724,6 +748,103 @@ const Resource: React.FC<ResourceProps> = ({
     }
   };
 
+  const allDocumentTypes = useGetAllDocumentTypes();
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentTypes.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentTypes.data?.data.documentCategories]
+  );
+  const formFields: FormField[] = [
+    {
+      id: 'fiscal_year',
+      label: 'Fiscal Year',
+      type: 'select',
+      required: true,
+      placeholder: 'Select Fiscal Year',
+      options: fiscalYears,
+    },
+    {
+      id: 'document_category_rid',
+      label: 'Document Category',
+      type: 'select',
+      required: true,
+      placeholder: 'Enter Document Category',
+      options: memoizedDocumentCategories,
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
+    {
+      id: 'document_type_rid',
+      label: 'Document Type',
+      type: 'select',
+      required: true,
+      placeholder: 'Enter Document Type',
+      options: memoizedDocumentTypes,
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
+    {
+      id: 'comments',
+      label: 'Comments',
+      type: 'textarea',
+      rows: 3,
+      fullWidth: true,
+      validation: [
+        {
+          regex: RESOURCE_REGEX.DESCRIPTION,
+          errorMessage: 'Max length exceeded.',
+        },
+      ],
+    },
+  ];
+
   return (
     <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
@@ -738,98 +859,110 @@ const Resource: React.FC<ResourceProps> = ({
           isResoureceOverviewHide
             ? false
             : isResourceViewAllEnable
-              ? filterVisibility
+              ? showUploads
+                ? false
+                : filterVisibility
               : false
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        showRefresh={true}
+        showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
       />
-      {!isResoureceOverviewHide && isResourceViewAllEnable && (
-        <>
-          <ResourceTableHeader
-            value={value}
-            title='Resources'
-            count={count}
-            resourceNumber={resourceData?.r_number ?? resourceNumber}
-            titleIcon={<ResourceProfileIcon alt='resource header icon' />}
-            headerButtons={headerButtons}
-            showBackArrow={showBackArrow}
-            onBackClick={handleBackClick}
-          />
-          {!viewResourceList && value && (
-            <ResourceSubComponents
-              permission={permission}
-              tabMenus={tabMenus}
-              setFilterVisibility={setFilterVisibility}
-              handleTabChange={handleTabChange}
+      {showUploads ? (
+        <Uploads
+          formFields={formFields}
+          accountId={accountid}
+          attachID={resId}
+        />
+      ) : (
+        !isResoureceOverviewHide &&
+        isResourceViewAllEnable && (
+          <>
+            <ResourceTableHeader
               value={value}
-              resourceId={searchParams.get('res_id') as string}
-              accountId={accountDetails?.data?.accountById?.r_number}
-              appliedFilters={appliedFilters || {}}
-              fiscalYearValue={convertedFiscalYear}
-              accountDetails={accountDetails as AccountData}
-              setShowFilter={setShowFilter}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              costOrder={costOrder}
-              setCostOrder={setCostOrder}
-              costorderBy={costorderBy}
-              setCostorderBy={setCostOrderBy}
-              skillOrder={skillOrder}
-              setSkillOrder={setSkillOrder}
-              skillOrderBy={skillOrderBy}
-              setSkillOrderBy={setSkillOrderBy}
-              refreshCostTrigger={refreshCostTrigger}
-              refreshSkillTrigger={refreshSkillTrigger}
-              attachmentsOrder={attachmentsOrder}
-              setAttachmentsOrder={setAttachmentsOrder}
-              attachmentsOrderBy={attachmentsOrderBy}
-              setAttachmentsOrderBy={setAttachmentsOrderBy}
-              refreshAttachments={refreshAttachments}
-              setCount={setCount}
+              title='Resources'
+              count={count}
+              resourceNumber={resourceData?.r_number ?? resourceNumber}
+              titleIcon={<ResourceProfileIcon alt='resource header icon' />}
+              headerButtons={headerButtons}
+              showBackArrow={showBackArrow}
+              onBackClick={handleBackClick}
             />
-          )}
-          {viewResourceList && !value && (
-            <div className='border border-[#CBD6E2]'>
-              <ListTable
-                data={resourcesList}
-                columns={resourceColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  borderBottom: '1px solid #CBD6E2',
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                selectable={false}
-                actionWidth={80}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionMenuItems}
-                loading={isLoading}
-                error={error ? 'Failed to load resource data' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
+
+            {!viewResourceList && value && (
+              <ResourceSubComponents
+                permission={permission}
+                tabMenus={tabMenus}
+                setFilterVisibility={setFilterVisibility}
+                handleTabChange={handleTabChange}
+                value={value}
+                resourceId={searchParams.get('res_id') as string}
+                accountId={accountDetails?.data?.accountById?.r_number}
+                appliedFilters={appliedFilters || {}}
+                fiscalYearValue={convertedFiscalYear}
+                accountDetails={accountDetails as AccountData}
+                setShowFilter={setShowFilter}
                 currentPage={currentPage}
-                totalItems={ResourceList?.count || 0}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortBy={sortField}
-                sortOrder={sortOrder}
-                onSort={handleSortRequest}
-                onCellEdit={handleCellEdit}
-                onFieldChange={handleFieldChange}
+                setCurrentPage={setCurrentPage}
+                costOrder={costOrder}
+                setCostOrder={setCostOrder}
+                costorderBy={costorderBy}
+                setCostorderBy={setCostOrderBy}
+                skillOrder={skillOrder}
+                setSkillOrder={setSkillOrder}
+                skillOrderBy={skillOrderBy}
+                setSkillOrderBy={setSkillOrderBy}
+                refreshCostTrigger={refreshCostTrigger}
+                refreshSkillTrigger={refreshSkillTrigger}
+                attachmentsOrder={attachmentsOrder}
+                setAttachmentsOrder={setAttachmentsOrder}
+                attachmentsOrderBy={attachmentsOrderBy}
+                setAttachmentsOrderBy={setAttachmentsOrderBy}
+                refreshAttachments={refreshAttachments}
+                setCount={setCount}
               />
-            </div>
-          )}
-        </>
+            )}
+            {viewResourceList && !value && (
+              <div className='border border-[#CBD6E2]'>
+                <ListTable
+                  data={resourcesList}
+                  columns={resourceColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionMenuItems}
+                  loading={isLoading}
+                  error={error ? 'Failed to load resource data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={ResourceList?.count || 0}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSortRequest}
+                  onCellEdit={handleCellEdit}
+                  onFieldChange={handleFieldChange}
+                />
+              </div>
+            )}
+          </>
+        )
       )}
       {!isResourceViewAllEnable && <AccessRestricted />}
     </div>

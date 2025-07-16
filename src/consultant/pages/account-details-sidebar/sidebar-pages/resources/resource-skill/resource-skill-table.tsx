@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import {
@@ -22,11 +22,17 @@ import {
   FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
-import { OthersEnum } from '../../../../../types';
+import { FormField, OthersEnum, SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { AllPermissions } from '../../../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllDocumentTypes,
+} from '../../../../../../common-service';
+import { fiscalYears } from '../../../../resource-form/form-data';
+import Uploads from '../../../../../../components/Attachments/upload';
+import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../../common-utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -61,9 +67,14 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const navigate = useNavigate();
   const { errorToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const [searchParams] = useSearchParams();
   const [resourceSkillList, setResourceSkillList] = useState<
     ResourceSkillList[]
   >([]);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [selectedAccountRid, setSelectedAccountRid] = useState<string | null>(
+    null
+  );
   const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
     client: resourceClient,
   });
@@ -216,6 +227,17 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentSkillType(rid);
   };
 
+  const handleAttachmentClick = (rowId: string, accountRid: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource_skill');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+    setSelectedRowId(rowId);
+    setSelectedAccountRid(accountRid);
+  };
+
   const resourceSkillColumns = getResourceSkillColumns(
     memoizedSkillLevels,
     memoizedSkillType,
@@ -223,7 +245,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     handleSkillType,
     skillTypeLoading,
     subTypeLoading,
-    permissionMap
+    permissionMap,
+    handleAttachmentClick
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -294,43 +317,152 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(previousSkillList);
     }
   };
+  const allDocumentTypes = useGetAllDocumentTypes();
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentTypes.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentTypes.data?.data.documentCategories]
+  );
+
+  const showUploads =
+    searchParams.get('attachment_entity') === 'resource_skill';
+
+  const formFields: FormField[] = [
+    {
+      id: 'fiscal_year',
+      label: 'Fiscal Year',
+      type: 'select',
+      required: true,
+      placeholder: 'Select Fiscal Year',
+      options: fiscalYears,
+    },
+    {
+      id: 'document_category_rid',
+      label: 'Document Category',
+      type: 'select',
+      required: true,
+      placeholder: 'Enter Document Category',
+      options: memoizedDocumentCategories,
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
+    {
+      id: 'document_type_rid',
+      label: 'Document Type',
+      type: 'select',
+      required: true,
+      placeholder: 'Enter Document Type',
+      options: memoizedDocumentTypes,
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_50,
+          errorMessage: 'Max length exceeded',
+        },
+        {
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+        },
+        {
+          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+          errorMessage:
+            'Only letters, numbers, hyphens, and underscores are allowed.',
+        },
+      ],
+    },
+    {
+      id: 'comments',
+      label: 'Comments',
+      type: 'textarea',
+      rows: 3,
+      fullWidth: true,
+      validation: [
+        {
+          regex: RESOURCE_REGEX.DESCRIPTION,
+          errorMessage: 'Max length exceeded.',
+        },
+      ],
+    },
+  ];
+
   return (
     <div>
-      <ListTable
-        data={resourceSkillList}
-        columns={resourceSkillColumns}
-        getRowId={getRowId}
-        hoverHighlight={false}
-        stickyHeader={false}
-        stickyColumnsCount={1}
-        tableStyle={{
-          borderBottom: '1px solid #CBD6E2',
-          height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
-          overflow: 'auto',
-        }}
-        selectable={true}
-        actionWidth={80}
-        actionDisplayMode='dropdown'
-        actionMenuItems={actionMenuItems}
-        loading={isLoading}
-        error={error ? 'Failed to load resource' : undefined}
-        rowsPerPageOptions={[25, 50, 100]}
-        rowsPerPage={rowsPerPage}
-        currentPage={currentPage}
-        totalItems={skillList?.count ?? 0}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortBy={skillOrderBy}
-        sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
-        onSort={handleSortRequest}
-        onCellEdit={handleCellEdit}
-        onFieldChange={handleFieldChange}
-        skillTypeIds={{
-          othersSkillTypeId,
-          othersSkillSubTypeId,
-        }}
-      />
+      {showUploads ? (
+        <Uploads
+          formFields={formFields}
+          accountId={selectedAccountRid}
+          attachID={selectedRowId}
+        />
+      ) : (
+        <ListTable
+          data={resourceSkillList}
+          columns={resourceSkillColumns}
+          getRowId={getRowId}
+          hoverHighlight={false}
+          stickyHeader={false}
+          stickyColumnsCount={1}
+          tableStyle={{
+            borderBottom: '1px solid #CBD6E2',
+            height: '100%',
+            maxHeight: 'calc(100vh - 410px)',
+            overflow: 'auto',
+          }}
+          selectable={true}
+          actionWidth={80}
+          actionDisplayMode='dropdown'
+          actionMenuItems={actionMenuItems}
+          loading={isLoading}
+          error={error ? 'Failed to load resource' : undefined}
+          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPage={rowsPerPage}
+          currentPage={currentPage}
+          totalItems={skillList?.count ?? 0}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortBy={skillOrderBy}
+          sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
+          onSort={handleSortRequest}
+          onCellEdit={handleCellEdit}
+          onFieldChange={handleFieldChange}
+          skillTypeIds={{
+            othersSkillTypeId,
+            othersSkillSubTypeId,
+          }}
+        />
+      )}
     </div>
   );
 };

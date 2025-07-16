@@ -1,12 +1,13 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { resourceServiceApi } from '../../../api/api';
+import { uploadAttachmentUrl } from '../urls/attachment-url';
 import { AttachmentListURL } from '../urls/attachment-url';
-import { attachmentUploadUrl } from '../urls';
 import {
   AttachmentList,
   AttachmentListResponse,
   AttachmentsListURLParams,
 } from '../../types/attachment';
+import { attachmentUploadUrl } from '../urls';
 
 export const fetchAttachmentList = async (
   params: AttachmentsListURLParams
@@ -59,4 +60,32 @@ export const useAllAttachmentList = (
     retry: 0,
     gcTime: 0,
   });
+};
+
+export const attachmentFileUpload = async (payload: any) => {
+  const formData = new FormData();
+  formData.append('attachment', payload.attachment);
+  formData.append('account_rid', payload.account_rid);
+  formData.append('attach_to', payload.attach_to);
+  formData.append('attachment_level', payload.attachment_level);
+  formData.append('fiscal_year', payload.fiscal_year);
+  formData.append('document_category_rid', payload.document_category_rid);
+  formData.append('document_type_rid', payload.document_type_rid);
+  formData.append(
+    'document_category_others',
+    payload.document_category_others || ''
+  );
+  formData.append('document_type_others', payload.document_type_others || '');
+  formData.append('comments', payload.comments || '');
+
+  const response = await resourceServiceApi.post(
+    uploadAttachmentUrl(),
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response;
 };

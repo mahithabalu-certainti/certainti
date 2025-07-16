@@ -42,3 +42,5 @@ export const AttachmentListURL = ({
 
   return `${baseUrl}?${searchParams.toString()}`;
 };
+
+export const uploadAttachmentUrl = () => `/api/attachment/upload/attachment`;

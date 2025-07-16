@@ -4,6 +4,7 @@ import {
   RESOURCE_REGEX,
   valueDisplay,
 } from '../../../../../../common-utils';
+import TextButton from '../../../../../../components/button/text-button';
 import {
   ListOption,
   ListTableColumn,
@@ -31,7 +32,8 @@ const { currentDate, previousDate } = getDateConstraints(
 export const getResourceCostColumns = (
   currencyOptions: ListOption[],
   isFullTime: boolean,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  handleAttachmentClick?: (rowId: string, accountRid: string) => void
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -433,5 +435,23 @@ export const getResourceCostColumns = (
     sortable: true,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'attachments',
+    sortId: 'attachments',
+    label: 'Attachments',
+    width: 100,
+    sortable: true,
+    render: (row) => (
+      <TextButton
+        label='Add'
+        color='primary'
+        disabled={false}
+        sx={{ margin: '10px' }}
+        onClick={() =>
+          handleAttachmentClick?.(row.rid ?? '', row.account_rid ?? '')
+        }
+      />
+    ),
   },
 ];
