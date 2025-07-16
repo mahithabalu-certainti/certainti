@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FormBuilder } from './formBuilder';
@@ -5,24 +6,29 @@ import { Attachment, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
+import { SelectOption } from '../../consultant/types';
+import { getFormFields } from './helpers';
 
+interface FieldOptionType {
+  fiscalYears: SelectOption[];
+  docCategories: SelectOption[];
+  docTypes: SelectOption[];
+}
 interface UploadsProps {
-  accountNo?: string | undefined;
   accountId?: string | undefined | null;
   attachID?: string | undefined | null;
   accountInActive?: boolean;
-  formFields?: any;
+  fieldOptions: FieldOptionType;
 }
 
 const MAX_FILE_SIZE_MB = 20;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 const Uploads: React.FC<UploadsProps> = ({
-  accountNo,
   attachID,
   accountId,
   accountInActive,
-  formFields,
+  fieldOptions,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState<any>({});
@@ -187,6 +193,12 @@ const Uploads: React.FC<UploadsProps> = ({
   const goBack = () => {
     window.history.back();
   };
+
+  const formFields = getFormFields(
+    fieldOptions.fiscalYears,
+    fieldOptions.docCategories,
+    fieldOptions.docTypes
+  );
 
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>

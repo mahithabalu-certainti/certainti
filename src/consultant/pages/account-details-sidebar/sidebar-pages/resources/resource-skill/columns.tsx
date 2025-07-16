@@ -17,7 +17,7 @@ export const getResourceSkillColumns = (
   skillTypeLoading: boolean,
   subTypeLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  handleAttachmentClick?: (rowId: string, accountRid: string) => void
+  handleAttachmentClick?: (rowId: string) => void
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -277,9 +277,7 @@ export const getResourceSkillColumns = (
         color='primary'
         disabled={false}
         sx={{ margin: '10px' }}
-        onClick={() =>
-          handleAttachmentClick?.(row.rid ?? '', row.account_rid ?? '')
-        }
+        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
       />
     ),
   },

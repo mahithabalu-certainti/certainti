@@ -247,7 +247,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   return (
     <form ref={formRef} className='bg-white px-4 py-4 space-y-3'>
-      {groupedFields.map((row, rowIndex) => (
+      {groupedFields.map((row) => (
         <div
           key={`row-${row.map((f) => f.id).join('-')}`}
           className='grid grid-cols-1 md:grid-cols-3 gap-6'

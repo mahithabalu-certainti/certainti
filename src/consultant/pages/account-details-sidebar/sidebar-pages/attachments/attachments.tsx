@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import { Attachment } from '../../../../../assets';
-import { fiscalYears } from '../../../resource-form/form-data';
 import { ResourceTabs } from '../resources/resources';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -10,16 +9,16 @@ import { ListTable } from '../../../../../components/table';
 import { getAttachmentColumns } from './column';
 import {
   AllPermissions,
-  useGetAllDocumentTypes,
+  useGetAllDocumentInfo,
 } from '../../../../../common-service';
 import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { FormField, SelectOption } from '../../../../types';
+import { SelectOption } from '../../../../types';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../types/attachment';
-import { attachmentsFilterFields } from './utils';
 import { SectionTabPanel } from '../../../../../components';
-import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
+import { getFiscalYears } from '../../../../../common-utils';
+import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -39,8 +38,6 @@ const Attachments: React.FC = () => {
   const { accountid } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const auth = localStorage.getItem('auth');
-  const { userId } = auth ? JSON.parse(auth) : {};
   const [searchParams] = useSearchParams();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -76,27 +73,29 @@ const Attachments: React.FC = () => {
     }
   }, [data]);
 
-  const allDocumentTypes = useGetAllDocumentTypes();
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentTypes]
+    [allDocumentInfo.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
         label: category.category_name,
         value: category.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentCategories]
+    [allDocumentInfo.data?.data.documentCategories]
   );
 
   const showUploads = searchParams.get('attachment_entity') === 'account';
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -156,88 +155,19 @@ const Attachments: React.FC = () => {
   const attachmentColumns = getAttachmentColumns();
   const getRowId = (row: AttachmentList) => row.rid;
 
-  const formFields: FormField[] = [
-    {
-      id: 'fiscal_year',
-      label: 'Fiscal Year',
-      type: 'select',
-      required: true,
-      placeholder: 'Select Fiscal Year',
-      options: fiscalYears,
-    },
-    {
-      id: 'document_category_rid',
-      label: 'Document Category',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Category',
-      options: memoizedDocumentCategories,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'document_type_rid',
-      label: 'Document Type',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Type',
-      options: memoizedDocumentTypes,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'comments',
-      label: 'Comments',
-      type: 'textarea',
-      rows: 3,
-      fullWidth: true,
-      validation: [
-        {
-          regex: RESOURCE_REGEX.DESCRIPTION,
-          errorMessage: 'Max length exceeded.',
-        },
-      ],
-    },
-  ];
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
+
+  const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={AttachmentTabs}
-        filterMenu={attachmentsFilterFields()}
+        filterMenu={attachmentsFilterFields}
         filterVisibility={showUploads ? false : true}
         showFilter={showFilter}
         contextKey='account-attachments'
@@ -253,9 +183,9 @@ const Attachments: React.FC = () => {
       />
       {showUploads ? (
         <Uploads
-          formFields={formFields}
           accountId={accountid}
           attachID={accountid}
+          fieldOptions={fieldOptions}
         />
       ) : (
         <>

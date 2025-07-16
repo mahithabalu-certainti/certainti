@@ -36,8 +36,8 @@ export const fetchAllCountries =
  * React Query hook for fetching country list (view only)
  * @returns UseQueryResult with user details and query state
  */
-export const getDocumentTypeUrl = (): string => {
-  return '/api/attachment/document-type-category?category_rid=D001-caa124b2-35f7-475f-bebc-6c436a4a1423';
+export const getDocumentInfoUrl = (): string => {
+  return 'api/attachment/document-type-category';
 };
 
 export const useGetAllCountries = () => {
@@ -52,24 +52,21 @@ export const useGetAllCountries = () => {
   });
 };
 
-export const fetchAllDocumentTypes =
-  async (): Promise<DocumentTypeResponse> => {
-    try {
-      const { data } = await resourceServiceApi.get<DocumentTypeResponse>(
-        getDocumentTypeUrl(),
-        {}
-      );
-      return data;
-    } catch (error) {
-      console.error('Error fetching document types:', error);
-      throw error;
-    }
-  };
+export const fetchAllDocumentInfo = async (): Promise<DocumentTypeResponse> => {
+  try {
+    const { data } =
+      await resourceServiceApi.get<DocumentTypeResponse>(getDocumentInfoUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching document types:', error);
+    throw error;
+  }
+};
 
-export const useGetAllDocumentTypes = () => {
+export const useGetAllDocumentInfo = () => {
   return useQuery<DocumentTypeResponse, Error>({
-    queryKey: ['getAllDocumentTypes'],
-    queryFn: () => fetchAllDocumentTypes(),
+    queryKey: ['getAllDocumentInfo'],
+    queryFn: () => fetchAllDocumentInfo(),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_COST } from '../../../../../../api/graphql/queries/resource-query';
 import { ResourceCostList } from '../../../../../types/resource-cost';
@@ -24,12 +24,11 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
   AllPermissions,
-  useGetAllDocumentTypes,
+  useGetAllDocumentInfo,
 } from '../../../../../../common-service';
-import { FormField, SelectOption } from '../../../../../types';
+import { SelectOption } from '../../../../../types';
 import { fiscalYears } from '../../../../resource-form/form-data';
 import Uploads from '../../../../../../components/Attachments/upload';
-import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../../common-utils';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -66,6 +65,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   resourceType,
 }) => {
   const navigate = useNavigate();
+  const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
   const [resourceCostList, setResourceCostList] = useState<ResourceCostList[]>(
     []
@@ -81,9 +81,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const { permission } = useSelector((state: RootState) => state.permission);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
-  const [selectedAccountRid, setSelectedAccountRid] = useState<string | null>(
-    null
-  );
 
   const {
     data: costList,
@@ -245,107 +242,35 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   const isFullTime = resourceType?.toLowerCase() === ResourceTypeEnum.FULL_TIME;
 
-  const allDocumentTypes = useGetAllDocumentTypes();
+  const allDocumentInfo = useGetAllDocumentInfo();
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentTypes]
+    [allDocumentInfo.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
         label: category.category_name,
         value: category.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentCategories]
+    [allDocumentInfo.data?.data.documentCategories]
   );
+
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
 
   const showUploads = searchParams.get('attachment_entity') === 'resource_cost';
 
-  const formFields: FormField[] = [
-    {
-      id: 'fiscal_year',
-      label: 'Fiscal Year',
-      type: 'select',
-      required: true,
-      placeholder: 'Select Fiscal Year',
-      options: fiscalYears,
-    },
-    {
-      id: 'document_category_rid',
-      label: 'Document Category',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Category',
-      options: memoizedDocumentCategories,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'document_type_rid',
-      label: 'Document Type',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Type',
-      options: memoizedDocumentTypes,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'comments',
-      label: 'Comments',
-      type: 'textarea',
-      rows: 3,
-      fullWidth: true,
-      validation: [
-        {
-          regex: RESOURCE_REGEX.DESCRIPTION,
-          errorMessage: 'Max length exceeded.',
-        },
-      ],
-    },
-  ];
-
-  const handleAttachmentClick = (rowId: string, accountRid: string) => {
+  const handleAttachmentClick = (rowId: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'resource_cost');
     navigate({
@@ -353,7 +278,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       search: newParams.toString(),
     });
     setSelectedRowId(rowId);
-    setSelectedAccountRid(accountRid);
   };
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
@@ -411,9 +335,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     <div>
       {showUploads ? (
         <Uploads
-          formFields={formFields}
-          accountId={selectedAccountRid}
+          accountId={accountid}
           attachID={selectedRowId}
+          fieldOptions={fieldOptions}
         />
       ) : (
         <ListTable

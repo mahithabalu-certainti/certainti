@@ -32,14 +32,10 @@ import {
   AllPermissions,
   Permissions,
   useGetAllCountries,
-  useGetAllDocumentTypes,
+  useGetAllDocumentInfo,
   useGetStatus,
 } from '../../../../../common-service';
-import {
-  checkPermission,
-  REGEX_PATTERNS,
-  RESOURCE_REGEX,
-} from '../../../../../common-utils';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -52,8 +48,7 @@ import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
-import { fiscalYears } from '../../../resource-form/form-data';
-import { FormField, SelectOption } from '../../../../types';
+import { SelectOption } from '../../../../types';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -748,102 +743,32 @@ const Resource: React.FC<ResourceProps> = ({
     }
   };
 
-  const allDocumentTypes = useGetAllDocumentTypes();
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentTypes]
+    [allDocumentInfo.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
         label: category.category_name,
         value: category.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentCategories]
+    [allDocumentInfo.data?.data.documentCategories]
   );
-  const formFields: FormField[] = [
-    {
-      id: 'fiscal_year',
-      label: 'Fiscal Year',
-      type: 'select',
-      required: true,
-      placeholder: 'Select Fiscal Year',
-      options: fiscalYears,
-    },
-    {
-      id: 'document_category_rid',
-      label: 'Document Category',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Category',
-      options: memoizedDocumentCategories,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'document_type_rid',
-      label: 'Document Type',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Type',
-      options: memoizedDocumentTypes,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'comments',
-      label: 'Comments',
-      type: 'textarea',
-      rows: 3,
-      fullWidth: true,
-      validation: [
-        {
-          regex: RESOURCE_REGEX.DESCRIPTION,
-          errorMessage: 'Max length exceeded.',
-        },
-      ],
-    },
-  ];
+
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
 
   return (
     <div className='w-full py-2 pl-2 pr-4'>
@@ -871,12 +796,13 @@ const Resource: React.FC<ResourceProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
+        fieldOptions={fieldOptions}
       />
       {showUploads ? (
         <Uploads
-          formFields={formFields}
           accountId={accountid}
           attachID={resId}
+          fieldOptions={fieldOptions}
         />
       ) : (
         !isResoureceOverviewHide &&

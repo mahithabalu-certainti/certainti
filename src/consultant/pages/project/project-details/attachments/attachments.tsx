@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   AllPermissions,
-  useGetAllDocumentTypes,
+  useGetAllDocumentInfo,
 } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,11 +12,10 @@ import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/
 import { Attachment } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
-import { attachmentsFilterFields } from './utils';
-import { FormField, SelectOption } from '../../../../types';
-import { fiscalYears } from '../../../resource-form/form-data';
+import { SelectOption } from '../../../../types';
 import Uploads from '../../../../../components/Attachments/upload';
-import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../common-utils';
+import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
+import { getFiscalYears } from '../../../../../common-utils';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -38,7 +36,9 @@ const Attachments: React.FC = () => {
   const { projectid } = useParams();
   const accountID = searchParams.get('accountID');
   const navigate = useNavigate();
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean>
+  >({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
@@ -95,24 +95,25 @@ const Attachments: React.FC = () => {
     }
   };
 
-  const allDocumentTypes = useGetAllDocumentTypes();
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentTypes]
+    [allDocumentInfo.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
         label: category.category_name,
         value: category.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentCategories]
+    [allDocumentInfo.data?.data.documentCategories]
   );
 
   const handleOpen = () => {
@@ -153,91 +154,20 @@ const Attachments: React.FC = () => {
   const getRowId = (row: AttachmentList) => row.rid;
 
   const showUploads = searchParams.get('attachment_entity') === 'project';
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
 
-  const formFields: FormField[] = [
-    {
-      id: 'fiscal_year',
-      label: 'Fiscal Year',
-      type: 'select',
-      required: true,
-      placeholder: 'Select Fiscal Year',
-      options: fiscalYears,
-    },
-    {
-      id: 'document_category_rid',
-      label: 'Document Category',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Category',
-      options: memoizedDocumentCategories,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'document_type_rid',
-      label: 'Document Type',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Type',
-      options: memoizedDocumentTypes,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'comments',
-      label: 'Comments',
-      type: 'textarea',
-      rows: 3,
-      fullWidth: true,
-      validation: [
-        {
-          regex: RESOURCE_REGEX.DESCRIPTION,
-          errorMessage: 'Max length exceeded.',
-        },
-      ],
-    },
-  ];
+  const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={AttachmentTabs}
-        filterMenu={attachmentsFilterFields()}
-        filterVisibility={true}
+        filterMenu={attachmentsFilterFields}
+        filterVisibility={showUploads ? false : true}
         showFilter={showFilter}
         contextKey='project-attachments'
         appliedFilters={appliedFilters}
@@ -247,14 +177,14 @@ const Attachments: React.FC = () => {
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh
+        showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
       />
       {showUploads ? (
         <Uploads
-          formFields={formFields}
           accountId={accountID}
           attachID={projectid}
+          fieldOptions={fieldOptions}
         />
       ) : (
         <>

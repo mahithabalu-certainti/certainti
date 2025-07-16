@@ -33,7 +33,7 @@ export const getResourceCostColumns = (
   currencyOptions: ListOption[],
   isFullTime: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  handleAttachmentClick?: (rowId: string, accountRid: string) => void
+  handleAttachmentClick?: (rowId: string) => void
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -448,9 +448,7 @@ export const getResourceCostColumns = (
         color='primary'
         disabled={false}
         sx={{ margin: '10px' }}
-        onClick={() =>
-          handleAttachmentClick?.(row.rid ?? '', row.account_rid ?? '')
-        }
+        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
       />
     ),
   },

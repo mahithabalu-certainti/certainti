@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -10,8 +10,11 @@ import {
 import { ActionsDropdown } from '../../../../components';
 import { AttachmentsListURLParams } from '../../../types/attachment';
 import { AttachmentTable } from './table/attachment-table';
-import { getAttachmentsFilterFields } from './helpers';
 import Filter from '../../account-details-sidebar/components/filter/filter';
+import { useGetAllDocumentInfo } from '../../../../common-service';
+import { getFiscalYears } from '../../../../common-utils';
+import { SelectOption } from '../../../types';
+import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 
 export const Attachments: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -77,7 +80,34 @@ export const Attachments: React.FC = () => {
     }
   };
 
-  const attachmentsFilterFields = getAttachmentsFilterFields();
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
+
+  const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
 
   const menuItems = [
     {

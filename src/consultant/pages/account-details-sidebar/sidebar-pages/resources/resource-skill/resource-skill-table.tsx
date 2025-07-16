@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import {
@@ -22,17 +22,16 @@ import {
   FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
-import { FormField, OthersEnum, SelectOption } from '../../../../../types';
+import { OthersEnum, SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
   AllPermissions,
-  useGetAllDocumentTypes,
+  useGetAllDocumentInfo,
 } from '../../../../../../common-service';
 import { fiscalYears } from '../../../../resource-form/form-data';
 import Uploads from '../../../../../../components/Attachments/upload';
-import { REGEX_PATTERNS, RESOURCE_REGEX } from '../../../../../../common-utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -65,6 +64,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   setCount,
 }) => {
   const navigate = useNavigate();
+  const { accountid } = useParams();
   const { errorToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [searchParams] = useSearchParams();
@@ -72,9 +72,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     ResourceSkillList[]
   >([]);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
-  const [selectedAccountRid, setSelectedAccountRid] = useState<string | null>(
-    null
-  );
   const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
     client: resourceClient,
   });
@@ -227,7 +224,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentSkillType(rid);
   };
 
-  const handleAttachmentClick = (rowId: string, accountRid: string) => {
+  const handleAttachmentClick = (rowId: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'resource_skill');
     navigate({
@@ -235,7 +232,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       search: newParams.toString(),
     });
     setSelectedRowId(rowId);
-    setSelectedAccountRid(accountRid);
   };
 
   const resourceSkillColumns = getResourceSkillColumns(
@@ -317,114 +313,42 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(previousSkillList);
     }
   };
-  const allDocumentTypes = useGetAllDocumentTypes();
+  const allDocumentInfo = useGetAllDocumentInfo();
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentTypes.map((type) => ({
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentTypes]
+    [allDocumentInfo.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
     () =>
-      allDocumentTypes.data?.data.documentCategories.map((category) => ({
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
         label: category.category_name,
         value: category.rid,
       })) || [],
-    [allDocumentTypes.data?.data.documentCategories]
+    [allDocumentInfo.data?.data.documentCategories]
   );
 
   const showUploads =
     searchParams.get('attachment_entity') === 'resource_skill';
 
-  const formFields: FormField[] = [
-    {
-      id: 'fiscal_year',
-      label: 'Fiscal Year',
-      type: 'select',
-      required: true,
-      placeholder: 'Select Fiscal Year',
-      options: fiscalYears,
-    },
-    {
-      id: 'document_category_rid',
-      label: 'Document Category',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Category',
-      options: memoizedDocumentCategories,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'document_type_rid',
-      label: 'Document Type',
-      type: 'select',
-      required: true,
-      placeholder: 'Enter Document Type',
-      options: memoizedDocumentTypes,
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Please enter more than 2 characters.',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_50,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
-        },
-        {
-          regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
-          errorMessage:
-            'Only letters, numbers, hyphens, and underscores are allowed.',
-        },
-      ],
-    },
-    {
-      id: 'comments',
-      label: 'Comments',
-      type: 'textarea',
-      rows: 3,
-      fullWidth: true,
-      validation: [
-        {
-          regex: RESOURCE_REGEX.DESCRIPTION,
-          errorMessage: 'Max length exceeded.',
-        },
-      ],
-    },
-  ];
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
 
   return (
     <div>
       {showUploads ? (
         <Uploads
-          formFields={formFields}
-          accountId={selectedAccountRid}
+          accountId={accountid}
           attachID={selectedRowId}
+          fieldOptions={fieldOptions}
         />
       ) : (
         <ListTable
