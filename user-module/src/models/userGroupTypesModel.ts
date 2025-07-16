@@ -10,6 +10,7 @@ interface UserGroupTypeAttributes {
   type:string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  is_consultant_only_group: boolean;
 }
 
 // Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
@@ -28,6 +29,7 @@ export class UserGroupType
   public created_by?: string;
   public modified_by?: string;
   public type!:string;
+  public is_consultant_only_group!: boolean;
   
 
   // Timestamps
@@ -71,6 +73,10 @@ export class UserGroupType
         },
         type: {
           type: DataTypes.STRING,
+          allowNull: false,
+        },
+        is_consultant_only_group: {
+          type: DataTypes.BOOLEAN,
           allowNull: false,
         },
 
