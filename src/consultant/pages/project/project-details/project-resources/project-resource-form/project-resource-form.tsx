@@ -1,14 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
-import { OnChange, useGetAllCountries } from '../../../../../../common-service';
+import {
+  Layout,
+  OnChange,
+  useGetAllCountries,
+  useGetStatus,
+} from '../../../../../../common-service';
 import {
   useFetchCurrency,
   useFetchState,
 } from '../../../../../services/account';
-import { SelectOption } from '../../../../../types';
+import {
+  OthersEnum,
+  SelectOption,
+  ResourceType,
+  ProjectResourceNewPayload,
+} from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
 import {
@@ -17,27 +26,51 @@ import {
   useUpdateProjectResource,
 } from '../../../../../services/project-resources/project-resource-service';
 import { ProjectResourceFormData } from './form-data';
+import { useGetResourceType } from '../../../../../services/resource-list';
+import {
+  useGetProjectResourceCode,
+  useGetProjectResourceRollSkill,
+  useGetProjectResourceSkillType,
+} from '../../../../../services/project-resources/project-resources-form-service';
+import { projectResourcesPayloadData } from './utils';
 
 const ProjectResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast } = useToast();
   const location = useLocation();
+  const [showSkillRoleOthersField, setShowSkillRoleOthersField] =
+    useState(false);
+  const [isResourceType, setIsResourceType] = useState(false);
   const { resourceId } = useParams();
 
-  const getProjectResource = useProjectResourceDetail(resourceId as string);
+  const [searchParams] = useSearchParams();
+  const account_Id = searchParams.get('account_Id');
+  const project_Id = searchParams.get('project_Id');
+  const projectPFY = searchParams.get('PFY');
+
+  const getProjectResource = useProjectResourceDetail(
+    account_Id as string,
+    resourceId as string
+  );
+
   const projectResource = getProjectResource.data?.data;
   const projectResourceData = useMemo(
     () => ({
-      ...projectResource?.projectResourceDetails,
+      ...projectResource?.projectResource,
     }),
     [projectResource]
   );
-  console.log('projectResourceData', projectResourceData);
-
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    account_Id as string
+  );
+  const projectResourceTypeOptions = useGetResourceType();
+  const projectResourceSkillTypeOptions = useGetProjectResourceSkillType();
+  const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();
+  const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
-  const state = useFetchState(currentCountry);
+  const states = useFetchState(currentCountry);
   // const city = useFetchCity(currentCountry.state);
   const createProjectResource = useCreateProjectResource();
   const updateProjectResource = useUpdateProjectResource();
@@ -53,10 +86,60 @@ const ProjectResourceForm: React.FC = () => {
           ? 'Project Resource updated successfully'
           : 'Project Resource created successfully'
       );
+      setShowSkillRoleOthersField(false);
+      setIsResourceType(false);
+      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
+  const memoizedProjectResourceCode: SelectOption[] = useMemo(
+    () =>
+      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+        label: item.resource_code,
+        value: item.resource_code,
+      })) || [],
+    [projectResourceCodeOptions?.data?.resourceCodes]
+  );
+
+  const memoizedProjectResourceSkillType: SelectOption[] = useMemo(
+    () =>
+      projectResourceSkillTypeOptions?.data?.data?.resourceRolesSubType.map(
+        (item) => ({
+          label: item.sub_type_name,
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceSkillTypeOptions?.data?.data?.resourceRolesSubType]
+  );
+
+  const memoizedProjectResourceRollSkill: SelectOption[] = useMemo(
+    () =>
+      projectResourceRollSkillOptions?.data?.data?.resourceRoles.map(
+        (item) => ({
+          label: item.skill_role_name,
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceRollSkillOptions?.data?.data?.resourceRoles]
+  );
+
+  const memoizedProjectTypes: SelectOption[] = useMemo(
+    () =>
+      projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [projectResourceTypeOptions?.data?.data?.resouceType]
+  );
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
   const memoizedCountry: SelectOption[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -77,11 +160,11 @@ const ProjectResourceForm: React.FC = () => {
 
   const memoizedState: SelectOption[] = useMemo(
     () =>
-      state.data?.data.states.map((state) => ({
+      states.data?.data.states.map((state) => ({
         label: state.state_name,
         value: state.rid,
       })) || [],
-    [state.data?.data.states]
+    [states.data?.data.states]
   );
 
   //   const memoizeCity: SelectOption[] = useMemo(
@@ -93,16 +176,23 @@ const ProjectResourceForm: React.FC = () => {
   //     [city.data?.data.cities]
   //   );
 
-  const submitData = (formValues: any) => {
-    const projectResourceData = {
-      ...formValues,
-      rid: resourceId,
-    };
-    // const projectResourceData = transformFormData(formValues, isEditView);
+  const submitData = (formValues: Partial<ProjectResourceNewPayload>) => {
+    const updated_resource_rid = isEditView ? (resourceId as string) : '';
+    const projectResourceFormData = projectResourcesPayloadData(
+      {
+        ...formValues,
+        project_rid: project_Id ?? '',
+        account_rid: account_Id ?? '',
+      },
+      updated_resource_rid,
+      isEditView,
+      showSkillRoleOthersField,
+      isResourceType
+    );
     if (isEditView) {
-      updateProjectResource.mutate(projectResourceData);
+      updateProjectResource.mutate(projectResourceFormData);
     } else {
-      createProjectResource.mutate(projectResourceData);
+      createProjectResource.mutate(projectResourceFormData);
     }
   };
 
@@ -118,7 +208,72 @@ const ProjectResourceForm: React.FC = () => {
     if (data.fieldName === 'country_rid') {
       setCurrentCountry(data.fieldValue as string);
     }
+    if (data.fieldName === 'resource_type_rid') {
+      const selectedProjectResourceType = memoizedProjectTypes.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+
+      setIsResourceType(
+        selectedProjectResourceType?.label.toLowerCase() ===
+          ResourceType.full_time
+      );
+    }
+    if (data.fieldName === 'assigned_skill_role_type_rid') {
+      const selectedSkillSubType = memoizedProjectResourceSkillType.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+      setShowSkillRoleOthersField(
+        selectedSkillSubType?.label.toLowerCase() === OthersEnum.Other
+      );
+    }
   };
+  useEffect(() => {
+    if (projectResourceData?.country_rid) {
+      setCurrentCountry(projectResourceData?.country_rid);
+    }
+  }, [projectResourceData?.country_rid]);
+
+  useEffect(() => {
+    const selectedProjectResourceType = memoizedProjectTypes.find(
+      (option) =>
+        String(option.value) === String(projectResourceData?.resource_type_rid)
+    );
+
+    setIsResourceType(
+      selectedProjectResourceType?.label.toLowerCase() ===
+        ResourceType.full_time
+    );
+  }, [memoizedProjectTypes, projectResourceData?.resource_type_rid]);
+
+  useEffect(() => {
+    const selectedSkillSubType = memoizedProjectResourceSkillType.find(
+      (option) =>
+        String(option.value) ===
+        String(projectResourceData?.assigned_skill_role_type_rid)
+    );
+
+    setShowSkillRoleOthersField(
+      selectedSkillSubType?.label.toLowerCase() === OthersEnum.Other
+    );
+  }, [
+    memoizedProjectResourceSkillType,
+    projectResourceData?.assigned_skill_role_type_rid,
+  ]);
+
+  const formConfig = ProjectResourceFormData(
+    memoizedProjectResourceCode,
+    memoizedProjectTypes,
+    memoizedProjectResourceSkillType,
+    memoizedProjectResourceRollSkill,
+    memoizedStatus,
+    memoizedCountry,
+    memoizedState,
+    memoizedCurrency,
+    showSkillRoleOthersField,
+    isResourceType,
+    states.isLoading,
+    projectPFY
+  );
 
   return (
     <>
@@ -137,9 +292,8 @@ const ProjectResourceForm: React.FC = () => {
           )}
 
           <div>
-            <>{console.log('projectResourceData', projectResourceData)}</>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project {'>'} {projectResourceData?.project_name}
+              Project {'>'} {projectResourceData?.resource_name}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
@@ -154,7 +308,6 @@ const ProjectResourceForm: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3'>
-          <TextButton label='Cancel' color='inherit' onClick={goBack} />
           <TextButton
             label='Save'
             loading={
@@ -162,21 +315,12 @@ const ProjectResourceForm: React.FC = () => {
             }
             onClick={handleExternalSubmit}
           />
+          <TextButton label='Cancel' color='inherit' onClick={goBack} />
         </div>
       </div>
       <div className='pb-4'>
         <FormBuilder
-          data={ProjectResourceFormData(
-            memoizedCountry,
-            memoizedState,
-            // memoizeCity,
-            memoizedCurrency,
-            state.isLoading
-            // city.isLoading,
-            // currency.isLoading,
-            // disableFields,
-            // isEditView
-          )}
+          data={formConfig}
           loading={allCountries.isLoading || currency.isLoading}
           values={
             isEditView && projectResourceData
@@ -185,6 +329,7 @@ const ProjectResourceForm: React.FC = () => {
           }
           outData={submitData}
           formRef={formRef}
+          layout={Layout.TYPE_1}
           onChange={onChangeField}
         />
       </div>

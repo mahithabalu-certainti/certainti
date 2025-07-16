@@ -442,13 +442,16 @@ export const PROJECT_RESOURCE_REGEX = {
     /^(?![ '\\-])(?=[A-Za-z '\\-]{2,100}$)(?!.*[ '\\-]$)[A-Za-z '\\-]+$/,
   // Resource Ref Id: Alphanumeric with hyphen/apostrophe, 1-20 chars
   RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,20}$/,
+  //Resource Name:
+  RESOURCE_NAME: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{2,64}[A-Za-z]$/,
+
   // Organization Name: Extended chars for org names, 4-100 chars
   ORG_NAME: /^(?![ .,&'\\-])(?!.*[ .,&'\\-]$)[A-Za-z0-9 .,&'\\-]{3,100}$/,
 
-  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,50}$/,
+  ROLE: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{3,64}[A-Za-z]$/,
 
   // Designation: Job titles with special chars, 4-100 chars
-  DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
+  DESIGNATION: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{1,62}[A-Za-z]$/,
 
   // Project resource cost regex
   COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,

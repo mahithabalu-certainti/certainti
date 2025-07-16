@@ -142,6 +142,10 @@ export enum OthersEnum {
   Others = 'others',
 }
 
+export enum ResourceType {
+  full_time = 'full-time',
+}
+
 export enum enumValue {
   Yes = 'Yes',
   No = 'No',

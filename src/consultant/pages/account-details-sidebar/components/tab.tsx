@@ -36,6 +36,8 @@ import { useGetProjectType } from '../../../services/project';
 import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fileds';
+import { useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -55,6 +57,7 @@ interface TabProps {
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   keyProjectTask?: string;
+  projectResourceAccountID?: string;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -73,6 +76,7 @@ const TabPanel: React.FC<TabProps> = ({
   toggleEnabled,
   setToggleEnabled,
   keyProjectTask,
+  projectResourceAccountID,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -112,11 +116,23 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    projectResourceAccountID as string
+  );
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
+  const memoizedProjectResourceCode: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+          option: item.resource_code,
+          value: item.resource_code,
+        })) || [],
+      [projectResourceCodeOptions?.data?.resourceCodes]
+    );
   const memoizedCountry: { option: string; value: string }[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -358,10 +374,9 @@ const TabPanel: React.FC<TabProps> = ({
         projectPermissionMap
       );
     if (value === 'project-resources')
-      return resourceFilterFields(
-        memoizedCountry,
+      return projectResourceFilterFields(
+        memoizedProjectResourceCode,
         regionData,
-        memoizedStatus,
         memoizedResourceType
       );
     return value === 'cost'

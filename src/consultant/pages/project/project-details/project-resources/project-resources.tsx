@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
@@ -8,7 +7,10 @@ import {
   useProjectResourceDetail,
   useProjectResources,
 } from '../../../../services/project-resources/project-resource-service';
-import { PROJECT_RESOURCE } from '../../../../../routes';
+import {
+  PROJECT_RESOURCE_CREATE,
+  PROJECT_RESOURCE_EDIT,
+} from '../../../../../routes';
 import { getProjectResourcesColumns } from './list/columns';
 import { ProjectResourcesListType } from '../../../../types/project-resources';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -39,63 +41,89 @@ const projectTabs: ResourceTabs[] = [
   },
 ];
 
-export const ProjectResources = () => {
+export const ProjectResources = ({
+  projectID,
+  accountID,
+  projectFiscalYear,
+}: {
+  projectID?: string;
+  accountID?: string;
+  projectFiscalYear?: number;
+}) => {
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
     projectsTabs,
     // setProjectsTabs
   ] = useState(projectTabs);
-  const [
-    ,
-    // sortFilterCount
-    setSortFilterCount,
-  ] = useState<number>(0);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-  const [sortField, setSortField] = useState<string>('created_datetime');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [, setProjectResData] = useState<ProjectResourcesListType | null>(null);
+  const [projectResData, setProjectResData] =
+    useState<ProjectResourcesListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
-  //   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-  //     {}
-  //   );
-  //   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  // const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+  //   {}
+  // );
+  // const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-  const navigate = useNavigate();
-  const [
-    ,
-    // refreshProjectsTrigger
-    setRefreshProjectsTrigger,
-  ] = useState<number>(Date.now());
 
-  const { data, isLoading, error } = useProjectResources({
-    page: currentPage + 1,
-    limit: rowsPerPage,
-    sortBy: sortField,
-    sortOrder: sortOrder,
-    filters: appliedFilters,
-    fiscalYear: convertedFiscalYear,
-    // accountNumber: accountDetails?.data?.accountById.r_number || '',
-  });
-  const detailsResourceId = searchParams.get('pro_res_id');
-  // get project resource detail
-  // project resource details
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
+  const navigate = useNavigate();
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const { data, isLoading, error } = useProjectResources(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+      accountNumber: accountID,
+      projectid: projectID,
+    },
+    undefined,
+    refreshProjectsTrigger
+  );
+  // const detailsResourceId = searchParams.get('pro_res_id');
+
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useProjectResourceDetail(detailsResourceId || '');
+  } = useProjectResourceDetail(
+    projectResData?.account_rid as string,
+    projectResData?.rid as string
+  );
+  const resourceData = resourceDetails?.data?.projectResource;
 
   const totalItems = data?.count || 0;
+
+  const handleProjectResourceDetailEdit = () => {
+    if (resourceData) {
+      const path = PROJECT_RESOURCE_EDIT.replace(
+        ':resourceId',
+        resourceData.rid
+      );
+      const queryParams = new URLSearchParams({
+        account_Id: resourceData.account_rid,
+        project_Id: resourceData.project_rid,
+      });
+      navigate(`${path}?${queryParams.toString()}`);
+    }
+  };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'project_code';
@@ -121,11 +149,11 @@ export const ProjectResources = () => {
     }
   }, [searchParams]);
 
-  const resourceData = resourceDetails?.data?.projectResourceDetails;
   const actionMenuItems = [
     {
       label: 'Edit',
-      onClick: (row: any) => handleEditProjectResource(row),
+      onClick: (row: ProjectResourcesListType) =>
+        handleEditProjectResource(row),
     },
   ];
 
@@ -133,7 +161,7 @@ export const ProjectResources = () => {
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      onClick: (row: any) => handleEditProjectResource(row),
+      onClick: () => handleProjectResourceDetailEdit(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
   ];
@@ -161,28 +189,32 @@ export const ProjectResources = () => {
       search: searchParams.toString(),
     });
     setFilterVisibility(true);
-    //   resetFilter(
-    //       {
-    //   setAppliedFilters,
-    //   setFilterStates,
-    //   setSelectedFilters,
-    //       }
-    //   );
   };
 
   const handleCreateProjectResource = () => {
-    navigate({
-      pathname: `${PROJECT_RESOURCE}/create`,
+    const account_Id = accountID ?? ''; // fallback to empty string
+    const project_Id = projectID ?? '';
+    const PFY = String(projectFiscalYear);
+    const queryParams = new URLSearchParams({
+      account_Id,
+      project_Id,
+      PFY,
+      source: 'createAccount',
     });
+    navigate(`${PROJECT_RESOURCE_CREATE}?${queryParams.toString()}`);
   };
 
-  const handleEditProjectResource = (row: any) => {
-    navigate({
-      pathname: `${PROJECT_RESOURCE}/edit/${row?.rid}`,
+  const handleEditProjectResource = (row: ProjectResourcesListType) => {
+    const path = row?.rid
+      ? PROJECT_RESOURCE_EDIT.replace(':resourceId', row.rid)
+      : PROJECT_RESOURCE_EDIT;
+    const queryParams = new URLSearchParams({
+      account_Id: row?.account_rid || '',
+      project_Id: row?.project_rid || '',
     });
+    navigate(`${path}?${queryParams.toString()}`);
   };
-  const getRowId = (row: any) => row.project_rid;
-  const handleProjectResourceClick = (row: any) => {
+  const handleProjectResourceClick = (row: ProjectResourcesListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_res_id', row?.rid ?? '');
     navigate({ search: searchParams.toString() });
@@ -216,9 +248,10 @@ export const ProjectResources = () => {
         showRefresh={true}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
-        sortFilterCount={0}
+        sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         keyProjectTask={'ProjectResources'}
+        projectResourceAccountID={accountID}
       />
       <>
         <ProjectResourceTableHeader
@@ -238,18 +271,18 @@ export const ProjectResources = () => {
         <div className='border border-[#CBD6E2]'>
           {showProjectResourceDetails ? (
             <ProjectResourceDetails
-              resourceData={
-                resourceDetails?.data?.projectResourceDetails || undefined
-              }
+              resourceData={resourceDetails?.data?.projectResource || undefined}
               isDetailsLoading={isDetailsLoading}
               detailsError={detailsError}
             />
           ) : (
             <ListTable
-              data={data?.projectResources as any}
+              data={data?.projectResources as ProjectResourcesListType[]}
               columns={projectResourcesColumns}
               actionMenuItems={actionMenuItems}
-              getRowId={getRowId}
+              getRowId={(row: ProjectResourcesListType): string =>
+                row.rid || ''
+              }
               hoverHighlight={false}
               tableStyle={{
                 height: '100%',

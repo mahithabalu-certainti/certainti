@@ -1,42 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProjectResourcesListParams } from '../../types/project-resources';
+import { baseUrl } from './resource-cost-skill-urls';
 
 // export const baseUrl = import.meta.env.VITE_RESOURCE_URL;
-export const projectResourcesUrl = 'api/project-resources/list';
-const returnURL = (
-  _projectResourcesUrl: string, // url: string,
-  params: Record<string, any>
-): string => {
-  const {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-    filters,
-    // accountNumber,
-    fiscalYear,
-    // resourceRid,
-  } = params;
+
+export const getProjectResourcesUrl = (
+  accountNumber: string,
+  projectid: string
+) => `/api/project_resources/list/${accountNumber}/${projectid}`;
+
+const returnURL = (baseURL: string, params: Record<string, any>): string => {
+  const { page, limit, sortBy, sortOrder, filters, fiscalYear } = params;
+
   const searchParams = new URLSearchParams();
 
-  searchParams.set('page', page.toString());
-  searchParams.set('limit', limit.toString());
-  searchParams.set('sortBy', sortBy);
-  searchParams.set('sortOrder', sortOrder);
-  //   searchParams.set('accountNumber', accountNumber);
-  //   if (resourceRid) {
-  //     searchParams.set('resourceRid', resourceRid);
-  //   }
-  if (fiscalYear) {
-    searchParams.set('fiscalYear', fiscalYear);
-  }
+  if (page !== undefined) searchParams.set('page', String(page));
+  if (limit !== undefined) searchParams.set('limit', String(limit));
+  if (sortBy) searchParams.set('sortBy', sortBy);
+  if (sortOrder) searchParams.set('sortOrder', sortOrder);
+  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
 
-  // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
-  return '';
-  // return `${baseUrl}/${url}?${searchParams.toString()}`;
+
+  return `${baseURL}?${searchParams.toString()}`;
 };
 export const ProjectResourcesURL = ({
   page,
@@ -44,24 +32,21 @@ export const ProjectResourcesURL = ({
   sortBy,
   sortOrder,
   filters,
-  // accountNumber,
+  accountNumber,
   fiscalYear,
-  // resourceRid,
+  projectid,
 }: ProjectResourcesListParams): string => {
-  return returnURL(projectResourcesUrl, {
+  const base = getProjectResourcesUrl(accountNumber ?? '', projectid ?? '');
+  return returnURL(base, {
     page,
     limit,
     sortBy,
     sortOrder,
     filters,
-    //   accountNumber,
     fiscalYear,
-    //   resourceRid,
   });
 };
 
-export const DetailURL = (resourceId: string, projectNumber: string) => {
-  console.log(resourceId, projectNumber);
-  return '';
-  // return `${baseUrl}/api/resources/list/${accountNumber}/${resourceId}`;
+export const DetailURL = (account_Id: string, resourceId: string) => {
+  return `${baseUrl}/api/project_resources/detail/${account_Id}/${resourceId}`;
 };

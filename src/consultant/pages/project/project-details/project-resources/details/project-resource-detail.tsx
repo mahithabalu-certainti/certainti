@@ -1,7 +1,10 @@
 import { CircularProgress, Typography } from '@mui/material';
 import { ProjectResourceDetailsType } from '../../../../../types/project-resources';
 import { TruncateWithTooltip } from '../../../../../../components/truncate-with-tooltip';
-import { getDateFormat } from '../../../../../../common-utils';
+import {
+  getDateFormat,
+  getDateTimeFormat,
+} from '../../../../../../common-utils';
 
 interface ErrorProps {
   message?: string;
@@ -174,8 +177,6 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
   detailsError,
   // accountId,
 }) => {
-  // const resourceData = resourceDetails?.data?.projectResourceDetails;
-
   if (isDetailsLoading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -217,46 +218,70 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const basicInfo: DetailItem[] = [
     { label: 'Resource Code', value: resourceData.resource_code },
-    { label: 'Resource Type', value: resourceData.resource_type },
-    { label: 'Resource Org Name', value: resourceData.resource_org_name },
+    { label: 'Resource Type', value: resourceData.resource_type_name },
+    { label: 'Resource Org Name', value: resourceData.resource_orgname },
     { label: 'Resource Name', value: resourceData.resource_name },
     { label: 'Designation', value: resourceData.designation },
     { label: 'Resource Role', value: resourceData.resource_role },
-    { label: 'Fiscal Year', value: resourceData.fiscal_year },
-    { label: 'Status', value: resourceData.status },
+
+    {
+      label: 'Resource Skill Role Type',
+      value: resourceData.assigned_skill_role || resourceData.skill_role_rid,
+    },
+    // { label: 'Resource Skill Role', value: resourceData.skill_role_rid },
+    ...(resourceData.skill_role_rid
+      ? [
+          {
+            label: 'Resource Skill Role Others',
+            value: resourceData.skill_role_others,
+          },
+        ]
+      : []),
+    // { label: 'Fiscal Year', value: resourceData.fiscal_year },
+    { label: 'Status', value: resourceData.status_name },
   ];
   const locationInfo: DetailItem[] = [
-    { label: 'Country', value: resourceData.country },
-    { label: 'Region', value: resourceData.region },
-    { label: 'Currency', value: resourceData.currency },
+    { label: 'Country', value: resourceData.country_name },
+    { label: 'Region', value: resourceData.region_name },
+    { label: 'Currency', value: resourceData.currency_name },
   ];
   const projectDetails: DetailItem[] = [
     {
       label: 'Effective From',
-      value: getDateFormat(resourceData.resource_effective_from ?? undefined),
+      value: getDateFormat(resourceData.start_date ?? undefined),
     },
     {
       label: 'End Date',
-      value: getDateFormat(resourceData.resource_enddate ?? undefined),
+      value: getDateFormat(resourceData.end_date ?? undefined),
     },
-    { label: 'Cost', value: resourceData.cost },
-    { label: 'Effort', value: resourceData.effort },
+    { label: 'Effort', value: resourceData.total_hours_pro_res },
+    { label: 'Salary', value: resourceData.salary },
+    { label: 'Bonus', value: resourceData.bonus },
+    { label: 'Insurance', value: resourceData.insurance },
+    { label: 'Deductions', value: resourceData.deductions },
+    { label: 'Cost', value: resourceData.total_cost_pro_res },
   ];
 
   const auditInfo: DetailItem[] = [
-    { label: 'Record ID', value: resourceData.project_id },
-    { label: 'Created On', value: resourceData.created_on },
-    { label: 'Updated On', value: resourceData.updated_on },
-    { label: 'Project Resource ID', value: resourceData.project_resource_id },
-    { label: 'Created By', value: resourceData.created_by },
-    { label: 'Updated By', value: resourceData.updated_by },
+    { label: 'Record ID', value: resourceData.project_rid },
+    { label: 'Project Resource ID', value: resourceData.r_number },
+    {
+      label: 'Created On',
+      value: getDateTimeFormat(resourceData.created_datetime ?? undefined),
+    },
+    { label: 'Created By', value: resourceData.created_name },
+    {
+      label: 'Updated On',
+      value: getDateTimeFormat(resourceData.modified_datetime ?? undefined),
+    },
+    { label: 'Updated By', value: resourceData.modified_name },
     {
       label: 'Project Resource Code',
       value: resourceData.project_resource_code,
     },
   ];
   const description: DetailItem[] = [
-    { label: 'Comments', value: resourceData.comments },
+    { label: 'Comments', value: resourceData.description },
   ];
 
   return (
@@ -273,12 +298,12 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       <DetailsSection
         title='Project Details'
         data={projectDetails as DetailItem[]}
-        isAudit={true}
       />
       <DetailsSection title='Comments' data={description as DetailItem[]} />
       <DetailsSection
         title='Audit Information'
         data={auditInfo as DetailItem[]}
+        isAudit={true}
       />
     </div>
   );

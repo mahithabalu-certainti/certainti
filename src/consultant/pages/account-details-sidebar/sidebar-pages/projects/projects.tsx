@@ -321,7 +321,6 @@ const Projects: React.FC<ProjectsProps> = ({
       AccountName: accountName,
       settings: JSON.stringify(projectSettings),
     });
-    console.log(accountName, 'vvvv');
     navigate(`${PROJECT_CREATE}?${queryParams.toString()}`);
   };
 

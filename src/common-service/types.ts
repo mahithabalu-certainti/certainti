@@ -268,6 +268,8 @@ export enum AllPermissions {
   ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
   USER_VIEW_PERMISSION = 'user_view_permission',
   PROFILE_PERMISSION_VIEW = 'profile_permission_view',
+  ACCOUNT_PROJECTS_TIMELINE = 'account_projects_timeline',
+  ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_overview',
 }
 
 export interface Country {

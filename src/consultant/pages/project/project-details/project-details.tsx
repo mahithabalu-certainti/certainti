@@ -125,6 +125,7 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+  const [fiscalYear, setFiscalYear] = useState<number>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const navigate = useNavigate();
   // Permission Mangement
@@ -166,6 +167,7 @@ export const ProjectDetails = () => {
     if (data?.data) {
       setProjectDetails(transformProjectData(data.data));
       setProjectData(data.data.project);
+      setFiscalYear(data.data.project.fiscal_year);
     }
   }, [data]);
   const menuItems = [
@@ -230,7 +232,13 @@ export const ProjectDetails = () => {
           />
         );
       case 'projectResources':
-        return <ProjectResources />;
+        return (
+          <ProjectResources
+            projectID={projectID}
+            accountID={accountID}
+            projectFiscalYear={fiscalYear}
+          />
+        );
       case 'projectsTask':
         return <NotFound />;
       case 'interactions':
