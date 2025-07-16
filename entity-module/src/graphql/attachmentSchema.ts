@@ -3,9 +3,9 @@ import {gql} from 'graphql-tag'
 const typeDefs = gql
 `
 type attachmentResponse {
-rid: String
+document_rid: String
 r_number: String
-created_datetime: String
+created_datetime: Date
 created_by: String
 modified_datetime: Date
 modified_by: String

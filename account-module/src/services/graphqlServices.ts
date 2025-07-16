@@ -4,6 +4,7 @@ import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
 import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
 import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
+import { Sequelize, Op, QueryTypes } from "sequelize";
 
 class AccountGraphQlServices {
     async inlineEditAccount(data : any) {
@@ -27,6 +28,25 @@ class AccountGraphQlServices {
         })
         if (isAccountActive) {
             if (isAccountActive.status_name == STATUS.active) {
+                if(data.account_name != undefined) {
+                    const checkAccountNameExists = await Account.findOne({
+                        where : {
+                            account_name : {
+                                [Op.iLike] : data.account_name
+                            },
+                            rid : {
+                                [Op.ne] : data.account_rid
+                            }
+                        }
+                    })
+                    if(checkAccountNameExists) {
+                        return {
+                            statusCode: HttpStatus.BAD_REQUEST,
+                            statusMessage: `An account with the name "${data.account_name}" already exists. Please choose a different name.`,
+                            data: null
+                        } 
+                    }
+                }
                 if (fetchAccountById.storage_type == STATUS_MESSAGE.storeInParent) {
                     parentAccount = await Account.findOne({
                         where: {

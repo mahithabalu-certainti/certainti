@@ -536,9 +536,9 @@ export const setResourcesData = (dbData : any, requestData : any) => {
     newData.last_name = newData.resource_name.split(' ')[1]
     dataStorage = `resource_name = '${newData.resource_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
-    dataStorage = `resource_firstname = '${newData.first_name.replace(/'/g, "''")}'`
+    dataStorage = newData.first_name == undefined || newData.last_name == null ? `resource_firstname = '${newData.first_name}'` : `resource_firstname = '${newData.first_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
-    dataStorage = `resource_lastname = '${newData.last_name.replace(/'/g, "''")}'`
+    dataStorage = newData.last_name == undefined || newData.last_name == null ? `resource_lastname = null` : `resource_lastname = '${newData.last_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.resource_type_rid != undefined) {
