@@ -200,3 +200,62 @@ export const getAttachmentsFilterFields = (
     },
   ];
 };
+
+export const validateField = (
+  fieldId: string,
+  value: string | string[],
+  formFields: FormField[]
+): string | null => {
+  const field = formFields.find((f) => f.id === fieldId);
+  if (!field) return null;
+
+  if (
+    !field.required &&
+    (!value || (Array.isArray(value) && value.length === 0))
+  ) {
+    return null;
+  }
+
+  if (
+    field.required &&
+    (!value || (Array.isArray(value) && value.length === 0))
+  ) {
+    return 'This field is required';
+  }
+
+  if (field.validation) {
+    const stringValue = Array.isArray(value) ? value.join('') : value;
+    for (const validation of field.validation) {
+      if (!validation.regex.test(stringValue)) {
+        return validation.errorMessage;
+      }
+    }
+  }
+
+  return null;
+};
+
+export const shouldShowField = (
+  field: FormField,
+  formData: { [key: string]: string | null },
+  formFields: FormField[]
+): boolean => {
+  if (field.id === 'document_category_other') {
+    const categoryField = formFields.find(
+      (f) => f.id === 'document_category_rid'
+    );
+    const selectedOption = categoryField?.options?.find(
+      (opt) => opt.value === formData.document_category_rid
+    );
+    return selectedOption?.label.toLowerCase() === 'others';
+  }
+  if (field.id === 'document_type_others') {
+    const typeField = formFields.find((f) => f.id === 'document_type_rid');
+    const selectedOption = typeField?.options?.find(
+      (opt) => opt.value === formData.document_type_rid
+    );
+    return selectedOption?.label.toLowerCase() === 'others';
+  }
+
+  return !field.hide;
+};

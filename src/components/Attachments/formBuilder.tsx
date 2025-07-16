@@ -1,5 +1,5 @@
 import { TextField, MenuItem, Select, FormControl } from '@mui/material';
-import { FormField, SelectOption } from '../../consultant/types';
+import { FormField, OthersEnum, SelectOption } from '../../consultant/types';
 import React, { useEffect } from 'react';
 import { getFormFields } from './helpers';
 
@@ -27,41 +27,6 @@ type FormBuilderProps = {
 
 export type FieldErrors = {
   [key: string]: string | null;
-};
-
-// Exported so parent can use
-export const validateField = (
-  fieldId: string,
-  value: string | string[],
-  formFields: FormField[]
-): string | null => {
-  const field = formFields.find((f) => f.id === fieldId);
-  if (!field) return null;
-
-  if (
-    !field.required &&
-    (!value || (Array.isArray(value) && value.length === 0))
-  ) {
-    return null;
-  }
-
-  if (
-    field.required &&
-    (!value || (Array.isArray(value) && value.length === 0))
-  ) {
-    return 'This field is required';
-  }
-
-  if (field.validation) {
-    const stringValue = Array.isArray(value) ? value.join('') : value;
-    for (const validation of field.validation) {
-      if (!validation.regex.test(stringValue)) {
-        return validation.errorMessage;
-      }
-    }
-  }
-
-  return null;
 };
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -106,8 +71,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     setFormData(updated);
     if (onFormChange) onFormChange(updated);
 
-    const error = validateField(fieldId, value, formFields);
-    setFieldErrors((prev) => ({ ...prev, [fieldId]: error }));
+    setFieldErrors((prev) => ({ ...prev, [fieldId]: null }));
   };
 
   const shouldShowField = (field: FormField): boolean => {
@@ -118,7 +82,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       const selectedOption = categoryField?.options?.find(
         (opt) => opt.value === formData.document_category_rid
       );
-      return selectedOption?.label.toLowerCase() === 'others';
+      return selectedOption?.label.toLowerCase() === OthersEnum.Others;
     }
 
     if (field.id === 'document_type_others') {
@@ -126,7 +90,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       const selectedOption = typeField?.options?.find(
         (opt) => opt.value === formData.document_type_rid
       );
-      return selectedOption?.label.toLowerCase() === 'others';
+      return selectedOption?.label.toLowerCase() === OthersEnum.Others;
     }
 
     return !field.hide;
@@ -151,6 +115,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const errorStyles = {
+    backgroundColor: '#FEF2F2',
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: '#ef4444 !important',
       borderWidth: '1px !important',
@@ -198,6 +163,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         sx: {
                           ...commonStyles,
                           ...(showError ? errorStyles : {}),
+                          '& .MuiInputBase-input::placeholder': {
+                            color: '#7D98B6',
+                            opacity: 1,
+                          },
                         },
                       }}
                       inputProps={{
@@ -214,7 +183,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       placeholder={field.placeholder || `Enter ${field.label}`}
                       required={field.required}
                       multiline
-                      rows={field.rows || 3}
+                      minRows={4}
+                      maxRows={4}
                       fullWidth
                       InputProps={{
                         sx: {
@@ -222,6 +192,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           height: 'auto',
                           padding: '0 !important',
                           ...(showError ? errorStyles : {}),
+                          '& .MuiInputBase-input::placeholder': {
+                            color: '#7D98B6',
+                            opacity: 1,
+                          },
                         },
                       }}
                       inputProps={{
@@ -230,7 +204,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           textAlign: 'left',
                           padding: '6px 12px',
                           lineHeight: '1.4',
-                          resize: 'vertical',
+                          resize: 'none',
                         },
                       }}
                     />
@@ -243,13 +217,40 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       onChange={(e) => handleChange(field.id, e.target.value)}
                       displayEmpty
                       fullWidth
+                      MenuProps={{
+                        anchorOrigin: {
+                          vertical: 'bottom',
+                          horizontal: 'left',
+                        },
+                        transformOrigin: {
+                          vertical: 'top',
+                          horizontal: 'left',
+                        },
+                        PaperProps: {
+                          sx: {
+                            mt: 0.5,
+                            borderRadius: '4px',
+                            boxShadow: '0 4px 8px rgba(0,0,0,0.08)',
+                            minHeight: '180px',
+                            maxHeight: '250px',
+                            overflowY: 'auto',
+                            '& .MuiMenuItem-root': {
+                              fontSize: '13px',
+                              color: '#425A76',
+                              padding: '6px 12px',
+                              fontWeight: 500,
+                            },
+                          },
+                        },
+                      }}
                       sx={{
                         ...commonStyles,
                         ...(showError ? errorStyles : {}),
                         '.MuiSelect-select': {
-                          padding: '6px',
-                          fontSize: 13,
+                          padding: '6px 12px',
+                          fontSize: '13px',
                           color: value === '' ? '#7D98B6' : '#425A76',
+                          fontWeight: 500,
                         },
                         '& svg': { color: '#7D98B6' },
                       }}

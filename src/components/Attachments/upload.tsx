@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FieldErrors, FormBuilder, validateField } from './formBuilder';
+import { FieldErrors, FormBuilder } from './formBuilder';
 import { Attachment, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
 import { SelectOption } from '../../consultant/types';
-import { getFormFields } from './helpers';
+import { getFormFields, shouldShowField, validateField } from './helpers';
 
 interface FieldOptionType {
   fiscalYears: SelectOption[];
@@ -106,12 +106,16 @@ const Uploads: React.FC<UploadsProps> = ({
   const handleSubmit = async () => {
     const newErrors: FieldErrors = {};
     formFields.forEach((field) => {
-      const error = validateField(
-        field.id,
-        formData[field.id] ?? '',
-        formFields
-      );
-      newErrors[field.id] = error;
+      if (shouldShowField(field, formData, formFields)) {
+        const error = validateField(
+          field.id,
+          formData[field.id] ?? '',
+          formFields
+        );
+        newErrors[field.id] = error;
+      } else {
+        newErrors[field.id] = null;
+      }
     });
     setFieldErrors(newErrors);
     const hasErrors = Object.values(newErrors).some((e) => e);
@@ -130,7 +134,6 @@ const Uploads: React.FC<UploadsProps> = ({
       );
       return;
     }
-
     try {
       const payload = {
         attachment: selectedFiles[0],
@@ -140,8 +143,8 @@ const Uploads: React.FC<UploadsProps> = ({
         fiscal_year: formData?.fiscal_year,
         document_category_rid: formData?.document_category_rid,
         document_type_rid: formData?.document_type_rid,
-        document_category_others: formData?.document_category_rid_others || '',
-        document_type_others: formData?.document_type_rid_others || '',
+        document_category_others: formData?.document_category_other || '',
+        document_type_others: formData?.document_type_others || '',
         comments: (formData?.comments || '').trim(),
       };
       setLoading(true);
@@ -158,7 +161,6 @@ const Uploads: React.FC<UploadsProps> = ({
         setLoading(false);
       }
     } catch (error) {
-      console.error('Uploads: Upload failed:', error);
       showError('Failed to upload the file.');
       setLoading(false);
     }
