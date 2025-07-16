@@ -16,6 +16,27 @@ const textOptions: { option: string; value: string }[] = [
   // { option: 'Is-Empty', value: 'is_empty' },
 ];
 
+const numberOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Less Than', value: 'less_than' },
+  { option: 'Greater Than', value: 'greater_than' },
+  { option: 'Between', value: 'between' },
+];
+
+const enumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
+
+const dateOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+];
+
 export const getFormFields = (
   fiscalYears: SelectOption[],
   memoizedDocumentCategories: SelectOption[],
@@ -135,28 +156,28 @@ export const getAttachmentsFilterFields = (
       name: 'Size',
       value: 'size_in_mb',
       type: 'number',
-      operatorOption: textOptions,
+      operatorOption: numberOptions,
     },
     {
       name: 'Fiscal Year',
       value: 'fiscal_year',
       type: 'enum',
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
-      operatorOption: textOptions,
+      operatorOption: enumOptions,
     },
     {
       name: 'Document Category',
-      value: 'document_category',
+      value: 'document_category_rid',
       type: 'enum',
       options: docCategories.map((c) => ({ option: c.label, value: c.value })),
-      operatorOption: textOptions,
+      operatorOption: enumOptions,
     },
     {
       name: 'Document Type',
-      value: 'document_type',
+      value: 'document_type_rid',
       type: 'enum',
       options: docTypes.map((t) => ({ option: t.label, value: t.value })),
-      operatorOption: textOptions,
+      operatorOption: enumOptions,
     },
     {
       name: 'Related Entity',
@@ -174,6 +195,7 @@ export const getAttachmentsFilterFields = (
       name: 'Related To Name',
       value: 'attached_to',
       type: 'text',
+      operatorOption: textOptions,
     },
     {
       name: 'Attached By',
@@ -185,6 +207,7 @@ export const getAttachmentsFilterFields = (
       name: 'Attached On',
       value: 'created_datetime',
       type: 'date',
+      operatorOption: dateOptions,
     },
     {
       name: 'Attachment ID',

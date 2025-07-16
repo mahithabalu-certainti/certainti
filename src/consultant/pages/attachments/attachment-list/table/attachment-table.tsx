@@ -7,10 +7,18 @@ import { RootState } from '../../../../../store/store';
 import { useEffect, useState } from 'react';
 import { useAllAttachmentList } from '../../../../services/attachments/attachments-service';
 import { getAllAttachmentColumns } from './columns';
-import { CellEditData } from '../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
 import { ListTable } from '../../../../../components/table';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
+import { FieldOptionType } from '../../../../../components/Attachments/helpers';
+import { useMutation } from '@apollo/client';
+import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 interface IAttachmentTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -20,6 +28,7 @@ interface IAttachmentTableProps {
   >;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshTrigger?: number;
+  fieldOptions: FieldOptionType;
 }
 
 export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
@@ -28,12 +37,17 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshTrigger,
+  fieldOptions,
 }) => {
+  const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
+  const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
+    client: resourceClient,
+  });
 
   useEffect(() => {
     const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -93,12 +107,79 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     }));
   };
 
-  const getRowId = (row: AttachmentList) => row.rid;
+  const getRowId = (row: AttachmentList) => row.document_rid;
 
-  const attachmentsColumns = getAllAttachmentColumns();
+  const attachmentsColumns = getAllAttachmentColumns(
+    fieldOptions.fiscalYears,
+    fieldOptions.docCategories,
+    fieldOptions.docTypes
+  );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log(rowId, updates);
+    const previousAttachments = [...attachmentList];
+    // Find account_id
+    const rowData = attachmentList.find((att) => att.document_rid === rowId);
+    if (!rowData) {
+      errorToast('Row not found.');
+      return;
+    }
+    // Flags
+    let hasDocType = false;
+    let hasDocTypeOther = false;
+    let hasDocCategory = false;
+    let hasDocCategoryOther = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (attach, item) => {
+        const key = item.editId || item.columnId;
+
+        attach[key] = key === 'fiscal_year' ? Number(item.value) : item.value;
+        if (item.columnId === 'document_type') hasDocType = true;
+        if (item.columnId === 'document_type_others') hasDocTypeOther = true;
+        if (item.columnId === 'document_category') hasDocCategory = true;
+        if (item.columnId === 'document_category_others')
+          hasDocCategoryOther = true;
+
+        return attach;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData.account_rid,
+      }
+    );
+
+    if (hasDocType && !hasDocTypeOther) {
+      updateData['document_type_others'] = '';
+    }
+    if (hasDocCategory && !hasDocCategoryOther)
+      updateData['document_category_others'] = '';
+
+    try {
+      const res = await updateAttachment({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateAttachmentInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateAttachment = result.data;
+        setAttachmentList((prev) =>
+          prev.map((att) => {
+            if (att.document_rid === updateAttachment.document_rid) {
+              return {
+                ...att,
+                ...updateAttachment,
+              };
+            }
+            return att;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setAttachmentList(previousAttachments);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setAttachmentList(previousAttachments);
+    }
   };
 
   return (

@@ -38,8 +38,8 @@ export interface ProfileResponse {
   depended_by_module?: string[];
   depended_by_permission?: string[];
   updatedByDependsOn?: boolean;
-  is_modified?: boolean
-  has_extended_permission?: boolean
+  is_modified?: boolean;
+  has_extended_permission?: boolean;
   hasReadExtendedPermsission?: boolean;
   hasEditExtendedPermsission?: boolean;
 }

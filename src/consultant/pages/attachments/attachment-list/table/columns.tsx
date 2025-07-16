@@ -1,110 +1,227 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../../../common-utils';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../components/table/types';
+import { OthersEnum, SelectOption } from '../../../../types';
 import { AttachmentList } from '../../../../types/attachment';
 
-export const getAllAttachmentColumns =
-  (): ListTableColumn<AttachmentList>[] => [
-    {
-      id: 'document_name',
-      sortId: 'document_name',
-      label: 'Document Name',
-      width: 160,
-      sortable: true,
-      sticky: true,
-      sx: {
-        position: 'sticky',
-        left: 0,
-        background: '#fff',
-        zIndex: 10,
-        borderRight: '1px solid #CBD6E2 !important',
-        borderBottom: '1px solid #CBD6E2 !important',
+export const getAllAttachmentColumns = (
+  fiscalYears: SelectOption[],
+  docCategories: SelectOption[],
+  docTypes: SelectOption[]
+): ListTableColumn<AttachmentList>[] => [
+  {
+    id: 'document_name',
+    sortId: 'document_name',
+    label: 'Document Name',
+    width: 160,
+    sortable: true,
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
+  },
+  {
+    id: 'format',
+    sortId: 'format',
+    label: 'Format',
+    width: 140,
+    sortable: true,
+  },
+  {
+    id: 'size_in_mb',
+    sortId: 'size_in_mb',
+    label: 'Size',
+    width: 140,
+    sortable: true,
+  },
+  {
+    id: 'fiscal_year',
+    editId: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal',
+    width: 140,
+    sortable: true,
+    editable: true,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: fiscalYears,
+    },
+    render: (row: AttachmentList) => `FY-${row.fiscal_year}`,
+  },
+  {
+    id: 'document_category',
+    editId: 'document_category_rid',
+    sortId: 'document_category',
+    label: 'Document Category',
+    width: 250,
+    sortable: true,
+    editable: true,
+    render: (row: AttachmentList) =>
+      row.document_category_others
+        ? `${row.document_category} - ${row.document_category_others}`
+        : row.document_category,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: docCategories,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.document_category_rid);
       },
+      dependencies: [
+        {
+          dependsOn: 'document_category',
+          condition: (value) => {
+            const found = docCategories.find(
+              (opt) => String(opt.value) === String(value)
+            );
+            return found?.label.toLowerCase() === OthersEnum.Others;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'document_category_others',
+              editId: 'document_category_others',
+              label: 'Document Category-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Category-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Category-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
-    {
-      id: 'format',
-      sortId: 'format',
-      label: 'Format',
-      width: 140,
-      sortable: false,
+  },
+  {
+    id: 'document_type',
+    editId: 'document_type_rid',
+    sortId: 'document_type',
+    label: 'Document Type',
+    width: 300,
+    sortable: true,
+    editable: true,
+    render: (row: AttachmentList) =>
+      row.document_type_others
+        ? `${row.document_type} - ${row.document_type_others}`
+        : row.document_type,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: docTypes,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.document_type_rid);
+      },
+      dependencies: [
+        {
+          dependsOn: 'document_type',
+          condition: (value) => {
+            const found = docTypes.find(
+              (opt) => String(opt.value) === String(value)
+            );
+            return found?.label.toLowerCase() === OthersEnum.Others;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'document_type_others',
+              editId: 'document_type_others',
+              label: 'Document Type-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Type-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Type-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
-    {
-      id: 'size_in_mb',
-      sortId: 'size_in_mb',
-      label: 'Size',
-      width: 140,
-      sortable: true,
-    },
-    {
-      id: 'fiscal_year',
-      sortId: 'fiscal_year',
-      label: 'Fiscal',
-      width: 140,
-      sortable: true,
-    },
-    {
-      id: 'document_category',
-      sortId: 'document_category',
-      label: 'Document Category',
-      width: 250,
-      sortable: true,
-      render: (row: AttachmentList) =>
-        row.document_category_others
-          ? `${row.document_category} - ${row.document_category_others}`
-          : row.document_category,
-    },
-    {
-      id: 'document_type',
-      sortId: 'document_type',
-      label: 'Document Type',
-      width: 300,
-      sortable: true,
-      render: (row: AttachmentList) =>
-        row.document_type_others
-          ? `${row.document_type} - ${row.document_type_others}`
-          : row.document_type,
-    },
-    {
-      id: 'attachment_level',
-      sortId: 'attachment_level',
-      label: 'Related Entity',
-      width: 140,
-      sortable: true,
-    },
-    {
-      id: 'attach_to',
-      sortId: 'attach_to',
-      label: 'Related To ID',
-      width: 180,
-      sortable: true,
-    },
-    {
-      id: 'attached_to',
-      sortId: 'attached_to',
-      label: 'Related To Name',
-      width: 180,
-      sortable: true,
-    },
-    {
-      id: 'uploaded_by',
-      sortId: 'uploaded_by',
-      label: 'Attached By',
-      width: 180,
-      sortable: true,
-    },
-    {
-      id: 'created_datetime',
-      sortId: 'created_datetime',
-      label: 'Attached On',
-      width: 200,
-      sortable: true,
-      render: (row: AttachmentList) =>
-        formatDateToYYYYMMDDWithTime(row.created_datetime),
-    },
-    {
-      id: 'r_number',
-      sortId: 'r_number',
-      label: 'Attachment ID',
-      width: 160,
-      sortable: true,
-    },
-  ];
+  },
+  {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+  },
+  {
+    id: 'attach_to',
+    sortId: 'attach_to',
+    label: 'Related To ID',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'attached_to',
+    sortId: 'attached_to',
+    label: 'Related To Name',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'uploaded_by',
+    sortId: 'uploaded_by',
+    label: 'Attached By',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'created_datetime',
+    sortId: 'created_datetime',
+    label: 'Attached On',
+    width: 200,
+    sortable: true,
+    render: (row: AttachmentList) =>
+      formatDateToYYYYMMDDWithTime(row.created_datetime),
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Attachment ID',
+    width: 160,
+    sortable: true,
+  },
+];

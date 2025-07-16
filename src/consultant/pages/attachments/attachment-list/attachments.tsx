@@ -199,6 +199,7 @@ export const Attachments: React.FC = () => {
           setTableParams={setTableParams}
           setTotalCount={setTotalCount}
           refreshTrigger={refreshTrigger}
+          fieldOptions={fieldOptions}
         />
       </div>
     </div>

@@ -1,11 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAttachmentList } from '../../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../../types/attachment';
 import { getResourceAttachmentColumns } from './column';
 import { ListTable } from '../../../../../../components/table';
 import { useParams } from 'react-router-dom';
+import { useGetAllDocumentInfo } from '../../../../../../common-service';
+import { getFiscalYears } from '../../../../../../common-utils';
+import { SelectOption } from '../../../../../types';
+import { useToast } from '../../../../../../hooks';
+import { ATTACHMENT_UPDATE } from '../../../../../../api/graphql/queries/attachment-query';
+import { resourceClient } from '../../../../../../api/graphql/clients/client';
+import { useMutation } from '@apollo/client';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../../components/table/types';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -32,9 +43,13 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   refreshAttachments,
   setCount,
 }) => {
+  const { errorToast } = useToast();
   const { accountid } = useParams();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
+  const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
+    client: resourceClient,
+  });
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -62,6 +77,27 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   }, [data]);
 
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -78,8 +114,79 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setOrderBy(property as keyof AttachmentList);
   };
 
-  const attachmentColumns = getResourceAttachmentColumns();
-  const getRowId = (row: AttachmentList) => row.rid;
+  const attachmentColumns = getResourceAttachmentColumns(
+    fiscalYears,
+    memoizedDocumentCategories,
+    memoizedDocumentTypes
+  );
+  const getRowId = (row: AttachmentList) => row.document_rid;
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousAttachments = [...attachmentList];
+    // Find account_id
+    const rowData = attachmentList.find((att) => att.document_rid === rowId);
+    if (!rowData) {
+      errorToast('Row not found.');
+      return;
+    }
+    // Flags
+    let hasDocType = false;
+    let hasDocTypeOther = false;
+    let hasDocCategory = false;
+    let hasDocCategoryOther = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (attach, item) => {
+        const key = item.editId || item.columnId;
+
+        attach[key] = key === 'fiscal_year' ? Number(item.value) : item.value;
+        if (item.columnId === 'document_type') hasDocType = true;
+        if (item.columnId === 'document_type_others') hasDocTypeOther = true;
+        if (item.columnId === 'document_category') hasDocCategory = true;
+        if (item.columnId === 'document_category_others')
+          hasDocCategoryOther = true;
+
+        return attach;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData.account_rid,
+      }
+    );
+
+    if (hasDocType && !hasDocTypeOther) {
+      updateData['document_type_others'] = '';
+    }
+    if (hasDocCategory && !hasDocCategoryOther)
+      updateData['document_category_others'] = '';
+
+    try {
+      const res = await updateAttachment({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateAttachmentInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateAttachment = result.data;
+        setAttachmentList((prev) =>
+          prev.map((att) => {
+            if (att.document_rid === updateAttachment.document_rid) {
+              return {
+                ...att,
+                ...updateAttachment,
+              };
+            }
+            return att;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setAttachmentList(previousAttachments);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setAttachmentList(previousAttachments);
+    }
+  };
 
   return (
     <div>
@@ -111,6 +218,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
         sortBy={orderBy}
         sortOrder={order.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
+        onCellEdit={handleCellEdit}
       />
     </div>
   );

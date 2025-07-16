@@ -16,6 +16,14 @@ import { SelectOption } from '../../../../types';
 import Uploads from '../../../../../components/Attachments/upload';
 import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
 import { getFiscalYears } from '../../../../../common-utils';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
+import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
+import { useMutation } from '@apollo/client';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -32,6 +40,7 @@ const AttachmentTabs: ResourceTabs[] = [
 ];
 
 const Attachments: React.FC = () => {
+  const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
   const { projectid } = useParams();
   const accountID = searchParams.get('accountID');
@@ -50,6 +59,9 @@ const Attachments: React.FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
+    client: resourceClient,
+  });
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -150,9 +162,6 @@ const Attachments: React.FC = () => {
     setSortField(property);
   };
 
-  const attachmentColumns = getProjectAttachmentColumns();
-  const getRowId = (row: AttachmentList) => row.rid;
-
   const showUploads = searchParams.get('attachment_entity') === 'project';
   const fieldOptions = {
     fiscalYears: fiscalYears,
@@ -161,6 +170,80 @@ const Attachments: React.FC = () => {
   };
 
   const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
+  const attachmentColumns = getProjectAttachmentColumns(
+    fiscalYears,
+    memoizedDocumentCategories,
+    memoizedDocumentTypes
+  );
+
+  const getRowId = (row: AttachmentList) => row.document_rid;
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousAttachments = [...attachmentList];
+    // Find account_id
+    const rowData = attachmentList.find((att) => att.document_rid === rowId);
+    if (!rowData) {
+      errorToast('Row not found.');
+      return;
+    }
+    // Flags
+    let hasDocType = false;
+    let hasDocTypeOther = false;
+    let hasDocCategory = false;
+    let hasDocCategoryOther = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (attach, item) => {
+        const key = item.editId || item.columnId;
+
+        attach[key] = key === 'fiscal_year' ? Number(item.value) : item.value;
+        if (item.columnId === 'document_type') hasDocType = true;
+        if (item.columnId === 'document_type_others') hasDocTypeOther = true;
+        if (item.columnId === 'document_category') hasDocCategory = true;
+        if (item.columnId === 'document_category_others')
+          hasDocCategoryOther = true;
+
+        return attach;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData.account_rid,
+      }
+    );
+
+    if (hasDocType && !hasDocTypeOther) {
+      updateData['document_type_others'] = '';
+    }
+    if (hasDocCategory && !hasDocCategoryOther)
+      updateData['document_category_others'] = '';
+
+    try {
+      const res = await updateAttachment({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateAttachmentInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateAttachment = result.data;
+        setAttachmentList((prev) =>
+          prev.map((att) => {
+            if (att.document_rid === updateAttachment.document_rid) {
+              return {
+                ...att,
+                ...updateAttachment,
+              };
+            }
+            return att;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setAttachmentList(previousAttachments);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setAttachmentList(previousAttachments);
+    }
+  };
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -224,6 +307,7 @@ const Attachments: React.FC = () => {
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSortRequest}
+              onCellEdit={handleCellEdit}
             />
           </div>
         </>

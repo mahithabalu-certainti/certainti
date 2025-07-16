@@ -1,5 +1,6 @@
 export type AttachmentList = {
   rid: string;
+  document_rid: string;
   r_number: string;
   created_datetime: string;
   created_by: string;

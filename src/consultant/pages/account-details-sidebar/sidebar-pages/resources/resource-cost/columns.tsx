@@ -440,14 +440,12 @@ export const getResourceCostColumns = (
     id: 'attachments',
     sortId: 'attachments',
     label: 'Attachments',
-    width: 100,
-    sortable: true,
+    width: 120,
+    sortable: false,
     render: (row) => (
       <TextButton
         label='Add'
-        color='primary'
-        disabled={false}
-        sx={{ margin: '10px' }}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 3.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
       />
     ),

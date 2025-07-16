@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { getFormFields } from './helpers';
 
 type FormData = {
-  [key: string]: string | string[];
+  [key: string]: string | null;
 };
 
 interface FieldOptionType {
@@ -53,7 +53,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     }
   }, [fieldErrors, onValidationChange]);
 
-  const handleChange = (fieldId: string, value: string | string[]) => {
+  const handleChange = (fieldId: string, value: string | null) => {
     if (typeof value === 'string') {
       value = value.replace(/\r?\n|\r/g, ' ').trim();
     }

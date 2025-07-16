@@ -388,6 +388,7 @@ const TabPanel: React.FC<TabProps> = ({
     memoizedSkillType,
     skillSubTypeData,
     memoizedSkillLevels,
+    fieldOptions,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =

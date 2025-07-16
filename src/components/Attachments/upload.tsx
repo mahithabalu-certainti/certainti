@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FieldErrors, FormBuilder } from './formBuilder';
@@ -8,6 +7,10 @@ import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
 import { SelectOption } from '../../consultant/types';
 import { getFormFields, shouldShowField, validateField } from './helpers';
+
+type FormData = {
+  [key: string]: string | null;
+};
 
 interface FieldOptionType {
   fiscalYears: SelectOption[];
@@ -31,7 +34,7 @@ const Uploads: React.FC<UploadsProps> = ({
   fieldOptions,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<FormData>({});
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
     text: string;
@@ -66,35 +69,32 @@ const Uploads: React.FC<UploadsProps> = ({
 
   const validateFiles = (files: FileList | null): File[] => {
     if (!files) return [];
-
     const validFiles: File[] = [];
-
     for (const file of Array.from(files)) {
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
         /\.(csv|xls|xlsx)$/i.test(file.name);
-
       if (!isAcceptedType) {
         showError(`"${file.name}" is not a valid CSV or Excel file.`);
         continue;
       }
-
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(`"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB limit.`);
         continue;
       }
-
       if (RESTRICTED_EXTENSIONS.test(file.name)) {
         showError(
           `"${file.name}" type is not allowed (.exe, .bat, .cmd, .sh, .bash).`
         );
         continue;
       }
-
       validFiles.push(file);
     }
-
     return validFiles;
+  };
+
+  const goBack = () => {
+    window.history.back();
   };
 
   const formFields = getFormFields(
@@ -134,6 +134,8 @@ const Uploads: React.FC<UploadsProps> = ({
       );
       return;
     }
+    setLoading(true);
+
     try {
       const payload = {
         attachment: selectedFiles[0],
@@ -145,9 +147,8 @@ const Uploads: React.FC<UploadsProps> = ({
         document_type_rid: formData?.document_type_rid,
         document_category_others: formData?.document_category_other || '',
         document_type_others: formData?.document_type_others || '',
-        comments: (formData?.comments || '').trim(),
+        comments: String(formData?.comments || '').trim(),
       };
-      setLoading(true);
       const response = await attachmentFileUpload(payload);
       if (response?.data.statusCode === 200) {
         successToast(response.data.statusMessage);
@@ -156,11 +157,15 @@ const Uploads: React.FC<UploadsProps> = ({
         setFormData({});
         setMessage(null);
         setLoading(false);
+        goBack();
       } else if (response?.data.statusCode === 400) {
         errorToast(response.data.statusMessage);
         setLoading(false);
       }
     } catch (error) {
+      errorToast(
+        error instanceof Error ? error.message : 'Failed to upload the file.'
+      );
       showError('Failed to upload the file.');
       setLoading(false);
     }
@@ -190,10 +195,6 @@ const Uploads: React.FC<UploadsProps> = ({
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
-  };
-
-  const goBack = () => {
-    window.history.back();
   };
 
   return (
@@ -230,62 +231,64 @@ const Uploads: React.FC<UploadsProps> = ({
           />
         </div>
       </div>
-      <div className='flex items-center align-middle px-4 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-        {'Document Info'}
-      </div>
-      <FormBuilder
-        fieldOptions={fieldOptions}
-        formData={formData}
-        setFormData={setFormData}
-        onFormChange={(data) => {
-          setFormData(data);
-        }}
-        fieldErrors={fieldErrors}
-        setFieldErrors={setFieldErrors}
-      />
-      <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onClick={openFileDialog}
-          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${
-            accountInActive
-              ? 'border-gray-300 cursor-not-allowed opacity-50'
-              : 'border-[#0176D3] cursor-pointer'
-          }`}
-        >
-          <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
-          <div className='text-[14px] text-[#0B0B0B]'>
-            Drag your file(s) or{' '}
-            <span
-              className='text-[#0176D3] underline'
-              onClick={(e) => {
-                e.stopPropagation();
-                openFileDialog();
-              }}
-            >
-              browse
-            </span>
-          </div>
-          <input
-            type='file'
-            accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            className='hidden'
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            disabled={accountInActive}
-          />
+      <div style={{ pointerEvents: loading ? 'none' : 'all' }}>
+        <div className='flex items-center align-middle px-4 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+          {'Document Info'}
         </div>
-
-        {message && (
+        <FormBuilder
+          fieldOptions={fieldOptions}
+          formData={formData}
+          setFormData={setFormData}
+          onFormChange={(data) => {
+            setFormData(data);
+          }}
+          fieldErrors={fieldErrors}
+          setFieldErrors={setFieldErrors}
+        />
+        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
           <div
-            className={`w-[502px] mt-2 text-sm ${
-              message.type === 'error' ? 'text-red-600' : 'text-green-600'
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onClick={openFileDialog}
+            className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
+              message && message.type === 'error'
+                ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
+                : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
             }`}
           >
-            {message.text}
+            <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
+            <div className='text-[14px] text-[#0B0B0B]'>
+              Drag your file(s) or{' '}
+              <span
+                className='text-[#0176D3] underline'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFileDialog();
+                }}
+              >
+                browse
+              </span>
+            </div>
+            <input
+              type='file'
+              accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              className='hidden'
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              disabled={accountInActive}
+            />
           </div>
-        )}
+
+          {message && (
+            <div
+              className={`w-[502px] mt-2 text-sm ${
+                message.type === 'error' ? 'text-red-600' : 'text-green-600'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
