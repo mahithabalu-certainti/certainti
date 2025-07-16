@@ -424,10 +424,12 @@ export interface FormField {
     | 'textarea'
     | 'checkbox';
   required?: boolean;
+  hide?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
   rows?: number;
   fullWidth?: boolean;
+  resetDependsFields?: string[];
   validation?: Array<{
     regex: RegExp;
     errorMessage: string;

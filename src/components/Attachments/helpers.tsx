@@ -36,6 +36,31 @@ export const getFormFields = (
     required: true,
     placeholder: 'Enter Document Category',
     options: memoizedDocumentCategories,
+    resetDependsFields: ['document_category_other'],
+  },
+  {
+    id: 'document_category_other',
+    label: 'Document Category-other',
+    type: 'text',
+    hide: true,
+    required: true,
+    placeholder: 'Enter Document Category-other',
+    validation: [
+      {
+        regex: REGEX_PATTERNS.MIN_3,
+        errorMessage:
+          'Document Category-other must be more than 2 characters long',
+      },
+      {
+        regex: REGEX_PATTERNS.MAX_255,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+        errorMessage:
+          "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+      },
+    ],
   },
   {
     id: 'document_type_rid',
@@ -44,6 +69,30 @@ export const getFormFields = (
     required: true,
     placeholder: 'Enter Document Type',
     options: memoizedDocumentTypes,
+    resetDependsFields: ['document_type_others'],
+  },
+  {
+    id: 'document_type_others',
+    label: 'Document Type-other',
+    type: 'text',
+    hide: true,
+    required: true,
+    placeholder: 'Enter Document Type-other',
+    validation: [
+      {
+        regex: REGEX_PATTERNS.MIN_3,
+        errorMessage: 'Document Type-other must be more than 2 characters long',
+      },
+      {
+        regex: REGEX_PATTERNS.MAX_255,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+        errorMessage:
+          "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+      },
+    ],
   },
   {
     id: 'comments',

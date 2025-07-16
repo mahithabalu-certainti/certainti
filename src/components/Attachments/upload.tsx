@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FormBuilder } from './formBuilder';
+import { FieldErrors, FormBuilder, validateField } from './formBuilder';
 import { Attachment, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
@@ -39,7 +39,7 @@ const Uploads: React.FC<UploadsProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entityType, setEntityType] = useState<string | null>('Select Type');
   const [loading, setLoading] = useState<boolean>(false);
-  const [hasFormErrors, setHasFormErrors] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const location = useLocation();
   const { successToast, errorToast } = useToast();
@@ -97,25 +97,25 @@ const Uploads: React.FC<UploadsProps> = ({
     return validFiles;
   };
 
+  const formFields = getFormFields(
+    fieldOptions.fiscalYears,
+    fieldOptions.docCategories,
+    fieldOptions.docTypes
+  );
+
   const handleSubmit = async () => {
-    if (entityType === 'Select Type') {
-      showError('Please select an Entity Type.');
-      return;
-    }
-    if (!formData?.fiscal_year) {
-      showError('Please select a Fiscal Year.');
-      return;
-    }
-    if (!formData?.document_category_rid) {
-      showError('Please select a Document Category.');
-      return;
-    }
-    if (!formData?.document_type_rid) {
-      showError('Please select a Document Type.');
-      return;
-    }
-    if (!accountId) {
-      showError('Missing account information.');
+    const newErrors: FieldErrors = {};
+    formFields.forEach((field) => {
+      const error = validateField(
+        field.id,
+        formData[field.id] ?? '',
+        formFields
+      );
+      newErrors[field.id] = error;
+    });
+    setFieldErrors(newErrors);
+    const hasErrors = Object.values(newErrors).some((e) => e);
+    if (hasErrors) {
       return;
     }
     if (selectedFiles.length === 0) {
@@ -194,12 +194,6 @@ const Uploads: React.FC<UploadsProps> = ({
     window.history.back();
   };
 
-  const formFields = getFormFields(
-    fieldOptions.fiscalYears,
-    fieldOptions.docCategories,
-    fieldOptions.docTypes
-  );
-
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
@@ -224,7 +218,7 @@ const Uploads: React.FC<UploadsProps> = ({
             label='Save'
             loading={loading}
             onClick={handleSubmit}
-            disabled={accountInActive || hasFormErrors}
+            disabled={loading}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -238,13 +232,14 @@ const Uploads: React.FC<UploadsProps> = ({
         {'Document Info'}
       </div>
       <FormBuilder
-        fields={formFields}
+        fieldOptions={fieldOptions}
         formData={formData}
         setFormData={setFormData}
         onFormChange={(data) => {
           setFormData(data);
         }}
-        onValidationChange={(hasErrors) => setHasFormErrors(hasErrors)}
+        fieldErrors={fieldErrors}
+        setFieldErrors={setFieldErrors}
       />
       <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
         <div
