@@ -170,7 +170,7 @@ export const rawQueries = {
                 WHERE 
                 pf.account_rid = '${data.account_rid}'
                 AND
-                pf.project_code ILIKE '%${data.project_code}%'
+                pf.project_code ILIKE '%${data.project_code.replace(/'/g, "''")}%'
                 AND
                 pf.rid != p.rid
                 )
@@ -181,7 +181,7 @@ export const rawQueries = {
             UPDATE 
                 ${schemaName}.project 
                 SET 
-                project_code = '${project_code}' 
+                project_code = '${project_code.replace(/'/g, "''")}' 
                 WHERE 
                     rid = '${data.project_rid}'
                     AND
@@ -206,7 +206,7 @@ export const rawQueries = {
             UPDATE
                 ${MAIN_SCHEMA_NAME}.project_summary
             SET
-                project_code = '${project_code}'
+                project_code = '${project_code.replace(/'/g, "''")}'
             WHERE 
                 account_rid = '${data.account_rid}'
                 AND
@@ -437,16 +437,16 @@ export const rawQueries = {
   },
   updateProjectFiscalPrjCode (schemaName : string, newProject_code : string, account_rid : string, project_rid : string, existing_project_code : string) {
     return `
-    UPDATE ${schemaName}.project_fiscal SET project_code = '${newProject_code}'
+    UPDATE ${schemaName}.project_fiscal SET project_code = '${newProject_code.replace(/'/g, "''")}'
     WHERE
-    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code}'
+    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code.replace(/'/g, "''")}'
     `
   },
     updateProjectFiscalSummaryPrjCode (newProject_code : string, account_rid : string, project_rid : string, existing_project_code : string) {
     return `
-    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET project_code = '${newProject_code}'
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET project_code = '${newProject_code.replace(/'/g, "''")}'
     WHERE
-    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code}'
+    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code.replace(/'/g, "''")}'
     `
   },
   insertProjectTimeline(schemaName : string, data : any) {
