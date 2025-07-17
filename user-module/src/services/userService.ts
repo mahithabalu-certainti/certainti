@@ -836,22 +836,39 @@ async getAllUserPermission(userId: string, profileId: string) {
     this.getUserPermission(userId)
   ]);
 
-    const merged = [...profilePermissions, ...userPermissions];
-    const uniqueByNameType: { [key: string]: any } = {};
+  const userPermissionMap = new Map<string, any>();
+  userPermissions.forEach((p) =>
+    userPermissionMap.set(getPermissionKey(p), p)
+  );
 
-    merged.forEach((item) => {
-      const key = getPermissionKey(item);
-      const existingItem = uniqueByNameType[key];
+  // Result array for merged permissions
+  const mergedPermissions: any[] = [];
 
-      if (!existingItem) {
-        uniqueByNameType[key] = item;
-      } else if (item.is_enabled && !existingItem.is_enabled) {
-        uniqueByNameType[key] = item;
-      } else {
-        console.log(`[getAllUserPermission] Duplicate found for key: ${key}`);
+  // Merge profilePermissions with userPermissions overrides
+  for (const profilePerm of profilePermissions) {
+    const key = getPermissionKey(profilePerm);
+    const userPerm = userPermissionMap.get(key);
+    if (profilePerm.type === "field") {
+        // For field permissions, merge read/edit and extended flags
+        mergedPermissions.push({
+          ...profilePerm,
+          read: profilePerm.read ? true : userPerm?.read === true,
+          edit: profilePerm.edit ? true : userPerm?.edit === true
+        });
+    } else {
+        // For other types (menu, module, etc.)
+        mergedPermissions.push({
+          ...profilePerm,
+          is_enabled: profilePerm.is_enabled
+            ? true
+            : userPerm?.is_enabled === true,
+        });
       }
-    });
-    return Object.values(uniqueByNameType);
+
+      // Remove merged user permission from map to track leftover user-only permissions
+      if (userPerm) userPermissionMap.delete(key);
+    }
+    return mergedPermissions
   }
 
   // Get all profile-based permissions
@@ -1980,7 +1997,7 @@ if (includeDependencies) {
     this.getProfilePermission(profileId,true),
     this.getUserPermission(userId)
   ]);
-
+  console.log(userPermissions)
     // Create map of user permissions by key for quick lookup
     const userPermissionMap = new Map<string, any>();
     userPermissions.forEach((p) =>
