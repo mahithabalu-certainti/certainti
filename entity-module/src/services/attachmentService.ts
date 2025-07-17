@@ -414,7 +414,7 @@ async getAttachments(
         switch (operator) {
           case 'contains': return displayValue.includes(filterValue);
           case 'equals': return displayValue === filterValue;
-          case 'not_equals': return displayValue !== filterValue;
+          case 'not_equals': return displayValue !== filterValue || displayValue === null;
           default: return false;
         }
       });
@@ -426,10 +426,24 @@ async getAttachments(
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     allAttachments.sort((a, b) => {
-      const aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] || '') : (a[finalSortBy] || '');
-      const bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] || '') : (b[finalSortBy] || '');
+      let aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
+      let bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
+
+      // Convert to string safely
+      aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal).toLowerCase();
+      bVal = typeof bVal === 'string' ? bVal.toLowerCase() : String(bVal).toLowerCase();
+
+      const aEmpty = !aVal || aVal.trim() === '';
+      const bEmpty = !bVal || bVal.trim() === '';
+
+      if (aEmpty && bEmpty) return 0; // Both empty – equal
+      if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1; // a empty comes last in ASC, first in DESC
+      if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1; // b empty comes last in ASC, first in DESC
+
+      // Both non-empty, normal comparison
       return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
     });
+
 
     // 🔷 Pagination
     const totalCount = allAttachments.length;
@@ -474,7 +488,16 @@ async getAttachments(
       attachments.sort((a, b) => {
         const aType = a.uploaded_by || '';
         const bType = b.uploaded_by || '';
-        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+        const aEmpty = !aType || aType.trim() === '';
+        const bEmpty = !bType || bType.trim() === '';
+        
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+        if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+        
+        return finalSortOrder === 'ASC' ? 
+          aType.localeCompare(bType) : 
+          bType.localeCompare(aType);
       });
     }
 
@@ -483,7 +506,16 @@ async getAttachments(
       attachments.sort((a, b) => {
         const aType = a.document_type || '';
         const bType = b.document_type || '';
-        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+        const aEmpty = !aType || aType.trim() === '';
+        const bEmpty = !bType || bType.trim() === '';
+        
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+        if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+        
+        return finalSortOrder === 'ASC' ? 
+          aType.localeCompare(bType) : 
+          bType.localeCompare(aType);
       });
     }
 
@@ -492,7 +524,16 @@ async getAttachments(
       attachments.sort((a, b) => {
         const aType = a.document_category || '';
         const bType = b.document_category || '';
-        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+        const aEmpty = !aType || aType.trim() === '';
+        const bEmpty = !bType || bType.trim() === '';
+        
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+        if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+        
+        return finalSortOrder === 'ASC' ? 
+          aType.localeCompare(bType) : 
+          bType.localeCompare(aType);
       });
     }
      
@@ -505,7 +546,7 @@ async getAttachments(
         switch (operator) {
           case 'contains': return uploadedBy.includes(filterValue);
           case 'equals': return uploadedBy === filterValue;
-          case 'not_equals': return uploadedBy !== filterValue;
+          case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
           default: return false;
         }
       });
@@ -757,7 +798,7 @@ async exportAttachments(
         switch (operator) {
           case 'contains': return displayValue.includes(filterValue);
           case 'equals': return displayValue === filterValue;
-          case 'not_equals': return displayValue !== filterValue;
+          case 'not_equals': return displayValue !== filterValue || displayValue === null;
           default: return false;
         }
       });
@@ -769,8 +810,21 @@ async exportAttachments(
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     allAttachments.sort((a, b) => {
-      const aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] || '') : (a[finalSortBy] || '');
-      const bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] || '') : (b[finalSortBy] || '');
+      let aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
+      let bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
+
+      // Convert to string safely
+      aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal).toLowerCase();
+      bVal = typeof bVal === 'string' ? bVal.toLowerCase() : String(bVal).toLowerCase();
+
+      const aEmpty = !aVal || aVal.trim() === '';
+      const bEmpty = !bVal || bVal.trim() === '';
+
+      if (aEmpty && bEmpty) return 0; // Both empty – equal
+      if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1; // a empty comes last in ASC, first in DESC
+      if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1; // b empty comes last in ASC, first in DESC
+
+      // Both non-empty, normal comparison
       return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
     });
 
@@ -813,7 +867,16 @@ async exportAttachments(
       attachments.sort((a, b) => {
         const aType = a.uploaded_by || '';
         const bType = b.uploaded_by || '';
-        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+        const aEmpty = !aType || aType.trim() === '';
+        const bEmpty = !bType || bType.trim() === '';
+        
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+        if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+        
+        return finalSortOrder === 'ASC' ? 
+          aType.localeCompare(bType) : 
+          bType.localeCompare(aType);
       });
     }
 
@@ -822,7 +885,16 @@ async exportAttachments(
       attachments.sort((a, b) => {
         const aType = a.document_type || '';
         const bType = b.document_type || '';
-        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+        const aEmpty = !aType || aType.trim() === '';
+        const bEmpty = !bType || bType.trim() === '';
+        
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+        if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+        
+        return finalSortOrder === 'ASC' ? 
+          aType.localeCompare(bType) : 
+          bType.localeCompare(aType);
       });
     }
 
@@ -831,7 +903,16 @@ async exportAttachments(
       attachments.sort((a, b) => {
         const aType = a.document_category || '';
         const bType = b.document_category || '';
-        return finalSortOrder === 'ASC' ? aType.localeCompare(bType) : bType.localeCompare(aType);
+        const aEmpty = !aType || aType.trim() === '';
+        const bEmpty = !bType || bType.trim() === '';
+        
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+        if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+        
+        return finalSortOrder === 'ASC' ? 
+          aType.localeCompare(bType) : 
+          bType.localeCompare(aType);
       });
     }
      
@@ -844,7 +925,7 @@ async exportAttachments(
         switch (operator) {
           case 'contains': return uploadedBy.includes(filterValue);
           case 'equals': return uploadedBy === filterValue;
-          case 'not_equals': return uploadedBy !== filterValue;
+          case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
           default: return false;
         }
       });
@@ -919,7 +1000,6 @@ async getAttachmentSummary(
 
     const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
 
-    // Handle filters
     let attachedToFilter, uploadedByFilter;
     if (filters.attached_to) {
       attachedToFilter = filters.attached_to;
@@ -930,11 +1010,9 @@ async getAttachmentSummary(
       delete filters.uploaded_by;
     }
 
-    // Build where clause
     const { whereClause } = this.buildRawWhereClause(filters, search);
     if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
 
-    // Global account_rid filters
     if (globalFilters && Object.keys(globalFilters).length > 0) {
       const parentAccountRid = Object.keys(globalFilters)[0];
       const childAccountRids = globalFilters[parentAccountRid];
@@ -949,27 +1027,15 @@ async getAttachmentSummary(
       whereClause[Op.and].push({ fiscal_year: fiscalYear });
     }
 
-    const totalCount = await AttachmentSummaryModel.count({ where: whereClause });
+    const attachmentsRaw = await AttachmentSummaryModel.findAll({ where: whereClause });
 
-    // Fetch attachments paginated (sorting other than attached_to/uploaded_by in DB)
-    const attachmentsRaw = await AttachmentSummaryModel.findAll({
-      where: whereClause,
-      order: (sortBy !== 'attached_to' && sortBy !== 'uploaded_by')
-        ? [[sortBy, sortOrder]]
-        : [],
-      limit,
-      offset: (page - 1) * limit
-    });
-
-    // Batch fetch account data
     const accountRids = [...new Set(attachmentsRaw.map(a => a.account_rid))];
     const accounts = await this.schemaService.fetchAccountsByIds(accountRids);
     const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
 
-    // Build schemaNumber map efficiently
     const schemaNumberMap = new Map<string, string>();
     await Promise.all(accounts.map(async acc => {
-      if ((acc as any).storage_type === "store_in_parent") {
+      if ((acc as { storage_type: string }).storage_type === "store_in_parent") {
         const parent = await this.schemaService.fetchParentAccount((acc as { parent_account_rid: string }).parent_account_rid);
         schemaNumberMap.set((acc as { rid: string }).rid, parent);
       } else {
@@ -977,46 +1043,27 @@ async getAttachmentSummary(
       }
     }));
 
-    // 🔷 Group attachments by schemaNumber for batch display name calls
     const schemaAttachmentMap = new Map<string, any[]>();
     attachmentsRaw.forEach(att => {
       const schemaNumber = schemaNumberMap.get(att.account_rid);
-      if (schemaNumber && !schemaAttachmentMap.has(schemaNumber)) {
-        schemaAttachmentMap.set(schemaNumber, []);
-      }
-      const attachments = schemaAttachmentMap.get(schemaNumber || '');
-      if (attachments) {
-        attachments.push(att);
+      if (schemaNumber) {
+        if (!schemaAttachmentMap.has(schemaNumber)) {
+          schemaAttachmentMap.set(schemaNumber, []);
+        }
+        schemaAttachmentMap.get(schemaNumber)!.push(att);
       }
     });
 
-    // Fetch display names in parallel per schemaNumber
     const attachmentDisplayNames: Record<string, string> = {};
     await Promise.all(Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
       const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
       Object.assign(attachmentDisplayNames, displayNames);
     }));
 
-    // Apply attached_to filter if needed
-    let filteredAttachments = attachmentsRaw;
-    if (attachedToFilter) {
-      filteredAttachments = attachmentsRaw.filter(att => {
-        const displayName = (attachmentDisplayNames[att.rid] || att.attach_to || '').toLowerCase();
-        const operator = Object.keys(attachedToFilter)[0];
-        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
-        switch (operator) {
-          case 'contains': return displayName.includes(filterValue);
-          case 'equals': return displayName === filterValue;
-          case 'not_equals': return displayName !== filterValue;
-          default: return false;
-        }
-      });
-    }
-
-    // Batch fetch document types, categories, users
-    const documentTypeIds = [...new Set(filteredAttachments.map(att => att.document_type_rid))];
-    const documentCategoryIds = [...new Set(filteredAttachments.map(att => att.document_category_rid))];
-    const userIds = [...new Set(filteredAttachments.map(att => att.created_by))];
+    // Map enriched data
+    const documentTypeIds = [...new Set(attachmentsRaw.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(attachmentsRaw.map(att => att.document_category_rid))];
+    const userIds = [...new Set(attachmentsRaw.map(att => att.created_by))];
 
     const [documentTypes, documentCategories, users] = await Promise.all([
       documentTypeIds.length > 0 ? mainSequelize.query(
@@ -1037,8 +1084,7 @@ async getAttachmentSummary(
     const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-    // Map attachments with display names and metadata
-    let attachments = filteredAttachments.map(att => ({
+    let attachments = attachmentsRaw.map(att => ({
       ...att.get({ plain: true }),
       document_type: documentTypeMap.get(att.document_type_rid) || null,
       document_category: documentCategoryMap.get(att.document_category_rid) || null,
@@ -1046,36 +1092,86 @@ async getAttachmentSummary(
       attached_to: attachmentDisplayNames[att.rid] || att.attach_to
     }));
 
-    // Apply uploaded_by filter if present
-    if (uploadedByFilter) {
-      const operator = Object.keys(uploadedByFilter)[0];
-      const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+    // Filters: attached_to
+    if (attachedToFilter) {
       attachments = attachments.filter(att => {
-        const uploadedBy = (att.uploaded_by || '').toLowerCase();
+        const displayName = (att.attached_to || '').toLowerCase();
+        const operator = Object.keys(attachedToFilter)[0];
+        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
         switch (operator) {
-          case 'contains': return uploadedBy.includes(filterValue);
-          case 'equals': return uploadedBy === filterValue;
-          case 'not_equals': return uploadedBy !== filterValue;
+          case 'contains': return displayName.includes(filterValue);
+          case 'equals': return displayName === filterValue;
+          case 'not_equals': return displayName !== filterValue || displayName === null;
           default: return false;
         }
       });
     }
 
-    // Sort if needed for special fields
-    if (['attached_to', 'uploaded_by', 'document_type', 'document_category'].includes(sortBy)) {
-      attachments.sort((a, b) => {
-        const aVal = (a[sortBy] || '').toLowerCase();
-        const bVal = (b[sortBy] || '').toLowerCase();
-        return sortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    // Filters: uploaded_by
+    if (uploadedByFilter) {
+      attachments = attachments.filter(att => {
+        const uploadedBy = (att.uploaded_by || '').toLowerCase();
+        const operator = Object.keys(uploadedByFilter)[0];
+        const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return uploadedBy.includes(filterValue);
+          case 'equals': return uploadedBy === filterValue;
+          case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+          default: return false;
+        }
       });
     }
+
+    // 🔷 Sort with custom field sorting logic
+    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+    const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
+    const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    attachments.sort((a, b) => {
+    let aVal: string = '';
+    let bVal: string = '';
+
+    switch (finalSortBy) {
+      case 'attached_to': aVal = a.attached_to || ''; bVal = b.attached_to || ''; break;
+      case 'uploaded_by': aVal = a.uploaded_by || ''; bVal = b.uploaded_by || ''; break;
+      case 'document_type': aVal = a.document_type || ''; bVal = b.document_type || ''; break;
+      case 'document_category': aVal = a.document_category || ''; bVal = b.document_category || ''; break;
+      default:
+        aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
+        bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
+    }
+
+    aVal = aVal.trim().toLowerCase();
+    bVal = bVal.trim().toLowerCase();
+
+    const isAEmpty = !aVal;
+    const isBEmpty = !bVal;
+
+    // 🔷 Ascending: empty values last
+    if (finalSortOrder === 'ASC') {
+      if (isAEmpty && !isBEmpty) return 1;
+      if (!isAEmpty && isBEmpty) return -1;
+      return aVal.localeCompare(bVal);
+    }
+
+    // 🔷 Descending: empty values first (reverse logic)
+    else {
+      if (isAEmpty && !isBEmpty) return -1;
+      if (!isAEmpty && isBEmpty) return 1;
+      return bVal.localeCompare(aVal);
+    }
+  });
+
+
+    // Pagination AFTER sorting
+    const paginatedAttachments = attachments.slice((page - 1) * limit, page * limit);
 
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
       data: {
-        attachments,
-        totalCount: uploadedByFilter ? attachments.length : totalCount
+        attachments: paginatedAttachments,
+        totalCount: attachments.length
       }
     };
 
@@ -1089,6 +1185,7 @@ async getAttachmentSummary(
     };
   }
 }
+
 
 
 async exportAttachmentSummary(
@@ -1111,7 +1208,6 @@ async exportAttachmentSummary(
 
     const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
 
-    // Handle filters
     let attachedToFilter, uploadedByFilter;
     if (filters.attached_to) {
       attachedToFilter = filters.attached_to;
@@ -1122,11 +1218,9 @@ async exportAttachmentSummary(
       delete filters.uploaded_by;
     }
 
-    // Build where clause
     const { whereClause } = this.buildRawWhereClause(filters, search);
     if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
 
-    // Global account_rid filters
     if (globalFilters && Object.keys(globalFilters).length > 0) {
       const parentAccountRid = Object.keys(globalFilters)[0];
       const childAccountRids = globalFilters[parentAccountRid];
@@ -1141,23 +1235,15 @@ async exportAttachmentSummary(
       whereClause[Op.and].push({ fiscal_year: fiscalYear });
     }
 
-    // Fetch attachments paginated (sorting other than attached_to/uploaded_by in DB)
-    const attachmentsRaw = await AttachmentSummaryModel.findAll({
-      where: whereClause,
-      order: (sortBy !== 'attached_to' && sortBy !== 'uploaded_by')
-        ? [[sortBy, sortOrder]]
-        : [],
-    });
+    const attachmentsRaw = await AttachmentSummaryModel.findAll({ where: whereClause });
 
-    // Batch fetch account data
     const accountRids = [...new Set(attachmentsRaw.map(a => a.account_rid))];
     const accounts = await this.schemaService.fetchAccountsByIds(accountRids);
     const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
 
-    // Build schemaNumber map efficiently
     const schemaNumberMap = new Map<string, string>();
     await Promise.all(accounts.map(async acc => {
-      if ((acc as any).storage_type === "store_in_parent") {
+      if ((acc as { storage_type: string }).storage_type === "store_in_parent") {
         const parent = await this.schemaService.fetchParentAccount((acc as { parent_account_rid: string }).parent_account_rid);
         schemaNumberMap.set((acc as { rid: string }).rid, parent);
       } else {
@@ -1165,46 +1251,27 @@ async exportAttachmentSummary(
       }
     }));
 
-    // 🔷 Group attachments by schemaNumber for batch display name calls
     const schemaAttachmentMap = new Map<string, any[]>();
     attachmentsRaw.forEach(att => {
       const schemaNumber = schemaNumberMap.get(att.account_rid);
-      if (schemaNumber && !schemaAttachmentMap.has(schemaNumber)) {
-        schemaAttachmentMap.set(schemaNumber, []);
-      }
-      const attachments = schemaAttachmentMap.get(schemaNumber || '');
-      if (attachments) {
-        attachments.push(att);
+      if (schemaNumber) {
+        if (!schemaAttachmentMap.has(schemaNumber)) {
+          schemaAttachmentMap.set(schemaNumber, []);
+        }
+        schemaAttachmentMap.get(schemaNumber)!.push(att);
       }
     });
 
-    // Fetch display names in parallel per schemaNumber
     const attachmentDisplayNames: Record<string, string> = {};
     await Promise.all(Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
       const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
       Object.assign(attachmentDisplayNames, displayNames);
     }));
 
-    // 🔷 Apply attached_to filter before mapping if needed
-    let filteredAttachments = attachmentsRaw;
-    if (attachedToFilter) {
-      filteredAttachments = attachmentsRaw.filter(att => {
-        const displayName = (attachmentDisplayNames[att.rid] || att.attach_to || '').toLowerCase();
-        const operator = Object.keys(attachedToFilter)[0];
-        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
-        switch (operator) {
-          case 'contains': return displayName.includes(filterValue);
-          case 'equals': return displayName === filterValue;
-          case 'not_equals': return displayName !== filterValue;
-          default: return false;
-        }
-      });
-    }
-
-    // 🔷 Batch fetch document types, categories, users
-    const documentTypeIds = [...new Set(filteredAttachments.map(att => att.document_type_rid))];
-    const documentCategoryIds = [...new Set(filteredAttachments.map(att => att.document_category_rid))];
-    const userIds = [...new Set(filteredAttachments.map(att => att.created_by))];
+    // Map enriched data
+    const documentTypeIds = [...new Set(attachmentsRaw.map(att => att.document_type_rid))];
+    const documentCategoryIds = [...new Set(attachmentsRaw.map(att => att.document_category_rid))];
+    const userIds = [...new Set(attachmentsRaw.map(att => att.created_by))];
 
     const [documentTypes, documentCategories, users] = await Promise.all([
       documentTypeIds.length > 0 ? mainSequelize.query(
@@ -1225,8 +1292,7 @@ async exportAttachmentSummary(
     const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-    // 🔷 Map final attachments
-    let attachments = filteredAttachments.map(att => ({
+    let attachments = attachmentsRaw.map(att => ({
       ...att.get({ plain: true }),
       document_type: documentTypeMap.get(att.document_type_rid) || null,
       document_category: documentCategoryMap.get(att.document_category_rid) || null,
@@ -1234,29 +1300,75 @@ async exportAttachmentSummary(
       attached_to: attachmentDisplayNames[att.rid] || att.attach_to
     }));
 
-    // Apply uploaded_by filter if present
-    if (uploadedByFilter) {
-      const operator = Object.keys(uploadedByFilter)[0];
-      const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+    // Filters: attached_to
+    if (attachedToFilter) {
       attachments = attachments.filter(att => {
-        const uploadedBy = (att.uploaded_by || '').toLowerCase();
+        const displayName = (att.attached_to || '').toLowerCase();
+        const operator = Object.keys(attachedToFilter)[0];
+        const filterValue = (attachedToFilter[operator] || '').toLowerCase();
         switch (operator) {
-          case 'contains': return uploadedBy.includes(filterValue);
-          case 'equals': return uploadedBy === filterValue;
-          case 'not_equals': return uploadedBy !== filterValue;
+          case 'contains': return displayName.includes(filterValue);
+          case 'equals': return displayName === filterValue;
+          case 'not_equals': return displayName !== filterValue || displayName === null;
           default: return false;
         }
       });
     }
 
-    // 🔷 JS sorting if needed for attached_to, uploaded_by, document_type, document_category
-    if (['attached_to', 'uploaded_by', 'document_type', 'document_category'].includes(sortBy)) {
-      attachments.sort((a, b) => {
-        const aVal = (a[sortBy] || '').toLowerCase();
-        const bVal = (b[sortBy] || '').toLowerCase();
-        return sortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    // Filters: uploaded_by
+    if (uploadedByFilter) {
+      attachments = attachments.filter(att => {
+        const uploadedBy = (att.uploaded_by || '').toLowerCase();
+        const operator = Object.keys(uploadedByFilter)[0];
+        const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+        switch (operator) {
+          case 'contains': return uploadedBy.includes(filterValue);
+          case 'equals': return uploadedBy === filterValue;
+          case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+          default: return false;
+        }
       });
     }
+
+    // 🔷 Sort with custom field sorting logic
+    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+    const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
+    const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    attachments.sort((a, b) => {
+    let aVal: string = '';
+    let bVal: string = '';
+
+    switch (finalSortBy) {
+      case 'attached_to': aVal = a.attached_to || ''; bVal = b.attached_to || ''; break;
+      case 'uploaded_by': aVal = a.uploaded_by || ''; bVal = b.uploaded_by || ''; break;
+      case 'document_type': aVal = a.document_type || ''; bVal = b.document_type || ''; break;
+      case 'document_category': aVal = a.document_category || ''; bVal = b.document_category || ''; break;
+      default:
+        aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
+        bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
+    }
+
+    aVal = aVal.trim().toLowerCase();
+    bVal = bVal.trim().toLowerCase();
+
+    const isAEmpty = !aVal;
+    const isBEmpty = !bVal;
+
+    // 🔷 Ascending: empty values last
+    if (finalSortOrder === 'ASC') {
+      if (isAEmpty && !isBEmpty) return 1;
+      if (!isAEmpty && isBEmpty) return -1;
+      return aVal.localeCompare(bVal);
+    }
+
+    // 🔷 Descending: empty values first (reverse logic)
+    else {
+      if (isAEmpty && !isBEmpty) return -1;
+      if (!isAEmpty && isBEmpty) return 1;
+      return bVal.localeCompare(aVal);
+    }
+  });
 
     attachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
 
@@ -1264,7 +1376,7 @@ async exportAttachmentSummary(
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
       data: {
-        attachments,
+        attachments: attachments,
       }
     };
 
@@ -1462,21 +1574,31 @@ private buildRawWhereClause(
 
       case 'created_datetime':
         switch (operator.toLowerCase()) {
-          case 'equals':
-            condition[field] = {
-              [Op.and]: [
-                { [Op.gte]: new Date(value).setHours(0, 0, 0, 0) },
-                { [Op.lte]: new Date(value).setHours(23, 59, 59, 999) }
-              ]
-            };
+          case 'equals': {
+            const date = new Date(value);
+            condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
             break;
-          case 'before': condition[field] = { [Op.lt]: new Date(value) }; break;
-          case 'after': condition[field] = { [Op.gt]: new Date(value) }; break;
-          case 'between':
+          }
+          case 'before': {
+            const date = new Date(value);
+            condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+            break;
+          }
+          case 'after': {
+            const date = new Date(value);
+            condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+            break;
+          }
+          case 'between': {
             if (Array.isArray(value)) {
-              condition[field] = { [Op.between]: [new Date(value[0]), new Date(value[1])] };
+              const startDate = new Date(value[0]);
+              const endDate = new Date(value[1]);
+              condition[field] = Sequelize.literal(
+                `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+              );
             }
             break;
+          }
           case 'is_empty': condition[field] = { [Op.is]: null }; break;
         }
         break;
