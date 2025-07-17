@@ -84,28 +84,19 @@ const assignUserToAccountSchema = Joi.object({
   has_access_enabled:Joi.boolean().required()
 });
 
-const assignUserToGroupSchema = Joi.object({
-  group_rid: Joi.string().optional().label("Group Id"),
-  user_rid: Joi.alternatives()
-    .try(Joi.string(), Joi.array().items(Joi.string()))
-    .optional()
-    .label("User Id"),
-  has_access:Joi.boolean().required()
-});
-
-const assignAccountToGroupSchema = Joi.object({
-  group_rid: Joi.string().optional().label("Group Id"),
-  account_rid: Joi.alternatives()
-    .try(Joi.string(), Joi.array().items(Joi.string()))
-    .optional()
-    .label("User Id"),
-  has_access:Joi.boolean().required()
-});
 
 const listProjectUserGroupSchema = Joi.object({
   account_rid: Joi.string().required().label("Account Id"),
   entity_rid: Joi.string().required().label("User Id/Project Id"),
   entity_type: Joi.string().required().label("Type"),
+  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+   filters: Joi.string().default("{}"),
+});
+
+const listProjectOfAccountSchema = Joi.object({
+  account_rid: Joi.string().required().label("Account Id"),
+  group_rid: Joi.string().optional().label("Group Id"),
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
    filters: Joi.string().default("{}"),
@@ -456,5 +447,5 @@ export { createUserSchema, updateUserSchema, enterpriseUserSchema,
     editProfilePermissionsSchema, listProfileSchema,updateUserExtendedPermissionsSchema,
   createUserGroupSchema,updateUserGroupSchema,listUserGroupSchema,
 listActiveUserGroupSchema,assignUserToAccountSchema,assignUserToProjectSchema,
-listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,assignUserToGroupSchema,
-assignAccountToGroupSchema};
+listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,
+listProjectOfAccountSchema};

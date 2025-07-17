@@ -34,6 +34,83 @@ class UserGroupService {
       errorMessage: err.message,
     };
   }
+async  getAutoAssignedGroupRidForAccount(accountRid: string): Promise<string> {
+  const group = await UserGroup.findOne({
+    include: [
+      {
+        model: UserGroupType,
+         as: "usergrouptype",
+        where: { type: 'AUTO_ASSIGNED' },
+      },
+      {
+        model: UserGroupAccountMapping,
+        as :'usergroupaccount',
+        where: { account_rid: accountRid },
+      },
+    ],
+  });
+  if (!group?.rid) {
+      throw new Error(`No AUTO_ASSIGNED group found for account: ${accountRid}`);
+    }
+
+  return group?.rid;
+}
+async assignUserToUserGroups(
+  userData: any,
+  loggedInUser: string
+): Promise<void> {
+  try {
+    const sequelize = await initSequelize();
+    const isConsultant = userData?.is_consultant_firm ?? false;
+    const orgId = userData?.org_id;
+    const userRid = userData?.rid ?? null;
+
+    if (!userRid || !orgId) {
+      throw new Error('Missing userRid or orgId');
+    }
+
+    let groupRidToAssign: string | null = null;
+
+    if (!isConsultant) {
+      // For non-consultants → get group rid using your helper
+      groupRidToAssign = await this.getAutoAssignedGroupRidForAccount(orgId);
+    } else {
+      // For consultants → find by group name
+      const groupType = await UserGroupType.findOne({
+        where: { group_type_name: 'Global Consultant Firm' },
+      });
+
+      if (!groupType) {
+        throw new Error('Group type "Global Consultant Firm" not found');
+      }
+
+      const group = await UserGroup.findOne({
+        where: { group_type_rid: groupType.rid },
+      });
+
+      if (!group) {
+        throw new Error('UserGroup for consultant firm not found');
+      }
+
+      groupRidToAssign = group.rid;
+    }
+
+    if (!groupRidToAssign) {
+      throw new Error('Group RID not resolved');
+    }
+
+    await UserGroupMapping.create({
+      user_rid: userRid,
+      group_rid: groupRidToAssign,
+      created_by: loggedInUser,
+    });
+  } catch (err) {
+    console.error('Error assigning user to user groups:', err);
+    throw err;
+  }
+}
+
+
 
   /**
    * Creates a new user group in the database
@@ -80,6 +157,7 @@ async createUserGroup(
     const newGroup = await UserGroup.create({
       group_name,
       status_rid,
+      group_type_rid:'',
       is_consultant_only_group,
       created_by: userId,
     });
@@ -1971,7 +2049,104 @@ async  assignEntityAccessToProjects({
   }
 }
 
+/**
+ * Fetch all projects for a given account and indicate if the user has access to each.
+ *
+ * Access is evaluated based on `UserGroupEntityAccess` entries where:
+ * - `entity_type = 'PROJECT'`
+ * - `entity_rid = project.rid`
+ * - `user_rid = <provided>`
+ *
+ * A project is marked `has_project_access: true` if:
+ * - It has an `INCLUDE` entry and no `EXCLUDE` entry for the user
+ *
+ * @param account_rid - The account to fetch projects from
+ * @param user_rid - The user whose project access is evaluated
+ * @returns List of all eligible projects with access flags
+ */
 
+async  getProjectsOfSelectedAccounts(
+  account_rids: string[],
+  group_rid?:string,
+  page: number = 1,
+  limit: number = 10,
+  filters: Record<string, string>= {},
+  sortBy: string = "project_name", 
+  sortOrder: string = "ASC"
+): Promise<{
+  statusCode: number;
+  message: string;
+  data?: { projects: ProjectAccessView[]; totalCount: number };
+  errorMessage?: string;
+}> {
+  const offset = (page - 1) * limit;
+  const sequelize = await initSequelize();
+
+  // Validate inputs
+  if (!account_rids || account_rids.length === 0) {
+    return {
+      statusCode: constants.BAD_REQUEST,
+      message: constants.BAD_REQUEST_MESSAGE,
+      errorMessage: "Missing Account Id",
+    };
+  }
+
+  // Build WHERE clauses
+  //const whereClauses = ['ps.account_rid = :account_rid'];
+   const allowedSortFields = ['project_name'];
+   const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'project_name';
+   const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
+   const baseWhereClauses = ['ps.account_rid IN (:account_rids)'];
+   const replacements: any = { account_rids, limit, offset,
+     group_rid: group_rid ?? null,
+    };
+   const filterConditions = this.buildSQLConditions(filters);
+   if (filterConditions) {
+     baseWhereClauses.push(filterConditions);
+    }
+
+    // Build ORDER BY clause with proper access type sorting
+   let orderByClause: string;
+   orderByClause = `ORDER BY ps.${sortField} ${sortDirection.toUpperCase()}`;
+
+  // Main query with both access_type and has_access fields
+  const query =constants.SQL_GET_ALL_PROJECTS_OF_ACCOUNT
+    .replace('{whereClauses}', baseWhereClauses.join(' AND '))
+    .replace('{orderByClause}', orderByClause)
+
+  // Count query
+  const countQuery = constants.SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT
+      .replace("{whereClauses}", baseWhereClauses.join(' AND '))
+
+
+  try {
+    const [projects, total_count] = await Promise.all([
+  sequelize.query<ProjectAccessView>(query, {
+    replacements,
+    type: QueryTypes.SELECT,
+  }),
+  sequelize.query<{ total_count: string }>(countQuery, {
+    replacements: { ...replacements, limit: undefined, offset: undefined },
+    type: QueryTypes.SELECT,
+  }),
+]) as [ProjectAccessView[], [{ total_count: string }]];
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        projects,
+        totalCount: parseInt(total_count[0].total_count, 10),
+      },
+    };
+  } catch (error) {
+    console.error('Database query failed:', error);
+    return {
+      statusCode: constants.FAILED,
+      message: constants.FAILED_MESSAGE,
+      errorMessage: 'Failed to fetch projects',
+    };
+  }
+}
 
 
 /**
@@ -2110,7 +2285,7 @@ async  getProjectsWithUserAccessFlag(
   }
 }
 
-async getUserGroupType(is_consultant_only_group:boolean): Promise<{
+async getUserGroupType(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -2119,9 +2294,9 @@ async getUserGroupType(is_consultant_only_group:boolean): Promise<{
     try {
       const groupTypes = await UserGroupType.findAll({
           where: {
-    type: 'CUSTOM',
-    is_consultant_only_group:is_consultant_only_group
+    type: 'CUSTOM'
   },
+    attributes:["rid","group_type_name","group_type_description","type","is_consultant_only_group"],
       order: [
         ['group_type_name', 'ASC']
       ]

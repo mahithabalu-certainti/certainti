@@ -41,6 +41,29 @@ export const constants = {
       {orderByClause}
       LIMIT :limit OFFSET :offset
 `,
+  SQL_GET_ALL_PROJECTS_OF_ACCOUNT: `
+    SELECT 
+      ps.rid,
+      ps.project_name,
+      ps.account_rid,
+      CASE 
+        WHEN uga.rid IS NOT NULL THEN true
+        ELSE false
+      END as has_access,
+      uga.access_type
+    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
+      ON uga.entity_rid = ps.rid 
+      AND uga.entity_type = 'PROJECT'
+      AND uga.group_rid = :group_rid -- only works if group_rid is provided
+    WHERE {whereClauses}
+    {orderByClause}
+    LIMIT :limit OFFSET :offset
+  `,
+
+  SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(*) as total_count
+      FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+      WHERE {whereClauses}`,
 SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
     {extraJoin}
