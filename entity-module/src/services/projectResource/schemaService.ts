@@ -269,6 +269,39 @@ export class ProjectResourceSchemaService {
     return projectData;
   }
 
+  async validateProjectResource(accountNumber: string, projectResourceData: IUpdateProjectResource,
+    fiscalYear: number, projectCode: string
+  ){
+    const { ProjectResource } = await this.getModels(accountNumber);
+
+    const startDateTocheck = projectResourceData.start_date
+      ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
+      : null;
+    const endDateToCheck = projectResourceData.end_date ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD") : null;
+
+    const projectData = await ProjectResource.findOne({
+      where: {
+        account_rid: projectResourceData.account_rid,
+        fiscal_year: fiscalYear,
+        start_date: startDateTocheck ? startDateTocheck?.toDate() : null,
+        end_date: endDateToCheck ? endDateToCheck?.toDate() : null,
+        rid: { [Op.ne]: projectResourceData.project_resource_rid },
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col("project_code")),
+            Sequelize.fn("LOWER", projectCode)
+          ),
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col("resource_code")),
+            Sequelize.fn("LOWER", projectResourceData.resource_code)
+          ),
+        ],
+      },
+    });
+
+    return !!projectData;
+  }
+
   async existsInProjectResourceTable(
     accountNumber: string,
     accountId: string,
