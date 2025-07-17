@@ -925,7 +925,12 @@ private processBooleanFilter(
 
   if (typeof value === 'string') {
     // Convert 'True'/'False' string to boolean
-    whereClause[field] = parseBoolean(value);
+    if (value.toLowerCase() === 'yes') {
+      whereClause[field] = true;
+    } else if (value.toLowerCase() === 'no') {
+      whereClause[field] = false;
+    }
+  //  whereClause[field] = parseBoolean(value);
   } else if (typeof value === 'object') {
     if (value.equals !== undefined) {
       whereClause[field] = parseBoolean(value.equals);
@@ -1013,9 +1018,8 @@ private createUserCountCondition(operator: string, value: number): any {
       );
       } else if (value.contains !== undefined) {
         whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
-       } else if (Array.isArray(value.in) && value.in.length > 0) {
-      // Case-insensitive IN filter
-      whereClause[Op.or] = value.in.map((val: string) =>
+      } else if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[Op.or] = value.in.map((val: string) =>
         Sequelize.where(
           Sequelize.fn('LOWER', Sequelize.col(field)),
           '=',
