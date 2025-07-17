@@ -4,6 +4,7 @@ import resourceSkillController from "./resourceSkillController";
 import projectController from "./projectController";
 import attachmentController from "./attachmentController";
 import projectResourcesController from "./projectResourcesController";
+import importListController from './importListController';
 
 const controller = {
     resoucesController,
@@ -11,7 +12,8 @@ const controller = {
     resourceSkillController,
     projectController,
     attachmentController,
-    projectResourcesController
+    projectResourcesController,
+    importListController
 };
 
 export default controller;
