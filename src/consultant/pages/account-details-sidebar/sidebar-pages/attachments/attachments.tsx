@@ -52,11 +52,13 @@ interface AttachmentsProps {
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
+  accountInActive: boolean;
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
   setExportType,
   setAttachmentParams,
+  accountInActive,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -170,7 +172,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: false,
+      disabled: accountInActive,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: false,
@@ -297,6 +299,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
           accountId={accountid}
           attachID={accountid}
           fieldOptions={fieldOptions}
+          onUploadSuccess={onRefreshClick}
         />
       ) : (
         <>

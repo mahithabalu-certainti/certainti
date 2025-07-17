@@ -313,6 +313,7 @@ export const AccountDetails = () => {
       case 'attachments':
         return (
           <Attachments
+            accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
           />

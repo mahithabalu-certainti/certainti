@@ -467,6 +467,7 @@ const Resource: React.FC<ResourceProps> = ({
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: value !== 'details',
+      disabled: accountInActive,
     },
     {
       label: value === 'details' ? 'Edit' : 'New',

@@ -22,16 +22,29 @@ interface UploadsProps {
   attachID?: string | undefined | null;
   accountInActive?: boolean;
   fieldOptions: FieldOptionType;
+  onUploadSuccess?: () => void;
 }
 
-const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
+
+const ACCEPTED_FILE_TYPES = [
+  'text/csv',
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/pdf', // .pdf
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'image/png', // .png
+  'image/jpeg', // .jpg
+  'text/plain', // .txt
+];
 
 const Uploads: React.FC<UploadsProps> = ({
   attachID,
   accountId,
   accountInActive,
   fieldOptions,
+  onUploadSuccess,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState<FormData>({});
@@ -60,12 +73,6 @@ const Uploads: React.FC<UploadsProps> = ({
   const showSuccess = (text: string) => {
     setMessage({ type: 'success', text });
   };
-
-  const ACCEPTED_FILE_TYPES = [
-    'text/csv',
-    'application/vnd.ms-excel', // .xls
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-  ];
 
   const validateFiles = (files: FileList | null): File[] => {
     if (!files) return [];
@@ -158,6 +165,9 @@ const Uploads: React.FC<UploadsProps> = ({
         setMessage(null);
         setLoading(false);
         goBack();
+        if (onUploadSuccess) {
+          onUploadSuccess();
+        }
       } else if (response?.data.statusCode === 400) {
         errorToast(response.data.statusMessage);
         setLoading(false);
@@ -271,7 +281,7 @@ const Uploads: React.FC<UploadsProps> = ({
             </div>
             <input
               type='file'
-              accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              accept='.csv,.xls,.xlsx,.pdf,.docx,.png,.jpg,.txt'
               className='hidden'
               ref={fileInputRef}
               onChange={handleFileSelect}

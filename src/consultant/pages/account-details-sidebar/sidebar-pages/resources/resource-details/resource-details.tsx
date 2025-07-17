@@ -192,7 +192,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetailsInfo} />
       <DetailsSection title='Comments' data={descriptionDetails} />
-      {resourceData?.attachment.length > 0 && (
+      {resourceData?.attachment && resourceData?.attachment.length > 0 && (
         <DetailsTable
           title='Attachments'
           columns={attachmentColumns}

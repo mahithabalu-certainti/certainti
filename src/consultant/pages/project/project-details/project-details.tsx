@@ -218,7 +218,7 @@ export const ProjectDetails = () => {
       label: 'Export',
       onClick: () => handleExport(exportType),
       // hide: !projectExportIsEnable,
-      hide: checkExport(),
+      hide: accountInActive || checkExport(),
     },
   ];
 
@@ -289,6 +289,7 @@ export const ProjectDetails = () => {
       case 'attachments':
         return (
           <Attachments
+            accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
           />

@@ -242,6 +242,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     skillTypeLoading,
     subTypeLoading,
     permissionMap,
+    accountInActive,
     handleAttachmentClick
   );
 

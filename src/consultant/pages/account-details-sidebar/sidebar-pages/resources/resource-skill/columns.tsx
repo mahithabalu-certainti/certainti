@@ -17,6 +17,7 @@ export const getResourceSkillColumns = (
   skillTypeLoading: boolean,
   subTypeLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void
 ): ListTableColumn<ResourceSkillList>[] => [
   {
@@ -274,6 +275,7 @@ export const getResourceSkillColumns = (
     render: (row) => (
       <TextButton
         label='Add'
+        disabled={accountInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 3.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
       />

@@ -285,6 +285,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     memoizedCurrency,
     isFullTime,
     permissionMap,
+    accountInActive,
     handleAttachmentClick
   );
 

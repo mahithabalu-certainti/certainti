@@ -33,6 +33,7 @@ export const getResourceCostColumns = (
   currencyOptions: ListOption[],
   isFullTime: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void
 ): ListTableColumn<ResourceCostList>[] => [
   {
@@ -445,6 +446,7 @@ export const getResourceCostColumns = (
     render: (row) => (
       <TextButton
         label='Add'
+        disabled={accountInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 3.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
       />
