@@ -109,7 +109,7 @@ const typeDefs = gql`
    input UserGroupUpdate {
     group_rid: ID!
     group_name: String!
-    status_rid : String!
+    status_rid : String
   }
 
   type Query {

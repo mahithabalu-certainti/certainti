@@ -871,11 +871,12 @@ async getAccountGroups(
       const filterProcessors: Record<string, Function> = {
         'group_name': (value: any) => this.processTextFilter('group_name', value, whereClause),
         'first_name': (value: any) => this.processTextFilter('first_name', value, whereClause),
-        'is_consultant_only_group': (value: any) => this.processTextFilter('is_consultant_only_group', value, whereClause),
+        'group_type': (value: any) => this.processTextFilter('group_type', value, whereClause),
+        'is_consultant_only_group': (value: any) => this.processBooleanFilter('is_consultant_only_group', value, whereClause),
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause),
-         'user_count': (value: any) => this.processUserCountFilter(value, whereClause)
+        'user_count': (value: any) => this.processUserCountFilter(value, whereClause)
       };
       Object.keys(filters).forEach(key => {
         
@@ -913,6 +914,32 @@ async getAccountGroups(
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
   }
+
+private processBooleanFilter(
+  field: string,
+  value: any,
+  whereClause: Record<string, any>
+): void {
+ 
+ const parseBoolean = (val: string) => val.toLowerCase() === 'true';
+
+  if (typeof value === 'string') {
+    // Convert 'True'/'False' string to boolean
+    whereClause[field] = parseBoolean(value);
+  } else if (typeof value === 'object') {
+    if (value.equals !== undefined) {
+      whereClause[field] = parseBoolean(value.equals);
+    } else if (value.not_equals !== undefined) {
+      whereClause[field] = { [Op.not]: parseBoolean(value.not_equals) };
+    } else if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        whereClause[field] = { [Op.or]: [null] };
+      } else {
+        whereClause[field] = { [Op.not]: null };
+      }
+    }
+  }
+}
 
 private processUserCountFilter(value: any, whereClause: Record<string, any>): void {
   const conditions: any[] = [];
@@ -968,7 +995,7 @@ private createUserCountCondition(operator: string, value: number): any {
    * @param {any} value - Filter value
    * @param {Record<string, any>} whereClause - Where clause to modify
    */
-  private processTextFilter(field: string, value: any, whereClause: Record<string, any>): void {
+  private processTextFilter(field: string, value: any,  whereClause: Record<string | symbol, any>): void {
     if (typeof value === 'string') {
       // Simple string value - treat as equals
       whereClause[field] = value;
@@ -986,6 +1013,15 @@ private createUserCountCondition(operator: string, value: number): any {
       );
       } else if (value.contains !== undefined) {
         whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
+       } else if (Array.isArray(value.in) && value.in.length > 0) {
+      // Case-insensitive IN filter
+      whereClause[Op.or] = value.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(field)),
+          '=',
+          val.toLowerCase()
+        )
+      );
       } else if (value.is_empty !== undefined) {
         if (value.is_empty) {
           whereClause[field] = { [Op.or]: [null, ''] };
@@ -2285,34 +2321,44 @@ async  getProjectsWithUserAccessFlag(
   }
 }
 
-async getUserGroupType(): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { groupTypes: any; count: number };
-  }> {
-    try {
-      const groupTypes = await UserGroupType.findAll({
-          where: {
-    type: 'CUSTOM'
-  },
-    attributes:["rid","group_type_name","group_type_description","type","is_consultant_only_group"],
-      order: [
-        ['group_type_name', 'ASC']
-      ]
+async getUserGroupType(type: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { groupTypes: any; count: number };
+}> {
+  try {
+    console.log("type",type)
+    const whereClause =
+      type === 'All'
+        ? {} // no filter
+        : { type: 'CUSTOM' }; // only custom group types
+
+    const groupTypes = await UserGroupType.findAll({
+      where: whereClause,
+      attributes: [
+        'rid',
+        'group_type_name',
+        'group_type_description',
+        'type',
+        'is_consultant_only_group',
+      ],
+      order: [['group_type_name', 'ASC']],
     });
-      return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          groupTypes,
-          count: groupTypes.length,
-        },
-      };
-    } catch (err) {
-      return this.throwServiceError(err as Error);
-    }
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        groupTypes,
+        count: groupTypes.length,
+      },
+    };
+  } catch (err) {
+    return this.throwServiceError(err as Error);
   }
+}
+
 
 
 private buildSQLConditions(filters: Record<string, any>): string | null {
