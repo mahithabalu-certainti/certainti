@@ -164,14 +164,14 @@ export const FormData = (
             options: profile,
             required: true,
             placeholder: 'Choose Profile',
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['profile_rid']?.read &&
-            //   !permissionMap?.['profile_rid']?.edit,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['profile_rid']?.read &&
-            //   !permissionMap?.['profile_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['profile_rid']?.read &&
+              !permissionMap?.['profile_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['profile_rid']?.read &&
+              !permissionMap?.['profile_rid']?.edit,
           }),
           createSelectField('role_rid', 'Role', {
             options: role,

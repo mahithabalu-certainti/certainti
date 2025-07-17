@@ -82,7 +82,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const commentsHide =
     !permissionMap['comments']?.read && !permissionMap['comments']?.edit;
 
-  console.log('permissionMap', permissionMap);
   const basicInfo: DetailItem[] = [
     {
       key: 'project_code',
