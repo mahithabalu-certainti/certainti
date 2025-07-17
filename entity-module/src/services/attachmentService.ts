@@ -316,7 +316,7 @@ async getAttachments(
       if (projectResourceIds.length > 0) {
         const projectResourceAttachments = await fetchAttachments(model, 'project_resource', projectResourceIds);
         projectChildAttachments.push(...projectResourceAttachments);
-
+        
         // 🔹 Fetch all project_tasks under project_resources in one call
         const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, projectResourceIds);
         const projectTaskIds = projectTasks.map(t => t.rid);
