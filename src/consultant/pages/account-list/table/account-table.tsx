@@ -121,8 +121,23 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };
 
   // Handler for edit and delete actions
-  const handleEdit = (account: AccountList) => {
-    navigate(ACCOUNT + '/edit/' + account.rid);
+  const handleEdit = (
+    account: AccountList,
+    fieldValue?: string,
+    section?: string
+  ) => {
+    const sendState = fieldValue || section;
+    navigate(
+      ACCOUNT + '/edit/' + account.rid,
+      sendState
+        ? {
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
+        : undefined
+    );
   };
 
   const handleDelete = (account: AccountList) => {

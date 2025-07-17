@@ -85,6 +85,10 @@ export const AccountForm: React.FC = () => {
   const location = useLocation();
   const { accountid } = useParams();
   const dispatch = useAppDispatch();
+  const highlight = {
+    field: location.state?.field,
+    section: location.state?.section,
+  };
 
   // Permission Management
   const { modules, permission } = useSelector(
@@ -525,6 +529,7 @@ export const AccountForm: React.FC = () => {
             logo={logo}
             keyContactHeaders={defaultKeyContactHeaders}
             newContactLength={9}
+            highlight={highlight}
           />
         )}
       </div>

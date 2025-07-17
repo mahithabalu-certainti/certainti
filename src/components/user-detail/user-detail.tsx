@@ -161,8 +161,8 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
         data={IdentityDetails}
         customStyle='pt-0 mt-0'
       />
-      <DetailsSection title='Access & Role' data={AddressDetails} />
-      <DetailsSection title='Address' data={AccessDetails} />
+      <DetailsSection title='Access & Role' data={AccessDetails} />
+      <DetailsSection title='Address' data={AddressDetails} />
       <DetailsSection
         title='Audit Information'
         data={AuditDetails}
