@@ -269,7 +269,7 @@ export const getExtendedPermissionUrl = (): string => {
 };
 
 export const updateExtendedPermission = async (
-  body: Partial<UserDetail>
+  body: Partial<UpdateExtendedPermission>
 ): Promise<CommonApiResponse> => {
   try {
     const { data } = await userServiceApi.put<CommonApiResponse>(

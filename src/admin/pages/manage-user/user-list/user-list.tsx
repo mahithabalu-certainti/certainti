@@ -221,7 +221,6 @@ const UserList: React.FC = () => {
       })) || [],
     [userRoles.data?.data.roles]
   );
-  console.log('permissionMap', permissionMap);
   const userFilterfields = getUserFilterFields(
     userProfiles,
     memoizeRole,
