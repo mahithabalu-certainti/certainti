@@ -421,11 +421,18 @@ async getAttachments(
     }
 
     // 🔷 Sort
-    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'comments', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+    const validSortFields = ['document_name', 'document_type', 'document_category', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'created_datetime', 'comments', 'uploaded_by', 'fiscal_year'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     allAttachments.sort((a, b) => {
+      // Special handling for created_datetime
+      if (finalSortBy === 'created_datetime') {
+        const aDate = new Date(a[finalSortBy]).getTime();
+        const bDate = new Date(b[finalSortBy]).getTime();
+        return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
+      }
+
       let aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
       let bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
 
@@ -810,6 +817,13 @@ async exportAttachments(
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     allAttachments.sort((a, b) => {
+      // Special handling for created_datetime
+      if (finalSortBy === 'created_datetime') {
+        const aDate = new Date(a[finalSortBy]).getTime();
+        const bDate = new Date(b[finalSortBy]).getTime();
+        return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
+      }
+
       let aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
       let bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
 
@@ -1128,6 +1142,13 @@ async getAttachmentSummary(
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     attachments.sort((a, b) => {
+      // Special handling for created_datetime
+      if (finalSortBy === 'created_datetime') {
+        const aDate = new Date(a[finalSortBy]).getTime();
+        const bDate = new Date(b[finalSortBy]).getTime();
+        return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
+      }
+
     let aVal: string = '';
     let bVal: string = '';
 
@@ -1336,6 +1357,13 @@ async exportAttachmentSummary(
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     attachments.sort((a, b) => {
+    // Special handling for created_datetime
+    if (finalSortBy === 'created_datetime') {
+      const aDate = new Date(a[finalSortBy]).getTime();
+      const bDate = new Date(b[finalSortBy]).getTime();
+      return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
+    }
+
     let aVal: string = '';
     let bVal: string = '';
 
@@ -1565,8 +1593,8 @@ private buildRawWhereClause(
       case 'r_number':
       case 'uploaded_by':
         switch (operator.toLowerCase()) {
-          case 'equals': condition[field] = { [Op.eq]: value }; break;
-          case 'not_equals': condition[field] = { [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }] }; break;          
+          case 'equals': condition[field] = { [Op.iLike]: value }; break;
+          case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
           case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
           case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
         }
