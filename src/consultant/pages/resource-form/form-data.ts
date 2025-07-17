@@ -223,7 +223,7 @@ export const ResourceFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_2,
-                errorMessage: 'PLease enter more than 1 characters.',
+                errorMessage: 'Please enter more than 1 characters.',
               },
               {
                 regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,

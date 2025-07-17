@@ -41,7 +41,13 @@ import {
   getDependentValue,
 } from './dependency-utils';
 import ModalDialog from './modal-dialog';
-import { ArrowDownIcon, ChildAccountIcon, ErrorInfoIcon } from '../../assets';
+import {
+  ArrowDownIcon,
+  ChildAccountIcon,
+  EditIcon,
+  ErrorInfoIcon,
+} from '../../assets';
+import './table.css';
 
 const ListTable = <T extends RowData>({
   data = [],
@@ -829,9 +835,16 @@ const ListTable = <T extends RowData>({
     );
   };
 
+  const isEditingAnyCell = Object.keys(editingCells).length > 0;
+
   return (
     <>
-      <TableContainer sx={tableStyle}>
+      <TableContainer
+        sx={{
+          ...tableStyle,
+          overflow: isEditingAnyCell ? 'hidden' : 'auto',
+        }}
+      >
         <MuiTable
           stickyHeader={stickyHeader}
           sx={{
@@ -1144,6 +1157,11 @@ const ListTable = <T extends RowData>({
                           column.id === visibleColumns[0].id;
                         const isChildRows = isFirstDataColumn && rowLevel !== 0;
 
+                        const isEditableCell =
+                          column.editable &&
+                          !isEditingAnyCell &&
+                          !editDisableLevel?.includes(row._level);
+
                         return (
                           <TableCell
                             key={`${rowId}-${column.id}`}
@@ -1179,7 +1197,7 @@ const ListTable = <T extends RowData>({
                               (isStatus
                                 ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'}`
                                 : 'group-hover:!text-[#1755E7]')
-                            } cursor-context-menu`}
+                            } cursor-context-menu list-table-cell`}
                             onDoubleClick={() => {
                               handleCellDoubleClick(
                                 rowId,
@@ -1218,7 +1236,7 @@ const ListTable = <T extends RowData>({
                                     }}
                                   >
                                     <span
-                                      className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? '-top-[3px] bg-[#FEF2F2] right-[1px] z-40' : 'top-[3px] right-0 bg-[#FEF2F2]'} cursor-pointer`}
+                                      className={`h-[26px] w-6 flex items-center justify-center absolute ${column?.field?.type === 'textarea' ? 'top-0.5 bg-[#FEF2F2] right-[2px] z-40' : 'top-[3px] right-0 bg-[#FEF2F2]'} cursor-pointer`}
                                     >
                                       <ErrorInfoIcon
                                         alt='error'
@@ -1230,19 +1248,19 @@ const ListTable = <T extends RowData>({
                               </div>
                             ) : (
                               <div
-                                className={
+                                className={`${
                                   isChildRows
                                     ? `flex items-center gap-1 ${rowLevel === 2 ? 'ml-[32px]' : 'ml-[15px]'}`
                                     : isFirstDataColumn
                                       ? 'flex'
                                       : ''
-                                }
+                                } cell-content-wrapper`}
                               >
                                 {expandable &&
                                   isFirstDataColumn &&
                                   renderExpandIcon(row, rowId)}
                                 {isChildRows && (
-                                  <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
+                                  <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px] shrink-0'>
                                     <ChildAccountIcon
                                       alt='childAccountIcon'
                                       className='w-[9px] h-[10px]'
@@ -1275,6 +1293,29 @@ const ListTable = <T extends RowData>({
                                 >
                                   {displayValue as React.ReactNode}
                                 </TruncateWithTooltip>
+                                {isEditableCell && (
+                                  <button
+                                    className='edit-pencil-icon absolute -right-1.5 top-1/2 cursor-pointer transform -translate-y-1/2 w-6 h-[28px] flex items-center justify-center bg-[#f5f7fa]'
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCellDoubleClick(
+                                        rowId,
+                                        column,
+                                        row,
+                                        editingCells,
+                                        cellKey
+                                      );
+                                    }}
+                                  >
+                                    <EditIcon
+                                      className='w-3.5 h-3.5'
+                                      style={{
+                                        filter:
+                                          'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
+                                      }}
+                                    />
+                                  </button>
+                                )}
                               </div>
                             )}
                           </TableCell>

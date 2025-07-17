@@ -11,7 +11,7 @@ import {
   useGetProjectType,
 } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
-import { generatePath, useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import { Project, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -72,6 +72,7 @@ const Projects: React.FC<ProjectsProps> = ({
   toggleEnabled,
   setToggleEnabled,
 }) => {
+  const { accountid } = useParams();
   const navigate = useNavigate();
   const { errorToast } = useToast();
   const projectTypeOptions = useGetProjectType();
@@ -150,7 +151,7 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
       bothParentAndChild: toggleEnabled,
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
@@ -209,7 +210,12 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
-  const handleEdit = (account: Project) => {
+  const handleEdit = (
+    account: Project,
+    fieldValue?: string | null,
+    section?: string
+  ) => {
+    const sendState = fieldValue || section;
     const accountID = account?.account_rid ?? '';
     const projectID = account?.project_fiscal_rid ?? '';
 
@@ -219,8 +225,19 @@ const Projects: React.FC<ProjectsProps> = ({
       source: 'account',
     });
 
-    navigate(`/Project/edit/${projectID}?${queryParams.toString()}`);
+    navigate(
+      `/project/edit/${projectID}?${queryParams.toString()}`,
+      sendState
+        ? {
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
+        : undefined
+    );
   };
+
   const getRowId = (row: Project & { _level?: number }) => {
     if (row._level === 1 && 'project_fiscal_rid' in row) {
       return row.project_fiscal_rid || '';
@@ -412,34 +429,10 @@ const Projects: React.FC<ProjectsProps> = ({
 
       if (result?.statusCode === 200 && result.data) {
         const updatedParentData = result.data;
-        const updatedFiscalData = updatedParentData.ProjectFiscal;
-
-        if (!updatedFiscalData) {
-          errorToast('Failed to update project. Please try again.');
-          setProjectList(previousProject);
-          return;
-        }
 
         const newProjects = projectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            const mergedParent = {
-              ...project,
-              ...updatedParentData,
-              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
-                if (
-                  fiscal.project_fiscal_rid ===
-                  updatedFiscalData.project_fiscal_rid
-                ) {
-                  return {
-                    ...fiscal,
-                    ...updatedFiscalData,
-                  };
-                }
-                return fiscal;
-              }),
-            };
-
-            return mergedParent;
+            return updatedParentData;
           }
           return project;
         });

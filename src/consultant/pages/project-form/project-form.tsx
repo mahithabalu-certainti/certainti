@@ -88,6 +88,10 @@ const ProjectForm: React.FC = () => {
 
   const accountName = account?.account_name;
   const projectCode = account?.project_code;
+  const highlight = {
+    field: location.state?.field,
+    section: location.state?.section,
+  };
 
   const source = searchParams.get('source');
   const AccountNameValue = searchParams.get('AccountName');
@@ -508,6 +512,7 @@ const ProjectForm: React.FC = () => {
             keyEnd='project_enddate'
             layout={Layout.TYPE_1}
             keyContactHeaders={defaultKeyContactHeaders}
+            highlight={highlight}
           />
         )}
       </div>
