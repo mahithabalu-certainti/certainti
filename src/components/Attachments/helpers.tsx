@@ -255,9 +255,6 @@ export const getAttachmentsFilterFields = (
       value: 'sort_options',
       type: 'system-sort',
       options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
-      hide:
-        !permissionMap?.['sort_options']?.edit &&
-        !permissionMap?.['sort_options']?.read,
     },
   ];
 };

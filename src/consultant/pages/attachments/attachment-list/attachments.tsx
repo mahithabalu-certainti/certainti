@@ -126,7 +126,7 @@ export const Attachments: React.FC = () => {
   };
 
   // Permissions
-  const costViewEditFields = useMemo(
+  const attachmentEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -136,11 +136,11 @@ export const Attachments: React.FC = () => {
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    attachmentEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [attachmentEditFields]);
 
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,

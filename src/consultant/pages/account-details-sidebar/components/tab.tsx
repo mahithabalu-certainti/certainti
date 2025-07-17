@@ -376,7 +376,7 @@ const TabPanel: React.FC<TabProps> = ({
   // };
 
   // Permissions
-  const costViewEditFields = useMemo(
+  const attachmentEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -384,13 +384,13 @@ const TabPanel: React.FC<TabProps> = ({
     [permission]
   );
 
-  const permissionMap = useMemo(() => {
+  const attachmentPermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    attachmentEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [attachmentEditFields]);
 
   const filterFields = useMemo(() => {
     if (!value)
@@ -419,7 +419,7 @@ const TabPanel: React.FC<TabProps> = ({
         permissionProjectResourcesMap
       );
     if (value === 'attachments')
-      return getAttachmentsFilterFields(fieldOptions, permissionMap);
+      return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,

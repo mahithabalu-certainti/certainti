@@ -1,3 +1,4 @@
+import { PROJECT_RESOURCE_REGEX } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
 import { ProjectResourcesListType } from '../../../../../types/project-resources';
 
@@ -48,6 +49,7 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'resource_name',
+    editId: 'resource_name',
     label: 'Resource Name',
     sortable: true,
     sortId: 'resource_name',
@@ -58,6 +60,18 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['resource_name']?.read &&
       !permissionMap?.['resource_name']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Resource Name',
+      validation: [
+        {
+          regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
+          errorMessage:
+            "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
+        },
+      ],
+    },
   },
   {
     id: 'region_name',

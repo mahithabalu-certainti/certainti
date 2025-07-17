@@ -23,6 +23,14 @@ import { ListTable } from '../../../../../components/table';
 import { FiscalYearType } from '../../../../types/project';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useMutation } from '@apollo/client';
+import { UPDATE_PROJECT_RESOURCE } from '../../../../../api/graphql/queries/project-query';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
+import { useToast } from '../../../../../hooks';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -53,6 +61,7 @@ export const ProjectResources = ({
   accountID?: string;
   projectFiscalYear?: FiscalYearType;
 }) => {
+  const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
     projectsTabs,
@@ -76,6 +85,12 @@ export const ProjectResources = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
+  const [projectResourceList, setProjectResourceList] = useState<
+    ProjectResourcesListType[]
+  >([]);
+  const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
+    client: resourceClient,
+  });
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -133,6 +148,12 @@ export const ProjectResources = ({
   const resourceData = resourceDetails?.data?.projectResource;
 
   const totalItems = data?.count || 0;
+
+  useEffect(() => {
+    if (data) {
+      setProjectResourceList(data?.projectResources || []);
+    }
+  }, [data]);
 
   const handleProjectResourceDetailEdit = () => {
     if (resourceData) {
@@ -259,6 +280,59 @@ export const ProjectResources = ({
     setRefreshProjectsTrigger(Date.now());
   };
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousProject = [...projectResourceList];
+
+    const selectedProject = projectResourceList.find(
+      (pro) => pro.rid === rowId
+    );
+    // let hasResourceTye = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        // if (item.columnId === 'resource_type_name') hasResourceTye = true;
+        return acc;
+      },
+      {
+        account_rid: selectedProject?.account_rid,
+        project_rid: selectedProject?.project_rid,
+        project_resource_rid: rowId,
+      }
+    );
+
+    // if (hasResourceTye) {
+    //   updateData['resource_orgname'] = '';
+    // }
+
+    try {
+      const res = await updateProjectResourceMutation({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateProjectResource;
+
+      if (result?.statusCode === 200 && result.data) {
+        const updatedParentData = result.data;
+
+        const newProjects = projectResourceList.map((project) => {
+          if (project.rid === updatedParentData.rid) {
+            return updatedParentData;
+          }
+          return project;
+        });
+
+        setProjectResourceList(newProjects);
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setProjectResourceList(previousProject);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setProjectResourceList(previousProject);
+    }
+  };
+
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
@@ -308,7 +382,7 @@ export const ProjectResources = ({
             />
           ) : (
             <ListTable
-              data={data?.projectResources as ProjectResourcesListType[]}
+              data={projectResourceList}
               columns={projectResourcesColumns}
               actionMenuItems={actionMenuItems}
               getRowId={(row: ProjectResourcesListType): string =>
@@ -340,6 +414,7 @@ export const ProjectResources = ({
                 console.log('Selected:', selectedIds)
               }
               component='project resources'
+              onCellEdit={handleCellEdit}
             />
           )}
         </div>
