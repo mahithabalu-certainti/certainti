@@ -286,7 +286,10 @@ export const getAccountColumns = (
       !permissionMap?.['finance_executive']?.read &&
       !permissionMap?.['finance_executive']?.edit,
     render: (row: AccountList & { _level?: number }) => {
-      const isClickable = row._level === undefined || row._level < 2;
+      const isClickable =
+        permissionMap?.['finance_executive']?.read &&
+        permissionMap?.['finance_executive']?.edit &&
+        (row._level === undefined || row._level < 2);
       return isClickable ? (
         <div
           onDoubleClick={() =>
@@ -311,7 +314,10 @@ export const getAccountColumns = (
       !permissionMap?.['finance_lead']?.read &&
       !permissionMap?.['finance_lead']?.edit,
     render: (row: AccountList & { _level?: number }) => {
-      const isClickable = row._level === undefined || row._level < 2;
+      const isClickable =
+        permissionMap?.['finance_lead']?.read &&
+        permissionMap?.['finance_lead']?.edit &&
+        (row._level === undefined || row._level < 2);
       return isClickable ? (
         <div
           onDoubleClick={() =>
@@ -336,7 +342,10 @@ export const getAccountColumns = (
       !permissionMap?.['professional_services_consultant']?.read &&
       !permissionMap?.['professional_services_consultant']?.edit,
     render: (row: AccountList & { _level?: number }) => {
-      const isClickable = row._level === undefined || row._level < 2;
+      const isClickable =
+        permissionMap?.['professional_services_consultant']?.read &&
+        permissionMap?.['professional_services_consultant']?.edit &&
+        (row._level === undefined || row._level < 2);
       return isClickable ? (
         <div
           onDoubleClick={() =>

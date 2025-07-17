@@ -525,7 +525,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_point_of_contact']?.read &&
       !permissionMap?.['project_point_of_contact']?.edit,
     render: (row: Project & { _level?: number }) => {
-      const isClickable = row._level !== undefined && row._level === 1;
+      const isClickable =
+        // !permissionMap?.['project_point_of_contact']?.read &&
+        // !permissionMap?.['project_point_of_contact']?.edit &&
+        row._level !== undefined && row._level === 1;
       return isClickable ? (
         <div
           onDoubleClick={() =>
@@ -550,7 +553,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['technical_point_of_contact']?.read &&
       !permissionMap?.['technical_point_of_contact']?.edit,
     render: (row: Project & { _level?: number }) => {
-      const isClickable = row._level !== undefined && row._level === 1;
+      const isClickable =
+        // permissionMap?.['technical_point_of_contact']?.read &&
+        // permissionMap?.['technical_point_of_contact']?.edit &&
+        row._level !== undefined && row._level === 1;
       return isClickable ? (
         <div
           onDoubleClick={() =>
