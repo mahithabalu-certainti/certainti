@@ -344,10 +344,11 @@ export const AccountDetails = () => {
       case 'imports':
         return (
           <Import
-            data={{
+            accountDetails={{
               ...(data?.data as AccountDetailsResponse),
               activeKey: 'imports',
             }}
+            accountInActive={accountInActive}
           />
         );
       default:

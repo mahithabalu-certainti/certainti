@@ -3,9 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { Box, Switch, Tab, Tabs } from '@mui/material';
 import { RefreshIcon, ResourceFilterIcon } from '../../assets';
 import Filter from '../../consultant/pages/account-details-sidebar/components/filter/filter';
-import ActionImportDropdown from '../../consultant/pages/account-details-sidebar/sidebar-pages/imports/importdropdown';
 import { clearFilters } from '../../consultant/pages/account-details-sidebar/components/filter/utils';
 import { FieldConfig } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
+import ActionImportDropdown from '../actions-dropdown/import-dropdown';
 
 interface TabOption {
   id: string;
