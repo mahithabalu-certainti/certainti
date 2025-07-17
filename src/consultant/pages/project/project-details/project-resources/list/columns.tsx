@@ -66,11 +66,11 @@ export const getProjectResourcesColumns = (
     sortId: 'region_name',
     width: '150px',
     editable:
-      permissionMap?.['region_name']?.read &&
-      permissionMap?.['region_name']?.edit,
+      permissionMap?.['region_rid']?.read &&
+      permissionMap?.['region_rid']?.edit,
     hide:
-      !permissionMap?.['region_name']?.read &&
-      !permissionMap?.['region_name']?.edit,
+      !permissionMap?.['region_rid']?.read &&
+      !permissionMap?.['region_rid']?.edit,
   },
   {
     id: 'resource_type_name',
@@ -79,11 +79,11 @@ export const getProjectResourcesColumns = (
     sortId: 'resource_type_name',
     width: '150px',
     editable:
-      permissionMap?.['resource_type_name']?.read &&
-      permissionMap?.['resource_type_name']?.edit,
+      permissionMap?.['resource_type_rid']?.read &&
+      permissionMap?.['resource_type_rid']?.edit,
     hide:
-      !permissionMap?.['resource_type_name']?.read &&
-      !permissionMap?.['resource_type_name']?.edit,
+      !permissionMap?.['resource_type_rid']?.read &&
+      !permissionMap?.['resource_type_rid']?.edit,
   },
   // {
   //   id: 'resource_orgname',
@@ -105,37 +105,7 @@ export const getProjectResourcesColumns = (
       !permissionMap?.['resource_role']?.read &&
       !permissionMap?.['resource_role']?.edit,
   },
-  // {
-  //   id: 'status',
-  //   label: 'Resource Status',
-  //   sortable: true,
-  //   sortId: 'status',
-  //   width: '160px',
-  //   render: (row: ProjectResourcesListType) => (
-  //     <span
-  //       className={
-  //         row.status === 'Active' ? '!text-[#199806]' : '!text-[#f44336]'
-  //       }
-  //     >
-  //       {row.status}
-  //     </span>
-  //   ),
-  // },
-  // {
-  //   id: 'country',
-  //   label: 'Resource Country',
-  //   sortable: false,
-  //   sortId: 'country',
-  //   width: '150px',
-  // },
 
-  // {
-  //   id: 'currency',
-  //   label: 'Currency',
-  //   sortable: false,
-  //   sortId: 'Currency',
-  //   width: '150px',
-  // },
   {
     id: 'total_hours_pro_res',
     label: 'Effort (Hours)',
