@@ -11,11 +11,16 @@ import { ActionsDropdown } from '../../../../components';
 import { AttachmentsListURLParams } from '../../../types/attachment';
 import { AttachmentTable } from './table/attachment-table';
 import Filter from '../../account-details-sidebar/components/filter/filter';
-import { useGetAllDocumentInfo } from '../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllDocumentInfo,
+} from '../../../../common-service';
 import { getFiscalYears } from '../../../../common-utils';
 import { SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 export const Attachments: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -31,6 +36,7 @@ export const Attachments: React.FC = () => {
     isGlobal: true,
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -119,7 +125,27 @@ export const Attachments: React.FC = () => {
     docTypes: memoizedDocumentTypes,
   };
 
-  const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
+  // Permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
+
+  const attachmentsFilterFields = getAttachmentsFilterFields(
+    fieldOptions,
+    permissionMap
+  );
 
   const menuItems = [
     {

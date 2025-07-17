@@ -208,14 +208,16 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     memoizedDocumentTypes,
     permissionMap
   );
-
   const fieldOptions = {
     fiscalYears: fiscalYears,
     docCategories: memoizedDocumentCategories,
     docTypes: memoizedDocumentTypes,
   };
 
-  const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
+  const attachmentsFilterFields = getAttachmentsFilterFields(
+    fieldOptions,
+    permissionMap
+  );
 
   const getRowId = (row: AttachmentList) => row.rid;
 

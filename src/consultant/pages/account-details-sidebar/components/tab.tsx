@@ -375,6 +375,23 @@ const TabPanel: React.FC<TabProps> = ({
   //     : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
   // };
 
+  // Permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
+
   const filterFields = useMemo(() => {
     if (!value)
       return resourceFilterFields(
@@ -402,7 +419,7 @@ const TabPanel: React.FC<TabProps> = ({
         permissionProjectResourcesMap
       );
     if (value === 'attachments')
-      return getAttachmentsFilterFields(fieldOptions);
+      return getAttachmentsFilterFields(fieldOptions, permissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
