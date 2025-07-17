@@ -634,3 +634,11 @@ export const valueDisplay = (
 
   return formattedValue;
 };
+
+export const getFiscalYears = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `FY-${year}`, value: String(year) };
+  });
+};

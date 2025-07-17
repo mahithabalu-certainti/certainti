@@ -17,6 +17,8 @@ import { TabMenus } from './resources';
 import { InfoSection } from '../../../../../components';
 import { useResourceDetail } from '../../../../services/resource-details';
 import { ResourceTypeEnum } from '../../../resource-form/utils';
+import ResourceAttachmentsTable from './resource-attachment/resource-attachment-table';
+import { AttachmentList } from '../../../../types/attachment';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 
@@ -45,6 +47,13 @@ interface SubcomponentProps {
   refreshCostTrigger?: number;
   refreshSkillTrigger?: number;
   setCount?: (count: number) => void;
+  attachmentsOrder: 'ASC' | 'DESC';
+  setAttachmentsOrder: (order: 'ASC' | 'DESC') => void;
+  attachmentsOrderBy: string;
+  setAttachmentsOrderBy: (field: keyof AttachmentList) => void;
+  refreshAttachments?: number;
+  resourceInActive: boolean;
+  setResourceInActive: (value: boolean) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -73,6 +82,14 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   refreshCostTrigger,
   refreshSkillTrigger,
   setCount,
+
+  attachmentsOrder,
+  setAttachmentsOrder,
+  attachmentsOrderBy,
+  setAttachmentsOrderBy,
+  refreshAttachments,
+  resourceInActive,
+  setResourceInActive,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -130,6 +147,9 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     setResourceDetails(
       resource ? transformResourceData(resource, permissionMap) : []
     );
+    const status =
+      resource?.data?.resourceDetails?.status_name.toLowerCase() !== 'active';
+    setResourceInActive(status);
   }, [resource, permissionMap]);
 
   return (
@@ -211,6 +231,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
                 resource?.data?.resourceDetails
                   ?.resource_type_name as ResourceTypeEnum
               }
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}
@@ -232,6 +253,25 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
               refreshSkillTrigger={refreshSkillTrigger}
               setCount={setCount}
+              resourceInActive={resourceInActive}
+            />
+          </Box>
+        )}
+        {value === 'attachments' && isResourceSkillViewEnable && (
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceAttachmentsTable
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              order={attachmentsOrder}
+              setOrder={setAttachmentsOrder}
+              orderBy={attachmentsOrderBy}
+              setOrderBy={setAttachmentsOrderBy}
+              refreshAttachments={refreshAttachments}
+              setCount={setCount}
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}
