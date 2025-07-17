@@ -82,7 +82,9 @@ async updateInlineResourceSkill (data : any) {
                     
                     if(newValue == undefined) newValue = ''
                     else newValue = newValue
-                    await orgSequelize.query(rawQueries.insertSkillHistory(schemaName, data, attributeName, oldValue, newValue))
+                    if(newValue != oldValue) {
+                        await orgSequelize.query(rawQueries.insertSkillHistory(schemaName, data, attributeName, oldValue, newValue))
+                    }
                     let graphQlData : any = {};
                     graphQlData.is_graphQl = true
                     graphQlData.rid = data.resource_skill_rid

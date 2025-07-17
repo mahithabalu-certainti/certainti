@@ -3,9 +3,20 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { setResFiscalForResCost, setResourceCostDatas } from "../utils/helpers";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
+import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
+import Decimal from "decimal.js";
+
 
 export default class ResourceCostGraphQlService {
-      async inlineEditResourceCost (data : any) {
+  async inlineEditResourceCost (data : any) {
+    let bonus;
+    let deductions;
+    let insurance;
+    let resource_cost;
+    let salary;
+    let effort_in_hrs;
+    let status : string | undefined
+
     const mainDbSequelize = await initMainDbSequelize();
     const orgDbSequelize = await initOrgSequelize();
     let fetchParentAcc : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize))
@@ -18,6 +29,7 @@ export default class ResourceCostGraphQlService {
       }
     }
     else {
+      const statusMap = await getResourceStatuses(mainDbSequelize);
       let schemaName = `${MAIN_SCHEMA_NAME}_${fetchParentAcc[0][0].r_number.replace('ACC-', '')}`
       let checkResourceCostExists : any = await orgDbSequelize.query(rawQueries.isResourceCostExists(schemaName, data))
       if(checkResourceCostExists[0].length < 1) {
@@ -37,6 +49,53 @@ export default class ResourceCostGraphQlService {
               data : null          
             }
           }
+        if(checkResourceCostExists[0][0].currency_rid) {
+          if(data.salary) salary = data.salary
+          else salary = checkResourceCostExists[0][0].salary
+
+          if(data.bonus) bonus = data.bonus
+          else bonus = checkResourceCostExists[0][0].bonus
+
+          if(data.insurance) insurance = data.insurance
+          else insurance = checkResourceCostExists[0][0].insurance
+
+          if(data.resource_cost) resource_cost = data.resource_cost
+          else resource_cost = checkResourceCostExists[0][0].resource_cost
+
+          if(data.deductions) deductions = data.deductions
+          else deductions = checkResourceCostExists[0][0].deductions
+
+          if(data.effort_in_hrs) effort_in_hrs = data.effort_in_hrs
+          else effort_in_hrs = checkResourceCostExists[0][0].effort_in_hrs
+
+          let currencyThreshold = await getCurrencyThreshold(mainDbSequelize, checkResourceCostExists[0][0].currency_rid)
+          const calculatedResourceCost = Number(
+            new Decimal(salary || 0)
+              .plus(bonus || 0)
+              .plus(insurance || 0)
+              .plus(resource_cost || 0)
+              .minus(deductions || 0)
+          );
+          const statusNameMap = new Map<string, string>();
+          statusMap?.forEach((value, key) => {
+            statusNameMap.set(value, key);
+          });
+          let resourceCostStatus = statusNameMap.get(status?.toString() || '') || 'Active';
+
+          if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
+            resourceCostStatus = "Anomaly";
+          } 
+          else if (
+            (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
+            (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
+          ) {
+            resourceCostStatus = "Anomaly";
+          }
+          const status_rid = statusMap?.get(resourceCostStatus);
+          data.status_rid = status_rid
+          data.net_resource_cost = calculatedResourceCost
+        }
+        
         let setResourceCost = setResourceCostDatas(checkResourceCostExists[0][0], data)
         let updateResourceCost = await orgDbSequelize.query(rawQueries.updateResourceCostQuery(schemaName, setResourceCost, data))
         if(updateResourceCost) {
@@ -66,7 +125,9 @@ export default class ResourceCostGraphQlService {
               attribute_name = finalData
               if(newValue == undefined) newValue = ''
               else newValue = newValue
-              await orgDbSequelize.query(rawQueries.insertResCostHisQuery(schemaName, data, attribute_name, oldValue, newValue))
+              if(oldValue != newValue) {
+                await orgDbSequelize.query(rawQueries.insertResCostHisQuery(schemaName, data, attribute_name, oldValue, newValue))
+              }
             }
           }
           let graphQlData : any = {};
