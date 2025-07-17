@@ -334,15 +334,16 @@ if(projects)
    * @returns {Promise<Object>} - Response object with status and message
    */
   async updateUserGroupInline(
-    data:any
+    data: any
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-     data?: { affectedGroupCount: any };
+    data?: { usergroup: any };
   }> {
     try {
-      console.log(data)
+
+    // Check if another group with the same name exists (case-insensitive)
       const isExistingGrp = await UserGroup.findOne({
       where: {
         [Op.and]: [
@@ -351,35 +352,84 @@ if(projects)
         ]
         }
       });
-        if (isExistingGrp) {
+      if (isExistingGrp) {
         return {
           statusCode: constants.BAD_REQUEST,
           message: constants.BAD_REQUEST_MESSAGE,
           errorMessage: `Group name already exists. Please choose a different name.`
         };
       }
-      const [affectedGroupCount] = await UserGroup.update(
+
+    // Update the user group
+    const [affectedGroupCount] = await UserGroup.update(
       {
-        group_name:data.group_name,
-        status_rid:data.status_rid,
+        group_name: data.group_name,
+        status_rid: data.status_rid,
         modified_by: data.userId,
         modified_datetime: new Date(),
       },
       { where: { rid: data.group_rid } }
-      );
+    );
 
-
-       return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          affectedGroupCount:affectedGroupCount,
+    // Fetch updated group details
+    const userGroup = await UserGroup.findOne({
+      where: { rid: data.group_rid },
+      attributes: {
+        include: [
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+              WHERE ugm.group_rid = "UserGroup".rid
+            )`),
+            'user_count'
+          ],
+        ]
+      },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['first_name', 'last_name'],
         },
+        {
+          model: UserGroupType,
+          as: 'usergrouptype',
+          attributes: ['group_type_name', 'type'],
+        }
+      ]
+    });
+
+    if (!userGroup) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: `Group not found after update.`,
       };
-    } catch (err: any) {
-      return this.throwServiceError(err as Error);
     }
+
+    // Transform result
+    const result = userGroup.get({ plain: true });
+    const transformed = {
+      ...result,
+      account_name: result?.account_name ?? null,
+      user_count: result.user_count ?? 0,
+      creator: undefined,
+      modifier: undefined,
+    };
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        usergroup: transformed,
+      },
+    };
+  } catch (err: any) {
+    return this.throwServiceError(err as Error);
   }
+}
+
  /**
    * Retrieves a list of active users eligible for grouping.
    *

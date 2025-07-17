@@ -130,14 +130,14 @@ const userResolvers: IResolvers = {
           return {
             success: true,
             message: "User Group updated successfully",
-            userGroup: response.data.userGroup,
+            data: response.data.usergroup,
           };
         }
 
         return {
           success: false,
           message: response.errorMessage || "Failed to update user group",
-          userGroup: null,
+          data: null,
         };
       } catch (err) {
         return {
