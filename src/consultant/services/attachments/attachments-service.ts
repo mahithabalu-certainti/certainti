@@ -29,7 +29,7 @@ export const useAttachmentList = (
   refreshAttachments?: number
 ): UseQueryResult<{ attachments: AttachmentList[]; count: number }, Error> => {
   return useQuery<{ attachments: AttachmentList[]; count: number }, Error>({
-    queryKey: ['resourceList', params, refreshAttachments],
+    queryKey: ['attachmentList', params, refreshAttachments],
     queryFn: () => fetchAttachmentList(params),
     retry: 0,
     gcTime: 0,
@@ -43,7 +43,7 @@ export const useAllAttachmentList = (
   refreshTrigger?: number
 ): UseQueryResult<{ attachments: AttachmentList[]; count: number }, Error> => {
   return useQuery<{ attachments: AttachmentList[]; count: number }, Error>({
-    queryKey: ['resourceList', params, refreshTrigger],
+    queryKey: ['allAttachmentList', params, refreshTrigger],
     queryFn: () => fetchAttachmentList(params),
     retry: 0,
     gcTime: 0,
