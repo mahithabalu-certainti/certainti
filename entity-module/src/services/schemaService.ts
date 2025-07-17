@@ -3368,6 +3368,24 @@ async fetchAttachmentsByResourceId(resource_rid: string): Promise<any[]> {
   }
 }
 
+async fetchAccountsByIds(accountRids: string[]) {
+  try {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    const accounts = await mainDbSequelize.query(
+      `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:accountRids)`,
+      {
+        replacements: { accountRids },
+        type: "SELECT"
+      }
+    );
+
+    return accounts;
+  } catch (err) {
+    throw new Error("Error fetching accounts by IDs: " + (err as Error).message);
+  }
+}
+
 }
 
 export default SchemaService;
