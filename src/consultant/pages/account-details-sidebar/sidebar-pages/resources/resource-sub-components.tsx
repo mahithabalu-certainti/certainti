@@ -52,6 +52,8 @@ interface SubcomponentProps {
   attachmentsOrderBy: string;
   setAttachmentsOrderBy: (field: keyof AttachmentList) => void;
   refreshAttachments?: number;
+  resourceInActive: boolean;
+  setResourceInActive: (value: boolean) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -86,6 +88,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   attachmentsOrderBy,
   setAttachmentsOrderBy,
   refreshAttachments,
+  resourceInActive,
+  setResourceInActive,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -143,6 +147,9 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     setResourceDetails(
       resource ? transformResourceData(resource, permissionMap) : []
     );
+    const status =
+      resource?.data?.resourceDetails?.status_name.toLowerCase() !== 'active';
+    setResourceInActive(status);
   }, [resource, permissionMap]);
 
   return (
@@ -224,6 +231,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
                 resource?.data?.resourceDetails
                   ?.resource_type_name as ResourceTypeEnum
               }
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}
@@ -245,6 +253,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
               refreshSkillTrigger={refreshSkillTrigger}
               setCount={setCount}
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}
@@ -262,6 +271,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setOrderBy={setAttachmentsOrderBy}
               refreshAttachments={refreshAttachments}
               setCount={setCount}
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}

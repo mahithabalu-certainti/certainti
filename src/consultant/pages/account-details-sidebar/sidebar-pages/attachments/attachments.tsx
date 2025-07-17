@@ -30,6 +30,8 @@ import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
 import { useToast } from '../../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -55,11 +57,7 @@ interface AttachmentsProps {
   accountInActive: boolean;
 }
 
-const Attachments: React.FC<AttachmentsProps> = ({
-  setExportType,
-  setAttachmentParams,
-  accountInActive,
-}) => {
+const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
   const location = useLocation();
@@ -80,6 +78,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -91,6 +93,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
       attachmentLevel: 'account',
       accountRid: accountid || '',
       entityId: accountid || '',
+      fiscalYear: convertedFiscalYear,
     },
     refreshAttachments
   );
@@ -101,18 +104,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
       setAttachmentList(data.attachments || []);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (setExportType) {
-      setExportType('attachments');
-    }
-    setAttachmentParams({
-      sortBy: sortField,
-      sortOrder: sortOrder,
-      filters: appliedFilters,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder, appliedFilters]);
 
   const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);

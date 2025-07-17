@@ -48,6 +48,7 @@ interface ResourceSkillTableProps {
   isResourceSkillDeleteEnable?: boolean;
   refreshSkillTrigger?: number;
   setCount?: (count: number) => void;
+  resourceInActive: boolean;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -62,6 +63,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   isResourceSkillEditEnable,
   refreshSkillTrigger,
   setCount,
+  resourceInActive,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -109,6 +111,22 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(skillList.resourceSkill);
     }
   }, [skillList]);
+
+  useEffect(() => {
+    return () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      if (currentParams.has('attachment_entity')) {
+        currentParams.delete('attachment_entity');
+        navigate(
+          {
+            pathname: location.pathname,
+            search: currentParams.toString(),
+          },
+          { replace: true }
+        );
+      }
+    };
+  }, [navigate, location.pathname]);
 
   //permissions
   const skillViewEditFields = useMemo(
@@ -243,7 +261,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     subTypeLoading,
     permissionMap,
     accountInActive,
-    handleAttachmentClick
+    handleAttachmentClick,
+    resourceInActive
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {

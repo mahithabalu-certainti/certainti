@@ -29,6 +29,7 @@ import {
 import { SelectOption } from '../../../../../types';
 import { fiscalYears } from '../../../../resource-form/form-data';
 import Uploads from '../../../../../../components/Attachments/upload';
+import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup.tsx';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -46,6 +47,7 @@ interface ResourceCostTableProps {
   refreshCostTrigger?: number;
   setCount?: (count: number) => void;
   resourceType: ResourceTypeEnum;
+  resourceInActive?: boolean;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -63,6 +65,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   refreshCostTrigger,
   setCount,
   resourceType,
+  resourceInActive,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -81,6 +84,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const { permission } = useSelector((state: RootState) => state.permission);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
 
   const {
     data: costList,
@@ -101,6 +109,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     undefined,
     refreshCostTrigger
   );
+
   useEffect(() => {
     if (setCount) {
       setCount(costList?.count || 0);
@@ -113,6 +122,22 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     }
   }, [costList]);
 
+  useEffect(() => {
+    return () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      if (currentParams.has('attachment_entity')) {
+        currentParams.delete('attachment_entity');
+        navigate(
+          {
+            pathname: location.pathname,
+            search: currentParams.toString(),
+          },
+          { replace: true }
+        );
+      }
+    };
+  }, [navigate, location.pathname]);
+
   const currency = useFetchCurrency();
 
   const memoizedCurrency = useMemo(
@@ -124,7 +149,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     [currency.data?.data.currency]
   );
 
-  //permissions
+  // Permissions
   const costViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -147,12 +172,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       state: { ...accountDetails, costInfo: data, cost: true },
     });
   };
+
   const updateStatusAccept = useUpdateCostAccept();
+
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
-  // handles page limit change
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
     setCurrentPage(0);
@@ -174,7 +200,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      // hide: !isResourceCostDeleteEnable,
       hide: true,
     },
   ];
@@ -208,6 +233,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       },
     });
   };
+
   const getConditionMenuItems = (row: ResourceCostList) => {
     let statusLabel = '';
     switch (row.status_name) {
@@ -217,7 +243,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       case 'Anomaly':
         statusLabel = 'Anomaly';
         break;
-
       default:
         return [];
     }
@@ -228,14 +253,14 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         onClick: handleAccept,
         icon: AcceptIcon,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
         onClick: handleReject,
         icon: RejectIcon,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
       },
     ];
   };
@@ -281,12 +306,14 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   };
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
+
   const resourceCostColumns = getResourceCostColumns(
     memoizedCurrency,
     isFullTime,
     permissionMap,
     accountInActive,
-    handleAttachmentClick
+    handleAttachmentClick,
+    resourceInActive
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -318,12 +345,60 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
             cost.rid === updatedResourceCost.rid ? updatedResourceCost : cost
           )
         );
+        successToast('Resource cost updated successfully');
+      } else if (result?.statusCode === 210) {
+        setConfirmationState({
+          isOpen: true,
+          message:
+            result?.statusMessage ||
+            'Compensation details already exist for the resource',
+          onConfirm: async () => {
+            try {
+              const updatedPayload = {
+                ...updateData,
+                user_preference: 'accept',
+              };
+              const confirmRes = await updateResourceCost({
+                variables: { data: updatedPayload },
+              });
+              const confirmResult = confirmRes.data?.updateResourceCostInline;
+              if (confirmResult?.statusCode === 200 && confirmResult.data) {
+                const updatedResourceCost = confirmResult.data;
+                setResourceCostList((prevCost) =>
+                  prevCost.map((cost) =>
+                    cost.rid === updatedResourceCost.rid
+                      ? updatedResourceCost
+                      : cost
+                  )
+                );
+                successToast('Resource cost updated successfully');
+              } else {
+                errorToast(
+                  confirmResult?.statusMessage ||
+                    'Failed to update resource cost'
+                );
+                setResourceCostList(previousCostList);
+              }
+            } catch (error) {
+              errorToast(
+                (error as Error)?.message || 'Failed to update resource cost'
+              );
+              setResourceCostList(previousCostList);
+            } finally {
+              setConfirmationState((prev) => ({
+                ...prev,
+                isOpen: false,
+                message: '',
+              }));
+            }
+          },
+        });
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setResourceCostList(previousCostList);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setResourceCostList(previousCostList);
     }
   };
@@ -377,6 +452,20 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
           onCellEdit={handleCellEdit}
         />
       )}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+        }}
+        onCancel={() => {
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </div>
   );
 };

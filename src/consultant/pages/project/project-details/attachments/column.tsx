@@ -48,7 +48,7 @@ export const getProjectAttachmentColumns = (
     id: 'fiscal_year',
     editId: 'fiscal_year',
     sortId: 'fiscal_year',
-    label: 'Fiscal',
+    label: 'Fiscal Year',
     width: 140,
     sortable: true,
     editable: true,

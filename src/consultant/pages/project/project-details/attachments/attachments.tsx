@@ -27,6 +27,8 @@ import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -78,6 +80,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -89,6 +95,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
       attachmentLevel: 'project',
       accountRid: accountID || '',
       entityId: projectid || '',
+      fiscalYear: convertedFiscalYear,
     },
     refreshAttachments
   );
@@ -109,8 +116,23 @@ const Attachments: React.FC<AttachmentsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, appliedFilters]);
+
+  useEffect(() => {
+    return () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      if (currentParams.has('attachment_entity')) {
+        currentParams.delete('attachment_entity');
+        navigate(
+          {
+            pathname: location.pathname,
+            search: currentParams.toString(),
+          },
+          { replace: true }
+        );
+      }
+    };
+  }, [navigate, location.pathname]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);

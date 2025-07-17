@@ -19,8 +19,9 @@ export const attachmentColumns = [
   },
   {
     id: 'fiscal_year',
-    label: 'Fiscal',
+    label: 'Fiscal Year',
     width: 140,
+    render: (row: AttachmentList) => `FY-${row.fiscal_year}`,
   },
   {
     id: 'document_category',

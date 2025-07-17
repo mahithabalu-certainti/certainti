@@ -125,6 +125,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
+  const [resourceInActive, setResourceInActive] = useState<boolean>(false);
   // const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
@@ -467,7 +468,7 @@ const Resource: React.FC<ResourceProps> = ({
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: value !== 'details',
-      disabled: accountInActive,
+      disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
       label: value === 'details' ? 'Edit' : 'New',
@@ -851,6 +852,8 @@ const Resource: React.FC<ResourceProps> = ({
                 setAttachmentsOrderBy={setAttachmentsOrderBy}
                 refreshAttachments={refreshAttachments}
                 setCount={setCount}
+                resourceInActive={resourceInActive}
+                setResourceInActive={setResourceInActive}
               />
             )}
             {viewResourceList && !value && (

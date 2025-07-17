@@ -18,7 +18,8 @@ export const getResourceSkillColumns = (
   subTypeLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
-  handleAttachmentClick?: (rowId: string) => void
+  handleAttachmentClick?: (rowId: string) => void,
+  resourceInActive?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -270,13 +271,13 @@ export const getResourceSkillColumns = (
     id: 'attachments',
     sortId: 'attachments',
     label: 'Attachments',
-    width: 120,
+    width: 100,
     sortable: false,
     render: (row) => (
       <TextButton
         label='Add'
-        disabled={accountInActive}
-        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 3.5 }}
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
       />
     ),

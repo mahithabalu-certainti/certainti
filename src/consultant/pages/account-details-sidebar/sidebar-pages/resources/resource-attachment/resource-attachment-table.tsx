@@ -17,6 +17,8 @@ import {
   CellEditData,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
+import { RootState } from '../../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -30,6 +32,7 @@ interface ResourceSkillTableProps {
   setCurrentPage: (page: number) => void;
   refreshAttachments?: number;
   setCount?: (count: number) => void;
+  resourceInActive?: boolean;
 }
 const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -50,6 +53,10 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -61,6 +68,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       attachmentLevel: 'resource',
       accountRid: accountid,
       entityId: resourceRid || '',
+      fiscalYear: convertedFiscalYear,
     },
     refreshAttachments
   );
