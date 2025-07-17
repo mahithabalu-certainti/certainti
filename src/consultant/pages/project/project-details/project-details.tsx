@@ -25,7 +25,7 @@ import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { NewProjectData } from '../../../types/project';
-import { MenuItem } from '../../../types';
+import { ExportType, MenuItem } from '../../../types';
 import {
   AllMenus,
   AllModules,
@@ -37,6 +37,9 @@ import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
 import { ProjectResources } from './project-resources/project-resources';
+import { Attachments } from './attachments';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { AttachmentsListExportParams } from '../../../types/attachment';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -127,6 +130,14 @@ export const ProjectDetails = () => {
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
   const [fiscalYear, setFiscalYear] = useState<number>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [exportType, setExportType] = useState<ExportType>('attachments');
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const navigate = useNavigate();
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -170,6 +181,36 @@ export const ProjectDetails = () => {
       setFiscalYear(data.data.project.fiscal_year);
     }
   }, [data]);
+
+  const checkExport = () => {
+    const list = searchParams.get('list');
+    if (list === 'attachments') {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const handleExport = (exportType: ExportType) => {
+    if (searchParams.get('list') !== 'attachments') {
+      return;
+    }
+
+    const attachmentPayload = {
+      accountRid: accountID,
+      entityId: projectID,
+      attachmentLevel: 'project',
+    };
+    if (exportType === 'attachments') {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
+    } else {
+      return;
+    }
+  };
+
   const menuItems = [
     {
       label: 'Manage user',
@@ -178,9 +219,9 @@ export const ProjectDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('export clicked'),
+      onClick: () => handleExport(exportType),
       // hide: !projectExportIsEnable,
-      hide: true,
+      hide: accountInActive || checkExport(),
     },
   ];
 
@@ -223,7 +264,10 @@ export const ProjectDetails = () => {
         return (
           <ProjectDetailsData
             accountInActive={accountInActive}
-            projectDetails={projectData}
+            projectDetails={{
+              ...projectData!,
+              attachment: data?.data?.attachment || [],
+            }}
             isDetailsLoading={isLoading}
             detailsError={isError}
             projectDownloadIsEnable={projectDownloadIsEnable}
@@ -252,7 +296,13 @@ export const ProjectDetails = () => {
       case 'notes':
         return <NotFound />;
       case 'attachments':
-        return <NotFound />;
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+          />
+        );
       case 'checklists':
         return <NotFound />;
       default:

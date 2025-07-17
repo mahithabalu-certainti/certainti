@@ -27,7 +27,7 @@ import {
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
-import { AccountDetailsResponse } from '../../../../types';
+import { AccountDetailsResponse, ExportType } from '../../../../types';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -46,7 +46,7 @@ interface ProjectsProps {
   accountDetails?: AccountDetailsProps;
   activeKey?: string;
   setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
-  setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
+  setExportType?: (type: ExportType) => void;
   toggleEnabled: boolean;
   setToggleEnabled: (val: boolean) => void;
 }

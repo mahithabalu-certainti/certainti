@@ -15,6 +15,7 @@ import {
   ADMIN_EDIT_USER,
   ADMIN_MANAGE_USER,
   ADMIN_MANAGE_USER_DETAILS,
+  ATTACHMENTS,
   LOGIN,
   MAIN_ROUTE,
   MANAGE_PROFILE,
@@ -40,6 +41,7 @@ import {
 } from './routes';
 import { RootState } from './store/store';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
+import { Attachments } from './consultant/pages';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -146,6 +148,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   path={PROJECT_RESOURCE_EDIT}
                   element={<ProjectResourceForm />}
                 />
+                <Route path={ATTACHMENTS} element={<Attachments />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>

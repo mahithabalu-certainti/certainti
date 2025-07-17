@@ -32,9 +32,10 @@ import {
   AllPermissions,
   Permissions,
   useGetAllCountries,
+  useGetAllDocumentInfo,
   useGetStatus,
 } from '../../../../../common-service';
-import { checkPermission } from '../../../../../common-utils';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -46,6 +47,8 @@ import {
 import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import Uploads from '../../../../../components/Attachments/upload';
+import { ExportType, SelectOption } from '../../../../types';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -59,7 +62,7 @@ interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
-  setExportType?: (type: 'resource' | 'cost' | 'skill') => void;
+  setExportType?: (type: ExportType) => void;
 }
 
 export interface ResourceTabs {
@@ -105,6 +108,12 @@ const tabs: TabMenus[] = [
     hide: false,
     id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
   },
+  {
+    label: 'Attachments',
+    value: 'attachments',
+    hide: false,
+    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
+  },
 ];
 
 const Resource: React.FC<ResourceProps> = ({
@@ -116,6 +125,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
+  const [resourceInActive, setResourceInActive] = useState<boolean>(false);
   // const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
@@ -149,6 +159,15 @@ const Resource: React.FC<ResourceProps> = ({
   const [refreshSkillTrigger, setRefreshSkillTrigger] = useState<number>(
     Date.now()
   );
+  const [refreshAttachments, setRefreshAttachments] = useState<number>(
+    Date.now()
+  );
+  const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
+    'ASC'
+  );
+  const [attachmentsOrderBy, setAttachmentsOrderBy] =
+    useState<string>('document_name');
+
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
@@ -160,6 +179,7 @@ const Resource: React.FC<ResourceProps> = ({
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
+  const resId = searchParams.get('res_id');
 
   // Permission Mangement
   const isResourceDownloadEnable = checkPermission(
@@ -379,7 +399,15 @@ const Resource: React.FC<ResourceProps> = ({
       state: { resource, accountDetails, resources: true },
     });
   };
-
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
+  const showUploads = searchParams.get('attachment_entity') === 'resource';
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -434,6 +462,14 @@ const Resource: React.FC<ResourceProps> = ({
   };
 
   const headerButtons = [
+    {
+      label: 'Add Attachment',
+      variant: 'outlined' as const,
+      onClick: () => handleOpen(),
+      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
+      hide: value !== 'details',
+      disabled: accountInActive ? accountInActive : resourceInActive,
+    },
     {
       label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
@@ -551,6 +587,10 @@ const Resource: React.FC<ResourceProps> = ({
       updatedParams.sortBy = skillOrderBy;
       updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
       setExportType?.('skill');
+    } else if (value === 'attachments') {
+      updatedParams.sortBy = attachmentsOrderBy;
+      updatedParams.sortOrder = attachmentsOrder;
+      setExportType?.('resource_attachments');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;
@@ -574,6 +614,8 @@ const Resource: React.FC<ResourceProps> = ({
     setTableParams,
     setExportType,
     accountDetails?.data?.accountById?.r_number,
+    attachmentsOrderBy,
+    attachmentsOrder,
   ]);
 
   const handlePageChange = (newPage: number) => {
@@ -619,6 +661,8 @@ const Resource: React.FC<ResourceProps> = ({
       setRefreshCostTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     } else if (value === 'skill') {
       setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else if (value === 'attachments') {
+      setRefreshAttachments(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -643,6 +687,11 @@ const Resource: React.FC<ResourceProps> = ({
     } else if (value === 'cost') {
       setCostOrder(isSortByEmpty ? 'asc' : sortOrder);
       setCostOrderBy(apiSortBy as keyof ResourceCostList);
+    } else if (value === 'attachments') {
+      setAttachmentsOrder(
+        isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
+      );
+      setAttachmentsOrderBy(apiSortBy);
     } else {
       setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
       setSortField(apiSortBy);
@@ -696,6 +745,33 @@ const Resource: React.FC<ResourceProps> = ({
     }
   };
 
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
+
   return (
     <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
@@ -710,93 +786,113 @@ const Resource: React.FC<ResourceProps> = ({
           isResoureceOverviewHide
             ? false
             : isResourceViewAllEnable
-              ? filterVisibility
+              ? showUploads
+                ? false
+                : filterVisibility
               : false
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        showRefresh={true}
+        showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
+        fieldOptions={fieldOptions}
       />
-      {!isResoureceOverviewHide && isResourceViewAllEnable && (
-        <>
-          <ResourceTableHeader
-            value={value}
-            title='Resources'
-            count={count}
-            resourceNumber={resourceData?.r_number ?? resourceNumber}
-            titleIcon={<ResourceProfileIcon alt='resource header icon' />}
-            headerButtons={headerButtons}
-            showBackArrow={showBackArrow}
-            onBackClick={handleBackClick}
-          />
-          {!viewResourceList && value && (
-            <ResourceSubComponents
-              permission={permission}
-              tabMenus={tabMenus}
-              setFilterVisibility={setFilterVisibility}
-              handleTabChange={handleTabChange}
+      {showUploads ? (
+        <Uploads
+          accountId={accountid}
+          attachID={resId}
+          fieldOptions={fieldOptions}
+        />
+      ) : (
+        !isResoureceOverviewHide &&
+        isResourceViewAllEnable && (
+          <>
+            <ResourceTableHeader
               value={value}
-              resourceId={searchParams.get('res_id') as string}
-              accountId={accountDetails?.data?.accountById?.r_number}
-              appliedFilters={appliedFilters || {}}
-              fiscalYearValue={convertedFiscalYear}
-              accountDetails={accountDetails as AccountData}
-              setShowFilter={setShowFilter}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              costOrder={costOrder}
-              setCostOrder={setCostOrder}
-              costorderBy={costorderBy}
-              setCostorderBy={setCostOrderBy}
-              skillOrder={skillOrder}
-              setSkillOrder={setSkillOrder}
-              skillOrderBy={skillOrderBy}
-              setSkillOrderBy={setSkillOrderBy}
-              refreshCostTrigger={refreshCostTrigger}
-              refreshSkillTrigger={refreshSkillTrigger}
-              setCount={setCount}
+              title='Resources'
+              count={count}
+              resourceNumber={resourceData?.r_number ?? resourceNumber}
+              titleIcon={<ResourceProfileIcon alt='resource header icon' />}
+              headerButtons={headerButtons}
+              showBackArrow={showBackArrow}
+              onBackClick={handleBackClick}
             />
-          )}
-          {viewResourceList && !value && (
-            <div className='border border-[#CBD6E2]'>
-              <ListTable
-                data={resourcesList}
-                columns={resourceColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  borderBottom: '1px solid #CBD6E2',
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                selectable={false}
-                actionWidth={80}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionMenuItems}
-                loading={isLoading}
-                error={error ? 'Failed to load resource data' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
+
+            {!viewResourceList && value && (
+              <ResourceSubComponents
+                permission={permission}
+                tabMenus={tabMenus}
+                setFilterVisibility={setFilterVisibility}
+                handleTabChange={handleTabChange}
+                value={value}
+                resourceId={searchParams.get('res_id') as string}
+                accountId={accountDetails?.data?.accountById?.r_number}
+                appliedFilters={appliedFilters || {}}
+                fiscalYearValue={convertedFiscalYear}
+                accountDetails={accountDetails as AccountData}
+                setShowFilter={setShowFilter}
                 currentPage={currentPage}
-                totalItems={ResourceList?.count || 0}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortBy={sortField}
-                sortOrder={sortOrder}
-                onSort={handleSortRequest}
-                onCellEdit={handleCellEdit}
-                onFieldChange={handleFieldChange}
+                setCurrentPage={setCurrentPage}
+                costOrder={costOrder}
+                setCostOrder={setCostOrder}
+                costorderBy={costorderBy}
+                setCostorderBy={setCostOrderBy}
+                skillOrder={skillOrder}
+                setSkillOrder={setSkillOrder}
+                skillOrderBy={skillOrderBy}
+                setSkillOrderBy={setSkillOrderBy}
+                refreshCostTrigger={refreshCostTrigger}
+                refreshSkillTrigger={refreshSkillTrigger}
+                attachmentsOrder={attachmentsOrder}
+                setAttachmentsOrder={setAttachmentsOrder}
+                attachmentsOrderBy={attachmentsOrderBy}
+                setAttachmentsOrderBy={setAttachmentsOrderBy}
+                refreshAttachments={refreshAttachments}
+                setCount={setCount}
+                resourceInActive={resourceInActive}
+                setResourceInActive={setResourceInActive}
               />
-            </div>
-          )}
-        </>
+            )}
+            {viewResourceList && !value && (
+              <div className='border border-[#CBD6E2]'>
+                <ListTable
+                  data={resourcesList}
+                  columns={resourceColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionMenuItems}
+                  loading={isLoading}
+                  error={error ? 'Failed to load resource data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={ResourceList?.count || 0}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSortRequest}
+                  onCellEdit={handleCellEdit}
+                  onFieldChange={handleFieldChange}
+                />
+              </div>
+            )}
+          </>
+        )
       )}
       {!isResourceViewAllEnable && <AccessRestricted />}
     </div>
