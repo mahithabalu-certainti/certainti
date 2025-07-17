@@ -10,6 +10,8 @@ import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
 } from '../../../../../../common-utils';
+import DetailsTable from '../../../../../../components/details-section/details-table';
+import { attachmentColumns } from '../../../../../../components/details-section/helpers';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
@@ -190,6 +192,13 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetailsInfo} />
       <DetailsSection title='Comments' data={descriptionDetails} />
+      {resourceData?.attachment && resourceData?.attachment.length > 0 && (
+        <DetailsTable
+          title='Attachments'
+          columns={attachmentColumns}
+          data={resourceData.attachment || []}
+        />
+      )}
       <DetailsSection
         title='Audit Information'
         data={auditInfoDetails}

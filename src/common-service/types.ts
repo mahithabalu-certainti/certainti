@@ -38,8 +38,8 @@ export interface ProfileResponse {
   depended_by_module?: string[];
   depended_by_permission?: string[];
   updatedByDependsOn?: boolean;
-  is_modified?: boolean
-  has_extended_permission?: boolean
+  is_modified?: boolean;
+  has_extended_permission?: boolean;
   hasReadExtendedPermsission?: boolean;
   hasEditExtendedPermsission?: boolean;
 }
@@ -268,6 +268,9 @@ export enum AllPermissions {
   ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
   USER_VIEW_PERMISSION = 'user_view_permission',
   PROFILE_PERMISSION_VIEW = 'profile_permission_view',
+  ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
+  ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
+  ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
 }
 
 export interface Country {
@@ -368,4 +371,29 @@ export interface GetStatusApiResponse extends CommonApiResponse {
   data: {
     status: StatusItem[];
   };
+}
+
+export interface DocumentType {
+  rid: string;
+  type_name: string;
+  type_description: string | null;
+  category_rid: string;
+}
+
+export interface DocumentCategory {
+  rid: string;
+  category_name: string;
+  category_description: string | null;
+}
+
+export interface DocumentTypeResponseData {
+  documentTypes: DocumentType[];
+  documentCategories: DocumentCategory[];
+}
+
+export interface DocumentTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: DocumentTypeResponseData;
 }

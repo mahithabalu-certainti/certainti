@@ -1,4 +1,5 @@
 import { REGEX_PATTERNS } from '../../../../../../common-utils';
+import TextButton from '../../../../../../components/button/text-button';
 import {
   DependencyRowData,
   ListOption,
@@ -15,7 +16,10 @@ export const getResourceSkillColumns = (
   handleSkillType: (rid: string) => void,
   skillTypeLoading: boolean,
   subTypeLoading: boolean,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountInActive: boolean,
+  handleAttachmentClick?: (rowId: string) => void,
+  resourceInActive?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -262,5 +266,20 @@ export const getResourceSkillColumns = (
     sortable: true,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'attachments',
+    sortId: 'attachments',
+    label: 'Attachments',
+    width: 100,
+    sortable: false,
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
+        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
   },
 ];

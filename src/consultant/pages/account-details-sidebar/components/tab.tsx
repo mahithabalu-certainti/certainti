@@ -36,6 +36,10 @@ import { useGetProjectType } from '../../../services/project';
 import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import {
+  FieldOptionType,
+  getAttachmentsFilterFields,
+} from '../../../../components/Attachments/helpers';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -54,6 +58,7 @@ interface TabProps {
   setSortFilterCount: (count: number) => void;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
+  fieldOptions?: FieldOptionType;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -71,6 +76,7 @@ const TabPanel: React.FC<TabProps> = ({
   setSortFilterCount,
   toggleEnabled,
   setToggleEnabled,
+  fieldOptions,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -79,6 +85,7 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: [] as string[],
     skill_subtype_rid: [] as string[] | undefined[],
   });
+
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
@@ -190,7 +197,6 @@ const TabPanel: React.FC<TabProps> = ({
     });
     return map;
   }, [projectViewEditFields]);
-  console.log(projectPermissionMap, 'projectPermissionMap');
 
   const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
     const data = skillType as SkillType[];
@@ -355,6 +361,8 @@ const TabPanel: React.FC<TabProps> = ({
         memoizedStatus,
         projectPermissionMap
       );
+    if (value === 'attachments')
+      return getAttachmentsFilterFields(fieldOptions);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -380,6 +388,7 @@ const TabPanel: React.FC<TabProps> = ({
     memoizedSkillType,
     skillSubTypeData,
     memoizedSkillLevels,
+    fieldOptions,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =

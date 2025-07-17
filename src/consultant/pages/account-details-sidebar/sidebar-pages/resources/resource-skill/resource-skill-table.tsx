@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import {
@@ -22,11 +22,16 @@ import {
   FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
-import { OthersEnum } from '../../../../../types';
+import { OthersEnum, SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { AllPermissions } from '../../../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllDocumentInfo,
+} from '../../../../../../common-service';
+import { fiscalYears } from '../../../../resource-form/form-data';
+import Uploads from '../../../../../../components/Attachments/upload';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -43,6 +48,7 @@ interface ResourceSkillTableProps {
   isResourceSkillDeleteEnable?: boolean;
   refreshSkillTrigger?: number;
   setCount?: (count: number) => void;
+  resourceInActive: boolean;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -57,13 +63,17 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   isResourceSkillEditEnable,
   refreshSkillTrigger,
   setCount,
+  resourceInActive,
 }) => {
   const navigate = useNavigate();
+  const { accountid } = useParams();
   const { errorToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const [searchParams] = useSearchParams();
   const [resourceSkillList, setResourceSkillList] = useState<
     ResourceSkillList[]
   >([]);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
     client: resourceClient,
   });
@@ -101,6 +111,22 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(skillList.resourceSkill);
     }
   }, [skillList]);
+
+  useEffect(() => {
+    return () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      if (currentParams.has('attachment_entity')) {
+        currentParams.delete('attachment_entity');
+        navigate(
+          {
+            pathname: location.pathname,
+            search: currentParams.toString(),
+          },
+          { replace: true }
+        );
+      }
+    };
+  }, [navigate, location.pathname]);
 
   //permissions
   const skillViewEditFields = useMemo(
@@ -216,6 +242,16 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentSkillType(rid);
   };
 
+  const handleAttachmentClick = (rowId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource_skill');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+    setSelectedRowId(rowId);
+  };
+
   const resourceSkillColumns = getResourceSkillColumns(
     memoizedSkillLevels,
     memoizedSkillType,
@@ -223,7 +259,10 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     handleSkillType,
     skillTypeLoading,
     subTypeLoading,
-    permissionMap
+    permissionMap,
+    accountInActive,
+    handleAttachmentClick,
+    resourceInActive
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -294,43 +333,80 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(previousSkillList);
     }
   };
+  const allDocumentInfo = useGetAllDocumentInfo();
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  const showUploads =
+    searchParams.get('attachment_entity') === 'resource_skill';
+
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
+
   return (
     <div>
-      <ListTable
-        data={resourceSkillList}
-        columns={resourceSkillColumns}
-        getRowId={getRowId}
-        hoverHighlight={false}
-        stickyHeader={false}
-        stickyColumnsCount={1}
-        tableStyle={{
-          borderBottom: '1px solid #CBD6E2',
-          height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
-          overflow: 'auto',
-        }}
-        selectable={true}
-        actionWidth={80}
-        actionDisplayMode='dropdown'
-        actionMenuItems={actionMenuItems}
-        loading={isLoading}
-        error={error ? 'Failed to load resource' : undefined}
-        rowsPerPageOptions={[25, 50, 100]}
-        rowsPerPage={rowsPerPage}
-        currentPage={currentPage}
-        totalItems={skillList?.count ?? 0}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortBy={skillOrderBy}
-        sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
-        onSort={handleSortRequest}
-        onCellEdit={handleCellEdit}
-        onFieldChange={handleFieldChange}
-        skillTypeIds={{
-          othersSkillTypeId,
-          othersSkillSubTypeId,
-        }}
-      />
+      {showUploads ? (
+        <Uploads
+          accountId={accountid}
+          attachID={selectedRowId}
+          fieldOptions={fieldOptions}
+        />
+      ) : (
+        <ListTable
+          data={resourceSkillList}
+          columns={resourceSkillColumns}
+          getRowId={getRowId}
+          hoverHighlight={false}
+          stickyHeader={false}
+          stickyColumnsCount={1}
+          tableStyle={{
+            borderBottom: '1px solid #CBD6E2',
+            height: '100%',
+            maxHeight: 'calc(100vh - 410px)',
+            overflow: 'auto',
+          }}
+          selectable={true}
+          actionWidth={80}
+          actionDisplayMode='dropdown'
+          actionMenuItems={actionMenuItems}
+          loading={isLoading}
+          error={error ? 'Failed to load resource' : undefined}
+          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPage={rowsPerPage}
+          currentPage={currentPage}
+          totalItems={skillList?.count ?? 0}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortBy={skillOrderBy}
+          sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
+          onSort={handleSortRequest}
+          onCellEdit={handleCellEdit}
+          onFieldChange={handleFieldChange}
+          skillTypeIds={{
+            othersSkillTypeId,
+            othersSkillSubTypeId,
+          }}
+        />
+      )}
     </div>
   );
 };

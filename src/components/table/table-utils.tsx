@@ -231,37 +231,39 @@ export const renderFields = <T extends RowData>({
 
     case 'textarea':
       return (
-        <TextField
-          {...commonProps}
-          multiline
-          minRows={3}
-          maxRows={10}
-          autoFocus
-          sx={{
-            width: '100%',
-            '& .MuiOutlinedInput-root': {
-              padding: '4px 0px 4px 8px !important',
-              borderRadius: 0,
-              bgcolor: fieldError ? '#FEF2F2' : '#fff',
-              '& fieldset': {
-                border: `1px solid ${fieldError ? '#ef4444' : '#60A5FA'}`,
+        <div className='absolute top-0 w-full bg-[#fff]' style={{ zIndex: 1 }}>
+          <TextField
+            {...commonProps}
+            multiline
+            minRows={3}
+            maxRows={10}
+            autoFocus
+            sx={{
+              width: '100%',
+              '& .MuiOutlinedInput-root': {
+                padding: '4px 0px 4px 8px !important',
+                borderRadius: 0,
+                bgcolor: fieldError ? '#FEF2F2' : '#fff',
+                '& fieldset': {
+                  border: `1px solid ${fieldError ? '#ef4444' : '#60A5FA'}`,
+                },
+                '&:hover fieldset': {
+                  borderColor: fieldError ? '#ef4444' : '#60A5FA',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: fieldError ? '#ef4444' : '#60A5FA',
+                },
               },
-              '&:hover fieldset': {
-                borderColor: fieldError ? '#ef4444' : '#60A5FA',
+              '& .MuiOutlinedInput-input': {
+                fontSize: '13px',
+                lineHeight: 1.4,
               },
-              '&.Mui-focused fieldset': {
-                borderColor: fieldError ? '#ef4444' : '#60A5FA',
+              '& textarea': {
+                resize: 'none',
               },
-            },
-            '& .MuiOutlinedInput-input': {
-              fontSize: '13px',
-              lineHeight: 1.4,
-            },
-            '& textarea': {
-              resize: 'none',
-            },
-          }}
-        />
+            }}
+          />
+        </div>
       );
 
     case 'number':

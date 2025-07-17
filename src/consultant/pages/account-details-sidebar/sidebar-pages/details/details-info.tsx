@@ -12,6 +12,8 @@ import {
 import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
+import DetailsTable from '../../../../../components/details-section/details-table';
+import { attachmentColumns } from '../../../../../components/details-section/helpers';
 import { RootState } from '../../../../../store/store';
 import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
@@ -293,6 +295,14 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         data={descriptionDetails}
         fullColumn={true}
       />
+      {accountDetails?.attachments &&
+        accountDetails?.attachments.length > 0 && (
+          <DetailsTable
+            title='Attachments'
+            columns={attachmentColumns}
+            data={accountDetails?.attachments || []}
+          />
+        )}
       <DetailsSection
         title='Audit Information'
         data={auditDetails}

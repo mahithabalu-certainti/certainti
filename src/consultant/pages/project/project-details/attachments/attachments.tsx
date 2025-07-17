@@ -1,34 +1,31 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from 'react';
-import { Attachment } from '../../../../../assets';
-import { ResourceTabs } from '../resources/resources';
-import { useNavigate, useParams } from 'react-router-dom';
-import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
-import ResourceTableHeader from '../resources/resource-table-header';
-import { ListTable } from '../../../../../components/table';
-import { getAttachmentColumns } from './column';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   AllPermissions,
   useGetAllDocumentInfo,
 } from '../../../../../common-service';
-import Uploads from '../../../../../components/Attachments/upload';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import { SelectOption } from '../../../../types';
-import { useAttachmentList } from '../../../../services/attachments/attachments-service';
+import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AttachmentList,
   AttachmentsListExportParams,
 } from '../../../../types/attachment';
+import { useAttachmentList } from '../../../../services/attachments/attachments-service';
+import { getProjectAttachmentColumns } from './column';
+import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
+import { Attachment } from '../../../../../assets';
+import { ListTable } from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
-import { getFiscalYears } from '../../../../../common-utils';
+import { SelectOption } from '../../../../types';
+import Uploads from '../../../../../components/Attachments/upload';
 import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
+import { getFiscalYears } from '../../../../../common-utils';
 import {
   CellEditData,
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
-import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -46,7 +43,6 @@ const AttachmentTabs: ResourceTabs[] = [
     disable: true,
   },
 ];
-
 interface AttachmentsProps {
   setExportType?: (
     type: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
@@ -57,14 +53,19 @@ interface AttachmentsProps {
   accountInActive: boolean;
 }
 
-const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
+const Attachments: React.FC<AttachmentsProps> = ({
+  setExportType,
+  setAttachmentParams,
+  accountInActive,
+}) => {
   const { errorToast } = useToast();
-  const { accountid } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { projectid } = useParams();
+  const accountID = searchParams.get('accountID');
+  const navigate = useNavigate();
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean>
+  >({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
@@ -76,6 +77,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -91,9 +93,9 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'account',
-      accountRid: accountid || '',
-      entityId: accountid || '',
+      attachmentLevel: 'project',
+      accountRid: accountID || '',
+      entityId: projectid || '',
       fiscalYear: convertedFiscalYear,
     },
     refreshAttachments
@@ -106,28 +108,32 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     }
   }, [data]);
 
-  const allDocumentInfo = useGetAllDocumentInfo();
-  const fiscalYears = getFiscalYears(20);
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('attachments');
+    }
+    setAttachmentParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+    });
+  }, [sortField, sortOrder, appliedFilters]);
 
-  const memoizedDocumentTypes: SelectOption[] = useMemo(
-    () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
-        label: type.type_name,
-        value: type.rid,
-      })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
-  );
-
-  const memoizedDocumentCategories: SelectOption[] = useMemo(
-    () =>
-      allDocumentInfo.data?.data.documentCategories.map((category) => ({
-        label: category.category_name,
-        value: category.rid,
-      })) || [],
-    [allDocumentInfo.data?.data.documentCategories]
-  );
-
-  const showUploads = searchParams.get('attachment_entity') === 'account';
+  useEffect(() => {
+    return () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      if (currentParams.has('attachment_entity')) {
+        currentParams.delete('attachment_entity');
+        navigate(
+          {
+            pathname: location.pathname,
+            search: currentParams.toString(),
+          },
+          { replace: true }
+        );
+      }
+    };
+  }, [navigate, location.pathname]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -151,39 +157,6 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
       setSortField(sortBy);
     }
   };
-  const handleOpen = () => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('attachment_entity', 'account');
-    navigate({
-      pathname: location.pathname,
-      search: newParams.toString(),
-    });
-  };
-
-  const headerButtons = [
-    {
-      label: 'Upload file',
-      variant: 'outlined' as const,
-      disabled: accountInActive,
-      onClick: () => handleOpen(),
-      sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
-      hide: false,
-    },
-  ];
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
-
-  const handleRowsPerPageChange = (newPageSize: number) => {
-    setRowsPerPage(newPageSize);
-    setCurrentPage(1);
-  };
-  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
-    setSortOrder(apiOrder);
-    setSortField(property);
-  };
 
   // Permissions
   const costViewEditFields = useMemo(
@@ -202,13 +175,62 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     return map;
   }, [costViewEditFields]);
 
-  const attachmentColumns = getAttachmentColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    permissionMap
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const fiscalYears = getFiscalYears(20);
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentTypes]
   );
 
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'project');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
+
+  const headerButtons = [
+    {
+      label: 'Upload file',
+      variant: 'outlined' as const,
+      disabled: accountInActive,
+      onClick: () => handleOpen(),
+      sx: { width: '90px', minWidth: '90px' },
+      hide: false,
+    },
+  ];
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
+    setCurrentPage(1);
+  };
+  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(property);
+  };
+
+  const showUploads = searchParams.get('attachment_entity') === 'project';
   const fieldOptions = {
     fiscalYears: fiscalYears,
     docCategories: memoizedDocumentCategories,
@@ -216,6 +238,12 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   };
 
   const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
+  const attachmentColumns = getProjectAttachmentColumns(
+    fiscalYears,
+    memoizedDocumentCategories,
+    memoizedDocumentTypes,
+    permissionMap
+  );
 
   const getRowId = (row: AttachmentList) => row.rid;
 
@@ -293,7 +321,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
         filterMenu={attachmentsFilterFields}
         filterVisibility={showUploads ? false : true}
         showFilter={showFilter}
-        contextKey='account-attachments'
+        contextKey='project-attachments'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
@@ -306,8 +334,8 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
       />
       {showUploads ? (
         <Uploads
-          accountId={accountid}
-          attachID={accountid}
+          accountId={accountID}
+          attachID={projectid}
           fieldOptions={fieldOptions}
           onUploadSuccess={onRefreshClick}
         />

@@ -14,6 +14,8 @@ import {
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+import DetailsTable from '../../../../../components/details-section/details-table';
+import { attachmentColumns } from '../../../../../components/details-section/helpers';
 import { AllPermissions, Permissions } from '../../../../../common-service';
 interface DetailItem {
   key?: string;
@@ -404,6 +406,14 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               data={commentsDetails as DetailItem[]}
             />
           )}
+          {projectDetails?.attachment &&
+            projectDetails?.attachment.length > 0 && (
+              <DetailsTable
+                title='Attachments'
+                columns={attachmentColumns}
+                data={projectDetails?.attachment || []}
+              />
+            )}
           <DetailsSection
             title='Audit Information'
             data={auditInfoDetails as DetailItem[]}
