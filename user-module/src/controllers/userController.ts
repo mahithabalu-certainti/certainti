@@ -116,6 +116,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
     await sendEmail(mailContent);
 
     if (user.statusCode === constants.SUCCESS) {
+     await services.userGroupService.assignUserToUserGroups(user?.data?.user,userId);
       successLog(methodName);
       handleSuccessResponse(res, user);
       return;

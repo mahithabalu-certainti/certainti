@@ -23,6 +23,7 @@ import { Logger } from "winston";
 import { MAIN_SCHEMA_NAME } from "../utils/constants";
 import { ProjectFiscalRegion } from "../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../models/accountFiscalRegion";
+import AccountDetails from "../models/accountDetails";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -43,6 +44,7 @@ class ProjectIngestionService {
       ProjectHistory: ReturnType<typeof ProjectHistory.initialize>;
       ProjectFiscalRegion: ReturnType<typeof ProjectFiscalRegion.initialize>;
       AccountFiscalRegion: ReturnType<typeof AccountFiscalRegion.initialize>;
+      AccountDetails: ReturnType<typeof AccountDetails.initialize>;
     }
   > = new Map();
 
@@ -94,6 +96,10 @@ class ProjectIngestionService {
       schemaName
     );
 
+    const AccountDetailsModel = await AccountDetails.initialize(
+      sequelize,
+      schemaName
+    );
     const AccountFiscalModel = await AccountFiscal.initialize(
       sequelize,
       schemaName
@@ -127,7 +133,8 @@ class ProjectIngestionService {
       AccountFiscal: AccountFiscalModel,
       AccountFiscalRegion: AccountFiscalRegionModel,
       ProjectHistory: ProjectHistoryModel,
-      ProjectFiscalRegion: ProjectFiscalRegionModel
+      ProjectFiscalRegion: ProjectFiscalRegionModel,
+      AccountDetails: AccountDetailsModel
     };
     this.modelCache.set(schemaName, models);
     return models;
@@ -1752,6 +1759,21 @@ class ProjectIngestionService {
       exportData,
       count: exportData.length
     };
+  }
+
+  async fetchAccountDetailsById(accountNumber: string, accountId: string){
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+    if(!this.orgDbSequelize){
+      this.orgDbSequelize = await this.getSequelize();
+    }
+
+    const accountDetails = await this.orgDbSequelize.query(`select * from ${schemaName}.account_details where account_rid = :accountId`, {
+      replacements: { accountId },
+      type: "SELECT"
+    });
+
+    return accountDetails;
   }
 
   async fetchProjectById(accountNumber: string, projectId: string) {

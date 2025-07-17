@@ -4,6 +4,7 @@ import { Status } from "./statusModel";
 import { User } from "./userModel";
 import { UserGroupMapping } from "./userGroupMappingModel";
 import { UserGroupType } from "./userGroupTypesModel";
+import { UserGroupAccountMapping } from "./userGroupAccountMappingModel";
 
 // Import User model
 // import { User } from "./userModel";
@@ -12,6 +13,7 @@ interface UserGroupAttributes {
   rid: string;
   r_number?: string;
   group_name: string;
+  group_type_rid: string;
   status_rid?: string;
   created_by?: string;
   modified_by?: string;
@@ -34,6 +36,7 @@ export class UserGroup
   public rid!: string;
   public r_number?:string;
   public group_name!: string;
+  public group_type_rid!: string;
   public status_rid!: string;
   public created_by?: string;
   public modified_by?: string;
@@ -80,6 +83,10 @@ export class UserGroup
           type: DataTypes.STRING,
            allowNull: false,
         },
+         group_type_rid: {
+          type: DataTypes.STRING,
+           allowNull: false,
+        },
          is_consultant_only_group: {
           type: DataTypes.BOOLEAN,
            allowNull: false,
@@ -117,7 +124,11 @@ export class UserGroup
        });
     UserGroup.hasMany(UserGroupMapping, {
         foreignKey: "group_rid",
-        as: "user_mappings"
+        as: "usergroup"
+      });
+       UserGroup.hasMany(UserGroupAccountMapping, {
+        foreignKey: "group_rid",
+        as: "usergroupaccount"
       });
     UserGroup.belongsTo(UserGroupType, {
         foreignKey: 'group_type_rid',
