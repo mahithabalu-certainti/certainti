@@ -1,3 +1,4 @@
+import { ListTableColumn } from '../../../../../../components/table/types';
 import { ProjectResourcesListType } from '../../../../../types/project-resources';
 
 export type TableColumn<T> = {
@@ -12,8 +13,9 @@ export type TableColumn<T> = {
 };
 
 export const getProjectResourcesColumns = (
-  onClick: (row: ProjectResourcesListType) => void
-): TableColumn<ProjectResourcesListType>[] => [
+  onClick: (row: ProjectResourcesListType) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<ProjectResourcesListType>[] => [
   {
     id: 'resource_code',
     label: 'Resource Code',
@@ -21,6 +23,12 @@ export const getProjectResourcesColumns = (
     sortId: 'resource_code',
     width: '160px',
     sticky: true,
+    editable:
+      permissionMap?.['resource_code']?.read &&
+      permissionMap?.['resource_code']?.edit,
+    hide:
+      !permissionMap?.['resource_code']?.read &&
+      !permissionMap?.['resource_code']?.edit,
     sx: {
       position: 'sticky',
       left: 0,
@@ -44,6 +52,12 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'resource_name',
     width: '180px',
+    editable:
+      permissionMap?.['resource_name']?.read &&
+      permissionMap?.['resource_name']?.edit,
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit,
   },
   {
     id: 'region_name',
@@ -51,6 +65,12 @@ export const getProjectResourcesColumns = (
     sortable: false,
     sortId: 'region_name',
     width: '150px',
+    editable:
+      permissionMap?.['region_name']?.read &&
+      permissionMap?.['region_name']?.edit,
+    hide:
+      !permissionMap?.['region_name']?.read &&
+      !permissionMap?.['region_name']?.edit,
   },
   {
     id: 'resource_type_name',
@@ -58,6 +78,12 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'resource_type_name',
     width: '150px',
+    editable:
+      permissionMap?.['resource_type_name']?.read &&
+      permissionMap?.['resource_type_name']?.edit,
+    hide:
+      !permissionMap?.['resource_type_name']?.read &&
+      !permissionMap?.['resource_type_name']?.edit,
   },
   // {
   //   id: 'resource_orgname',
@@ -72,6 +98,12 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'resource_role',
     width: '150px',
+    editable:
+      permissionMap?.['resource_role']?.read &&
+      permissionMap?.['resource_role']?.edit,
+    hide:
+      !permissionMap?.['resource_role']?.read &&
+      !permissionMap?.['resource_role']?.edit,
   },
   // {
   //   id: 'status',
@@ -110,6 +142,12 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'total_hours_pro_res',
     width: '150px',
+    editable:
+      permissionMap?.['total_hours_pro_res']?.read &&
+      permissionMap?.['total_hours_pro_res']?.edit,
+    hide:
+      !permissionMap?.['total_hours_pro_res']?.read &&
+      !permissionMap?.['total_hours_pro_res']?.edit,
   },
   {
     id: 'total_cost_pro_res',
@@ -117,6 +155,12 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'total_cost_pro_res',
     width: '150px',
+    editable:
+      permissionMap?.['total_cost_pro_res']?.read &&
+      permissionMap?.['total_cost_pro_res']?.edit,
+    hide:
+      !permissionMap?.['total_cost_pro_res']?.read &&
+      !permissionMap?.['total_cost_pro_res']?.edit,
   },
   {
     id: 'qre_percent',
@@ -124,6 +168,9 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'qre_percent',
     width: '150px',
+    hide:
+      !permissionMap?.['qre_percent']?.read &&
+      !permissionMap?.['qre_percent']?.edit,
   },
   {
     id: 'qre_final',
@@ -131,6 +178,9 @@ export const getProjectResourcesColumns = (
     sortable: true,
     sortId: 'qre_final',
     width: '150px',
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
   },
   {
     id: 'description',
@@ -138,6 +188,12 @@ export const getProjectResourcesColumns = (
     sortable: false,
     sortId: 'description',
     width: '150px',
+    editable:
+      permissionMap?.['description']?.read &&
+      permissionMap?.['description']?.edit,
+    hide:
+      !permissionMap?.['description']?.read &&
+      !permissionMap?.['description']?.edit,
   },
   // {
   //   id: 'r_number',

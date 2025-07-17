@@ -2,9 +2,12 @@ import { CircularProgress, Typography } from '@mui/material';
 import { ProjectResourceDetailsType } from '../../../../../types/project-resources';
 import { TruncateWithTooltip } from '../../../../../../components/truncate-with-tooltip';
 import {
+  applyHidePermission,
   getDateFormat,
   getDateTimeFormat,
 } from '../../../../../../common-utils';
+import { useMemo } from 'react';
+import { AllPermissions, Permissions } from '../../../../../../common-service';
 
 interface ErrorProps {
   message?: string;
@@ -13,6 +16,7 @@ interface ResourceDetailsProps {
   resourceData?: ProjectResourceDetailsType;
   isDetailsLoading?: boolean;
   detailsError?: ErrorProps | null | undefined;
+  permission?: Permissions[];
 }
 
 interface DetailItem {
@@ -176,7 +180,23 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
   isDetailsLoading,
   detailsError,
   // accountId,
+  permission,
 }) => {
+  const projectViewEditFields = useMemo(
+    () =>
+      (permission ?? []).find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   if (isDetailsLoading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -226,17 +246,17 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
 
     {
       label: 'Resource Skill Role Type',
-      value: resourceData.assigned_skill_role || resourceData.skill_role_rid,
+      value: resourceData.assigned_skill_role,
     },
     // { label: 'Resource Skill Role', value: resourceData.skill_role_rid },
-    ...(resourceData.skill_role_rid
-      ? [
-          {
-            label: 'Resource Skill Role Others',
-            value: resourceData.skill_role_others,
-          },
-        ]
-      : []),
+    // ...(resourceData.skill_role_rid
+    //   ? [
+    //       {
+    //         label: 'Resource Skill Role Others',
+    //         value: resourceData.skill_role_others,
+    //       },
+    //     ]
+    //   : []),
     // { label: 'Fiscal Year', value: resourceData.fiscal_year },
     { label: 'Status', value: resourceData.status_name },
   ];
@@ -284,25 +304,38 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     { label: 'Comments', value: resourceData.description },
   ];
 
+  const IdentityDetails = applyHidePermission(basicInfo, permissionMap);
+  const descriptionDetails = applyHidePermission(description, permissionMap);
+  const locationInfoDetails = applyHidePermission(locationInfo, permissionMap);
+
+  const projectResourceDetails = applyHidePermission(
+    projectDetails,
+    permissionMap
+  );
+  const auditInfoDetails = applyHidePermission(auditInfo, permissionMap);
+
   return (
     <div>
       <DetailsSection
         title='Basic Information'
-        data={basicInfo as DetailItem[]}
+        data={IdentityDetails as DetailItem[]}
         customStyle='pt-0 mt-0'
       />
       <DetailsSection
         title='Location and Currency Information'
-        data={locationInfo as DetailItem[]}
+        data={locationInfoDetails as DetailItem[]}
       />
       <DetailsSection
         title='Project Details'
-        data={projectDetails as DetailItem[]}
+        data={projectResourceDetails as DetailItem[]}
       />
-      <DetailsSection title='Comments' data={description as DetailItem[]} />
+      <DetailsSection
+        title='Comments'
+        data={descriptionDetails as DetailItem[]}
+      />
       <DetailsSection
         title='Audit Information'
-        data={auditInfo as DetailItem[]}
+        data={auditInfoDetails as DetailItem[]}
         isAudit={true}
       />
     </div>

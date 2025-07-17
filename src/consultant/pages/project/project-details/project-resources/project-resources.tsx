@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
@@ -18,8 +18,11 @@ import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 // import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
+import { FiscalYearType } from '../../../../types/project';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -48,7 +51,7 @@ export const ProjectResources = ({
 }: {
   projectID?: string;
   accountID?: string;
-  projectFiscalYear?: number;
+  projectFiscalYear?: FiscalYearType;
 }) => {
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
@@ -67,10 +70,7 @@ export const ProjectResources = ({
     useState<ProjectResourcesListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
-  // const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-  //   {}
-  // );
-  // const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -98,6 +98,29 @@ export const ProjectResources = ({
     refreshProjectsTrigger
   );
   // const detailsResourceId = searchParams.get('pro_res_id');
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const projectIsEnable = checkPermission(
+    modules,
+    AllModules.PROJECT_RESOURCES
+  );
+
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   const {
     data: resourceDetails,
@@ -191,15 +214,16 @@ export const ProjectResources = ({
     setFilterVisibility(true);
   };
 
+  const PFY = projectFiscalYear;
+
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? ''; // fallback to empty string
     const project_Id = projectID ?? '';
-    const PFY = String(projectFiscalYear);
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
-      PFY,
-      source: 'createAccount',
+      PFY: JSON.stringify(PFY),
+      source: 'createProjectResource',
     });
     navigate(`${PROJECT_RESOURCE_CREATE}?${queryParams.toString()}`);
   };
@@ -208,9 +232,12 @@ export const ProjectResources = ({
     const path = row?.rid
       ? PROJECT_RESOURCE_EDIT.replace(':resourceId', row.rid)
       : PROJECT_RESOURCE_EDIT;
+    const PFY = projectFiscalYear;
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_rid || '',
+      PFY: PFY ? JSON.stringify(PFY) : '',
+      source: 'editProjectResource',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -225,11 +252,14 @@ export const ProjectResources = ({
   };
 
   const projectResourcesColumns = getProjectResourcesColumns(
-    handleProjectResourceClick
+    handleProjectResourceClick,
+    permissionMap
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
   };
+
+  if (!projectIsEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
@@ -274,6 +304,7 @@ export const ProjectResources = ({
               resourceData={resourceDetails?.data?.projectResource || undefined}
               isDetailsLoading={isDetailsLoading}
               detailsError={detailsError}
+              permission={permission}
             />
           ) : (
             <ListTable

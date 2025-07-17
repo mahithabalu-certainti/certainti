@@ -158,6 +158,21 @@ const TabPanel: React.FC<TabProps> = ({
   //   [Regions.data?.data.states]
   // );
   const { permission } = useSelector((state: RootState) => state.permission);
+  const projectResourcesViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionProjectResourcesMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectResourcesViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectResourcesViewEditFields]);
+
   const resourceViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -383,7 +398,8 @@ const TabPanel: React.FC<TabProps> = ({
       return projectResourceFilterFields(
         memoizedProjectResourceCode,
         regionData,
-        memoizedResourceType
+        memoizedResourceType,
+        permissionProjectResourcesMap
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions);

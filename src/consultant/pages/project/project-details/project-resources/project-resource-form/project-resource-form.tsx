@@ -3,6 +3,7 @@ import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
+  AllPermissions,
   Layout,
   OnChange,
   useGetAllCountries,
@@ -33,6 +34,9 @@ import {
   useGetProjectResourceSkillType,
 } from '../../../../../services/project-resources/project-resources-form-service';
 import { projectResourcesPayloadData } from './utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { FiscalYearType } from '../../../../../types/project';
 
 const ProjectResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -48,6 +52,9 @@ const ProjectResourceForm: React.FC = () => {
   const account_Id = searchParams.get('account_Id');
   const project_Id = searchParams.get('project_Id');
   const projectPFY = searchParams.get('PFY');
+  const fiscalYear: FiscalYearType | undefined = projectPFY
+    ? JSON.parse(projectPFY)
+    : undefined;
 
   const getProjectResource = useProjectResourceDetail(
     account_Id as string,
@@ -61,6 +68,23 @@ const ProjectResourceForm: React.FC = () => {
     }),
     [projectResource]
   );
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? true, edit: item.edit ?? true };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     account_Id as string
   );
@@ -272,7 +296,9 @@ const ProjectResourceForm: React.FC = () => {
     showSkillRoleOthersField,
     isResourceType,
     states.isLoading,
-    projectPFY
+    isEditView,
+    fiscalYear,
+    permissionMap
   );
 
   return (
@@ -311,7 +337,7 @@ const ProjectResourceForm: React.FC = () => {
           <TextButton
             label='Save'
             loading={
-              createProjectResource.isPending || createProjectResource.isPending
+              createProjectResource.isPending || updateProjectResource.isPending
             }
             onClick={handleExternalSubmit}
           />

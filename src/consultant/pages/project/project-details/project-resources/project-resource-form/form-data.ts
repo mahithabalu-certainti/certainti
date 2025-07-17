@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../../types';
 // import {
@@ -12,6 +13,7 @@ import {
   PROJECT_RESOURCE_REGEX,
   REGEX_PATTERNS,
 } from '../../../../../../common-utils';
+import { FiscalYearType } from '../../../../../types/project';
 
 // 1. Extract date constants
 const DATE_CONFIG = {
@@ -60,25 +62,32 @@ export const ProjectResourceFormData = (
   // cityLoading?: boolean,
   // currencyLoading?: boolean,
   // disableFields?: boolean,
-  // isEditView?: boolean
-  projectPFY?: string | null
+  isEditView?: boolean,
+  projectPFY?: FiscalYearType | undefined,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   const today = new Date();
   const currentYear = today.getFullYear();
-  const endDateMax = projectPFY
-    ? Number(projectPFY) === currentYear
-      ? today
-      : new Date(`${projectPFY}-12-31`)
-    : undefined;
+  const endDateMax =
+    projectPFY?.endDate && Number(projectPFY.year) !== currentYear
+      ? new Date(projectPFY.endDate)
+      : today;
+
   const previousDate = new Date(today);
   previousDate.setDate(today.getDate() - 1);
 
-  const startDateMin = projectPFY ? new Date(`${projectPFY}-01-01`) : undefined;
+  const startDateMin = projectPFY?.startDate
+    ? new Date(projectPFY.startDate)
+    : undefined;
 
-  const startDateMax = projectPFY
-    ? Number(projectPFY) === currentYear
+  const startDateMax = projectPFY?.endDate
+    ? Number(projectPFY.year) === currentYear
       ? previousDate
-      : new Date(`${projectPFY}-12-31`)
+      : (() => {
+          const date = new Date(projectPFY.endDate);
+          date.setDate(date.getDate() - 1);
+          return date;
+        })()
     : undefined;
 
   return useMemo(
@@ -91,6 +100,14 @@ export const ProjectResourceFormData = (
             options: projectResourceCodes,
             required: true,
             placeholder: 'Enter Resource Code',
+            disabled:
+              isEditView &&
+              permissionMap?.['resource_code']?.read &&
+              !permissionMap?.['resource_code']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['resource_code']?.read &&
+              !permissionMap?.['resource_code']?.edit,
           }),
           createSelectField('resource_type_rid', 'Resource Type', {
             options: projectTypes,
@@ -103,6 +120,14 @@ export const ProjectResourceFormData = (
               'insurance',
               'resource_orgname',
             ],
+            disabled:
+              isEditView &&
+              permissionMap?.['resource_type_rid']?.read &&
+              !permissionMap?.['resource_type_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['resource_type_rid']?.read &&
+              !permissionMap?.['resource_type_rid']?.edit,
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
@@ -110,8 +135,16 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               'Please enter 3-100 characters, including at least one letter. Special characters other than ampersand, hyphen, period, comma are not allowed.',
             placeholder: 'Enter Organization Name',
-            // hide: isResourceType,
-            disabled: isResourceType,
+            // disabled: isResourceType,
+            disabled:
+              (isEditView &&
+                permissionMap?.['resource_orgname']?.read &&
+                !permissionMap?.['resource_orgname']?.edit) ||
+              isResourceType,
+            hide:
+              isEditView &&
+              !permissionMap?.['resource_orgname']?.read &&
+              !permissionMap?.['resource_orgname']?.edit,
           }),
           createTextField('resource_name', 'Resource Name', {
             required: false,
@@ -119,6 +152,14 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
             placeholder: 'Enter Resource Name',
+            disabled:
+              isEditView &&
+              permissionMap?.['resource_name']?.read &&
+              !permissionMap?.['resource_name']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['resource_name']?.read &&
+              !permissionMap?.['resource_name']?.edit,
           }),
           createTextField('designation', 'Designation', {
             required: false,
@@ -126,6 +167,14 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               "Please enter 3–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
             placeholder: 'Enter Resource Role',
+            disabled:
+              isEditView &&
+              permissionMap?.['designation']?.read &&
+              !permissionMap?.['designation']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['designation']?.read &&
+              !permissionMap?.['designation']?.edit,
           }),
           createTextField('resource_role', 'Resource Role', {
             required: false,
@@ -133,6 +182,14 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
             placeholder: 'Enter Resource Role',
+            disabled:
+              isEditView &&
+              permissionMap?.['resource_role']?.read &&
+              !permissionMap?.['resource_role']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['resource_role']?.read &&
+              !permissionMap?.['resource_role']?.edit,
           }),
           createSelectField(
             'assigned_skill_role_type_rid',
@@ -143,13 +200,30 @@ export const ProjectResourceFormData = (
               required: false,
               onChange: true,
               resetDependsFields: ['skill_role_rid', 'skill_role_others'],
+              disabled:
+                isEditView &&
+                permissionMap?.['assigned_skill_role_type_rid']?.read &&
+                !permissionMap?.['assigned_skill_role_type_rid']?.edit,
+              hide:
+                isEditView &&
+                !permissionMap?.['assigned_skill_role_type_rid']?.read &&
+                !permissionMap?.['assigned_skill_role_type_rid']?.edit,
             }
           ),
           createSelectField('skill_role_rid', 'Resource Skill Role', {
             options: projectResourceRollSkill,
             placeholder: 'Choose Resource Skill Role',
             required: true,
-            hide: !showSkillRoleOthersField,
+            // hide: !showSkillRoleOthersField,
+            disabled:
+              isEditView &&
+              permissionMap?.['skill_role_rid']?.read &&
+              !permissionMap?.['skill_role_rid']?.edit,
+            hide:
+              (isEditView &&
+                !permissionMap?.['skill_role_rid']?.read &&
+                !permissionMap?.['skill_role_rid']?.edit) ||
+              !showSkillRoleOthersField,
           }),
           createTextField('skill_role_others', 'Resource Skill Role Others', {
             required: true,
@@ -157,18 +231,30 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Resource Skill Role Others',
-            hide: !showSkillRoleOthersField,
+            // hide: !showSkillRoleOthersField,
+            disabled:
+              isEditView &&
+              permissionMap?.['skill_role_others']?.read &&
+              !permissionMap?.['skill_role_others']?.edit,
+            hide:
+              (isEditView &&
+                !permissionMap?.['skill_role_others']?.read &&
+                !permissionMap?.['skill_role_others']?.edit) ||
+              !showSkillRoleOthersField,
           }),
-          // createSelectField('fiscal_year', 'Fiscal Year', {
-          //   options: fiscalYears,
-          //   placeholder: '-Select-',
-          //   required: true,
-          //   onChange: true,
-          // }),
+
           createSelectField('status_rid', 'Resource Status', {
             options: resourceStatusOptions,
             placeholder: 'Choose Resource Status',
             required: false,
+            disabled:
+              isEditView &&
+              permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
           }),
         ],
       },
@@ -182,17 +268,41 @@ export const ProjectResourceFormData = (
             required: false,
             onChange: true,
             resetDependsFields: ['region_rid'],
+            disabled:
+              isEditView &&
+              permissionMap?.['country_rid']?.read &&
+              !permissionMap?.['country_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['country_rid']?.read &&
+              !permissionMap?.['country_rid']?.edit,
           }),
           createSelectField('region_rid', 'Region', {
             options: states,
             placeholder: 'Choose Region',
             required: false,
             isLoading: stateLoading,
+            disabled:
+              isEditView &&
+              permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,
             required: false,
             placeholder: 'Choose Currency',
+            disabled:
+              isEditView &&
+              permissionMap?.['currency_rid']?.read &&
+              !permissionMap?.['currency_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['currency_rid']?.read &&
+              !permissionMap?.['currency_rid']?.edit,
           }),
         ],
       },
@@ -205,21 +315,45 @@ export const ProjectResourceFormData = (
             minDate: startDateMin,
             maxDate: startDateMax,
             disableFutureDates: true,
+            disabled:
+              isEditView &&
+              permissionMap?.['start_date']?.read &&
+              !permissionMap?.['start_date']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['start_date']?.read &&
+              !permissionMap?.['start_date']?.edit,
           }),
           createDateField('end_date', 'End Date', {
             required: false,
-            minDate: projectPFY ? new Date(`${projectPFY}-01-01`) : undefined,
+            minDate: startDateMin,
             maxDate: endDateMax,
             greaterThan: {
               field: 'start_date',
               message: 'End Date must be after Start Date',
             },
+            disabled:
+              isEditView &&
+              permissionMap?.['end_date']?.read &&
+              !permissionMap?.['end_date']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['end_date']?.read &&
+              !permissionMap?.['end_date']?.edit,
           }),
           createTextField('total_hours_pro_res', 'Effort', {
             required: false,
             regex: PROJECT_RESOURCE_REGEX.EFFORT,
             regexErrorMessage: 'Effort must be a positive number',
             placeholder: 'Enter an effort',
+            disabled:
+              isEditView &&
+              permissionMap?.['total_hours_pro_res']?.read &&
+              !permissionMap?.['total_hours_pro_res']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['total_hours_pro_res']?.read &&
+              !permissionMap?.['total_hours_pro_res']?.edit,
           }),
           createTextField('salary', 'Salary', {
             required: false,
@@ -227,7 +361,16 @@ export const ProjectResourceFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            hide: !isResourceType,
+            // hide: !isResourceType,
+            disabled:
+              isEditView &&
+              permissionMap?.['salary']?.read &&
+              !permissionMap?.['salary']?.edit,
+            hide:
+              (isEditView &&
+                !permissionMap?.['salary']?.read &&
+                !permissionMap?.['salary']?.edit) ||
+              !isResourceType,
           }),
           createTextField('bonus', 'Bonus', {
             required: false,
@@ -235,8 +378,16 @@ export const ProjectResourceFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            hide: !isResourceType,
-            onChange: true,
+            // hide: !isResourceType,
+            disabled:
+              isEditView &&
+              permissionMap?.['bonus']?.read &&
+              !permissionMap?.['bonus']?.edit,
+            hide:
+              (isEditView &&
+                !permissionMap?.['bonus']?.read &&
+                !permissionMap?.['bonus']?.edit) ||
+              !isResourceType,
           }),
           createTextField('insurance', 'Insurance', {
             required: false,
@@ -244,8 +395,16 @@ export const ProjectResourceFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            hide: !isResourceType,
-            onChange: true,
+            // hide: !isResourceType,
+            disabled:
+              isEditView &&
+              permissionMap?.['insurance']?.read &&
+              !permissionMap?.['insurance']?.edit,
+            hide:
+              (isEditView &&
+                !permissionMap?.['insurance']?.read &&
+                !permissionMap?.['insurance']?.edit) ||
+              !isResourceType,
           }),
           createTextField('deductions', 'Deductions', {
             required: false,
@@ -253,7 +412,14 @@ export const ProjectResourceFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            onChange: true,
+            disabled:
+              isEditView &&
+              permissionMap?.['deductions']?.read &&
+              !permissionMap?.['deductions']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['deductions']?.read &&
+              !permissionMap?.['deductions']?.edit,
           }),
           createTextField('total_cost_pro_res', 'Cost', {
             required: false,
@@ -261,6 +427,14 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               'Cost must be a 18-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
+            disabled:
+              isEditView &&
+              permissionMap?.['total_cost_pro_res']?.read &&
+              !permissionMap?.['total_cost_pro_res']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['total_cost_pro_res']?.read &&
+              !permissionMap?.['total_cost_pro_res']?.edit,
           }),
         ],
       },
@@ -273,6 +447,14 @@ export const ProjectResourceFormData = (
             placeholder: 'Enter Comments',
             regexErrorMessage: 'Maximum 2000 characters allowed',
             regex: PROJECT_RESOURCE_REGEX.DESCRIPTION,
+            disabled:
+              isEditView &&
+              permissionMap?.['description']?.read &&
+              !permissionMap?.['description']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['description']?.read &&
+              !permissionMap?.['description']?.edit,
           }),
         ],
       },
