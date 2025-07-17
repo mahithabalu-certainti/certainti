@@ -567,6 +567,7 @@ export class ProjectService {
         };
       }
 
+      const accountDetails = await this.projectIngestion.fetchAccountDetailsById(accountRNumber, accountId);
       let projectData = await this.projectIngestion.fetchProjectById(accountRNumber, projectId);
 
       if (projectData) {
@@ -598,7 +599,7 @@ export class ProjectService {
           mainDbInit
         );
 
-        projectData = this.insertAccount(projectData, accountData);
+        projectData = this.insertAccount(projectData, accountData, accountDetails);
 
         projectData = await this.schemaService.insertUserDetails(projectData);
         }
@@ -669,11 +670,15 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, account: any,){
+  insertAccount(project: any, account: any, accountDetails: any){
+    const fiscalStartDate = accountDetails?.[0]?.fiscal_start_date || null;
+    const fiscalEndDate = accountDetails?.[0]?.fiscal_end_date || null;
     return {
       ...(project),
       account_name: account.account_name,
-      account_status:account.status
+      account_status:account.status,
+      fiscal_start_date: fiscalStartDate,
+      fiscal_end_date: fiscalEndDate,
     }
   }
 
