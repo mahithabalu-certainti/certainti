@@ -283,10 +283,13 @@ export const getAccountColumns = (
     width: 200,
     sortable: true,
     hide:
-      !permissionMap?.['finance_executive']?.read &&
-      !permissionMap?.['finance_executive']?.edit,
+      !permissionMap?.['keyContacts']?.read &&
+      !permissionMap?.['keyContacts']?.edit,
     render: (row: AccountList & { _level?: number }) => {
-      const isClickable = row._level === undefined || row._level < 2;
+      const isClickable =
+        permissionMap?.['keyContacts']?.read &&
+        permissionMap?.['keyContacts']?.edit &&
+        (row._level === undefined || row._level < 2);
       return isClickable ? (
         <div
           onDoubleClick={() =>
@@ -308,10 +311,13 @@ export const getAccountColumns = (
     width: 160,
     sortable: true,
     hide:
-      !permissionMap?.['finance_lead']?.read &&
-      !permissionMap?.['finance_lead']?.edit,
+      !permissionMap?.['keyContacts']?.read &&
+      !permissionMap?.['keyContacts']?.edit,
     render: (row: AccountList & { _level?: number }) => {
-      const isClickable = row._level === undefined || row._level < 2;
+      const isClickable =
+        permissionMap?.['keyContacts']?.read &&
+        permissionMap?.['keyContacts']?.edit &&
+        (row._level === undefined || row._level < 2);
       return isClickable ? (
         <div
           onDoubleClick={() =>
@@ -333,10 +339,13 @@ export const getAccountColumns = (
     width: 250,
     sortable: true,
     hide:
-      !permissionMap?.['professional_services_consultant']?.read &&
-      !permissionMap?.['professional_services_consultant']?.edit,
+      !permissionMap?.['keyContacts']?.read &&
+      !permissionMap?.['keyContacts']?.edit,
     render: (row: AccountList & { _level?: number }) => {
-      const isClickable = row._level === undefined || row._level < 2;
+      const isClickable =
+        permissionMap?.['keyContacts']?.read &&
+        permissionMap?.['keyContacts']?.edit &&
+        (row._level === undefined || row._level < 2);
       return isClickable ? (
         <div
           onDoubleClick={() =>
