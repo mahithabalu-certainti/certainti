@@ -665,6 +665,14 @@ export const setResourceCostDatas = (dbData : any, requestData : any) => {
     dataStorage = `comments = '${newCostData.comments}'`
     newCostDataArray.push(dataStorage)
   }
+  if(requestData.status_rid) {
+    dataStorage = `status_rid = '${requestData.status_rid}'`
+    newCostDataArray.push(dataStorage)
+  }
+  if(requestData.net_resource_cost) {
+    dataStorage = `net_resource_cost = ${requestData.net_resource_cost}`
+    newCostDataArray.push(dataStorage)
+  }
   dataStorage = `modified_by = '${requestData.userId}'`
   newCostDataArray.push(dataStorage)
   dataStorage = `modified_datetime = NOW()`
