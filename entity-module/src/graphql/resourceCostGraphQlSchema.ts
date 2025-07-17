@@ -171,6 +171,7 @@ input resourceCostInlineInput {
   deductions : String,
   resource_cost : String,
   comments : String
+  user_preference : String
 }
 
 type Mutation {

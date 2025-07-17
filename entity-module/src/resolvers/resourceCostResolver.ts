@@ -156,6 +156,14 @@ const resourceCostResolvers: IResolvers = {
           data : result.data
         }       
       }
+      else if(result.statusCode == HttpStatus.PROMPT) {
+        return {
+          statusCode : HttpStatus.PROMPT,
+          statusCodeValue : HttpStatus.PROMPT_MESSAGE,
+          statusMessage : result.statusMessage,
+          data : result.data
+        }       
+      }
       } catch (error : any) {
         return {
           statusCode : HttpStatus.FAILED,
