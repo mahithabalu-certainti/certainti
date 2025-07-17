@@ -536,9 +536,9 @@ export const setResourcesData = (dbData : any, requestData : any) => {
     newData.last_name = newData.resource_name.split(' ')[1]
     dataStorage = `resource_name = '${newData.resource_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
-    dataStorage = `resource_firstname = '${newData.first_name.replace(/'/g, "''")}'`
+    dataStorage = newData.first_name == undefined || newData.first_name == null ? `resource_firstname = '${newData.first_name}'` : `resource_firstname = '${newData.first_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
-    dataStorage = `resource_lastname = '${newData.last_name.replace(/'/g, "''")}'`
+    dataStorage = newData.last_name == undefined || newData.last_name == null ? `resource_lastname = null` : `resource_lastname = '${newData.last_name.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
   if(requestData.resource_type_rid != undefined) {
@@ -663,6 +663,14 @@ export const setResourceCostDatas = (dbData : any, requestData : any) => {
   if(requestData.comments != undefined) {
     newCostData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
     dataStorage = `comments = '${newCostData.comments}'`
+    newCostDataArray.push(dataStorage)
+  }
+  if(requestData.status_rid) {
+    dataStorage = `status_rid = '${requestData.status_rid}'`
+    newCostDataArray.push(dataStorage)
+  }
+  if(requestData.net_resource_cost) {
+    dataStorage = `net_resource_cost = ${requestData.net_resource_cost}`
     newCostDataArray.push(dataStorage)
   }
   dataStorage = `modified_by = '${requestData.userId}'`

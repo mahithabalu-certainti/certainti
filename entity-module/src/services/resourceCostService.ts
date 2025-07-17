@@ -1354,7 +1354,7 @@ async getResourceCostsByResourceIds(accountNumber: string, resourceIds: string[]
 }
 }
 
-async function getResourceStatuses(
+export async function getResourceStatuses(
   mainDbSequelize: Sequelize,
 ): Promise<Map<string, string> | null> {
   try {
@@ -1387,7 +1387,7 @@ async function getResourceStatuses(
  * @param currency_rid - Optional currency RID to lookup.
  * @returns currency_threshold value or null if not found.
  */
-async function getCurrencyThreshold(
+export async function getCurrencyThreshold(
   mainDbSequelize: Sequelize,
   currency_rid?: string
 ): Promise<number | null> {

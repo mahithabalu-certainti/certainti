@@ -2,7 +2,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
 import { ResourceFiscal } from "../models/resourceFiscal";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
 import moment from "moment";
@@ -394,8 +394,65 @@ export class ResourceService {
       }
 
       const attachments = await this.schemaService.fetchAttachmentsByResourceId(resourceId);
-      resourceDetails.attachment = attachments || [];
+      if(attachments.length>0){
+      const sequelize = await initMainDbSequelize();
+      const orgDbSequelize = await initOrgSequelize();
+      // Extract IDs from attachments
+      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
+      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
+      const userIds = attachments.map(attachment => attachment.created_by);
+      const resourceIds = attachments.map(attachment => attachment.attach_to);
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
 
+      // Execute all queries in parallel
+      const [documentTypes, documentCategories, users, resources] = await Promise.all([
+        documentTypeIds.length > 0 
+          ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
+              replacements: { documentTypeIds }, 
+              type: 'SELECT' 
+            })
+          : Promise.resolve([]),
+
+        documentCategoryIds.length > 0
+          ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
+              replacements: { documentCategoryIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([]),
+
+        userIds.length > 0
+          ? sequelize.query(rawQueries.GET_USERS, {
+              replacements: { userIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([]),
+
+        resourceIds.length > 0
+          ? orgDbSequelize.query(rawQueries.fetchResourcesByIds(schemaName), {
+              replacements: { resourceIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([])
+      ]);
+
+      // Enhance attachments with related data
+      const mappedAttachments = attachments.map(attachment => {
+        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
+        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
+        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
+        const attachedTo = resources.find((a: any) => a.rid === attachment.attach_to);
+
+        return {
+          ...attachment,
+          document_type: (documentType as any)?.type_name || '',
+          document_category: (documentCategory as any)?.category_name || '',
+          uploaded_by: (uploadedBy as any)?.full_name || '',
+          attached_to: (attachedTo as any) ?.resource_code || ''
+        };
+      });
+
+      resourceDetails.attachment = mappedAttachments || [];
+    }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
