@@ -6,7 +6,10 @@ import { AttachmentList } from '../../../../../types/attachment';
 import { getResourceAttachmentColumns } from './column';
 import { ListTable } from '../../../../../../components/table';
 import { useParams } from 'react-router-dom';
-import { useGetAllDocumentInfo } from '../../../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllDocumentInfo,
+} from '../../../../../../common-service';
 import { getFiscalYears } from '../../../../../../common-utils';
 import { SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
@@ -49,6 +52,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const { errorToast } = useToast();
   const { accountid } = useParams();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
@@ -116,6 +120,22 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentPage(0);
   };
 
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
+
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setOrder(apiOrder);
@@ -125,7 +145,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const attachmentColumns = getResourceAttachmentColumns(
     fiscalYears,
     memoizedDocumentCategories,
-    memoizedDocumentTypes
+    memoizedDocumentTypes,
+    permissionMap
   );
   const getRowId = (row: AttachmentList) => row.rid;
 

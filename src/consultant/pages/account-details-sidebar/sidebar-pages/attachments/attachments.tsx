@@ -64,6 +64,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
@@ -184,10 +185,28 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     setSortField(property);
   };
 
+  // Permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
+
   const attachmentColumns = getAttachmentColumns(
     fiscalYears,
     memoizedDocumentCategories,
-    memoizedDocumentTypes
+    memoizedDocumentTypes,
+    permissionMap
   );
 
   const fieldOptions = {

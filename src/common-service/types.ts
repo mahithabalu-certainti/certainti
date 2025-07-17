@@ -270,6 +270,7 @@ export enum AllPermissions {
   PROFILE_PERMISSION_VIEW = 'profile_permission_view',
   ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
   ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
+  ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
 }
 
 export interface Country {

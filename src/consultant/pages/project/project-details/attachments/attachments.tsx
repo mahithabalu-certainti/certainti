@@ -77,6 +77,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const [totalItems, setTotalItems] = useState<number>(0);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -157,6 +158,23 @@ const Attachments: React.FC<AttachmentsProps> = ({
     }
   };
 
+  // Permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
+
   const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
 
@@ -223,7 +241,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const attachmentColumns = getProjectAttachmentColumns(
     fiscalYears,
     memoizedDocumentCategories,
-    memoizedDocumentTypes
+    memoizedDocumentTypes,
+    permissionMap
   );
 
   const getRowId = (row: AttachmentList) => row.rid;

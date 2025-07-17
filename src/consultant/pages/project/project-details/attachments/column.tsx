@@ -12,7 +12,8 @@ import { AttachmentList } from '../../../../types/attachment';
 export const getProjectAttachmentColumns = (
   fiscalYears: SelectOption[],
   docCategories: SelectOption[],
-  docTypes: SelectOption[]
+  docTypes: SelectOption[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<AttachmentList>[] => [
   {
     id: 'document_name',
@@ -21,6 +22,9 @@ export const getProjectAttachmentColumns = (
     width: 160,
     sortable: true,
     sticky: true,
+    hide:
+      !permissionMap?.['document_name']?.edit &&
+      !permissionMap?.['document_name']?.read,
     sx: {
       position: 'sticky',
       left: 0,
@@ -36,6 +40,7 @@ export const getProjectAttachmentColumns = (
     label: 'Format',
     width: 140,
     sortable: true,
+    hide: !permissionMap?.['format']?.edit && !permissionMap?.['format']?.read,
   },
   {
     id: 'size_in_mb',
@@ -43,6 +48,9 @@ export const getProjectAttachmentColumns = (
     label: 'Size',
     width: 140,
     sortable: true,
+    hide:
+      !permissionMap?.['size_in_mb']?.edit &&
+      !permissionMap?.['size_in_mb']?.read,
   },
   {
     id: 'fiscal_year',
@@ -51,7 +59,12 @@ export const getProjectAttachmentColumns = (
     label: 'Fiscal Year',
     width: 140,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['fiscal_year']?.edit &&
+      permissionMap?.['fiscal_year']?.read,
+    hide:
+      !permissionMap?.['fiscal_year']?.edit &&
+      !permissionMap?.['fiscal_year']?.read,
     field: {
       type: 'select',
       required: true,
@@ -67,7 +80,12 @@ export const getProjectAttachmentColumns = (
     label: 'Document Category',
     width: 250,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['document_category_rid']?.edit &&
+      permissionMap?.['document_category_rid']?.read,
+    hide:
+      !permissionMap?.['document_category_rid']?.edit &&
+      !permissionMap?.['document_category_rid']?.read,
     render: (row: AttachmentList) =>
       row.document_category_others
         ? `${row.document_category} - ${row.document_category_others}`
@@ -127,7 +145,12 @@ export const getProjectAttachmentColumns = (
     label: 'Document Type',
     width: 300,
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['document_type_rid']?.edit &&
+      permissionMap?.['document_type_rid']?.read,
+    hide:
+      !permissionMap?.['document_type_rid']?.edit &&
+      !permissionMap?.['document_type_rid']?.read,
     render: (row: AttachmentList) =>
       row.document_type_others
         ? `${row.document_type} - ${row.document_type_others}`
@@ -186,6 +209,9 @@ export const getProjectAttachmentColumns = (
     label: 'Related Entity',
     width: 140,
     sortable: true,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
   },
   {
     id: 'attach_to',
@@ -193,6 +219,9 @@ export const getProjectAttachmentColumns = (
     label: 'Related To ID',
     width: 180,
     sortable: true,
+    hide:
+      !permissionMap?.['attach_to']?.edit &&
+      !permissionMap?.['attach_to']?.read,
   },
   {
     id: 'attached_to',
@@ -200,6 +229,9 @@ export const getProjectAttachmentColumns = (
     label: 'Related To Name',
     width: 180,
     sortable: true,
+    hide:
+      !permissionMap?.['attached_to']?.edit &&
+      !permissionMap?.['attached_to']?.read,
   },
   {
     id: 'uploaded_by',
@@ -207,6 +239,9 @@ export const getProjectAttachmentColumns = (
     label: 'Attached By',
     width: 180,
     sortable: true,
+    hide:
+      !permissionMap?.['uploaded_by']?.edit &&
+      !permissionMap?.['uploaded_by']?.read,
   },
   {
     id: 'created_datetime',
@@ -214,6 +249,9 @@ export const getProjectAttachmentColumns = (
     label: 'Attached On',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['created_datetime']?.edit &&
+      !permissionMap?.['created_datetime']?.read,
     render: (row: AttachmentList) =>
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
@@ -223,5 +261,7 @@ export const getProjectAttachmentColumns = (
     label: 'Attachment ID',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
 ];

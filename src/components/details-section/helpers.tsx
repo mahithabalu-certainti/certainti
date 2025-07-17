@@ -6,6 +6,14 @@ export const attachmentColumns = [
     id: 'document_name',
     label: 'Document Name',
     width: 160,
+    sx: {
+      position: 'sticky' as 'sticky',
+      left: 0,
+      background: '#fff',
+      borderRight: '1px solid #CBD6E2',
+      borderBottom: '1px solid #CBD6E2 !important',
+      zIndex: 10,
+    },
   },
   {
     id: 'format',

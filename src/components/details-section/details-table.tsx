@@ -19,6 +19,7 @@ type Column<T> = {
   width?: number;
   hide?: boolean;
   render?: (row: T) => React.ReactNode;
+  sx?: React.CSSProperties;
 };
 
 interface DetailsTableProps<T> {
@@ -38,8 +39,8 @@ const DetailsTable = <T extends RowData>({
     <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
       {title}
     </div>
-    <TableContainer sx={{ overflowX: 'auto' }}>
-      <Table>
+    <TableContainer sx={{ overflow: 'auto', maxHeight: '150px' }}>
+      <Table stickyHeader>
         {/* Table Head */}
         <TableHead
           sx={{
@@ -66,6 +67,7 @@ const DetailsTable = <T extends RowData>({
                   minWidth: col.width,
                   maxWidth: col.width,
                   display: col.hide ? 'none' : 'table-cell',
+                  ...(col.sx || {}),
                 }}
               >
                 {col.label}
@@ -110,6 +112,7 @@ const DetailsTable = <T extends RowData>({
                       minWidth: col.width,
                       maxWidth: col.width,
                       display: col.hide ? 'none' : 'table-cell',
+                      ...(col.sx || {}),
                     }}
                   >
                     {col.render ? (

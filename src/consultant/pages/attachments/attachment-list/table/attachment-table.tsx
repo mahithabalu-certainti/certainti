@@ -4,7 +4,7 @@ import {
   AttachmentsListURLParams,
 } from '../../../../types/attachment';
 import { RootState } from '../../../../../store/store';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAllAttachmentList } from '../../../../services/attachments/attachments-service';
 import { getAllAttachmentColumns } from './columns';
 import {
@@ -19,6 +19,7 @@ import { useMutation } from '@apollo/client';
 import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import { AllPermissions } from '../../../../../common-service';
 
 interface IAttachmentTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -45,6 +46,7 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -106,13 +108,29 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
       page: 1,
     }));
   };
+  // Permissions
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
   const getRowId = (row: AttachmentList) => row.document_rid;
 
   const attachmentsColumns = getAllAttachmentColumns(
     fieldOptions.fiscalYears,
     fieldOptions.docCategories,
-    fieldOptions.docTypes
+    fieldOptions.docTypes,
+    permissionMap
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
