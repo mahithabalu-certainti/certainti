@@ -853,6 +853,7 @@ export const FormData = (
         fields: [
           createTextField('rid', 'Record ID', {
             required: false,
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['rid']?.read &&

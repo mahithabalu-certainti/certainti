@@ -131,32 +131,40 @@ export const getFormFields = (
 ];
 
 export const getAttachmentsFilterFields = (
-  fieldOptions?: FieldOptionType
+  fieldOptions?: FieldOptionType,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   const {
     fiscalYears = [],
     docCategories = [],
     docTypes = [],
   } = fieldOptions || {};
-
   return [
     {
       name: 'Document Name',
       value: 'document_name',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['document_name']?.edit &&
+        !permissionMap?.['document_name']?.read,
     },
     {
       name: 'Format',
       value: 'format',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['format']?.edit && !permissionMap?.['format']?.read,
     },
     {
       name: 'Size',
       value: 'size_in_mb',
       type: 'number',
       operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['size_in_mb']?.edit &&
+        !permissionMap?.['size_in_mb']?.read,
     },
     {
       name: 'Fiscal Year',
@@ -164,6 +172,9 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read,
     },
     {
       name: 'Document Category',
@@ -171,6 +182,9 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: docCategories.map((c) => ({ option: c.label, value: c.value })),
       operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['document_category_rid']?.edit &&
+        !permissionMap?.['document_category_rid']?.read,
     },
     {
       name: 'Document Type',
@@ -178,42 +192,63 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: docTypes.map((t) => ({ option: t.label, value: t.value })),
       operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['document_type_rid']?.edit &&
+        !permissionMap?.['document_type_rid']?.read,
     },
     {
       name: 'Related Entity',
       value: 'attachment_level',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['attachment_level']?.edit &&
+        !permissionMap?.['attachment_level']?.read,
     },
     {
       name: 'Related To ID',
       value: 'attach_to',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['attach_to']?.edit &&
+        !permissionMap?.['attach_to']?.read,
     },
     {
       name: 'Related To Name',
       value: 'attached_to',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['attached_to']?.edit &&
+        !permissionMap?.['attached_to']?.read,
     },
     {
       name: 'Attached By',
       value: 'uploaded_by',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['uploaded_by']?.edit &&
+        !permissionMap?.['uploaded_by']?.read,
     },
     {
       name: 'Attached On',
       value: 'created_datetime',
       type: 'date',
       operatorOption: dateOptions,
+      hide:
+        !permissionMap?.['created_datetime']?.edit &&
+        !permissionMap?.['created_datetime']?.read,
     },
     {
       name: 'Attachment ID',
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
     },
     {
       name: 'Sort Options',

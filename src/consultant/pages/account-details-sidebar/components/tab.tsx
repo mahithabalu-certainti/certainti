@@ -35,6 +35,8 @@ import { useGetProjectType } from '../../../services/project';
 import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fileds';
+import { useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -58,6 +60,8 @@ interface TabProps {
   setSortFilterCount: (count: number) => void;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
+  keyProjectTask?: string;
+  projectResourceAccountID?: string;
   fieldOptions?: FieldOptionType;
 }
 const TabPanel: React.FC<TabProps> = ({
@@ -76,6 +80,8 @@ const TabPanel: React.FC<TabProps> = ({
   setSortFilterCount,
   toggleEnabled,
   setToggleEnabled,
+  keyProjectTask,
+  projectResourceAccountID,
   fieldOptions,
 }) => {
   const [tabValue, setTabValue] = useState('');
@@ -117,11 +123,23 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    projectResourceAccountID as string
+  );
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
+  const memoizedProjectResourceCode: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+          option: item.resource_code,
+          value: item.resource_code,
+        })) || [],
+      [projectResourceCodeOptions?.data?.resourceCodes]
+    );
   const memoizedCountry: { option: string; value: string }[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -140,6 +158,21 @@ const TabPanel: React.FC<TabProps> = ({
   //   [Regions.data?.data.states]
   // );
   const { permission } = useSelector((state: RootState) => state.permission);
+  const projectResourcesViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionProjectResourcesMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectResourcesViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectResourcesViewEditFields]);
+
   const resourceViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -273,7 +306,7 @@ const TabPanel: React.FC<TabProps> = ({
       }));
       setRegionData(data);
     }
-  }, [Regions.data?.data.states]);
+  }, [Regions.data?.data?.states]);
 
   useEffect(() => {
     if (skillSubType) {
@@ -342,6 +375,23 @@ const TabPanel: React.FC<TabProps> = ({
   //     : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
   // };
 
+  // Permissions
+  const attachmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentEditFields]);
+
   const filterFields = useMemo(() => {
     if (!value)
       return resourceFilterFields(
@@ -361,8 +411,16 @@ const TabPanel: React.FC<TabProps> = ({
         memoizedStatus,
         projectPermissionMap
       );
+    if (value === 'project-resources')
+      return projectResourceFilterFields(
+        memoizedProjectResourceCode,
+        memoizedCountry,
+        regionData,
+        memoizedResourceType,
+        permissionProjectResourcesMap
+      );
     if (value === 'attachments')
-      return getAttachmentsFilterFields(fieldOptions);
+      return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -381,14 +439,21 @@ const TabPanel: React.FC<TabProps> = ({
     regionData,
     memoizedStatus,
     memoizedResourceType,
+    resourcepermissionMap,
     memoizedClassification,
     memoizedProjectTypes,
+    projectPermissionMap,
+    memoizedProjectResourceCode,
+    permissionProjectResourcesMap,
+    fieldOptions,
+    attachmentPermissionMap,
     memoizedCurrency,
     memoizedResourceStatus,
+    resourceCostpermissionMap,
     memoizedSkillType,
     skillSubTypeData,
     memoizedSkillLevels,
-    fieldOptions,
+    resourceSkillpermissionMap,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =
@@ -478,19 +543,20 @@ const TabPanel: React.FC<TabProps> = ({
 
         <Box className='flex items-center'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {tabValue === 'account_projects_view_overview' && (
-            <div className='flex items-center gap-2'>
-              <span className='font-semibold text-[13px] text-[#425A76]'>
-                Include Parent
-              </span>
-              <Switch
-                checked={toggleEnabled}
-                onChange={handleToggleChange}
-                size='small'
-                color='success'
-              />
-            </div>
-          )}
+          {tabValue === 'account_projects_view_overview' &&
+            keyProjectTask !== 'ProjectResources' && (
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold text-[13px] text-[#425A76]'>
+                  Include Parent
+                </span>
+                <Switch
+                  checked={toggleEnabled}
+                  onChange={handleToggleChange}
+                  size='small'
+                  color='success'
+                />
+              </div>
+            )}
           {filterVisibility && value !== 'details' && (
             <>
               <Box className='relative'>
