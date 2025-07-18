@@ -500,7 +500,6 @@ async getActiveUsersForGrouping(
 
       // Filter users belonging to these orgs or consultants
       whereClause[Op.or] = [
-        { is_consultant_firm: true },
         { org_id: { [Op.in]: orgIdsToFilter } },
       ];
     }
@@ -1485,6 +1484,7 @@ private createUserCountCondition(operator: string, value: number): any {
     }
     delete groupData.user;
     const groupType = groupData.usergrouptype?.type;
+    groupData.group_type = groupType;
     delete groupData.usergrouptype;
     const usersList = await this.getFormattedUsersForGroup(groupData, user_group_id);
     groupData.users = usersList;
@@ -1663,20 +1663,17 @@ private async getFormattedUsersForGroup(groupData: any, groupRid: string): Promi
   });
 
   const accountRids = assignedAccounts.map(acc => acc.account_rid);
-  if (accountRids.length === 0) return [];
+  if (accountRids.length === 0 && !groupData?.is_consultant_only_group) return [];
 
-  // Step 2: Build user filter from those accounts
-  const userWhereClause: any = {
-    org_id: { [Op.in]: accountRids },
-  };
+  const userWhereClause: WhereOptions<User> = {};
 
-  // Apply consultant-only filter
-  if (groupData?.is_consultant_only_group) {
-    userWhereClause.is_consultant_firm = true;
-  } else {
-    userWhereClause.is_consultant_firm = false;
-  }
-
+// Consultant group
+if (groupData?.is_consultant_only_group) {
+  userWhereClause.is_consultant_firm = true;
+} else {
+  userWhereClause.is_consultant_firm = false;
+  userWhereClause.org_id = { [Op.in]: accountRids }; // All assigned accounts
+}
   // Step 3: Get all users from those accounts
   const allUsers = await User.findAll({
     where: userWhereClause,
