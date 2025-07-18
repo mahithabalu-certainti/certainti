@@ -21,7 +21,7 @@ export default class ImportGraphqlServices {
         }
         return this.mainDbSequelize;
       }
-    async listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : Record<string, any>) {
+    async listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : Record<string, any>, fiscal_year : number) {
         const orgSequelize = await this.getOrgSequelize()
         const mainSequelize = await this.getMainDbSequelize()
         let disablePagination : boolean = false
@@ -33,7 +33,7 @@ export default class ImportGraphqlServices {
           disablePagination = true
           delete filters.imported_by;
         }
-        const result = await orgSequelize.query(listAllImportedDatasQuery(page, limit, sort, sortBy, account_rid, filters, schemaName, disablePagination))
+        const result = await orgSequelize.query(listAllImportedDatasQuery(page, limit, sort, sortBy, account_rid, filters, schemaName, disablePagination, fiscal_year))
         if(result[0].length > 0) {
             return {
                 statusCode : HttpStatus.SUCCESS,
@@ -48,17 +48,17 @@ export default class ImportGraphqlServices {
         }
     }
 
-  async fetchUserDetails(userRids: string[]) {
-    const mainSequelize = await this.getMainDbSequelize();
-    if (!userRids.length) return [];
+    async fetchUserDetails(userRids: string[]) {
+      const mainSequelize = await this.getMainDbSequelize();
+      if (!userRids.length) return [];
 
-    const placeholders = userRids.map(() => '?').join(',');
-    const query = `SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${placeholders})`;
+      const placeholders = userRids.map(() => '?').join(',');
+      const query = `SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${placeholders})`;
 
-    const [results] = await mainSequelize.query(query, {
-        replacements: userRids
-    });
+      const [results] = await mainSequelize.query(query, {
+          replacements: userRids
+      });
 
-    return results;
-}
+      return results;
+  }
 }

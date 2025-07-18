@@ -31,7 +31,7 @@ async function fetchAllImportList(req: Request, res: Response) {
         if(data.filters.imported_by) {
             importedByFilter = data.filters.imported_by
         }
-        const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters);
+        const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters, data.fiscal_year);
         if (result.statusCode !== HttpStatus.SUCCESS) {
             handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
             return
