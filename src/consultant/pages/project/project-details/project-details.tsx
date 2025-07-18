@@ -24,7 +24,7 @@ import {
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
-import { NewProjectData } from '../../../types/project';
+import { FiscalYearType, NewProjectData } from '../../../types/project';
 import { ExportType, MenuItem } from '../../../types';
 import {
   AllMenus,
@@ -36,6 +36,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
+import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../../types/attachment';
@@ -127,6 +128,7 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+  const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
   const [attachmentParams, setAttachmentParams] =
@@ -172,10 +174,26 @@ export const ProjectDetails = () => {
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
+  const formatDate = (year: number, mmdd: string): string => {
+    const [month, day] = mmdd.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     if (data?.data) {
       setProjectDetails(transformProjectData(data.data));
       setProjectData(data.data.project);
+      setFiscalYear({
+        year: data.data.project.fiscal_year,
+        startDate: formatDate(
+          data.data.project.fiscal_year,
+          data.data.project.fiscal_start_date
+        ),
+        endDate: formatDate(
+          data.data.project.fiscal_year,
+          data.data.project.fiscal_end_date
+        ),
+      });
     }
   }, [data]);
 
@@ -273,7 +291,13 @@ export const ProjectDetails = () => {
           />
         );
       case 'projectResources':
-        return <NotFound />;
+        return (
+          <ProjectResources
+            projectID={projectID}
+            accountID={accountID}
+            projectFiscalYear={fiscalYear}
+          />
+        );
       case 'projectsTask':
         return <NotFound />;
       case 'interactions':

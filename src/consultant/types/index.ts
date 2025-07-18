@@ -10,3 +10,4 @@ export * from './resource-details';
 export * from './table';
 export * from './toast-message';
 export * from './profile';
+export * from './project-resources';

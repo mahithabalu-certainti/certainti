@@ -310,6 +310,14 @@ export const getResourceColumns = (
         onCountryClick(String(rowData.country_rid));
         return String(rowData.country_rid);
       },
+      dependencies: [
+        {
+          dependsOn: 'region_name',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+      ],
     },
   },
   {

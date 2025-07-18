@@ -237,7 +237,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
     docTypes: memoizedDocumentTypes,
   };
 
-  const attachmentsFilterFields = getAttachmentsFilterFields(fieldOptions);
+  const attachmentsFilterFields = getAttachmentsFilterFields(
+    fieldOptions,
+    permissionMap
+  );
   const attachmentColumns = getProjectAttachmentColumns(
     fiscalYears,
     memoizedDocumentCategories,

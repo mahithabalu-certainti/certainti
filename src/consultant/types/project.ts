@@ -227,3 +227,9 @@ export type ProjectFiscalSummary = {
   project_fiscal_rid: string;
   rid: string;
 };
+
+export type FiscalYearType = {
+  year?: number;
+  startDate?: string;
+  endDate?: string;
+};
