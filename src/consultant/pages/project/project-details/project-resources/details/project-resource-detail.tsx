@@ -179,7 +179,6 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
   resourceData,
   isDetailsLoading,
   detailsError,
-  // accountId,
   permission,
 }) => {
   const projectViewEditFields = useMemo(
@@ -248,16 +247,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       label: 'Resource Skill Role Type',
       value: resourceData.assigned_skill_role,
     },
-    // { label: 'Resource Skill Role', value: resourceData.skill_role_rid },
-    // ...(resourceData.skill_role_rid
-    //   ? [
-    //       {
-    //         label: 'Resource Skill Role Others',
-    //         value: resourceData.skill_role_others,
-    //       },
-    //     ]
-    //   : []),
-    // { label: 'Fiscal Year', value: resourceData.fiscal_year },
+
     { label: 'Status', value: resourceData.status_name },
   ];
   const locationInfo: DetailItem[] = [

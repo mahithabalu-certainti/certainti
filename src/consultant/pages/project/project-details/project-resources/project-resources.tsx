@@ -16,7 +16,6 @@ import { ProjectResourcesListType } from '../../../../types/project-resources';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
-// import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllModules,

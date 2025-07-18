@@ -174,8 +174,8 @@ export const ProjectDetails = () => {
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
-  const formatDate = (year: number, ddmm: string): string => {
-    const [day, month] = ddmm.split('/');
+  const formatDate = (year: number, mmdd: string): string => {
+    const [month, day] = mmdd.split('/');
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   };
 

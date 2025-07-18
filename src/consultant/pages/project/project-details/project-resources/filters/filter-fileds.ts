@@ -1,10 +1,5 @@
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
 
-// const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
-//   { option: 'Equals', value: 'equals' },
-//   { option: 'Not Equals', value: 'not_equals' },
-//   { option: 'Contains', value: 'contains' },
-// ];
 const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },

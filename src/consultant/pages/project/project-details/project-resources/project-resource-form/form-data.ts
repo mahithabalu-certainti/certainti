@@ -1,10 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../../types';
-// import {
-//   PROJECT_RESOURCE_STATUS_OPTIONS,
-//   PROJECT_RESOURCE_TYPE_OPTIONS,
-// } from './utils';
 import {
   createDateField,
   createSelectField,

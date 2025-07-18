@@ -191,15 +191,6 @@ const ProjectResourceForm: React.FC = () => {
     [states.data?.data.states]
   );
 
-  //   const memoizeCity: SelectOption[] = useMemo(
-  //     () =>
-  //       city.data?.data.cities.map((role) => ({
-  //         label: role.city_name,
-  //         value: role.rid,
-  //       })) || [],
-  //     [city.data?.data.cities]
-  //   );
-
   const submitData = (formValues: Partial<ProjectResourceNewPayload>) => {
     const updated_resource_rid = isEditView ? (resourceId as string) : '';
     const projectResourceFormData = projectResourcesPayloadData(
