@@ -508,7 +508,7 @@ export interface IAttachmentGraphqlServices {
 }
 
 export interface IImportListGraphqlServices {
-  listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : any) : Promise<{
+  listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : any, fiscal_year : number) : Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
