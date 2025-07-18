@@ -21,6 +21,7 @@ import {
   listProjectOfAccountSchema,
   listProjectUserGroupSchema,
   listUserGroupSchema,
+  listUserGroupTypeSchema,
   updateUserGroupSchema
 } from "../lib/joi/schemas/schema";
 
@@ -729,7 +730,14 @@ async function assignEntityAccessToProject(req: Request, res: Response): Promise
 async function getUserGroupType(req: Request, res: Response): Promise<void> {
   const methodName = "List User Group Type";
   try {
-    const groupTypes = await services.userGroupService.getUserGroupType();
+     const validatedData = await validateRequest(
+      req,
+      listUserGroupTypeSchema,
+      "",
+      res,
+      "GET"
+    );
+    const groupTypes = await services.userGroupService.getUserGroupType(validatedData?.type);
     if (groupTypes.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, groupTypes.data);

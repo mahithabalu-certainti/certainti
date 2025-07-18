@@ -17,6 +17,10 @@ interface UpdateUserProfileFields {
   profile_description?: string;
 }
 
+interface UpdateUserGroupFields {
+  rid: string;
+  group_name?: string;
+}
 const userResolvers: IResolvers = {
   Query: {
     permissionById: async (_: any, { azureId }: { azureId: string }, ctx) => {
@@ -121,23 +125,25 @@ const userResolvers: IResolvers = {
         };
       }
     },
-    userGroupUpdate : async (_, {data} : {data : any}, ctx) => {
+    userGroupUpdate: async (_: any, args: { input: UpdateUserGroupFields }, ctx) => {
+
       try {
+        const { input } = args;
+        const userId = ctx.userId;
         
-        const response = await ctx.services.userGroupService.updateUserGroupInline(data);
-        console.log("User group graph ql update",response.statusCode)
+        const response = await ctx.services.userGroupService.updateUserGroupInline(input,userId);
         if (response.statusCode === constants.SUCCESS) {
           return {
             success: true,
             message: "User Group updated successfully",
-            userGroup: response.data.userGroup,
+            usergroup: response.data.usergroup,
           };
         }
 
         return {
           success: false,
           message: response.errorMessage || "Failed to update user group",
-          userGroup: null,
+          data: null,
         };
       } catch (err) {
         return {
