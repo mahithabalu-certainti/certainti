@@ -2557,8 +2557,27 @@ async getProjectResourcesByProjectIds(accountNumber: string, projectIds: string[
 async getProjectTasksByProjectResourceIds(accountNumber: string, projectResourceIds: string[]): Promise<any[]> {
   try {
     if (projectResourceIds.length === 0) return [];
-
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+    const sequelize = await initOrgSequelize();
+
+
+  // Check if project_task table exists
+  const checkTableQuery = `
+    SELECT EXISTS (
+      SELECT 1 
+      FROM information_schema.tables 
+      WHERE table_schema = '${schemaName}'
+      AND table_name = 'project_task'
+    );
+  `;
+
+  const [tableExists] = await sequelize.query(checkTableQuery, {
+    type: 'SELECT'
+  });
+
+  if ((tableExists as any).exists === false) {
+    return [];
+  }
 
     const query = `
       SELECT 
@@ -2569,7 +2588,6 @@ async getProjectTasksByProjectResourceIds(accountNumber: string, projectResource
       ORDER BY pt.created_datetime DESC
     `;
 
-    const sequelize = await initOrgSequelize();
     const results = await sequelize.query(query, {
       replacements: { projectResourceIds },
       type: 'SELECT'
