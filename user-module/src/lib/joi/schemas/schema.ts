@@ -73,7 +73,7 @@ const updateUserGroupSchema = Joi.object({
     )
     .optional()
     .label("Projects"),
-  status_rid: Joi.string().required().label("Status"),
+  status_rid: Joi.string().optional().label("Status"),
   is_consultant_only_group:Joi.boolean().required()
 });
 
