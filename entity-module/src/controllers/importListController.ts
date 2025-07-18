@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { HttpStatus, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
-import { handleErrorResponse, handleSuccessResponse } from '../utils/helpers';
+import { handleErrorResponse, handleSuccessResponse, validateImportListRequest } from '../utils/helpers';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -11,13 +11,19 @@ async function fetchAllImportList(req: Request, res: Response) {
         const data = req.body;
         let importedByFilter;
         let importedByCondition : string;
+        let totalCount : number = 0
+        const requestValidation = validateImportListRequest(data)
+        if(requestValidation) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, requestValidation);
+            return
+        }
         if(data.filters.imported_by) {
             importedByFilter = data.filters.imported_by
         }
         const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters);
-
         if (result.statusCode !== HttpStatus.SUCCESS) {
-            return handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
+            handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
+            return
         }
 
         let flatData = result.data.flatMap((d : any) => {
@@ -81,11 +87,13 @@ async function fetchAllImportList(req: Request, res: Response) {
         const paginatedData = importedByFilter
             ? filteredFinalData.slice((data.page - 1) * data.limit, data.page * data.limit)
             : finalData;
+        if(result.data[0].imports == null) totalCount = 0
+        else totalCount = result.data[0].imports[0].count
 
         const finalResponse = {
             page: data.page,
             limit: data.limit,
-            total_count: importedByFilter ? filteredFinalData.length : (result.data[0].imports[0].count),
+            total_count: importedByFilter ? filteredFinalData.length : totalCount,
             imports: paginatedData
         };
 

@@ -42,12 +42,12 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
         for(let [cond, values] of Object.entries(conditions)) {
             switch (cond) {
                 case ALPHANUMERIC_CONDITIONS.equals: {
-                    filterValues = `${alias}.${keyColumns} = '${values}'`
+                    filterValues = `LOWER(${alias}.${keyColumns}) = '${values.toLowerCase()}'`
                     filterArray.push(filterValues)
                     break
                 }
                 case ALPHANUMERIC_CONDITIONS.notEquals : {
-                    filterValues = `${alias}.${keyColumns} != '${values}'`
+                    filterValues = `LOWER(${alias}.${keyColumns}) != '${values.toLowerCase()}'`
                     filterArray.push(filterValues)
                     break
                 }
