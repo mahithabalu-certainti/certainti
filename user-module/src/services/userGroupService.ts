@@ -334,7 +334,8 @@ if(projects)
    * @returns {Promise<Object>} - Response object with status and message
    */
   async updateUserGroupInline(
-    data: any
+    data: {group_name: string;group_rid:string},
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -364,8 +365,7 @@ if(projects)
     const [affectedGroupCount] = await UserGroup.update(
       {
         group_name: data.group_name,
-        status_rid: data.status_rid,
-        modified_by: data.userId,
+        modified_by: userId,
         modified_datetime: new Date(),
       },
       { where: { rid: data.group_rid } }
