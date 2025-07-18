@@ -42,14 +42,38 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
         for(let [cond, values] of Object.entries(conditions)) {
             switch (cond) {
                 case ALPHANUMERIC_CONDITIONS.equals: {
-                    filterValues = `LOWER(${alias}.${keyColumns}) = '${values.toLowerCase()}'`
-                    filterArray.push(filterValues)
-                    break
+                    if(typeof values == 'number') {
+                        filterValues = `${alias}.${keyColumns} = '${values}'`
+                        filterArray.push(filterValues)
+                        break
+                    } 
+                    else if(!isNaN(Date.parse(values))){
+                        filterValues = `${alias}.${keyColumns} = '${values}'`
+                        filterArray.push(filterValues)
+                        break
+                    } 
+                    else {
+                        filterValues = `LOWER(${alias}.${keyColumns}) = '${values.toLowerCase()}'`
+                        filterArray.push(filterValues)
+                        break
+                    } 
                 }
                 case ALPHANUMERIC_CONDITIONS.notEquals : {
-                    filterValues = `LOWER(${alias}.${keyColumns}) != '${values.toLowerCase()}'`
-                    filterArray.push(filterValues)
-                    break
+                    if(typeof values == 'number') {
+                        filterValues = `${alias}.${keyColumns} != '${values}'`
+                        filterArray.push(filterValues)
+                        break
+                    } 
+                    else if(!isNaN(Date.parse(values))){
+                        filterValues = `${alias}.${keyColumns} != '${values}'`
+                        filterArray.push(filterValues)
+                        break
+                    } 
+                    else {
+                        filterValues = `LOWER(${alias}.${keyColumns}) != '${values.toLowerCase()}'`
+                        filterArray.push(filterValues)
+                        break
+                    } 
                 }
                 case ALPHANUMERIC_CONDITIONS.isEmpty : {
                     filterValues = `${alias}.${keyColumns} IS NULL`
@@ -67,14 +91,18 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
                     break
                 }
                 case ALPHANUMERIC_CONDITIONS.less_than : {
-                    filterValues = `${alias}.${keyColumns} < ${values}`
-                    filterArray.push(filterValues)
-                    break
+                    if(typeof values === 'number') {
+                        filterValues = `${alias}.${keyColumns} < ${values}`
+                        filterArray.push(filterValues)
+                        break
+                    }
                 }
                 case ALPHANUMERIC_CONDITIONS.greater_than : {
-                    filterValues = `${alias}.${keyColumns} > ${values}`
-                    filterArray.push(filterValues)
-                    break
+                    if(typeof values === 'number') {
+                        filterValues = `${alias}.${keyColumns} > ${values}`
+                        filterArray.push(filterValues)
+                        break
+                    }
                 }
                 case ALPHANUMERIC_CONDITIONS.between : {
                     filterValues = `${alias}.${keyColumns} BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`
@@ -82,14 +110,18 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
                     break
                 }
                 case ALPHANUMERIC_CONDITIONS.before : {
-                    filterValues = `${alias}.${keyColumns} < '${values}'`
-                    filterArray.push(filterValues)
-                    break
+                    if(!isNaN(Date.parse(values))) {
+                        filterValues = `${alias}.${keyColumns} < '${values}'`
+                        filterArray.push(filterValues)
+                        break
+                    }
                 }
                 case ALPHANUMERIC_CONDITIONS.after : {
-                    filterValues = `${alias}.${keyColumns} > '${values}'`
-                    filterArray.push(filterValues)
-                    break
+                    if(!isNaN(Date.parse(values))) {
+                        filterValues = `${alias}.${keyColumns} > '${values}'`
+                        filterArray.push(filterValues)
+                        break
+                    }
                 }
                 default:
                     break;
@@ -113,7 +145,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     d.document_size,i.entity_type, i.total_records,i.fiscal_year,
     (SELECT COUNT(*) FROM ${schemaName}.import ii WHERE ii.account_rid = i.account_rid AND ii.target_load_status = '${STATUS_MESSAGE.targetLoadSuccess}') AS records_loaded_successfully,
     (SELECT COUNT(*) FROM ${schemaName}.import ii WHERE ii.account_rid = i.account_rid AND ii.target_load_status = '${STATUS_MESSAGE.targetLoadFailed}') AS records_failed_to_load,
-    i.total_staging_warning_count,d.document_status, i.uploaded_datetime::date, i.uploaded_by_user_rid
+    i.total_staging_warning_count,d.document_status, i.uploaded_datetime, i.uploaded_by_user_rid
     FROM ${schemaName}.import i
     LEFT JOIN ${schemaName}.account_details a ON a.account_rid = i.account_rid
     LEFT JOIN ${schemaName}.document d ON d.rid = i.document_rid
@@ -148,7 +180,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     'records_failed_to_load', a.records_failed_to_load,
     'records_with_warning', a.total_staging_warning_count,
     'status', a.document_status,
-    'imported_on', a.uploaded_datetime::date,
+    'imported_on', a.uploaded_datetime,
     'imported_by', a.uploaded_by_user_rid
     )ORDER BY ${sortValue}) AS imports
     FROM paginated_datas a
