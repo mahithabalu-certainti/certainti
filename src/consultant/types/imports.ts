@@ -1,5 +1,6 @@
 export type ImportsList = {
   rid: string;
+  r_number: string;
   file_name: string;
   format: string;
   size: string;
@@ -10,8 +11,8 @@ export type ImportsList = {
   records_failed_to_load: number | null;
   records_with_warning: number | null;
   status: string;
-  status_description: string | null;
-  import_type: string | null;
+  status_description?: string | null;
+  import_type?: string | null;
   imported_by: string;
   imported_on: string;
 };
@@ -19,28 +20,25 @@ export type ImportsList = {
 export interface ImportsListURLParams {
   page: number;
   limit: number;
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
+  sort: string;
+  sort_by: 'asc' | 'desc';
   filters?: object;
   fiscalYear?: number | string;
-  accountId: string;
+  account_rid: string;
 }
 
-export type ImportListResponse = {
+export interface ImportListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue: string;
   data: {
-    listAllImportedData: {
-      statusCode: number;
-      statusCodeValue: string;
-      statusMessage: string;
-      data: {
-        page: number;
-        limit: number;
-        total_count: number;
-        imports: ImportsList[];
-      };
-    };
+    page: number;
+    limit: number;
+    imports: ImportsList[];
+    count?: number;
+    total_count?: number;
   };
-};
+}
 
 export type ImportErrorRecord = {
   id: string;

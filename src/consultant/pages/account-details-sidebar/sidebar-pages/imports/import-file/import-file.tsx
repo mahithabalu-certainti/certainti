@@ -3,8 +3,8 @@ import { useToast } from '../../../../../../hooks';
 import { UploadImportPayload } from '../../../../../../common-service';
 import { uploadImportFile } from '../../../../../services/import';
 import { ImportIcon, UploadIcon } from '../../../../../../assets';
-import TextButton from '../../../../../../components/button/text-button';
 import ActionImportDropdown from '../../../../../../components/actions-dropdown/import-dropdown';
+import SectionHeader from '../../../../../../components/details-section/section-header';
 
 interface ImportFileProps {
   accountNo?: string | undefined;
@@ -207,40 +207,33 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const goBack = () => {
     handleShowUpload();
   };
+
+  const headerButtons = [
+    {
+      label: 'Cancel',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: () => goBack(),
+      sx: { width: '75px', minWidth: '75px' },
+    },
+    {
+      label: 'Save',
+      variant: 'outlined' as const,
+      disabled: accountInActive,
+      loading: loading,
+      onClick: () => handleSubmit(),
+      sx: { width: '64px', minWidth: '64px' },
+    },
+  ];
+
   return (
-    <div className='h-auto border border-[#CBD6E2] flex flex-col'>
-      <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <ImportIcon alt='Import Icon' className='w-6 h-6' />
-          <span className='text-[13px] text-[#2D3E4F] font-semibold'>
-            Import
-          </span>
-        </div>
-        <div className='flex gap-2'>
-          <TextButton
-            label='Cancel'
-            onClick={goBack}
-            sx={{
-              width: '75px',
-              minWidth: '75px',
-              fontWeight: 400,
-              fontSize: '13px',
-            }}
-          />
-          <TextButton
-            label='Save'
-            loading={loading}
-            onClick={handleSubmit}
-            disabled={accountInActive}
-            sx={{
-              width: '64px',
-              minWidth: '64px',
-              fontWeight: 400,
-              fontSize: '13px',
-            }}
-          />
-        </div>
-      </div>
+    <div className='h-auto border border-[#CBD6E2] flex flex-col rounded-tr-[2px] rounded-tl-[2px] '>
+      <SectionHeader
+        title='Imports'
+        titleIcon={<ImportIcon alt='Imports-upload-icon' />}
+        className='border-b border-[#CBD6E2] h-[40px]'
+        buttons={headerButtons}
+      />
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center gap-6'>
         <div className='flex items-center gap-2'>
           <label className='font-normal text-[14px] text-[#2D3E4F]'>

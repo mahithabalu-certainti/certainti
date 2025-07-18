@@ -7,13 +7,16 @@ import { getImportsListColumns } from './columns';
 import { getImportsFilterFields } from './helpers';
 import { CellEditData } from '../../../../../components/table/types';
 import { SectionTabPanel } from '../../../../../components';
-import ResourceTableHeader from '../resources/resource-table-header';
 import { ImportIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { AccountDetailsResponse } from '../../../../types';
 import ImportFile from './import-file/import-file';
 import { useImportListList } from '../../../../services/import';
 import ImportDetails from './import-details/import-details';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { getFiscalYears } from '../../../../../common-utils';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 const ImportsTabs: ResourceTabs[] = [
   {
@@ -59,13 +62,18 @@ const Imports: React.FC<ImportsProps> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [refreshImports, setRefreshImports] = useState<number>(Date.now());
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [sortField, setSortField] = useState<string>('document_name');
-  const [totalItems, setTotalItems] = useState<number>(0);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<string>('r_number');
   const [importsList, setImportsList] = useState<ImportsList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [showUploads, setShowUploads] = useState<boolean>(false);
-  const [viewDetails, setViewDetails] = useState<boolean>(false);
+
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const fileId = searchParams.get('file_id');
+  const viewDetails = !!fileId;
   //   const [updateImport] = useMutation(IMPORTS_UPDATE, {
   //     client: resourceClient,
   //   });
@@ -74,17 +82,20 @@ const Imports: React.FC<ImportsProps> = ({
     {
       page: currentPage + 1,
       limit: rowsPerPage,
-      sortBy: sortField,
-      sortOrder: sortOrder,
+      sort: sortField,
+      sort_by: sortOrder,
       filters: appliedFilters,
-      accountId: accountid || '',
+      account_rid: accountid || '',
+      fiscalYear: convertedFiscalYear,
     },
+    !viewDetails,
     refreshImports
   );
+  const totalItems = data?.count || 0;
+  const fiscalYears = getFiscalYears(26);
 
   useEffect(() => {
     if (data) {
-      setTotalItems(data?.count || 0);
       setImportsList(data.imports || []);
     }
   }, [data]);
@@ -109,9 +120,8 @@ const Imports: React.FC<ImportsProps> = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'document_name';
-    const defaultSortOrder = 'ASC';
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const defaultSortField = 'r_number';
+    const defaultSortOrder = 'asc';
 
     if (!sortBy) {
       setSortFilterCount(0);
@@ -119,7 +129,7 @@ const Imports: React.FC<ImportsProps> = ({
       setSortField(defaultSortField);
     } else {
       setSortFilterCount(1);
-      setSortOrder(apiOrder);
+      setSortOrder(sortOrder);
       setSortField(sortBy);
     }
   };
@@ -149,8 +159,7 @@ const Imports: React.FC<ImportsProps> = ({
   };
 
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
-    setSortOrder(apiOrder);
+    setSortOrder(sortOrder);
     setSortField(property);
   };
 
@@ -159,22 +168,20 @@ const Imports: React.FC<ImportsProps> = ({
   };
 
   const handleDocument = (rowId: string) => {
-    console.log('clicked', rowId);
     if (rowId) {
-      setViewDetails(true);
       searchParams.set('file_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
 
   const handleBackClick = () => {
-    setViewDetails(false);
     searchParams.delete('file_id');
+    searchParams.delete('view_type');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
   const importsColumns = getImportsListColumns(handleDocument, handleDownload);
-  const importsFilterFields = getImportsFilterFields();
+  const importsFilterFields = getImportsFilterFields(fiscalYears);
 
   const getRowId = (row: ImportsList) => row.rid;
 
@@ -212,12 +219,12 @@ const Imports: React.FC<ImportsProps> = ({
         <ImportDetails handleBackClick={handleBackClick} />
       ) : (
         <>
-          <ResourceTableHeader
-            value={'imports'}
+          <SectionHeader
             title='Imports'
             count={totalItems}
+            showItemCount={true}
             titleIcon={<ImportIcon alt='Imports-header-icon' />}
-            headerButtons={headerButtons}
+            buttons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
             <ListTable
@@ -231,7 +238,7 @@ const Imports: React.FC<ImportsProps> = ({
                 maxHeight: 'calc(100vh - 290px)',
                 overflow: 'auto',
               }}
-              stickyHeader={false}
+              stickyHeader={true}
               stickyColumnsCount={1}
               selectable={false}
               actionWidth={80}
@@ -246,7 +253,7 @@ const Imports: React.FC<ImportsProps> = ({
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
               sortBy={sortField}
-              sortOrder={sortOrder}
+              sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
               onSort={handleSortRequest}
               onCellEdit={handleCellEdit}
             />

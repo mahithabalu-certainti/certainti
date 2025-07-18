@@ -11,6 +11,7 @@ interface SectionHeaderButton {
   sx?: SxProps<Theme>;
   hide?: boolean;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 interface SectionHeaderProps {
@@ -94,6 +95,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
                     ? onViewToggle
                     : button.onClick
                 }
+                loading={button.loading}
                 aria-label={button.label}
                 sx={button.sx}
                 disabled={button.disabled}

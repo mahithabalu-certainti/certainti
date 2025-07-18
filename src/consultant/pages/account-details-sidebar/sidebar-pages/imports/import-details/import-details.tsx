@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useImportDetails } from '../../../../../services/import';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
@@ -9,7 +9,7 @@ import DetailsSection, {
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { ImportDetailsIcon } from '../../../../../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
-import ImportErrorTable from './import-error-table';
+import ImportErrorTable from './table/import-error-table';
 
 interface ImportDetailsProps {
   handleBackClick: () => void;
@@ -17,18 +17,39 @@ interface ImportDetailsProps {
 type ViewType = 'basic' | 'warning' | 'failed';
 
 const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fileId = searchParams.get('file_id') || undefined;
-  const [viewType, setViewType] = useState<ViewType>('basic');
 
-  const { data, isLoading, error } = useImportDetails(fileId);
+  const initialViewType = (() => {
+    const type = searchParams.get('view_type');
+    return type === 'warning' || type === 'failed' ? type : 'basic';
+  })();
+  const [viewType, setViewType] = useState<ViewType>(initialViewType);
+
+  const shouldFetchDetails = viewType === 'basic';
+  const { data, isLoading, error } = useImportDetails(
+    fileId,
+    shouldFetchDetails
+  );
+
+  const updateViewType = (newType: ViewType) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newType === 'basic') {
+      newParams.delete('view_type');
+    } else {
+      newParams.set('view_type', newType);
+    }
+    navigate({ search: newParams.toString() }, { replace: true });
+    setViewType(newType);
+  };
 
   const headerButtons = [
     {
       label: 'Back',
       variant: 'outlined' as const,
       disabled: false,
-      onClick: () => setViewType('basic'),
+      onClick: () => updateViewType('basic'),
       sx: { width: '48px', minWidth: '48px' },
       hide: viewType === 'basic',
     },
@@ -70,46 +91,54 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       value: data?.entity,
       key: 'entity',
     },
-    {
-      label: 'Import Type',
-      value: data?.import_type,
-      key: 'import_type',
-    },
-    {
-      label: 'Records with Warning',
-      value: (
-        <span
-          className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
-          onClick={() => setViewType('warning')}
-        >
-          View staging failures
-          {`(${data?.records_with_warning})`}
-        </span>
-      ),
-      key: 'records_with_warning',
-    },
+    // {
+    //   label: 'Import Type',
+    //   value: data?.import_type,
+    //   key: 'import_type',
+    // },
     {
       label: 'Status',
-      value: data?.status,
+      value: (
+        <span
+          className={`font-semibold ${
+            data?.status === 'Failed'
+              ? 'text-red-600'
+              : data?.status === 'Completed'
+                ? 'text-green-600'
+                : data?.status === 'Processing'
+                  ? 'text-yellow-600'
+                  : 'text-gray-700'
+          }`}
+        >
+          {data?.status}
+        </span>
+      ),
       key: 'status',
     },
     {
-      label: 'Status Description',
-      value: data?.status_description,
-      key: 'status_description',
-    },
-    {
-      label: 'Records Failed to Load',
-      value: (
+      label: 'Records with Warning',
+      value: data?.records_with_warning ? (
         <span
           className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
-          onClick={() => setViewType('failed')}
+          onClick={() => updateViewType('warning')}
         >
-          View Load Failures
-          {`(${data?.records_failed_to_load})`}
+          View staging failures
+          {`(${data.records_with_warning})`}
         </span>
+      ) : (
+        '-'
       ),
-      key: 'records_failed_to_load',
+      key: 'records_with_warning',
+    },
+    // {
+    //   label: 'Status Description',
+    //   value: data?.status_description,
+    //   key: 'status_description',
+    // },
+    {
+      label: 'imported_on',
+      value: formatDateToYYYYMMDDWithTime(data?.imported_on),
+      key: 'imported_on',
     },
     {
       label: 'Imported By',
@@ -117,9 +146,19 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       key: 'imported_by',
     },
     {
-      label: 'imported_on',
-      value: formatDateToYYYYMMDDWithTime(data?.imported_on),
-      key: 'imported_on',
+      label: 'Records Failed to Load',
+      value: data?.records_failed_to_load ? (
+        <span
+          className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
+          onClick={() => updateViewType('failed')}
+        >
+          View Load Failures
+          {`(${data.records_failed_to_load})`}
+        </span>
+      ) : (
+        '-'
+      ),
+      key: 'records_failed_to_load',
     },
   ];
 
@@ -127,21 +166,21 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     <div className='border border-[#CBD6E2]'>
       <SectionHeader
         title='Imports'
-        subValue={data?.rid}
+        subValue={data?.r_number}
         titleIcon={
           <ImportDetailsIcon
             alt='import-header-icon'
-            className='bg-[#FF73C3] h-6 w-6 p-1 rounded-[2px]'
+            className='bg-[#FF73C3] h-[23px] w-[23px] p-1 rounded-[2px]'
           />
         }
         className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-        showBackArrow={viewType === 'basic' ? true : false}
+        showBackArrow={viewType === 'basic'}
         onBackClick={handleBackClick}
         buttons={headerButtons}
       />
       {isLoading ? (
         <DetailsSectionSkeleton className='p-0 m-0' />
-      ) : !isLoading && error ? (
+      ) : error ? (
         <div className='flex items-center justify-center h-64 p-4'>
           <Typography variant='h6' color='error' className='mb-2'>
             Error loading import details

@@ -1,3 +1,4 @@
+import { SelectOption } from '../../../../types';
 import { FieldConfig } from '../../components/filter/filterType';
 
 const textOptions: { option: string; value: string }[] = [
@@ -14,13 +15,14 @@ const numberOptions: { option: string; value: string }[] = [
   { option: 'Less Than', value: 'less_than' },
   { option: 'Greater Than', value: 'greater_than' },
   { option: 'Between', value: 'between' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
 
-// const enumOptions: { option: string; value: string }[] = [
-//   { option: 'Equals', value: 'equals' },
-//   { option: 'Not Equals', value: 'not_equals' },
-//   { option: 'In', value: 'in' },
-// ];
+const enumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
 
 const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -29,8 +31,16 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
 ];
 
-export const getImportsFilterFields = (): FieldConfig[] => {
+export const getImportsFilterFields = (
+  fiscalYears: SelectOption[]
+): FieldConfig[] => {
   return [
+    {
+      name: 'Import ID',
+      value: 'r_number',
+      type: 'text',
+      operatorOption: textOptions,
+    },
     {
       name: 'File Name',
       value: 'file_name',
@@ -45,15 +55,16 @@ export const getImportsFilterFields = (): FieldConfig[] => {
     },
     {
       name: 'Size',
-      value: 'size_in_mb',
+      value: 'size',
       type: 'text',
       operatorOption: textOptions,
     },
     {
       name: 'Fiscal Year',
-      value: 'fiscal_year',
-      type: 'text',
-      operatorOption: textOptions,
+      value: 'fiscal',
+      type: 'enum',
+      options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
+      operatorOption: enumOptions,
     },
     {
       name: 'Entity',
@@ -91,18 +102,18 @@ export const getImportsFilterFields = (): FieldConfig[] => {
       type: 'text',
       operatorOption: textOptions,
     },
-    {
-      name: 'Status Description',
-      value: 'status_description',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Import Type',
-      value: 'import_type',
-      type: 'text',
-      operatorOption: textOptions,
-    },
+    // {
+    //   name: 'Status Description',
+    //   value: 'status_description',
+    //   type: 'text',
+    //   operatorOption: textOptions,
+    // },
+    // {
+    //   name: 'Import Type',
+    //   value: 'import_type',
+    //   type: 'text',
+    //   operatorOption: textOptions,
+    // },
     {
       name: 'Imported By',
       value: 'imported_by',

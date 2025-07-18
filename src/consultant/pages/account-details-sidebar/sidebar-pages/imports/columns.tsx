@@ -8,19 +8,35 @@ export const getImportsListColumns = (
   handleDownload: (rowId: string) => void
 ): ListTableColumn<ImportsList>[] => [
   {
-    id: 'file_name',
-    sortId: 'file_name',
-    label: 'File Name',
-    width: 200,
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Import ID',
+    width: 140,
     sortable: true,
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
     render: (row: ImportsList) => (
       <span
         onClick={() => handleDocument(row.rid)}
         className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
       >
-        {row.file_name}
+        {row.r_number}
       </span>
     ),
+  },
+  {
+    id: 'file_name',
+    sortId: 'file_name',
+    label: 'File Name',
+    width: 200,
+    sortable: true,
   },
   {
     id: 'format',
@@ -42,6 +58,7 @@ export const getImportsListColumns = (
     label: 'Fiscal Year',
     width: 140,
     sortable: true,
+    render: (row: ImportsList) => row.fiscal && `FY-${row.fiscal}`,
   },
   {
     id: 'entity',
@@ -97,20 +114,20 @@ export const getImportsListColumns = (
     width: 140,
     sortable: true,
   },
-  {
-    id: 'status_description',
-    sortId: 'status_description',
-    label: 'Status Description',
-    width: 240,
-    sortable: true,
-  },
-  {
-    id: 'import_type',
-    sortId: 'import_type',
-    label: 'Import Type',
-    width: 160,
-    sortable: true,
-  },
+  // {
+  //   id: 'status_description',
+  //   sortId: 'status_description',
+  //   label: 'Status Description',
+  //   width: 240,
+  //   sortable: true,
+  // },
+  // {
+  //   id: 'import_type',
+  //   sortId: 'import_type',
+  //   label: 'Import Type',
+  //   width: 160,
+  //   sortable: true,
+  // },
   {
     id: 'imported_by',
     sortId: 'imported_by',

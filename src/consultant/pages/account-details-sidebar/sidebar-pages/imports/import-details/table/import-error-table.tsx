@@ -1,6 +1,7 @@
-import { ListTable } from '../../../../../../components/table';
-import { useImportErrorRecords } from '../../../../../services/import';
-import { ImportErrorRecord } from '../../../../../types/imports';
+import { ListTable } from '../../../../../../../components/table';
+import { useImportErrorRecords } from '../../../../../../services/import';
+import { ImportErrorRecord } from '../../../../../../types/imports';
+import { importsErrorColumns } from './columns';
 
 interface ImportErrorTableProps {
   fileId: string | null;
@@ -13,31 +14,9 @@ const ImportErrorTable = ({ fileId, type }: ImportErrorTableProps) => {
     isLoading,
     isError,
   } = useImportErrorRecords(fileId || '', type);
+
   const getRowId = (row: ImportErrorRecord) => row.id;
 
-  const importsErrorColumns = [
-    {
-      id: 'id',
-      sortId: 'id',
-      label: 'File ID',
-      width: 300,
-      sortable: false,
-    },
-    {
-      id: 'reason',
-      sortId: 'reason',
-      label: 'Reason',
-      width: 300,
-      sortable: false,
-    },
-    {
-      id: 'description',
-      sortId: 'description',
-      label: 'Description',
-      width: 300,
-      sortable: false,
-    },
-  ];
   return (
     <div className='border-t border-[#CBD6E2]'>
       <ListTable
