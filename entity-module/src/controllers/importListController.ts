@@ -51,7 +51,7 @@ async function fetchAllImportList(req: Request, res: Response) {
                 records_failed_to_load : data.records_failed_to_load,
                 records_with_warning : data.records_with_warning,
                 status : data.status,
-                imported_on : data.imported_on,
+                imported_on : new Date(data.imported_on).toISOString(),
                 imported_by : data.imported_by,
             })
         )
@@ -67,6 +67,9 @@ async function fetchAllImportList(req: Request, res: Response) {
         } else if (conditionObj.not_equals) {
             importedByFilter = conditionObj.not_equals.toLowerCase();
             importedByCondition = "not_equals";
+        } else if (conditionObj.is_empty) {
+            importedByFilter = conditionObj.is_empty;
+            importedByCondition = "is_empty";
         }
     }
 
@@ -90,6 +93,8 @@ async function fetchAllImportList(req: Request, res: Response) {
                     return importedByName === importedByFilter;
                 } else if (importedByCondition === "not_equals") {
                     return importedByName !== importedByFilter;
+                } else if (importedByCondition === "is_empty") {
+                    return importedByName === null;
                 }
                 return true;
             })
