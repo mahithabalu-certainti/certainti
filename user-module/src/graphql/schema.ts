@@ -103,13 +103,13 @@ const typeDefs = gql`
       statusCode : Int
       statusCodeValue : String
       statusMessage : String
-      data : UserGroup
+      usergroup : UserGroup
     }
 
    input UserGroupUpdate {
     group_rid: ID!
     group_name: String!
-    status_rid : String!
+    status_rid : String
   }
 
   type Query {
@@ -119,7 +119,7 @@ const typeDefs = gql`
   type Mutation {
     updateUser(input: UpdateUserInput!): UpdateUserResponse!
     updateUserProfile(input: UpdateUserProfileInput!): UpdateUserProfileResponse!
-    userGroupUpdate(data: UserGroupUpdate!): updateUserGroupResponse!
+    userGroupUpdate(input: UserGroupUpdate!): updateUserGroupResponse!
   }
 `;
 

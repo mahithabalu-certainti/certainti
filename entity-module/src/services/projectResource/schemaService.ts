@@ -3343,7 +3343,7 @@ export class ProjectResourceSchemaService {
       whereFilters.fiscal_year = fiscalYear;
     }
 
-    const isDbField = !["region_name", "resource_type_name"].includes(sortBy);
+    const isDbField = !["region_name", "resource_type_name", "country_name"].includes(sortBy);
     const dbOrder =
       isDbField && sortBy && sortOrder
         ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
@@ -3469,7 +3469,17 @@ export class ProjectResourceSchemaService {
         ),
       ];
 
+      // Get unique country_rids
+      const uniqueCountryIds = [
+        ...new Set(
+          projectResources
+            .map((res) => res.country_rid)
+            .filter((id) => id !== null && id !== undefined)
+        ),
+      ];
+
       const regionMap = new Map<string, string>();
+      const countryMap = new Map<string, string>();
 
       if (uniqueRegionIds.length > 0) {
         const regionsResult: any = await this.mainDbSequelize.query(
@@ -3485,11 +3495,27 @@ export class ProjectResourceSchemaService {
         }
       }
 
+      if (uniqueCountryIds.length > 0) {
+        const countriesResult: any = await this.mainDbSequelize.query(
+          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: uniqueCountryIds },
+            type: "SELECT",
+          }
+        );
+  
+        for (const country of countriesResult) {
+          countryMap.set(country.rid, country.country_name);
+        }
+      }  
+
       const enrichedResources = projectResources.map((resource) => {
         const regionName = regionMap.get(resource.region_rid) || null;
+        const countryName = countryMap.get(resource.country_rid) || null;
         return {
           ...(resource.dataValues ?? resource),
           region_name: regionName,
+          country_name: countryName,
         };
       });
 
@@ -3553,7 +3579,7 @@ export class ProjectResourceSchemaService {
     sortOrder: string,
     filters?: Record<string, any>
   ): Promise<any[]> {
-    const enumFields = ["region_name", "resource_type_name"];
+    const enumFields = ["region_name", "resource_type_name", "country_name"];
 
     const matchFilter = (record: any, key: string, filter: any): boolean => {
       const value = record[key];

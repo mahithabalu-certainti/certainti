@@ -84,7 +84,10 @@ const assignUserToAccountSchema = Joi.object({
   has_access_enabled:Joi.boolean().required()
 });
 
-
+const listUserGroupTypeSchema = Joi.object({
+  type: Joi.string().optional().label("Type"),
+  
+});
 const listProjectUserGroupSchema = Joi.object({
   account_rid: Joi.string().required().label("Account Id"),
   entity_rid: Joi.string().required().label("User Id/Project Id"),
@@ -448,4 +451,4 @@ export { createUserSchema, updateUserSchema, enterpriseUserSchema,
   createUserGroupSchema,updateUserGroupSchema,listUserGroupSchema,
 listActiveUserGroupSchema,assignUserToAccountSchema,assignUserToProjectSchema,
 listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,
-listProjectOfAccountSchema};
+listProjectOfAccountSchema,listUserGroupTypeSchema};
