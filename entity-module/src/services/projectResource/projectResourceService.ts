@@ -1320,7 +1320,7 @@ export class ProjectResourceService {
       "qre_final",
     ];
 
-    const enumFields = ["resource_code"];
+    const enumFields = ["resource_code", "country_rid", "region_rid", "resource_type_rid"];
 
     const filterFields = this.getFilterFields();
 
@@ -1354,8 +1354,9 @@ export class ProjectResourceService {
     const projectFilterFields = [
       { clientField: "resource_code", dbField: "resource_code" },
       { clientField: "resource_name", dbField: "resource_name" },
-      // { clientField: "region_rid", dbField: "region_rid" },
-      // { clientField: "resource_type", dbField: "resource_type" },
+      { clientField: "region_rid", dbField: "region_rid" },
+      { clientField: "country_rid", dbField: "country_rid" },
+      { clientField: "resource_type_rid", dbField: "resource_type_rid" },
       { clientField: "resource_role", dbField: "resource_role" },
       { clientField: "total_hours_pro_res", dbField: "total_hours_pro_res" },
       { clientField: "total_cost_pro_res", dbField: "total_cost_pro_res" },

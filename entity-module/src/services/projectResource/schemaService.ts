@@ -3438,15 +3438,16 @@ export class ProjectResourceSchemaService {
       return {
         "Resource Code": resource.resource_code || "-",
         "Resource Name": resource.resource_name || "-",
-        Region: resource.region_name || "-",
+        "Country": resource.country_name || "-",
+        "Region": resource.region_name || "-",
         "Fiscal Year": resource.fiscal_year || "-",
         "Resource Type": resource?.resource_type_name || "-",
-        Role: resource.resource_role || "-",
+        "Role": resource.resource_role || "-",
         "Effort (Hours)": resource.total_hours_pro_res || "-",
         Cost: resource.total_cost_pro_res || "-",
         "QRE%": resource.qre_percent || "-",
-        QRE: resource.qre_final || "-",
-        Comments: resource.description || "-",
+        "QRE": resource.qre_final || "-",
+        "Comments": resource.description || "-",
         "Project Resource ID": resource.project_resource_code || "-",
       };
     });
