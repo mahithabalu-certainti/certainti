@@ -506,3 +506,13 @@ export interface IAttachmentGraphqlServices {
     data?: { resourceRolesSubType: any };
   }>;
 }
+
+export interface IImportListGraphqlServices {
+  listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : any) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceRolesSubType: any };
+  }>; 
+  fetchUserDetails(userRids: string[]) :  Promise<any[]>
+}

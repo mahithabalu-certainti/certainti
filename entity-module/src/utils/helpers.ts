@@ -854,65 +854,6 @@ export const setInlineForAttachments = (dbData : Attachment, requestData : any) 
   }
 }
 
-// export const mapPrjToPrjFiscal = (requestData : any) => {
-//   let newPrjArray = []
-//   let newPrjData : any = {}
-
-//   if(requestData.project_name != undefined) {
-//   newPrjData.project_name = requestData.project_name
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.project_code) {
-//   newPrjData.project_code = requestData.project_code
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.project_type_rid != undefined) {
-//   newPrjData.project_type_rid = requestData.project_type_rid
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.project_classification_rid != undefined) {
-//   newPrjData.project_classification_rid = requestData.project_classification_rid 
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.project_classification_other != undefined) {
-//   newPrjData.project_classification_other = requestData.project_classification_other
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.project_client_group != undefined) {
-//   newPrjData.project_client_group = requestData.project_client_group
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.project_group != undefined) {
-//   newPrjData.project_group = requestData.project_group 
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.assessment_status != undefined) {
-//   newPrjData.assessment_status = requestData.assessment_status
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.comments != undefined) {
-//   newPrjData.comments = requestData.comments
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.total_cost != undefined) {
-//   newPrjData.total_cost_prj = requestData.total_cost
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.total_effort != undefined) {
-//   newPrjData.total_effort_prj = requestData.total_effort
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.total_cost_fte != undefined) {
-//   newPrjData.total_cost_fte_prj = requestData.total_cost_fte 
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.total_cost_subcon != undefined) {
-//   newPrjData.total_cost_subcon_prj = requestData.total_cost_subcon 
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(requestData.total_cost_nonlabor != undefined) {
-//   newPrjData.total_cost_nonlabor_prj = requestData.total_cost_nonlabor 
-//   newPrjArray.push(newPrjData)
-//   }
-//   if(request)
-// }
+export const validateImportListRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+}

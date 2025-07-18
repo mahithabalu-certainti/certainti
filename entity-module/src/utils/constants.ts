@@ -111,7 +111,11 @@ export const STATUS_MESSAGE = {
   docTypeInvalid : "Document Type you are trying to update is invalid",
   NoResourceFound : "No Resource found",
   separateDb : "separate_db",
-  fiscalYearAlreadyExists : "Duplicate fiscal year not allowed"
+  fiscalYearAlreadyExists : "Duplicate fiscal year not allowed",
+  targetLoadSuccess : "Success",
+  targetLoadFailed : "Failed",
+  importListedSuccess : "Imports listed successfully",
+  importsNoFound : "No imports found"
 }
 
 export const TYPES = {
@@ -519,4 +523,56 @@ export const rawQueries = {
     FROM ${MAIN_SCHEMA_NAME}.user 
     WHERE rid IN (:userIds)
   `,
+}
+
+export const IMPORT_FILTER_COLUMNS : any = {
+  file_name: "document_name",
+  format: "document_format",
+  size: "document_size",
+  fiscal: "fiscal_year",
+  entity: "entity_type",
+  total_records: "total_records",
+  records_loaded_successfully: "records_loaded_successfully",
+  records_failed_to_load: "records_failed_to_load",
+  status: "document_status",
+  imported_on: "uploaded_datetime",
+  status_description: "status_description",
+  import_type: "import_type",
+  imported_by: "uploaded_by_user_rid",
+  records_with_warning: "total_staging_warning_count",
+}
+
+export const IMPORT_DOC_FILTER_KEYS = {
+  format: "format",
+  size: "size",
+  status : "status"
+}
+
+export const IMPORT_DOC_IMPORT_KEYS = {
+  file_name: "file_name",
+  fiscal: "fiscal",
+  entity: "entity",
+  total_records: "total_records",
+  records_loaded_successfully: "records_loaded_successfully",
+  records_failed_to_load: "records_failed_to_load",
+  imported_on: "imported_on",
+  status_description: "status_description",
+  import_type: "import_type",
+  imported_by: "imported_by",
+  records_with_warning: "records_with_warning"
+}
+
+
+export const ALPHANUMERIC_CONDITIONS = {
+  equals : "equals",
+  notEquals : "not_equals",
+  contains : "contains",
+  isEmpty : "is_empty",
+  IN : "in",
+  less_than : "less_than",
+  greater_than : "greater_than",
+  between : "between",
+  before : "before",
+  after : "after",
+
 }
