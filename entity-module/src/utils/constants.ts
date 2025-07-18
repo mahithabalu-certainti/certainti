@@ -523,6 +523,9 @@ export const rawQueries = {
     FROM ${MAIN_SCHEMA_NAME}.user 
     WHERE rid IN (:userIds)
   `,
+  fetchUserDetailsById (userId : string) {
+    return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`
+  }
 }
 
 export const IMPORT_FILTER_COLUMNS : any = {

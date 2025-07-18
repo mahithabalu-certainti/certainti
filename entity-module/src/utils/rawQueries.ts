@@ -42,7 +42,13 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     if (sort === 'r_number') sortValue = `a.r_number ${sortBy}`;
     else if (sort === 'file_name') sortValue = `a.document_name ${sortBy}`;
     else if (sort === 'format') sortValue = `a.document_format ${sortBy}`;
-    else if (sort === 'size') sortValue = `CAST(REGEXP_REPLACE(a.document_size, '[^0-9.]', '', 'g')AS DECIMAL) ${sortBy}`;
+    else if (sort === 'size') sortValue = `
+    CASE 
+    WHEN a.document_size ILIKE '%kb' THEN CAST(REGEXP_REPLACE(a.document_size, '[^0-9.]', '', 'g') AS DECIMAL ) * 1024 
+    WHEN a.document_size ILIKE '%bytes' THEN CAST(REGEXP_REPLACE(a.document_size, '[^0-9.]', '', 'g') AS DECIMAL)
+    WHEN a.document_size ILIKE '%mb' THEN CAST(REGEXP_REPLACE(a.document_size, '[^0-9.]', '', 'g') AS DECIMAL) * 1024 * 1024
+    ELSE 0
+    END ${sortBy}`
     else if (sort === 'fiscal') sortValue = `a.fiscal_year ${sortBy}`;
     else if (sort === 'entity') sortValue = `a.entity_type ${sortBy}`;
     else if (sort === 'total_records') sortValue = `a.total_records ${sortBy}`;
@@ -180,8 +186,8 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     WITH all_datas AS (
     SELECT i.rid, i.r_number, i.document_name, d.document_format,
     d.document_size,i.entity_type, i.total_records,i.fiscal_year,
-    (SELECT COUNT(*) FROM ${schemaName}.import ii WHERE ii.account_rid = i.account_rid AND ii.target_load_status = '${STATUS_MESSAGE.targetLoadSuccess}') AS records_loaded_successfully,
-    (SELECT COUNT(*) FROM ${schemaName}.import ii WHERE ii.account_rid = i.account_rid AND ii.target_load_status = '${STATUS_MESSAGE.targetLoadFailed}') AS records_failed_to_load,
+    ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))) AS records_loaded_successfully,
+    (COALESCE(i.target_load_error_records_count,0) + (COALESCE(i.total_records, 0) - COALESCE(i.total_staging_processed,0))) AS records_failed_to_load,
     i.total_staging_warning_count,d.document_status, i.uploaded_datetime, i.uploaded_by_user_rid
     FROM ${schemaName}.import i
     LEFT JOIN ${schemaName}.account_details a ON a.account_rid = i.account_rid
@@ -240,4 +246,32 @@ function isStrictIsoDate(value: any): boolean {
 
 function isNumber(value : any) {
   return !isNaN(value) && /^\d+$/.test(value);
+}
+
+export const fetchImportListByRid = (rid : string, schemaName : string) => {
+    let query = `
+    SELECT 
+    jsonb_build_object(
+    'rid', i.rid,
+    'r_number', i.r_number,
+    'file_name', i.document_name,
+    'format', d.document_format,
+    'size', d.document_size,
+    'entity', i.entity_type,
+    'total_records', i.total_records,
+    'fiscal', i.fiscal_year,
+    'status', d.document_status,
+    'imported_on', i.uploaded_datetime,
+    'imported_by', i.uploaded_by_user_rid,
+    'records_loaded_successfully', ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))),
+    'records_failed_to_load', i.target_load_error_records_count,
+    'records_failed_to_stage', (COALESCE(i.total_records,0) - COALESCE(i.total_staging_processed, 0)),
+    'records_with_warning', i.total_staging_warning_count
+    ) AS imports
+    FROM ${schemaName}.import i
+    LEFT JOIN ${schemaName}.document d ON d.rid = i.document_rid
+    WHERE 
+    i.rid = '${rid}'
+    `
+    return query;
 }

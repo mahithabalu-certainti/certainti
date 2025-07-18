@@ -515,4 +515,11 @@ export interface IImportListGraphqlServices {
     data?: { resourceRolesSubType: any };
   }>; 
   fetchUserDetails(userRids: string[]) :  Promise<any[]>
+  fetchImportById(account_rid : any, rid : any) : Promise<{
+    statusCode: number;
+    data: {};
+} | {
+    statusCode: number;
+    data: null;
+}>
 }
