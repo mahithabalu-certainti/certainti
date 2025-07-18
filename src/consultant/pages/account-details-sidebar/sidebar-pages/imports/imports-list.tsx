@@ -86,13 +86,14 @@ const Imports: React.FC<ImportsProps> = ({
       sort_by: sortOrder,
       filters: appliedFilters,
       account_rid: accountid || '',
-      fiscalYear: convertedFiscalYear,
+      fiscal_year: convertedFiscalYear,
     },
     !viewDetails,
     refreshImports
   );
   const totalItems = data?.count || 0;
-  const fiscalYears = getFiscalYears(26);
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
 
   useEffect(() => {
     if (data) {

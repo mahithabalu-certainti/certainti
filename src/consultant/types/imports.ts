@@ -23,7 +23,7 @@ export interface ImportsListURLParams {
   sort: string;
   sort_by: 'asc' | 'desc';
   filters?: object;
-  fiscalYear?: number | string;
+  fiscal_year?: number | string;
   account_rid: string;
 }
 
