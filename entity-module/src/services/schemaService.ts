@@ -3372,6 +3372,11 @@ async fetchAccountsByIds(accountRids: string[]) {
   try {
     const mainDbSequelize = await initMainDbSequelize();
 
+    // Return empty array if no account IDs provided
+    if (!accountRids || accountRids.length === 0) {
+      return [];
+    }
+
     const accounts = await mainDbSequelize.query(
       `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:accountRids)`,
       {

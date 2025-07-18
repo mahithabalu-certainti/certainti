@@ -10,7 +10,8 @@ import {
   IResourceSkillGraphQlService,
   IResourceSkillService,
   IAttachmentService,
-  IAttachmentGraphqlServices
+  IAttachmentGraphqlServices,
+  IImportListGraphqlServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -36,6 +37,7 @@ class Services implements IServiceContainer {
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
   private _resourceSkillGraphqlServices? : IResourceSkillGraphQlService;
   private _attachmentGraphqlServices? : IAttachmentGraphqlServices;
+  private _importGraphqlService? : IImportListGraphqlServices;
 
   constructor(
     logger: Logger,
@@ -96,6 +98,13 @@ class Services implements IServiceContainer {
       this._attachmentGraphqlServices = new AttachmentGraphqlServies
     }
     return this._attachmentGraphqlServices!
+  }
+  get importGraphqlServices() : IImportListGraphqlServices {
+    if(!this._importGraphqlService) {
+      const {default : IImportListGraphqlServices} = require('../services/importGraphqlServices')
+      this._importGraphqlService = new IImportListGraphqlServices()
+    }
+    return this._importGraphqlService!
   }
 }
 

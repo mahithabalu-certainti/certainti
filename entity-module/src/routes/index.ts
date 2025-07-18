@@ -6,6 +6,7 @@ import projectRoutes from "./projectRoutes";
 import attachmentRoutes from "./attachmentRoutes";
 import projectResourceRoutes from "./projectResourceRoutes";
 import { errorLog, successLog } from "../utils/helpers";
+import importRoutes from './importRoutes'
 
 const routes: Router = Router();
 
@@ -33,5 +34,6 @@ routes.use("/resource_skill", resourceSkillRoutes);
 routes.use("/project", projectRoutes);
 routes.use("/attachment", attachmentRoutes);
 routes.use("/project_resources", projectResourceRoutes);
+routes.use("/import", importRoutes)
 
 export default routes;
