@@ -2,7 +2,7 @@ import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants, MAIN_SCHEMA_NAME, rawQuery } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op, Sequelize, IndexHints, DataTypes } from "sequelize";
+import { Op, Sequelize, IndexHints, DataTypes, QueryTypes } from "sequelize";
 import ExcelJS from "exceljs";
 import { OrganizationLicenses } from "../models/organisationLicense";
 import moment, { Moment } from "moment";
@@ -1642,6 +1642,89 @@ if (includeDependencies) {
       orgName,
     };
   }
+ async getAllowedExportFields(userId: string, permission_name: string): Promise<any[]> {
+  const userInfo = await User.findOne({
+    attributes: ["role_rid", "rid", "profile_rid", "first_name"],
+    where: { rid: userId },
+  });
+
+  if (!userInfo) {
+    return [];
+  }
+
+  const sequelize = await initSequelize();
+
+  const [profileFields, userFields] = await Promise.all([
+    sequelize.query(
+      `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM trd365.profile_fields_access pfa
+      JOIN trd365.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND pfa.profile_id = :profileId
+      `,
+      {
+        replacements: {
+          permissionName: permission_name,
+          profileId: userInfo.profile_rid,
+        },
+        type: QueryTypes.SELECT,
+      }
+    ),
+    sequelize.query(
+      `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM trd365.user_fields_access ufa
+      JOIN trd365.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+      `,
+      {
+        replacements: {
+          permissionName: permission_name,
+          userId,
+        },
+        type: QueryTypes.SELECT,
+      }
+    ),
+  ]);
+
+  // Merge: user overrides profile
+  const userFieldMap = new Map<string, any>();
+  for (const field of userFields as any[]) {
+    userFieldMap.set(field.field_name, field);
+  }
+
+  const merged = (profileFields as any[]).map((pf) => {
+    const userPerm = userFieldMap.get(pf.field_name);
+    if (userPerm) {
+      userFieldMap.delete(pf.field_name);
+      return {
+        field_desc: pf.field_desc,
+        field_name: pf.field_name,
+        read:pf.read ? true : userPerm?.read === true,
+      };
+    }
+    return {
+      field_desc: pf.field_desc,
+      field_name: pf.field_name,
+      read: pf.read,
+    };
+  });
+
+  const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+    field_desc: uf.field_desc,
+    field_name: uf.field_name,
+    read: uf.read,
+  }));
+
+  const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+  console.log(exportableFields)
+  return exportableFields;
+}
+
 
   /**
    * Retrieves a  list of users based on search and filter criteria  for exporting the data with,
@@ -1665,7 +1748,8 @@ if (includeDependencies) {
     sortBy: string,
     sortOrder: string,
     organization: string,
-    timezone: string
+    timezone: string,
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1709,36 +1793,63 @@ if (includeDependencies) {
           return user.dataValues;
         }
       });
+      const allowedFieldsForExport = await this.getAllowedExportFields(userId,"user_view_edit");
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
       users = cleanedUsers.map((user: any) => {
-        const { profile, business_teams, ...basicUserInfo } = user;
-        return {
-          Username: basicUserInfo.first_name || "-",
-          Email: basicUserInfo.email || "-",
-          Profile: profile?.profile_name || "-",
-          Role: business_teams.business_teams || "-",
-          "Created On": basicUserInfo.created_datetime
+      const exportData: Record<string, any> = {};
+      const flatUser = {
+        ...user,
+        profile_name: user.profile?.profile_name,
+        business_teams: user.business_teams?.business_teams,
+        status_name: user.status?.status_name,
+      };
+      const fieldMap: Record<string, any> = {
+        first_name: flatUser.first_name || "-",
+        email: flatUser.email || "-",
+        profile_rid: flatUser.profile_name || "-",
+        business_teams: flatUser.business_teams || "-",
+        created_datetime: flatUser.created_datetime
             ? timezone && isValidTimezone(timezone)
-              ? moment(basicUserInfo.created_datetime)
-                  .tz(timezone)
-                  .format("YYYY-MM-DD, hh:mm:ss A")
-              : moment(basicUserInfo.created_datetime).format(
-                  "YYYY-MM-DD, hh:mm:ss A"
-                )
-            : "-",
-          "Updated On": basicUserInfo.modified_datetime
-            ? timezone && isValidTimezone(timezone)
-              ? moment(basicUserInfo.modified_datetime)
-                  .tz(timezone)
-                  .format("YYYY-MM-DD, hh:mm:ss A")
-              : moment(basicUserInfo.modified_datetime).format(
-                  "YYYY-MM-DD, hh:mm:ss A"
-                )
-            : "-",
-          Status: basicUserInfo.status?.status_name,
-        };
-      });
+            ? moment(flatUser.created_datetime).tz(timezone).format("YYYY-MM-DD, hh:mm:ss A")
+          : moment(flatUser.created_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+          : "-",
+        modified_datetime: flatUser.modified_datetime
+        ? timezone && isValidTimezone(timezone)
+        ? moment(flatUser.modified_datetime).tz(timezone).format("YYYY-MM-DD, hh:mm:ss A")
+        : moment(flatUser.modified_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+        : "-",
+        status_rid: flatUser.status_name || "-",
+  };
 
-      return {
+  // Label mapping for output
+  const labelMap: Record<string, string> = {
+    first_name: "Username",
+    email: "Email",
+    profile_rid: "Profile",
+    business_teams: "Role",
+    created_datetime: "Created On",
+    modified_datetime: "Updated On",
+    status_rid: "Status",
+  };
+
+  for (const [field, value] of Object.entries(fieldMap)) {
+    console.log("field",field);
+    console.log("value",value)
+    if (allowedFieldSet.has(field)) {
+      exportData[labelMap[field]] = value;
+    }
+  }
+
+  return exportData;
+});
+
+
+  return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
