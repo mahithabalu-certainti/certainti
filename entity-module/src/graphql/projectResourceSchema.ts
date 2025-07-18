@@ -65,6 +65,7 @@ export const projectResourceSchema = gql`
     resource_name: String
     resource_code: String
     region_rid: String
+    country_rid: String
     resource_type_rid: String
     resource_role: String
     total_hours_pro_res: String
