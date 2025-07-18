@@ -1,5 +1,9 @@
 import { PROJECT_RESOURCE_REGEX } from '../../../../../../common-utils';
-import { ListTableColumn } from '../../../../../../components/table/types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../../components/table/types';
+import { SelectOption } from '../../../../../types';
 import { ProjectResourcesListType } from '../../../../../types/project-resources';
 
 export type TableColumn<T> = {
@@ -15,11 +19,18 @@ export type TableColumn<T> = {
 
 export const getProjectResourcesColumns = (
   onClick: (row: ProjectResourcesListType) => void,
+  memoizedProjectResourceCode: SelectOption[],
+  memoizedProjectTypes: SelectOption[],
+  countryOptions: SelectOption[],
+  memoizedState: SelectOption[],
+  handleCountry: (country: string) => void,
+  regionLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ProjectResourcesListType>[] => [
   {
     id: 'resource_code',
     label: 'Resource Code',
+    editId: 'resource_code',
     sortable: true,
     sortId: 'resource_code',
     width: '160px',
@@ -37,6 +48,11 @@ export const getProjectResourcesColumns = (
       zIndex: 10,
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
+    },
+    field: {
+      type: 'select',
+      options: memoizedProjectResourceCode,
+      required: true,
     },
     render: (row: ProjectResourcesListType) => (
       <span
@@ -74,8 +90,43 @@ export const getProjectResourcesColumns = (
     },
   },
   {
+    id: 'country_name',
+    label: 'Resource Country',
+    editId: 'country_rid',
+    sortable: false,
+    sortId: 'country_name',
+    width: '150px',
+    editable:
+      permissionMap?.['country_rid']?.read &&
+      permissionMap?.['country_rid']?.edit,
+    hide:
+      !permissionMap?.['country_rid']?.read &&
+      !permissionMap?.['country_rid']?.edit,
+    field: {
+      type: 'select',
+      options: countryOptions,
+      required: false,
+      onChange: true,
+      placeholder: 'Choose Country',
+      resetDependentFields: ['region_name'],
+      getFieldData: (rowData: DependencyRowData) => {
+        handleCountry(String(rowData.country_rid));
+        return String(rowData.country_rid);
+      },
+      dependencies: [
+        {
+          dependsOn: 'region_name',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+      ],
+    },
+  },
+  {
     id: 'region_name',
     label: 'Resource Region',
+    editId: 'region_rid',
     sortable: false,
     sortId: 'region_name',
     width: '150px',
@@ -85,10 +136,29 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['region_rid']?.read &&
       !permissionMap?.['region_rid']?.edit,
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Region',
+      loading: regionLoading,
+      options: memoizedState,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.region_rid);
+      },
+      dependencies: [
+        {
+          dependsOn: 'country_name',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+      ],
+    },
   },
   {
     id: 'resource_type_name',
     label: 'Resource Type',
+    editId: 'resource_type_rid',
     sortable: true,
     sortId: 'resource_type_name',
     width: '150px',
@@ -98,6 +168,11 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['resource_type_rid']?.read &&
       !permissionMap?.['resource_type_rid']?.edit,
+    field: {
+      type: 'select',
+      options: memoizedProjectTypes,
+      required: true,
+    },
   },
   // {
   //   id: 'resource_orgname',
@@ -118,6 +193,18 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['resource_role']?.read &&
       !permissionMap?.['resource_role']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Resource Role',
+      validation: [
+        {
+          regex: PROJECT_RESOURCE_REGEX.ROLE,
+          errorMessage:
+            "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
+        },
+      ],
+    },
   },
 
   {
@@ -132,6 +219,17 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['total_hours_pro_res']?.read &&
       !permissionMap?.['total_hours_pro_res']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter an effort',
+      validation: [
+        {
+          regex: PROJECT_RESOURCE_REGEX.EFFORT,
+          errorMessage: 'Effort must be a positive number',
+        },
+      ],
+    },
   },
   {
     id: 'total_cost_pro_res',
@@ -145,6 +243,17 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['total_cost_pro_res']?.read &&
       !permissionMap?.['total_cost_pro_res']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Cost',
+      validation: [
+        {
+          regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
+          errorMessage: 'Cost must be a 18-digit number with up to 2 decimals',
+        },
+      ],
+    },
   },
   {
     id: 'qre_percent',
@@ -178,6 +287,17 @@ export const getProjectResourcesColumns = (
     hide:
       !permissionMap?.['description']?.read &&
       !permissionMap?.['description']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Comments',
+      validation: [
+        {
+          regex: PROJECT_RESOURCE_REGEX.DESCRIPTION,
+          errorMessage: 'Maximum 2000 characters allowed',
+        },
+      ],
+    },
   },
   // {
   //   id: 'r_number',

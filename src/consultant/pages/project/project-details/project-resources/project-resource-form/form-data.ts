@@ -99,7 +99,7 @@ export const ProjectResourceFormData = (
           createSelectField('resource_code', 'Resource Code', {
             options: projectResourceCodes,
             required: true,
-            placeholder: 'Enter Resource Code',
+            placeholder: 'Choose Resource Code',
             disabled:
               isEditView &&
               permissionMap?.['resource_code']?.read &&

@@ -18,7 +18,11 @@ import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 // import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
 import { FiscalYearType } from '../../../../types/project';
 import { checkPermission } from '../../../../../common-utils';
@@ -28,9 +32,14 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_RESOURCE } from '../../../../../api/graphql/queries/project-query';
 import {
   CellEditData,
+  FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
+import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import { SelectOption } from '../../../../types';
+import { useGetResourceType } from '../../../../services/resource-list';
+import { useFetchState } from '../../../../services/account';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -79,6 +88,7 @@ export const ProjectResources = ({
     useState<ProjectResourcesListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
 
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
@@ -154,7 +164,53 @@ export const ProjectResources = ({
       setProjectResourceList(data?.projectResources || []);
     }
   }, [data]);
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    accountID as string
+  );
+  const projectResourceTypeOptions = useGetResourceType();
+  const countriesList = useGetAllCountries();
+  const region = useFetchState(currentCountry);
+  const memoizedProjectResourceCode: SelectOption[] = useMemo(
+    () =>
+      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+        label: item.resource_code,
+        value: item.resource_code,
+      })) || [],
+    [projectResourceCodeOptions?.data?.resourceCodes]
+  );
+  const countryOptions: SelectOption[] = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
 
+  const memoizedState: SelectOption[] = useMemo(
+    () =>
+      region.data?.data.states.map((state) => ({
+        label: state.state_name,
+        value: state.rid,
+      })) || [],
+    [region.data?.data.states]
+  );
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'country_name' && event.value) {
+      setCurrentCountry(String(event.value));
+    }
+  };
+  const handleCountry = (country: string) => {
+    setCurrentCountry(country);
+  };
+  const memoizedProjectTypes: SelectOption[] = useMemo(
+    () =>
+      projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [projectResourceTypeOptions?.data?.data?.resouceType]
+  );
   const handleProjectResourceDetailEdit = () => {
     if (resourceData) {
       const path = PROJECT_RESOURCE_EDIT.replace(
@@ -274,6 +330,12 @@ export const ProjectResources = ({
 
   const projectResourcesColumns = getProjectResourcesColumns(
     handleProjectResourceClick,
+    memoizedProjectResourceCode,
+    memoizedProjectTypes,
+    countryOptions,
+    memoizedState,
+    handleCountry,
+    region.isPending,
     permissionMap
   );
   const onRefreshClick = () => {
@@ -287,11 +349,15 @@ export const ProjectResources = ({
       (pro) => pro.rid === rowId
     );
     // let hasResourceTye = false;
+    let hasCountry = false;
+    let hasRegion = false;
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;
         // if (item.columnId === 'resource_type_name') hasResourceTye = true;
+        if (item.columnId === 'country_name') hasCountry = true;
+        if (item.columnId === 'region_name') hasRegion = true;
         return acc;
       },
       {
@@ -301,9 +367,9 @@ export const ProjectResources = ({
       }
     );
 
-    // if (hasResourceTye) {
-    //   updateData['resource_orgname'] = '';
-    // }
+    if (hasCountry && !hasRegion) {
+      updateData['region_rid'] = '';
+    }
 
     try {
       const res = await updateProjectResourceMutation({
@@ -415,6 +481,7 @@ export const ProjectResources = ({
               }
               component='project resources'
               onCellEdit={handleCellEdit}
+              onFieldChange={handleFieldChange}
             />
           )}
         </div>

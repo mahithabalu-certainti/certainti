@@ -306,7 +306,7 @@ const TabPanel: React.FC<TabProps> = ({
       }));
       setRegionData(data);
     }
-  }, [Regions.data?.data.states]);
+  }, [Regions.data?.data?.states]);
 
   useEffect(() => {
     if (skillSubType) {
@@ -414,6 +414,7 @@ const TabPanel: React.FC<TabProps> = ({
     if (value === 'project-resources')
       return projectResourceFilterFields(
         memoizedProjectResourceCode,
+        memoizedCountry,
         regionData,
         memoizedResourceType,
         permissionProjectResourcesMap
@@ -438,14 +439,21 @@ const TabPanel: React.FC<TabProps> = ({
     regionData,
     memoizedStatus,
     memoizedResourceType,
+    resourcepermissionMap,
     memoizedClassification,
     memoizedProjectTypes,
+    projectPermissionMap,
+    memoizedProjectResourceCode,
+    permissionProjectResourcesMap,
+    fieldOptions,
+    attachmentPermissionMap,
     memoizedCurrency,
     memoizedResourceStatus,
+    resourceCostpermissionMap,
     memoizedSkillType,
     skillSubTypeData,
     memoizedSkillLevels,
-    fieldOptions,
+    resourceSkillpermissionMap,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =

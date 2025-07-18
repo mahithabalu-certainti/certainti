@@ -13,6 +13,7 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 
 export const projectResourceFilterFields = (
   memoizedProjectResourceCode: { option: string; value: string }[],
+  memoizedCountry: { option: string; value: string }[],
   region: { option: string; value: string }[],
   resourceTypeOptions: { option: string; value: string }[],
   resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -36,20 +37,30 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['resource_name']?.read &&
       !resourcepermissionMap?.['resource_name']?.edit,
   },
-
+  {
+    name: 'Resource Country',
+    value: 'country_rid',
+    type: 'enum',
+    options: memoizedCountry,
+    filterOptions: requiredFieldFilterOptionsForEnum,
+    hide:
+      !resourcepermissionMap?.['country_rid']?.read &&
+      !resourcepermissionMap?.['country_rid']?.edit,
+  },
   {
     name: 'Resource Region',
-    value: 'region_name',
+    value: 'region_rid',
     type: 'enum',
     options: region,
     dependsOn: 'country_rid',
+    filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !resourcepermissionMap?.['region_rid']?.read &&
       !resourcepermissionMap?.['region_rid']?.edit,
   },
   {
     name: 'Resource Type',
-    value: 'resource_type_name',
+    value: 'resource_type_rid',
     type: 'enum',
     required: true,
     options: resourceTypeOptions,
