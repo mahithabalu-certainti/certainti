@@ -2,7 +2,7 @@ import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
-import { listAllImportedDatasQuery } from "../utils/rawQueries";
+import { fetchImportListByRid, listAllImportedDatasQuery } from "../utils/rawQueries";
 
 export default class ImportGraphqlServices {
       private orgSequelize: Sequelize | null = null;
@@ -61,4 +61,30 @@ export default class ImportGraphqlServices {
 
       return results;
   }
+    
+    async fetchImportById (account_rid : string, rid : string) {
+      let mainSequelize = await this.getMainDbSequelize()
+      let orgSequelize = await this.getOrgSequelize()
+
+      let fetchParentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
+      let schemaName = rawQueries.fetchSchemaName(fetchParentAccount[0][0].r_number)
+
+      const result : any = await orgSequelize.query(fetchImportListByRid(rid, schemaName))
+      if(result[0][0]) {
+        const fetchUserDetails : any = await mainSequelize.query(rawQueries.fetchUserDetailsById(result[0][0].imports.imported_by))
+        delete result[0][0].imports.imported_by
+        result[0][0].imports.imported_on = new Date(result[0][0].imports.imported_on).toISOString()
+        result[0][0].imports.imported_by = fetchUserDetails[0][0].imported_by
+
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : result[0][0]
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : null
+        }
+      }
+    }
 }
