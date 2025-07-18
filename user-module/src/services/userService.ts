@@ -1786,7 +1786,7 @@ if (includeDependencies) {
       }
 
       const rawResult = users || [];
-      const cleanedUsers = rawResult.map((user: any) => {
+      const cleanedUsers = rawResult.map((user) => {
         if (typeof user.get === "function") {
           return user.get({ plain: true });
         } else {
@@ -1801,14 +1801,14 @@ if (includeDependencies) {
         }
       }
       users = cleanedUsers.map((user: any) => {
-      const exportData: Record<string, any> = {};
+      const exportData: Record<string, string> = {};
       const flatUser = {
         ...user,
         profile_name: user.profile?.profile_name,
         business_teams: user.business_teams?.business_teams,
         status_name: user.status?.status_name,
       };
-      const fieldMap: Record<string, any> = {
+      const fieldMap: Record<string, string> = {
         first_name: flatUser.first_name || "-",
         email: flatUser.email || "-",
         profile_rid: flatUser.profile_name || "-",
