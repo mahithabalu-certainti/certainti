@@ -540,6 +540,7 @@ export const IMPORT_FILTER_COLUMNS : any = {
   import_type: "import_type",
   imported_by: "uploaded_by_user_rid",
   records_with_warning: "total_staging_warning_count",
+  r_number : "r_number"
 }
 
 export const IMPORT_DOC_FILTER_KEYS = {
