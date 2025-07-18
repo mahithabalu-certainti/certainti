@@ -123,7 +123,7 @@ export async function generateExcelBase64(
   });
 
   // Generate buffer
-  await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
+  //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString('base64');
 }
