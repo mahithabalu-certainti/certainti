@@ -12,6 +12,17 @@ async function fetchAllImportList(req: Request, res: Response) {
         let importedByFilter;
         let importedByCondition : string;
         let totalCount : number = 0
+        const userId = req.headers['x-user-id'] as string;
+
+        if (!userId) {
+        handleErrorResponse(
+            res,
+            HttpStatus.BAD_REQUEST,
+            HttpStatus.BAD_REQUEST_MESSAGE,
+            "User id is required"
+        );
+        return;
+        }
         const requestValidation = validateImportListRequest(data)
         if(requestValidation) {
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, requestValidation);
