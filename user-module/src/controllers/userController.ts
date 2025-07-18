@@ -402,6 +402,7 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
+    const userId = req.headers['x-user-id'] as string;
 
     const result = await services.userServices.exportUsers(
       value.search,
@@ -409,7 +410,8 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.organization,
-      value.timezone
+      value.timezone,
+      userId
     );
 
     if (result.statusCode === constants.SUCCESS) {
