@@ -154,7 +154,10 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string
   );
-  const resourceData = resourceDetails?.data?.projectResource;
+  // const resourceData = resourceDetails?.data?.projectResource;
+  const resourceData = useMemo(() => {
+    return resourceDetails?.data?.projectResource;
+  }, [resourceDetails]);
 
   const totalItems = data?.count || 0;
 
@@ -326,6 +329,17 @@ export const ProjectResources = ({
     setShowFilter(false);
     setFilterVisibility(false);
   };
+  useEffect(() => {
+    const resourceId = searchParams.get('pro_res_id');
+    if (resourceId && !projectResData) {
+      const found = projectResourceList.find((item) => item.rid === resourceId);
+      if (found) {
+        setProjectResData(found);
+        setShowProjectResourceDetails(true);
+        setShowFilter(false);
+      }
+    }
+  }, [projectResourceList, searchParams, projectResData]);
 
   const projectResourcesColumns = getProjectResourcesColumns(
     handleProjectResourceClick,
