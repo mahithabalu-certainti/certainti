@@ -37,6 +37,7 @@ import { AccountFiscal } from "../../models/accountFiscal";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -604,45 +605,45 @@ export class ProjectResourceSchemaService {
     return !!existing;
   }
 
-  async insertIntoResourceTable(
-    accountNumber: string,
-    accountId: string,
-    userId: string,
-    projectResourceData: ICreateProjectResource,
-    transaction: Transaction
-  ) {
-    const { Resources } = await this.getModels(accountNumber);
+  // async insertIntoResourceTable(
+  //   accountNumber: string,
+  //   accountId: string,
+  //   userId: string,
+  //   projectResourceData: ICreateProjectResource,
+  //   transaction: Transaction
+  // ) {
+  //   const { Resources } = await this.getModels(accountNumber);
 
-    const startDate = projectResourceData.start_date
-      ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
-      : null;
-    const endDate = projectResourceData.end_date
-      ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD")
-      : null;
+  //   const startDate = projectResourceData.start_date
+  //     ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
+  //     : null;
+  //   const endDate = projectResourceData.end_date
+  //     ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD")
+  //     : null;
 
-    await Resources.create(
-      {
-        resource_code: projectResourceData.resource_code,
-        resource_type_rid: projectResourceData.resource_type_rid,
-        account_rid: accountId,
-        resource_designation: projectResourceData.designation || null,
-        resource_name: projectResourceData.resource_name || null,
-        resource_startdate: startDate ? startDate.toDate() : null,
-        resource_enddate: endDate ? endDate.toDate() : null,
-        region_rid: projectResourceData.region_rid || null,
-        country_rid: projectResourceData.country_rid || null,
-        resource_orgname: projectResourceData.resource_orgname || null,
-        resource_role: projectResourceData.resource_role || null,
-        status_rid: projectResourceData.status_rid || null,
-        comments: projectResourceData.description || "",
-        created_datetime: new Date(),
-        created_by: userId,
-      },
-      {
-        transaction,
-      }
-    );
-  }
+  //   await Resources.create(
+  //     {
+  //       resource_code: projectResourceData.resource_code,
+  //       resource_type_rid: projectResourceData.resource_type_rid,
+  //       account_rid: accountId,
+  //       resource_designation: projectResourceData.designation || null,
+  //       resource_name: projectResourceData.resource_name || null,
+  //       resource_startdate: startDate ? startDate.toDate() : null,
+  //       resource_enddate: endDate ? endDate.toDate() : null,
+  //       region_rid: projectResourceData.region_rid || null,
+  //       country_rid: projectResourceData.country_rid || null,
+  //       resource_orgname: projectResourceData.resource_orgname || null,
+  //       resource_role: projectResourceData.resource_role || null,
+  //       status_rid: projectResourceData.status_rid || null,
+  //       comments: projectResourceData.description || "",
+  //       created_datetime: new Date(),
+  //       created_by: userId,
+  //     },
+  //     {
+  //       transaction,
+  //     }
+  //   );
+  // }
 
   async insertIntoResourceFiscalTable(
     accountNumber: string,
@@ -671,7 +672,6 @@ export class ProjectResourceSchemaService {
           ),
         ],
       },
-      attributes: ["rid"],
       transaction,
     });
 
@@ -685,7 +685,7 @@ export class ProjectResourceSchemaService {
       {
         resource_rid: resourceData.rid || "",
         resource_code: projectResourceData.resource_code,
-        resource_type_rid: projectResourceData.resource_type_rid,
+        resource_type_rid: resourceData.resource_type_rid, // need to add resource fiscal
         account_rid: accountId,
         country_rid: projectResourceData.country_rid || null,
         country_region_rid: projectResourceData.region_rid || null,
@@ -733,7 +733,6 @@ export class ProjectResourceSchemaService {
           ),
         ],
       },
-      attributes: ["rid"],
       transaction,
     });
 
@@ -747,7 +746,7 @@ export class ProjectResourceSchemaService {
       {
         resource_rid: resourceData.rid || "",
         resource_code: projectResourceData.resource_code,
-        resource_type_rid: projectResourceData.resource_type_rid,
+        resource_type_rid: resourceData.resource_type_rid, // need to add resource fiscal
         account_rid: accountId,
         country_rid: projectResourceData.country_rid || null,
         country_region_rid: projectResourceData.region_rid || null,
@@ -918,7 +917,6 @@ export class ProjectResourceSchemaService {
           ),
         ],
       },
-      attributes: ["rid"],
       transaction,
     });
   
@@ -958,7 +956,7 @@ export class ProjectResourceSchemaService {
             end_date: endDate,
             created_by: userId,
             created_datetime: new Date(),
-            resource_type_rid: projectResourceData.resource_type_rid || "",
+            resource_type_rid: resource?.resource_type_rid || "", // need to add resource fiscal
           },
           { transaction }
         );
@@ -985,7 +983,7 @@ export class ProjectResourceSchemaService {
 
     await ResourcesFiscal.update(
       {
-        resource_type_rid: projectResourceData.resource_type_rid,
+        resource_type_rid: "", // need to add resource fiscal
         country_rid: projectResourceData.country_rid || null,
         country_region_rid: projectResourceData.region_rid || null,
         total_cost_for_year_project_resource_level:
@@ -1038,12 +1036,12 @@ export class ProjectResourceSchemaService {
     });
 
     const resourceType: any = await this.fetchResourceType(
-      projectResourceData.resource_type_rid
+      "" // need to add resource fiscal
     );
 
     if (!resourceType) {
       throw new Error(
-        `Invalid resource type ID: ${projectResourceData.resource_type_rid}`
+        `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
@@ -1164,12 +1162,12 @@ export class ProjectResourceSchemaService {
     });
 
     const resourceType: any = await this.fetchResourceType(
-      projectResourceData.resource_type_rid
+      "" // need to add resource fiscal
     );
 
     if (!resourceType) {
       throw new Error(
-        `Invalid resource type ID: ${projectResourceData.resource_type_rid}`
+        `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
@@ -1288,12 +1286,12 @@ export class ProjectResourceSchemaService {
     });
 
     const resourceType: any = await this.fetchResourceType(
-      projectResourceData.resource_type_rid
+      "" // need to add resource fiscal
     );
 
     if (!resourceType) {
       throw new Error(
-        `Invalid resource type ID: ${projectResourceData.resource_type_rid}`
+        `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
@@ -1377,6 +1375,7 @@ export class ProjectResourceSchemaService {
     accountNumber: string,
     projectCode: string,
     projectResourceData: ICreateProjectResource | IUpdateProjectResource,
+    resourceData: any,
     fiscalYear: number,
     userId: string,
     transaction: Transaction
@@ -1412,15 +1411,16 @@ export class ProjectResourceSchemaService {
       return;
     }
   
-    const resourceType: any = await this.fetchResourceType(projectResourceData.resource_type_rid);
+    const resourceType: any = await this.fetchResourceType(resourceData.resource_type_rid); // need to add resource fiscal
     if (!resourceType) {
-      throw new Error(`Invalid resource type ID: ${projectResourceData.resource_type_rid}`);
+      throw new Error(`Invalid resource type ID: ${resourceData.resource_type_rid}`);// need to add resource fiscal
     }
+
+    const resourceTypeName = resourceType[0]?.resource_type_name?.toLowerCase();
   
     // Aggregate by resource type
     const aggregates: any = await ProjectResource.findAll({
       attributes: [
-        "resource_type_rid",
         [Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")), "total_cost"],
         [Sequelize.fn("SUM", Sequelize.col("total_hours_pro_res")), "total_effort"],
       ],
@@ -1435,7 +1435,6 @@ export class ProjectResourceSchemaService {
         //   ),
         // ],
       },
-      group: ["resource_type_rid"],
       raw: true,
       transaction,
     });
@@ -1463,10 +1462,10 @@ export class ProjectResourceSchemaService {
   
     // Distribute aggregate values based on resource type name
     for (const row of aggregates) {
-      const resType: any = await this.fetchResourceType(row.resource_type_rid);
-      const typeName = resType?.[0]?.resource_type_name?.toLowerCase();
+      // const resType: any = await this.fetchResourceType(row.resource_type_rid);
+      // const typeName = resType?.[0]?.resource_type_name?.toLowerCase();
   
-      switch (typeName) {
+      switch (resourceTypeName) {
         case "full-time":
           baseData.total_cost_fte_from_prj_res = +row.total_cost || 0;
           baseData.total_effort_fte_from_prj_res = +row.total_effort || 0;
@@ -1720,10 +1719,7 @@ export class ProjectResourceSchemaService {
         account_rid: projectResourceData.account_rid,
         project_rid: projectResourceData.project_rid,
         resource_rid: resource?.rid || "",
-        resource_type_rid: projectResourceData.resource_type_rid,
-        resource_role: projectResourceData.resource_role || null,
         assigned_skill_role_type_rid: updatedAssignedRoleId,
-        resource_name: projectResourceData.resource_name || null,
         start_date: startDate ? startDate.toDate() : null,
         end_date: endDate ? endDate.toDate() : null,
         fiscal_year: fiscalYear,
@@ -1731,10 +1727,8 @@ export class ProjectResourceSchemaService {
         created_by: userId,
         created_datetime: new Date(),
         description: projectResourceData.description || null,
-        designation: projectResourceData.designation || null,
         total_cost_pro_res: projectResourceData.total_cost_pro_res || null,
         total_hours_pro_res: projectResourceData.total_hours_pro_res || null,
-        resource_orgname: projectResourceData.resource_orgname || null,
         country_rid: projectResourceData.country_rid || null,
         region_rid: projectResourceData.region_rid || null,
         currency_rid: projectResourceData.currency_rid || null,
@@ -1867,18 +1861,13 @@ export class ProjectResourceSchemaService {
         project_rid: projectResourceData.project_rid,
         project_resource_rid: createdProjectResource.rid,
         resource_rid: resource.rid || "",
-        resource_type_rid: projectResourceData.resource_type_rid || null,
-        resource_name: projectResourceData.resource_name || null,
         fiscal_year: projectData.fiscal_year,
-        resource_orgname: projectResourceData.resource_orgname || null,
         status_rid: projectResourceData.status_rid || null,
-        resource_role: projectResourceData.resource_role || null,
         total_cost_pro_res: projectResourceData.total_cost_pro_res || null,
         total_hours_pro_res: projectResourceData.total_hours_pro_res || null,
         country_rid: projectResourceData.country_rid || null,
         region_rid: projectResourceData.region_rid || null,
         currency_rid: projectResourceData.currency_rid || null,
-        designation: projectResourceData.designation || null,
         description: projectResourceData.description || null,
         created_by: userId,
         created_datetime: new Date(),
@@ -2198,17 +2187,12 @@ export class ProjectResourceSchemaService {
           fiscal_year: fiscalYear,
           resource_rid: resource?.rid || "",
           project_resource_rid: projectResourceData.project_resource_rid,
-          resource_type_rid: projectResourceData.resource_type_rid || null,
-          resource_name: projectResourceData.resource_name || null,
-          resource_orgname: projectResourceData.resource_orgname || null,
           status_rid: projectResourceData.status_rid || null,
-          resource_role: projectResourceData.resource_role || null,
           total_hours_pro_res: projectResourceData.total_hours_pro_res ?? 0,
           total_cost_pro_res: projectResourceData.total_cost_pro_res ?? 0,
           country_rid: projectResourceData.country_rid || null,
           region_rid: projectResourceData.region_rid || null,
           currency_rid: projectResourceData.currency_rid || null,
-          designation: projectResourceData.designation || null,
           description: projectResourceData.description || null,
           created_by: userId,
           created_datetime: new Date(),
@@ -2712,6 +2696,7 @@ export class ProjectResourceSchemaService {
   async insertIntoAccountFiscalRegion(
     accountNumber: string,
     projectResourceData: ICreateProjectResource | IUpdateProjectResource,
+    resourceData: any,
     fiscalYear: number,
     regionId: string,
     userId: string,
@@ -2725,7 +2710,7 @@ export class ProjectResourceSchemaService {
     );
 
     const resourceType: any = await this.fetchResourceType(
-      projectResourceData.resource_type_rid
+      resourceData.resource_type_rid // need to add resource fiscal
     );
 
     if (resourceType) {
@@ -3067,7 +3052,6 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "project_rid",
         "fiscal_year",
-        "resource_type_rid",
         [
           Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
           "total_cost",
@@ -3093,7 +3077,6 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "project_rid",
         "fiscal_year",
-        "resource_type_rid",
       ],
       raw: true,
       transaction,
@@ -3238,7 +3221,6 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "project_rid",
         "fiscal_year",
-        "resource_type_rid",
         [
           Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
           "total_cost",
@@ -3264,7 +3246,6 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "project_rid",
         "fiscal_year",
-        "resource_type_rid",
       ],
       raw: true,
       transaction,
@@ -3421,7 +3402,6 @@ export class ProjectResourceSchemaService {
     // 2. Aggregate by region + resource_type_rid
     const aggregates: any[] = await ProjectResource.findAll({
       attributes: [
-        "resource_type_rid",
         "region_rid",
         [
           Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
@@ -3444,7 +3424,7 @@ export class ProjectResourceSchemaService {
         //   ),
         // ],
       },
-      group: ["region_rid", "resource_type_rid"],
+      group: ["region_rid"],
       raw: true,
       transaction,
     });
@@ -4188,7 +4168,6 @@ export class ProjectResourceSchemaService {
           ),
         ],
       },
-      attributes: ["rid"],
       transaction,
     });
 
@@ -4221,7 +4200,7 @@ export class ProjectResourceSchemaService {
             total_cost_for_year_project_resource_level:
               newAggregates.total_cost ?? null,
             created_by: userId,
-            resource_type_rid: projectResourceData.resource_type_rid || "",
+            resource_type_rid: resource?.resource_type_rid || "", // need to add resource fiscal
             created_datetime: new Date(),
           },
           { transaction }
@@ -4237,7 +4216,7 @@ export class ProjectResourceSchemaService {
             total_cost_for_year_project_resource_level:
               projectResourceData.total_cost_pro_res ?? null,
             created_by: userId,
-            resource_type_rid: projectResourceData.resource_type_rid || "",
+            resource_type_rid: resource?.resource_type_rid || "", // need to add resource fiscal
             created_datetime: new Date(),
           },
           { transaction }
@@ -4619,7 +4598,7 @@ export class ProjectResourceSchemaService {
       whereFilters.fiscal_year = fiscalYear;
     }
 
-    const isDbField = !["region_name", "resource_type_name", "country_name", "resource_code"].includes(sortBy);
+    const isDbField = !["region_name", "resource_type_name", "country_name", "resource_code", "resource_role", "resource_name", "resource_type_rid"].includes(sortBy);
     const dbOrder =
       isDbField && sortBy && sortOrder
         ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
@@ -4642,7 +4621,7 @@ export class ProjectResourceSchemaService {
 
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
-      projectResource = await this.insertResourceTypeData(projectResource);
+      projectResource = await this.insertResourceTypeData(accountNumber, projectResource);
       projectResource = await this.insertResourceCode(accountNumber, projectResource);
 
       projectResource = await this.inMemorySortAndFilter(
@@ -4686,7 +4665,7 @@ export class ProjectResourceSchemaService {
       whereFilters.fiscal_year = fiscalYear;
     }
 
-    const isDbField = !["region_name", "resource_type_name"].includes(sortBy);
+    const isDbField = !["region_name", "resource_type_name", "country_name", "resource_code", "resource_role", "resource_name", "resource_type_rid"].includes(sortBy);
     const dbOrder =
       isDbField && sortBy && sortOrder
         ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
@@ -4701,7 +4680,7 @@ export class ProjectResourceSchemaService {
 
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
-      projectResource = await this.insertResourceTypeData(projectResource);
+      projectResource = await this.insertResourceTypeData(accountNumber, projectResource);
       projectResource = await this.insertResourceCode(accountNumber, projectResource);
 
       projectResource = await this.inMemorySortAndFilter(
@@ -4806,52 +4785,87 @@ export class ProjectResourceSchemaService {
     }
   }
 
-  async insertResourceTypeData(projectResources: any[]): Promise<any[]> {
+  async insertResourceTypeData(accountNumber: string, projectResources: any[]): Promise<any[]> {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.getMainSequelize();
       }
-
-      // Get unique resource_type_rids from all project resources
-      const uniqueTypeIds = [
+  
+      const { Resources } = await this.getModels(accountNumber);
+  
+      // Step 1: Get unique resource_rids from project resources
+      const uniqueResourceRids = [
         ...new Set(
           projectResources
-            .map((res) => res.resource_type_rid)
+            .map((res) => res.resource_rid)
             .filter((id) => id !== null && id !== undefined)
         ),
       ];
-
-      // Fetch all resource types in one query
-      const typeResult: any = await this.mainDbSequelize.query(
-        `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+  
+      if (uniqueResourceRids.length === 0) {
+        return projectResources.map((resource) => ({
+          ...(resource.dataValues ?? resource),
+          resource_type_name: null,
+          resource_name: null,
+          resource_role: null,
+        }));
+      }
+  
+      // Step 2: Fetch resource data from Resources model
+      const resourceResult = await Resources.findAll({
+        where: {
+          rid: uniqueResourceRids,
+        },
+        attributes: ['rid', 'resource_type_rid', 'resource_name', 'resource_role'],
+        raw: true,
+      });
+  
+      // Map resource_rid to full resource data
+      const resourceMap: any = new Map<string, any>();
+      const uniqueTypeIds = new Set<string>();
+  
+      for (const res of resourceResult) {
+        resourceMap.set(res.rid, res);
+        if (res.resource_type_rid) {
+          uniqueTypeIds.add(res.resource_type_rid);
+        }
+      }
+  
+      // Step 3: Fetch resource_type_rid → resource_type_name mapping
+      const typeResult: any[] = await this.mainDbSequelize.query(
+        `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
         {
-          replacements: { ids: uniqueTypeIds },
-          type: "SELECT",
+          replacements: { ids: Array.from(uniqueTypeIds) },
+          type: 'SELECT',
         }
       );
-
-      // Convert result array to a map for fast lookup
+  
       const typeMap = new Map<string, string>();
       for (const type of typeResult) {
-        typeMap.set(type.rid, type.resource_type_name);
+        typeMap.set(type.resource_type_rid, type.resource_type_name);
       }
-
-      // Enrich each project resource object with resource_type_name
+  
+      // Step 4: Enrich project resources with resource_type_name, resource_name, and resource_role
       const enrichedResources = projectResources.map((resource) => {
-        const typeName = typeMap.get(resource.resource_type_rid) || null;
+        const resData = resourceMap.get(resource.resource_rid) || {};
+        const typeName = typeMap.get(resData.resource_type_rid || '') || null;
+  
         return {
           ...(resource.dataValues ?? resource),
           resource_type_name: typeName,
+          resource_name: resData.resource_name ?? null,
+          resource_role: resData.resource_role ?? null,
+          resource_type_rid: resData.resource_type_rid ?? null
         };
       });
-
+  
       return enrichedResources;
     } catch (err) {
       throw new Error(
-        "Error fetching resource type data: " + (err as Error).message
+        'Error fetching resource type data: ' + (err as Error).message
       );
     }
-  }
+  }   
   
   async insertResourceCode(accountNumber: string, projectResources: any[]): Promise<any[]> {
     try {
@@ -4904,7 +4918,7 @@ export class ProjectResourceSchemaService {
     sortOrder: string,
     filters?: Record<string, any>
   ): Promise<any[]> {
-    const enumFields = ["region_name", "resource_type_name", "country_name", "resource_code"];
+    const enumFields = ["region_name", "resource_type_name", "country_name", "resource_code", "resource_name", "resource_role", "resource_type_rid"];
 
     const matchFilter = (record: any, key: string, filter: any): boolean => {
       const value = record[key];
@@ -4977,15 +4991,62 @@ export class ProjectResourceSchemaService {
   async listResourceCodes(accountNumber: string, accountId: string) {
     const { Resources } = await this.getModels(accountNumber);
 
-    const resourceCodes = await Resources.findAll({
-      attributes: ["rid", "resource_code"],
+    let resourceCodes = await Resources.findAll({
+      attributes: ["rid", "resource_code", "resource_type_rid"],
       where: {
         account_rid: accountId,
       },
     });
 
+    if(resourceCodes && resourceCodes.length > 0){
+      resourceCodes = await this.insertResourceTypeName(resourceCodes);
+    }
+
     return resourceCodes;
   }
+  
+  async insertResourceTypeName(resourceCodes: any[]) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
+    }
+  
+    // Step 1: Extract unique resource_type_rids
+    const uniqueTypeIds = [
+      ...new Set(
+        resourceCodes
+          .map((res) => res.resource_type_rid)
+          .filter((id) => id !== null && id !== undefined)
+      ),
+    ];
+  
+    if (uniqueTypeIds.length === 0) return resourceCodes;
+  
+    // Step 2: Query resource_type table for names
+    const typeResult: any[] = await this.mainDbSequelize.query(
+      `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+      {
+        replacements: { ids: uniqueTypeIds },
+        type: "SELECT",
+      }
+    );
+  
+    // Step 3: Build lookup map
+    const typeMap = new Map<string, string>();
+    for (const type of typeResult) {
+      typeMap.set(type.resource_type_rid, type.resource_type_name);
+    }
+  
+    // Step 4: Enrich resourceCodes with resource_type_name
+    const enriched = resourceCodes.map((resource) => {
+      const typeName = typeMap.get(resource.resource_type_rid) || null;
+      return {
+        ...(resource.dataValues ?? resource),
+        resource_type_name: typeName,
+      };
+    });
+  
+    return enriched;
+  }  
 
   async listResourceSkillRoles() {
     if (!this.mainDbSequelize) {

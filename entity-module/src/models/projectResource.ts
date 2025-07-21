@@ -19,10 +19,6 @@ interface ProjectResourceAttributes {
   start_date?: Date | null;
   end_date?: Date | null;
 
-  resource_name?: string | null;
-  resource_type_rid: string | null;
-  designation?: string | null;
-  resource_role?: string | null;
   assigned_skill_role_type_rid?: string | null,
 
   total_hours_pro_res?: number | null;
@@ -32,8 +28,6 @@ interface ProjectResourceAttributes {
   country_rid?: string | null;
   region_rid?: string | null;
   currency_rid?: string | null;
-
-  resource_orgname?: string | null;
 
   effort_project_resource_level?: number | null;
   cost_project_resource_level?: number | null;
@@ -75,10 +69,6 @@ export class ProjectResource
   public start_date?: Date | null;
   public end_date?: Date | null;
 
-  public resource_name?: string | null;
-  public resource_type_rid!: string | null;
-  public designation?: string | null;
-  public resource_role?: string | null;
   public assigned_skill_role_type_rid?: string | null;
 
   public total_hours_pro_res?: number | null;
@@ -88,8 +78,6 @@ export class ProjectResource
   public country_rid?: string | null;
   public region_rid?: string | null;
   public currency_rid?: string | null;
-
-  public resource_orgname?: string | null;
 
   public effort_project_resource_level?: number | null;
   public cost_project_resource_level?: number | null;
@@ -137,11 +125,6 @@ export class ProjectResource
         start_date: { type: DataTypes.DATE },
         end_date: { type: DataTypes.DATE },
 
-        resource_name: { type: DataTypes.STRING(200) },
-        resource_type_rid: { type: DataTypes.STRING(100), allowNull: false },
-        designation: { type: DataTypes.STRING(200) },
-        resource_role: { type: DataTypes.STRING(200) },
-
         assigned_skill_role_type_rid: {
           type: DataTypes.STRING(50),
           allowNull: true
@@ -153,8 +136,6 @@ export class ProjectResource
         country_rid: { type: DataTypes.STRING(50) },
         region_rid: { type: DataTypes.STRING(50) },
         currency_rid: { type: DataTypes.STRING(50) },
-
-        resource_orgname: { type: DataTypes.STRING(200) },
 
         effort_project_resource_level: { type: DataTypes.DECIMAL(18, 2) },
         cost_project_resource_level: { type: DataTypes.DECIMAL(18, 2) },
