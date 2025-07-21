@@ -857,6 +857,19 @@ export const setInlineForAttachments = (dbData : Attachment, requestData : any) 
 export const validateImportListRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
 }
+export const validateStagingErrorListRequest = (account_rid : string, import_rid : string,entity_type:string) => {
+  if(!account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!import_rid) return STATUS_MESSAGE.importIdMissing
+  if(!entity_type) return STATUS_MESSAGE.entityTypeMissing
+}
+
+
+export const validateLoadErrorListRequest = (account_rid : string, import_rid : string,entity_type:string) => {
+  if(!account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!import_rid) return STATUS_MESSAGE.importIdMissing
+  if(!entity_type) return STATUS_MESSAGE.entityTypeMissing
+}
+
 
 export const validateImportListByRidRequest = (account_rid : any, rid : string) => {
   if(!rid) return STATUS_MESSAGE.accountIdMissing

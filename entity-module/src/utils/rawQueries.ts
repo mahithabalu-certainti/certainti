@@ -247,6 +247,42 @@ function isStrictIsoDate(value: any): boolean {
 function isNumber(value : any) {
   return !isNaN(value) && /^\d+$/.test(value);
 }
+export const listAllLoadFailures = (schemaName: string, import_rid: string, entity_type: string) => {
+  const query = `
+    WITH import_data AS (
+      SELECT r_number, entity_type, document_rid
+      FROM ${schemaName}.import
+      WHERE rid = '${import_rid}'
+    )
+    SELECT p.*
+    FROM ${schemaName}.history_staging_${entity_type} p
+    JOIN import_data i ON p.document_rid = i.document_rid
+    WHERE p.status != 'Success'
+      AND p.error_descriptions NOT ILIKE '%staging:%'
+  `;
+
+  return query;
+};
+
+
+export const listAllStageFailures = (schemaName: string, import_rid: string, entity_type: string) => { 
+  const query = `
+    WITH import_data AS (
+      SELECT r_number, entity_type, document_rid
+      FROM ${schemaName}.import
+      WHERE rid = '${import_rid}'
+    )
+    SELECT 
+      p.*,
+      TRIM(split_part(p.error_descriptions, 'staging:', 2)) AS error_descriptions
+    FROM ${schemaName}.history_staging_${entity_type} p
+    JOIN import_data i ON p.document_rid = i.document_rid
+    WHERE p.status != 'Success'
+      AND p.error_descriptions ILIKE '%staging:%'
+  `;
+
+  return query;
+};
 
 export const fetchImportListByRid = (rid : string, schemaName : string) => {
     let query = `
