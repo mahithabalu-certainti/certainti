@@ -1,7 +1,6 @@
 import { Op, Order, Sequelize } from "sequelize";
 import {
   HttpStatus,
-  MAIN_SCHEMA_NAME,
   rawQueries,
 } from "../../utils/constants";
 import {
@@ -91,15 +90,15 @@ export class ProjectResourceService {
               transaction
             );
 
-          if (!existsInResourceTable) {
-            await this.projectResourceSchema.insertIntoResourceTable(
-              accountNumber,
-              account_rid,
-              userId,
-              projectResourceData,
-              transaction
-            );
-          }
+          // if (!existsInResourceTable) {
+          //   await this.projectResourceSchema.insertIntoResourceTable(
+          //     accountNumber,
+          //     account_rid,
+          //     userId,
+          //     projectResourceData,
+          //     transaction
+          //   );
+          // }
 
           const existsInResourceFiscal =
             await this.projectResourceSchema.existsInResourceFiscalTable(
@@ -236,6 +235,7 @@ export class ProjectResourceService {
               await this.projectResourceSchema.insertIntoAccountFiscalRegion(
                 accountNumber,
                 projectResourceData,
+                resourceData,
                 projectData.fiscal_year,
                 projectResourceData.region_rid,
                 userId,
@@ -541,6 +541,7 @@ export class ProjectResourceService {
         validAccountNumber,
         projectResourceData,
         projectData,
+        resourceData,
         userId,
         transaction
       );
@@ -975,6 +976,7 @@ export class ProjectResourceService {
           validAccountNumber,
           resourceUpdatePayload,
           projectData,
+          resourceData,
           userId,
           transaction
         );
@@ -1198,6 +1200,7 @@ export class ProjectResourceService {
     accountNumber: string,
     projectResourceData: any,
     projectData: any,
+    resourceData: any,
     userId: string,
     transaction: any
   ) {
@@ -1217,6 +1220,7 @@ export class ProjectResourceService {
       accountNumber,
       projectData.project_code,
       projectResourceData,
+      resourceData,
       projectData.fiscal_year,
       userId,
       transaction
@@ -1410,9 +1414,7 @@ export class ProjectResourceService {
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
-      "resource_name",
       "fiscal_year",
-      "resource_role",
       "total_hours_pro_res",
       "total_cost_pro_res",
       "qre_percent",
@@ -1462,7 +1464,6 @@ export class ProjectResourceService {
     const enumFields = [
       "country_rid",
       "region_rid",
-      "resource_type_rid",
     ];
 
     const filterFields = this.getFilterFields();
@@ -1495,11 +1496,8 @@ export class ProjectResourceService {
 
   getFilterFields(): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
-      { clientField: "resource_name", dbField: "resource_name" },
       { clientField: "region_rid", dbField: "region_rid" },
       { clientField: "country_rid", dbField: "country_rid" },
-      { clientField: "resource_type_rid", dbField: "resource_type_rid" },
-      { clientField: "resource_role", dbField: "resource_role" },
       { clientField: "total_hours_pro_res", dbField: "total_hours_pro_res" },
       { clientField: "total_cost_pro_res", dbField: "total_cost_pro_res" },
       { clientField: "qre_final", dbField: "qre_final" },
