@@ -229,6 +229,7 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
     const value = await validateRequest(req, exportListResourceSchema, res, "GET");
 
     let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string;
 
     if (!value) {
       return;
@@ -255,7 +256,8 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.bothParentAndChild,
-      value.timezone
+      value.timezone,
+      userId
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {

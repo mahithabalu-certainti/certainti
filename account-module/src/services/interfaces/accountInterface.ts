@@ -9,7 +9,7 @@ export interface IAccountService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    fiscalYear: number | "FY-All"
+    fiscalYear: number | "FY-All",userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -23,7 +23,8 @@ export interface IAccountService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    fiscalYear: number | "FY-All"
+    fiscalYear: number | "FY-All",
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -60,7 +61,7 @@ export interface IAccountService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { gloablAcconunt: any; count: number };
+    data?: { globalAccount: any; count: number };
   }>;
 
   accountById(account_id: string): Promise<{
@@ -70,7 +71,7 @@ export interface IAccountService {
     data?: { accountById: any; accountDetails: any };
   }>;
 
-  listGlobalAccounts(): Promise<{
+  listGlobalAccounts(userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

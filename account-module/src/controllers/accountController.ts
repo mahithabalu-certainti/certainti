@@ -60,7 +60,7 @@ async function accounts(req: Request, res: Response): Promise<void> {
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 10;
     const fiscalYear: number | "FY-All" = value?.fiscalYear || null ;
-  
+    const userId = req.headers['x-user-id'] as string;
 
     const accounts = await accountServices.accountList(
       pageNum,
@@ -70,7 +70,7 @@ async function accounts(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      fiscalYear
+      fiscalYear,userId
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
@@ -114,6 +114,7 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
   const methodName = "Export user";
   try {
     const value = await validateRequest(req, exportAccountSchema, res, "GET");
+    const userId = req.headers['x-user-id'] as string;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {}
 
@@ -144,7 +145,7 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      fiscalYear
+      fiscalYear,userId
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
@@ -448,7 +449,8 @@ async function listOrgAccounts(req: Request, res: Response): Promise<void> {
 async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   const methodName = "List global account";
   try {
-    const account = await accountServices.listGlobalAccounts();
+    const userId = req.headers['x-user-id'] as string;
+    const account = await accountServices.listGlobalAccounts(userId);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

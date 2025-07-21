@@ -25,8 +25,9 @@ export const constants = {
   SQL_GET_ACCOUNT: `SELECT rid,parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}."account" WHERE {whereClause}  LIMIT 1`,
   SQL_GET_PROJECTS : `
       SELECT 
-        ps.rid,
+        ps.project_rid,
         ps.project_name,
+         ps.project_code,
         ps.account_rid,
         uga.access_type,
         (uga.access_type = 'INCLUDE') AS has_access
@@ -34,7 +35,7 @@ export const constants = {
       FROM ${MAIN_SCHEMA_NAME}.project_summary ps
       {extraJoin}
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
-        ON uga.entity_rid = ps.rid
+        ON uga.entity_rid = ps.project_rid
         AND uga.entity_type = 'PROJECT'
         AND {joinCondition}
       WHERE {whereClauses}
@@ -43,8 +44,9 @@ export const constants = {
 `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT: `
     SELECT 
-      ps.rid,
+      ps.project_rid,
       ps.project_name,
+      ps.project_code,
       ps.account_rid,
       CASE 
         WHEN uga.rid IS NOT NULL THEN true

@@ -8,7 +8,7 @@ import {
   IUpdateResource,
 } from "../utils/types";
 
-import { DataTypes, Op, Sequelize } from "sequelize";
+import { DataTypes, Op, QueryTypes, Sequelize } from "sequelize";
 import {
   ResourceFiscal,
   setupResourceFiscalSeq,
@@ -1587,7 +1587,8 @@ async fetchAllProjects(
     userId: string,
     search: string,
     accountDataSort: string[][],
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    accessibleIds: string[]
   ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
@@ -1702,38 +1703,46 @@ async fetchAllProjects(
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
         st.state_name, ps.created_datetime, ps.account_rid
       `;
-
+      const includeProjectFilter = accessibleIds.length > 0;
+      const accessibleProjectsCondition = includeProjectFilter
+        ? `ps.project_rid = ANY(ARRAY[?]::text[])`
+        : "1=1";
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
       const projectIdsQuery = bothParentAndChild 
         ? `
           SELECT DISTINCT ps.project_rid
           ${commonJoins}
           INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-          ON pfs.project_rid = ps.project_rid 
-          AND pfs.account_rid = ps.account_rid
-          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
-          ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+            ON pfs.project_rid = ps.project_rid 
+            AND pfs.account_rid = ps.account_rid
+          WHERE ${accessibleProjectsCondition}
+          ${accountMeta.length > 0 ? 'AND acc.rid IN (' + accountMeta.map(a => `'${a}'`).join(',') + ')' : ''}
+          ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
           ${fiscalYearClause}
         `
         : `
-          SELECT DISTINCT ps.project_rid
-          ${commonJoins}
-          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-            ON pfs.project_rid = ps.project_rid 
-            AND pfs.account_rid = ps.account_rid
-            ${fiscalYearClause}
-          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
-          ${filterWhereSQLChild ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLChild}` : ""}
-        `;
+    SELECT DISTINCT ps.project_rid
+    ${commonJoins}
+    INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+      ON pfs.project_rid = ps.project_rid 
+      AND pfs.account_rid = ps.account_rid
+      ${fiscalYearClause}
+    WHERE ${accessibleProjectsCondition}
+     ${accountMeta.length > 0 ? 'AND acc.rid IN (' + accountMeta.map(a => `'${a}'`).join(',') + ')' : ''}
+    ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+  `;
 
+      // Updated replacements array
       const projectIdsReplacements = bothParentAndChild
         ? [
-            ...(accountMeta.length > 0 ? accountMeta : []),
+            accessibleIds, // For project_rid = ANY(?)
+            ...(accountMeta.length > 0 ? [accountMeta] : []), // For acc.rid = ANY(?)
             ...whereReplacementsParent,
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : [])
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
           ]
         : [
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+            accessibleIds,
+             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
             ...(accountMeta.length > 0 ? accountMeta : []),
             ...whereReplacementsChild
           ];
@@ -1804,8 +1813,12 @@ async fetchAllProjects(
           SELECT ${commonSelectFields},
           ${childAggSQL}
           ${commonJoins}
-          WHERE ps.project_rid IN (${projectIds.map(() => '?').join(',')})
-          ${accountMeta.length > 0 ? `AND acc.rid IN (${accountMeta.map(() => '?').join(',')})` : ''}
+          WHERE ps.project_rid IN (${projectIds.map(() => "?").join(",")})
+          ${
+            accountMeta.length > 0
+              ? `AND acc.rid IN (${accountMeta.map(() => "?").join(",")})`
+              : ""
+          }
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -1850,7 +1863,8 @@ async fetchAllProjects(
     userId: string,
     search: string,
     accountDataSort: string[][],
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    accessibleIds: string[]
   ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
@@ -1902,22 +1916,23 @@ async fetchAllProjects(
         : '';
 
       // 2. Build where clauses
-      const { 
-        whereSQL: filterWhereSQLParent, 
-        replacements: whereReplacementsParent 
-      } = bothParentAndChild ? this.buildRawWhereClause(whereClause, search, true) : { whereSQL: '', replacements: [] };
-      
-      const { 
-        whereSQL: filterWhereSQLChild, 
-        replacements: whereReplacementsChild 
+      const {
+        whereSQL: filterWhereSQLParent,
+        replacements: whereReplacementsParent,
+      } = bothParentAndChild
+        ? this.buildRawWhereClause(whereClause, search, true)
+        : { whereSQL: "", replacements: [] };
+
+      const {
+        whereSQL: filterWhereSQLChild,
+        replacements: whereReplacementsChild,
       } = this.buildRawWhereClause(whereClause, search, false);
 
       replacements.push(...whereReplacementsParent, ...whereReplacementsChild);
 
       // 3. Fiscal year handling
-      const fiscalYearClause = fiscalYear && fiscalYear !== 0 
-        ? `AND pfs.fiscal_year = ?` 
-        : '';
+      const fiscalYearClause =
+        fiscalYear && fiscalYear !== 0 ? `AND pfs.fiscal_year = ?` : "";
 
       // 4. Common SQL fragments
       const commonSelectFields = `
@@ -1966,15 +1981,31 @@ async fetchAllProjects(
       `;
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
-      const projectIdsQuery = bothParentAndChild 
+       const includeProjectFilter = accessibleIds.length > 0;
+      const accessibleProjectsCondition = includeProjectFilter
+        ? `ps.project_rid = ANY(ARRAY[?]::text[])`
+        : "1=1";
+      const projectIdsQuery = bothParentAndChild
         ? `
           SELECT DISTINCT ps.project_rid
           ${commonJoins}
           INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
           ON pfs.project_rid = ps.project_rid 
           AND pfs.account_rid = ps.account_rid
-          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
-          ${filterWhereSQLParent ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLParent}` : ""}
+          WHERE ${accessibleProjectsCondition}
+          ${
+            accountMeta.length > 0
+              ? "WHERE acc.rid IN (" +
+                accountMeta.map(() => "?").join(",") +
+                ")"
+              : ""
+          }
+          ${
+            filterWhereSQLParent
+              ? (accountMeta.length > 0 ? "AND" : "WHERE") +
+                ` ${filterWhereSQLParent}`
+              : ""
+          }
           ${fiscalYearClause}
         `
         : `
@@ -1983,21 +2014,35 @@ async fetchAllProjects(
           INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
             ON pfs.project_rid = ps.project_rid 
             AND pfs.account_rid = ps.account_rid
+            WHERE ${accessibleProjectsCondition}
             ${fiscalYearClause}
-          ${accountMeta.length > 0 ? 'WHERE acc.rid IN (' + accountMeta.map(() => '?').join(',') + ')' : ''}
-          ${filterWhereSQLChild ? (accountMeta.length > 0 ? 'AND' : 'WHERE') + ` ${filterWhereSQLChild}` : ""}
+          ${
+            accountMeta.length > 0
+              ? "WHERE acc.rid IN (" +
+                accountMeta.map(() => "?").join(",") +
+                ")"
+              : ""
+          }
+          ${
+            filterWhereSQLChild
+              ? (accountMeta.length > 0 ? "AND" : "WHERE") +
+                ` ${filterWhereSQLChild}`
+              : ""
+          }
         `;
 
       const projectIdsReplacements = bothParentAndChild
         ? [
+          accessibleIds,
             ...(accountMeta.length > 0 ? accountMeta : []),
             ...whereReplacementsParent,
             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
           ]
         : [
+          accessibleIds,
             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
             ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsChild
+            ...whereReplacementsChild,
           ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
@@ -3391,6 +3436,210 @@ async fetchAccountsByIds(accountRids: string[]) {
   }
 }
 
+  async getUserGroupType(userRid: string): Promise<string | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{ group_type: string }>(
+        `
+      SELECT type group_type
+      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
+      WHERE ugm.user_rid = :userRid
+      LIMIT 1`, // Important if user can only have one group type
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      return results[0]?.group_type;
+    } catch (error) {
+      // Log the error for debugging
+      console.error("Error fetching user group type:", error);
+      throw new Error("Failed to get user group type");
+    }
+  }
+
+  async getAccessibleAccountInfo(userRid: string): Promise<
+    Array<{
+      id: string;
+      isChild: boolean;
+      parentId: string | null;
+    }>
+  > {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      // 1. Direct access with account info
+      const directAccess = await mainDbSequelize.query<{
+        entity_rid: string;
+        parent_account_rid: string | null;
+        is_child: boolean;
+      }>(
+        `
+      SELECT 
+        ugea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'INCLUDE'
+      `,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      // 2. Group access with account info
+      const groupAccess = await mainDbSequelize.query<{
+        entity_rid: string;
+        parent_account_rid: string | null;
+        is_child: boolean;
+      }>(
+        `
+      WITH user_groups AS (
+        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+        WHERE user_rid = :userRid
+      )
+      SELECT DISTINCT 
+        gea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
+      JOIN user_groups ug ON gea.group_rid = ug.group_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
+      WHERE gea.entity_type = 'ACCOUNT'
+        AND gea.access_type = 'INCLUDE'
+      `,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      // 3. Combine and deduplicate
+      const allAccess = [...directAccess, ...groupAccess];
+      const uniqueAccess = new Map<
+        string,
+        {
+          id: string;
+          isChild: boolean;
+          parentId: string | null;
+        }
+      >();
+
+      allAccess.forEach((access) => {
+        if (!uniqueAccess.has(access.entity_rid)) {
+          uniqueAccess.set(access.entity_rid, {
+            id: access.entity_rid,
+            isChild: access.is_child,
+            parentId: access.parent_account_rid,
+          });
+        }
+      });
+
+      return Array.from(uniqueAccess.values());
+    } catch (err) {
+      console.error("Error in getAccessibleAccountInfo:", err);
+      return [];
+    }
+  }
+
+  async getAllowedExportFields(
+    userId: string,
+    permission_name: string
+  ): Promise<any[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const [userInfo] = (await mainDbSequelize.query(
+      `SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;`,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    )) as [{ profile_rid: string }] | [];
+
+    if (!userInfo?.profile_rid) {
+      return [];
+    }
+
+    const [profileFields, userFields] = await Promise.all([
+      mainDbSequelize.query(
+        `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM trd365.profile_fields_access pfa
+      JOIN trd365.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND pfa.profile_id = :profileId
+      `,
+        {
+          replacements: {
+            permissionName: permission_name,
+            profileId: userInfo?.profile_rid,
+          },
+          type: "SELECT",
+        }
+      ),
+      mainDbSequelize.query(
+        `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM trd365.user_fields_access ufa
+      JOIN trd365.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+      `,
+        {
+          replacements: {
+            permissionName: permission_name,
+            userId,
+          },
+          type: QueryTypes.SELECT,
+        }
+      ),
+    ]);
+
+    // Merge: user overrides profile
+    const userFieldMap = new Map<string, any>();
+    for (const field of userFields as any[]) {
+      userFieldMap.set(field.field_name, field);
+    }
+
+    const merged = (profileFields as any[]).map((pf) => {
+      const userPerm = userFieldMap.get(pf.field_name);
+      if (userPerm) {
+        userFieldMap.delete(pf.field_name);
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read ? true : userPerm?.read === true,
+        };
+      }
+      return {
+        field_desc: pf.field_desc,
+        field_name: pf.field_name,
+        read: pf.read,
+      };
+    });
+
+    const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+      field_desc: uf.field_desc,
+      field_name: uf.field_name,
+      read: uf.read,
+    }));
+
+    const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+    return exportableFields;
+  }
 }
 
 export default SchemaService;

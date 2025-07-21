@@ -187,7 +187,8 @@ export class ResourceService {
     search: string,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -229,24 +230,91 @@ export class ResourceService {
       );
 
       const rawResult = resources.resources || [];
-      let exportData = rawResult.map((resource: any) => {   
-        return {
-          "Account Name": resource.account_name || "-",
-          "Resource Code":resource.resource_code || "-",
-          "Name":resource.resource_name || "-",
-          "Resource Type": resource?.resource_type_name || "-",
-          "Org Name": resource.resource_orgname || "-",
-          "Designation": resource.resource_designation || "-",
-          "Role": resource.resource_role || "-",
-          "Region": resource.region_name || "-",
-          "Country": resource.country_name || "-",
-          "Total Project Hours": resource.total_project_hours || "-",
-          "Estimated R&D Hours": resource.estimated_rd_hours || "-",
-          "Status": resource.status_name,
-          "Comments": resource.comments || "-",
-          "Resource ID": resource.r_number || "-"
-        };
-      });
+      const [
+        accountFields,
+        resourceFields,
+      ] = await Promise.all([
+        this.schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+        this.schemaService.getAllowedExportFields(userId, "account_resources_view_edit")
+      ]);
+     // const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"account_resources_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of resourceFields) {
+          console.log("field",field,field.read)
+          if (field.read) {
+            console.log("in checkfield",field,field.read)
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+        const requiredAccountFields = new Set(["account_name"]); // Add more if needed
+      for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      console.log(allowedFieldSet)
+      const labelMap: Record<string, string> = {
+        "account_name": "Account Name", // Maps to 'Name' in allowedFieldSet
+        "resource_code": "Resource Code",
+        "resource_name": "Name",
+        "resource_type_rid": "Resource Type",
+        "resource_orgname": "Org Name",
+        "resource_designation": "Designation",
+        "resource_role": "Role",
+        "region_rid": "Region",
+        "country_rid": "Country",
+        "total_project_hours": "Total Project Hours",
+        "estimated_rd_hours": "Estimated R&D Hours",
+        "status_rid": "Status",
+        "comments": "Comments",
+        "r_number": "Resource ID",
+      };
+      const fieldValueMap: Record<string, string> = {
+        "resource_type_rid": "resource_type_name",
+        "region_rid":"region_name",
+        "country_rid":"country_name",
+         "status_rid":"status_name",
+
+      };
+
+      const exportData = rawResult.map((resource: any) => {
+      const row: Record<string, string> = {};
+
+      for (const [field, label] of Object.entries(labelMap)) {
+       if (allowedFieldSet.has(field)) {
+      const actualField = fieldValueMap[field] || field; // fallback to same field if not mapped
+      row[label] = resource[actualField] ?? "-";
+      }
+      }
+
+      return row;
+    });
+
+      // let exportData = rawResult.map((resource: any) => {
+      //    const exportData: Record<string, string> = {};   
+      //   let resultMap = {
+      //     "Account Name": resource.account_name || "-",
+      //     "Resource Code":resource.resource_code || "-",
+      //     "Name":resource.resource_name || "-",
+      //     "Resource Type": resource?.resource_type_name || "-",
+      //     "Org Name": resource.resource_orgname || "-",
+      //     "Designation": resource.resource_designation || "-",
+      //     "Role": resource.resource_role || "-",
+      //     "Region": resource.region_name || "-",
+      //     "Country": resource.country_name || "-",
+      //     "Total Project Hours": resource.total_project_hours || "-",
+      //     "Estimated R&D Hours": resource.estimated_rd_hours || "-",
+      //     "Status": resource.status_name,
+      //     "Comments": resource.comments || "-",
+      //     "Resource ID": resource.r_number || "-"
+      //   };
+      //   for (const [field, value] of Object.entries(resultMap)) {
+      //   if (allowedFieldSet.has(field)) {
+      //     exportData[labelMap[field]] = value;
+      //   }
+      //   }
+      //   return exportData
+      // });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

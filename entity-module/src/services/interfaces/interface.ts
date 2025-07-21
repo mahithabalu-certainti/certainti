@@ -50,7 +50,8 @@ export interface IResourceService {
     search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -84,7 +85,8 @@ export interface IResourceCostService {
     sortBy: any, 
     sortOrder: any, 
     accountNumber: any, 
-    fiscalYear: any, 
+    fiscalYear: any,
+    userId:string,
     resourceRid: any): Promise<{
       statusCode: number;
       message: string;
@@ -220,6 +222,7 @@ export interface IResourceSkillService {
     accountNumber: string,
     fiscalYear: number,
     resourceRid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -305,7 +308,8 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     bothParentAndChild: boolean,
-    timezone:string
+    timezone:string,
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;

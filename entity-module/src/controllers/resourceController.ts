@@ -136,6 +136,8 @@ async function exportResourcesList(req: Request, res: Response): Promise<void> {
   const methodName = "export ResourcesList";
   try {
     const { accountNumber } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+
 
     const value = await validateRequest(req, exportResourceSchema, res, "GET");
 
@@ -161,7 +163,8 @@ async function exportResourcesList(req: Request, res: Response): Promise<void> {
       value.search,
       parsedFilters,
       value.sortBy,
-      value.sortOrder
+      value.sortOrder,
+      userId
     );
 
     if (resourcesList.statusCode === HttpStatus.SUCCESS) {
