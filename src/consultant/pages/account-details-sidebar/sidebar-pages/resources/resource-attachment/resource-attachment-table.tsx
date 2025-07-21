@@ -9,6 +9,7 @@ import { useParams } from 'react-router-dom';
 import {
   AllPermissions,
   useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
 } from '../../../../../../common-service';
 import { getFiscalYears } from '../../../../../../common-utils';
 import { SelectOption } from '../../../../../types';
@@ -18,11 +19,11 @@ import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
 import {
   CellEditData,
+  FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
-
 interface ResourceSkillTableProps {
   fiscalYear?: number;
   appliedFilters?: Record<string, any>;
@@ -54,6 +55,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const { permission } = useSelector((state: RootState) => state.permission);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
+  const [currentCategory, setCurrentCategory] = useState<string>('');
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -89,16 +91,17 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   }, [data]);
 
-  const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+      categoryTypes.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
+    [categoryTypes.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
@@ -142,12 +145,25 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setOrderBy(property as keyof AttachmentList);
   };
 
+  const handleDocumentCategory = (rid: string) => {
+    setCurrentCategory(rid);
+  };
+
   const attachmentColumns = getResourceAttachmentColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
+    handleDocumentCategory,
+    categoryTypes.isLoading,
     permissionMap
   );
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'document_category' && event.value) {
+      setCurrentCategory(String(event.value));
+    }
+  };
+
   const getRowId = (row: AttachmentList) => row.rid;
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -183,11 +199,15 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       }
     );
 
-    if (hasDocType && !hasDocTypeOther) {
+    if (
+      hasDocCategory &&
+      hasDocType &&
+      !hasDocCategoryOther &&
+      !hasDocTypeOther
+    ) {
+      updateData['document_category_others'] = '';
       updateData['document_type_others'] = '';
     }
-    if (hasDocCategory && !hasDocCategoryOther)
-      updateData['document_category_others'] = '';
 
     try {
       const res = await updateAttachment({
@@ -230,7 +250,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
           maxHeight: 'calc(100vh - 410px)',
           overflow: 'auto',
         }}
-        stickyHeader={false}
+        stickyHeader={true}
         stickyColumnsCount={1}
         selectable={false}
         actionWidth={80}
@@ -248,6 +268,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
         sortOrder={order.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
         onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
       />
     </div>
   );

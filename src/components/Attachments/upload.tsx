@@ -1,27 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FieldErrors, FormBuilder } from './formBuilder';
 import { Attachment, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
-import { SelectOption } from '../../consultant/types';
-import { getFormFields, shouldShowField, validateField } from './helpers';
-
-type FormData = {
-  [key: string]: string | null;
-};
-
-interface FieldOptionType {
-  fiscalYears: SelectOption[];
-  docCategories: SelectOption[];
-  docTypes: SelectOption[];
-}
+import AttachmentForm from './attachment-from';
+import { AttachmentUploadPayload } from '../../consultant/types/attachment';
 interface UploadsProps {
-  accountId?: string | undefined | null;
-  attachID?: string | undefined | null;
+  accountId: string | undefined | null;
+  attachID: string | undefined | null;
   accountInActive?: boolean;
-  fieldOptions: FieldOptionType;
   onUploadSuccess?: () => void;
 }
 
@@ -43,11 +31,9 @@ const Uploads: React.FC<UploadsProps> = ({
   attachID,
   accountId,
   accountInActive,
-  fieldOptions,
   onUploadSuccess,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [formData, setFormData] = useState<FormData>({});
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
     text: string;
@@ -55,7 +41,8 @@ const Uploads: React.FC<UploadsProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entityType, setEntityType] = useState<string | null>('Select Type');
   const [loading, setLoading] = useState<boolean>(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const formRef = useRef<HTMLFormElement>(null);
 
   const location = useLocation();
   const { successToast, errorToast } = useToast();
@@ -104,31 +91,7 @@ const Uploads: React.FC<UploadsProps> = ({
     window.history.back();
   };
 
-  const formFields = getFormFields(
-    fieldOptions.fiscalYears,
-    fieldOptions.docCategories,
-    fieldOptions.docTypes
-  );
-
-  const handleSubmit = async () => {
-    const newErrors: FieldErrors = {};
-    formFields.forEach((field) => {
-      if (shouldShowField(field, formData, formFields)) {
-        const error = validateField(
-          field.id,
-          formData[field.id] ?? '',
-          formFields
-        );
-        newErrors[field.id] = error;
-      } else {
-        newErrors[field.id] = null;
-      }
-    });
-    setFieldErrors(newErrors);
-    const hasErrors = Object.values(newErrors).some((e) => e);
-    if (hasErrors) {
-      return;
-    }
+  const handleSubmit = async (data: Partial<AttachmentUploadPayload>) => {
     if (selectedFiles.length === 0) {
       showError('Please select a file before submitting.');
       return;
@@ -146,22 +109,21 @@ const Uploads: React.FC<UploadsProps> = ({
     try {
       const payload = {
         attachment: selectedFiles[0],
-        account_rid: accountId,
-        attach_to: attachID,
-        attachment_level: entityType,
-        fiscal_year: formData?.fiscal_year,
-        document_category_rid: formData?.document_category_rid,
-        document_type_rid: formData?.document_type_rid,
-        document_category_others: formData?.document_category_other || '',
-        document_type_others: formData?.document_type_others || '',
-        comments: String(formData?.comments || '').trim(),
+        account_rid: accountId || '',
+        attach_to: attachID || '',
+        attachment_level: entityType || '',
+        fiscal_year: data?.fiscal_year || '',
+        document_category_rid: data?.document_category_rid || '',
+        document_type_rid: data?.document_type_rid || '',
+        document_category_others: data?.document_category_others || '',
+        document_type_others: data?.document_type_others || '',
+        comments: data?.comments || '',
       };
       const response = await attachmentFileUpload(payload);
       if (response?.data.statusCode === 200) {
         successToast(response.data.statusMessage);
         fileInputRef.current!.value = '';
         setSelectedFiles([]);
-        setFormData({});
         setMessage(null);
         setLoading(false);
         goBack();
@@ -207,6 +169,10 @@ const Uploads: React.FC<UploadsProps> = ({
     fileInputRef.current?.click();
   };
 
+  const handleExternalSubmit = () => {
+    formRef.current?.requestSubmit();
+  };
+
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
@@ -230,7 +196,7 @@ const Uploads: React.FC<UploadsProps> = ({
           <TextButton
             label='Save'
             loading={loading}
-            onClick={handleSubmit}
+            onClick={handleExternalSubmit}
             disabled={loading}
             sx={{
               width: '64px',
@@ -242,19 +208,7 @@ const Uploads: React.FC<UploadsProps> = ({
         </div>
       </div>
       <div style={{ pointerEvents: loading ? 'none' : 'all' }}>
-        <div className='flex items-center align-middle px-4 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-          {'Document Info'}
-        </div>
-        <FormBuilder
-          fieldOptions={fieldOptions}
-          formData={formData}
-          setFormData={setFormData}
-          onFormChange={(data) => {
-            setFormData(data);
-          }}
-          fieldErrors={fieldErrors}
-          setFieldErrors={setFieldErrors}
-        />
+        <AttachmentForm formRef={formRef} onFormSubmit={handleSubmit} />
         <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
           <div
             onDrop={handleDrop}
@@ -291,7 +245,7 @@ const Uploads: React.FC<UploadsProps> = ({
 
           {message && (
             <div
-              className={`w-[502px] mt-2 text-sm ${
+              className={`w-[502px] max-w-[502px] mt-2 break-all text-sm ${
                 message.type === 'error' ? 'text-red-600' : 'text-green-600'
               }`}
             >

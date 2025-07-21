@@ -10,6 +10,7 @@ import { getAttachmentColumns } from './column';
 import {
   AllPermissions,
   useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
 } from '../../../../../common-service';
 import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
@@ -24,6 +25,7 @@ import { getFiscalYears } from '../../../../../common-utils';
 import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
 import {
   CellEditData,
+  FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
@@ -32,6 +34,7 @@ import { useMutation } from '@apollo/client';
 import { useToast } from '../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
+import { FilterValue } from '../../components/filter/filterType';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -76,6 +79,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [currentCategory, setCurrentCategory] = useState<string>('');
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -106,16 +110,17 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     }
   }, [data]);
 
-  const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+      categoryTypes.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
+    [categoryTypes.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
@@ -202,16 +207,34 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     return map;
   }, [costViewEditFields]);
 
-  const attachmentColumns = getAttachmentColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    permissionMap
-  );
   const fieldOptions = {
     fiscalYears: fiscalYears,
     docCategories: memoizedDocumentCategories,
     docTypes: memoizedDocumentTypes,
+  };
+
+  const handleDocumentCategory = (rid: string) => {
+    setCurrentCategory(rid);
+  };
+  const handleCategory = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'document_category_rid' && value) {
+      setCurrentCategory(String(value));
+    }
+  };
+
+  const attachmentColumns = getAttachmentColumns(
+    fiscalYears,
+    memoizedDocumentCategories,
+    memoizedDocumentTypes,
+    handleDocumentCategory,
+    categoryTypes.isLoading,
+    permissionMap
+  );
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'document_category' && event.value) {
+      setCurrentCategory(String(event.value));
+    }
   };
 
   const attachmentsFilterFields = getAttachmentsFilterFields(
@@ -254,11 +277,15 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
       }
     );
 
-    if (hasDocType && !hasDocTypeOther) {
+    if (
+      hasDocCategory &&
+      hasDocType &&
+      !hasDocCategoryOther &&
+      !hasDocTypeOther
+    ) {
+      updateData['document_category_others'] = '';
       updateData['document_type_others'] = '';
     }
-    if (hasDocCategory && !hasDocCategoryOther)
-      updateData['document_category_others'] = '';
 
     try {
       const res = await updateAttachment({
@@ -305,12 +332,12 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
         setSortFilterCount={setSortFilterCount}
         showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
+        onFilterChange={handleCategory}
       />
       {showUploads ? (
         <Uploads
           accountId={accountid}
           attachID={accountid}
-          fieldOptions={fieldOptions}
           onUploadSuccess={onRefreshClick}
         />
       ) : (
@@ -334,7 +361,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
                 maxHeight: 'calc(100vh - 290px)',
                 overflow: 'auto',
               }}
-              stickyHeader={false}
+              stickyHeader={true}
               stickyColumnsCount={1}
               selectable={false}
               actionWidth={80}
@@ -351,6 +378,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSortRequest}
+              onFieldChange={handleFieldChange}
               onCellEdit={handleCellEdit}
             />
           </div>

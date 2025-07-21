@@ -6,8 +6,9 @@ export const attachmentColumns = [
     id: 'document_name',
     label: 'Document Name',
     width: 160,
+    sticky: true,
     sx: {
-      position: 'sticky' as 'sticky',
+      position: 'sticky' as const,
       left: 0,
       background: '#fff',
       borderRight: '1px solid #CBD6E2',

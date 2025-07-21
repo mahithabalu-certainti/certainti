@@ -182,6 +182,7 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: docCategories.map((c) => ({ option: c.label, value: c.value })),
       operatorOption: enumOptions,
+      onChange: true,
       hide:
         !permissionMap?.['document_category_rid']?.edit &&
         !permissionMap?.['document_category_rid']?.read,
@@ -192,6 +193,7 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: docTypes.map((t) => ({ option: t.label, value: t.value })),
       operatorOption: enumOptions,
+      dependsOn: 'document_category_rid',
       hide:
         !permissionMap?.['document_type_rid']?.edit &&
         !permissionMap?.['document_type_rid']?.read,

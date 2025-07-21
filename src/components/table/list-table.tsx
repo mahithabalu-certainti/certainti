@@ -61,7 +61,7 @@ const ListTable = <T extends RowData>({
   editDisableLevel = [],
   hoverHighlight = false,
   tableStyle,
-  stickyHeader = false,
+  stickyHeader = true,
   stickyColumnsCount = 0,
   // Selection
   hideHeaderSelect = false,

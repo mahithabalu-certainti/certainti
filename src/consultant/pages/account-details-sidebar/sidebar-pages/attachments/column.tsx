@@ -13,6 +13,8 @@ export const getAttachmentColumns = (
   fiscalYears: SelectOption[],
   docCategories: SelectOption[],
   docTypes: SelectOption[],
+  handleDocumentCategory: (rid: string) => void,
+  typeLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<AttachmentList>[] => [
   {
@@ -95,17 +97,43 @@ export const getAttachmentColumns = (
       required: true,
       placeholder: '',
       options: docCategories,
+      onChange: true,
+      resetDependentFields: ['document_type'],
       getFieldData: (rowData: DependencyRowData) => {
+        handleDocumentCategory(String(rowData.document_category_rid));
         return String(rowData.document_category_rid);
       },
       dependencies: [
         {
-          dependsOn: 'document_category',
-          condition: (value) => {
-            const found = docCategories.find(
-              (opt) => String(opt.value) === String(value)
+          dependsOn: 'document_type',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+        {
+          dependsOn: ['document_category', 'document_type'],
+          condition: (value, rowData) => {
+            const docType = rowData.document_type;
+            const docCategory = value;
+            const bothFieldsHaveValues =
+              docCategory && docCategory !== '' && docType && docType !== '';
+
+            if (!bothFieldsHaveValues) {
+              return false;
+            }
+
+            const categoryFound = docCategories.find(
+              (opt) => String(opt.value) === String(docCategory)
             );
-            return found?.label.toLowerCase() === OthersEnum.Others;
+            const typeFound = docTypes.find(
+              (opt) => String(opt.value) === String(docType)
+            );
+
+            // Show modal if either is "Others"
+            const shouldShowModal =
+              categoryFound?.label.toLowerCase() === OthersEnum.Others ||
+              typeFound?.label.toLowerCase() === OthersEnum.Others;
+            return shouldShowModal;
           },
           action: 'show_modal',
           modalFields: [
@@ -121,6 +149,30 @@ export const getAttachmentColumns = (
                   regex: REGEX_PATTERNS.MIN_3,
                   errorMessage:
                     'Document Category-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+            {
+              id: 'document_type_others',
+              editId: 'document_type_others',
+              label: 'Document Type-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Type-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Type-others must be more than 2 characters long',
                 },
                 {
                   regex: REGEX_PATTERNS.MAX_255,
@@ -158,22 +210,70 @@ export const getAttachmentColumns = (
     field: {
       type: 'select',
       required: true,
-      placeholder: '',
+      placeholder: 'Choose Document Type',
+      loading: typeLoading,
       options: docTypes,
       getFieldData: (rowData: DependencyRowData) => {
         return String(rowData.document_type_rid);
       },
       dependencies: [
         {
-          dependsOn: 'document_type',
-          condition: (value) => {
-            const found = docTypes.find(
-              (opt) => String(opt.value) === String(value)
+          dependsOn: 'document_category',
+          condition: (value) => !value,
+          action: 'disabled',
+          message: '',
+        },
+        {
+          dependsOn: ['document_category', 'document_type'],
+          condition: (value, rowData) => {
+            const docCategory = rowData.document_category;
+            const docType = value;
+            const bothFieldsHaveValues =
+              docCategory && docCategory !== '' && docType && docType !== '';
+
+            if (!bothFieldsHaveValues) {
+              return false;
+            }
+
+            const categoryFound = docCategories.find(
+              (opt) => String(opt.value) === String(docCategory)
             );
-            return found?.label.toLowerCase() === OthersEnum.Others;
+            const typeFound = docTypes.find(
+              (opt) => String(opt.value) === String(docType)
+            );
+
+            // Show modal if either is "Others"
+            const shouldShowModal =
+              categoryFound?.label.toLowerCase() === OthersEnum.Others ||
+              typeFound?.label.toLowerCase() === OthersEnum.Others;
+            return shouldShowModal;
           },
           action: 'show_modal',
           modalFields: [
+            {
+              id: 'document_category_others',
+              editId: 'document_category_others',
+              label: 'Document Category-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Category-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Category-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
             {
               id: 'document_type_others',
               editId: 'document_type_others',

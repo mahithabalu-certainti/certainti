@@ -161,6 +161,7 @@ export type FieldConfig = {
   options?: string[] | Options[];
   operatorOption?: Options[];
   hide?: boolean;
+  onChange?: boolean;
 };
 
 export interface FilterComponentProps {
@@ -181,6 +182,10 @@ export interface FilterModalProps {
   setPage: (page: number) => void;
   handleCloseFilter: () => void;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  onFilterChange?: (
+    fieldName: string,
+    value: string | string[] | number | undefined | undefined[]
+  ) => void;
 }
 
 export const StatusOptions = [

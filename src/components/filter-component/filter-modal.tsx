@@ -51,6 +51,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   setPage,
   handleCloseFilter,
   handleSorting,
+  onFilterChange,
 }) => {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -299,6 +300,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   ) => {
     setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
+    const newValue = event.target.value;
     if (!fieldConfig) return;
 
     setFilterStates((prev) => {
@@ -362,13 +364,22 @@ const FilterModal: React.FC<FilterModalProps> = ({
           return prev;
       }
     });
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, newValue);
+    }
   };
 
   const handleMultiSelectChange = (fieldName: string, values: string[]) => {
+    const fieldConfig = filterFields.find((f) => f.name === fieldName);
     setFilterStates((prev) => ({
       ...prev,
       [fieldName]: { multiSelect: { values } },
     }));
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, values);
+    }
   };
 
   const handleSystemFilter = (fieldName: string, filterValue: string) => {
@@ -462,6 +473,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleDateChange = (type: string, fieldName: string, value: string) => {
+    const fieldConfig = filterFields.find((f) => f.name === fieldName);
     setFilterStates(
       (prev: Record<string, FilterState>): Record<string, FilterState> => {
         return {
@@ -479,9 +491,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
         };
       }
     );
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, value);
+    }
   };
 
   const handleEnumSelectChange = (fieldName: string, value: string[]) => {
+    const fieldConfig = filterFields.find((f) => f.name === fieldName);
     setFilterStates(
       (prev: Record<string, FilterState>): Record<string, FilterState> => {
         return {
@@ -496,6 +513,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
         };
       }
     );
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, value);
+    }
   };
 
   const handleApplyFilters = () => {
