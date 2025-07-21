@@ -343,7 +343,6 @@ export interface IUpdateProjectResource {
   project_rid: string;
   account_rid: string;
   resource_id: string;
-  project_code: string;
   resource_code: string;
   resource_name: string;
   manager_name?: string;
