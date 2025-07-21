@@ -543,7 +543,7 @@ export const IMPORT_FILTER_COLUMNS : any = {
   records_failed_to_load: "records_failed_to_load",
   status: "document_status",
   imported_on: "uploaded_datetime",
-  status_description: "status_description",
+  status_description: "upload_failure_reason",
   import_type: "import_type",
   imported_by: "uploaded_by_user_rid",
   records_with_warning: "total_staging_warning_count",

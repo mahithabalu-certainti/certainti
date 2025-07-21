@@ -51,6 +51,7 @@ async function fetchAllImportList(req: Request, res: Response) {
                 records_failed_to_load : data.records_failed_to_load,
                 records_with_warning : data.records_with_warning,
                 status : data.status,
+                status_descriptions : data.status_description,
                 imported_on : new Date(data.imported_on).toISOString(),
                 imported_by : data.imported_by,
             })
@@ -173,6 +174,7 @@ async function exportAllImportedDatas (req : Request, res : Response) {
                 records_failed_to_load : data.records_failed_to_load,
                 records_with_warning : data.records_with_warning,
                 status : data.status,
+                status_description : data.status_description,
                 imported_on : new Date(data.imported_on).toISOString(),
                 imported_by : data.imported_by,
             })
@@ -240,6 +242,7 @@ async function exportAllImportedDatas (req : Request, res : Response) {
                 "Records Failed to Load" : data.records_failed_to_load,
                 "Records with Warning" : data.records_with_warning,
                 "Status" : data.status,
+                "Status Description" : data.status_description,
                 "Imported On" : new Date(data.imported_on).toISOString().slice(0, 10),
                 "Imported By" : data.imported_by,
             }
@@ -268,6 +271,7 @@ async function exportImportListPerRow (req : Request, res : Response) {
                 "Records Failed to Load" : finalData.records_failed_to_load,
                 "Records with Warning" : finalData.records_with_warning,
                 "Status" : finalData.status,
+                "Status Description" : finalData.status_description,
                 "Imported On" : finalData.imported_on.slice(0, 10),
                 "Imported By" : finalData.imported_by,
             }
