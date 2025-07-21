@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
-import { handleErrorResponse, handleSuccessResponse, validateImportListByRidRequest, validateImportListRequest } from '../utils/helpers';
+import { handleErrorResponse, handleSuccessResponse, validateImportListByRidRequest, validateImportListRequest, validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -121,6 +121,51 @@ async function fetchAllImportList(req: Request, res: Response) {
     }
 }
 
+async function fetchAllStagingFailureList (req : Request, res : Response) {
+    try {
+        const {account_rid, import_rid,entity_type} = req.params
+        const validation = validateStagingErrorListRequest(account_rid, import_rid,entity_type)
+        if(validation) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
+            return;
+        }
+        const result = await importServices.listAllStageFailures(account_rid, import_rid,entity_type)
+        if(result.statusCode == HttpStatus.SUCCESS) {
+            handleSuccessResponse(res, result.data);
+            return;
+        }
+        else {
+            handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
+            return 
+        }
+    } catch (error : any) {
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
+        return
+    }
+}
+
+async function fetchAllLoadFailureList (req : Request, res : Response) {
+    try {
+        const {account_rid, import_rid,entity_type} = req.params
+        const validation = validateLoadErrorListRequest(account_rid, import_rid,entity_type)
+        if(validation) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
+            return;
+        }
+        const result = await importServices.listAllLoadFailures(account_rid, import_rid,entity_type)
+        if(result.statusCode == HttpStatus.SUCCESS) {
+            handleSuccessResponse(res, result.data);
+            return;
+        }
+        else {
+            handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
+            return 
+        }
+    } catch (error : any) {
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
+        return
+    }
+}
 async function importListByRid (req : Request, res : Response) {
     try {
         const {account_rid, rid} = req.params
@@ -147,5 +192,7 @@ async function importListByRid (req : Request, res : Response) {
 
 export default {
     fetchAllImportList,
-    importListByRid
+    importListByRid,
+    fetchAllStagingFailureList,
+    fetchAllLoadFailureList
 }

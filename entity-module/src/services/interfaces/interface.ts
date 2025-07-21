@@ -526,4 +526,20 @@ export interface IImportListGraphqlServices {
     statusCode: number;
     data: null;
 }>
+
+  listAllStageFailures(account_rid : string, import_rid : string,entity_type:string) : Promise<{
+    statusCode: number;
+    data: {};
+} | {
+    statusCode: number;
+    data: null;
+}>
+
+  listAllLoadFailures(account_rid : string, rid : string,entity_type:string) : Promise<{
+    statusCode: number;
+    data: {};
+} | {
+    statusCode: number;
+    data: null;
+}>
 }

@@ -2,8 +2,9 @@ import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
-import { fetchImportListByRid, listAllImportedDatasQuery } from "../utils/rawQueries";
+import { fetchImportListByRid, listAllImportedDatasQuery, listAllStageFailures,listAllLoadFailures } from "../utils/rawQueries";
 import { setInlineForImports } from "../utils/helpers";
+
 
 export default class ImportGraphqlServices {
       private orgSequelize: Sequelize | null = null;
@@ -49,6 +50,49 @@ export default class ImportGraphqlServices {
         }
     }
 
+    async listAllStageFailures (account_rid : string,import_rid:string,entity_type:string) {
+        const orgSequelize = await this.getOrgSequelize()
+        const mainSequelize = await this.getMainDbSequelize()
+
+        const fetchParentRnumber : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
+
+        const result = await orgSequelize.query(listAllStageFailures(schemaName,import_rid,entity_type))
+        if(result[0].length > 0) {
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                data : result[0]
+            }
+        }
+        else {
+            return {
+                statusCode : HttpStatus.NOT_FOUND,
+                data : []
+            }
+        }
+    }
+
+    async listAllLoadFailures (account_rid : string,import_rid:string,entity_type:string) {
+        const orgSequelize = await this.getOrgSequelize()
+        const mainSequelize = await this.getMainDbSequelize()
+
+        const fetchParentRnumber : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
+
+        const result = await orgSequelize.query(listAllLoadFailures(schemaName,import_rid,entity_type))
+        if(result[0].length > 0) {
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                data : result[0]
+            }
+        }
+        else {
+            return {
+                statusCode : HttpStatus.NOT_FOUND,
+                data : []
+            }
+        }
+    }
     async fetchUserDetails(userRids: string[]) {
       const mainSequelize = await this.getMainDbSequelize();
       if (!userRids.length) return [];
