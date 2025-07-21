@@ -1410,7 +1410,6 @@ export class ProjectResourceService {
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
-      "resource_code",
       "resource_name",
       "fiscal_year",
       "resource_role",
@@ -1461,7 +1460,6 @@ export class ProjectResourceService {
     ];
 
     const enumFields = [
-      "resource_code",
       "country_rid",
       "region_rid",
       "resource_type_rid",
@@ -1497,7 +1495,6 @@ export class ProjectResourceService {
 
   getFilterFields(): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
-      { clientField: "resource_code", dbField: "resource_code" },
       { clientField: "resource_name", dbField: "resource_name" },
       { clientField: "region_rid", dbField: "region_rid" },
       { clientField: "country_rid", dbField: "country_rid" },
