@@ -191,7 +191,7 @@ async function importListByRid (req : Request, res : Response) {
     }
 }
 
-async function exportAllImportedDatas (req : Request, res : Response) {
+async function exportAllImportedData (req : Request, res : Response) {
     const data = req.body;
     let importedByFilter;
     let importedByCondition : string;
@@ -333,7 +333,7 @@ async function exportImportListPerRow (req : Request, res : Response) {
 export default {
     fetchAllImportList,
     importListByRid,
-    exportAllImportedDatas,
+    exportAllImportedData,
     exportImportListPerRow,
     fetchAllStagingFailureList,
     fetchAllLoadFailureList
