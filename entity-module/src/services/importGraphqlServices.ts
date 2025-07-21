@@ -1,8 +1,10 @@
 import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { fetchImportListByRid, listAllImportedDatasQuery, listAllStageFailures,listAllLoadFailures } from "../utils/rawQueries";
+import { setInlineForImports } from "../utils/helpers";
+
 
 export default class ImportGraphqlServices {
       private orgSequelize: Sequelize | null = null;
@@ -127,6 +129,34 @@ export default class ImportGraphqlServices {
         return {
           statusCode : HttpStatus.NOT_FOUND,
           data : null
+        }
+      }
+    }
+
+    async inlineEditImportList (data : any) {
+      const mainDb = await this.getMainDbSequelize()
+      const orgDb = await this.getOrgSequelize()
+      console.log(data)
+      const fetchAccountDetails : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+      let schemaName = rawQueries.fetchSchemaName(fetchAccountDetails[0][0].r_number)
+
+      const checkImportDataExists = await this.fetchImportById(data.account_rid, data.rid)
+      let importDbData = checkImportDataExists.data
+      const setInlineDetails = setInlineForImports(importDbData, data)
+      if(setInlineDetails == null) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.noDataToUpdate,
+          data : null
+        }        
+      }
+      const updateImportDetails = await orgDb.query(rawQueries.updateImport(schemaName, setInlineDetails, data.rid))
+      if(updateImportDetails.length > 0) {
+        const latestUpdatedData = await this.fetchImportById(data.account_rid, data.rid)
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.importUpdatedSuccess,
+          data : latestUpdatedData.data
         }
       }
     }

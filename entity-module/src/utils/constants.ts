@@ -117,7 +117,8 @@ export const STATUS_MESSAGE = {
   targetLoadSuccess : "Success",
   targetLoadFailed : "Failed",
   importListedSuccess : "Imports listed successfully",
-  importsNoFound : "No imports found"
+  importsNoFound : "No imports found",
+  importUpdatedSuccess : "Import updated successfully"
 }
 
 export const TYPES = {
@@ -398,7 +399,7 @@ export const rawQueries = {
   },
   findAttachementDetails (schemaName : string, rid : string, account_rid : string) {
     return `
-      SELECT attachment_level, attach_to FROM ${schemaName}.attachments WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
+      SELECT * FROM ${schemaName}.attachments WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
   },
   fetchSchemaName(r_number : string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace('ACC-', '')}`
@@ -527,6 +528,9 @@ export const rawQueries = {
   `,
   fetchUserDetailsById (userId : string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`
+  },
+  updateImport(schemaName : string, updatedData : any, rid : string) {
+    return `UPDATE ${schemaName}.import SET fiscal_year = ${updatedData.fiscal_year} WHERE rid = '${rid}'`
   }
 }
 

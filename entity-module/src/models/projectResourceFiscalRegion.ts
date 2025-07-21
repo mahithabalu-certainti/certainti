@@ -13,14 +13,7 @@ interface ProjectResourceFiscalRegionAttributes {
   account_rid: string;
   project_rid: string;
   resource_rid: string;
-  project_code: string;
   fiscal_year: number;
-
-  resource_code: string;
-  resource_name?: string | null;
-  resource_type_rid: string | null;
-  designation?: string | null;
-  resource_role?: string | null;
 
   total_hours_pro_res?: number | null;
   total_cost_pro_res?: number | null;
@@ -29,8 +22,6 @@ interface ProjectResourceFiscalRegionAttributes {
   country_rid?: string | null;
   region_rid?: string | null;
   currency_rid?: string | null;
-
-  resource_orgname?: string | null;
 
   effort_project_resource_level?: number | null;
   cost_project_resource_level?: number | null;
@@ -86,13 +77,6 @@ export class ProjectResourceFiscalRegion
   public project_rid!: string;
   public resource_rid!: string;
   public fiscal_year!: number;
-  public project_code!: string;
-
-  public resource_code!: string;
-  public resource_name?: string | null;
-  public resource_type_rid!: string | null;
-  public designation?: string | null;
-  public resource_role?: string | null;
 
   public total_hours_pro_res?: number | null;
   public total_cost_pro_res?: number | null;
@@ -101,8 +85,6 @@ export class ProjectResourceFiscalRegion
   public country_rid?: string | null;
   public region_rid?: string | null;
   public currency_rid?: string | null;
-
-  public resource_orgname?: string | null;
 
   public effort_project_resource_level?: number | null;
   public cost_project_resource_level?: number | null;
@@ -158,15 +140,6 @@ export class ProjectResourceFiscalRegion
         project_rid: { type: DataTypes.STRING(50), allowNull: false },
         resource_rid: { type: DataTypes.STRING(50), allowNull: false },
         fiscal_year: { type: DataTypes.INTEGER, allowNull: false },
-        project_code: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
-        },
-        resource_code: { type: DataTypes.STRING(100), allowNull: false },
-        resource_name: { type: DataTypes.STRING(200) },
-        resource_type_rid: { type: DataTypes.STRING(100) },
-        designation: { type: DataTypes.STRING(200) },
-        resource_role: { type: DataTypes.STRING(200) },
 
         total_hours_pro_res: { type: DataTypes.DECIMAL(18, 2) },
         total_cost_pro_res: { type: DataTypes.DECIMAL(18, 2) },
@@ -175,8 +148,6 @@ export class ProjectResourceFiscalRegion
         country_rid: { type: DataTypes.STRING(50) },
         region_rid: { type: DataTypes.STRING(50) },
         currency_rid: { type: DataTypes.STRING(50) },
-
-        resource_orgname: { type: DataTypes.STRING(200) },
 
         effort_project_resource_level: { type: DataTypes.DECIMAL(18, 2) },
         cost_project_resource_level: { type: DataTypes.DECIMAL(18, 2) },

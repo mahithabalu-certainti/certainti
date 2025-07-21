@@ -272,7 +272,7 @@ export class ProjectFiscalRegion
   public effective_nonlabor_cost?: number | null;
 
   public effective_metric_type?: string | null;
-  public efault_metric_type?: string | null;
+  public default_metric_type?: string | null;
 
   public interaction_cc_list?: string | null;
   public assessment_status?: string | null;
