@@ -1005,7 +1005,7 @@ async getAccountGroups(
       const filterProcessors: Record<string, Function> = {
         'group_name': (value: any) => this.processTextFilter('group_name', value, whereClause),
         'first_name': (value: any) => this.processTextFilter('first_name', value, whereClause),
-        'group_type': (value: any) => this.processTextFilter('group_type', value, whereClause),
+        'group_type': (value: any) => this.processTextFilter('group_type_rid', value, whereClause),
         'is_consultant_only_group': (value: any) => this.processBooleanFilter('is_consultant_only_group', value, whereClause),
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),

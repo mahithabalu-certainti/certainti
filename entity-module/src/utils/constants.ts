@@ -71,6 +71,8 @@ export const STATUS_MESSAGE = {
   accountNoFound : "Account not found",
   accountUpdateSuccess : "Account updated successfully",
   accountIdMissing : "Account RID mising",
+  importIdMissing : "Import RID mising",
+  entityTypeMissing : "Entity type mising",
   oneFieldRequired : "Atleast one field is required to update",
   keyContactIdMissing : "Key-Contact RID is missing",
   projectUpdateSuccess : "Field updated successfully",

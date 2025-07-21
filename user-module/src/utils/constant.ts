@@ -48,12 +48,15 @@ export const constants = {
       ps.project_name,
       ps.project_code,
       ps.account_rid,
+      acc.account_name,
       CASE 
         WHEN uga.rid IS NOT NULL THEN true
         ELSE false
       END as has_access,
       uga.access_type
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+     LEFT JOIN trd365.account acc
+      ON acc.rid = ps.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
       ON uga.entity_rid = ps.rid 
       AND uga.entity_type = 'PROJECT'
