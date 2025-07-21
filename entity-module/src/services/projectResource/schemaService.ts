@@ -4381,6 +4381,10 @@ export class ProjectResourceSchemaService {
       projectResource = await this.insertProjectResourceRoleSkill(
         projectResource
       );
+      projectResource = await this.insertResourceDetails(
+        accountNumber,
+        projectResource
+      );
     }
 
     return projectResource;
@@ -4556,6 +4560,40 @@ export class ProjectResourceSchemaService {
     }
   }
 
+  async insertResourceDetails(accountNumber: string, projectResource: any){
+    try {
+      const { Resources } = await this.getModels(accountNumber);
+  
+      const resourceRid = projectResource.resource_rid;
+  
+      if (!resourceRid) {
+        return {
+          ...(projectResource.dataValues ?? projectResource),
+          resource_code: null,
+        };
+      }
+  
+      // Fetch the resource code for the given rid
+      const resource = await Resources.findOne({
+        where: { rid: resourceRid },
+        attributes: ['resource_code'],
+        raw: true,
+      });
+  
+      const resourceCode = resource?.resource_code || null;
+  
+      // Enrich and return the project resource object
+      return {
+        ...(projectResource.dataValues ?? projectResource),
+        resource_code: resourceCode,
+      };
+    } catch (err) {
+      throw new Error(
+        "Error fetching resource details: " + (err as Error).message
+      );
+    }
+  }  
+
   async listProjectResourceSchema(
     accountNumber: string,
     accountId: string,
@@ -4581,7 +4619,7 @@ export class ProjectResourceSchemaService {
       whereFilters.fiscal_year = fiscalYear;
     }
 
-    const isDbField = !["region_name", "resource_type_name", "country_name"].includes(sortBy);
+    const isDbField = !["region_name", "resource_type_name", "country_name", "resource_code"].includes(sortBy);
     const dbOrder =
       isDbField && sortBy && sortOrder
         ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
@@ -4605,6 +4643,7 @@ export class ProjectResourceSchemaService {
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
       projectResource = await this.insertResourceTypeData(projectResource);
+      projectResource = await this.insertResourceCode(accountNumber, projectResource);
 
       projectResource = await this.inMemorySortAndFilter(
         projectResource,
@@ -4663,6 +4702,7 @@ export class ProjectResourceSchemaService {
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
       projectResource = await this.insertResourceTypeData(projectResource);
+      projectResource = await this.insertResourceCode(accountNumber, projectResource);
 
       projectResource = await this.inMemorySortAndFilter(
         projectResource,
@@ -4812,6 +4852,51 @@ export class ProjectResourceSchemaService {
       );
     }
   }
+  
+  async insertResourceCode(accountNumber: string, projectResources: any[]): Promise<any[]> {
+    try {
+      const { Resources } = await this.getModels(accountNumber);
+  
+      // Get unique resource_rids from all project resources
+      const uniqueResourceRids = [
+        ...new Set(
+          projectResources
+            .map((res) => res.resource_rid)
+            .filter((id) => id !== null && id !== undefined)
+        ),
+      ];
+  
+      // Fetch all resources in one query
+      const resourceResults = await Resources.findAll({
+        where: {
+          rid: uniqueResourceRids,
+        },
+        attributes: ['rid', 'resource_code'],
+        raw: true,
+      });
+  
+      // Convert result array to a map for fast lookup
+      const resourceCodeMap: any = new Map<string, string>();
+      for (const res of resourceResults) {
+        resourceCodeMap.set(res.rid, res.resource_code);
+      }
+  
+      // Enrich each project resource object with resource_code
+      const enrichedResources = projectResources.map((resource) => {
+        const code = resourceCodeMap.get(resource.resource_rid) || null;
+        return {
+          ...(resource.dataValues ?? resource),
+          resource_code: code,
+        };
+      });
+  
+      return enrichedResources;
+    } catch (err) {
+      throw new Error(
+        "Error fetching resource code data: " + (err as Error).message
+      );
+    }
+  }  
 
   async inMemorySortAndFilter(
     projectResources: any[],
@@ -4819,7 +4904,7 @@ export class ProjectResourceSchemaService {
     sortOrder: string,
     filters?: Record<string, any>
   ): Promise<any[]> {
-    const enumFields = ["region_name", "resource_type_name", "country_name"];
+    const enumFields = ["region_name", "resource_type_name", "country_name", "resource_code"];
 
     const matchFilter = (record: any, key: string, filter: any): boolean => {
       const value = record[key];
