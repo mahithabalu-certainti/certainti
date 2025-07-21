@@ -10,6 +10,7 @@ export type ImportsList = {
   records_loaded_successfully: number | null;
   records_failed_to_load: number | null;
   records_with_warning: number | null;
+  records_failed_to_stage?: number | null;
   status: string;
   status_description?: string | null;
   import_type?: string | null;
@@ -45,3 +46,30 @@ export type ImportErrorRecord = {
   reason: string;
   description: string;
 };
+
+export interface ImportsDetails {
+  rid: string;
+  size: string;
+  entity: string;
+  fiscal: number;
+  format: string;
+  status: string;
+  r_number: string;
+  file_name: string;
+  imported_on: string;
+  total_records: number;
+  records_with_warning: number | null;
+  records_failed_to_load: number;
+  records_failed_to_stage: number;
+  records_loaded_successfully: number;
+  imported_by: string;
+}
+
+export interface ImportDetailsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    imports: ImportsDetails;
+  };
+}

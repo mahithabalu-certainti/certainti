@@ -5,7 +5,10 @@ import { useEffect, useState } from 'react';
 import { ImportsList } from '../../../../types/imports';
 import { getImportsListColumns } from './columns';
 import { getImportsFilterFields } from './helpers';
-import { CellEditData } from '../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
 import { SectionTabPanel } from '../../../../../components';
 import { ImportIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
@@ -17,6 +20,10 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { getFiscalYears } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useMutation } from '@apollo/client';
+import { IMPORT_UPDATE } from '../../../../../api/graphql/queries/import-query';
+import { useToast } from '../../../../../hooks';
 
 const ImportsTabs: ResourceTabs[] = [
   {
@@ -52,7 +59,7 @@ const Imports: React.FC<ImportsProps> = ({
   accountInActive,
   accountDetails,
 }) => {
-  // const { errorToast } = useToast();
+  const { errorToast } = useToast();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,9 +81,9 @@ const Imports: React.FC<ImportsProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const fileId = searchParams.get('file_id');
   const viewDetails = !!fileId;
-  //   const [updateImport] = useMutation(IMPORTS_UPDATE, {
-  //     client: resourceClient,
-  //   });
+  const [updateImport] = useMutation(IMPORT_UPDATE, {
+    client: resourceClient,
+  });
 
   const { data, isLoading, isError } = useImportListList(
     {
@@ -181,13 +188,56 @@ const Imports: React.FC<ImportsProps> = ({
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
-  const importsColumns = getImportsListColumns(handleDocument, handleDownload);
+  const importsColumns = getImportsListColumns(
+    handleDocument,
+    handleDownload,
+    fiscalYears
+  );
   const importsFilterFields = getImportsFilterFields(fiscalYears);
 
   const getRowId = (row: ImportsList) => row.rid;
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    console.log('Edit data', rowId, updates);
+    const previousImports = [...importsList];
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (data, item) => {
+        const key = item.editId || item.columnId;
+        data[key] = key === 'fiscal_year' ? Number(item.value) : item.value;
+        return data;
+      },
+      {
+        rid: rowId,
+        account_rid: accountid,
+      }
+    );
+
+    try {
+      const res = await updateImport({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateInlineEditForImports;
+      if (result?.statusCode === 200 && result.data) {
+        const updateImport = result.data;
+        setImportsList((prev) =>
+          prev.map((att) => {
+            if (att.rid === updateImport.rid) {
+              return {
+                ...att,
+                ...updateImport,
+              };
+            }
+            return att;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setImportsList(previousImports);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setImportsList(previousImports);
+    }
   };
 
   return (

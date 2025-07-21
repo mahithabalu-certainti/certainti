@@ -1,11 +1,13 @@
 import { ImportsIcon } from '../../../../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
+import { SelectOption } from '../../../../types';
 import { ImportsList } from '../../../../types/imports';
 
 export const getImportsListColumns = (
   handleDocument: (rowId: string) => void,
-  handleDownload: (rowId: string) => void
+  handleDownload: (rowId: string) => void,
+  fiscalYears: SelectOption[]
 ): ListTableColumn<ImportsList>[] => [
   {
     id: 'r_number',
@@ -54,11 +56,19 @@ export const getImportsListColumns = (
   },
   {
     id: 'fiscal',
+    editId: 'fiscal_year',
     sortId: 'fiscal',
     label: 'Fiscal Year',
     width: 140,
     sortable: true,
+    editable: true,
     render: (row: ImportsList) => row.fiscal && `FY-${row.fiscal}`,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: fiscalYears,
+    },
   },
   {
     id: 'entity',

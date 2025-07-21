@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useImportDetails } from '../../../../../services/import';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
@@ -17,6 +17,7 @@ interface ImportDetailsProps {
 type ViewType = 'basic' | 'warning' | 'failed';
 
 const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
+  const { accountid } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fileId = searchParams.get('file_id') || undefined;
@@ -29,6 +30,7 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
 
   const shouldFetchDetails = viewType === 'basic';
   const { data, isLoading, error } = useImportDetails(
+    accountid,
     fileId,
     shouldFetchDetails
   );
@@ -77,14 +79,24 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       key: 'size',
     },
     {
-      label: 'Fiscal',
-      value: data?.fiscal,
+      label: 'Fiscal Year',
+      value: data?.fiscal ? `FY-${data?.fiscal}` : '',
       key: 'fiscal',
     },
     {
-      label: 'Records Loaded Successfully',
-      value: data?.records_loaded_successfully,
-      key: 'records_loaded_successfully',
+      label: 'Records Failed to Load',
+      value: data?.records_failed_to_load ? (
+        <span
+          className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
+          onClick={() => updateViewType('failed')}
+        >
+          View Load Failures
+          {`(${data.records_failed_to_load})`}
+        </span>
+      ) : (
+        '-'
+      ),
+      key: 'records_failed_to_load',
     },
     {
       label: 'Entity',
@@ -116,14 +128,14 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       key: 'status',
     },
     {
-      label: 'Records with Warning',
-      value: data?.records_with_warning ? (
+      label: 'Records Failed to Stage',
+      value: data?.records_failed_to_stage ? (
         <span
           className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
           onClick={() => updateViewType('warning')}
         >
           View staging failures
-          {`(${data.records_with_warning})`}
+          {`(${data.records_failed_to_stage})`}
         </span>
       ) : (
         '-'
@@ -136,7 +148,30 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     //   key: 'status_description',
     // },
     {
-      label: 'imported_on',
+      label: 'Records Loaded Successfully',
+      value: data?.records_loaded_successfully,
+      key: 'records_loaded_successfully',
+    },
+    {
+      label: 'Records with Warning',
+      value: data?.records_with_warning,
+      key: 'records_with_warning',
+    },
+  ];
+
+  const auditInfo: DetailItem[] = [
+    {
+      label: 'Record ID',
+      value: data?.rid,
+      key: 'rid',
+    },
+    {
+      label: 'Import ID',
+      value: data?.r_number,
+      key: 'r_number',
+    },
+    {
+      label: 'Imported On',
       value: formatDateToYYYYMMDDWithTime(data?.imported_on),
       key: 'imported_on',
     },
@@ -144,21 +179,6 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       label: 'Imported By',
       value: data?.imported_by,
       key: 'imported_by',
-    },
-    {
-      label: 'Records Failed to Load',
-      value: data?.records_failed_to_load ? (
-        <span
-          className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
-          onClick={() => updateViewType('failed')}
-        >
-          View Load Failures
-          {`(${data.records_failed_to_load})`}
-        </span>
-      ) : (
-        '-'
-      ),
-      key: 'records_failed_to_load',
     },
   ];
 
@@ -189,11 +209,19 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       ) : (
         <>
           {viewType === 'basic' ? (
-            <DetailsSection
-              title='Basic Information'
-              data={basicInfo}
-              customStyle='pt-0 mt-0'
-            />
+            <>
+              <DetailsSection
+                title='Basic Information'
+                data={basicInfo}
+                customStyle='pt-0 mt-0'
+              />
+              <DetailsSection
+                title='Audit Information'
+                data={auditInfo}
+                customStyle='pt-0 mt-0'
+                isAudit={true}
+              />
+            </>
           ) : (
             <ImportErrorTable fileId={fileId || ''} type={viewType} />
           )}

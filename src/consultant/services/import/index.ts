@@ -2,16 +2,19 @@ import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { api, resourceServiceApi } from '../../../api/api';
 import { UploadImportPayload } from '../../../common-service';
 import {
+  ImportDetailsResponse,
   ImportErrorRecord,
   ImportListResponse,
+  ImportsDetails,
   ImportsList,
   ImportsListURLParams,
 } from '../../types/imports';
 import { uploadUrl } from '../urls';
-import {
-  mockErrorRecordsData,
-  mockImportsData,
-} from '../../pages/account-details-sidebar/sidebar-pages/imports/mock-response';
+import { mockErrorRecordsData } from '../../pages/account-details-sidebar/sidebar-pages/imports/mock-response';
+
+const getImportDetailsURL = (accountId: string, fileId: string) => {
+  return `/api/import/list/${accountId}/${fileId}`;
+};
 
 export const uploadImportFile = async (payload: UploadImportPayload) => {
   const response = await api.post(uploadUrl(), payload, {
@@ -51,27 +54,24 @@ export const useImportListList = (
 };
 
 const fetchImportDetails = async (
+  accountId: string,
   fileId: string
-): Promise<ImportsList | undefined> => {
-  return new Promise((resolve) => {
-    const delay = Math.floor(Math.random() * 1000) + 2000;
-    setTimeout(() => {
-      const found = mockImportsData.data.imports.find(
-        (item) => item.rid === fileId
-      );
-      resolve(found);
-    }, delay);
-  });
+): Promise<ImportsDetails> => {
+  const response = await resourceServiceApi.get<ImportDetailsResponse>(
+    getImportDetailsURL(accountId, fileId)
+  );
+  return response.data.data.imports;
 };
 
 export const useImportDetails = (
+  accountId?: string,
   fileId?: string,
   shouldFetchDetails?: boolean
-): UseQueryResult<ImportsList | undefined, Error> => {
-  return useQuery<ImportsList | undefined, Error>({
-    queryKey: ['importDetails', fileId],
-    queryFn: () => fetchImportDetails(fileId!),
-    enabled: !!fileId && !!shouldFetchDetails,
+): UseQueryResult<ImportsDetails | undefined, Error> => {
+  return useQuery<ImportsDetails | undefined, Error>({
+    queryKey: ['importDetails', accountId, fileId],
+    queryFn: () => fetchImportDetails(accountId!, fileId!),
+    enabled: !!fileId && !!accountId && !!shouldFetchDetails,
     retry: 0,
     gcTime: 0,
   });
