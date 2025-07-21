@@ -568,10 +568,6 @@ export class ProjectResourceMapper {
       end_date: endDate ? endDate.toDate() : null,
 
       resource_code: projectResource.resource_code,
-      resource_name: projectResource.resource_name || null,
-      resource_type_rid: projectResource.resource_type_rid,
-      designation: projectResource.designation || null,
-      resource_role: projectResource.resource_role || null,
 
       total_hours_pro_res: projectResource.total_hours_pro_res || null,
       total_cost_pro_res: projectResource.total_cost_pro_res || null,
@@ -581,7 +577,6 @@ export class ProjectResourceMapper {
       region_rid: projectResource.region_rid || null,
       currency_rid: projectResource.currency_rid || null,
 
-      resource_orgname: projectResource.resource_orgname || null,
       manager_name: projectResource.manager_name,
       manager_ref_id: projectResource.manager_ref_id,
 
@@ -600,12 +595,7 @@ export class ProjectResourceMapper {
   ) {
     return {
       fiscal_year: projectResource.fiscal_year,
-      resource_name: projectResource.resource_name || null,
-      resource_orgname: projectResource.resource_orgname || null,
-      resource_role: projectResource.resource_role || null,
-      resource_type_rid: projectResource.resource_type_rid || null,
       status_rid: projectResource.status_rid || null,
-      designation: projectResource.designation || null,
       description: projectResource.description || null,
       country_rid: projectResource.country_rid || null,
       currency_rid: projectResource.currency_rid || null,
@@ -630,11 +620,6 @@ export class ProjectResourceMapper {
       resource_rid: resourceId,
       fiscal_year: fiscalYear,
 
-      resource_name: projectResource.resource_name ?? null,
-      resource_type_rid: projectResource.resource_type_rid ?? null,
-      designation: projectResource.designation ?? null,
-      resource_role: projectResource.resource_role ?? null,
-
       total_hours_pro_res: projectResource.total_hours_pro_res ?? null,
       total_cost_pro_res: projectResource.total_cost_pro_res ?? null,
 
@@ -643,7 +628,6 @@ export class ProjectResourceMapper {
       region_rid: projectResource.region_rid ?? null,
       currency_rid: projectResource.currency_rid ?? null,
 
-      resource_orgname: projectResource.resource_orgname ?? null,
       description: projectResource.description ?? null,
     };
   }
@@ -653,12 +637,7 @@ export class ProjectResourceMapper {
     userId: string
   ) {
     return {
-      resource_name: projectResource.resource_name || null,
-      resource_orgname: projectResource.resource_orgname || null,
-      resource_role: projectResource.resource_role || null,
-      resource_type_rid: projectResource.resource_type_rid || null,
       status_rid: projectResource.status_rid || null,
-      designation: projectResource.designation || null,
       description: projectResource.description || null,
       effort_project_resource_level: projectResource.total_hours_pro_res,
       cost_project_resource_level: projectResource.total_cost_pro_res,
@@ -819,11 +798,6 @@ export class ProjectResourceMapper {
       start_date: startDate ? startDate.toDate() : null,
       end_date: endDate ? endDate.toDate() : null,
 
-      resource_name: projectResource.resource_name || null,
-      resource_type_rid: projectResource.resource_type_rid,
-      designation: projectResource.designation || null,
-      resource_role: projectResource.resource_role || null,
-
       total_hours_pro_res: projectResource.total_hours_pro_res || null,
       total_cost_pro_res: projectResource.total_cost_pro_res || null,
 
@@ -832,7 +806,6 @@ export class ProjectResourceMapper {
       region_rid: projectResource.region_rid || null,
       currency_rid: projectResource.currency_rid || null,
 
-      resource_orgname: projectResource.resource_orgname || null,
       manager_name: projectResource.manager_name,
       manager_ref_id: projectResource.manager_ref_id,
 
@@ -860,11 +833,7 @@ export class ProjectResourceMapper {
       project_rid: updateProjectResource.project_rid,
       account_rid: updateProjectResource.account_rid,
       resource_id: updateProjectResource.resource_rid,
-      resource_name: updateProjectResource.resource_name ?? "",
       resource_code: resourceData.resource_code,
-      resource_type_rid: updateProjectResource.resource_type_rid ?? "",
-      resource_orgname: updateProjectResource.resource_orgname ?? null,
-      resource_role: updateProjectResource.resource_role ?? null,
       assigned_skill_role_type_rid:
         updateProjectResource.assigned_skill_role_type_rid ?? null,
       status_rid: updateProjectResource.status_rid ?? null,
@@ -878,7 +847,6 @@ export class ProjectResourceMapper {
       currency_rid: updateProjectResource.currency_rid ?? null,
       start_date:  null,
       end_date: null,
-      designation: updateProjectResource.designation ?? null,
       effort_project_resource_level:
         updateProjectResource.effort_project_resource_level ?? null,
       cost_project_resource_level:
