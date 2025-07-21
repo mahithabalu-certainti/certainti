@@ -857,3 +857,8 @@ export const setInlineForAttachments = (dbData : Attachment, requestData : any) 
 export const validateImportListRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
 }
+
+export const validateImportListByRidRequest = (account_rid : any, rid : string) => {
+  if(!rid) return STATUS_MESSAGE.accountIdMissing
+  if(!account_rid) return STATUS_MESSAGE.accountIdMissing
+}

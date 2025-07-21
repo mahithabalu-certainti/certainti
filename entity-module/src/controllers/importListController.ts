@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import { HttpStatus, STATUS_MESSAGE } from '../utils/constants'
+import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
-import { handleErrorResponse, handleSuccessResponse, validateImportListRequest } from '../utils/helpers';
+import { handleErrorResponse, handleSuccessResponse, validateImportListByRidRequest, validateImportListRequest } from '../utils/helpers';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -31,7 +31,7 @@ async function fetchAllImportList(req: Request, res: Response) {
         if(data.filters.imported_by) {
             importedByFilter = data.filters.imported_by
         }
-        const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters);
+        const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters, data.fiscal_year);
         if (result.statusCode !== HttpStatus.SUCCESS) {
             handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
             return
@@ -121,7 +121,31 @@ async function fetchAllImportList(req: Request, res: Response) {
     }
 }
 
+async function importListByRid (req : Request, res : Response) {
+    try {
+        const {account_rid, rid} = req.params
+        const validation = validateImportListByRidRequest(account_rid, rid)
+        if(validation) {
+            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
+            return;
+        }
+        const result = await importServices.fetchImportById(account_rid, rid)
+        if(result.statusCode == HttpStatus.SUCCESS) {
+            handleSuccessResponse(res, result.data);
+            return;
+        }
+        else {
+            handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
+            return 
+        }
+    } catch (error : any) {
+        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
+        return
+    }
+}
+
 
 export default {
-    fetchAllImportList
+    fetchAllImportList,
+    importListByRid
 }

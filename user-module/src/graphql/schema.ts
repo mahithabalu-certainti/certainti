@@ -100,9 +100,8 @@ const typeDefs = gql`
   }
 
   type updateUserGroupResponse {
-      statusCode : Int
-      statusCodeValue : String
-      statusMessage : String
+      success: Boolean!
+      message: String
       usergroup : UserGroup
     }
 
