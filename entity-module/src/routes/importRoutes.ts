@@ -5,6 +5,6 @@ const router: Router = Router();
 
 router.post('/list', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.fetchAllImportList)
 router.get('/list/:account_rid/:rid', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.importListByRid)
-router.post('/list/export', controller.importListController.exportAllImportedDatas)
-router.get('/list/export/:account_rid/:rid', controller.importListController.exportImportListPerRow)
+router.post('/list/export', checkUserStatusMiddleware('imports_export'), controller.importListController.exportAllImportedDatas)
+router.get('/list/export/:account_rid/:rid', checkUserStatusMiddleware('imports_export'), controller.importListController.exportImportListPerRow)
 export default router
