@@ -245,6 +245,7 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    const userId = req.headers["x-user-id"] as string;
 
     // If no rid is provided, proceed with normal filtering and pagination
     let parsedFilters: Record<string, any> = {};
@@ -265,7 +266,8 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       value.accountNumber,
       value.fiscalYear,
-      value.resourceRid
+      value.resourceRid,
+      userId
     );
 
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {

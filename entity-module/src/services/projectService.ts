@@ -330,6 +330,12 @@ export class ProjectService {
             projectData
           );
 
+          await this.projectIngestion.autoAssignToDefaultUserGroup(
+            createdProject.rid,
+            accountData.rid,
+            userId
+          );
+
           if(projectData.region_rid){
             await this.projectIngestion.addAccountFiscalRegion(
               accountNumber,
@@ -793,7 +799,8 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
-    timezone: string
+    timezone: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -859,7 +866,8 @@ export class ProjectService {
         filters,
         finalMetaDataSortBy,
         finalMetaDataSortOrder,
-        timezone
+        timezone,
+        userId
       );
 
       return {
@@ -873,6 +881,94 @@ export class ProjectService {
     } catch (err) {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
+  }
+  async getAccessibleProjectIds(
+    userId: string,
+    isdefaultparent: boolean
+  ): Promise<string[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const MAIN_SCHEMA_NAME = "trd365";
+
+    const replacements = [userId, userId];
+
+    const accountAccessSubquery = `
+    (
+      EXISTS (
+        SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+        WHERE uea.user_rid = ? 
+        AND uea.entity_type = 'ACCOUNT'
+        AND uea.entity_rid = ps.account_rid
+        AND uea.access_type = 'INCLUDE' 
+      )
+      OR EXISTS (
+        SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+        JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+          ON ugea.group_rid = ugm.group_rid
+        WHERE ugm.user_rid = ?
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.entity_rid = ps.account_rid
+        AND ugea.access_type = 'INCLUDE'
+      )
+    )
+  `;
+
+    let accessControlWhere = `WHERE ${accountAccessSubquery}`;
+
+    if (!isdefaultparent) {
+      // Add project-level access checks if not a parent group
+      accessControlWhere += `
+      AND (
+        (
+          EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+            WHERE uea.user_rid = ? 
+            AND uea.entity_type = 'PROJECT'
+            AND uea.entity_rid = ps.project_rid
+            AND uea.access_type = 'INCLUDE'
+          )
+          OR EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+            JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+              ON ugea.group_rid = ugm.group_rid
+            WHERE ugm.user_rid = ?
+            AND ugea.entity_type = 'PROJECT'
+            AND ugea.entity_rid = ps.project_rid
+            AND ugea.access_type = 'INCLUDE'
+          )
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+          WHERE uea.user_rid = ? 
+          AND uea.entity_type = 'PROJECT'
+          AND uea.entity_rid = ps.project_rid
+          AND uea.access_type = 'EXCLUDE'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+          JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+            ON ugea.group_rid = ugm.group_rid
+          WHERE ugm.user_rid = ?
+          AND ugea.entity_type = 'PROJECT'
+          AND ugea.entity_rid = ps.project_rid
+          AND ugea.access_type = 'EXCLUDE'
+        )
+      )
+    `;
+      replacements.push(userId, userId, userId, userId); // 4 more for project checks
+    }
+
+    const query = `
+    SELECT DISTINCT ps.project_rid
+    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+    ${accessControlWhere}
+  `;
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_rid);
   }
 
   async allProjectList(
@@ -894,6 +990,26 @@ export class ProjectService {
   }> {
     try {
       const offset = (page - 1) * limit;
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
 
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
@@ -922,7 +1038,8 @@ export class ProjectService {
           userId,
           search,
           accountDataSort,
-          bothParentAndChild
+          bothParentAndChild,
+          accessibleIds
         );
 
       return {
@@ -967,6 +1084,27 @@ export class ProjectService {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
  
       const appliedAccountNumber =
         await this.schemaService.computeGlobalAccountFilter(
@@ -982,8 +1120,16 @@ export class ProjectService {
           userId,
           search,
           accountDataSort,
-          bothParentAndChild
+          bothParentAndChild,
+          accessibleIds
         );
+        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"projects_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
  
         const formatNumberForExport = (value: any, currency_symbol: string): string => {
           if (value == null || value === '') return '-';
@@ -1017,10 +1163,33 @@ export class ProjectService {
           
       const rawResult = allProjectList || [];
       let exportData: any[] = [];
- 
+      const labelMap: Record<string, string> = {
+        "Project Code": "Project Code",
+        "Project Name": "Name",
+        "Project Type": "Project Type",
+        "Account Name": "Name",
+        "Fiscal Year": "Fiscal Year",
+        "Project Classification": "Classification",
+        "Customer Group": "Client Group",
+        "Project Group": "Project Group",
+        "Project Effort (Hours)": "Total Effort In Hrs",
+        "Project Cost": "Total Cost",
+        "FTE Cost": "Total FTE Cost",
+        "SubCon Cost": "Total Sub Con Cost",
+        "Non-Labor Cost": "Total Non Labor Cost",
+        "Assessment Status": "Assessment Status",
+        "QRE%": "QRE %",
+        "QRE": "QRE",
+        "Project Point of Contact": "Key Contacts List",
+        "Technical Point of Contact": "Key Contacts List",
+        "Comments": "Comments",
+        "Last Modified": "Updated On",
+        "Project ID": "Project ID",
+      };
+
       rawResult.forEach((project: any) => {
         // Always add base project data row first
-        exportData.push({
+        const projectInfo = {
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type_name || "-",
@@ -1046,13 +1215,20 @@ export class ProjectService {
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
           "Project ID": project.r_number || "-",
-        });
- 
+        }
+        const filteredProjectRow: Record<string, string> = {};
+        for (const [label, value] of Object.entries(projectInfo)) {
+          const mappedLabel = labelMap[label] || label;
+          if (allowedFieldSet.has(mappedLabel)) {
+            filteredProjectRow[label] = value; // Keep original label for export
+          }
+        }
+        exportData.push(filteredProjectRow);
         // Add fiscal summary rows if they exist
         const fiscalSummaries = project.ProjectFiscal || [];
         if (fiscalSummaries.length > 0) {
           fiscalSummaries.forEach((fiscal: any) => {
-            exportData.push({
+            const fiscalInfo ={
               "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
@@ -1078,7 +1254,15 @@ export class ProjectService {
               : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
               : '-',
               "Project ID": fiscal.r_number || "-",
-            });
+            }
+            const filteredFiscalRow: Record<string, string> = {};
+            for (const [label, value] of Object.entries(fiscalInfo)) {
+              const mappedLabel = labelMap[label] || label;
+              if (allowedFieldSet.has(mappedLabel)) {
+                filteredFiscalRow[label] = value; // Keep original label for export
+              }
+            }
+            exportData.push(filteredFiscalRow);
           });
         }
       });

@@ -2616,23 +2616,22 @@ async createUserGroup(
   accountData: IAccount,
   userId: string,
   is_parent: boolean,
-  account_rid: string
+  account_rid: string,
+  parent_account_rid?: string | null
 ) {
   const sequelize = await initSequelize();
   const transaction = await sequelize.transaction();
 
   try {
-    // Step 1: Determine group_type_name based on is_parent
-    const groupTypeName = is_parent ? 'Client Firm Global' : 'Client Firm Child';
+    const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
 
-    // Step 2: Fetch group_type_rid from user_group_type table
-    const result = await sequelize.query<{ rid: string }>(
+    const groupTypeResult = await sequelize.query<{ rid: string }>(
       `
       SELECT rid
       FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
-      WHERE group_type_name = :group_type_name
+      WHERE type = :group_type_name
       LIMIT 1
-    `,
+      `,
       {
         replacements: { group_type_name: groupTypeName },
         type: QueryTypes.SELECT,
@@ -2640,15 +2639,13 @@ async createUserGroup(
       }
     );
 
-    const groupTypeResult = result[0];
-    if (!groupTypeResult?.rid) {
-      throw new Error(`Group type '${groupTypeName}' not found in user_group_type table.`);
+    const group_type_rid = groupTypeResult?.[0]?.rid;
+    if (!group_type_rid) {
+      throw new Error(`Group type '${groupTypeName}' not found.`);
     }
 
-    const group_type_rid = groupTypeResult.rid;
 
-    // Step 3: Insert into user_groups
-    const newGroupInsert = await sequelize.query<{ rid: string }>(
+    const newGroupResult = await sequelize.query<{ rid: string }>(
       `
       INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
         group_name, group_type_rid, created_by
@@ -2657,7 +2654,7 @@ async createUserGroup(
         :group_name, :group_type_rid, :created_by
       )
       RETURNING rid
-    `,
+      `,
       {
         replacements: {
           group_name: 'G-' + accountData.account_name,
@@ -2669,10 +2666,70 @@ async createUserGroup(
       }
     );
 
-    const groupRid = (newGroupInsert[0] as any).rid || (newGroupInsert as any)[0]?.[0]?.rid;
-    if (!groupRid) throw new Error("Failed to retrieve newly created group RID.");
+    const groupRid = newGroupResult?.[0]?.rid;
+    if (!groupRid) throw new Error("Failed to create new user group.");
 
-    // Step 4: Insert into user_group_account_mapping
+    // 4. If it's a child, map it to AUTO_ASSIGNED_PARENT group of parent
+    if (!is_parent && parent_account_rid) {
+      const autoAssignedParentGroup = await sequelize.query<{ group_rid: string }>(
+        `
+        SELECT ug.rid AS group_rid
+        FROM "${MAIN_SCHEMA_NAME}"."user_groups" ug
+        JOIN "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" ugam ON ug.rid = ugam.group_rid
+        JOIN "${MAIN_SCHEMA_NAME}"."user_group_type" ugt ON ug.group_type_rid = ugt.rid
+        WHERE ugam.account_rid = :parent_account_rid
+          AND ugt.type = 'AUTO_ASSIGNED_PARENT'
+        `,
+        {
+          replacements: { parent_account_rid },
+          type: QueryTypes.SELECT,
+          transaction,
+        }
+      );
+
+      const parentGroupRid = autoAssignedParentGroup?.[0]?.group_rid;
+      if (parentGroupRid) {
+        await sequelize.query(
+          `
+          INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
+            group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
+          )
+          VALUES (
+            :group_rid, 'ACCOUNT', :entity_rid, 'INCLUDE', :created_by, NOW()
+          )
+          `,
+          {
+            replacements: {
+              group_rid: parentGroupRid,
+              entity_rid: account_rid,
+              created_by: userId,
+            },
+            transaction,
+          }
+        );
+        // 5. Insert into user_group_account_mapping for parent
+        await sequelize.query(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
+        group_rid, account_rid, created_by
+      )
+      VALUES (
+        :group_rid, :account_rid, :created_by
+      )
+      `,
+      {
+        replacements: {
+          group_rid: parentGroupRid,
+          account_rid,
+          created_by: userId,
+        },
+        transaction,
+      }
+       );
+        
+      }
+    }
+    // 5. Insert into user_group_account_mapping
     await sequelize.query(
       `
       INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
@@ -2692,20 +2749,20 @@ async createUserGroup(
       }
     );
 
-    // Step 5: Insert into user_group_entity_access (entity_type = 'ACCOUNT')
+    // 6. Insert into user_group_entity_access
     await sequelize.query(
       `
       INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
         group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
       )
       VALUES (
-        :group_rid, 'ACCOUNT', :account_rid, 'INCLUDE', :created_by, NOW()
+        :group_rid, 'ACCOUNT', :entity_rid, 'INCLUDE', :created_by, NOW()
       )
-    `,
+      `,
       {
         replacements: {
           group_rid: groupRid,
-          account_rid,
+          entity_rid: account_rid,
           created_by: userId,
         },
         transaction,
@@ -2725,9 +2782,10 @@ async getUserGroupType(userRid: string): Promise<string | null>   {
   
   try {
     const results = await mainDbSequelize.query<{ group_type: string }>(`
-      SELECT group_type 
+      SELECT type group_type
       FROM ${MAIN_SCHEMA_NAME}.user_groups ug
       JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
       WHERE ugm.user_rid = :userRid
       LIMIT 1`,  // Important if user can only have one group type
     {
@@ -2827,6 +2885,91 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
     console.error("Error in getAccessibleAccountInfo:", err);
     return [];
   }
+}
+
+ async getAllowedExportFields(userId: string, permission_name: string): Promise<any[]> {
+  const mainDbSequelize = await initSequelize();
+  const [userInfo] = await mainDbSequelize.query(
+  `SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;`,
+  {
+    replacements: { userId },
+    type: QueryTypes.SELECT,
+  }
+) as [{ profile_rid: string }] | [];
+
+  if (!userInfo?.profile_rid) {
+    return [];
+  }
+
+  const sequelize = await initSequelize();
+  const [profileFields, userFields] = await Promise.all([
+    sequelize.query(
+      `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM trd365.profile_fields_access pfa
+      JOIN trd365.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND pfa.profile_id = :profileId
+      `,
+      {
+        replacements: {
+          permissionName: permission_name,
+          profileId: userInfo?.profile_rid,
+        },
+        type: "SELECT",
+      }
+    ),
+    sequelize.query(
+      `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM trd365.user_fields_access ufa
+      JOIN trd365.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+      `,
+      {
+        replacements: {
+          permissionName: permission_name,
+          userId,
+        },
+        type: QueryTypes.SELECT,
+      }
+    ),
+  ]);
+
+  // Merge: user overrides profile
+  const userFieldMap = new Map<string, any>();
+  for (const field of userFields as any[]) {
+    userFieldMap.set(field.field_name, field);
+  }
+
+  const merged = (profileFields as any[]).map((pf) => {
+    const userPerm = userFieldMap.get(pf.field_name);
+    if (userPerm) {
+      userFieldMap.delete(pf.field_name);
+      return {
+        field_desc: pf.field_desc,
+        field_name: pf.field_name,
+        read:pf.read ? true : userPerm?.read === true,
+      };
+    }
+    return {
+      field_desc: pf.field_desc,
+      field_name: pf.field_name,
+      read: pf.read,
+    };
+  });
+
+  const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+    field_desc: uf.field_desc,
+    field_name: uf.field_name,
+    read: uf.read,
+  }));
+
+  const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+  return exportableFields;
 }
 // async  getAccessibleAccountIds(userRid: string): Promise<string[]> {
 //   const mainDbSequelize = await initSequelize();

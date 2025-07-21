@@ -1,5 +1,4 @@
 import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
-import { models } from "../models/index";
 import { UserGroup } from "../models/userGroupModel";
 import { where, fn, col, Op, WhereOptions, literal,QueryTypes, Sequelize  } from "sequelize";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
@@ -35,12 +34,26 @@ class UserGroupService {
     };
   }
 async  getAutoAssignedGroupRidForAccount(accountRid: string): Promise<string> {
+  const sequelize = await initSequelize();
+  const accWhereClause =  'rid = :account_rid';
+  const result = await sequelize.query(
+  constants.SQL_GET_ACCOUNT.replace("{whereClause}", accWhereClause),
+  {
+      replacements: { account_rid: accountRid },
+      type: constants.SELECT,
+  }
+  ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
+  const accountData = result?.[0];
+  if (!accountData) {
+    throw new Error(`Account not found: ${accountRid}`);
+  }
+  const groupType = accountData.is_parent === 'true' ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
   const group = await UserGroup.findOne({
     include: [
       {
         model: UserGroupType,
          as: "usergrouptype",
-        where: { type: 'AUTO_ASSIGNED' },
+        where: { type: groupType },
       },
       {
         model: UserGroupAccountMapping,
@@ -60,7 +73,6 @@ async assignUserToUserGroups(
   loggedInUser: string
 ): Promise<void> {
   try {
-    const sequelize = await initSequelize();
     const isConsultant = userData?.is_consultant_firm ?? false;
     const orgId = userData?.org_id;
     const userRid = userData?.rid ?? null;
@@ -72,7 +84,7 @@ async assignUserToUserGroups(
     let groupRidToAssign: string | null = null;
 
     if (!isConsultant) {
-      // For non-consultants → get group rid using your helper
+      // For non-consultants → get group rid using  helper
       groupRidToAssign = await this.getAutoAssignedGroupRidForAccount(orgId);
     } else {
       // For consultants → find by group name
@@ -119,102 +131,73 @@ async assignUserToUserGroups(
    * @param {string} userId - The ID of the user creating the profile
    * @returns {Promise<Object>} - Response object with status and message
    */
-async createUserGroup(
-  userGroup: {
-    group_name: string;
-    users: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
-    accounts:  Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
-    projects:any;
-    status_rid: string;
-    is_consultant_only_group: boolean;
-  },
-  userId: string
-): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { usergroup: any };
-}> {
-  try {
-    const {
-      group_name,
-      users,
-      accounts,
-      projects,
-      status_rid,
-      is_consultant_only_group,
-    } = userGroup;
+  async createUserGroup(
+    userGroup: {
+      group_name: string;
+      users: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+      accounts:  Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+      projects:Record<string, boolean>;
+      status_rid: string;
+      is_consultant_only_group: boolean;
+      group_type_rid:string;
+    },
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { usergroup: any };
+  }> {
+    try {
+      const {
+        group_name,
+        users,
+        accounts,
+        projects,
+        status_rid,
+        is_consultant_only_group,
+        group_type_rid
+      } = userGroup;
 
-    const isUniqueGroup = await this.checkIsGroupNameUnique(group_name);
-    if (!isUniqueGroup) {
+      const isUniqueGroup = await this.checkIsGroupNameUnique(group_name);
+      if (!isUniqueGroup) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: `Group name already exists. Please choose a different name.`,
+        };
+      }
+      // Step 1: Create the group (only once)
+      const newGroup = await UserGroup.create({
+        group_name,
+        status_rid,
+        group_type_rid,
+        is_consultant_only_group,
+        created_by: userId,
+      });
+
+      const groupRid = newGroup.rid;
+
+      //Step 2:Assign the user,accounts,projects
+      await this.applyGroupMappings({
+        group_rid: groupRid,
+        users,
+        accounts,
+        projects,
+        userId,
+      });
+      
       return {
-        statusCode: constants.BAD_REQUEST,
-        message: constants.BAD_REQUEST_MESSAGE,
-        errorMessage: `Group name already exists. Please choose a different name.`,
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          usergroup: newGroup,
+        },
       };
+    } catch (err: any) {
+      return this.throwServiceError(err as Error);
     }
-    // Step 1: Create the group (only once)
-    const newGroup = await UserGroup.create({
-      group_name,
-      status_rid,
-      group_type_rid:'',
-      is_consultant_only_group,
-      created_by: userId,
-    });
-
-    const groupRid = newGroup.rid;
-
-    // Step 2: Create user mappings
-  //Assign users to group
-   const userresult = await this.assignUsersToGroup({
-         users,
-         group_rid:groupRid,
-         userId
-       } );
-  
-  //Assign Accounts to group
-  if(accounts)
-  {
-    const acountresult = await this.assignAccountsToGroup({
-        accounts,
-        group_rid:groupRid,
-        userId
-      } );
-
-  //assign access to all account
-
-  const result = await this.assignEntityAccessToAccount({
-        group_rid:groupRid,
-        accounts,
-        userId
-      } );
   }
-  if(projects)
-  {
-    //assign access to projects
-      const result1 = await this.assignEntityAccessToProjects({
-          group_rid:groupRid,
-          project_access_list:[],
-          userId
-        } );
-  }
-   
-
-  
-
-    return {
-      statusCode: constants.SUCCESS,
-      message: constants.SUCCESS_MESSAGE,
-      data: {
-        usergroup: newGroup,
-      },
-    };
-  } catch (err: any) {
-    return this.throwServiceError(err as Error);
-  }
-}
-
-
 
   private async checkIsGroupNameUnique(group_name: string): Promise<boolean> {
   const response = await UserGroup.findOne({
@@ -231,100 +214,157 @@ async createUserGroup(
    * @returns {Promise<Object>} - Response object with status and message
    */
   async updateUserGroup(
-    userGroup: {
-      group_name: string;
-      users: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
-      accounts: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
-      projects:any;
-      group_rid: string;
-      status_rid:string;
-      is_consultant_only_group:boolean;
-    },
-    userId: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-     data?: { affectedGroupCount: any };
-  }> {
-    try {
-      const { group_name, users, accounts, status_rid,group_rid,is_consultant_only_group,projects } = userGroup;
+  userGroup: {
+    group_name: string;
+    users: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+    accounts: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+    projects: Record<string, boolean>;
+    group_rid: string;
+    status_rid: string;
+    is_consultant_only_group: boolean;
+  },
+  userId: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { affectedGroupCount: any };
+}> {
+  try {
+    const { group_name, users, accounts, status_rid, group_rid, is_consultant_only_group, projects } = userGroup;
+
+    // Fetch existing group info
+    const existingGroup = await UserGroup.findOne({
+      where: { rid: group_rid },
+      include: [{ model: UserGroupType, as: 'usergrouptype' }],
+    });
+
+    if (!existingGroup) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: `Group not found.`,
+      };
+    }
+
+    const groupType = (existingGroup as any).usergrouptype?.type;
+
+    // Only check uniqueness if group name is changing
+    const isGroupNameChanged = group_name.toLowerCase() !== existingGroup.group_name.toLowerCase();
+
+    if (isGroupNameChanged && groupType === 'CUSTOM') {
       const isExistingGrp = await UserGroup.findOne({
-      where: {
-        [Op.and]: [
-          where(fn('LOWER', col('group_name')), Op.eq, group_name.toLowerCase()),
-          { rid: { [Op.ne]: group_rid } }
-        ]
-        }
+        where: {
+          [Op.and]: [
+            where(fn('LOWER', col('group_name')), Op.eq, group_name.toLowerCase()),
+            { rid: { [Op.ne]: group_rid } },
+          ],
+        },
       });
-        if (isExistingGrp) {
+
+      if (isExistingGrp) {
         return {
           statusCode: constants.BAD_REQUEST,
           message: constants.BAD_REQUEST_MESSAGE,
-          errorMessage: `Group name already exists. Please choose a different name.`
+          errorMessage: `Group name already exists. Please choose a different name.`,
         };
       }
-      const [affectedGroupCount] = await UserGroup.update(
-      {
-        group_name,
-        status_rid,
-      //  is_consultant_only_group,
-        modified_by: userId,
-        modified_datetime: new Date(),
+    }
+
+    // Only update if something is changed
+    let shouldUpdate = false;
+    const updatePayload: any = {
+      status_rid,
+      modified_by: userId,
+      modified_datetime: new Date(),
+    };
+
+    if (isGroupNameChanged && groupType === 'CUSTOM') {
+      updatePayload.group_name = group_name;
+      shouldUpdate = true;
+    }
+    let affectedGroupCount = 0;
+    if (shouldUpdate) {
+      const [count] = await UserGroup.update(updatePayload, {
+        where: { rid: group_rid },
+      });
+      affectedGroupCount = count;
+    }
+
+    // Apply mapping logic
+    await this.applyGroupMappings({
+      group_rid,
+      users,
+      accounts,
+      projects,
+      userId,
+    });
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        affectedGroupCount,
       },
-      { where: { rid: group_rid } }
-      );
-
-  //Assign users to group
-   const userresult = await this.assignUsersToGroup({
-         users,
-         group_rid:group_rid,
-         userId
-       } );
-  
-  //Assign Accounts to group
-if(accounts)
-{
-  const aacountresult = await this.assignAccountsToGroup({
-        accounts,
-        group_rid:group_rid,
-        userId
-      } );
-      //assign access to all account
-
-  const result = await this.assignEntityAccessToAccount({
-        group_rid:group_rid,
-        accounts,
-        userId
-      } );
-
+    };
+  } catch (err: any) {
+    return this.throwServiceError(err as Error);
+  }
 }
-if(projects)
-{
-  //assign access to projects
-   const result1 = await this.assignEntityAccessToProjects({
-      group_rid:group_rid,
-      project_access_list:projects,
-      userId
-    } );
-}
-   
-
-  
 
 
+  private async applyGroupMappings({
+    group_rid,
+    users,
+    accounts,
+    projects,
+    userId,
+  }: {
+    group_rid: string;
+    users?: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+    accounts?: Array<{ rid: string; is_enabled: boolean; is_modified: boolean }>;
+    projects?: Record<string, boolean>;
+    userId: string;
+  }): Promise<void> {
+    // Assign users
+    const modifiedUsers = users?.filter(u => u.is_modified);
+    if (modifiedUsers && modifiedUsers?.length > 0) {
+      await this.assignUsersToGroup({
+        users: modifiedUsers,
+        group_rid,
+        userId
+      });
+    }
 
-       return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          affectedGroupCount:affectedGroupCount,
-        },
-      };
-    } catch (err: any) {
-      return this.throwServiceError(err as Error);
+    // Assign accounts
+    const modifiedAccounts = accounts?.filter(a => a.is_modified);
+    if (modifiedAccounts && modifiedAccounts?.length > 0) {
+      await this.assignAccountsToGroup({
+        accounts: modifiedAccounts,
+        group_rid,
+        userId
+      });
+
+      const accountsWithEnabledAccess = modifiedAccounts.filter(a => a.is_enabled);
+      if (accountsWithEnabledAccess.length > 0) {
+        await this.assignEntityAccessToAccount({
+          group_rid,
+          accounts: accountsWithEnabledAccess,
+          userId
+        });
+      }
+    }
+
+    // Assign projects
+    if (projects && Object.keys(projects).length > 0) {
+      await this.assignEntityAccessToProjects({
+        group_rid,
+        projects,
+        userId
+      });
     }
   }
+
 
    /**
    * Updates the user group in the database
@@ -458,8 +498,6 @@ async getActiveUsersForGrouping(
     if (is_consultant_only_group) {
       whereClause.is_consultant_firm = true;
     } else if (account_rid) {
-      const sequelize = await initSequelize();
-
       const accountRidArray: string[] = Array.isArray(account_rid)
         ? account_rid
         : typeof account_rid === 'string' && account_rid.trim() !== ''
@@ -474,29 +512,7 @@ async getActiveUsersForGrouping(
         };
       }
 
-      // Fetch account details
-      const accWhereClause = accountRidArray.length > 1
-        ? 'rid IN (:account_rid)'
-        : 'rid = :account_rid';
-
-      const accounts = await sequelize.query(
-        constants.SQL_GET_ACCOUNT.replace("{whereClause}", accWhereClause),
-        {
-          replacements: { account_rid: accountRidArray },
-          type: constants.SELECT,
-        }
-      ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
-
-      if (!accounts?.length) {
-        return {
-          statusCode: constants.BAD_REQUEST,
-          message: constants.BAD_REQUEST_MESSAGE,
-          errorMessage: "Invalid account_rid provided.",
-        };
-      }
-
-      // Collect org_ids (handle parent/child later if needed)
-      orgIdsToFilter = accounts.map(acc => acc.rid);
+      orgIdsToFilter = accountRidArray;
 
       // Filter users belonging to these orgs or consultants
       whereClause[Op.or] = [
@@ -523,6 +539,7 @@ async getActiveUsersForGrouping(
 
     // Step 3: Get group RIDs for the given accounts from mapping table
     let groupRids: string[] = [];
+    let assignedMappings: { user_rid: string }[] = [];
     if (!is_consultant_only_group && orgIdsToFilter.length) {
       const groupAccountMappings = await UserGroupAccountMapping.findAll({
         where: {
@@ -533,18 +550,25 @@ async getActiveUsersForGrouping(
         attributes: ['group_rid'],
       });
       groupRids = groupAccountMappings.map(g => g.group_rid);
-    }
-
+    } 
     // Step 4: Get already-assigned user_rids
-    const assignedMappings = groupRids.length
-      ? await UserGroupMapping.findAll({
-          where: {
-            group_rid: { [Op.in]: groupRids },
-          },
-          attributes: ["user_rid"]
-        })
-      : [];
-
+     if (is_consultant_only_group) {
+  // Directly check if any of the consultant users are already mapped (user-based filtering)
+      assignedMappings = await UserGroupMapping.findAll({
+        where: {
+          user_rid: { [Op.in]: allUserRids },
+        },
+        attributes: ["user_rid"],
+      });
+    } else if (groupRids.length) {
+      // Default group-based filtering
+      assignedMappings = await UserGroupMapping.findAll({
+        where: {
+          group_rid: { [Op.in]: groupRids },
+        },
+        attributes: ["user_rid"],
+  });
+  }
     const assignedUserRids = assignedMappings.map(m => m.user_rid);
 
     // Step 5: Filter out assigned users
@@ -558,7 +582,6 @@ async getActiveUsersForGrouping(
       data: { users: unassignedUsers },
     };
   } catch (err: any) {
-    console.error(err);
     return this.throwServiceError(err as Error);
   }
 }
@@ -620,10 +643,10 @@ async getAccountUsers(
 
       orgIdsToFilter = accountResult.is_parent
         ? [accountResult.rid]
-        : [accountResult.parent_account_rid, accountResult.rid];
+        : [accountResult.rid];
 
       basewhereClause[Op.or] = [
-        { is_consultant_firm: true },
+       // { is_consultant_firm: true },
         { org_id: { [Op.in]: orgIdsToFilter } },
       ];
     }
@@ -668,12 +691,12 @@ async getAccountUsers(
 
     if (account_rid) {
       // Step 5: Get groups for this account
-      const groups = await UserGroup.findAll({
-    //    where: { account_rid },
-        attributes: ["rid"],
+      const groups = await UserGroupAccountMapping.findAll({
+        where: { account_rid },
+        attributes: ["group_rid"],
       });
 
-      groupRids = groups.map((g) => g.rid);
+      groupRids = groups.map((g) => g.group_rid);
 
       // Step 6: Get user-group mappings
       const userMappings = await UserGroupMapping.findAll({
@@ -754,7 +777,6 @@ async getAccountUsers(
       data: { users: usersWithFlags },
     };
   } catch (err: any) {
-    console.error(err);
     return this.throwServiceError(err as Error);
   }
 }
@@ -775,7 +797,7 @@ async getAccountUsers(
  */
 async getAccountGroups(
   account_rid?: string,
-   project_rid?:string,
+  project_rid?:string,
   entity_type:string = 'ACCOUNT',
   page: number = 1,
   limit: number = 10,
@@ -799,9 +821,9 @@ async getAccountGroups(
 
     // Step 1: Validate the account
     const sequelize = await initSequelize();
-     const basewhereClause: any = {};
+    const basewhereClause: any = {};
     const [accountResult] = await sequelize.query(
-      constants.SQL_GET_ACCOUNT.replace("{whereClause}", "rid = :account_rid"),
+    constants.SQL_GET_ACCOUNT.replace("{whereClause}", "rid = :account_rid"),
       {
         replacements: { account_rid },
         type: constants.SELECT,
@@ -817,7 +839,7 @@ async getAccountGroups(
     }
     const offset = (page - 1) * limit;
     const {whereClause} = this.buildWhereClause(filters);
-      const order: any[] = [];
+    const order: any[] = [];
     const allowedSortFields = ['group_name', 'user_count'];
     const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'group_name';
     const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
@@ -825,34 +847,81 @@ async getAccountGroups(
             order.push([sequelize.literal('user_count'), sortDirection]);
         } else {
             order.push([sortField, sortDirection]);
-        }
-  
-    
+        }  
     // Step 2: Fetch all groups for the account
-    const groups = await UserGroup.findAll({
-    //  where: { account_rid ,...whereClause},
-      limit:limit,
-      offset:offset,
+  
+    const defaultGroups = await UserGroup.findAll({
       attributes: [
         "rid",
-    "group_name",
-    "is_consultant_only_group",
-    "created_datetime",
-     [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ],
-            ],
-     order
-     
-    });
+        "group_name",
+        "is_consultant_only_group",
+        "created_datetime",
+        [
+          literal(`(
+            SELECT COUNT(*)
+            FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+            WHERE ugm.group_rid = "UserGroup".rid
+            )`),
+            "user_count"
+        ]
+      ],
+      include: [
+        {
+        model: UserGroupType,
+        as: "usergrouptype",
+        required: true,
+        where: { type: "DEFAULT" }
+      }
+    ],
+    
+    order: [["group_name", "ASC"]]
+  });
 
-    const groupIds = groups.map(g => g.rid);
+  // 2. Get mapped groups for this account
+  const mappedGroups = await UserGroup.findAll({
+    attributes: [
+      "rid",
+      "group_name",
+      "is_consultant_only_group",
+      "created_datetime",
+      [
+        literal(`(
+          SELECT COUNT(*)
+          FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+          WHERE ugm.group_rid = "UserGroup".rid
+        )`),
+        "user_count"
+      ]
+    ],
+    include: [
+      {
+        model: UserGroupAccountMapping,
+        as: "usergroupaccount",
+        required: true,
+        where: {
+          account_rid: account_rid
+        },
+      },
+       {
+        model: UserGroupType,
+        as: "usergrouptype",
+        required: true,
+       // where: { type: "DEFAULT" }
+      }
+    ],
+    order: [["group_name", "ASC"]]
+  });
+
+  // Merge both arrays and remove duplicates by `rid`
+  const uniqueGroupsMap = new Map();
+  [...defaultGroups, ...mappedGroups].forEach(group => {
+    uniqueGroupsMap.set(group.rid, group);
+  });
+
+  // Convert map back to array and apply pagination
+  const combinedGroups = Array.from(uniqueGroupsMap.values());
+
+    const groupIds = combinedGroups.map(g => g.rid);
     if (groupIds.length === 0) {
       return {
         statusCode: constants.SUCCESS,
@@ -886,10 +955,26 @@ async getAccountGroups(
 
 
     // Step 5: Build final response
-    const groupsWithAccess = groups.map(group => ({
-      ...group.toJSON(),
-      has_access: accessMap.get(group.rid) === true // default to false if not present
-    }));
+    // const groupsWithAccess = combinedGroups.map(group => ({
+    //   ...group.toJSON(),
+    //   has_access: accessMap.get(group.rid) === true // default to false if not present
+    // }));
+
+     const groupsWithAccess  = combinedGroups.map((group) => {
+    const groupJson = group.toJSON();
+     const isDefaultGroup = groupJson.usergrouptype?.type === 'DEFAULT';
+    return {
+      rid: groupJson.rid,
+      group_name: groupJson.group_name,
+      is_consultant_only_group: groupJson.is_consultant_only_group,
+      created_datetime: groupJson.created_datetime,
+      user_count: groupJson.user_count,
+      group_type_name: groupJson.usergrouptype?.group_type_name || null,
+      group_type_description: groupJson.usergrouptype?.group_type_description || null,
+      type: groupJson.usergrouptype?.type,
+      has_access: isDefaultGroup || accessMap.get(group.rid) === true,
+    };
+  });
 
     return {
       statusCode: constants.SUCCESS,
@@ -1237,11 +1322,9 @@ private createUserCountCondition(operator: string, value: number): any {
   async listUserGroup(
     page: number,
     limit: number,
-    search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string,
-    organization: string
+    sortOrder: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1293,15 +1376,7 @@ private createUserCountCondition(operator: string, value: number): any {
                     WHERE ugm.group_rid = "UserGroup".rid
                   )`),
                   'user_count'
-                ],
-              //   [
-              //   literal(`(
-              //     SELECT account_name
-              //     FROM "${MAIN_SCHEMA_NAME}".account AS acc
-              //     WHERE acc.rid = "UserGroup".account_rid
-              //   )`),
-              //   'account_name'
-              //  ],
+                ]
               ]
             },
           include: [
@@ -1968,7 +2043,7 @@ async assignEntityAccessToAccount({
   errorMessage?: string;
 }> {
   try {
-    if (!accounts || (!user_rid && !group_rid)) {
+    if (!accounts || (!user_rid || !group_rid)) {
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
@@ -2036,6 +2111,178 @@ async assignEntityAccessToAccount({
   }
 }
 
+async assignUserAccessToAccount({
+  users,
+  account_rid,
+  userId,
+}: {
+  users?: Array<{
+    rid: string;
+    is_enabled: boolean;
+    is_modified: boolean;
+  }>;
+  account_rid: string;
+  userId: string;
+}): Promise<{
+  statusCode: number;
+  message: string;
+  data?: { created: string[]; updated: string[] };
+  errorMessage?: string;
+}> {
+  try {
+    if (!account_rid || (!users)) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage:
+          "Missing required identifiers (user_rid/group_rid or account_rid)",
+      };
+    }
+
+    const now = new Date();
+    const created: string[] = [];
+    const updated: string[] = [];
+
+    for (const user of users) {
+      if (!user.is_modified) continue;
+
+      const access_type = user.is_enabled ? "INCLUDE" : "EXCLUDE";
+
+      const whereClause: any = {
+        entity_type: "ACCOUNT",
+        entity_rid: account_rid,
+      };
+       whereClause.user_rid = user.rid;
+
+      const existing = await UserGroupEntityAccess.findOne({
+        where: whereClause,
+      });
+
+      if (existing) {
+        await existing.update({
+          access_type,
+          modified_by: userId,
+          modified_datetime: now,
+        });
+        updated.push(user.rid);
+      } else {
+        await UserGroupEntityAccess.create({
+          user_rid: user.rid ?? null,
+          group_rid: null,
+          entity_type: "ACCOUNT",
+          entity_rid:account_rid,
+          access_type,
+          created_by: userId,
+          created_datetime: now,
+        });
+        created.push(user.rid);
+      }
+    }
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: `Access updated successfully. Created: ${created.length}, Updated: ${updated.length}`,
+      data: {
+        created,
+        updated,
+      },
+    };
+  } catch (err: any) {
+    console.error("Error assigning access to entity:", err);
+    return {
+      statusCode: constants.FAILED,
+      message: constants.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
+  }
+}
+
+async assignGroupAccessToAccount({
+  groups,
+  account_rid,
+  userId,
+}: {
+  groups?: Array<{
+    rid: string;
+    is_enabled: boolean;
+    is_modified: boolean;
+  }>;
+  account_rid: string;
+  userId: string;
+}): Promise<{
+  statusCode: number;
+  message: string;
+  data?: { created: string[]; updated: string[] };
+  errorMessage?: string;
+}> {
+  try {
+    if (!account_rid || (!groups)) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage:
+          "Missing required identifiers (user_rid/group_rid or account_rid)",
+      };
+    }
+
+    const now = new Date();
+    const created: string[] = [];
+    const updated: string[] = [];
+
+    for (const grp of groups) {
+      if (!grp.is_modified) continue;
+
+      const access_type = grp.is_enabled ? "INCLUDE" : "EXCLUDE";
+
+      const whereClause: any = {
+        entity_type: "ACCOUNT",
+        entity_rid: account_rid,
+      };
+       whereClause.group_rid = grp.rid;
+
+      const existing = await UserGroupEntityAccess.findOne({
+        where: whereClause,
+      });
+
+      if (existing) {
+        await existing.update({
+          access_type,
+          modified_by: userId,
+          modified_datetime: now,
+        });
+        updated.push(grp.rid);
+      } else {
+        await UserGroupEntityAccess.create({
+          user_rid:  null,
+          group_rid: grp.rid ?? null,
+          entity_type: "ACCOUNT",
+          entity_rid:account_rid,
+          access_type,
+          created_by: userId,
+          created_datetime: now,
+        });
+        created.push(grp.rid);
+      }
+    }
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: `Access updated successfully. Created: ${created.length}, Updated: ${updated.length}`,
+      data: {
+        created,
+        updated,
+      },
+    };
+  } catch (err: any) {
+    console.error("Error assigning access to entity:", err);
+    return {
+      statusCode: constants.FAILED,
+      message: constants.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
+  }
+}
+
 
 /**
  * Assigns or revokes access to a project for a user or a group based on `has_access` flag.
@@ -2051,15 +2298,12 @@ async assignEntityAccessToAccount({
 async  assignEntityAccessToProjects({
   user_rid,
   group_rid,
-  project_access_list,
+  projects,
   userId,
 }: {
   user_rid?: string;
   group_rid?: string;
-  project_access_list: Array<{
-    project_rid: string;
-    has_access_enabled: boolean;
-  }>;
+  projects: any;
   userId: string;
 }): Promise<{
   statusCode: number;
@@ -2067,8 +2311,9 @@ async  assignEntityAccessToProjects({
   data?: { updated: number; failed: number };
   errorMessage?: string;
 }> {
+ 
   try {
-    if ((!user_rid && !group_rid) || !project_access_list?.length) {
+    if ((!user_rid && !group_rid) || !projects) {
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
@@ -2078,8 +2323,9 @@ async  assignEntityAccessToProjects({
 
     let updated = 0;
     let failed = 0;
+    console.log(projects)
 
-      for (const [project_rid, has_access_enabled] of Object.entries(project_access_list)) {
+      for (const [project_rid, has_access_enabled] of Object.entries(projects)) {
       if (!project_rid) {
         failed++;
         continue;

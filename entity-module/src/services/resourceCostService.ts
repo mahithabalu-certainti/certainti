@@ -155,7 +155,8 @@ class ResourceCostService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    resourceRid: string
+    resourceRid: string,
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -215,7 +216,8 @@ class ResourceCostService {
         finalSortOrder,
         resourceRid,
         search,
-        accountId
+        accountId,
+        userId
       );
     } catch (err) {
       console.log("Error ", err);

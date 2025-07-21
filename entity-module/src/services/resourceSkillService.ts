@@ -746,7 +746,8 @@ class ResourceSkillService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    resourceRid: string
+    resourceRid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -791,7 +792,8 @@ class ResourceSkillService {
         finalSortOrder,
         resourceRid,
         search,
-        accountId
+        accountId,
+        userId
       );
     } catch (err) {
       console.log("Error ", err);

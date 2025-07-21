@@ -1838,8 +1838,6 @@ if (includeDependencies) {
   };
 
   for (const [field, value] of Object.entries(fieldMap)) {
-    console.log("field",field);
-    console.log("value",value)
     if (allowedFieldSet.has(field)) {
       exportData[labelMap[field]] = value;
     }

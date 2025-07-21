@@ -1,4 +1,4 @@
-import { Op, Order, Sequelize, col, fn, literal, where } from "sequelize";
+import { Op, Order, QueryTypes, Sequelize, col, fn, literal, where } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project } from "../models/project";
 import { ProjectFiscal } from "../models/projectFiscal";
@@ -30,6 +30,7 @@ import { ProjectResource } from "../models/projectResource";
 import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
 import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
 import AccountDetails from "../models/accountDetails";
+import SchemaService from "./schemaService";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -100,10 +101,7 @@ class ProjectIngestionService {
     );
     const ProjectModel = await Project.initialize(sequelize, schemaName);
 
-    const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(
-      sequelize,
-      schemaName
-    );
+    const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(sequelize, schemaName);
 
     const ProjectTimelineModel = await ProjectTimeline.initialize(
       sequelize,
@@ -684,10 +682,43 @@ class ProjectIngestionService {
     }
   }
 
-  async addAccountFiscalRegion(
-    accountNumber: string,
-    projectData: ICreateProject
-  ) {
+  async autoAssignToDefaultUserGroup(project_rid:string,account_rid: string,userId:string) {
+    const autoAssignedChildGroup = await this.mainDbSequelize?.query<{ group_rid: string }>(
+        `
+        SELECT ug.rid AS group_rid
+        FROM "${MAIN_SCHEMA_NAME}"."user_groups" ug
+        JOIN "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" ugam ON ug.rid = ugam.group_rid
+        JOIN "${MAIN_SCHEMA_NAME}"."user_group_type" ugt ON ug.group_type_rid = ugt.rid
+        WHERE ugam.account_rid = :account_rid
+          AND ugt.type = 'AUTO_ASSIGNED_CHILD'
+        `,
+        {
+          replacements: { account_rid },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      const childGroupRid = autoAssignedChildGroup?.[0]?.group_rid;
+       await this.mainDbSequelize?.query(
+      `
+      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
+        group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
+      )
+      VALUES (
+        :group_rid, 'PROJECT', :entity_rid, 'INCLUDE', :created_by, NOW()
+      )
+      `,
+      {
+        replacements: {
+          group_rid: childGroupRid,
+          entity_rid: project_rid,
+          created_by: userId,
+        }
+      }
+    );
+  }
+
+  async addAccountFiscalRegion(accountNumber: string, projectData: ICreateProject){
     const { AccountFiscalRegion } = await this.getModels(accountNumber);
 
     const accountFiscalData = ProjectMapper.mapToAccountFiscal(projectData);
@@ -1751,7 +1782,8 @@ class ProjectIngestionService {
     rawFilters: Record<string, any> = {},
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
-    timezone: string
+    timezone: string,
+    userId: string
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1979,6 +2011,38 @@ class ProjectIngestionService {
     };
 
     const rawResult = projects || [];
+    const schemaService = new SchemaService();
+     const allowedFieldsForExport = await schemaService.getAllowedExportFields(userId,"projects_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
+        const labelMap: Record<string, string> = {
+        "Project Code": "Project Code",
+        "Project Name": "Name",
+        "Project Type": "Project Type",
+        "Account Name": "Name",
+        "Fiscal Year": "Fiscal Year",
+        "Project Classification": "Classification",
+        "Customer Group": "Client Group",
+        "Project Group": "Project Group",
+        "Project Effort (Hours)": "Total Effort In Hrs",
+        "Project Cost": "Total Cost",
+        "FTE Cost": "Total FTE Cost",
+        "SubCon Cost": "Total Sub Con Cost",
+        "Non-Labor Cost": "Total Non Labor Cost",
+        "Assessment Status": "Assessment Status",
+        "QRE%": "QRE %",
+        "QRE": "QRE",
+        "Project Point of Contact": "Key Contacts List",
+        "Technical Point of Contact": "Key Contacts List",
+        "Comments": "Comments",
+        "Last Modified": "Updated On",
+        "Project ID": "Project ID",
+      };
+
 
     let exportData = rawResult.flatMap((project: any) => {
       const baseRow = {
@@ -2028,15 +2092,21 @@ class ProjectIngestionService {
           : "-",
         "Project ID": project.r_number || "-",
       };
+       const filteredProjectRow: Record<string, string> = {};
+        for (const [label, value] of Object.entries(baseRow)) {
+    
+          const mappedLabel = labelMap[label] || label;
+          if (allowedFieldSet.has(mappedLabel)) {
+            filteredProjectRow[label] = value; // Keep original label for export
+          }
+        }
 
       const fiscalSummaries = project.ProjectFiscal || [];
 
-      const fiscalRows = fiscalSummaries.map((fiscal: any) => ({
-        "Project Code":
-          (fiscal.project_code
-            ? fiscal.project_code + " - FY" + fiscal.fiscal_year
-            : "-") || "-",
-        Name: fiscal.project_name || "-",
+     const fiscalRows = fiscalSummaries.map((fiscal: any) => {
+      const rawFiscalRow = {
+        "Project Code": fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-",
+        "Name": fiscal.project_name || "-",
         "Project Type": fiscal.project_type_name || "-",
         "Account Name": project.account_name || "-",
         "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
@@ -2044,43 +2114,37 @@ class ProjectIngestionService {
         "Customer Group": fiscal.project_client_group || "-",
         "Project Group": fiscal?.project_group || "-",
         "Project Effort (Hours)": fiscal.total_effort || "-",
-        "Project Cost":
-          formatNumberForExport(fiscal.total_cost, fiscal.currency_symbol) ||
-          "-",
-        "FTE Cost":
-          formatNumberForExport(
-            fiscal.total_cost_fte,
-            fiscal.currency_symbol
-          ) || "-",
-        "SubCon Cost":
-          formatNumberForExport(
-            fiscal.total_cost_subcon,
-            fiscal.currency_symbol
-          ) || "-",
-        "Non-Labor Cost":
-          formatNumberForExport(
-            fiscal.total_cost_nonlabor,
-            fiscal.currency_symbol
-          ) || "-",
+        "Project Cost": formatNumberForExport(fiscal.total_cost, fiscal.currency_symbol) || "-",
+        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, fiscal.currency_symbol) || "-",
+        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, fiscal.currency_symbol) || "-",
+        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, fiscal.currency_symbol) || "-",
         "Assessment Status": fiscal.assessment_status || "-",
         "QRE %": "-", // Only base project has QRE %
-        QRE:
-          formatNumberForExport(fiscal.qre_final, project.currency_symbol) ||
-          "-",
+        "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
         "Project Point of Contact": fiscal.project_point_of_contact || "-",
         "Technical Point of Contact": fiscal.technical_point_of_contact || "-",
-        Comments: fiscal.comments || "-",
+        "Comments": fiscal.comments || "-",
         "Last Modified": fiscal.modified_datetime
           ? timezone && isValidTimezone(timezone)
-            ? moment(fiscal.modified_datetime)
-                .tz(timezone)
-                .format("YYYY-MM-DD, hh:mm:ss A")
-            : moment(fiscal.modified_datetime).format("YYYY-MM-DD, hh:mm:ss A")
-          : "-",
+            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+            : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
         "Project ID": fiscal.r_number || "-",
-      }));
+      };
 
-      return [baseRow, ...fiscalRows];
+    const filteredFiscalRow: Record<string, string> = {};
+    for (const [label, value] of Object.entries(rawFiscalRow)) {
+      const mappedLabel = labelMap[label] || label;
+      if (allowedFieldSet.has(mappedLabel)) {
+        filteredFiscalRow[label] = value; // keep original label for export
+      }
+    }
+
+    return filteredFiscalRow;
+});
+
+
+      return [filteredProjectRow, ...fiscalRows];
     });
 
     return {
@@ -2949,17 +3013,19 @@ class ProjectIngestionService {
       ORDER BY pt.created_datetime DESC
     `;
 
-      const results = await sequelize.query(query, {
-        replacements: { projectResourceIds },
-        type: "SELECT",
-      });
+    const results = await sequelize.query(query, {
+      replacements: { projectResourceIds },
+      type: 'SELECT'
+    });
 
-      return results;
-    } catch (error) {
-      console.error("Error fetching project tasks (bulk):", error);
-      throw error;
-    }
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching project tasks (bulk):', error);
+    throw error;
   }
+}
+
 }
 
 export default ProjectIngestionService;

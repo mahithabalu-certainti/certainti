@@ -50,7 +50,7 @@ async function createUserGroup(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { group_name, users, accounts,status_rid ,is_consultant_only_group,projects} = validatedData;
+    const { group_name, users, accounts,status_rid ,is_consultant_only_group,projects,group_type_rid} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -61,7 +61,8 @@ async function createUserGroup(req: Request, res: Response): Promise<void> {
       accounts,
       projects,
       status_rid,
-      is_consultant_only_group
+      is_consultant_only_group,
+      group_type_rid
     }, userId);
     
     if (result.statusCode === constants.SUCCESS) {
@@ -284,8 +285,6 @@ async function getProjectUsers(req: Request, res: Response): Promise<void> {
 
     const page: number = parseInt(validatedData.page, 10) || 1;
     const limit: number = parseInt(validatedData.limit, 10) || 10;
-    
-
     const projectUsers = await services.userGroupService.getProjectsWithUserAccessFlag(
       validatedData.entity_type,
       validatedData.account_rid,
@@ -473,11 +472,9 @@ async function listUserGroup(req: Request, res: Response): Promise<void> {
     const result = await services.userGroupService.listUserGroup(
       page,
       limit,
-      validatedData.search,
       parsedFilters,
       validatedData.sortBy,
       validatedData.sortOrder,
-      validatedData.organization
     );
     
     if (result.statusCode === constants.SUCCESS) {
@@ -630,29 +627,41 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { user_rid, accounts,group_rid} = validatedData;
+    const { users, account_rid,groups,access_type} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
 
-    
-    const result = await services.userGroupService.assignEntityAccessToAccount({
-      user_rid,
-      group_rid,
-      accounts,
+    let result;
+
+    if(access_type === "USER")
+    {
+      result = await services.userGroupService.assignUserAccessToAccount({
+      users,
+      account_rid,
       userId
     } );
+    }
+    if(access_type === "GROUP")
+    {
+      result = await services.userGroupService.assignGroupAccessToAccount({
+      groups,
+      account_rid,
+      userId
+    } );
+    }
     
-    if (result.statusCode === constants.SUCCESS) {
+    
+    if (result?.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result?.data);
     } else {
-      errorLog(methodName, result.errorMessage);
+      errorLog(methodName, result?.errorMessage);
       handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        result.errorMessage
+        result?.errorMessage
       );
     }
   } catch (error) {
@@ -690,7 +699,7 @@ async function assignEntityAccessToProject(req: Request, res: Response): Promise
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { user_rid, project_access_list,group_rid} = validatedData;
+    const { user_rid, projects,group_rid} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -699,7 +708,7 @@ async function assignEntityAccessToProject(req: Request, res: Response): Promise
     const result = await services.userGroupService.assignEntityAccessToProjects({
       user_rid,
       group_rid,
-      project_access_list,
+      projects,
       userId
     } );
     

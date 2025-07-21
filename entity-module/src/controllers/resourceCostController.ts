@@ -120,7 +120,7 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
     );
 
     let parsedFilters: Record<string, any> = {};
-
+    const userId = req.headers["x-user-id"] as string;
     if (!value) {
       return;
     }
@@ -140,7 +140,7 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       value.accountNumber,
       value.fiscalYear,
-      value.resourceRid
+      value.resourceRid,userId
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
