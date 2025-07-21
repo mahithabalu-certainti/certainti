@@ -188,7 +188,8 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     d.document_size,i.entity_type, i.total_records,i.fiscal_year,
     ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))) AS records_loaded_successfully,
     (COALESCE(i.target_load_error_records_count,0) + (COALESCE(i.total_records, 0) - COALESCE(i.total_staging_processed,0))) AS records_failed_to_load,
-    i.total_staging_warning_count,d.document_status, i.uploaded_datetime, i.uploaded_by_user_rid
+    i.total_staging_warning_count,d.document_status, i.uploaded_datetime, i.uploaded_by_user_rid,
+    i.upload_failure_reason
     FROM ${schemaName}.import i
     LEFT JOIN ${schemaName}.account_details a ON a.account_rid = i.account_rid
     LEFT JOIN ${schemaName}.document d ON d.rid = i.document_rid
@@ -225,6 +226,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     'records_failed_to_load', a.records_failed_to_load,
     'records_with_warning', a.total_staging_warning_count,
     'status', a.document_status,
+    'status_description', a.upload_failure_reason,
     'imported_on', a.uploaded_datetime,
     'imported_by', a.uploaded_by_user_rid
     )ORDER BY ${sortValue}) AS imports
@@ -297,6 +299,7 @@ export const fetchImportListByRid = (rid : string, schemaName : string) => {
     'total_records', i.total_records,
     'fiscal', i.fiscal_year,
     'status', d.document_status,
+    'status_description', i.upload_failure_reason,
     'imported_on', i.uploaded_datetime,
     'imported_by', i.uploaded_by_user_rid,
     'records_loaded_successfully', ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))),
