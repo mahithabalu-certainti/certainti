@@ -1559,6 +1559,7 @@ class ProjectIngestionService {
     let whereFiscal: Record<string, any>;
     let projectData: any;
     const fullOrder: any[] = [];
+    let totalCount: number = 0;
     if (graphqlData.type == "graphql") {
       whereProject = {
         account_rid: accountData.rid,
@@ -1610,6 +1611,51 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+      
+      for (const key in filters) {
+        const dbField = fiscalFieldMap[key];
+        if (dbField) {
+          whereFiscal[dbField] = filters[key];
+        }
+    }
+      if (fiscalYear) {
+        whereFiscal.fiscal_year = fiscalYear;
+      }
+      
+          for (const [field, direction] of order) {
+      const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
+      const nullsHandled = `${sortDirection} NULLS LAST`;
+
+      if (bothParentAndChild) {
+        if (parentLevelFields.includes(field)) {
+          fullOrder.push([
+            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+          ]);
+        }
+        if (field === "created_datetime") {
+          fullOrder.push([
+            Sequelize.literal(`"Project"."created_datetime" ${nullsHandled}`),
+          ]);
+        }
+      } else {
+        if (field === "created_datetime") {
+          fullOrder.push([
+            Sequelize.literal(`"Project"."project_code" ${nullsHandled}`),
+          ]);
+        } else {
+          fullOrder.push([
+            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+          ]);
+        }
+      }
+
+      const aliasFilter =
+        fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
+
+      fullOrder.push([
+        Sequelize.literal(`"ProjectFiscal"."${aliasFilter}" ${nullsHandled}`),
+      ]);
+    }
       projectData = await Project.findAll({
         where: whereProject,
         offset,
@@ -1650,54 +1696,6 @@ class ProjectIngestionService {
     // const whereFiscal: Record<string, any> = {
     //   account_rid: accountData.rid,
     // };
-
-    for (const key in filters) {
-      const dbField = fiscalFieldMap[key];
-      if (dbField) {
-        whereFiscal[dbField] = filters[key];
-      }
-    }
-
-    if (fiscalYear) {
-      whereFiscal.fiscal_year = fiscalYear;
-    }
-
-    let totalCount: number = 0;
-
-    for (const [field, direction] of order) {
-      const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
-      const nullsHandled = `${sortDirection} NULLS LAST`;
-
-      if (bothParentAndChild) {
-        if (parentLevelFields.includes(field)) {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
-          ]);
-        }
-        if (field === "created_datetime") {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."created_datetime" ${nullsHandled}`),
-          ]);
-        }
-      } else {
-        if (field === "created_datetime") {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ${nullsHandled}`),
-          ]);
-        } else {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
-          ]);
-        }
-      }
-
-      const aliasFilter =
-        fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
-
-      fullOrder.push([
-        Sequelize.literal(`"ProjectFiscal"."${aliasFilter}" ${nullsHandled}`),
-      ]);
-    }
 
     let projects = projectData;
 
