@@ -13,14 +13,12 @@ interface ProjectResourceAttributes {
   account_rid: string;
   project_rid: string;
   resource_rid: string;
-  project_code: string;
   project_resource_code: string;
   fiscal_year: number;
 
   start_date?: Date | null;
   end_date?: Date | null;
 
-  resource_code: string;
   resource_name?: string | null;
   resource_type_rid: string | null;
   designation?: string | null;
@@ -73,12 +71,10 @@ export class ProjectResource
   public resource_rid!: string;
   public fiscal_year!: number;
   public project_resource_code!: string;
-  public project_code!: string;
 
   public start_date?: Date | null;
   public end_date?: Date | null;
 
-  public resource_code!: string;
   public resource_name?: string | null;
   public resource_type_rid!: string | null;
   public designation?: string | null;
@@ -137,15 +133,10 @@ export class ProjectResource
           type: DataTypes.STRING(100),
           allowNull: false,
         },
-        project_code: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
-        },
 
         start_date: { type: DataTypes.DATE },
         end_date: { type: DataTypes.DATE },
 
-        resource_code: { type: DataTypes.STRING(100), allowNull: false },
         resource_name: { type: DataTypes.STRING(200) },
         resource_type_rid: { type: DataTypes.STRING(100), allowNull: false },
         designation: { type: DataTypes.STRING(200) },

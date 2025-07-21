@@ -13,10 +13,8 @@ interface ProjectResourceFiscalRegionAttributes {
   account_rid: string;
   project_rid: string;
   resource_rid: string;
-  project_code: string;
   fiscal_year: number;
 
-  resource_code: string;
   resource_name?: string | null;
   resource_type_rid: string | null;
   designation?: string | null;
@@ -86,9 +84,7 @@ export class ProjectResourceFiscalRegion
   public project_rid!: string;
   public resource_rid!: string;
   public fiscal_year!: number;
-  public project_code!: string;
 
-  public resource_code!: string;
   public resource_name?: string | null;
   public resource_type_rid!: string | null;
   public designation?: string | null;
@@ -158,11 +154,7 @@ export class ProjectResourceFiscalRegion
         project_rid: { type: DataTypes.STRING(50), allowNull: false },
         resource_rid: { type: DataTypes.STRING(50), allowNull: false },
         fiscal_year: { type: DataTypes.INTEGER, allowNull: false },
-        project_code: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
-        },
-        resource_code: { type: DataTypes.STRING(100), allowNull: false },
+
         resource_name: { type: DataTypes.STRING(200) },
         resource_type_rid: { type: DataTypes.STRING(100) },
         designation: { type: DataTypes.STRING(200) },

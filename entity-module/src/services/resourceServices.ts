@@ -310,12 +310,16 @@ export class ResourceService {
         );
       }
 
+      const existingResource = await this.schemaService.fetchExistingResource(accountNumber, resource_id);
+
       resourceData.modified_by = userId;
       const resource = await this.schemaService.updateResource(
         resourceData,
         accountNumber,
         accountId
       );
+
+      // await this.schemaService.updateProjectResource(accountNumber, resourceData, existingResource, accountId);
 
       return {
         statusCode: HttpStatus.SUCCESS,
