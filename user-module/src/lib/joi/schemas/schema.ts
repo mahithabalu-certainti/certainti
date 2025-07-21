@@ -78,10 +78,28 @@ const updateUserGroupSchema = Joi.object({
 });
 
 const assignUserToAccountSchema = Joi.object({
-  group_rid: Joi.string().optional().label("Group Id"),
-  user_rid: Joi.string().optional().label("User Id"),
-  account_rid: Joi.array().required().label("Account Name"),
-  has_access_enabled:Joi.boolean().required()
+  users: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .optional()
+    .label("Users"),
+  groups: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .optional()
+    .label("Users"),
+  access_type:Joi.string().required().label("Access type"),
+  account_rid: Joi.string().required().label("Account Name"),
 });
 
 const listUserGroupTypeSchema = Joi.object({
@@ -109,16 +127,14 @@ const assignUserToProjectSchema = Joi.object({
   group_rid: Joi.string().optional().label("Group Id"),
   user_rid: Joi.string().optional().label("User Id"),
   account_rid: Joi.string().required().label("Account Name"),
-  project_access_list: Joi.array()
-    .items(
-      Joi.object({
-        project_rid: Joi.string().required().label("Project Id"),
-        has_access_enabled: Joi.boolean().required().label("Access Enabled"),
-      })
+  projects: Joi.object()
+    .pattern(
+      Joi.string(), // key: project_rid
+      Joi.boolean() // value: has_access_enabled
     )
-    .min(1)
     .required()
-    .label("Project Access List"),
+    .min(1)
+    .label("Projects Access Map"),
 });
 
 const listActiveUserGroupSchema = Joi.object({

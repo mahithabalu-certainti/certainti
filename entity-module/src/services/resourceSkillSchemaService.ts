@@ -9,6 +9,7 @@ import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
+import SchemaService from "./schemaService";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -279,7 +280,8 @@ async exportResoucreSkill(
   finalSortOrder: string,
   resource_rid: string,
   search: string,
-  account_rid: string
+  account_rid: string,
+  userId: string
 ) {
   const sequelize = await this.getDbConnection(schemaName);
   const mainDbSequelize = await initMainDbSequelize();
@@ -349,25 +351,79 @@ async exportResoucreSkill(
       skill_level_name: skillLevelMap.get(rs.skill_level_rid) || '',
       
     }));
+     const schemaService = new SchemaService();
+     const [
+        accountFields,
+        resourceFields,
+        skillFields
+      ] = await Promise.all([
+        schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+        schemaService.getAllowedExportFields(userId, "account_resources_view_edit"),
+        schemaService.getAllowedExportFields(userId, "account_resource_skill_view_edit")
+      ]);
+      const allowedFieldSet = new Set<string>();
+        for (const field of skillFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+        const requiredAccountFields = new Set(["account_name"]); // Add more if needed
+        for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      const requiredResourceFields = new Set(["resource_name","resource_type_rid","resource_orgname","resource_designation","resource_role","resource_total_experience","resource_code"]); // Add more if needed
+        for (const field of resourceFields) {
+        if (field.read && requiredResourceFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      const labelMap: Record<string, string> = {
+      "account_name": "Account Name",
+      "resource_code": "Resource Code",
+      "resource_name": "Name",
+      "resource_type_rid": "Resource Type",
+      "start_date": "Effective Date",
+      "skill_type_rid": "Skill Type",
+      "skill_subtype_rid": "Skill SubType",
+      "skill_level_rid": "Skill Level",
+      "skill_details": "Skill Details",
+      "resource_orgname": "Org Name",
+      "resource_designation": "Designation",
+      "resource_role": "Role",
+      "resource_total_experience": "Years of Experience",
+      "r_number": "Skill ID"
+    };
 
     // Add names to resource skills and format for export
-    resourceSkill = resourceSkill.map((rs: any) => ({
+    resourceSkill = resourceSkill.map((rs: any) => {
+      const resultMap = {
+        "account_name": rs.account_name || "-",
+        "resource_code": rs.resource_code || "-",
+        "resource_name": rs.resource_name || "-",
+        "resource_type_rid": rs.resource_type || "-",
+        "start_date": rs.start_date || "-",
+        "skill_type_rid": rs.skill_type_name || "-",
+        "skill_subtype_rid": rs.skill_subtype_name || "-",
+        "skill_level_rid": rs.skill_level_name || "-",
+        "skill_details": rs.skill_details || "-",
+        "resource_orgname": rs.resource_orgname || "-",
+        "resource_designation": rs.resource_designation || "-",
+        "resource_role": rs.resource_role || "-",
+        "resource_total_experience": rs.years_of_experience || "-",
+        "r_number": rs.r_number || "-"
+      };
 
-      "Account Name": rs.account_name || "-",
-      "Resource Code": rs.resource_code || "-",
-      "Name": rs.resource_name || "-",
-      "Resource Type": rs.resource_type || "-",
-      "Effective Date": rs.start_date || "-",
-      "Skill Type": rs.skill_type_name || "-",
-      "Skill SubType": rs.skill_subtype_name || "-",
-      "Skill Level": rs.skill_level_name || "-",
-      "Skill Details": rs.skill_details || "-",
-      "Org Name": rs.resource_orgname || "-",
-      "Designation": rs.resource_designation || "-",
-      "Role": rs.resource_role || "-",
-      "Years of Experience": rs.years_of_experience || "-",
-      "Skill ID": rs.r_number || "-"
-    }));
+      const filteredRow: Record<string, string> = {};
+      for (const [field, value] of Object.entries(resultMap)) {
+          if (allowedFieldSet.has(field)) {
+            filteredRow[labelMap[field]] = value;
+          }
+        }
+      return filteredRow;
+});
+
 
     // Apply sorting if needed
     if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name') {

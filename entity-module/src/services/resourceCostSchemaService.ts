@@ -10,6 +10,7 @@ import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
 import currency from "currency.js";
 import Decimal from "decimal.js";
+import SchemaService from "./schemaService";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -585,7 +586,8 @@ class ResourceCostSchemaService {
     sortOrder: string,
     resource_rid: string,
     search: string,
-    account_rid: string
+    account_rid: string,
+    userId:string
   ) {
     try {
       const sequelize = await this.getDbConnection(schemaName);
@@ -794,36 +796,91 @@ class ResourceCostSchemaService {
       
 
       const rawResult = resourceCost || [];
+       const schemaService = new SchemaService();
+        const [
+        accountFields,
+        resourceFields,
+        costFields
+      ] = await Promise.all([
+        schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+        schemaService.getAllowedExportFields(userId, "account_resources_view_edit"),
+        schemaService.getAllowedExportFields(userId, "account_resource_cost_edit_view")
+      ]);
+        const allowedFieldSet = new Set<string>();
+        for (const field of costFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+      const requiredAccountFields = new Set(["account_name"]); // Add more if needed
+
+      for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      console.log(allowedFieldSet)
+      const requiredResourceFields = new Set(["resource_orgname","resource_designation","resource_role","resource_type_rid","resource_code","resource_name"]); // Add more if needed
+        for (const field of resourceFields) {
+        if (field.read && requiredResourceFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      const labelMap: Record<string, string> = {
+        "account_name": "Account Name",                   // Account name is mapped as 'Name' in allowedFieldSet
+        "resource_code": "Resource Code",
+        "fiscal_year": "Fiscal Year",
+        "resource_name": "Name",
+        "resource_type_rid": "Resource Type",
+        "effective_from": "Effective Date",
+        "end_date": "End Date",
+        "currency_rid": "Currency",
+        "effort_in_hrs": "Effort In Hours",
+        "salary": "Salary",
+        "bonus": "Bonus",
+        "insurance": "Insurance",
+        "deductions": "Deductions",
+        "resource_cost": "Resource Cost",                     // Assuming 'Cost' corresponds to 'Total Cost' in permissions
+        "resource_orgname": "Org Name",
+        "resource_designation": "Designation",
+        "resource_role": "Role",
+        "comments": "Comments",
+        "status": "Status",
+        "r_number": "Cost ID",                 // Assuming 'Cost ID' is same as 'Resource ID'
+      };
+
       let exportData = rawResult.map((resource: any) => {
-        return {
-          "Account Name": resource.account_name || "-",
-          "Resource Code": resource.resource_code || "-",
-          "Fiscal Year": resource.fiscal_year || "-",
-          "Name": resource.resource_name || "-",
-          "Resource Type": resource.resource_type_name || "-",
-          "Effective Date": resource.effective_from || "-",
-          "End Date": resource.end_date || "-",
-          "Currency": resource.currency_code || "USD",
-          "Effort In Hours": resource.effort_in_hrs || "-",
-          "Salary": formatNumberForExport(resource.salary , resource.currency_symbol) || "-",
-          "Bonus": formatNumberForExport(resource.bonus , resource.currency_symbol) || "-",
-          "Insurance": formatNumberForExport(resource.insurance , resource.currency_symbol) || "-",
-          "Deductions": formatNumberForExport(resource.deductions , resource.currency_symbol) || "-",
-          "Cost": formatNumberForExport(resource.resource_cost , resource.currency_symbol) || "-",
-          "Org Name": resource.resource_orgname || "-",
-          "Designation": resource.resource_designation || "-",
-          "Role": resource.resource_role || "-",
-          "Comments": resource.comments || "-",
-          "Status": resource.status_name || "-",
-          "Cost ID": resource.r_number || "-",
-          // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
-          // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
-          // "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
-          // "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
-          // "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
-          // "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
-          // "Semi Annual": resource.semi_annual_cost,
+         const exportData: Record<string, string> = {};   
+        let resultMap = {
+          "account_name": resource.account_name || "-",
+          "resource_code": resource.resource_code || "-",
+          "fiscal_year": resource.fiscal_year || "-",
+          "resource_name": resource.resource_name || "-",
+          "resource_type_rid": resource.resource_type_name || "-",
+          "effective_from": resource.effective_from || "-",
+          "end_date": resource.end_date || "-",
+          "currency_rid": resource.currency_code || "USD",
+          "effort_in_hrs": resource.effort_in_hrs || "-",
+          "salary": formatNumberForExport(resource.salary , resource.currency_symbol) || "-",
+          "bonus": formatNumberForExport(resource.bonus , resource.currency_symbol) || "-",
+          "insurance": formatNumberForExport(resource.insurance , resource.currency_symbol) || "-",
+          "deductions": formatNumberForExport(resource.deductions , resource.currency_symbol) || "-",
+          "resource_cost": formatNumberForExport(resource.resource_cost , resource.currency_symbol) || "-",
+          "resource_orgname": resource.resource_orgname || "-",
+          "resource_designation": resource.resource_designation || "-",
+          "resource_role": resource.resource_role || "-",
+          "comments": resource.comments || "-",
+          "status_rid": resource.status_name || "-",
+          "r_number": resource.r_number || "-"
         };
+
+        
+         for (const [field, value] of Object.entries(resultMap)) {
+          if (allowedFieldSet.has(field)) {
+            exportData[labelMap[field]] = value;
+          }
+         }
+         return exportData
       });
 
       return {

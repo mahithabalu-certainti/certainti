@@ -944,8 +944,40 @@ async exportAttachments(
         }
       });
 
+      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"accounts_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
+      const labelMap: Record<string, string>  = {
+          "Document Name": "Document Name",
+          "Format": "Format",
+          "Size": "Size",
+          "Fiscal Year": "Fiscal Year",
+          "Document Category": "Document Category",
+          "Document Type": "Document Type",
+          "Related Entity": "Related Entity",
+          "Related To ID": "Related To ID",
+          "Attached By": "Attached By",
+          "Attached On": "Attached On",
+          "Attachment ID": "Attachment ID",
+        };
+
       // Add names to attachments and format for export
-      filteredAttachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+      //filteredAttachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+    attachments = attachments.map((at) => {
+    const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+    const filtered: Record<string, any> = {};
+    for (const [fieldKey, value] of Object.entries(rawMapped)) {
+      const label = labelMap[fieldKey]; // field_desc
+      if (allowedFieldSet.has(label)) {
+        filtered[label] = value; // export with label name
+      }
+    }
+    return filtered;
+});
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -981,7 +1013,7 @@ private mapAttachmentToCommonFormat(at: any) {
     "Document Name": at.document_name || "-",
     "Format": at.format || "-", 
     "Size": at.size_in_mb || "-",
-    "Fiscal": at.fiscal_year || "-",
+    "Fiscal Year": at.fiscal_year || "-",
     "Document Category": at.document_category || "-",
     "Document Type": at.document_type || "-",
     "Related Entity": at.attachment_level || "-",
@@ -1013,6 +1045,25 @@ async getAttachmentSummary(
     if (!mainSequelize) throw new Error("Failed to initialize main DB connection");
 
     const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
+    const userGroupType = await this.schemaService.getUserGroupType(userId);
+    const isCustomGlobal = userGroupType === "DEFAULT";
+    let accessibleAccountIds: string[] = [];
+    if (!isCustomGlobal) {
+    const accessibleAccounts = await this.schemaService.getAccessibleAccountInfo(userId);
+    const accessibleAccountIds = accessibleAccounts.map((acc) => acc.id);
+
+      // If user has no accessible accounts, return empty response
+      if (accessibleAccountIds.length === 0) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            attachments: [],
+            totalCount: 0,
+          },
+        };
+      }
+    }
 
     let attachedToFilter, uploadedByFilter;
     if (filters.attached_to) {
@@ -1026,15 +1077,55 @@ async getAttachmentSummary(
 
     const { whereClause } = this.buildRawWhereClause(filters, search);
     if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
+      whereClause[Op.and] = whereClause[Op.and] || [];
+
 
     if (globalFilters && Object.keys(globalFilters).length > 0) {
       const parentAccountRid = Object.keys(globalFilters)[0];
       const childAccountRids = globalFilters[parentAccountRid];
-      whereClause[Op.and] = whereClause[Op.and] || [];
-      whereClause[Op.and].push({
-        account_rid: { [Op.in]: [...childAccountRids, parentAccountRid] }
-      });
-    }
+        const filterAccounts = [...childAccountRids, parentAccountRid];
+
+        // Intersect frontend filters with backend-accessible accounts
+        if(!isCustomGlobal)
+        {
+          const validAccounts = filterAccounts.filter((rid) =>
+            accessibleAccountIds.includes(rid)
+          );
+
+          // No valid accounts → return early
+          if (validAccounts.length === 0) {
+            return {
+              statusCode: HttpStatus.SUCCESS,
+              message: HttpStatus.SUCCESS_MESSAGE,
+              data: {
+                attachments: [],
+                totalCount: 0,
+              },
+            };
+          }
+           // Apply valid filtered accounts
+          whereClause[Op.and].push({
+            account_rid: { [Op.in]: validAccounts },
+          });
+        }
+        else
+        {
+           // Apply valid filtered accounts
+        whereClause[Op.and].push({
+          account_rid: { [Op.in]: filterAccounts },
+        });
+        }
+       
+      } else {
+        // No global filters — use all backend-accessible accounts
+        if(!isCustomGlobal)
+        {
+            whereClause[Op.and].push({
+            account_rid: { [Op.in]: accessibleAccountIds },
+        });
+        }
+        
+      }
 
     if (fiscalYear !== 0) {
       whereClause[Op.and] = whereClause[Op.and] || [];
@@ -1228,6 +1319,24 @@ async exportAttachmentSummary(
     if (!mainSequelize) throw new Error("Failed to initialize main DB connection");
 
     const AttachmentSummaryModel = AttachmentSummary.initialize(mainSequelize);
+    const userGroupType = await this.schemaService.getUserGroupType(userId);
+    const isCustomGlobal = userGroupType === "DEFAULT";
+    let accessibleAccountIds: string[] = [];
+    if (!isCustomGlobal) {
+    const accessibleAccounts = await this.schemaService.getAccessibleAccountInfo(userId);
+    const accessibleAccountIds = accessibleAccounts.map((acc) => acc.id);
+
+      // If user has no accessible accounts, return empty response
+      if (accessibleAccountIds.length === 0) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            attachments: []
+          },
+        };
+      }
+    }
 
     let attachedToFilter, uploadedByFilter;
     if (filters.attached_to) {
@@ -1242,14 +1351,51 @@ async exportAttachmentSummary(
     const { whereClause } = this.buildRawWhereClause(filters, search);
     if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
 
-    if (globalFilters && Object.keys(globalFilters).length > 0) {
-      const parentAccountRid = Object.keys(globalFilters)[0];
-      const childAccountRids = globalFilters[parentAccountRid];
-      whereClause[Op.and] = whereClause[Op.and] || [];
-      whereClause[Op.and].push({
-        account_rid: { [Op.in]: [...childAccountRids, parentAccountRid] }
-      });
-    }
+    
+      if (globalFilters && Object.keys(globalFilters).length > 0) {
+        const parentAccountRid = Object.keys(globalFilters)[0];
+        const childAccountRids = globalFilters[parentAccountRid];
+        const filterAccounts = [...childAccountRids, parentAccountRid];
+
+        // Intersect frontend filters with backend-accessible accounts
+        if(!isCustomGlobal)
+        {
+          const validAccounts = filterAccounts.filter((rid) =>
+            accessibleAccountIds.includes(rid)
+          );
+
+          // No valid accounts → return early
+          if (validAccounts.length === 0) {
+            return {
+              statusCode: HttpStatus.SUCCESS,
+              message: HttpStatus.SUCCESS_MESSAGE,
+              data: {
+                attachments: []
+              },
+            };
+          }
+           // Apply valid filtered accounts
+          whereClause[Op.and].push({
+            account_rid: { [Op.in]: validAccounts },
+          });
+        }
+        else
+        {
+           // Apply valid filtered accounts
+        whereClause[Op.and].push({
+          account_rid: { [Op.in]: filterAccounts },
+        });
+        }
+       
+      } else {
+        // No global filters — use all backend-accessible accounts
+         if(!isCustomGlobal)
+        {
+            whereClause[Op.and].push({
+            account_rid: { [Op.in]: accessibleAccountIds },
+        });
+        }
+      }
 
     if (fiscalYear !== 0) {
       whereClause[Op.and] = whereClause[Op.and] || [];
@@ -1398,7 +1544,39 @@ async exportAttachmentSummary(
     }
   });
 
-    attachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+    const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
+   const labelMap: Record<string, string>  = {
+      "Document Name": "Document Name",
+      "Format": "Format",
+      "Size": "Size",
+      "Fiscal Year": "Fiscal Year",
+      "Document Category": "Document Category",
+      "Document Type": "Document Type",
+      "Related Entity": "Related Entity",
+      "Related To ID": "Related To ID",
+      "Attached By": "Attached By",
+      "Attached On": "Attached On",
+      "Attachment ID": "Attachment ID",
+    };
+
+    attachments = attachments.map((at) => {
+    const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+    const filtered: Record<string, any> = {};
+    for (const [fieldKey, value] of Object.entries(rawMapped)) {
+      const label = labelMap[fieldKey]; // field_desc
+      if (allowedFieldSet.has(label)) {
+        filtered[label] = value; // export with label name
+      }
+    }
+    return filtered;
+});
+
 
     return {
       statusCode: HttpStatus.SUCCESS,
