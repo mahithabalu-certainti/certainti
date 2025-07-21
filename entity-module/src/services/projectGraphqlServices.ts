@@ -63,6 +63,7 @@ class ProjectGraphQlServices {
                 }
                 await orgSequelize.query(rawQueries.updateProjectFiscal(schemaName, setProjectFiscalData, data))
                 findProjectFiscal[0][0].project_fiscal_id = findProjectFiscal[0][0].rid
+                findProjectFiscal[0][0].account_id = findProjectFiscal[0][0].account_rid
                 await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, findProjectFiscal[0][0], findProjectFiscal[0][0].project_code)
             }
             if(setProjectFiscalSummary.length > 0) {
