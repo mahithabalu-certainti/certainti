@@ -857,3 +857,18 @@ export const setInlineForAttachments = (dbData : Attachment, requestData : any) 
 export const validateImportListRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
 }
+
+export const validateImportListByRidRequest = (account_rid : any, rid : string) => {
+  if(!rid) return STATUS_MESSAGE.accountIdMissing
+  if(!account_rid) return STATUS_MESSAGE.accountIdMissing
+}
+
+export const setInlineForImports = (dbData : any, requestData : any) => {
+  let newData : any = {}
+  if(requestData.fiscal_year) {
+    newData.fiscal_year = requestData.fiscal_year != dbData.fiscal_year ? requestData.fiscal_year : dbData.fiscal_year
+    return newData;
+  } else {
+    return null
+  }
+}

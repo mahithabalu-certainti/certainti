@@ -599,7 +599,6 @@ export class ProjectResourceMapper {
     userId: string
   ) {
     return {
-      resource_code: projectResource.resource_code,
       fiscal_year: projectResource.fiscal_year,
       resource_name: projectResource.resource_name || null,
       resource_orgname: projectResource.resource_orgname || null,
@@ -620,7 +619,6 @@ export class ProjectResourceMapper {
     projectResource: ICreateProjectResource | IUpdateProjectResource,
     fiscalYear: number,
     userId: string,
-    project_code: string,
     resourceId: string
   ) {
     return {
@@ -630,10 +628,8 @@ export class ProjectResourceMapper {
       account_rid: projectResource.account_rid,
       project_rid: projectResource.project_rid,
       resource_rid: resourceId,
-      project_code: project_code,
       fiscal_year: fiscalYear,
 
-      resource_code: projectResource.resource_code,
       resource_name: projectResource.resource_name ?? null,
       resource_type_rid: projectResource.resource_type_rid ?? null,
       designation: projectResource.designation ?? null,
@@ -809,20 +805,20 @@ export class ProjectResourceMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     projectResourceCode: string,
+    resourceId: string,
     userId: string
   ) {
     return {
       modified_datetime: new Date(),
       modified_by: userId,
 
-      resource_rid: projectResource.resource_id,
+      resource_rid: resourceId,
       project_resource_code: projectResourceCode,
       fiscal_year: projectResource.fiscal_year,
 
       start_date: startDate ? startDate.toDate() : null,
       end_date: endDate ? endDate.toDate() : null,
 
-      resource_code: projectResource.resource_code,
       resource_name: projectResource.resource_name || null,
       resource_type_rid: projectResource.resource_type_rid,
       designation: projectResource.designation || null,
@@ -856,16 +852,16 @@ export class ProjectResourceMapper {
 
   static mapToProjectResourceUpload(
     updateProjectResource: ProjectResource,
-    userId: string
+    userId: string,
+    resourceData: any
   ) {
     return {
       project_resource_rid: updateProjectResource.rid,
       project_rid: updateProjectResource.project_rid,
       account_rid: updateProjectResource.account_rid,
       resource_id: updateProjectResource.resource_rid,
-      project_code: updateProjectResource.project_code,
-      resource_code: updateProjectResource.resource_code,
       resource_name: updateProjectResource.resource_name ?? "",
+      resource_code: resourceData.resource_code,
       resource_type_rid: updateProjectResource.resource_type_rid ?? "",
       resource_orgname: updateProjectResource.resource_orgname ?? null,
       resource_role: updateProjectResource.resource_role ?? null,
@@ -880,8 +876,8 @@ export class ProjectResourceMapper {
       country_rid: updateProjectResource.country_rid ?? null,
       region_rid: updateProjectResource.region_rid ?? null,
       currency_rid: updateProjectResource.currency_rid ?? null,
-      start_date: updateProjectResource.start_date?.toISOString() ?? null,
-      end_date: updateProjectResource.end_date?.toISOString() ?? null,
+      start_date:  null,
+      end_date: null,
       designation: updateProjectResource.designation ?? null,
       effort_project_resource_level:
         updateProjectResource.effort_project_resource_level ?? null,
