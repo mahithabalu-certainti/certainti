@@ -416,7 +416,7 @@ const TabPanel: React.FC<TabProps> = ({
         memoizedProjectResourceCode,
         memoizedCountry,
         regionData,
-        memoizedResourceType,
+        // memoizedResourceType,
         permissionProjectResourcesMap
       );
     if (value === 'attachments')

@@ -37,7 +37,7 @@ import {
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import { SelectOption } from '../../../../types';
-import { useGetResourceType } from '../../../../services/resource-list';
+// import { useGetResourceType } from '../../../../services/resource-list';
 import { useFetchState } from '../../../../services/account';
 
 const BUTTON_STYLES = {
@@ -169,7 +169,7 @@ export const ProjectResources = ({
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     accountID as string
   );
-  const projectResourceTypeOptions = useGetResourceType();
+  // const projectResourceTypeOptions = useGetResourceType();
   const countriesList = useGetAllCountries();
   const region = useFetchState(currentCountry);
   const memoizedProjectResourceCode: SelectOption[] = useMemo(
@@ -205,14 +205,14 @@ export const ProjectResources = ({
   const handleCountry = (country: string) => {
     setCurrentCountry(country);
   };
-  const memoizedProjectTypes: SelectOption[] = useMemo(
-    () =>
-      projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-        label: item.resource_type_name,
-        value: item.rid,
-      })) || [],
-    [projectResourceTypeOptions?.data?.data?.resouceType]
-  );
+  // const memoizedProjectTypes: SelectOption[] = useMemo(
+  //   () =>
+  //     projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+  //       label: item.resource_type_name,
+  //       value: item.rid,
+  //     })) || [],
+  //   [projectResourceTypeOptions?.data?.data?.resouceType]
+  // );
   const handleProjectResourceDetailEdit = () => {
     if (resourceData) {
       const path = PROJECT_RESOURCE_EDIT.replace(
@@ -228,7 +228,7 @@ export const ProjectResources = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'project_code';
+    const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -344,7 +344,7 @@ export const ProjectResources = ({
   const projectResourcesColumns = getProjectResourcesColumns(
     handleProjectResourceClick,
     memoizedProjectResourceCode,
-    memoizedProjectTypes,
+    // memoizedProjectTypes,
     countryOptions,
     memoizedState,
     handleCountry,

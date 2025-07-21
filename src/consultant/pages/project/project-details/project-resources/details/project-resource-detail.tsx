@@ -237,11 +237,11 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const basicInfo: DetailItem[] = [
     { label: 'Resource Code', value: resourceData.resource_code },
-    { label: 'Resource Type', value: resourceData.resource_type_name },
-    { label: 'Resource Org Name', value: resourceData.resource_orgname },
-    { label: 'Resource Name', value: resourceData.resource_name },
-    { label: 'Designation', value: resourceData.designation },
-    { label: 'Resource Role', value: resourceData.resource_role },
+    // { label: 'Resource Type', value: resourceData.resource_type_name },
+    // { label: 'Resource Org Name', value: resourceData.resource_orgname },
+    // { label: 'Resource Name', value: resourceData.resource_name },
+    // { label: 'Designation', value: resourceData.designation },
+    // { label: 'Resource Role', value: resourceData.resource_role },
 
     {
       label: 'Resource Skill Role Type',

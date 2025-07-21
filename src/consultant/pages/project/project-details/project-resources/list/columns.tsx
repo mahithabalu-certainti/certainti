@@ -20,7 +20,7 @@ export type TableColumn<T> = {
 export const getProjectResourcesColumns = (
   onClick: (row: ProjectResourcesListType) => void,
   memoizedProjectResourceCode: SelectOption[],
-  memoizedProjectTypes: SelectOption[],
+  // memoizedProjectTypes: SelectOption[],
   countryOptions: SelectOption[],
   memoizedState: SelectOption[],
   handleCountry: (country: string) => void,
@@ -63,32 +63,32 @@ export const getProjectResourcesColumns = (
       </span>
     ),
   },
-  {
-    id: 'resource_name',
-    editId: 'resource_name',
-    label: 'Resource Name',
-    sortable: true,
-    sortId: 'resource_name',
-    width: '180px',
-    editable:
-      permissionMap?.['resource_name']?.read &&
-      permissionMap?.['resource_name']?.edit,
-    hide:
-      !permissionMap?.['resource_name']?.read &&
-      !permissionMap?.['resource_name']?.edit,
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Resource Name',
-      validation: [
-        {
-          regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
-          errorMessage:
-            "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-        },
-      ],
-    },
-  },
+  // {
+  //   id: 'resource_name',
+  //   editId: 'resource_name',
+  //   label: 'Resource Name',
+  //   sortable: true,
+  //   sortId: 'resource_name',
+  //   width: '180px',
+  //   editable:
+  //     permissionMap?.['resource_name']?.read &&
+  //     permissionMap?.['resource_name']?.edit,
+  //   hide:
+  //     !permissionMap?.['resource_name']?.read &&
+  //     !permissionMap?.['resource_name']?.edit,
+  //   field: {
+  //     type: 'text',
+  //     required: false,
+  //     placeholder: 'Enter Resource Name',
+  //     validation: [
+  //       {
+  //         regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
+  //         errorMessage:
+  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
+  //       },
+  //     ],
+  //   },
+  // },
   {
     id: 'country_name',
     label: 'Resource Country',
@@ -155,25 +155,25 @@ export const getProjectResourcesColumns = (
       ],
     },
   },
-  {
-    id: 'resource_type_name',
-    label: 'Resource Type',
-    editId: 'resource_type_rid',
-    sortable: true,
-    sortId: 'resource_type_name',
-    width: '150px',
-    editable:
-      permissionMap?.['resource_type_rid']?.read &&
-      permissionMap?.['resource_type_rid']?.edit,
-    hide:
-      !permissionMap?.['resource_type_rid']?.read &&
-      !permissionMap?.['resource_type_rid']?.edit,
-    field: {
-      type: 'select',
-      options: memoizedProjectTypes,
-      required: true,
-    },
-  },
+  // {
+  //   id: 'resource_type_name',
+  //   label: 'Resource Type',
+  //   editId: 'resource_type_rid',
+  //   sortable: true,
+  //   sortId: 'resource_type_name',
+  //   width: '150px',
+  //   editable:
+  //     permissionMap?.['resource_type_rid']?.read &&
+  //     permissionMap?.['resource_type_rid']?.edit,
+  //   hide:
+  //     !permissionMap?.['resource_type_rid']?.read &&
+  //     !permissionMap?.['resource_type_rid']?.edit,
+  //   field: {
+  //     type: 'select',
+  //     options: memoizedProjectTypes,
+  //     required: true,
+  //   },
+  // },
   // {
   //   id: 'resource_orgname',
   //   label: 'Resource Org Name',
@@ -181,31 +181,31 @@ export const getProjectResourcesColumns = (
   //   sortId: 'resource_orgname',
   //   width: '180px',
   // },
-  {
-    id: 'resource_role',
-    label: 'Resource Role',
-    sortable: true,
-    sortId: 'resource_role',
-    width: '150px',
-    editable:
-      permissionMap?.['resource_role']?.read &&
-      permissionMap?.['resource_role']?.edit,
-    hide:
-      !permissionMap?.['resource_role']?.read &&
-      !permissionMap?.['resource_role']?.edit,
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Resource Role',
-      validation: [
-        {
-          regex: PROJECT_RESOURCE_REGEX.ROLE,
-          errorMessage:
-            "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-        },
-      ],
-    },
-  },
+  // {
+  //   id: 'resource_role',
+  //   label: 'Resource Role',
+  //   sortable: true,
+  //   sortId: 'resource_role',
+  //   width: '150px',
+  //   editable:
+  //     permissionMap?.['resource_role']?.read &&
+  //     permissionMap?.['resource_role']?.edit,
+  //   hide:
+  //     !permissionMap?.['resource_role']?.read &&
+  //     !permissionMap?.['resource_role']?.edit,
+  //   field: {
+  //     type: 'text',
+  //     required: false,
+  //     placeholder: 'Enter Resource Role',
+  //     validation: [
+  //       {
+  //         regex: PROJECT_RESOURCE_REGEX.ROLE,
+  //         errorMessage:
+  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
+  //       },
+  //     ],
+  //   },
+  // },
 
   {
     id: 'total_hours_pro_res',
