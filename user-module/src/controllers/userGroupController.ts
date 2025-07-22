@@ -169,11 +169,33 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
+     if (!validatedData) return;
+    let parsedFilters: Record<string, any> = {};
 
-    const { is_consultant_only_group,account_rid} = validatedData;
+    try {
+      parsedFilters = JSON.parse(validatedData.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const page: number = parseInt(validatedData.page, 10) || 1;
+    const limit: number = parseInt(validatedData.limit, 10) || 10;
+
+    const { is_consultant_only_group,account_rid,group_rid,sortBy,sortOrder} = validatedData;
+    let account;
+    if(!group_rid)
+    {
+       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid,page,limit,sortBy,sortOrder);
+    }
+    else
+    {
+      account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid,page,limit,sortBy,sortOrder);
+    }
     
-    const account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid);
-
+    
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, account.data);
@@ -197,6 +219,7 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
     );
   }
 }
+
 
 /**
  * Retrieves all users associated with a specific account

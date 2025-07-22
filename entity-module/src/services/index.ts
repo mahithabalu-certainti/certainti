@@ -13,7 +13,8 @@ import {
   IAttachmentGraphqlServices,
   IImportListGraphqlServices,
   IProjectTaskService,
-  IProjectTaskGraphqlServices
+  IProjectTaskGraphqlServices,
+  ISettingsServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -43,7 +44,7 @@ class Services implements IServiceContainer {
   private _attachmentGraphqlServices? : IAttachmentGraphqlServices;
   private _importGraphqlService? : IImportListGraphqlServices;
   private _projectTaskGraphqlServices? : IProjectTaskGraphqlServices;
-
+  private _settingService? : ISettingsServices;
 
   constructor(
     logger: Logger,
@@ -119,6 +120,13 @@ class Services implements IServiceContainer {
       this._projectTaskGraphqlServices = new ProjectTaskGraphqlServies();
     }
     return this._projectTaskGraphqlServices!
+  }
+  get settingServices() : ISettingsServices {
+    if(!this._settingService) {
+      const {default : SettingService} = require('../services/settingsServices')
+      this._settingService = new SettingService()
+    }
+    return this._settingService!
   }
 }
 

@@ -494,6 +494,7 @@ export interface IProjectResourceService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -595,4 +596,11 @@ export interface IProjectTaskGraphqlServices {
     errorMessage?: string;
     data?: any;
   }>;
+}
+
+export interface ISettingsServices {
+  updateSettings(data : any) : Promise<{
+    statusCode : number
+    statusMessage : string
+  }>
 }

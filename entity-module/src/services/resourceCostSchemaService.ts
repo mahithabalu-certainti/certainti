@@ -873,9 +873,7 @@ class ResourceCostSchemaService {
           "status_rid": resource.status_name || "-",
           "r_number": resource.r_number || "-"
         };
-
-        
-         for (const [field, value] of Object.entries(resultMap)) {
+        for (const [field, value] of Object.entries(resultMap)) {
           if (allowedFieldSet.has(field)) {
             exportData[labelMap[field]] = value;
           }

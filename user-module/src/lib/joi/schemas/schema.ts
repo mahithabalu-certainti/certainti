@@ -30,7 +30,7 @@ const createUserGroupSchema = Joi.object({
     .min(1)
     .optional()
     .label("Accounts"),
-  status_rid: Joi.string().required().label("Status"),
+  status_rid: Joi.string().optional().label("Status"),
   is_consultant_only_group: Joi.boolean().required(),
   projects: Joi.object()
     .pattern(
@@ -74,7 +74,7 @@ const updateUserGroupSchema = Joi.object({
     .optional()
     .label("Projects"),
   status_rid: Joi.string().optional().label("Status"),
-  is_consultant_only_group:Joi.boolean().required()
+  is_consultant_only_group:Joi.boolean().optional()
 });
 
 const assignUserToAccountSchema = Joi.object({
@@ -116,10 +116,13 @@ const listProjectUserGroupSchema = Joi.object({
 });
 
 const listProjectOfAccountSchema = Joi.object({
-  account_rid: Joi.string().required().label("Account Id"),
+  account_rid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
   group_rid: Joi.string().optional().label("Group Id"),
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
-  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
    filters: Joi.string().default("{}"),
 });
 
@@ -141,7 +144,12 @@ const listActiveUserGroupSchema = Joi.object({
  
   is_consultant_only_group:Joi.boolean().optional().allow('',null),
   group_rid:Joi.string().optional().allow('',null),
-    account_rid: Joi.alternatives().try(
+  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  account_rid: Joi.alternatives().try(
     Joi.string().allow('', null),
     Joi.array().items(Joi.string())
   ).optional()

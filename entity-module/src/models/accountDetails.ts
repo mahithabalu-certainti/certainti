@@ -24,6 +24,7 @@ interface AccountDetailsAttributes {
   business_details: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  auto_access_rd? : boolean
 }
 
 interface AccountDetailsCreationAttributes
@@ -59,6 +60,7 @@ class AccountDetails
   public business_details!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public auto_access_rd? : boolean
 
 static initialize(sequelize: Sequelize, schema: string){
 AccountDetails.init(
@@ -110,6 +112,10 @@ AccountDetails.init(
       allowNull: true,
     },
     autosend_interaction: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
+    auto_access_rd: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },

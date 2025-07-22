@@ -311,7 +311,8 @@ async function exportProjectResource(
           : 0,
         parsedFilters,
         value.sortBy,
-        value.sortOrder
+        value.sortOrder,
+        userId
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {

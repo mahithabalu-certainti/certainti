@@ -483,16 +483,26 @@ async assignUserToUserGroups(
    */
 async getActiveUsersForGrouping(
   is_consultant_only_group?: boolean,
-  account_rid?: string | string[]
+  account_rid?: string | string[],
+  page: number = 1,
+  limit: number = 10,
+  sortBy: string = "first_name", 
+  sortOrder: string = "ASC"
 ): Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { users: any };
+  data?: { users: any,count:number };
 }> {
   try {
     const whereClause: any = {};
     let orgIdsToFilter: string[] = [];
+    const offset = (page - 1) * limit;
+    const order: any[] = [];
+    const allowedSortFields: (keyof User)[] = ["first_name"];
+    const sortField = allowedSortFields.includes(sortBy as keyof User) ? sortBy : "first_name";
+    const sortDirection = ["asc", "desc"].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : "ASC";
+    order.push([sortField, sortDirection]);
 
     // Step 1: If consultant-only group, filter directly
     if (is_consultant_only_group) {
@@ -532,7 +542,7 @@ async getActiveUsersForGrouping(
           attributes: [],
         },
       ],
-      order: [["first_name", "ASC"]],
+      order,
     });
 
     const allUserRids = allUsers.map(u => u.rid);
@@ -576,15 +586,162 @@ async getActiveUsersForGrouping(
       user => !assignedUserRids.includes(user.rid)
     );
 
+    const sortedUsers = unassignedUsers.sort((a, b) => {
+    const valA = (a[sortBy as keyof User] ?? '').toString().toLowerCase();
+    const valB = (b[sortBy as keyof User] ?? '').toString().toLowerCase();
+    return sortOrder === 'ASC' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    });
+     const paginatedUsers = sortedUsers.slice(offset, offset + limit);
+
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: unassignedUsers },
+      data: { users: paginatedUsers ,count:sortedUsers.length},
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);
   }
 }
+
+/**
+   * Retrieves a list of active users eligible for grouping.
+   *
+   * - If `is_consultant_only_group` is true, returns only consultant firm users.
+   * - If `account_rid` is provided, returns users from the account's org or its parent (if child account).
+   * - Excludes users already assigned to a group under the same account.
+   *
+   * @param {boolean} [is_consultant_only_group] - Whether the group is for consultant users only.
+   * @param {string} [account_rid] - The RID of the account to filter users by org or parent org.
+   * @returns {Promise<Object>} - Response with list of eligible users and status metadata.
+   */
+async getActiveUsersForUpdate(
+  is_consultant_only_group?: boolean,
+  account_rid?: string | string[],
+  group_rid?: string,
+  page: number = 1,
+  limit: number = 10,
+  sortBy: string = "first_name", 
+  sortOrder: string = "ASC"
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { users: any,count:number };
+}> {
+  try {
+    const whereClause: any = {};
+    let orgIdsToFilter: string[] = [];
+
+    if (is_consultant_only_group) {
+      whereClause.is_consultant_firm = true;
+    } else if (account_rid) {
+      const accountRidArray: string[] = Array.isArray(account_rid)
+        ? account_rid
+        : typeof account_rid === 'string' && account_rid.trim() !== ''
+          ? account_rid.split(',').map((r) => r.trim())
+          : [];
+
+      if (!accountRidArray.length) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid account_rid provided.",
+        };
+      }
+
+      orgIdsToFilter = accountRidArray;
+      whereClause[Op.or] = [{ org_id: { [Op.in]: orgIdsToFilter } }];
+    }
+    const order: any[] = [];
+    const allowedSortFields: (keyof User)[] = ["first_name"];
+    const sortField = allowedSortFields.includes(sortBy as keyof User) ? sortBy : "first_name";
+    const sortDirection = ["asc", "desc"].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : "ASC";
+    order.push([sortField, sortDirection]);
+
+    // Step 1: Users based on account/consultant filter
+    const usersFromAccounts = await User.findAll({
+      where: whereClause,
+      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
+      include: [
+        {
+          model: Status,
+          as: "status",
+          where: { status_description: "active" },
+          attributes: [],
+        },
+      ],
+      order
+    });
+
+    // Step 2: Users already in the group
+    const assignedMappings = await UserGroupMapping.findAll({
+      where: { group_rid },
+      attributes: ["user_rid"],
+    });
+    const assignedUserRids = assignedMappings.map(m => m.user_rid);
+
+    const usersInGroup = await User.findAll({
+      where: {
+        rid: { [Op.in]: assignedUserRids },
+      },
+      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
+      include: [
+        {
+          model: Status,
+          as: "status",
+          where: { status_description: "active" },
+          attributes: [],
+        },
+      ],
+      order
+    });
+
+    // Step 3: Combine both user lists
+    const combinedUserMap = new Map<string, any>();
+
+    const addUsersWithFlag = (users: any[], isGrouped: boolean) => {
+      for (const user of users) {
+        const plainUser = user.get({ plain: true });
+        if (combinedUserMap.has(plainUser.rid)) {
+          // Already added, just mark grouped if not yet set
+          const existing = combinedUserMap.get(plainUser.rid);
+          if (isGrouped) {
+            existing.grouped = true;
+            existing.has_access = true;
+          }
+        } else {
+          combinedUserMap.set(plainUser.rid, {
+            ...plainUser,
+            grouped: isGrouped,
+            has_access: isGrouped,
+          });
+        }
+      }
+    };
+
+    addUsersWithFlag(usersFromAccounts, false);
+    addUsersWithFlag(usersInGroup, true);
+    const combinedUsers = Array.from(combinedUserMap.values());
+    const sortedUsers = combinedUsers.sort((a, b) => {
+      const valA = a[sortField]?.toString().toLowerCase() || '';
+      const valB = b[sortField]?.toString().toLowerCase() || '';
+      return sortDirection === 'ASC' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    });
+
+    const total = sortedUsers.length;
+    const offset = (page - 1) * limit;
+    const paginatedUsers = sortedUsers.slice(offset, offset + limit);
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: { users: paginatedUsers,count: total},
+    };
+  } catch (err: any) {
+    return this.throwServiceError(err as Error);
+  }
+}
+
 
 
 /**
@@ -614,7 +771,7 @@ async getAccountUsers(
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { users: any };
+  data?: { users: any ,count:number};
 }> {
   try {
     const offset = (page - 1) * limit;
@@ -667,7 +824,7 @@ async getAccountUsers(
     order.push([sortField, sortDirection]);
 
     // Step 4: Fetch users
-    const users = await User.findAll({
+   const { rows: users, count } = await User.findAndCountAll({
       where: basewhereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
       include: [
@@ -774,7 +931,7 @@ async getAccountUsers(
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: usersWithFlags },
+      data: { users: usersWithFlags,count:count },
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);
@@ -808,7 +965,7 @@ async getAccountGroups(
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { groups: any[] };
+  data?: { groups: any[],count:number };
 }> {
   try {
     if (!account_rid) {
@@ -873,6 +1030,8 @@ async getAccountGroups(
         where: { type: "DEFAULT" }
       }
     ],
+    limit,
+    offset,
     
     order: [["group_name", "ASC"]]
   });
@@ -917,16 +1076,24 @@ async getAccountGroups(
   [...defaultGroups, ...mappedGroups].forEach(group => {
     uniqueGroupsMap.set(group.rid, group);
   });
-
-  // Convert map back to array and apply pagination
   const combinedGroups = Array.from(uniqueGroupsMap.values());
 
-    const groupIds = combinedGroups.map(g => g.rid);
+// Step 2: Sort merged groups before pagination
+  const sortedGroups = combinedGroups.sort((a, b) => {
+    const valA = (a.get ? a.get(sortField) : a[sortField])?.toString().toLowerCase() || '';
+    const valB = (b.get ? b.get(sortField) : b[sortField])?.toString().toLowerCase() || '';
+    return sortDirection === "ASC" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+  });
+  const paginatedGroups = sortedGroups.slice(offset, offset + limit);
+  // Convert map back to array and apply pagination
+  
+
+    const groupIds = sortedGroups.map(g => g.rid);
     if (groupIds.length === 0) {
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
-        data: { groups: [] },
+        data: { groups: [],count:0 },
       };
     }
 
@@ -953,14 +1120,7 @@ async getAccountGroups(
         }
     }
 
-
-    // Step 5: Build final response
-    // const groupsWithAccess = combinedGroups.map(group => ({
-    //   ...group.toJSON(),
-    //   has_access: accessMap.get(group.rid) === true // default to false if not present
-    // }));
-
-     const groupsWithAccess  = combinedGroups.map((group) => {
+     const groupsWithAccess  = paginatedGroups.map((group) => {
     const groupJson = group.toJSON();
      const isDefaultGroup = groupJson.usergrouptype?.type === 'DEFAULT';
     return {
@@ -979,7 +1139,7 @@ async getAccountGroups(
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { groups: groupsWithAccess },
+      data: { groups: groupsWithAccess, count:sortedGroups.length },
     };
   } catch (err: any) {
     console.error("Error in getAccountGroups:", err);
@@ -1366,6 +1526,8 @@ private createUserCountCondition(operator: string, value: number): any {
         {
           where: whereClause,
           order: orderArray,
+          limit,
+          offset,
           attributes: {
            include: [
                 [
@@ -1565,6 +1727,8 @@ private createUserCountCondition(operator: string, value: number): any {
     groupData.users = usersList;
     const accountsList = await this.getFormattedAccountsForGroup(groupType, user_group_id);
     groupData.accounts = accountsList;
+    const projectList = await this.getFormattedProjectsForGroup(groupType, user_group_id)
+    groupData.projects = projectList;
    
     return {
       statusCode: constants.SUCCESS,
@@ -1728,6 +1892,57 @@ private async getFormattedAccountsForGroup(groupType: string, groupRid: string):
   );
 }
 
+private async getFormattedProjectsForGroup(groupType: string, groupRid: string): Promise<any[]> {
+  const sequelize = await initSequelize();
+  console.log("groupType",groupType)
+
+  if (groupType === "DEFAULT") {
+    return await sequelize.query(
+      `SELECT rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_summary`,
+      { type: QueryTypes.SELECT }
+    );
+  }
+
+  if (groupType === "AUTO_ASSIGNED") {
+    return await sequelize.query(
+      `SELECT a.rid, a.account_name, true as has_access
+       FROM ${MAIN_SCHEMA_NAME}.account a
+       INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+       ON uga.account_rid = a.rid
+       WHERE uga.group_rid = :group_rid`,
+      {
+        replacements: { group_rid: groupRid },
+        type: QueryTypes.SELECT
+      }
+    );
+  }
+
+  // Else: Custom group with dynamic access
+  return await sequelize.query(
+    `SELECT 
+      ps.project_rid,
+      ps.project_name,
+      ps.project_code,
+      ps.account_rid,
+      acc.account_name,
+      CASE 
+        WHEN uga.rid IS NOT NULL THEN true
+        ELSE false
+      END as has_access,
+      uga.access_type
+    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+     LEFT JOIN trd365.account acc
+      ON acc.rid = ps.account_rid
+    INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
+      ON uga.entity_rid = ps.project_rid 
+      AND uga.entity_type = 'PROJECT'
+      AND uga.group_rid = :group_rid`,
+    {
+      replacements: { group_rid: groupRid },
+      type: QueryTypes.SELECT
+    }
+  );
+}
 
 private async getFormattedUsersForGroup(groupData: any, groupRid: string): Promise<any[]> {
   // Step 1: Get assigned account_rids using the model
@@ -2399,10 +2614,10 @@ async  assignEntityAccessToProjects({
  */
 
 async  getProjectsOfSelectedAccounts(
-  account_rids: string[],
+  account_rids: string | string[],
   group_rid?:string,
   page: number = 1,
-  limit: number = 10,
+  limit: number = 1000,
   filters: Record<string, string>= {},
   sortBy: string = "project_name", 
   sortOrder: string = "ASC"
@@ -2415,42 +2630,46 @@ async  getProjectsOfSelectedAccounts(
   const offset = (page - 1) * limit;
   const sequelize = await initSequelize();
 
-  // Validate inputs
-  if (!account_rids || account_rids.length === 0) {
-    return {
-      statusCode: constants.BAD_REQUEST,
-      message: constants.BAD_REQUEST_MESSAGE,
-      errorMessage: "Missing Account Id",
-    };
-  }
+  if(account_rids)
+  {
+    const accountRidArray: string[] = Array.isArray(account_rids)
+        ? account_rids
+        : typeof account_rids === 'string' && account_rids.trim() !== ''
+          ? account_rids.split(',').map((r) => r.trim())
+          : [];
 
-  // Build WHERE clauses
-  //const whereClauses = ['ps.account_rid = :account_rid'];
-   const allowedSortFields = ['project_name'];
-   const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'project_name';
-   const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
-   const baseWhereClauses = ['ps.account_rid IN (:account_rids)'];
-   const replacements: any = { account_rids, limit, offset,
-     group_rid: group_rid ?? null,
-    };
-   const filterConditions = this.buildSQLConditions(filters);
-   if (filterConditions) {
-     baseWhereClauses.push(filterConditions);
-    }
-
+      if (!accountRidArray.length) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid account_rid provided.",
+        };
+      }
+      const allowedSortFields = ['project_name'];
+      const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'project_name';
+      const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
+      const baseWhereClauses = ['ps.account_rid IN (:accountRidArray)'];
+       const replacements: any = { accountRidArray, limit, offset,
+        group_rid: group_rid ?? null,
+      };
+      const filterConditions = this.buildSQLConditions(filters);
+      if (filterConditions) {
+        baseWhereClauses.push(filterConditions);
+        }
+        
     // Build ORDER BY clause with proper access type sorting
-   let orderByClause: string;
-   orderByClause = `ORDER BY ps.${sortField} ${sortDirection.toUpperCase()}`;
+      let orderByClause: string;
+      orderByClause = `ORDER BY ps.${sortField} ${sortDirection.toUpperCase()}`;
 
-  // Main query with both access_type and has_access fields
-  const query =constants.SQL_GET_ALL_PROJECTS_OF_ACCOUNT
-    .replace('{whereClauses}', baseWhereClauses.join(' AND '))
-    .replace('{orderByClause}', orderByClause)
+      // Main query with both access_type and has_access fields
+      const query =constants.SQL_GET_ALL_PROJECTS_OF_ACCOUNT
+        .replace('{whereClauses}', baseWhereClauses.join(' AND '))
+        .replace('{orderByClause}', orderByClause)
 
-  // Count query
-  const countQuery = constants.SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT
-      .replace("{whereClauses}", baseWhereClauses.join(' AND '))
-
+      // Count query
+      const countQuery = constants.SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT
+          .replace("{whereClauses}", baseWhereClauses.join(' AND '))
+      
 
   try {
     const [projects, total_count] = await Promise.all([
@@ -2468,7 +2687,7 @@ async  getProjectsOfSelectedAccounts(
       message: constants.SUCCESS_MESSAGE,
       data: {
         projects,
-        totalCount: parseInt(total_count[0].total_count, 10),
+        totalCount: parseInt(total_count[0]?.total_count),
       },
     };
   } catch (error) {
@@ -2479,6 +2698,15 @@ async  getProjectsOfSelectedAccounts(
       errorMessage: 'Failed to fetch projects',
     };
   }
+}
+else
+{
+   return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid account_rid provided.",
+        };
+}
 }
 
 
@@ -2525,8 +2753,6 @@ async  getProjectsWithUserAccessFlag(
     };
   }
 
-  // Build WHERE clauses
-  //const whereClauses = ['ps.account_rid = :account_rid'];
    const allowedSortFields = ['project_name'];
    const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'project_name';
    const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
