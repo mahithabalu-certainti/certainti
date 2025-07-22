@@ -597,3 +597,10 @@ export interface IProjectTaskGraphqlServices {
     data?: any;
   }>;
 }
+
+export interface ISettingsServices {
+  updateSettings(data : any) : Promise<{
+    statusCode : number
+    statusMessage : string
+  }>
+}
