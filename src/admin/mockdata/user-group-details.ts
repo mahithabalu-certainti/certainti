@@ -21,18 +21,20 @@ export const mockUserGroupDetails: UserGroupDetailsApiResponse = {
         {
           rid: 'D001-79c7fc6e-d99c-4a69-9e24-c064bac251a0',
           email: 'arun.mani@certainti.ai',
-          name: 'Arun Mani',
-          account_rid: 'RESDEV',
-          is_consultant: true,
+          first_name: 'Arun Mani',
+          is_consultant_firm: true,
           has_access: false,
+          org_id: '',
+          status_rid: ''
         },
         {
           rid: 'D001-caace427-6365-469d-b8e5-d6322da67d40',
           email: 'dhivya.s@hubino.com',
-          name: 'Dhivya Sivasami',
-          account_rid: 'RESDEV',
-          is_consultant: true,
+          first_name: 'Dhivya Sivasami',
+          is_consultant_firm: true,
           has_access: true,
+          org_id: '',
+          status_rid: ''
         },
       ],
       accounts: [
