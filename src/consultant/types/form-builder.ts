@@ -74,7 +74,13 @@ export interface SelectOption {
   value: string;
   desc?: string;
 }
-
+export interface SelectResourceOption {
+  label: string;
+  value: string;
+  desc?: string;
+  resource_type_rid?: string;
+  resource_type_name?: string;
+}
 export interface ErrorHandling {
   regex: RegExp;
   errorMessage: string;

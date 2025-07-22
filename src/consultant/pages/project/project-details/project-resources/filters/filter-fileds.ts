@@ -10,7 +10,7 @@ export const projectResourceFilterFields = (
   memoizedProjectResourceCode: { option: string; value: string }[],
   memoizedCountry: { option: string; value: string }[],
   region: { option: string; value: string }[],
-  resourceTypeOptions: { option: string; value: string }[],
+  // resourceTypeOptions: { option: string; value: string }[],
   resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
@@ -24,14 +24,14 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['resource_code']?.read &&
       !resourcepermissionMap?.['resource_code']?.edit,
   },
-  {
-    name: 'Resource Name',
-    value: 'resource_name',
-    type: 'text',
-    hide:
-      !resourcepermissionMap?.['resource_name']?.read &&
-      !resourcepermissionMap?.['resource_name']?.edit,
-  },
+  // {
+  //   name: 'Resource Name',
+  //   value: 'resource_name',
+  //   type: 'text',
+  //   hide:
+  //     !resourcepermissionMap?.['resource_name']?.read &&
+  //     !resourcepermissionMap?.['resource_name']?.edit,
+  // },
   {
     name: 'Resource Country',
     value: 'country_rid',
@@ -53,26 +53,26 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['region_rid']?.read &&
       !resourcepermissionMap?.['region_rid']?.edit,
   },
-  {
-    name: 'Resource Type',
-    value: 'resource_type_rid',
-    type: 'enum',
-    required: true,
-    options: resourceTypeOptions,
-    filterOptions: requiredFieldFilterOptionsForEnum,
-    hide:
-      !resourcepermissionMap?.['resource_type_rid']?.read &&
-      !resourcepermissionMap?.['resource_type_rid']?.edit,
-  },
+  // {
+  //   name: 'Resource Type',
+  //   value: 'resource_type_rid',
+  //   type: 'enum',
+  //   required: true,
+  //   options: resourceTypeOptions,
+  //   filterOptions: requiredFieldFilterOptionsForEnum,
+  //   hide:
+  //     !resourcepermissionMap?.['resource_type_rid']?.read &&
+  //     !resourcepermissionMap?.['resource_type_rid']?.edit,
+  // },
 
-  {
-    name: 'Resource Role',
-    value: 'resource_role',
-    type: 'text',
-    hide:
-      !resourcepermissionMap?.['resource_role']?.read &&
-      !resourcepermissionMap?.['resource_role']?.edit,
-  },
+  // {
+  //   name: 'Resource Role',
+  //   value: 'resource_role',
+  //   type: 'text',
+  //   hide:
+  //     !resourcepermissionMap?.['resource_role']?.read &&
+  //     !resourcepermissionMap?.['resource_role']?.edit,
+  // },
 
   {
     name: 'Effort Hours',
