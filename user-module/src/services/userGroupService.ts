@@ -483,16 +483,26 @@ async assignUserToUserGroups(
    */
 async getActiveUsersForGrouping(
   is_consultant_only_group?: boolean,
-  account_rid?: string | string[]
+  account_rid?: string | string[],
+  page: number = 1,
+  limit: number = 10,
+  sortBy: string = "first_name", 
+  sortOrder: string = "ASC"
 ): Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { users: any };
+  data?: { users: any,count:number };
 }> {
   try {
     const whereClause: any = {};
     let orgIdsToFilter: string[] = [];
+    const offset = (page - 1) * limit;
+    const order: any[] = [];
+    const allowedSortFields: (keyof User)[] = ["first_name"];
+    const sortField = allowedSortFields.includes(sortBy as keyof User) ? sortBy : "first_name";
+    const sortDirection = ["asc", "desc"].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : "ASC";
+    order.push([sortField, sortDirection]);
 
     // Step 1: If consultant-only group, filter directly
     if (is_consultant_only_group) {
@@ -532,7 +542,7 @@ async getActiveUsersForGrouping(
           attributes: [],
         },
       ],
-      order: [["first_name", "ASC"]],
+      order,
     });
 
     const allUserRids = allUsers.map(u => u.rid);
@@ -576,10 +586,17 @@ async getActiveUsersForGrouping(
       user => !assignedUserRids.includes(user.rid)
     );
 
+    const sortedUsers = unassignedUsers.sort((a, b) => {
+    const valA = (a[sortBy as keyof User] ?? '').toString().toLowerCase();
+    const valB = (b[sortBy as keyof User] ?? '').toString().toLowerCase();
+    return sortOrder === 'ASC' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    });
+     const paginatedUsers = sortedUsers.slice(offset, offset + limit);
+
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: unassignedUsers },
+      data: { users: paginatedUsers ,count:sortedUsers.length},
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);
@@ -600,12 +617,16 @@ async getActiveUsersForGrouping(
 async getActiveUsersForUpdate(
   is_consultant_only_group?: boolean,
   account_rid?: string | string[],
-  group_rid?: string
+  group_rid?: string,
+  page: number = 1,
+  limit: number = 10,
+  sortBy: string = "first_name", 
+  sortOrder: string = "ASC"
 ): Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { users: any };
+  data?: { users: any,count:number };
 }> {
   try {
     const whereClause: any = {};
@@ -631,6 +652,11 @@ async getActiveUsersForUpdate(
       orgIdsToFilter = accountRidArray;
       whereClause[Op.or] = [{ org_id: { [Op.in]: orgIdsToFilter } }];
     }
+    const order: any[] = [];
+    const allowedSortFields: (keyof User)[] = ["first_name"];
+    const sortField = allowedSortFields.includes(sortBy as keyof User) ? sortBy : "first_name";
+    const sortDirection = ["asc", "desc"].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : "ASC";
+    order.push([sortField, sortDirection]);
 
     // Step 1: Users based on account/consultant filter
     const usersFromAccounts = await User.findAll({
@@ -644,6 +670,7 @@ async getActiveUsersForUpdate(
           attributes: [],
         },
       ],
+      order
     });
 
     // Step 2: Users already in the group
@@ -666,6 +693,7 @@ async getActiveUsersForUpdate(
           attributes: [],
         },
       ],
+      order
     });
 
     // Step 3: Combine both user lists
@@ -693,11 +721,21 @@ async getActiveUsersForUpdate(
 
     addUsersWithFlag(usersFromAccounts, false);
     addUsersWithFlag(usersInGroup, true);
+    const combinedUsers = Array.from(combinedUserMap.values());
+    const sortedUsers = combinedUsers.sort((a, b) => {
+      const valA = a[sortField]?.toString().toLowerCase() || '';
+      const valB = b[sortField]?.toString().toLowerCase() || '';
+      return sortDirection === 'ASC' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    });
+
+    const total = sortedUsers.length;
+    const offset = (page - 1) * limit;
+    const paginatedUsers = sortedUsers.slice(offset, offset + limit);
 
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: Array.from(combinedUserMap.values()) },
+      data: { users: paginatedUsers,count: total},
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);
@@ -733,7 +771,7 @@ async getAccountUsers(
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { users: any };
+  data?: { users: any ,count:number};
 }> {
   try {
     const offset = (page - 1) * limit;
@@ -786,7 +824,7 @@ async getAccountUsers(
     order.push([sortField, sortDirection]);
 
     // Step 4: Fetch users
-    const users = await User.findAll({
+   const { rows: users, count } = await User.findAndCountAll({
       where: basewhereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
       include: [
@@ -893,7 +931,7 @@ async getAccountUsers(
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: usersWithFlags },
+      data: { users: usersWithFlags,count:count },
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);
@@ -927,7 +965,7 @@ async getAccountGroups(
   statusCode: number;
   message: string;
   errorMessage?: string;
-  data?: { groups: any[] };
+  data?: { groups: any[],count:number };
 }> {
   try {
     if (!account_rid) {
@@ -992,6 +1030,8 @@ async getAccountGroups(
         where: { type: "DEFAULT" }
       }
     ],
+    limit,
+    offset,
     
     order: [["group_name", "ASC"]]
   });
@@ -1036,16 +1076,24 @@ async getAccountGroups(
   [...defaultGroups, ...mappedGroups].forEach(group => {
     uniqueGroupsMap.set(group.rid, group);
   });
-
-  // Convert map back to array and apply pagination
   const combinedGroups = Array.from(uniqueGroupsMap.values());
 
-    const groupIds = combinedGroups.map(g => g.rid);
+// Step 2: Sort merged groups before pagination
+  const sortedGroups = combinedGroups.sort((a, b) => {
+    const valA = (a.get ? a.get(sortField) : a[sortField])?.toString().toLowerCase() || '';
+    const valB = (b.get ? b.get(sortField) : b[sortField])?.toString().toLowerCase() || '';
+    return sortDirection === "ASC" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+  });
+  const paginatedGroups = sortedGroups.slice(offset, offset + limit);
+  // Convert map back to array and apply pagination
+  
+
+    const groupIds = sortedGroups.map(g => g.rid);
     if (groupIds.length === 0) {
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
-        data: { groups: [] },
+        data: { groups: [],count:0 },
       };
     }
 
@@ -1072,14 +1120,7 @@ async getAccountGroups(
         }
     }
 
-
-    // Step 5: Build final response
-    // const groupsWithAccess = combinedGroups.map(group => ({
-    //   ...group.toJSON(),
-    //   has_access: accessMap.get(group.rid) === true // default to false if not present
-    // }));
-
-     const groupsWithAccess  = combinedGroups.map((group) => {
+     const groupsWithAccess  = paginatedGroups.map((group) => {
     const groupJson = group.toJSON();
      const isDefaultGroup = groupJson.usergrouptype?.type === 'DEFAULT';
     return {
@@ -1098,7 +1139,7 @@ async getAccountGroups(
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { groups: groupsWithAccess },
+      data: { groups: groupsWithAccess, count:sortedGroups.length },
     };
   } catch (err: any) {
     console.error("Error in getAccountGroups:", err);
@@ -1485,6 +1526,8 @@ private createUserCountCondition(operator: string, value: number): any {
         {
           where: whereClause,
           order: orderArray,
+          limit,
+          offset,
           attributes: {
            include: [
                 [
@@ -2644,7 +2687,7 @@ async  getProjectsOfSelectedAccounts(
       message: constants.SUCCESS_MESSAGE,
       data: {
         projects,
-        totalCount: parseInt(total_count[0].total_count, 10),
+        totalCount: parseInt(total_count[0]?.total_count),
       },
     };
   } catch (error) {
