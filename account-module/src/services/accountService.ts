@@ -1388,10 +1388,9 @@ async accountById(account_id: string): Promise<{
       const documentTypeIds = attachments.map(a => a.document_type_rid);
       const documentCategoryIds = attachments.map(a => a.document_category_rid);
       const userIds = attachments.map(a => a.created_by);
-      const attachmentIds = attachments.map(a => a.attach_to);
 
       // Fetch attachment related data in parallel
-      const [documentTypes, documentCategories, users, accounts] = await Promise.all([
+      const [documentTypes, documentCategories, users] = await Promise.all([
         documentTypeIds.length > 0 ? 
           sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
             replacements: { documentTypeIds }, 
@@ -1406,11 +1405,6 @@ async accountById(account_id: string): Promise<{
           sequelize.query(rawQueries.GET_USERS, { 
           replacements: { userIds }, 
           type: 'SELECT' 
-        }) : [],
-        attachmentIds.length>0 ?
-          sequelize.query(rawQueries.GET_ACCOUNTS, { 
-          replacements: { attachmentIds }, 
-          type: 'SELECT' 
         }) : []
       ]);
 
@@ -1420,7 +1414,7 @@ async accountById(account_id: string): Promise<{
         document_type: (documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid) as any)?.type_name || '',
         document_category: (documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid) as any)?.category_name || '',
         uploaded_by: (users.find((u: any) => u.rid === attachment.created_by) as any)?.full_name || '',
-        attached_to: (accounts.find((a: any) => a.rid === attachment.attach_to) as any)?.account_name || ''
+        attached_to: accountById?.account_name
       }));
 
       // Construct final account data

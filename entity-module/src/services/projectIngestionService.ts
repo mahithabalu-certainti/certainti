@@ -2201,9 +2201,9 @@ class ProjectIngestionService {
   }
 
   async fetchProjectInfoById(accountNumber: string, projectId: string) {
-    const { Project } = await this.getModels(accountNumber);
+    const { ProjectFiscal } = await this.getModels(accountNumber);
 
-    const projectData = await Project.findOne({
+    const projectData = await ProjectFiscal.findOne({
       where: {
         rid: projectId,
       },
@@ -2914,9 +2914,9 @@ class ProjectIngestionService {
   }
 
   async getProjectsByAccountId(schemaNumber: string, accountRid: string) {
-    const { Project } = await this.getModels(schemaNumber);
+    const { ProjectFiscal } = await this.getModels(schemaNumber);
 
-    return Project.findAll({
+    return ProjectFiscal.findAll({
       where: {
         account_rid: accountRid,
       },

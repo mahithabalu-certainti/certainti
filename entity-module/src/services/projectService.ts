@@ -625,15 +625,12 @@ export class ProjectService {
         let mappedAttachments = [];
         if(attachments.length>0){
         const sequelize = await initMainDbSequelize();
-      const orgDbSequelize = await initOrgSequelize();
-      // Get document types, categories, users and projects in parallel
+      // Get document types, categories, users in parallel
       const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
       const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
       const userIds = attachments.map(attachment => attachment.created_by);
-      const projectIds = attachments.map(attachment => attachment.attach_to);
-      const schemaName = `trd365_${accountRNumber.replace(/\D/g, '')}`;
 
-      const [documentTypes, documentCategories, users, projects] = await Promise.all([
+      const [documentTypes, documentCategories, users] = await Promise.all([
         documentTypeIds.length > 0 
           ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, 
               { replacements: { documentTypeIds }, type: 'SELECT' })
@@ -645,10 +642,6 @@ export class ProjectService {
         userIds.length > 0
           ? sequelize.query(rawQueries.GET_USERS,
               { replacements: { userIds }, type: 'SELECT' })
-          : [],
-        projectIds.length > 0
-          ? orgDbSequelize.query(rawQueries.fetchProjectsByIds(schemaName),
-              { replacements: { projectIds }, type: 'SELECT' })
           : []
       ]);
 
@@ -657,14 +650,14 @@ export class ProjectService {
         const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
         const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
         const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
-        const attachedTo = projects.find((a: any) => a.rid === attachment.attach_to);
+        const attachedTo = projectData?.project_code;
 
         return {
           ...attachment,
           document_type: (documentType as any)?.type_name || '',
           document_category: (documentCategory as any)?.category_name || '',
           uploaded_by: (uploadedBy as any)?.full_name || '',
-          attached_to: (attachedTo as any) ?.project_code || ''
+          attached_to: attachedTo
         };
       });
     }

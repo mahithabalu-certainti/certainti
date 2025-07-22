@@ -11,7 +11,9 @@ import {
   IResourceSkillService,
   IAttachmentService,
   IAttachmentGraphqlServices,
-  IImportListGraphqlServices
+  IImportListGraphqlServices,
+  IProjectTaskService,
+  IProjectTaskGraphqlServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -19,6 +21,7 @@ import { ResourceService } from "./resourceServices";
 import ResourceSkillService from "./resourceSkillService";
 import { AttachmentService } from "./attachmentService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
+import { ProjectTaskService } from "./projectTaskService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -32,19 +35,22 @@ class Services implements IServiceContainer {
   private _projectGraphQlServices?: IProjectGraphQlServices;
   attachmentServices: IAttachmentService;
   projectResourceServices: IProjectResourceService;
+  projectTaskServices: IProjectTaskService;
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
   private _resourceSkillGraphqlServices? : IResourceSkillGraphQlService;
   private _attachmentGraphqlServices? : IAttachmentGraphqlServices;
   private _importGraphqlService? : IImportListGraphqlServices;
+  private _projectTaskGraphqlServices? : IProjectTaskGraphqlServices;
+
 
   constructor(
     logger: Logger,
     resourceService: IResourceService = new ResourceService(),
     resourceCostServices: IResourceCostService = new ResourceCostService(),
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
-    projectResourceServices: IProjectResourceService = new ProjectResourceService()
+    projectResourceServices: IProjectResourceService = new ProjectResourceService(logger)
   ) {
     try {
       this.logger = logger;
@@ -54,6 +60,7 @@ class Services implements IServiceContainer {
       this.projectServices = new ProjectService(this.logger);
       this.attachmentServices = new AttachmentService(this.logger);
       this.projectResourceServices = projectResourceServices;
+      this.projectTaskServices = new ProjectTaskService(this.logger);
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");
@@ -105,6 +112,13 @@ class Services implements IServiceContainer {
       this._importGraphqlService = new IImportListGraphqlServices()
     }
     return this._importGraphqlService!
+  }
+ get projectTaskGraphqlServices() : IProjectTaskGraphqlServices {
+    if(!this._projectTaskGraphqlServices) {
+      const {default : ProjectTaskGraphqlServies} = require('../services/projectTaskGraphqlService')
+      this._projectTaskGraphqlServices = new ProjectTaskGraphqlServies();
+    }
+    return this._projectTaskGraphqlServices!
   }
 }
 
