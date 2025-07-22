@@ -7,6 +7,6 @@ router.post('/list', checkUserStatusMiddleware('imports_view_edit'), controller.
 router.get('/list/:account_rid/:rid', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.importListByRid)
 router.post('/list/export', checkUserStatusMiddleware('imports_export'), controller.importListController.exportAllImportedData)
 router.get('/list/export/:account_rid/:rid', checkUserStatusMiddleware('imports_export'), controller.importListController.exportImportListPerRow)
-router.get('/list/export/staging-failure/:account_rid/:import_rid/:entity_type', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportStagingFailureList)
-router.get('/list/export/load-failure/:account_rid/:import_rid/:entity_type', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportLoadFailureList)
+router.get('/export/staging-failure/:account_rid/:import_rid/:entity_type', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportStagingFailureList)
+router.get('/export/load-failure/:account_rid/:import_rid/:entity_type', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportLoadFailureList)
 export default router
