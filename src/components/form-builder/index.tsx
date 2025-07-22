@@ -59,6 +59,7 @@ interface FormBuilderProps {
   admin?: boolean;
   logo?: File | null;
   keyContactHeaders?: KeyContactHeader[];
+  highlight?: { field: string; section: string };
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -75,6 +76,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   logo,
   keyContactHeaders = [],
   newContactLength,
+  highlight,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -356,9 +358,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const getFields = (field: FormTypeFields) => {
-    const isError = field.error
-      ? 'border-red-500 bg-[#FEF2F2]'
-      : 'bg-[#FFFFFF]';
+    const isError = field.error ? 'border-red-500 bg-[#FEF2F2]' : '';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
@@ -1509,8 +1509,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'button':
         return (
           <button
-            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
+            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:cursor-default'
             type='button'
+            disabled={field.disabled}
             onClick={(e) => {
               e.stopPropagation();
               field.onClick?.(e);
@@ -2241,147 +2242,165 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                 }}
               >
-                {fieldRows.map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {row.map((field, colIndex) => {
-                      const isLastColumn = colIndex === row.length - 1;
-                      const isRequired = field.required;
-                      return (
-                        <TableCell
-                          sx={{
-                            position: 'relative',
-                            height: '32px !important',
-                            width: `${field.width}`,
-                            minWidth: `${field.width}`,
-                            maxWidth: `${field.width}`,
-                            paddingLeft:
-                              `${field.type}` === 'iconButton' ||
-                              `${field.type}` === 'radio'
-                                ? '10px !important'
-                                : 'none',
-                            verticalAlign:
-                              `${field.type}` === 'iconButton'
-                                ? 'middle !important'
-                                : 'top',
-                            '& input': {
-                              border: field.error
-                                ? '1px solid #fb2c36 !important'
-                                : 'none',
-                              '&:focus': {
+                {fieldRows.map((row, rowIndex) => {
+                  const shouldHighlight = row.some(
+                    (field) =>
+                      field.name.startsWith('key_contact_name_') &&
+                      constructFormData[field.name] === highlight?.field
+                  );
+                  return (
+                    <TableRow
+                      key={rowIndex}
+                      className={
+                        shouldHighlight
+                          ? 'animate-[fade-bg-white_3s_forwards]'
+                          : ''
+                      }
+                    >
+                      {row.map((field, colIndex) => {
+                        const isLastColumn = colIndex === row.length - 1;
+                        const isRequired = field.required;
+                        return (
+                          <TableCell
+                            sx={{
+                              position: 'relative',
+                              height: '32px !important',
+                              width: `${field.width}`,
+                              minWidth: `${field.width}`,
+                              maxWidth: `${field.width}`,
+                              paddingLeft:
+                                `${field.type}` === 'iconButton' ||
+                                `${field.type}` === 'radio'
+                                  ? '10px !important'
+                                  : 'none',
+                              verticalAlign:
+                                `${field.type}` === 'iconButton'
+                                  ? 'middle !important'
+                                  : 'top',
+                              '& input': {
                                 border: field.error
-                                  ? '1px solid #fb2c36'
-                                  : '1px solid #60A5FA',
-                              },
-                            },
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              border: field.error
-                                ? '1px solid #ef4444'
-                                : 'none !important',
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: field.error
-                                ? '1px solid #ef4444'
-                                : 'none !important',
-                            },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
+                                  ? '1px solid #fb2c36 !important'
+                                  : 'none',
+                                '&:focus': {
+                                  border: field.error
+                                    ? '1px solid #fb2c36'
+                                    : '1px solid #60A5FA',
                                 },
-                            },
-                          }}
-                          key={colIndex}
-                          style={{
-                            verticalAlign: 'top',
-                            height: '32px !important',
-                            backgroundColor: field.error
-                              ? '#FEF2F2'
-                              : 'transparent',
-                          }}
-                        >
-                          {field.type === 'iconButton' && isLastColumn ? (
-                            <Tooltip
-                              title={'Remove contact'}
-                              arrow
-                              placement='top'
-                            >
-                              <button
-                                type='button'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  field.onClick?.(e);
-                                  handleRemoveKeyContactRow(rowIndex);
-                                }}
-                                style={{
-                                  cursor: 'pointer',
-                                  background: 'transparent',
-                                  border: 'none',
-                                  padding: 0,
-                                  marginTop: '6px',
-                                }}
-                                aria-label='Remove contact'
+                              },
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                border: field.error
+                                  ? '1px solid #ef4444'
+                                  : 'none !important',
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                border: field.error
+                                  ? '1px solid #ef4444'
+                                  : 'none !important',
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
+                              },
+                            }}
+                            key={colIndex}
+                            style={{
+                              verticalAlign: 'top',
+                              height: '32px !important',
+                              backgroundColor: field.error
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                          >
+                            {field.type === 'iconButton' && isLastColumn ? (
+                              <Tooltip
+                                title={'Remove contact'}
+                                disableHoverListener={field.disabled}
+                                arrow
+                                placement='top'
                               >
-                                {field.iconUrl ? (
-                                  <field.iconUrl
-                                    alt='Icon'
-                                    style={{ width: 20, height: 20 }}
-                                  />
-                                ) : (
-                                  <KeyContactRemoveIcon
-                                    alt='Remove'
-                                    style={{ width: 20, height: 20 }}
-                                  />
-                                )}
-                              </button>
-                            </Tooltip>
-                          ) : field.type === 'text' ? (
-                            <div
-                              className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
-                            >
-                              {getFields(field)}
-                              {field.error && (
-                                <Tooltip
-                                  title={field.error}
-                                  arrow
-                                  placement='top'
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        backgroundColor: '#FEF2F2',
-                                        mr: 1,
-                                      },
-                                    },
+                                <button
+                                  type='button'
+                                  disabled={field.disabled}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    field.onClick?.(e);
+                                    handleRemoveKeyContactRow(rowIndex);
                                   }}
+                                  style={{
+                                    cursor: field.disabled
+                                      ? 'default'
+                                      : 'pointer',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    padding: 0,
+                                    marginTop: '6px',
+                                  }}
+                                  aria-label='Remove contact'
                                 >
-                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
+                                  {field.iconUrl ? (
+                                    <field.iconUrl
+                                      alt='Icon'
+                                      style={{ width: 20, height: 20 }}
                                     />
+                                  ) : (
+                                    <KeyContactRemoveIcon
+                                      alt='Remove'
+                                      style={{ width: 20, height: 20 }}
+                                    />
+                                  )}
+                                </button>
+                              </Tooltip>
+                            ) : field.type === 'text' ? (
+                              <div
+                                className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                              >
+                                {getFields(field)}
+                                {field.error && (
+                                  <Tooltip
+                                    title={field.error}
+                                    arrow
+                                    placement='top'
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          backgroundColor: '#FEF2F2',
+                                          mr: 1,
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </span>
+                                  </Tooltip>
+                                )}
+                                {isRequired && !field.error && (
+                                  <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                    *
                                   </span>
-                                </Tooltip>
-                              )}
-                              {isRequired && !field.error && (
-                                <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                  *
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <>
-                              {getFields(field)}
-                              {isRequired && (
-                                <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                  *
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
+                                )}
+                              </div>
+                            ) : (
+                              <>
+                                {getFields(field)}
+                                {isRequired && (
+                                  <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                    *
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             ) : (
               <TableBody>
@@ -2496,7 +2515,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <div key={i}>
               {section.sectionName && (
                 <h4
-                  className={`${i === 0 ? 'border-b' : 'border'} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                  className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
                   {section.sectionName.replace(/_/g, ' ')}
                 </h4>

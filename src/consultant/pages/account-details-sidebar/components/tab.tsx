@@ -22,7 +22,11 @@ import { SkillSubtype, SkillType } from '../../../types/resource';
 import { ResourceTabs } from '../sidebar-pages/resources/resources';
 import { clearFilters } from './filter/utils';
 import { projectFilterFields } from '../sidebar-pages/projects/utils';
-import { useGetAllCountries, useGetStatus } from '../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllCountries,
+  useGetStatus,
+} from '../../../../common-service';
 import { useLocation } from 'react-router-dom';
 import {
   useGetResourceStatus,
@@ -30,6 +34,14 @@ import {
 } from '../../../services/resource-list';
 import { useGetProjectType } from '../../../services/project';
 import { FilterType } from '../../../../admin/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fileds';
+import { useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
+import {
+  FieldOptionType,
+  getAttachmentsFilterFields,
+} from '../../../../components/Attachments/helpers';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -49,6 +61,9 @@ interface TabProps {
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   keyProjectTask?: string;
+  projectResourceAccountID?: string;
+  fieldOptions?: FieldOptionType;
+  keyProjectTask?: string;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -67,6 +82,9 @@ const TabPanel: React.FC<TabProps> = ({
   toggleEnabled,
   setToggleEnabled,
   keyProjectTask,
+  projectResourceAccountID,
+  fieldOptions,
+  keyProjectTask,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -75,6 +93,7 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: [] as string[],
     skill_subtype_rid: [] as string[] | undefined[],
   });
+
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
@@ -106,11 +125,23 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    projectResourceAccountID as string
+  );
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
+  const memoizedProjectResourceCode: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+          option: item.resource_code,
+          value: item.resource_code,
+        })) || [],
+      [projectResourceCodeOptions?.data?.resourceCodes]
+    );
   const memoizedCountry: { option: string; value: string }[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -128,6 +159,79 @@ const TabPanel: React.FC<TabProps> = ({
   //     })) || [],
   //   [Regions.data?.data.states]
   // );
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectResourcesViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionProjectResourcesMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectResourcesViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectResourcesViewEditFields]);
+
+  const resourceViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const resourceCostViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+  const resourceSkillViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const resourcepermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceViewEditFields]);
+  const resourceCostpermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceCostViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceCostViewEditFields]);
+  const resourceSkillpermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceSkillViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceSkillViewEditFields]);
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
     const data = skillType as SkillType[];
@@ -192,16 +296,6 @@ const TabPanel: React.FC<TabProps> = ({
     [projectTypeOptions?.data?.data?.projectType]
   );
 
-  // useEffect(() => {
-  //   const data = skillSubType as SkillSubtype[];
-  //   const finalData =
-  //     data?.map((skill: SkillSubtype) => ({
-  //       option: skill.skill_subtype_name,
-  //       value: skill.rid,
-  //     })) || [];
-  //   setSkillSubTypeData(finalData);
-  // }, [skillSubType]);
-
   const handleSortClose = () => {
     setSortAnchorEl(null);
   };
@@ -214,7 +308,7 @@ const TabPanel: React.FC<TabProps> = ({
       }));
       setRegionData(data);
     }
-  }, [Regions.data?.data.states]);
+  }, [Regions.data?.data?.states]);
 
   useEffect(() => {
     if (skillSubType) {
@@ -283,13 +377,31 @@ const TabPanel: React.FC<TabProps> = ({
   //     : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
   // };
 
+  // Permissions
+  const attachmentEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentEditFields]);
+
   const filterFields = useMemo(() => {
     if (!value)
       return resourceFilterFields(
         memoizedCountry,
         regionData,
         memoizedStatus,
-        memoizedResourceType
+        memoizedResourceType,
+        resourcepermissionMap
       );
     if (value === 'projects')
       return projectFilterFields(
@@ -298,14 +410,30 @@ const TabPanel: React.FC<TabProps> = ({
           value: item.value,
         })),
         memoizedProjectTypes,
-        memoizedStatus
+        memoizedStatus,
+        projectPermissionMap
       );
+    if (value === 'project-resources')
+      return projectResourceFilterFields(
+        memoizedProjectResourceCode,
+        memoizedCountry,
+        regionData,
+        memoizedResourceType,
+        permissionProjectResourcesMap
+      );
+    if (value === 'attachments')
+      return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     return value === 'cost'
-      ? getCostFilterFields(memoizedCurrency, memoizedResourceStatus)
+      ? getCostFilterFields(
+          memoizedCurrency,
+          memoizedResourceStatus,
+          resourceCostpermissionMap
+        )
       : getSkillFilterFields(
           memoizedSkillType,
           skillSubTypeData,
-          memoizedSkillLevels
+          memoizedSkillLevels,
+          resourceSkillpermissionMap
         );
   }, [
     value,
@@ -313,13 +441,21 @@ const TabPanel: React.FC<TabProps> = ({
     regionData,
     memoizedStatus,
     memoizedResourceType,
+    resourcepermissionMap,
     memoizedClassification,
     memoizedProjectTypes,
+    projectPermissionMap,
+    memoizedProjectResourceCode,
+    permissionProjectResourcesMap,
+    fieldOptions,
+    attachmentPermissionMap,
     memoizedCurrency,
     memoizedResourceStatus,
+    resourceCostpermissionMap,
     memoizedSkillType,
     skillSubTypeData,
     memoizedSkillLevels,
+    resourceSkillpermissionMap,
   ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =
@@ -407,7 +543,9 @@ const TabPanel: React.FC<TabProps> = ({
           </Tabs>
         )}
         <Box className='flex items-center'>
+          {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
           {tabValue === 'account_projects_view_overview' &&
+            keyProjectTask !== 'ProjectResources' &&
             keyProjectTask !== 'ProjectTask' && (
               <div className='flex items-center gap-2'>
                 <span className='font-semibold text-[13px] text-[#425A76]'>

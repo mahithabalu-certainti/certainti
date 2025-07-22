@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */ import {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
   useEffect,
   useState,
 } from 'react';
@@ -133,7 +134,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
 
   return (
     <div className='w-full'>
-      {!isKeyContactAvailable && (
+      {!isKeyContactAvailable && !isDetailsLoading && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <DetailsKeyContactErrorIcon alt='key-contact' />
@@ -165,6 +166,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             isDetailsLoading={isDetailsLoading}
             detailsError={detailsError}
             isKeyContactAvailable={isKeyContactAvailable}
+            permission={permission}
           />
         )}
       </Box>

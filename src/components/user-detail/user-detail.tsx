@@ -69,7 +69,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       value: getValueOrDefault(data?.is_consultant_firm ? 'Yes' : 'No') || '-',
     },
     {
-      key: 'org_name',
+      key: 'org_rid',
       label: 'Org Name',
       value: getValueOrDefault(data?.org_name) || '-',
     },
@@ -78,17 +78,17 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   const addressInfo: DetailItem[] = [
     { key: 'street', label: 'Street', value: getValueOrDefault(data?.street) },
     {
-      key: 'country_name',
+      key: 'country_rid',
       label: 'Country',
       value: getValueOrDefault(data?.country_name),
     },
     {
-      key: 'state_name',
+      key: 'state_rid',
       label: 'Region',
       value: getValueOrDefault(data?.state_name),
     },
     {
-      key: 'city_name',
+      key: 'city_rid',
       label: 'City',
       value: getValueOrDefault(data?.city_name),
     },
@@ -101,7 +101,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
 
   const accessInfo: DetailItem[] = [
     {
-      key: 'profile_name',
+      key: 'profile_rid',
       label: 'Profile',
       value: getValueOrDefault(data?.profile?.profile_name),
     },
@@ -111,7 +111,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       value: getValueOrDefault(data?.business_teams?.business_teams),
     },
     {
-      key: 'status',
+      key: 'state_rid',
       label: 'Status',
       value: data?.status?.status_name,
     },
@@ -161,8 +161,8 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
         data={IdentityDetails}
         customStyle='pt-0 mt-0'
       />
-      <DetailsSection title='Access & Role' data={AddressDetails} />
-      <DetailsSection title='Address' data={AccessDetails} />
+      <DetailsSection title='Access & Role' data={AccessDetails} />
+      <DetailsSection title='Address' data={AddressDetails} />
       <DetailsSection
         title='Audit Information'
         data={AuditDetails}

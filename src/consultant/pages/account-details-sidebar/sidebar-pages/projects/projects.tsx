@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
 // import ListTable from '../../components/table';
@@ -6,11 +6,14 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { getProjectColumns } from './columns';
-import { useAccountProjects } from '../../../../services/project';
+import {
+  useAccountProjects,
+  useGetProjectType,
+} from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
-import { generatePath, useNavigate } from 'react-router-dom';
-import { ProjectListParams } from '../../../../types/project';
-import { AccordionTable } from '../../../../../components/table';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
+import { Project, ProjectListParams } from '../../../../types/project';
+import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import {
@@ -19,8 +22,16 @@ import {
   AllPermissions,
 } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
-import { Project } from '../../../../../components/table/types';
-import { AccountDetailsResponse } from '../../../../types';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
+import { useFetchClassification } from '../../../../services/account';
+import { AccountDetailsResponse, ExportType } from '../../../../types';
+import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
+import { useMutation } from '@apollo/client';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -35,7 +46,7 @@ interface ProjectsProps {
   accountDetails?: AccountDetailsProps;
   activeKey?: string;
   setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
-  setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
+  setExportType?: (type: ExportType) => void;
   toggleEnabled: boolean;
   setToggleEnabled: (val: boolean) => void;
 }
@@ -61,7 +72,11 @@ const Projects: React.FC<ProjectsProps> = ({
   toggleEnabled,
   setToggleEnabled,
 }) => {
+  const { accountid } = useParams();
   const navigate = useNavigate();
+  const { errorToast } = useToast();
+  const projectTypeOptions = useGetProjectType();
+  const Classification = useFetchClassification();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [appliedFilters, setAppliedFilters] = useState<
@@ -82,6 +97,7 @@ const Projects: React.FC<ProjectsProps> = ({
   const accountInActive =
     accountDetails?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
+  const [projectList, setProjectList] = useState<Project[]>([]);
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -101,6 +117,21 @@ const Projects: React.FC<ProjectsProps> = ({
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
+
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   // const projectEditIsEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_PROJECTS_EDIT
@@ -120,16 +151,28 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
       bothParentAndChild: toggleEnabled,
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
     refreshProjectsTrigger
   );
+  const [updateProjectMutation] = useMutation(UPDATE_PROJECT, {
+    client: resourceClient,
+  });
+
   const totalItems = data?.count || 0;
+
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
   };
+
+  useEffect(() => {
+    if (data?.projects) {
+      setProjectList(data.projects || []);
+    }
+  }, [data?.projects]);
+
   useEffect(() => {
     const isHide = (tab: ResourceTabs) => {
       return (
@@ -167,7 +210,12 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortOrder(apiOrder);
     setSortField(sortBy);
   };
-  const handleEdit = (account: Project) => {
+  const handleEdit = (
+    account: Project,
+    fieldValue?: string | null,
+    section?: string
+  ) => {
+    const sendState = fieldValue || section;
     const accountID = account?.account_rid ?? '';
     const projectID = account?.project_fiscal_rid ?? '';
 
@@ -177,10 +225,25 @@ const Projects: React.FC<ProjectsProps> = ({
       source: 'account',
     });
 
-    navigate(`/Project/edit/${projectID}?${queryParams.toString()}`);
+    navigate(
+      `/project/edit/${projectID}?${queryParams.toString()}`,
+      sendState
+        ? {
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
+        : undefined
+    );
   };
 
-  const getRowId = (row: Project) => row.project_rid;
+  const getRowId = (row: Project & { _level?: number }) => {
+    if (row._level === 1 && 'project_fiscal_rid' in row) {
+      return row.project_fiscal_rid || '';
+    }
+    return row.project_rid || '';
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -258,7 +321,6 @@ const Projects: React.FC<ProjectsProps> = ({
       AccountName: accountName,
       settings: JSON.stringify(projectSettings),
     });
-    console.log(accountName, 'vvvv');
     navigate(`${PROJECT_CREATE}?${queryParams.toString()}`);
   };
 
@@ -290,7 +352,100 @@ const Projects: React.FC<ProjectsProps> = ({
     }
   };
 
-  const projectColumns = getProjectColumns(handleProject);
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        label: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
+
+  const memoizedClassification = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        label: data.classification_name,
+        value: data.rid,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
+
+  const projectColumns = getProjectColumns(
+    handleProject,
+    memoizedProjectTypes,
+    memoizedClassification,
+    handleEdit,
+    permissionMap
+  );
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    // Save the old state to revert if needed
+    const previousProject = [...projectList];
+
+    // Find parent project
+    const parentProject = projectList.find((project) =>
+      project.ProjectFiscal?.some((fiscal) => fiscal.rid === rowId)
+    );
+
+    if (!parentProject) return;
+
+    // Find the child fiscal
+    const childFiscal = parentProject.ProjectFiscal.find(
+      (fiscal) => fiscal.rid === rowId
+    );
+
+    if (!childFiscal) return;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        account_rid: parentProject.account_rid,
+        project_rid: childFiscal.project_rid,
+        project_fiscal_rid: childFiscal.project_fiscal_rid,
+      }
+    );
+
+    const isClassificationUpdated = updates.some(
+      (item) => item.columnId === 'classification_name'
+    );
+    const hasClassificationOther = updates.some(
+      (item) => item.columnId === 'project_classification_other'
+    );
+
+    if (isClassificationUpdated && !hasClassificationOther) {
+      updateData['project_classification_other'] = '';
+    }
+
+    try {
+      const res = await updateProjectMutation({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateSpecificProjectDetails;
+
+      if (result?.statusCode === 200 && result.data) {
+        const updatedParentData = result.data;
+
+        const newProjects = projectList.map((project) => {
+          if (project.project_rid === updatedParentData.project_rid) {
+            return updatedParentData;
+          }
+          return project;
+        });
+
+        setProjectList(newProjects);
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setProjectList(previousProject);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setProjectList(previousProject);
+    }
+  };
 
   if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
 
@@ -323,8 +478,8 @@ const Projects: React.FC<ProjectsProps> = ({
             headerButtons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
-            <AccordionTable
-              data={data?.projects as Project[]}
+            <ListTable
+              data={projectList as Project[]}
               columns={projectColumns}
               getRowId={getRowId}
               hoverHighlight={false}
@@ -334,6 +489,11 @@ const Projects: React.FC<ProjectsProps> = ({
                 overflow: 'auto',
               }}
               stickyHeader={true}
+              expandAllParent={true}
+              expandable={true}
+              childrenKey='ProjectFiscal'
+              maxNestingLevel={2}
+              editDisableLevel={[0]}
               stickyColumnsCount={1}
               actionWidth={60}
               actionDisplayMode='dropdown'
@@ -354,6 +514,7 @@ const Projects: React.FC<ProjectsProps> = ({
                 console.log('Selected:', selectedIds)
               }
               component='project'
+              onCellEdit={handleCellEdit}
             />
           </div>
         </>

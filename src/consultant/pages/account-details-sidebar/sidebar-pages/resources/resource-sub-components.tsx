@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   AccountData,
   DisplayColumn,
@@ -16,6 +16,11 @@ import { checkPermission } from '../../../../../common-utils';
 import { TabMenus } from './resources';
 import { InfoSection } from '../../../../../components';
 import { useResourceDetail } from '../../../../services/resource-details';
+import { ResourceTypeEnum } from '../../../resource-form/utils';
+import ResourceAttachmentsTable from './resource-attachment/resource-attachment-table';
+import { AttachmentList } from '../../../../types/attachment';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -42,6 +47,13 @@ interface SubcomponentProps {
   refreshCostTrigger?: number;
   refreshSkillTrigger?: number;
   setCount?: (count: number) => void;
+  attachmentsOrder: 'ASC' | 'DESC';
+  setAttachmentsOrder: (order: 'ASC' | 'DESC') => void;
+  attachmentsOrderBy: string;
+  setAttachmentsOrderBy: (field: keyof AttachmentList) => void;
+  refreshAttachments?: number;
+  resourceInActive: boolean;
+  setResourceInActive: (value: boolean) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -70,6 +82,14 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   refreshCostTrigger,
   refreshSkillTrigger,
   setCount,
+
+  attachmentsOrder,
+  setAttachmentsOrder,
+  attachmentsOrderBy,
+  setAttachmentsOrderBy,
+  refreshAttachments,
+  resourceInActive,
+  setResourceInActive,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -106,10 +126,31 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     error,
   } = useResourceDetail(resourceId, accountId);
   const [resourceDetails, setResourceDetails] = useState<DisplayColumn[]>([]);
-
+  const { permission: permissionvalue } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountViewEditFields = useMemo(
+    () =>
+      permissionvalue.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permissionvalue]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
   useEffect(() => {
-    setResourceDetails(resource ? transformResourceData(resource) : []);
-  }, [resource]);
+    setResourceDetails(
+      resource ? transformResourceData(resource, permissionMap) : []
+    );
+    const status =
+      resource?.data?.resourceDetails?.status_name.toLowerCase() !== 'active';
+    setResourceInActive(status);
+  }, [resource, permissionMap]);
 
   return (
     <Fragment>
@@ -186,6 +227,11 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
               refreshCostTrigger={refreshCostTrigger}
               setCount={setCount}
+              resourceType={
+                resource?.data?.resourceDetails
+                  ?.resource_type_name as ResourceTypeEnum
+              }
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}
@@ -207,6 +253,25 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
               refreshSkillTrigger={refreshSkillTrigger}
               setCount={setCount}
+              resourceInActive={resourceInActive}
+            />
+          </Box>
+        )}
+        {value === 'attachments' && isResourceSkillViewEnable && (
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceAttachmentsTable
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              order={attachmentsOrder}
+              setOrder={setAttachmentsOrder}
+              orderBy={attachmentsOrderBy}
+              setOrderBy={setAttachmentsOrderBy}
+              refreshAttachments={refreshAttachments}
+              setCount={setCount}
+              resourceInActive={resourceInActive}
             />
           </Box>
         )}

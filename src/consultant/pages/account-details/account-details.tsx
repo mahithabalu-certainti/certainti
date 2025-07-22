@@ -51,10 +51,13 @@ import { AccountState } from '../../../store/type';
 import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
+  ExportType,
   MenuItem,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
+import { exportAttachmentsData } from '../../services/attachments/attachments-service';
+import { AttachmentsListExportParams } from '../../types/attachment';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -92,7 +95,7 @@ export const AccountDetails = () => {
   );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_EXPORT
+    AllPermissions.PROJECTS_EXPORT
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -117,15 +120,22 @@ export const AccountDetails = () => {
     fiscalYear: String(convertedFiscalYear),
     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
-  const [exportType, setExportType] = useState<
-    'resource' | 'cost' | 'skill' | 'project'
-  >('resource');
-  const handleExport = (
-    exportType: 'resource' | 'cost' | 'skill' | 'project'
-  ) => {
+
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: String(convertedFiscalYear),
+    });
+
+  const [exportType, setExportType] = useState<ExportType>('resource');
+
+  const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'resources' &&
-      searchParams.get('list') !== 'projects'
+      searchParams.get('list') !== 'projects' &&
+      searchParams.get('list') !== 'attachments'
     ) {
       return;
     }
@@ -147,11 +157,26 @@ export const AccountDetails = () => {
       ...(exportType === 'cost' && { fiscalYear }),
     };
 
+    const attachmentPayload = {
+      accountRid: accountid || rNumber,
+      entityId:
+        exportType === 'attachments' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'attachments' ? 'account' : 'resource',
+    };
+
     if (exportType === 'project') {
       exportProjectData(exportType, {
         ...projectParams,
         timezone,
         bothParentAndChild: toggleEnabled,
+      });
+    } else if (
+      exportType === 'attachments' ||
+      exportType === 'resource_attachments'
+    ) {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
       });
     } else {
       exportData(exportType, exportPayload);
@@ -186,13 +211,26 @@ export const AccountDetails = () => {
     accountid as string,
     isAccountDetailsEnable
   );
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   useEffect(() => {
     if (data?.data) {
-      setAccountDetails(transformAccountData(data?.data));
+      setAccountDetails(transformAccountData(data?.data, permissionMap));
       setAccountDetailsForEdit(data.data);
     }
-  }, [data]);
+  }, [data, permissionMap]);
 
   const accountInActive =
     data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';
@@ -208,6 +246,8 @@ export const AccountDetails = () => {
       return !isResourcesExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
+    } else if (list === 'attachments') {
+      return false;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -271,7 +311,13 @@ export const AccountDetails = () => {
           />
         );
       case 'attachments':
-        return <Attachments />;
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+          />
+        );
       case 'projects':
         return (
           <Projects

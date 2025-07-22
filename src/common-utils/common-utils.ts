@@ -104,6 +104,7 @@ export const createTextAreaField = (
     regexErrorMessage?: string;
     placeholder?: string;
     disabled?: boolean;
+    hide?: boolean;
   } = {}
 ): FieldType => ({
   type: 'textarea',
@@ -114,6 +115,7 @@ export const createTextAreaField = (
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
   disabled: options.disabled,
+  hide: options.hide,
 });
 
 export const createCheckboxField = (
@@ -214,6 +216,7 @@ export const createButton = (
   others: {
     iconUrl?: React.ElementType | string;
     onClick?: () => void;
+    disabled?: boolean;
   }
 ): FieldType => ({
   type: 'button',
@@ -222,6 +225,7 @@ export const createButton = (
   required: false,
   iconUrl: others.iconUrl,
   onClick: others.onClick,
+  disabled: others.disabled,
 });
 export const createEmptyField = (
   name: string,
@@ -240,6 +244,7 @@ export const createImgButton = (
   others?: {
     width?: string;
     onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
+    disabled?: boolean;
   }
 ): FieldType => ({
   type: 'iconButton',
@@ -248,6 +253,7 @@ export const createImgButton = (
   label: '',
   required: false,
   width: others?.width,
+  disabled: others?.disabled,
   onClick: (e?: React.MouseEvent<HTMLElement>) => {
     others?.onClick?.(e);
   },
@@ -259,6 +265,7 @@ export const createDateField = (
   others: {
     required: boolean;
     disabled?: boolean;
+    hide?: boolean;
     disableFutureDates?: boolean;
     minDate?: Date;
     maxDate?: Date;
@@ -279,6 +286,7 @@ export const createDateField = (
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
+  hide: others.hide,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
@@ -297,6 +305,7 @@ export const createFiscalDateField = (
     disabled?: boolean;
     greaterThan?: Record<string, string>;
     toBeNotSame?: Record<string, string>;
+    hide?: boolean;
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -306,6 +315,7 @@ export const createFiscalDateField = (
   disabled: others.disabled,
   greaterThan: others.greaterThan,
   toBeNotSame: others.toBeNotSame,
+  hide: others.hide,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [
@@ -420,6 +430,47 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
+};
+export const PROJECT_RESOURCE_REGEX = {
+  // UUID VALIDATION STANDARD FORMAT
+  UUID: /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
+
+  //RESOURCE CODE REGEX WHICH ACCEPTS ONLY ALPHANUMERIC AND HYPHEN
+  RESOURCE_CODE: /^[A-Za-z][A-Za-z0-9_-]{2,49}$/,
+  // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
+  FULL_NAME:
+    /^(?![ '\\-])(?=[A-Za-z '\\-]{2,100}$)(?!.*[ '\\-]$)[A-Za-z '\\-]+$/,
+  // Resource Ref Id: Alphanumeric with hyphen/apostrophe, 1-20 chars
+  RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,20}$/,
+  //Resource Name:
+  RESOURCE_NAME: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{2,64}[A-Za-z]$/,
+
+  // Organization Name: Extended chars for org names, 4-100 chars
+  ORG_NAME: /^(?![ .,&'\\-])(?!.*[ .,&'\\-]$)[A-Za-z0-9 .,&'\\-]{3,100}$/,
+
+  ROLE: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{3,64}[A-Za-z]$/,
+
+  // Designation: Job titles with special chars, 4-100 chars
+  DESIGNATION: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{1,62}[A-Za-z]$/,
+
+  // Project resource cost regex
+  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
+
+  // NON NEGATIVE POSTIVE INTEGER
+  EFFORT: /^[1-9][0-9]*$/,
+
+  // Description: Multiline text, 0-2000 chars
+  DESCRIPTION: /^[\s\S]{0,2000}$/,
+
+  // Status/Type: For enum validation
+  ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
+
+  // Country: Standard name validation
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+
+  // Date Validation (format only)
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
 };
 export const PROJECT_TASK_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -660,4 +711,12 @@ export const valueDisplay = (
     decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
 
   return formattedValue;
+};
+
+export const getFiscalYears = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `FY-${year}`, value: String(year) };
+  });
 };

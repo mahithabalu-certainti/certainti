@@ -17,7 +17,7 @@ export const FormData = (
   states: SelectOption[],
   city: SelectOption[],
   orgNames: SelectOption[],
-  isEidtView?: boolean,
+  isEditView?: boolean,
   stateLoading?: boolean,
   cityLoading?: boolean,
   // disabledStatus?: boolean,
@@ -35,11 +35,11 @@ export const FormData = (
             required: true,
             placeholder: 'Enter First Name',
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['first_name']?.read &&
               !permissionMap?.['first_name']?.edit,
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['first_name']?.read &&
               !permissionMap?.['first_name']?.edit,
             errorHandling: [
@@ -67,11 +67,11 @@ export const FormData = (
             required: true,
             placeholder: 'Enter Last Name',
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['last_name']?.read &&
               !permissionMap?.['last_name']?.edit,
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['last_name']?.read &&
               !permissionMap?.['last_name']?.edit,
             errorHandling: [
@@ -93,9 +93,9 @@ export const FormData = (
           createTextField('email', 'Email Address', {
             required: true,
             placeholder: 'Enter Email Address',
-            disabled: isEidtView,
+            disabled: isEditView,
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['email']?.read &&
               !permissionMap?.['email']?.edit,
             errorHandling: [
@@ -113,11 +113,11 @@ export const FormData = (
             required: false,
             placeholder: 'Enter Phone Number',
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['phone']?.read &&
               !permissionMap?.['phone']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['phone']?.read &&
               !permissionMap?.['phone']?.edit,
           }),
@@ -128,11 +128,11 @@ export const FormData = (
             resetDependsFields: ['org_id'],
             dependantLabel: 'org_id',
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['is_consultant_firm']?.read &&
               !permissionMap?.['is_consultant_firm']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['is_consultant_firm']?.read &&
               !permissionMap?.['is_consultant_firm']?.edit,
           }),
@@ -141,7 +141,7 @@ export const FormData = (
             options: orgNames,
             placeholder: 'Choose Org Name',
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['org_id']?.read &&
               !permissionMap?.['org_id']?.edit,
             disabled: isConsultantFirm === YesNo.Yes,
@@ -165,11 +165,11 @@ export const FormData = (
             required: true,
             placeholder: 'Choose Profile',
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['profile_rid']?.read &&
               !permissionMap?.['profile_rid']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['profile_rid']?.read &&
               !permissionMap?.['profile_rid']?.edit,
           }),
@@ -178,13 +178,13 @@ export const FormData = (
             placeholder: 'Choose Role',
             required: true,
             hide:
-              isEidtView &&
-              !permissionMap?.['role_rid']?.read &&
-              !permissionMap?.['role_rid']?.edit,
+              isEditView &&
+              !permissionMap?.['business_teams']?.read &&
+              !permissionMap?.['business_teams']?.edit,
             disabled:
-              isEidtView &&
-              permissionMap?.['role_rid']?.read &&
-              !permissionMap?.['role_rid']?.edit,
+              isEditView &&
+              permissionMap?.['business_teams']?.read &&
+              !permissionMap?.['business_teams']?.edit,
           }),
           createSelectField('status', 'Status', {
             required: true,
@@ -192,13 +192,13 @@ export const FormData = (
             placeholder: 'Choose Status',
             // disabled: disabledStatus,
             hide:
-              isEidtView &&
-              !permissionMap?.['status']?.read &&
-              !permissionMap?.['status']?.edit,
+              isEditView &&
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
             disabled:
-              isEidtView &&
-              permissionMap?.['status']?.read &&
-              !permissionMap?.['status']?.edit,
+              isEditView &&
+              permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
           }),
         ],
       },
@@ -213,11 +213,11 @@ export const FormData = (
               'Street must contain only alphanumeric characters, spaces, commas, periods, hyphens and hash',
             placeholder: 'Enter Street',
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['street']?.read &&
               !permissionMap?.['street']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['street']?.read &&
               !permissionMap?.['street']?.edit,
             errorHandling: [
@@ -234,11 +234,11 @@ export const FormData = (
             onChange: true,
             resetDependsFields: ['region_rid, city_rid'],
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['country_rid']?.read &&
               !permissionMap?.['country_rid']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['country_rid']?.read &&
               !permissionMap?.['country_rid']?.edit,
           }),
@@ -250,11 +250,11 @@ export const FormData = (
             isLoading: stateLoading,
             resetDependsFields: ['city_rid'],
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['region_rid']?.read &&
               !permissionMap?.['region_rid']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['region_rid']?.read &&
               !permissionMap?.['region_rid']?.edit,
           }),
@@ -264,11 +264,11 @@ export const FormData = (
             required: false,
             isLoading: stateLoading || cityLoading,
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['city_rid']?.read &&
               !permissionMap?.['city_rid']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['city_rid']?.read &&
               !permissionMap?.['city_rid']?.edit,
           }),
@@ -276,11 +276,11 @@ export const FormData = (
             required: false,
             placeholder: 'Enter Zip Code / Area Code',
             hide:
-              isEidtView &&
+              isEditView &&
               !permissionMap?.['zip_code']?.read &&
               !permissionMap?.['zip_code']?.edit,
             disabled:
-              isEidtView &&
+              isEditView &&
               permissionMap?.['zip_code']?.read &&
               !permissionMap?.['zip_code']?.edit,
             errorHandling: [
@@ -308,7 +308,7 @@ export const FormData = (
       country,
       profile,
       role,
-      isEidtView,
+      isEditView,
       states,
       orgNames,
       stateLoading,

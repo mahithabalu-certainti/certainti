@@ -1,16 +1,14 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   GetProjectTypeApiResponse,
+  Project,
+  ProjectAccordionResponse,
   // ProjectList,
   ProjectListParams,
   // ProjectListResponse,
 } from '../../types/project';
 import { accountServiceApi, resourceServiceApi } from '../../../api/api';
 import { ProjectExportListURL, ProjectListURL } from '../urls';
-import {
-  ProjectAccordionResponse,
-  Project,
-} from '../../../components/table/types';
 
 export const fetchProjects = async (
   params: ProjectListParams
@@ -34,7 +32,7 @@ export const useAccountProjects = (
     queryKey: ['accountProjects', params, refreshProjectsTrigger],
     queryFn: () => fetchProjects(params),
     retry: 0,
-    enabled: projectOverviewIsEnable,
+    enabled: !!params.accountNumber && projectOverviewIsEnable,
   });
 };
 export const useAllProjects = (

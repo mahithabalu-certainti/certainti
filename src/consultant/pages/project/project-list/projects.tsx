@@ -159,18 +159,40 @@ export const Projects: React.FC = () => {
     [projectTypeOptions?.data?.data?.projectType]
   );
 
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const projectFilterFields = getAllProjectFilterFields(
     memoizedClassification.map((item) => ({
       label: item.option,
       value: item.value,
     })),
     memoizedProjectTypes,
-    memoizedStatus
+    memoizedStatus,
+    projectPermissionMap
   );
+
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (setToggleEnabled) {
       setToggleEnabled(event.target.checked);
     }
+  };
+
+  const dropdownOptions = {
+    classification: Classification?.data,
+    projectType: projectTypeOptions?.data,
   };
 
   if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
@@ -272,6 +294,7 @@ export const Projects: React.FC = () => {
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
           toggleEnabled={toggleEnabled}
+          dropdownOptions={dropdownOptions}
         />
       </div>
     </div>

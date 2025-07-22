@@ -160,6 +160,7 @@ export type FieldConfig = {
     | 'enum';
   options?: string[] | Options[];
   operatorOption?: Options[];
+  hide?: boolean;
 };
 
 export interface FilterComponentProps {

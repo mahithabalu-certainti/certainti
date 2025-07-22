@@ -1,4 +1,5 @@
 import { AccountDetailsResponse } from '../../types';
+import { AttachmentList } from '../../types/attachment';
 
 export interface AccountData {
   accountById: {
@@ -44,6 +45,7 @@ export interface DisplayColumn {
     label: string;
     value: string;
     className?: string;
+    hide?: boolean;
   }>;
 }
 
@@ -101,7 +103,8 @@ const getValueOrDefault = (
 };
 
 export const transformAccountData = (
-  data: AccountDetailsResponse
+  data: AccountDetailsResponse,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
   const account = data?.accountById;
   const status = account?.status?.status_name?.toLowerCase();
@@ -113,6 +116,9 @@ export const transformAccountData = (
           label: 'Account ID',
           value: account?.r_number || '-',
           className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          hide:
+            !permissionMap?.['r_number']?.read &&
+            !permissionMap?.['r_number']?.edit,
         },
       ],
     },
@@ -121,6 +127,9 @@ export const transformAccountData = (
         {
           label: 'Name',
           value: getValueOrDefault(account?.account_name),
+          hide:
+            !permissionMap?.['account_name']?.read &&
+            !permissionMap?.['account_name']?.edit,
         },
       ],
     },
@@ -129,6 +138,9 @@ export const transformAccountData = (
         {
           label: 'Parent Name',
           value: getValueOrDefault(account?.parent_account?.account_name),
+          hide:
+            !permissionMap?.['parent_account_rid']?.read &&
+            !permissionMap?.['parent_account_rid']?.edit,
         },
       ],
     },
@@ -137,6 +149,9 @@ export const transformAccountData = (
         {
           label: 'Country / Currency',
           value: `${getValueOrDefault(account?.country?.country_code)} / ${getValueOrDefault(account?.currency?.currency_code)}`,
+          hide:
+            !permissionMap?.['country_rid']?.read &&
+            !permissionMap?.['country_rid']?.edit,
         },
       ],
     },
@@ -145,16 +160,21 @@ export const transformAccountData = (
         {
           label: 'Industry',
           value: getValueOrDefault(account?.industry_rid_name),
+          hide:
+            !permissionMap?.['industry_rid']?.read &&
+            !permissionMap?.['industry_rid']?.edit,
         },
       ],
     },
   ];
 };
 export const transformResourceData = (
-  resource: ResourceData
+  resource: ResourceData,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
   const resourceData = resource?.data?.resourceDetails;
   const status = resourceData?.status_name;
+
   return [
     {
       items: [
@@ -162,10 +182,16 @@ export const transformResourceData = (
           label: 'Resource Code',
           value: getValueOrDefault(resourceData?.resource_code),
           className: `${status === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          hide:
+            !permissionMap?.['resource_code']?.read &&
+            !permissionMap?.['resource_code']?.edit,
         },
         {
           label: 'Role',
           value: `${getValueOrDefault(resourceData?.resource_role)} `,
+          hide:
+            !permissionMap?.['resource_role']?.read &&
+            !permissionMap?.['resource_role']?.edit,
         },
       ],
     },
@@ -174,10 +200,16 @@ export const transformResourceData = (
         {
           label: 'Name',
           value: getValueOrDefault(resourceData?.resource_name),
+          hide:
+            !permissionMap?.['resource_name']?.read &&
+            !permissionMap?.['resource_name']?.edit,
         },
         {
           label: 'Designation',
           value: getValueOrDefault(resourceData?.resource_designation),
+          hide:
+            !permissionMap?.['resource_designation']?.read &&
+            !permissionMap?.['resource_designation']?.edit,
         },
       ],
     },
@@ -186,6 +218,9 @@ export const transformResourceData = (
         {
           label: 'Resource Type',
           value: getValueOrDefault(resourceData?.resource_type_name),
+          hide:
+            !permissionMap?.['resource_type_rid']?.read &&
+            !permissionMap?.['resource_type_rid']?.edit,
         },
         {
           label: '',
@@ -198,6 +233,9 @@ export const transformResourceData = (
         {
           label: 'Resource Org Name',
           value: getValueOrDefault(resourceData?.resource_orgname),
+          hide:
+            !permissionMap?.['resource_orgname']?.read &&
+            !permissionMap?.['resource_orgname']?.edit,
         },
         {
           label: '',
@@ -293,6 +331,7 @@ export interface accountByDetailsProps {
   keyContacts: KeyContactProps[];
   business_details: string;
   data_storage: string;
+  attachments: AttachmentList[];
 }
 
 export interface KeyContactProps {

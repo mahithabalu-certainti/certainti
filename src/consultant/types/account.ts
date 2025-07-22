@@ -118,15 +118,6 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
-export interface AccountColumn {
-  id: string;
-  label: string;
-  width: string;
-  sortId: string;
-  sortable?: boolean;
-  sx?: React.CSSProperties;
-}
-
 export enum Storagetype {
   SeperateDB = 'separate_db',
   StoredDB = 'store_in_parent',
@@ -149,6 +140,10 @@ export enum YesNo {
 export enum OthersEnum {
   Other = 'other',
   Others = 'others',
+}
+
+export enum ResourceType {
+  full_time = 'full-time',
 }
 
 export enum enumValue {
@@ -378,6 +373,8 @@ export type AccountList = {
   professional_services_consultant: string;
   finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
+  color?: string;
+  bgColor?: string;
 };
 
 export interface ConvertedAccount {
@@ -418,3 +415,35 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
     keyContactRoles: keyContactRoles[];
   };
 }
+
+export interface FormField {
+  id: string;
+  label: string;
+  type:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'select'
+    | 'radio'
+    | 'textarea'
+    | 'checkbox';
+  required?: boolean;
+  hide?: boolean;
+  options?: { value: string; label: string }[];
+  placeholder?: string;
+  rows?: number;
+  fullWidth?: boolean;
+  resetDependsFields?: string[];
+  validation?: Array<{
+    regex: RegExp;
+    errorMessage: string;
+  }>;
+}
+
+export type ExportType =
+  | 'resource'
+  | 'cost'
+  | 'skill'
+  | 'project'
+  | 'attachments'
+  | 'resource_attachments';
