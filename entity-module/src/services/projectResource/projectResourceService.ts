@@ -206,6 +206,7 @@ export class ProjectResourceService {
                 accountNumber,
                 projectData.project_code,
                 projectResourceData,
+                resourceData,
                 projectData.fiscal_year,
                 userId,
                 transaction

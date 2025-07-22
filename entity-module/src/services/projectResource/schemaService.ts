@@ -1264,6 +1264,7 @@ export class ProjectResourceSchemaService {
     accountNumber: string,
     projectCode: string,
     projectResourceData: ICreateProjectResource | IUpdateProjectResource,
+    resourceData: any,
     fiscalYear: number,
     userId: string,
     transaction: Transaction
@@ -1286,7 +1287,7 @@ export class ProjectResourceSchemaService {
     });
 
     const resourceType: any = await this.fetchResourceType(
-      "" // need to add resource fiscal
+      resourceData.resource_type_rid // need to add resource fiscal
     );
 
     if (!resourceType) {
