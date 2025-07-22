@@ -65,3 +65,16 @@ export interface AttachmentsListExportParams {
   entityId?: string;
   accountRid?: string;
 }
+
+export interface AttachmentUploadPayload {
+  attachment: File;
+  account_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  fiscal_year: string;
+  document_category_rid: string;
+  document_type_rid: string;
+  document_category_others?: string;
+  document_type_others?: string;
+  comments?: string;
+}

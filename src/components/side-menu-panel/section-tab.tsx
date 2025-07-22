@@ -5,7 +5,10 @@ import { RefreshIcon, ResourceFilterIcon } from '../../assets';
 import Filter from '../../consultant/pages/account-details-sidebar/components/filter/filter';
 import ActionImportDropdown from '../../consultant/pages/account-details-sidebar/sidebar-pages/imports/importdropdown';
 import { clearFilters } from '../../consultant/pages/account-details-sidebar/components/filter/utils';
-import { FieldConfig } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
+import {
+  FieldConfig,
+  FilterValue,
+} from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
 
 interface TabOption {
   id: string;
@@ -36,6 +39,7 @@ interface TabPanelProps {
   onRefreshClick?: () => void;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
+  onFilterChange?: (fieldName: string, value: FilterValue) => void;
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
@@ -58,6 +62,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   onRefreshClick,
   toggleEnabled,
   setToggleEnabled,
+  onFilterChange,
 }) => {
   const location = useLocation();
   const [tabValue, setTabValue] = useState('');
@@ -65,9 +70,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     useState<HTMLButtonElement | null>(null);
 
   const isFilterOpen = Boolean(filterAnchorEl);
-  const filterId = isFilterOpen
-    ? `resource-${contextKey}-filter-popover`
-    : undefined;
+  const filterId = isFilterOpen ? `${contextKey}-filter-popover` : undefined;
 
   useEffect(() => {
     const activeTab = tabs?.find((tab) => !tab.hide)?.id;
@@ -204,6 +207,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                     setCurrentPage={setCurrentPage}
                     mode='date'
                     handleSorting={handleSorting}
+                    onFilterChange={onFilterChange}
                   />
                 </Suspense>
               </Box>

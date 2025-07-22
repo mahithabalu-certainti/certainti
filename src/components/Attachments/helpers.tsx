@@ -1,11 +1,17 @@
-import { REGEX_PATTERNS } from '../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../common-utils';
 import { FieldConfig } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
-import { FormField, SelectOption } from '../../consultant/types';
+import { OthersEnum, SelectOption } from '../../consultant/types';
+import { AttachmentList } from '../../consultant/types/attachment';
+import { DependencyRowData, ListTableColumn } from '../table/types';
 
 export interface FieldOptionType {
   fiscalYears: SelectOption[];
   docCategories: SelectOption[];
   docTypes: SelectOption[];
+  docTypesLoading?: boolean;
 }
 
 const textOptions: { option: string; value: string }[] = [
@@ -35,99 +41,6 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'Before', value: 'before' },
   { option: 'After', value: 'after' },
   { option: 'Between', value: 'between' },
-];
-
-export const getFormFields = (
-  fiscalYears: SelectOption[],
-  memoizedDocumentCategories: SelectOption[],
-  memoizedDocumentTypes: SelectOption[]
-): FormField[] => [
-  {
-    id: 'fiscal_year',
-    label: 'Fiscal Year',
-    type: 'select',
-    required: true,
-    placeholder: 'Select Fiscal Year',
-    options: fiscalYears,
-  },
-  {
-    id: 'document_category_rid',
-    label: 'Document Category',
-    type: 'select',
-    required: true,
-    placeholder: 'Enter Document Category',
-    options: memoizedDocumentCategories,
-    resetDependsFields: ['document_category_other'],
-  },
-  {
-    id: 'document_category_other',
-    label: 'Document Category-other',
-    type: 'text',
-    hide: true,
-    required: true,
-    placeholder: 'Enter Document Category-other',
-    validation: [
-      {
-        regex: REGEX_PATTERNS.MIN_3,
-        errorMessage:
-          'Document Category-other must be more than 2 characters long',
-      },
-      {
-        regex: REGEX_PATTERNS.MAX_255,
-        errorMessage: 'Max length exceeded',
-      },
-      {
-        regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
-        errorMessage:
-          "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
-      },
-    ],
-  },
-  {
-    id: 'document_type_rid',
-    label: 'Document Type',
-    type: 'select',
-    required: true,
-    placeholder: 'Enter Document Type',
-    options: memoizedDocumentTypes,
-    resetDependsFields: ['document_type_others'],
-  },
-  {
-    id: 'document_type_others',
-    label: 'Document Type-other',
-    type: 'text',
-    hide: true,
-    required: true,
-    placeholder: 'Enter Document Type-other',
-    validation: [
-      {
-        regex: REGEX_PATTERNS.MIN_3,
-        errorMessage: 'Document Type-other must be more than 2 characters long',
-      },
-      {
-        regex: REGEX_PATTERNS.MAX_255,
-        errorMessage: 'Max length exceeded',
-      },
-      {
-        regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
-        errorMessage:
-          "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
-      },
-    ],
-  },
-  {
-    id: 'comments',
-    label: 'Comments',
-    type: 'textarea',
-    rows: 3,
-    fullWidth: true,
-    validation: [
-      {
-        regex: REGEX_PATTERNS.MAX_2000,
-        errorMessage: 'Max length exceeded.',
-      },
-    ],
-  },
 ];
 
 export const getAttachmentsFilterFields = (
@@ -182,6 +95,7 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: docCategories.map((c) => ({ option: c.label, value: c.value })),
       operatorOption: enumOptions,
+      onChange: true,
       hide:
         !permissionMap?.['document_category_rid']?.edit &&
         !permissionMap?.['document_category_rid']?.read,
@@ -192,6 +106,7 @@ export const getAttachmentsFilterFields = (
       type: 'enum',
       options: docTypes.map((t) => ({ option: t.label, value: t.value })),
       operatorOption: enumOptions,
+      dependsOn: 'document_category_rid',
       hide:
         !permissionMap?.['document_type_rid']?.edit &&
         !permissionMap?.['document_type_rid']?.read,
@@ -254,66 +169,368 @@ export const getAttachmentsFilterFields = (
       name: 'Sort Options',
       value: 'sort_options',
       type: 'system-sort',
-      options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
+      options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
     },
   ];
 };
 
-export const validateField = (
-  fieldId: string,
-  value: string | string[],
-  formFields: FormField[]
-): string | null => {
-  const field = formFields.find((f) => f.id === fieldId);
-  if (!field) return null;
+export const getAttachmentTableColumns = (
+  fiscalYears: SelectOption[],
+  docCategories: SelectOption[],
+  docTypes: SelectOption[],
+  handleDocumentCategory: (rid: string) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  typeLoading?: boolean
+): ListTableColumn<AttachmentList>[] => [
+  {
+    id: 'document_name',
+    sortId: 'document_name',
+    label: 'Document Name',
+    width: 160,
+    sortable: true,
+    sticky: true,
+    hide:
+      !permissionMap?.['document_name']?.edit &&
+      !permissionMap?.['document_name']?.read,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
+  },
+  {
+    id: 'format',
+    sortId: 'format',
+    label: 'Format',
+    width: 140,
+    sortable: true,
+    hide: !permissionMap?.['format']?.edit && !permissionMap?.['format']?.read,
+  },
+  {
+    id: 'size_in_mb',
+    sortId: 'size_in_mb',
+    label: 'Size',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['size_in_mb']?.edit &&
+      !permissionMap?.['size_in_mb']?.read,
+  },
+  {
+    id: 'fiscal_year',
+    editId: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal Year',
+    width: 140,
+    sortable: true,
+    editable:
+      permissionMap?.['fiscal_year']?.edit &&
+      permissionMap?.['fiscal_year']?.read,
+    hide:
+      !permissionMap?.['fiscal_year']?.edit &&
+      !permissionMap?.['fiscal_year']?.read,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: fiscalYears,
+    },
+    render: (row: AttachmentList) => `FY-${row.fiscal_year}`,
+  },
+  {
+    id: 'document_category',
+    editId: 'document_category_rid',
+    sortId: 'document_category',
+    label: 'Document Category',
+    width: 250,
+    sortable: true,
+    editable:
+      permissionMap?.['document_category_rid']?.edit &&
+      permissionMap?.['document_category_rid']?.read,
+    hide:
+      !permissionMap?.['document_category_rid']?.edit &&
+      !permissionMap?.['document_category_rid']?.read,
+    render: (row: AttachmentList) =>
+      row.document_category_others
+        ? `${row.document_category} - ${row.document_category_others}`
+        : row.document_category,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: docCategories,
+      onChange: true,
+      resetDependentFields: ['document_type'],
+      getFieldData: (rowData: DependencyRowData) => {
+        handleDocumentCategory(String(rowData.document_category_rid));
+        return String(rowData.document_category_rid);
+      },
+      dependencies: [
+        {
+          dependsOn: 'document_type',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+        {
+          dependsOn: ['document_category', 'document_type'],
+          condition: (value, rowData) => {
+            const docType = rowData.document_type;
+            const docCategory = value;
+            const bothFieldsHaveValues =
+              docCategory && docCategory !== '' && docType && docType !== '';
 
-  if (
-    !field.required &&
-    (!value || (Array.isArray(value) && value.length === 0))
-  ) {
-    return null;
-  }
+            if (!bothFieldsHaveValues) {
+              return false;
+            }
 
-  if (
-    field.required &&
-    (!value || (Array.isArray(value) && value.length === 0))
-  ) {
-    return 'This field is required';
-  }
+            const categoryFound = docCategories.find(
+              (opt) => String(opt.value) === String(docCategory)
+            );
+            const typeFound = docTypes.find(
+              (opt) => String(opt.value) === String(docType)
+            );
 
-  if (field.validation) {
-    const stringValue = Array.isArray(value) ? value.join('') : value;
-    for (const validation of field.validation) {
-      if (!validation.regex.test(stringValue)) {
-        return validation.errorMessage;
-      }
-    }
-  }
+            // Show modal if either is "Others"
+            const shouldShowModal =
+              categoryFound?.label.toLowerCase() === OthersEnum.Others ||
+              typeFound?.label.toLowerCase() === OthersEnum.Others;
+            return shouldShowModal;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'document_category_others',
+              editId: 'document_category_others',
+              label: 'Document Category-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Category-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Category-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+            {
+              id: 'document_type_others',
+              editId: 'document_type_others',
+              label: 'Document Type-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Type-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Type-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'document_type',
+    editId: 'document_type_rid',
+    sortId: 'document_type',
+    label: 'Document Type',
+    width: 300,
+    sortable: true,
+    editable:
+      permissionMap?.['document_type_rid']?.edit &&
+      permissionMap?.['document_type_rid']?.read,
+    hide:
+      !permissionMap?.['document_type_rid']?.edit &&
+      !permissionMap?.['document_type_rid']?.read,
+    render: (row: AttachmentList) =>
+      row.document_type_others
+        ? `${row.document_type} - ${row.document_type_others}`
+        : row.document_type,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: 'Choose Document Type',
+      loading: typeLoading,
+      options: docTypes,
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.document_type_rid);
+      },
+      dependencies: [
+        {
+          dependsOn: 'document_category',
+          condition: (value) => !value,
+          action: 'disabled',
+          message: '',
+        },
+        {
+          dependsOn: ['document_category', 'document_type'],
+          condition: (value, rowData) => {
+            const docCategory = rowData.document_category;
+            const docType = value;
+            const bothFieldsHaveValues =
+              docCategory && docCategory !== '' && docType && docType !== '';
 
-  return null;
-};
+            if (!bothFieldsHaveValues) {
+              return false;
+            }
 
-export const shouldShowField = (
-  field: FormField,
-  formData: { [key: string]: string | null },
-  formFields: FormField[]
-): boolean => {
-  if (field.id === 'document_category_other') {
-    const categoryField = formFields.find(
-      (f) => f.id === 'document_category_rid'
-    );
-    const selectedOption = categoryField?.options?.find(
-      (opt) => opt.value === formData.document_category_rid
-    );
-    return selectedOption?.label.toLowerCase() === 'others';
-  }
-  if (field.id === 'document_type_others') {
-    const typeField = formFields.find((f) => f.id === 'document_type_rid');
-    const selectedOption = typeField?.options?.find(
-      (opt) => opt.value === formData.document_type_rid
-    );
-    return selectedOption?.label.toLowerCase() === 'others';
-  }
+            const categoryFound = docCategories.find(
+              (opt) => String(opt.value) === String(docCategory)
+            );
+            const typeFound = docTypes.find(
+              (opt) => String(opt.value) === String(docType)
+            );
 
-  return !field.hide;
-};
+            const directlyShowModal =
+              String(docCategory).toLowerCase() === OthersEnum.Others ||
+              String(docType).toLowerCase() === OthersEnum.Others;
+
+            // Show modal if either is "Others"
+            const shouldShowModal =
+              categoryFound?.label.toLowerCase() === OthersEnum.Others ||
+              typeFound?.label.toLowerCase() === OthersEnum.Others;
+            return shouldShowModal || directlyShowModal;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'document_category_others',
+              editId: 'document_category_others',
+              label: 'Document Category-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Category-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Category-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+            {
+              id: 'document_type_others',
+              editId: 'document_type_others',
+              label: 'Document Type-others',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Document Type-others',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage:
+                    'Document Type-others must be more than 2 characters long',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_255,
+                  errorMessage: 'Max length exceeded',
+                },
+                {
+                  regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                  errorMessage:
+                    "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    id: 'attach_to',
+    sortId: 'attach_to',
+    label: 'Related To ID',
+    width: 180,
+    sortable: true,
+    hide:
+      !permissionMap?.['attach_to']?.edit &&
+      !permissionMap?.['attach_to']?.read,
+  },
+  {
+    id: 'attached_to',
+    sortId: 'attached_to',
+    label: 'Related To Name',
+    width: 180,
+    sortable: true,
+    hide:
+      !permissionMap?.['attached_to']?.edit &&
+      !permissionMap?.['attached_to']?.read,
+  },
+  {
+    id: 'uploaded_by',
+    sortId: 'uploaded_by',
+    label: 'Attached By',
+    width: 180,
+    sortable: true,
+    hide:
+      !permissionMap?.['uploaded_by']?.edit &&
+      !permissionMap?.['uploaded_by']?.read,
+  },
+  {
+    id: 'created_datetime',
+    sortId: 'created_datetime',
+    label: 'Attached On',
+    width: 200,
+    sortable: true,
+    hide:
+      !permissionMap?.['created_datetime']?.edit &&
+      !permissionMap?.['created_datetime']?.read,
+    render: (row: AttachmentList) =>
+      formatDateToYYYYMMDDWithTime(row.created_datetime),
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Attachment ID',
+    width: 160,
+    sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+];

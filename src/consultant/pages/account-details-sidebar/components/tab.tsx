@@ -42,6 +42,7 @@ import {
   FieldOptionType,
   getAttachmentsFilterFields,
 } from '../../../../components/Attachments/helpers';
+import { FilterValue } from './filter/filterType';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -63,7 +64,7 @@ interface TabProps {
   keyProjectTask?: string;
   projectResourceAccountID?: string;
   fieldOptions?: FieldOptionType;
-  keyProjectTask?: string;
+  handleFilterChange?: (fieldName: string, value: FilterValue) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -84,7 +85,7 @@ const TabPanel: React.FC<TabProps> = ({
   keyProjectTask,
   projectResourceAccountID,
   fieldOptions,
-  keyProjectTask,
+  handleFilterChange,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -595,6 +596,7 @@ const TabPanel: React.FC<TabProps> = ({
                     setCurrentPage={setCurrentPage}
                     mode={'date'}
                     handleSorting={handleSorting}
+                    onFilterChange={handleFilterChange}
                   />
                 </Suspense>
               </Box>

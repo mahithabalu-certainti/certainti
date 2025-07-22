@@ -133,6 +133,9 @@ export const ProjectDetails = () => {
   const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
+  const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
+    Date.now()
+  );
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -166,12 +169,18 @@ export const ProjectDetails = () => {
       setActiveKey(list);
     }
   }, [searchParams]);
+
+  const onRefreshClick = () => {
+    setRefreshProjectDetails(Date.now());
+  };
+
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
   const parent = searchParams.get('source');
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
-    projectID || ''
+    projectID || '',
+    refreshProjectDetails
   );
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
@@ -199,10 +208,15 @@ export const ProjectDetails = () => {
     }
   }, [data]);
 
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     if (list === 'attachments') {
-      return false;
+      return !isAttachmentViewEnable;
     } else {
       return true;
     }
@@ -319,6 +333,7 @@ export const ProjectDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
+            refetchProjectDetails={onRefreshClick}
           />
         );
       case 'checklists':

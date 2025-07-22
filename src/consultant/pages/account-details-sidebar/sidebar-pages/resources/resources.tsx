@@ -33,6 +33,7 @@ import {
   Permissions,
   useGetAllCountries,
   useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
   useGetStatus,
 } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
@@ -49,6 +50,7 @@ import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
 import { ExportType, SelectOption } from '../../../../types';
+import { FilterValue } from '../../components/filter/filterType';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -112,7 +114,7 @@ const tabs: TabMenus[] = [
     label: 'Attachments',
     value: 'attachments',
     hide: false,
-    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
+    id: AllPermissions.ATTACHMENT_VIEW_EDIT,
   },
 ];
 
@@ -167,7 +169,7 @@ const Resource: React.FC<ResourceProps> = ({
   );
   const [attachmentsOrderBy, setAttachmentsOrderBy] =
     useState<string>('document_name');
-
+  const [currentCategory, setCurrentCategory] = useState<string>('');
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
@@ -351,6 +353,7 @@ const Resource: React.FC<ResourceProps> = ({
     clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
+    searchParams.delete('attachment_entity');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
@@ -446,6 +449,8 @@ const Resource: React.FC<ResourceProps> = ({
       return !isResourceCostCreateEnable;
     } else if (value === 'skill') {
       return !isResourceSkillCreateEnable;
+    } else if (value === 'attachments') {
+      return true;
     }
     return accountInActive;
   };
@@ -461,13 +466,18 @@ const Resource: React.FC<ResourceProps> = ({
     return false;
   };
 
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      hide: value !== 'details',
+      hide: value !== 'details' || !attachmentCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -520,6 +530,7 @@ const Resource: React.FC<ResourceProps> = ({
     setCount(ResourceList?.count || 0);
     // clear query params
     searchParams.delete('res_id');
+    searchParams.delete('attachment_entity');
     searchParams.delete('tab');
     navigate(
       {
@@ -745,16 +756,17 @@ const Resource: React.FC<ResourceProps> = ({
     }
   };
 
-  const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+      categoryTypes.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
+    [categoryTypes.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
@@ -765,6 +777,12 @@ const Resource: React.FC<ResourceProps> = ({
       })) || [],
     [allDocumentInfo.data?.data.documentCategories]
   );
+
+  const handleCategory = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'document_category_rid' && value) {
+      setCurrentCategory(String(value));
+    }
+  };
 
   const fieldOptions = {
     fiscalYears: fiscalYears,
@@ -799,13 +817,10 @@ const Resource: React.FC<ResourceProps> = ({
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         fieldOptions={fieldOptions}
+        handleFilterChange={handleCategory}
       />
       {showUploads ? (
-        <Uploads
-          accountId={accountid}
-          attachID={resId}
-          fieldOptions={fieldOptions}
-        />
+        <Uploads accountId={accountid} attachID={resId} />
       ) : (
         !isResoureceOverviewHide &&
         isResourceViewAllEnable && (

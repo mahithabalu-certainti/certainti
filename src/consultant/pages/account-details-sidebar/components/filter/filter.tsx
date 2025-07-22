@@ -36,6 +36,7 @@ import {
   TextFilterControlForCostAndSKill,
 } from './helper';
 import {
+  applyFilterOnChanges,
   clearFilters,
   getStoredFilters,
   resetFilter,
@@ -59,6 +60,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   setCurrentCountry,
   handleSorting,
   mode,
+  onFilterChange,
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -96,6 +98,10 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   useEffect(() => {
     const saved = getStoredFilters(value || 'resource');
+    if (isOpen && saved && onFilterChange) {
+      const savedFilters = saved as Record<string, FilterState>;
+      applyFilterOnChanges(savedFilters, filterMenu, onFilterChange);
+    }
     if (regularFilters.length > 0 && !saved) {
       // Automatically select the first field if no saved filters exist
       const firstField = regularFilters[0];
@@ -341,6 +347,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   ) => {
     // setIsModified(true);
     const fieldConfig = filterMenu.find((f) => f.value === fieldName);
+    const newValue = event.target.value;
     if (!fieldConfig) return;
 
     setFilterStates((prev) => {
@@ -386,6 +393,10 @@ const Filter: React.FC<FilterComponentProps> = ({
           return prev;
       }
     });
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, newValue);
+    }
   };
 
   const handleEnumSelectChange = (
@@ -393,6 +404,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     // isMultiple: boolean,
     value: string[] | string
   ) => {
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
     setFilterStates((prev: any) => {
       return {
         ...prev,
@@ -406,6 +418,10 @@ const Filter: React.FC<FilterComponentProps> = ({
         },
       };
     });
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, value);
+    }
   };
   const handleCurrencySelectChange = (fieldName: string, value: string[]) => {
     setFilterStates((prev: any) => {
@@ -461,6 +477,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   const handleDateChange = (type: string, fieldName: string, value: string) => {
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
     setFilterStates((prev: any) => {
       return {
         ...prev,
@@ -476,6 +493,10 @@ const Filter: React.FC<FilterComponentProps> = ({
         },
       };
     });
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, value);
+    }
   };
 
   const disableDependantFilterFields = (
@@ -517,6 +538,9 @@ const Filter: React.FC<FilterComponentProps> = ({
 
     if (field.value === 'region_rid') {
       return disableDependantFilterFields('country_rid', field, fieldState);
+    }
+    if (field.dependsOn) {
+      return disableDependantFilterFields(field.dependsOn, field, fieldState);
     }
 
     switch (field.type) {

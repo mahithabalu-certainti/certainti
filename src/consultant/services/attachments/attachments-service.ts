@@ -10,6 +10,7 @@ import {
   AttachmentListResponse,
   AttachmentsListExportParams,
   AttachmentsListURLParams,
+  AttachmentUploadPayload,
 } from '../../types/attachment';
 
 export const fetchAttachmentList = async (
@@ -50,8 +51,9 @@ export const useAllAttachmentList = (
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const attachmentFileUpload = async (payload: any) => {
+export const attachmentFileUpload = async (
+  payload: AttachmentUploadPayload
+) => {
   const formData = new FormData();
   formData.append('attachment', payload.attachment);
   formData.append('account_rid', payload.account_rid);

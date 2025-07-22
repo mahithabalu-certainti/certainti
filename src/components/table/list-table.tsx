@@ -61,7 +61,7 @@ const ListTable = <T extends RowData>({
   editDisableLevel = [],
   hoverHighlight = false,
   tableStyle,
-  stickyHeader = false,
+  stickyHeader = true,
   stickyColumnsCount = 0,
   // Selection
   hideHeaderSelect = false,
@@ -92,7 +92,6 @@ const ListTable = <T extends RowData>({
   // Expansion
   expandAllParent = false,
   expandAllChild = false,
-  skillTypeIds,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -103,8 +102,6 @@ const ListTable = <T extends RowData>({
     fields: [],
     rowId: '',
     columnId: '',
-    skillTypeIsOthers: false,
-    skillSubtypeIsOthers: false,
     anchorEl: null,
     modalFieldValues: {},
   });
@@ -342,8 +339,6 @@ const ListTable = <T extends RowData>({
       fields: [],
       rowId: '',
       columnId: '',
-      skillTypeIsOthers: false,
-      skillSubtypeIsOthers: false,
       anchorEl: null,
       modalFieldValues: {},
     });
@@ -416,66 +411,6 @@ const ListTable = <T extends RowData>({
         error: null,
       };
 
-      // Check if this value change should trigger a modal
-      const modalCheck = shouldShowModalForValue(
-        column,
-        value,
-        rowData,
-        updated
-      );
-      if (modalCheck.shouldShow && modalCheck.modalFields) {
-        // For skill type/subtype, determine which fields to show in modal
-        let skillTypeIsOthers = false;
-        let skillSubtypeIsOthers = false;
-
-        if (
-          cell.columnId === 'skill_type_name' ||
-          cell.columnId === 'skill_subtype_name'
-        ) {
-          // Get current values for both fields from updated editing cells
-          const currentSkillType =
-            cell.columnId === 'skill_type_name'
-              ? value
-              : getDependentValue('skill_type_name', rowData || {}, updated);
-          const currentSkillSubtype =
-            cell.columnId === 'skill_subtype_name'
-              ? value
-              : getDependentValue('skill_subtype_name', rowData || {}, updated);
-
-          skillTypeIsOthers =
-            currentSkillType === skillTypeIds?.othersSkillTypeId;
-          skillSubtypeIsOthers =
-            currentSkillSubtype === skillTypeIds?.othersSkillSubTypeId;
-        }
-
-        const anchorEl = document.querySelector(`[data-editing="${cellKey}"]`);
-
-        setModalState({
-          open: true,
-          fields: modalCheck.modalFields,
-          rowId: cell.rowId,
-          columnId: cell.columnId,
-          skillTypeIsOthers,
-          skillSubtypeIsOthers,
-          anchorEl: anchorEl as HTMLElement,
-        });
-
-        return updated;
-      } else {
-        // If there was a modal open and this change does NOT require modal, close/reset it
-        if (modalState.open) {
-          setModalState({
-            open: false,
-            fields: [],
-            rowId: '',
-            columnId: '',
-            skillTypeIsOthers: false,
-            skillSubtypeIsOthers: false,
-            anchorEl: null,
-          });
-        }
-      }
-
       // Get fields that should be reset due to this change
       const fieldsToReset = getFieldsToReset(
         visibleColumns,
@@ -499,6 +434,38 @@ const ListTable = <T extends RowData>({
           };
         }
       });
+
+      // Check if this value change should trigger a modal
+      const modalCheck = shouldShowModalForValue(
+        column,
+        value,
+        rowData,
+        updated
+      );
+      if (modalCheck.shouldShow && modalCheck.modalFields) {
+        const anchorEl = document.querySelector(`[data-editing="${cellKey}"]`);
+
+        setModalState({
+          open: true,
+          fields: modalCheck.modalFields,
+          rowId: cell.rowId,
+          columnId: cell.columnId,
+          anchorEl: anchorEl as HTMLElement,
+        });
+
+        return updated;
+      } else {
+        // If there was a modal open and this change does NOT require modal, close/reset it
+        if (modalState.open) {
+          setModalState({
+            open: false,
+            fields: [],
+            rowId: '',
+            columnId: '',
+            anchorEl: null,
+          });
+        }
+      }
 
       return updated;
     });
@@ -650,29 +617,6 @@ const ListTable = <T extends RowData>({
           newEditingCells
         );
         if (modalCheck.shouldShow && modalCheck.modalFields) {
-          let skillTypeIsOthers = false;
-          let skillSubtypeIsOthers = false;
-
-          if (
-            targetColumn.id === 'skill_type_name' ||
-            targetColumn.id === 'skill_subtype_name'
-          ) {
-            const currentSkillType =
-              targetColumn.id === 'skill_type_name'
-                ? editingValue
-                : getDependentValue('skill_type_name', row, newEditingCells);
-
-            const currentSkillSubtype =
-              targetColumn.id === 'skill_subtype_name'
-                ? editingValue
-                : getDependentValue('skill_subtype_name', row, newEditingCells);
-
-            skillTypeIsOthers =
-              currentSkillType === skillTypeIds?.othersSkillTypeId;
-            skillSubtypeIsOthers =
-              skillTypeIsOthers ||
-              currentSkillSubtype === skillTypeIds?.othersSkillSubTypeId;
-          }
           const anchorEl = document.querySelector(
             `[data-editing="${cellKey}"]`
           );
@@ -693,8 +637,6 @@ const ListTable = <T extends RowData>({
             fields: modalCheck.modalFields || [],
             rowId: rowId,
             columnId: targetColumn.id,
-            skillTypeIsOthers,
-            skillSubtypeIsOthers,
             anchorEl: anchorEl as HTMLElement,
             modalFieldValues,
           });
@@ -1531,8 +1473,6 @@ const ListTable = <T extends RowData>({
         }}
         onSubmit={handleModalSubmit}
         loading={isSaving}
-        skillTypeIsOthers={modalState.skillTypeIsOthers}
-        skillSubtypeIsOthers={modalState.skillSubtypeIsOthers}
         anchorEl={modalState.anchorEl}
         initialValues={modalState.modalFieldValues}
       />

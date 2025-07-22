@@ -6,15 +6,18 @@ import {
 import { RootState } from '../../../../../store/store';
 import { useEffect, useMemo, useState } from 'react';
 import { useAllAttachmentList } from '../../../../services/attachments/attachments-service';
-import { getAllAttachmentColumns } from './columns';
 import {
   CellEditData,
+  FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { ListTable } from '../../../../../components/table';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
-import { FieldOptionType } from '../../../../../components/Attachments/helpers';
+import {
+  FieldOptionType,
+  getAttachmentTableColumns,
+} from '../../../../../components/Attachments/helpers';
 import { useMutation } from '@apollo/client';
 import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -30,6 +33,7 @@ interface IAttachmentTableProps {
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshTrigger?: number;
   fieldOptions: FieldOptionType;
+  setCurrentCategory: (rowId: string) => void;
 }
 
 export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
@@ -39,6 +43,7 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
   setTotalCount,
   refreshTrigger,
   fieldOptions,
+  setCurrentCategory,
 }) => {
   const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -109,7 +114,7 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     }));
   };
   // Permissions
-  const costViewEditFields = useMemo(
+  const attachmentViewEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -119,19 +124,32 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    attachmentViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [attachmentViewEditFields]);
+
   const getRowId = (row: AttachmentList) => row.document_rid;
 
-  const attachmentsColumns = getAllAttachmentColumns(
+  const handleDocumentCategory = (rid: string) => {
+    setCurrentCategory(rid);
+  };
+
+  const attachmentsColumns = getAttachmentTableColumns(
     fieldOptions.fiscalYears,
     fieldOptions.docCategories,
     fieldOptions.docTypes,
-    permissionMap
+    handleDocumentCategory,
+    permissionMap,
+    fieldOptions?.docTypesLoading
   );
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'document_category' && event.value) {
+      setCurrentCategory(String(event.value));
+    }
+  };
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousAttachments = [...attachmentList];
@@ -166,11 +184,15 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
       }
     );
 
-    if (hasDocType && !hasDocTypeOther) {
+    if (
+      hasDocCategory &&
+      hasDocType &&
+      !hasDocCategoryOther &&
+      !hasDocTypeOther
+    ) {
+      updateData['document_category_others'] = '';
       updateData['document_type_others'] = '';
     }
-    if (hasDocCategory && !hasDocCategoryOther)
-      updateData['document_category_others'] = '';
 
     try {
       const res = await updateAttachment({
@@ -230,6 +252,7 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       onCellEdit={handleCellEdit}
+      onFieldChange={handleFieldChange}
     />
   );
 };
