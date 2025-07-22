@@ -37,7 +37,7 @@ import {
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import { SelectOption } from '../../../../types';
-import { useGetResourceType } from '../../../../services/resource-list';
+// import { useGetResourceType } from '../../../../services/resource-list';
 import { useFetchState } from '../../../../services/account';
 
 const BUTTON_STYLES = {
@@ -81,7 +81,7 @@ export const ProjectResources = ({
   >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-  const [sortField, setSortField] = useState<string>('project_code');
+  const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [projectResData, setProjectResData] =
     useState<ProjectResourcesListType | null>(null);
@@ -154,7 +154,10 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string
   );
-  const resourceData = resourceDetails?.data?.projectResource;
+  // const resourceData = resourceDetails?.data?.projectResource;
+  const resourceData = useMemo(() => {
+    return resourceDetails?.data?.projectResource;
+  }, [resourceDetails]);
 
   const totalItems = data?.count || 0;
 
@@ -166,7 +169,7 @@ export const ProjectResources = ({
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     accountID as string
   );
-  const projectResourceTypeOptions = useGetResourceType();
+  // const projectResourceTypeOptions = useGetResourceType();
   const countriesList = useGetAllCountries();
   const region = useFetchState(currentCountry);
   const memoizedProjectResourceCode: SelectOption[] = useMemo(
@@ -202,14 +205,14 @@ export const ProjectResources = ({
   const handleCountry = (country: string) => {
     setCurrentCountry(country);
   };
-  const memoizedProjectTypes: SelectOption[] = useMemo(
-    () =>
-      projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-        label: item.resource_type_name,
-        value: item.rid,
-      })) || [],
-    [projectResourceTypeOptions?.data?.data?.resouceType]
-  );
+  // const memoizedProjectTypes: SelectOption[] = useMemo(
+  //   () =>
+  //     projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+  //       label: item.resource_type_name,
+  //       value: item.rid,
+  //     })) || [],
+  //   [projectResourceTypeOptions?.data?.data?.resouceType]
+  // );
   const handleProjectResourceDetailEdit = () => {
     if (resourceData) {
       const path = PROJECT_RESOURCE_EDIT.replace(
@@ -225,7 +228,7 @@ export const ProjectResources = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'project_code';
+    const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -326,11 +329,22 @@ export const ProjectResources = ({
     setShowFilter(false);
     setFilterVisibility(false);
   };
+  useEffect(() => {
+    const resourceId = searchParams.get('pro_res_id');
+    if (resourceId && !projectResData) {
+      const found = projectResourceList.find((item) => item.rid === resourceId);
+      if (found) {
+        setProjectResData(found);
+        setShowProjectResourceDetails(true);
+        setShowFilter(false);
+      }
+    }
+  }, [projectResourceList, searchParams, projectResData]);
 
   const projectResourcesColumns = getProjectResourcesColumns(
     handleProjectResourceClick,
     memoizedProjectResourceCode,
-    memoizedProjectTypes,
+    // memoizedProjectTypes,
     countryOptions,
     memoizedState,
     handleCountry,

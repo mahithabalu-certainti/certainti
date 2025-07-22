@@ -18,6 +18,7 @@ import {
   SelectOption,
   ResourceType,
   ProjectResourceNewPayload,
+  SelectResourceOption,
 } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
@@ -27,7 +28,7 @@ import {
   useUpdateProjectResource,
 } from '../../../../../services/project-resources/project-resource-service';
 import { ProjectResourceFormData } from './form-data';
-import { useGetResourceType } from '../../../../../services/resource-list';
+// import { useGetResourceType } from '../../../../../services/resource-list';
 import {
   useGetProjectResourceCode,
   useGetProjectResourceRollSkill,
@@ -88,7 +89,7 @@ const ProjectResourceForm: React.FC = () => {
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     account_Id as string
   );
-  const projectResourceTypeOptions = useGetResourceType();
+  // const projectResourceTypeOptions = useGetResourceType();
   const projectResourceSkillTypeOptions = useGetProjectResourceSkillType();
   const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();
   const statusOptions = useGetStatus();
@@ -117,11 +118,13 @@ const ProjectResourceForm: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
-  const memoizedProjectResourceCode: SelectOption[] = useMemo(
+  const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
       projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
         label: item.resource_code,
         value: item.resource_code,
+        resource_type_rid: item.resource_type_rid,
+        resource_type_name: item.resource_type_name,
       })) || [],
     [projectResourceCodeOptions?.data?.resourceCodes]
   );
@@ -148,14 +151,14 @@ const ProjectResourceForm: React.FC = () => {
     [projectResourceRollSkillOptions?.data?.data?.resourceRoles]
   );
 
-  const memoizedProjectTypes: SelectOption[] = useMemo(
-    () =>
-      projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-        label: item.resource_type_name,
-        value: item.rid,
-      })) || [],
-    [projectResourceTypeOptions?.data?.data?.resouceType]
-  );
+  // const memoizedProjectTypes: SelectOption[] = useMemo(
+  //   () =>
+  //     projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+  //       label: item.resource_type_name,
+  //       value: item.rid,
+  //     })) || [],
+  //   [projectResourceTypeOptions?.data?.data?.resouceType]
+  // );
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
@@ -223,13 +226,13 @@ const ProjectResourceForm: React.FC = () => {
     if (data.fieldName === 'country_rid') {
       setCurrentCountry(data.fieldValue as string);
     }
-    if (data.fieldName === 'resource_type_rid') {
-      const selectedProjectResourceType = memoizedProjectTypes.find(
+    if (data.fieldName === 'resource_code') {
+      const selectedResource = memoizedProjectResourceCode.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
 
       setIsResourceType(
-        selectedProjectResourceType?.label.toLowerCase() ===
+        selectedResource?.resource_type_name?.toLowerCase() ===
           ResourceType.full_time
       );
     }
@@ -249,16 +252,20 @@ const ProjectResourceForm: React.FC = () => {
   }, [projectResourceData?.country_rid]);
 
   useEffect(() => {
-    const selectedProjectResourceType = memoizedProjectTypes.find(
+    const selectedProjectResourceType = memoizedProjectResourceCode.find(
       (option) =>
-        String(option.value) === String(projectResourceData?.resource_type_rid)
+        String(option.value) === String(projectResourceData?.resource_code)
     );
 
     setIsResourceType(
-      selectedProjectResourceType?.label.toLowerCase() ===
+      selectedProjectResourceType?.resource_type_name?.toLowerCase() ===
         ResourceType.full_time
     );
-  }, [memoizedProjectTypes, projectResourceData?.resource_type_rid]);
+  }, [
+    memoizedProjectResourceCode,
+    projectResourceData,
+    projectResourceData.resource_type_name,
+  ]);
 
   useEffect(() => {
     const selectedSkillSubType = memoizedProjectResourceSkillType.find(
@@ -277,7 +284,7 @@ const ProjectResourceForm: React.FC = () => {
 
   const formConfig = ProjectResourceFormData(
     memoizedProjectResourceCode,
-    memoizedProjectTypes,
+    // memoizedProjectTypes,
     memoizedProjectResourceSkillType,
     memoizedProjectResourceRollSkill,
     memoizedStatus,
