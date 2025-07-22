@@ -419,15 +419,9 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
 export interface FormField {
   id: string;
   label: string;
-  type:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'select'
-    | 'radio'
-    | 'textarea'
-    | 'checkbox';
+  type: 'text' | 'number' | 'email' | 'select' | 'textarea' | 'date';
   required?: boolean;
+  editable?: boolean;
   hide?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;

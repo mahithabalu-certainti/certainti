@@ -98,6 +98,7 @@ const icons = {
   search: () => import('./search.svg?react'),
   searchBlack: () => import('./search-black.svg?react'),
   settings: () => import('./settings.svg?react'),
+  setting: () => import('./setting.svg?react'),
   sortIcon: () => import('./sort-icon.svg?react'),
   survey: () => import('./survey.svg?react'),
   surveyTemplate: () => import('./survey-template.svg?react'),
@@ -113,6 +114,7 @@ const icons = {
   RejectIcon: () => import('./RejectIcon.svg?react'),
   AcceptIcon: () => import('./AcceptIcon.svg?react'),
   AttachmentIcon: () => import('./AttachmentIcon.svg?react'),
+  ConfigIcon: () => import('./config-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -220,6 +222,7 @@ export const ResourcesIcon = createLazySvgIcon('resourcesIcon');
 export const SearchBlackIcon = createLazySvgIcon('searchBlack');
 export const SearchIcon = createLazySvgIcon('search');
 export const SettingsIcon = createLazySvgIcon('settings');
+export const SettingIcon = createLazySvgIcon('setting');
 export const SortIcon = createLazySvgIcon('sortIcon');
 export const SurveyIcon = createLazySvgIcon('survey');
 export const SurveyTemplateIcon = createLazySvgIcon('surveyTemplate');
@@ -234,4 +237,5 @@ export const VerticalSeparatorIcon = createLazySvgIcon('verticalSeparatorIcon');
 export const OrgIcon = createLazySvgIcon('orgIcon');
 export const RejectIcon = createLazySvgIcon('RejectIcon');
 export const AcceptIcon = createLazySvgIcon('AcceptIcon');
+export const ConfigIcon = createLazySvgIcon('ConfigIcon');
 export const Attachment = createLazySvgIcon('AttachmentIcon');

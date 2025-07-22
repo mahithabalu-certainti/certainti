@@ -94,6 +94,7 @@ export const AccountForm: React.FC = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+  console.log('modules from account-create', permission);
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const accountViewEnable = checkPermission(
     permission,

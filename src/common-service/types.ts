@@ -118,6 +118,9 @@ export enum AllMenus {
   SURVEY_TEMPLATE = 'survey_template',
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
+  CONFIGURATION = 'configuration',
+  USERS = 'users',
+  SETTINGS = 'settings',
 }
 
 // export enum AllModules {

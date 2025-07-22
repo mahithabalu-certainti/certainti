@@ -17,7 +17,9 @@ import {
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TimeSheetIcon,
+  ConfigIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -34,6 +36,7 @@ import {
   Projects,
   Resources,
   Timesheet,
+  Configuration,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -64,6 +67,16 @@ export const AccountDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [accountDetailsObj, setAccountDetailsObj] = useState<{
+    account_id: string;
+    account_rid: string;
+    account_name: string;
+  }>({
+    account_id: '',
+    account_rid: '',
+    account_name: '',
+  });
+
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
@@ -128,7 +141,6 @@ export const AccountDetails = () => {
     fiscalYear: String(convertedFiscalYear),
     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
-
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -224,6 +236,16 @@ export const AccountDetails = () => {
     isAccountDetailsEnable,
     refreshAccountDetails
   );
+  useEffect(() => {
+    if (data?.data?.accountById) {
+      const account_id = data.data.accountById.r_number || '';
+      const account_rid = data.data.accountById.rid || '';
+      const account_name = data.data.accountById.account_name || '';
+
+      setAccountDetailsObj({ account_id, account_rid, account_name });
+    }
+  }, [data]);
+
   const accountViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
@@ -244,7 +266,6 @@ export const AccountDetails = () => {
       setAccountDetailsForEdit(data.data);
     }
   }, [data, permissionMap]);
-
   const accountInActive =
     data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';
 
@@ -364,6 +385,8 @@ export const AccountDetails = () => {
             }}
           />
         );
+      case 'configuration':
+        return <Configuration accountDetails={accountDetailsObj} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -453,6 +476,29 @@ export const AccountDetails = () => {
         id: AllMenus.IMPORTS,
         disabled: disable,
         icon: ImportsIcon,
+      },
+      {
+        name: 'Configuration',
+        key: 'configuration',
+        id: AllMenus.CONFIGURATION,
+        disabled: false,
+        icon: ConfigIcon,
+        subMenu: [
+          {
+            name: 'Users',
+            key: 'users',
+            id: AllMenus.USERS,
+            disabled: false,
+            icon: ResourcesIcon,
+          },
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.SETTINGS,
+            disabled: false,
+            icon: SettingIcon,
+          },
+        ],
       },
     ],
     [disable]

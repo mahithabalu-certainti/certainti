@@ -19,6 +19,7 @@ import {
   ProjectDetailsIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TechSummaryIcon,
 } from '../../../../assets';
 import { useProjectDetail } from '../../../services/project';
@@ -40,6 +41,7 @@ import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../../types/attachment';
+import { Configuration } from './configuration';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -118,6 +120,29 @@ const sideMenuItems: MenuItem[] = [
     id: AllMenus.CHECKLISTS,
     disabled: false,
     icon: ChecklistIcon,
+  },
+  {
+    name: 'Configuration',
+    key: 'configuration',
+    id: AllMenus.CONFIGURATION,
+    disabled: false,
+    icon: ChecklistIcon,
+    subMenu: [
+      {
+        name: 'Users',
+        key: 'users',
+        id: AllMenus.USERS,
+        disabled: false,
+        icon: ResourcesIcon,
+      },
+      {
+        name: 'Settings',
+        key: 'settings',
+        id: AllMenus.SETTINGS,
+        disabled: false,
+        icon: SettingIcon,
+      },
+    ],
   },
 ];
 
@@ -335,6 +360,8 @@ export const ProjectDetails = () => {
         );
       case 'checklists':
         return <NotFound />;
+      case 'configuration':
+        return <Configuration />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
