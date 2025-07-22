@@ -197,8 +197,16 @@ async accountList(
           parent.setDataValue(field, null);
         });
       }
+      (parent as any).hasAccountAccess = !parentIdsOnlyThroughChildren.includes(parent.rid);
       return parent;
-    });
+       });
+     }
+     else
+     {
+      parentAccounts = parentAccounts.map(parent => {
+         (parent as any).setDataValue('hasAccountAccess', true);
+        return parent;
+      });
      }
     
 

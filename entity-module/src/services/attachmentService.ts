@@ -949,7 +949,7 @@ async exportAttachments(
         }
       });
 
-      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"accounts_view_edit");
+      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of allowedFieldsForExport) {
           if (field.read) {

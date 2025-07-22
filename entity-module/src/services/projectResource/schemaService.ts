@@ -38,6 +38,7 @@ import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
+import SchemaService from "../schemaService";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -4658,7 +4659,8 @@ export class ProjectResourceSchemaService {
     fiscalYear: number,
     order: Order,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    userId: string
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
 
@@ -4697,23 +4699,53 @@ export class ProjectResourceSchemaService {
         rawFilters
       );
     }
-
-    let exportData = projectResource.map((resource: any) => {
-      return {
-        "Resource Code": resource.resource_code || "-",
-        "Resource Name": resource.resource_name || "-",
-        "Country": resource.country_name || "-",
-        "Region": resource.region_name || "-",
-        "Fiscal Year": resource.fiscal_year || "-",
-        "Resource Type": resource?.resource_type_name || "-",
-        "Role": resource.resource_role || "-",
-        "Effort (Hours)": resource.total_hours_pro_res || "-",
-        Cost: resource.total_cost_pro_res || "-",
-        "QRE%": resource.qre_percent || "-",
-        "QRE": resource.qre_final || "-",
-        "Comments": resource.description || "-",
-        "Project Resource ID": resource.project_resource_code || "-",
+    const schemaService = new SchemaService();
+    const projectResourceFields = await schemaService.getAllowedExportFields(userId,"projects_resources_view_edit");
+    const allowedFieldSet = new Set<string>();
+        for (const field of projectResourceFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+    const labelMap: Record<string, string> = {
+        "resource_code": "Resource Code",
+        "resource_name": "Name",
+        "country_rid": "Country",
+        "region_rid": "Region",
+        "fiscal_year":"Fiscal Year",
+        "resource_type_rid": "Resource Type",
+        "resource_role": "Role",
+        "total_project_hours": "Total Project Hours",
+        "total_cost_pro_res": "Cost",
+        "resource_designation": "Designation",
+        "qre_percent": "QRE %",
+        "qre_final": "QRE",
+        "comments": "Comments",
+        "r_number": "Project Resource ID",
       };
+    let exportData = projectResource.map((resource: any) => {
+       const exportData: Record<string, string> = {};   
+      let resultMap =  {
+        "resource_code": resource.resource_code || "-",
+        "resource_name": resource.resource_name || "-",
+        "country_name": resource.country_name || "-",
+        "region_name": resource.region_name || "-",
+        "fiscal_year": resource.fiscal_year || "-",
+        "resource_type_rid": resource?.resource_type_name || "-",
+        "resource_role": resource.resource_role || "-",
+        "total_hours_pro_res": resource.total_hours_pro_res || "-",
+        "total_cost_pro_res": resource.total_cost_pro_res || "-",
+        "qre_percent": resource.qre_percent || "-",
+        "qre_final": resource.qre_final || "-",
+        "domments": resource.description || "-",
+        "r_number": resource.project_resource_code || "-",
+      };      
+      for (const [field, value] of Object.entries(resultMap)) {
+      if (allowedFieldSet.has(field)) {
+        exportData[labelMap[field]] = value;
+      }
+      }
+       return exportData
     });
 
     return exportData;

@@ -685,7 +685,8 @@ export class ProjectResourceService {
     fiscal_year: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -720,7 +721,8 @@ export class ProjectResourceService {
           fiscal_year,
           order,
           sortBy,
-          sortOrder
+          sortOrder,
+          userId
         );
 
       return {
