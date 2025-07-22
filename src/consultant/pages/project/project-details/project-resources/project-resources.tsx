@@ -488,7 +488,7 @@ export const ProjectResources = ({
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSorting}
-              selectable={true}
+              selectable={false}
               onSelectionChange={(selectedIds: unknown) =>
                 console.log('Selected:', selectedIds)
               }
