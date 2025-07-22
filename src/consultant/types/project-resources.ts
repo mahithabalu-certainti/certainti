@@ -150,6 +150,8 @@ export interface ProjectResourceCodeResponse extends CommonApiResponse {
 }
 
 interface ProjectResourceCodeData {
+  resource_type_rid?: string;
+  resource_type_name?: string;
   rid: string;
   resource_code: string;
 }
