@@ -174,7 +174,6 @@ export const AccountDetails = () => {
         filters: filter,
       }),
     };
-    console.log('attachmentPayload', attachmentPayload);
 
     if (exportType === 'project') {
       exportProjectData(exportType, {
