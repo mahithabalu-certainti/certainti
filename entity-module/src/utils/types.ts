@@ -376,4 +376,5 @@ export interface IUpdateInlineProjectResource {
   region_rid?: string | null;
   description?: string | null;
   modified_by?: string;
+  resource_rid?: string;
 }
