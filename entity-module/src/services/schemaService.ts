@@ -370,7 +370,7 @@ class SchemaService {
    * @param accountId - Resource ID (RID).
    * @returns Resource record or null.
    */
-  async fetchResourceById(accountNumber: string, accountId: string) {
+  async fetchResourceById(accountNumber: string, resourceId: string) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
@@ -378,7 +378,7 @@ class SchemaService {
       const Resource = Resources.initialize(sequelize, schemaName);
       const resource = await Resource.findOne({
         where: {
-          rid: accountId,
+          rid: resourceId,
         },
       });
       return resource;

@@ -5,6 +5,7 @@ import resourceSkillRoutes from "./resourceSkillRoutes";
 import projectRoutes from "./projectRoutes";
 import attachmentRoutes from "./attachmentRoutes";
 import projectResourceRoutes from "./projectResourceRoutes";
+import projectTaskRoutes from "./projectTaskRoutes";
 import { errorLog, successLog } from "../utils/helpers";
 import importRoutes from './importRoutes'
 
@@ -34,6 +35,7 @@ routes.use("/resource_skill", resourceSkillRoutes);
 routes.use("/project", projectRoutes);
 routes.use("/attachment", attachmentRoutes);
 routes.use("/project_resources", projectResourceRoutes);
-routes.use("/import", importRoutes)
+routes.use("/import", importRoutes);
+routes.use("/project_tasks", projectTaskRoutes);
 
 export default routes;

@@ -12,12 +12,19 @@ import { ProjectResourceSchemaService } from "./schemaService";
 import { ProjectResourceMapper } from "../../utils/projectMapper";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
+import ProjectIngestionService from "../projectIngestionService";
+import { Logger } from "winston";
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
+  private projectIngestion: ProjectIngestionService;
+  private logger: Logger;
 
-  constructor() {
+
+  constructor(logger: Logger) {
+    this.logger=logger;
     this.projectResourceSchema = new ProjectResourceSchemaService();
+    this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
   async createProjectResource(
@@ -761,7 +768,6 @@ export class ProjectResourceService {
       let mappedAttachments = [];
       if (attachments.length > 0) {
         const sequelize = await initMainDbSequelize();
-        const orgDbSequelize = await initOrgSequelize();
         // Get all IDs from attachments
         const documentTypeIds = attachments.map(
           (attachment) => attachment.document_type_rid
@@ -770,13 +776,9 @@ export class ProjectResourceService {
           (attachment) => attachment.document_category_rid
         );
         const userIds = attachments.map((attachment) => attachment.created_by);
-        const projectResourceIds = attachments.map(
-          (attachment) => attachment.attach_to
-        );
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
-
+        
         // Execute all queries in parallel
-        const [documentTypes, documentCategories, users, projectResources] =
+        const [documentTypes, documentCategories, users] =
           await Promise.all([
             documentTypeIds.length > 0
               ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, {
@@ -795,15 +797,9 @@ export class ProjectResourceService {
                   replacements: { userIds },
                   type: "SELECT",
                 })
-              : [],
-            projectResourceIds.length > 0
-              ? orgDbSequelize.query(
-                  rawQueries.fetchProjectResourcesByIds(schemaName),
-                  { replacements: { projectResourceIds }, type: "SELECT" }
-                )
-              : [],
+              : []
           ]);
-
+          
         // Enhance attachments with related data
         mappedAttachments = attachments.map((attachment) => {
           const documentType = documentTypes.find(
@@ -815,16 +811,14 @@ export class ProjectResourceService {
           const uploadedBy = users.find(
             (u: any) => u.rid === attachment.created_by
           );
-          const attachedTo = projectResources.find(
-            (a: any) => a.rid === attachment.attach_to
-          );
+          const attachedTo = projectResource?.r_number;
 
           return {
             ...attachment,
             document_type: (documentType as any)?.type_name || "",
             document_category: (documentCategory as any)?.category_name || "",
             uploaded_by: (uploadedBy as any)?.full_name || "",
-            attached_to: (attachedTo as any)?.r_number || "",
+            attached_to: attachedTo,
           };
         });
       }

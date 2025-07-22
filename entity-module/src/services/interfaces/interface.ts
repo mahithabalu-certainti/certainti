@@ -518,7 +518,7 @@ export interface IImportListGraphqlServices {
     message: string;
     errorMessage?: string;
     data?: { resourceRolesSubType: any };
-  }>; 
+  }>;
   fetchUserDetails(userRids: string[]) :  Promise<any[]>
   fetchImportById(account_rid : any, rid : any) : Promise<{
     statusCode: number;
@@ -543,4 +543,57 @@ export interface IImportListGraphqlServices {
     statusCode: number;
     data: null;
 }>
+}
+export interface IProjectTaskService {
+  listProjectTasks(
+  accountRid: string,
+  projectRid: string,
+  projectResourceRid: string,
+  filters: Record<string, any>,
+  search: string,
+  page: number,
+  limit: number,
+  sortBy: string,
+  sortOrder: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { tasks: any[]; totalCount: number };
+}>;
+
+  listProjectTasksExport(
+  userId: string,  
+  accountRid: string,
+  projectRid: string,
+  projectResourceRid: string,
+  filters: Record<string, any>,
+  search: string,
+  sortBy: string,
+  sortOrder: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { tasks: any[]; totalCount: number };
+}>;
+
+  getProjectTaskById(
+  accountRid: string,
+  taskRid: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: any;
+}>
+}
+
+export interface IProjectTaskGraphqlServices {
+  updateInlineAttachment (data : any) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
 }

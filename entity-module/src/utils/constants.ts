@@ -64,6 +64,7 @@ export const R_NUMBER_PREFIX = {
   PROJECT_RESOURCE_FISCAL_REGION: 'PRSFR',
   PROJECT_RESOURCE_HISTORY: 'PRSH',
   PROJECT_RESOURCE_TIMELINE: 'PRST',
+  PROJECT_TASK: `PTA`
 }
 
 export const STATUS_MESSAGE = {
@@ -77,6 +78,7 @@ export const STATUS_MESSAGE = {
   keyContactIdMissing : "Key-Contact RID is missing",
   projectUpdateSuccess : "Field updated successfully",
   projectIdMissing : "Project RID missing",
+  projectTaskIdMissing : "Project Task RID is missing",
   fiscalIdMissing : "Project-Fiscal RID is missing",
   projectCodeMissing : "Project-Code missing",
   active : "Active",
@@ -107,6 +109,7 @@ export const STATUS_MESSAGE = {
   noAttachmentRecordFound : "No Attachment record found",
   noDataToUpdate : "Data is requried to update",
   attachmentUpdatedSuccess : "Attachment details updated successfully",
+  projectTaskUpdatedSuccess: "Project task details updated successfully",
   userIdEmpty : "User-Id is missing",
   attachmentIdMissing : "Attachment RID missing",
   docCatInvalid : "Document category you are trying to update is invalid",
@@ -118,7 +121,8 @@ export const STATUS_MESSAGE = {
   targetLoadFailed : "Failed",
   importListedSuccess : "Imports listed successfully",
   importsNoFound : "No imports found",
-  importUpdatedSuccess : "Import updated successfully"
+  importUpdatedSuccess : "Import updated successfully",
+  projectTaskNotFound : "Project Task not found"
 }
 
 export const TYPES = {
@@ -401,6 +405,10 @@ export const rawQueries = {
     return `
       SELECT * FROM ${schemaName}.attachments WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
   },
+  findProjectTaskDetails (schemaName : string, rid : string, account_rid : string) {
+    return `
+      SELECT * FROM ${schemaName}.project_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`
+  },
   fetchSchemaName(r_number : string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace('ACC-', '')}`
   },
@@ -408,6 +416,17 @@ export const rawQueries = {
     return `
     UPDATE 
         ${schemaName}.attachments 
+    SET 
+        ${getSetData.data.join(',')}
+    WHERE
+        rid = '${data.rid}'
+        AND
+        account_rid = '${data.account_rid}'`
+  },
+  updateProjectTaskQuery (schemaName : string, getSetData : any, data : any) {
+    return `
+    UPDATE 
+        ${schemaName}.project_task 
     SET 
         ${getSetData.data.join(',')}
     WHERE
@@ -490,24 +509,6 @@ export const rawQueries = {
       AND
       pf.rid != p.rid
       )`
-  },
-  fetchResourcesByIds(schemaName:string){ 
-    return `SELECT rid, resource_code 
-    FROM ${schemaName}.resources 
-    WHERE rid IN (:resourceIds)
-  `
-  },
-  fetchProjectsByIds(schemaName: string){
-    return `SELECT rid, project_code 
-    FROM ${schemaName}.project 
-    WHERE rid IN (:projectIds)
-  `
-  },
-  fetchProjectResourcesByIds(schemaName: string){
-    return `SELECT rid, r_number 
-    FROM ${schemaName}.project_resource 
-    WHERE rid IN (:projectResourceIds)
-  `
   },
   GET_DOCUMENT_TYPES: `
     SELECT rid, type_name 

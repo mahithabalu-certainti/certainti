@@ -466,16 +466,13 @@ export class ResourceService {
       const attachments = await this.schemaService.fetchAttachmentsByResourceId(resourceId);
       if(attachments.length>0){
       const sequelize = await initMainDbSequelize();
-      const orgDbSequelize = await initOrgSequelize();
       // Extract IDs from attachments
       const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
       const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
       const userIds = attachments.map(attachment => attachment.created_by);
-      const resourceIds = attachments.map(attachment => attachment.attach_to);
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
 
       // Execute all queries in parallel
-      const [documentTypes, documentCategories, users, resources] = await Promise.all([
+      const [documentTypes, documentCategories, users] = await Promise.all([
         documentTypeIds.length > 0 
           ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
               replacements: { documentTypeIds }, 
@@ -495,13 +492,6 @@ export class ResourceService {
               replacements: { userIds },
               type: 'SELECT'
             })
-          : Promise.resolve([]),
-
-        resourceIds.length > 0
-          ? orgDbSequelize.query(rawQueries.fetchResourcesByIds(schemaName), {
-              replacements: { resourceIds },
-              type: 'SELECT'
-            })
           : Promise.resolve([])
       ]);
 
@@ -510,14 +500,14 @@ export class ResourceService {
         const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
         const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
         const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
-        const attachedTo = resources.find((a: any) => a.rid === attachment.attach_to);
+        const attachedTo = resourceDetails?.resource_code;
 
         return {
           ...attachment,
           document_type: (documentType as any)?.type_name || '',
           document_category: (documentCategory as any)?.category_name || '',
           uploaded_by: (uploadedBy as any)?.full_name || '',
-          attached_to: (attachedTo as any) ?.resource_code || ''
+          attached_to: attachedTo
         };
       });
 
