@@ -270,8 +270,6 @@ export interface ModalState {
   fields: ModalField[];
   rowId: string;
   columnId: string;
-  skillTypeIsOthers: boolean;
-  skillSubtypeIsOthers: boolean;
   anchorEl: HTMLElement | null;
   modalFieldValues?: ModalFormData;
 }
@@ -294,8 +292,6 @@ export interface ModalDialogProps {
   onClose: () => void;
   onSubmit: (data: ModalFormData) => void;
   loading?: boolean;
-  skillTypeIsOthers?: boolean;
-  skillSubtypeIsOthers?: boolean;
   initialValues?: ModalFormData;
 }
 

@@ -22,7 +22,6 @@ import {
   FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
-import { OthersEnum } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
@@ -206,22 +205,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     return finalData;
   }, [skillSubType]);
 
-  const othersSkillTypeId = useMemo(() => {
-    const data = skillType as SkillType[];
-    const others = data?.find(
-      (item) => item.skill_type_name.toLowerCase() === OthersEnum.Others
-    );
-    return others?.rid || null;
-  }, [skillType]);
-
-  const othersSkillSubTypeId = useMemo(() => {
-    const data = skillSubType as SkillSubtype[];
-    const others = data?.find(
-      (item) => item.skill_subtype_name?.toLowerCase() === OthersEnum.Others
-    );
-    return others?.rid || null;
-  }, [skillSubType]);
-
   const getRowId = (row: ResourceSkillList) => row?.rid || '';
 
   const handleSkillType = (rid: string) => {
@@ -359,10 +342,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
           onSort={handleSortRequest}
           onCellEdit={handleCellEdit}
           onFieldChange={handleFieldChange}
-          skillTypeIds={{
-            othersSkillTypeId,
-            othersSkillSubTypeId,
-          }}
         />
       )}
     </div>
