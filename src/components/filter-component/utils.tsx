@@ -1,4 +1,5 @@
 // filterUtils.ts
+import { FilterValue } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
 import {
   FieldConfig,
   FilterState,
@@ -299,4 +300,27 @@ export const validateFilters = (
   }
 
   return hasInvalid;
+};
+
+export const applyFilterOnChanges = (
+  savedFilters: Record<string, FilterState>,
+  filterMenu: FieldConfig[],
+  onFilterChange: (field: string, value: FilterValue) => void
+) => {
+  Object.entries(savedFilters).forEach(([fieldName, fieldState]) => {
+    const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      const value =
+        fieldState.enumSelect?.value ??
+        fieldState.multiSelect?.values ??
+        fieldState.text?.value ??
+        fieldState.number?.value ??
+        fieldState.status?.value ??
+        fieldState.date?.value;
+
+      if (value !== undefined) {
+        onFilterChange(fieldName, value);
+      }
+    }
+  });
 };

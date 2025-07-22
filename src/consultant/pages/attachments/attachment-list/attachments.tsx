@@ -12,15 +12,19 @@ import { AttachmentsListURLParams } from '../../../types/attachment';
 import { AttachmentTable } from './table/attachment-table';
 import Filter from '../../account-details-sidebar/components/filter/filter';
 import {
+  AllModules,
   AllPermissions,
   useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
 } from '../../../../common-service';
-import { getFiscalYears } from '../../../../common-utils';
+import { checkPermission, getFiscalYears } from '../../../../common-utils';
 import { SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 export const Attachments: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -36,21 +40,22 @@ export const Attachments: React.FC = () => {
     isGlobal: true,
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const [currentCategory, setCurrentCategory] = useState<string>('');
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
   };
 
   // Permission Management
-  // const { modules, permission } = useSelector(
-  //   (state: RootState) => state.permission
-  // );
-  // const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
-  // const isProjectViewEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.PROJECTS_VIEW_EDIT
-  // );
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const attachmentEnable = checkPermission(modules, AllModules.ATTACHMENTS);
+
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -98,16 +103,17 @@ export const Attachments: React.FC = () => {
     exportAttachmentsData('all_attachments', projectParams);
   };
 
-  const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+      categoryTypes.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
+    [categoryTypes.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
@@ -119,10 +125,17 @@ export const Attachments: React.FC = () => {
     [allDocumentInfo.data?.data.documentCategories]
   );
 
+  const handleCategory = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'document_category_rid' && value) {
+      setCurrentCategory(String(value));
+    }
+  };
+
   const fieldOptions = {
     fiscalYears: fiscalYears,
     docCategories: memoizedDocumentCategories,
     docTypes: memoizedDocumentTypes,
+    docTypesLoading: categoryTypes.isLoading,
   };
 
   // Permissions
@@ -158,6 +171,8 @@ export const Attachments: React.FC = () => {
       onClick: () => handleExport(),
     },
   ];
+
+  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full  h-full'>
@@ -226,6 +241,7 @@ export const Attachments: React.FC = () => {
               handleCloseFilter={handleCloseFilter}
               setCurrentPage={setPage}
               handleSorting={handleSorting}
+              onFilterChange={handleCategory}
             />
           </Suspense>
         </div>
@@ -239,6 +255,7 @@ export const Attachments: React.FC = () => {
           setTotalCount={setTotalCount}
           refreshTrigger={refreshTrigger}
           fieldOptions={fieldOptions}
+          setCurrentCategory={setCurrentCategory}
         />
       </div>
     </div>

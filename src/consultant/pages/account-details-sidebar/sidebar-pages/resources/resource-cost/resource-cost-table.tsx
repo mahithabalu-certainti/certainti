@@ -22,14 +22,10 @@ import { CellEditData } from '../../../../../../components/table/types';
 import { ResourceTypeEnum } from '../../../../resource-form/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import {
-  AllPermissions,
-  useGetAllDocumentInfo,
-} from '../../../../../../common-service';
-import { SelectOption } from '../../../../../types';
-import { fiscalYears } from '../../../../resource-form/form-data';
+import { AllPermissions } from '../../../../../../common-service';
 import Uploads from '../../../../../../components/Attachments/upload';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup.tsx';
+import { checkPermission } from '../../../../../../common-utils/common-utils.ts';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -122,22 +118,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     }
   }, [costList]);
 
-  useEffect(() => {
-    return () => {
-      const currentParams = new URLSearchParams(window.location.search);
-      if (currentParams.has('attachment_entity')) {
-        currentParams.delete('attachment_entity');
-        navigate(
-          {
-            pathname: location.pathname,
-            search: currentParams.toString(),
-          },
-          { replace: true }
-        );
-      }
-    };
-  }, [navigate, location.pathname]);
-
   const currency = useFetchCurrency();
 
   const memoizedCurrency = useMemo(
@@ -165,6 +145,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     });
     return map;
   }, [costViewEditFields]);
+
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
@@ -267,32 +252,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   const isFullTime = resourceType?.toLowerCase() === ResourceTypeEnum.FULL_TIME;
 
-  const allDocumentInfo = useGetAllDocumentInfo();
-
-  const memoizedDocumentTypes: SelectOption[] = useMemo(
-    () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
-        label: type.type_name,
-        value: type.rid,
-      })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
-  );
-
-  const memoizedDocumentCategories: SelectOption[] = useMemo(
-    () =>
-      allDocumentInfo.data?.data.documentCategories.map((category) => ({
-        label: category.category_name,
-        value: category.rid,
-      })) || [],
-    [allDocumentInfo.data?.data.documentCategories]
-  );
-
-  const fieldOptions = {
-    fiscalYears: fiscalYears,
-    docCategories: memoizedDocumentCategories,
-    docTypes: memoizedDocumentTypes,
-  };
-
   const showUploads = searchParams.get('attachment_entity') === 'resource_cost';
 
   const handleAttachmentClick = (rowId: string) => {
@@ -313,7 +272,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     permissionMap,
     accountInActive,
     handleAttachmentClick,
-    resourceInActive
+    resourceInActive,
+    attachmentCreateEnable
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -410,11 +370,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   return (
     <div>
       {showUploads ? (
-        <Uploads
-          accountId={accountid}
-          attachID={selectedRowId}
-          fieldOptions={fieldOptions}
-        />
+        <Uploads accountId={accountid} attachID={selectedRowId} />
       ) : (
         <ListTable
           data={resourceCostList}

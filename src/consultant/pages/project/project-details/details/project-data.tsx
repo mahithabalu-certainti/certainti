@@ -1,8 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 import {
   DetailsKeyContactErrorIcon,
   ProjectsBook,
@@ -60,7 +56,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
-  projectDownloadIsEnable,
+  // projectDownloadIsEnable,
   projectEditIsEnable,
   permission,
 }) => {
@@ -115,7 +111,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      hide: !projectDownloadIsEnable,
+      // hide: !projectDownloadIsEnable,
+      hide: true,
     },
   ];
 

@@ -18,6 +18,7 @@ type Column<T> = {
   label: string;
   width?: number;
   hide?: boolean;
+  sticky?: boolean;
   render?: (row: T) => React.ReactNode;
   sx?: React.CSSProperties;
 };
@@ -101,32 +102,36 @@ const DetailsTable = <T extends RowData>({
           ) : (
             data.map((row, i) => (
               <TableRow key={i} sx={{ height: '28px' }}>
-                {columns.map((col, j) => (
-                  <TableCell
-                    key={col.id}
-                    sx={{
-                      height: '28px',
-                      padding: '0px 8px',
-                      px: j === 0 ? 3.2 : 1,
-                      width: col.width,
-                      minWidth: col.width,
-                      maxWidth: col.width,
-                      display: col.hide ? 'none' : 'table-cell',
-                      ...(col.sx || {}),
-                    }}
-                  >
-                    {col.render ? (
-                      col.render(row) || '-'
-                    ) : (
-                      <TruncateWithTooltip
-                        text={String(row[col.id] ?? '-')}
-                        maxWidth={(col.width || 160) - 10}
-                      >
-                        {String(row[col.id] ?? '-')}
+                {columns.map((col, j) => {
+                  const cellValue = col.render ? col.render(row) : row[col.id];
+
+                  const displayValue =
+                    cellValue !== null &&
+                    cellValue !== undefined &&
+                    cellValue !== ''
+                      ? cellValue
+                      : '-';
+                  return (
+                    <TableCell
+                      key={col.id}
+                      sx={{
+                        height: '28px',
+                        padding: '0px 8px',
+                        px: j === 0 ? 3.2 : 1,
+                        width: col.width,
+                        minWidth: col.width,
+                        maxWidth: col.width,
+                        display: col.hide ? 'none' : 'table-cell',
+                        ...(col.sx || {}),
+                        zIndex: col.sticky ? 6 : 'auto',
+                      }}
+                    >
+                      <TruncateWithTooltip maxWidth={Number(col.width)}>
+                        {displayValue as React.ReactNode}
                       </TruncateWithTooltip>
-                    )}
-                  </TableCell>
-                ))}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))
           )}

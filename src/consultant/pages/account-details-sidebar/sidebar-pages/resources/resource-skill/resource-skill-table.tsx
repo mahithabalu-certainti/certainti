@@ -22,16 +22,12 @@ import {
   FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
-import { OthersEnum, SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import {
-  AllPermissions,
-  useGetAllDocumentInfo,
-} from '../../../../../../common-service';
-import { fiscalYears } from '../../../../resource-form/form-data';
+import { AllPermissions } from '../../../../../../common-service';
 import Uploads from '../../../../../../components/Attachments/upload';
+import { checkPermission } from '../../../../../../common-utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -112,21 +108,10 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     }
   }, [skillList]);
 
-  useEffect(() => {
-    return () => {
-      const currentParams = new URLSearchParams(window.location.search);
-      if (currentParams.has('attachment_entity')) {
-        currentParams.delete('attachment_entity');
-        navigate(
-          {
-            pathname: location.pathname,
-            search: currentParams.toString(),
-          },
-          { replace: true }
-        );
-      }
-    };
-  }, [navigate, location.pathname]);
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
 
   //permissions
   const skillViewEditFields = useMemo(
@@ -220,22 +205,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     return finalData;
   }, [skillSubType]);
 
-  const othersSkillTypeId = useMemo(() => {
-    const data = skillType as SkillType[];
-    const others = data?.find(
-      (item) => item.skill_type_name.toLowerCase() === OthersEnum.Others
-    );
-    return others?.rid || null;
-  }, [skillType]);
-
-  const othersSkillSubTypeId = useMemo(() => {
-    const data = skillSubType as SkillSubtype[];
-    const others = data?.find(
-      (item) => item.skill_subtype_name?.toLowerCase() === OthersEnum.Others
-    );
-    return others?.rid || null;
-  }, [skillSubType]);
-
   const getRowId = (row: ResourceSkillList) => row?.rid || '';
 
   const handleSkillType = (rid: string) => {
@@ -262,7 +231,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     permissionMap,
     accountInActive,
     handleAttachmentClick,
-    resourceInActive
+    resourceInActive,
+    attachmentCreateEnable
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -333,43 +303,14 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(previousSkillList);
     }
   };
-  const allDocumentInfo = useGetAllDocumentInfo();
-
-  const memoizedDocumentTypes: SelectOption[] = useMemo(
-    () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
-        label: type.type_name,
-        value: type.rid,
-      })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
-  );
-
-  const memoizedDocumentCategories: SelectOption[] = useMemo(
-    () =>
-      allDocumentInfo.data?.data.documentCategories.map((category) => ({
-        label: category.category_name,
-        value: category.rid,
-      })) || [],
-    [allDocumentInfo.data?.data.documentCategories]
-  );
 
   const showUploads =
     searchParams.get('attachment_entity') === 'resource_skill';
 
-  const fieldOptions = {
-    fiscalYears: fiscalYears,
-    docCategories: memoizedDocumentCategories,
-    docTypes: memoizedDocumentTypes,
-  };
-
   return (
     <div>
       {showUploads ? (
-        <Uploads
-          accountId={accountid}
-          attachID={selectedRowId}
-          fieldOptions={fieldOptions}
-        />
+        <Uploads accountId={accountid} attachID={selectedRowId} />
       ) : (
         <ListTable
           data={resourceSkillList}
@@ -401,10 +342,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
           onSort={handleSortRequest}
           onCellEdit={handleCellEdit}
           onFieldChange={handleFieldChange}
-          skillTypeIds={{
-            othersSkillTypeId,
-            othersSkillSubTypeId,
-          }}
         />
       )}
     </div>

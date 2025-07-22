@@ -6,6 +6,7 @@ import {
 } from '../../../account-details/utils';
 import {
   applyHidePermission,
+  checkPermission,
   costDisplay,
   formatDateToYYYYMMDDWithTime,
 } from '../../../../../common-utils';
@@ -13,11 +14,11 @@ import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 import DetailsTable from '../../../../../components/details-section/details-table';
-import { attachmentColumns } from '../../../../../components/details-section/helpers';
 import { RootState } from '../../../../../store/store';
 import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
+import { getDetailsAttachmentColumns } from '../../../../../components/details-section/helpers';
 
 interface DetailsInfoProps {
   detailsInfo?: accountDetailsProps;
@@ -70,6 +71,32 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   }, [userViewEditFields]);
   const keycontactVisable =
     !permissionMap['keyContacts']?.read && !permissionMap['keyContacts']?.edit;
+
+  const isAttachmentViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+
+  const attachmentColumns = getDetailsAttachmentColumns(
+    attachmentPermissionMap
+  );
+
   if (detailsError) {
     return (
       <div className='flex flex-col items-center justify-center h-64 p-4'>
@@ -296,7 +323,8 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         fullColumn={true}
       />
       {accountDetails?.attachments &&
-        accountDetails?.attachments.length > 0 && (
+        accountDetails?.attachments.length > 0 &&
+        isAttachmentViewEnable && (
           <DetailsTable
             title='Attachments'
             columns={attachmentColumns}
