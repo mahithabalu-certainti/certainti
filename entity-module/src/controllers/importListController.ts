@@ -123,51 +123,288 @@ async function fetchAllImportList(req: Request, res: Response) {
     }
 }
 
-async function fetchAllStagingFailureList (req : Request, res : Response) {
+async function exportStagingFailureList (req : Request, res : Response) {
     try {
-        const {account_rid, import_rid,entity_type} = req.params
-        const validation = validateStagingErrorListRequest(account_rid, import_rid,entity_type)
-        if(validation) {
-            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
-            return;
+        const { account_rid, import_rid, entity_type } = req.params;
+
+        const validation = validateStagingErrorListRequest(account_rid, import_rid, entity_type);
+        if (validation) {
+            return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation);
         }
-        const result = await importServices.listAllStageFailures(account_rid, import_rid,entity_type)
-        if(result.statusCode == HttpStatus.SUCCESS) {
-            handleSuccessResponse(res, result.data);
-            return;
+
+        const result = await importServices.listAllStageFailures(account_rid, import_rid, entity_type);
+
+        if (result.statusCode !== HttpStatus.SUCCESS) {
+            return handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
         }
-        else {
-            handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
-            return 
+
+        const results = result.data as any[];
+
+        let finalPaginatedData: any[] = [];
+        let failureType = "";
+
+        switch (entity_type) {
+            case "project":
+                failureType = "Import - Load Failures - Project";
+                finalPaginatedData = results.map((data) => ({
+                    "Project Id": data.project_id,
+                    "Project Name": data.project_name,
+                    "Project Description": data.project_description,
+                    "Total Hours": data.total_hours,
+                    "Total Cost": data.total_cost,
+                    "Point Of Contact": data.point_of_contact,
+                    "Point Of Contact Email": data.point_of_contact_email,
+                    "Start Date": data.start_date,
+                    "End Date": data.end_date,
+                    "Detailed Description": data.detailed_description,
+                    "Currency": data.currency,
+                    "Industry": data.industry,
+                    "Program Name": data.program_name,
+                    "Client Organization": data.client_organization,
+                    "Country": data.country,
+                    "City": data.city,
+                    "Region": data.region,
+                    "Project Manager": data.project_manager,
+                    "Project Lead": data.project_lead,
+                    "Project Tech Poc Name": data.project_tech_poc_name,
+                    "Project Tech Poc Email": data.project_tech_poc_email,
+                    "Project Delivery Head Name": data.project_delivery_head_name,
+                    "Project Delivery Head Email": data.project_delivery_head_email,
+                    "Project Type": data.project_type,
+                    "Project Classification": data.project_classification,
+                    "Project Client Group": data.project_client_group,
+                    "Project Group": data.project_group,
+                    "Total Fte Count": data.total_fte_count,
+                    "Total Sub Con Count": data.total_sub_con_count,
+                    "Total Fte Effort In Hrs": data.total_fte_effort_in_hrs,
+                    "Total Fte Cost": data.total_fte_cost,
+                    "Total Sub Con Effort In Hrs": data.total_sub_con_effort_in_hrs,
+                    "Total Sub Con Cost": data.total_sub_con_cost,
+                    "Total Non Labor Cost": data.total_non_labor_cost,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "project_resource":
+                failureType = "Import - Load Failures - Project Resource";
+                finalPaginatedData = results.map((data) => ({
+                    "Project Id": data.project_id,
+                    "Project Name": data.project_name,
+                    "Project Description": data.project_description,
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Resource Designation": data.resource_designation,
+                    "Resource Role": data.resource_role,
+                    "Start Date": data.start_date,
+                    "End Date": data.end_date,
+                    "Total Experience": data.total_experience,
+                    "Total Hours": data.total_hours,
+                    "Total Cost": data.total_cost,
+                    "Project Resource Description": data.project_resource_description,
+                    "Resource City": data.resource_city,
+                    "Resource State Province": data.resource_state_province,
+                    "Resource Country": data.resource_country,
+                    "Currency": data.currency,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "resource":
+                failureType = "Import - Load Failures - Resource";
+                finalPaginatedData = results.map((data) => ({
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Resource Organization": data.resource_organization,
+                    "Resource Designation": data.resource_designation,
+                    "Resource Role": data.resource_role,
+                    "Total Experience": data.total_experience,
+                    "Resource Start Date": data.resource_start_date,
+                    "Resource End Date": data.resource_end_date,
+                    "Resource City": data.resource_city,
+                    "Resource State Province": data.resource_state_province,
+                    "Resource Country": data.resource_country,
+                    "Years In Organization": data.years_in_organization,
+                    "Comments": data.comments,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "resource_skill":
+                failureType = "Import - Load Failures - Resource Skill";
+                finalPaginatedData = results.map((data) => ({
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Start Date": data.start_date,
+                    "Skill Type": data.skill_type,
+                    "Skill Sub Type": data.skill_subtype,
+                    "Skill Details": data.skill_details,
+                    "Skill Level": data.skill_level,
+                    "Comments": data.comments,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            default:
+                return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "Invalid entity type.");
         }
-    } catch (error : any) {
-        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
-        return
+
+        const base64Response = await generateExcelBase64(finalPaginatedData, failureType);
+        handleSuccessResponse(res, base64Response);
+        return;  
+
+    } catch (error: any) {
+        return handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
     }
 }
 
-async function fetchAllLoadFailureList (req : Request, res : Response) {
+async function exportLoadFailureList(req: Request, res: Response) {
     try {
-        const {account_rid, import_rid,entity_type} = req.params
-        const validation = validateLoadErrorListRequest(account_rid, import_rid,entity_type)
-        if(validation) {
-            handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
-            return;
+        const { account_rid, import_rid, entity_type } = req.params;
+
+        const validation = validateLoadErrorListRequest(account_rid, import_rid, entity_type);
+        if (validation) {
+            return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation);
         }
-        const result = await importServices.listAllLoadFailures(account_rid, import_rid,entity_type)
-        if(result.statusCode == HttpStatus.SUCCESS) {
-            handleSuccessResponse(res, result.data);
-            return;
+
+        const result = await importServices.listAllLoadFailures(account_rid, import_rid, entity_type);
+
+        if (result.statusCode !== HttpStatus.SUCCESS) {
+            return handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
         }
-        else {
-            handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
-            return 
+
+        const results = result.data as any[];
+
+        let finalPaginatedData: any[] = [];
+        let failureType = "";
+
+        switch (entity_type) {
+            case "project":
+                failureType = "Import - Load Failures - Project";
+                finalPaginatedData = results.map((data) => ({
+                    "Project Id": data.project_id,
+                    "Project Name": data.project_name,
+                    "Project Description": data.project_description,
+                    "Total Hours": data.total_hours,
+                    "Total Cost": data.total_cost,
+                    "Point Of Contact": data.point_of_contact,
+                    "Point Of Contact Email": data.point_of_contact_email,
+                    "Start Date": data.start_date,
+                    "End Date": data.end_date,
+                    "Detailed Description": data.detailed_description,
+                    "Currency": data.currency,
+                    "Industry": data.industry,
+                    "Program Name": data.program_name,
+                    "Client Organization": data.client_organization,
+                    "Country": data.country,
+                    "City": data.city,
+                    "Region": data.region,
+                    "Project Manager": data.project_manager,
+                    "Project Lead": data.project_lead,
+                    "Project Tech Poc Name": data.project_tech_poc_name,
+                    "Project Tech Poc Email": data.project_tech_poc_email,
+                    "Project Delivery Head Name": data.project_delivery_head_name,
+                    "Project Delivery Head Email": data.project_delivery_head_email,
+                    "Project Type": data.project_type,
+                    "Project Classification": data.project_classification,
+                    "Project Client Group": data.project_client_group,
+                    "Project Group": data.project_group,
+                    "Total Fte Count": data.total_fte_count,
+                    "Total Sub Con Count": data.total_sub_con_count,
+                    "Total Fte Effort In Hrs": data.total_fte_effort_in_hrs,
+                    "Total Fte Cost": data.total_fte_cost,
+                    "Total Sub Con Effort In Hrs": data.total_sub_con_effort_in_hrs,
+                    "Total Sub Con Cost": data.total_sub_con_cost,
+                    "Total Non Labor Cost": data.total_non_labor_cost,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "project_resource":
+                failureType = "Import - Load Failures - Project Resource";
+                finalPaginatedData = results.map((data) => ({
+                    "Project Id": data.project_id,
+                    "Project Name": data.project_name,
+                    "Project Description": data.project_description,
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Resource Designation": data.resource_designation,
+                    "Resource Role": data.resource_role,
+                    "Start Date": data.start_date,
+                    "End Date": data.end_date,
+                    "Total Experience": data.total_experience,
+                    "Total Hours": data.total_hours,
+                    "Total Cost": data.total_cost,
+                    "Project Resource Description": data.project_resource_description,
+                    "Resource City": data.resource_city,
+                    "Resource State Province": data.resource_state_province,
+                    "Resource Country": data.resource_country,
+                    "Currency": data.currency,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "resource":
+                failureType = "Import - Load Failures - Resource";
+                finalPaginatedData = results.map((data) => ({
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Resource Organization": data.resource_organization,
+                    "Resource Designation": data.resource_designation,
+                    "Resource Role": data.resource_role,
+                    "Total Experience": data.total_experience,
+                    "Resource Start Date": data.resource_start_date,
+                    "Resource End Date": data.resource_end_date,
+                    "Resource City": data.resource_city,
+                    "Resource State Province": data.resource_state_province,
+                    "Resource Country": data.resource_country,
+                    "Years In Organization": data.years_in_organization,
+                    "Comments": data.comments,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "resource_skill":
+                failureType = "Import - Load Failures - Resource Skill";
+                finalPaginatedData = results.map((data) => ({
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Start Date": data.start_date,
+                    "Skill Type": data.skill_type,
+                    "Skill Sub Type": data.skill_subtype,
+                    "Skill Details": data.skill_details,
+                    "Skill Level": data.skill_level,
+                    "Comments": data.comments,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            default:
+                return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "Invalid entity type.");
         }
-    } catch (error : any) {
-        handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
-        return
+
+        const base64Response = await generateExcelBase64(finalPaginatedData, failureType);
+        handleSuccessResponse(res, base64Response);
+        return;  
+
+    } catch (error: any) {
+        return handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
     }
 }
+
 async function importListByRid (req : Request, res : Response) {
     try {
         const {account_rid, rid} = req.params
@@ -335,6 +572,6 @@ export default {
     importListByRid,
     exportAllImportedData,
     exportImportListPerRow,
-    fetchAllStagingFailureList,
-    fetchAllLoadFailureList
+    exportStagingFailureList,
+    exportLoadFailureList
 }
