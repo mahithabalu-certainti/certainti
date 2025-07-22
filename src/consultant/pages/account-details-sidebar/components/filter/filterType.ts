@@ -210,7 +210,13 @@ export type FieldConfig = {
   operatorOption?: { option: string; value: string }[];
 };
 
-export type FilterValue = string | string[] | number | undefined | undefined[];
+export type FilterValue =
+  | string
+  | string[]
+  | number
+  | undefined
+  | undefined[]
+  | { from?: string; to?: string };
 
 export interface FilterComponentProps {
   value: string;

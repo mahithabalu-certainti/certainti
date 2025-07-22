@@ -120,6 +120,12 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     permission || [],
     AllPermissions.ACCOUNT_RESOURCE_SKILL_DELETE
   );
+
+  const isAttachmentViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
   const {
     data: resource,
     isLoading,
@@ -150,6 +156,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     const status =
       resource?.data?.resourceDetails?.status_name.toLowerCase() !== 'active';
     setResourceInActive(status);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource, permissionMap]);
 
   return (
@@ -257,7 +264,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
             />
           </Box>
         )}
-        {value === 'attachments' && isResourceSkillViewEnable && (
+        {value === 'attachments' && isAttachmentViewEnable && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <ResourceAttachmentsTable
               fiscalYear={fiscalYearValue}

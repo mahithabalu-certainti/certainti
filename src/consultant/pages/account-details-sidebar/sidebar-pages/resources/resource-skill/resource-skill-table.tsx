@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import Uploads from '../../../../../../components/Attachments/upload';
+import { checkPermission } from '../../../../../../common-utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -107,6 +108,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(skillList.resourceSkill);
     }
   }, [skillList]);
+
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
 
   //permissions
   const skillViewEditFields = useMemo(
@@ -242,7 +248,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     permissionMap,
     accountInActive,
     handleAttachmentClick,
-    resourceInActive
+    resourceInActive,
+    attachmentCreateEnable
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {

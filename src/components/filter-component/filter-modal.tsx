@@ -28,6 +28,7 @@ import {
   storeFilters,
   getStoredFilters,
   validateFilters,
+  applyFilterOnChanges,
 } from './utils';
 import {
   NewTextFilterControl,
@@ -121,6 +122,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   useEffect(() => {
     const saved = getStoredFilters();
+    if (isOpen && saved && onFilterChange) {
+      const savedFilters = saved as Record<string, FilterState>;
+      applyFilterOnChanges(savedFilters, filterFields, onFilterChange);
+    }
     if (regularFilters.length > 0 && !saved) {
       // Automatically select the first field if no saved filters exist
       const firstField = regularFilters[0];
@@ -129,6 +134,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         [firstField.name]: getInitialStateForField(firstField),
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   useEffect(() => {

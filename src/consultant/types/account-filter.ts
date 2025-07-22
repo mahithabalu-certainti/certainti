@@ -173,6 +173,14 @@ export interface FilterComponentProps {
   setPage: (page: number) => void;
 }
 
+export type FilterValue =
+  | string
+  | string[]
+  | number
+  | undefined
+  | undefined[]
+  | { from?: string; to?: string };
+
 export interface FilterModalProps {
   isOpen: boolean;
   filterId: string | undefined;
@@ -182,10 +190,7 @@ export interface FilterModalProps {
   setPage: (page: number) => void;
   handleCloseFilter: () => void;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
-  onFilterChange?: (
-    fieldName: string,
-    value: string | string[] | number | undefined | undefined[]
-  ) => void;
+  onFilterChange?: (fieldName: string, value: FilterValue) => void;
 }
 
 export const StatusOptions = [

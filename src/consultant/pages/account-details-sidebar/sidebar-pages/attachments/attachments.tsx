@@ -6,23 +6,26 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { ListTable } from '../../../../../components/table';
-import { getAttachmentColumns } from './column';
 import {
+  AllModules,
   AllPermissions,
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../../common-service';
 import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { SelectOption } from '../../../../types';
+import { ExportType, SelectOption } from '../../../../types';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import {
   AttachmentList,
   AttachmentsListExportParams,
 } from '../../../../types/attachment';
 import { SectionTabPanel } from '../../../../../components';
-import { getFiscalYears } from '../../../../../common-utils';
-import { getAttachmentsFilterFields } from '../../../../../components/Attachments/helpers';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
+import {
+  getAttachmentsFilterFields,
+  getAttachmentTableColumns,
+} from '../../../../../components/Attachments/helpers';
 import {
   CellEditData,
   FieldChangeEvent,
@@ -35,6 +38,7 @@ import { useToast } from '../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { FilterValue } from '../../components/filter/filterType';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -51,23 +55,29 @@ const AttachmentTabs: ResourceTabs[] = [
 ];
 
 interface AttachmentsProps {
-  setExportType?: (
-    type: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
-  ) => void;
+  setExportType?: (type: ExportType) => void;
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
   accountInActive: boolean;
+  refetchAccountDetails: () => void;
 }
 
-const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
+const Attachments: React.FC<AttachmentsProps> = ({
+  setExportType,
+  setAttachmentParams,
+  accountInActive,
+  refetchAccountDetails,
+}) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
@@ -110,6 +120,19 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('attachments');
+    }
+    setAttachmentParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortField, sortOrder, appliedFilters]);
+
   const fiscalYears = getFiscalYears(20);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
@@ -139,6 +162,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   };
   const onRefreshClick = () => {
     setRefreshAttachments(Date.now());
+    refetchAccountDetails();
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -165,6 +189,11 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     });
   };
 
+  const attachmentCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const headerButtons = [
     {
       label: 'Upload file',
@@ -172,7 +201,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
       disabled: accountInActive,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
-      hide: false,
+      hide: !attachmentCreateEnable,
     },
   ];
 
@@ -191,7 +220,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
   };
 
   // Permissions
-  const costViewEditFields = useMemo(
+  const attachmentViewEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -201,11 +230,18 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    attachmentViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [attachmentViewEditFields]);
+
+  const attachmentEnable = checkPermission(modules, AllModules.ATTACHMENTS);
+
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
 
   const fieldOptions = {
     fiscalYears: fiscalYears,
@@ -222,13 +258,13 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
     }
   };
 
-  const attachmentColumns = getAttachmentColumns(
+  const attachmentColumns = getAttachmentTableColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
     handleDocumentCategory,
-    categoryTypes.isLoading,
-    permissionMap
+    permissionMap,
+    categoryTypes.isLoading
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -314,6 +350,8 @@ const Attachments: React.FC<AttachmentsProps> = ({ accountInActive }) => {
       setAttachmentList(previousAttachments);
     }
   };
+
+  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>

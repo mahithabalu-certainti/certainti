@@ -36,6 +36,7 @@ import {
   TextFilterControlForCostAndSKill,
 } from './helper';
 import {
+  applyFilterOnChanges,
   clearFilters,
   getStoredFilters,
   resetFilter,
@@ -97,6 +98,10 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   useEffect(() => {
     const saved = getStoredFilters(value || 'resource');
+    if (isOpen && saved && onFilterChange) {
+      const savedFilters = saved as Record<string, FilterState>;
+      applyFilterOnChanges(savedFilters, filterMenu, onFilterChange);
+    }
     if (regularFilters.length > 0 && !saved) {
       // Automatically select the first field if no saved filters exist
       const firstField = regularFilters[0];

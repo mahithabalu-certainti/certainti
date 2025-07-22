@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAttachmentList } from '../../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../../types/attachment';
-import { getResourceAttachmentColumns } from './column';
 import { ListTable } from '../../../../../../components/table';
 import { useParams } from 'react-router-dom';
 import {
+  AllModules,
   AllPermissions,
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../../../common-service';
-import { getFiscalYears } from '../../../../../../common-utils';
+import {
+  checkPermission,
+  getFiscalYears,
+} from '../../../../../../common-utils';
 import { SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { ATTACHMENT_UPDATE } from '../../../../../../api/graphql/queries/attachment-query';
@@ -24,6 +27,8 @@ import {
 } from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
+import { getAttachmentTableColumns } from '../../../../../../components/Attachments/helpers';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
 interface ResourceSkillTableProps {
   fiscalYear?: number;
   appliedFilters?: Record<string, any>;
@@ -53,7 +58,9 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const { errorToast } = useToast();
   const { accountid } = useParams();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
@@ -123,7 +130,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentPage(0);
   };
 
-  const costViewEditFields = useMemo(
+  const attachmentViewEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -133,11 +140,18 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    attachmentViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [attachmentViewEditFields]);
+
+  const attachmentEnable = checkPermission(modules, AllModules.ATTACHMENTS);
+
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
 
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
@@ -149,13 +163,13 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentCategory(rid);
   };
 
-  const attachmentColumns = getResourceAttachmentColumns(
+  const attachmentColumns = getAttachmentTableColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
     handleDocumentCategory,
-    categoryTypes.isLoading,
-    permissionMap
+    permissionMap,
+    categoryTypes.isLoading
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -236,6 +250,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       setAttachmentList(previousAttachments);
     }
   };
+
+  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   return (
     <div>

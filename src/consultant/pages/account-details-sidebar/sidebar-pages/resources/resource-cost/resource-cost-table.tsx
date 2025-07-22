@@ -25,6 +25,7 @@ import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import Uploads from '../../../../../../components/Attachments/upload';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup.tsx';
+import { checkPermission } from '../../../../../../common-utils/common-utils.ts';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -144,6 +145,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     });
     return map;
   }, [costViewEditFields]);
+
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
@@ -266,7 +272,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     permissionMap,
     accountInActive,
     handleAttachmentClick,
-    resourceInActive
+    resourceInActive,
+    attachmentCreateEnable
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {

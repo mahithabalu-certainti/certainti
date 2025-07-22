@@ -114,7 +114,7 @@ const tabs: TabMenus[] = [
     label: 'Attachments',
     value: 'attachments',
     hide: false,
-    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
+    id: AllPermissions.ATTACHMENT_VIEW_EDIT,
   },
 ];
 
@@ -466,13 +466,18 @@ const Resource: React.FC<ResourceProps> = ({
     return false;
   };
 
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      hide: value !== 'details',
+      hide: value !== 'details' || !attachmentCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
