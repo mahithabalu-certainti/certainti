@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { TextField, Box, Tooltip, Popover } from '@mui/material';
 import TextButton from '../button/text-button';
 import {
-  ModalField,
   ModalFormData,
   ModalFormErrors,
   ModalDialogProps,
@@ -17,8 +16,6 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   onClose,
   onSubmit,
   loading = false,
-  skillTypeIsOthers = false,
-  skillSubtypeIsOthers = false,
   initialValues,
 }) => {
   const [formData, setFormData] = useState<ModalFormData>({});
@@ -30,41 +27,6 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
     }
   }, [open, initialValues]);
 
-  // Determine which fields to show based on the scenario
-  const getVisibleFields = (): ModalField[] => {
-    if (fields.length <= 2) {
-      // For skill type/subtype modal, filter based on scenarios
-      const skillTypeField = fields.find((f) => f.id === 'skill_type_others');
-      const skillSubtypeField = fields.find(
-        (f) => f.id === 'skill_subtype_others'
-      );
-
-      if (skillTypeField && skillSubtypeField) {
-        const visibleFields: ModalField[] = [];
-
-        // Scenario 1: Both are "others" - show both fields
-        if (skillTypeIsOthers && skillSubtypeIsOthers) {
-          visibleFields.push(skillTypeField, skillSubtypeField);
-        }
-        // Scenario 2: Only skill type is "others" - show only skill type field
-        else if (skillTypeIsOthers && !skillSubtypeIsOthers) {
-          visibleFields.push(skillTypeField);
-        }
-        // Scenario 3: Only skill subtype is "others" - show only skill subtype field
-        else if (!skillTypeIsOthers && skillSubtypeIsOthers) {
-          visibleFields.push(skillSubtypeField);
-        }
-
-        return visibleFields;
-      }
-    }
-
-    // For other modals (like classification, industry), show all fields
-    return fields;
-  };
-
-  const visibleFields = getVisibleFields();
-
   const handleChange = (fieldId: string, value: ModalFormValue): void => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
     if (errors[fieldId]) {
@@ -75,7 +37,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
   const validateForm = (): boolean => {
     const newErrors: ModalFormErrors = {};
 
-    for (const field of visibleFields) {
+    for (const field of fields) {
       const value = formData[field.id];
 
       if (field.required && (!value || value === '')) {
@@ -101,7 +63,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
     if (validateForm()) {
       // Only submit data for visible fields
       const submitData: ModalFormData = {};
-      visibleFields.forEach((field) => {
+      fields.forEach((field) => {
         if (formData[field.id] !== undefined && formData[field.id] !== '') {
           submitData[field.id] = formData[field.id];
         }
@@ -141,7 +103,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
       setFormData({});
       setErrors({});
     }
-  }, [open, skillTypeIsOthers, skillSubtypeIsOthers]);
+  }, [open]);
 
   const getPlacement = () => {
     if (anchorEl) {
@@ -188,7 +150,7 @@ const ModalDialog: React.FC<ModalDialogProps> = ({
     >
       <Box sx={{ p: 2, pointerEvents: 'all !important' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {visibleFields.map((field) => {
+          {fields.map((field) => {
             const hasError = !!errors[field.id];
             const isTextarea = field.type === 'textarea';
 

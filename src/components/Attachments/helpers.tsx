@@ -407,11 +407,15 @@ export const getAttachmentTableColumns = (
               (opt) => String(opt.value) === String(docType)
             );
 
+            const directlyShowModal =
+              String(docCategory).toLowerCase() === OthersEnum.Others ||
+              String(docType).toLowerCase() === OthersEnum.Others;
+
             // Show modal if either is "Others"
             const shouldShowModal =
               categoryFound?.label.toLowerCase() === OthersEnum.Others ||
               typeFound?.label.toLowerCase() === OthersEnum.Others;
-            return shouldShowModal;
+            return shouldShowModal || directlyShowModal;
           },
           action: 'show_modal',
           modalFields: [
