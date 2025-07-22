@@ -9,7 +9,35 @@ export const getUserGroupColumns = (): ListTableColumn<UserGroupList>[] => [
     sortId: 'group_name',
     label: 'Group Name',
     sortable: true,
-    editable: false,
+    editable: true,
+    conditionallyEdit: { key: 'usergroup_type', matchValue: 'CUSTOM' },
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Group Name',
+      validation: [
+        {
+          regex: /^.{2,64}$/,
+          errorMessage:
+            'Group name must contain a minimum of 2 and a maximum of 64 characters.',
+        },
+        {
+          regex: /^[A-Za-z\s\-']+$/,
+          errorMessage:
+            "Group name can only contain letters, spaces, hyphens (-) and apostrophes (').",
+        },
+        {
+          regex: /^[A-Za-z](?:[A-Za-z\s\-']*[A-Za-z])?$/,
+          errorMessage:
+            'Group name cannot begin or end with a space or special character.',
+        },
+        {
+          regex: /^(?!.*(--|''))[A-Za-z\s\-']+$/,
+          errorMessage:
+            'Group name cannot contain consecutive special characters.',
+        },
+      ],
+    },
   },
   {
     id: 'usergrouptype',
@@ -54,4 +82,46 @@ export const getUserGroupColumns = (): ListTableColumn<UserGroupList>[] => [
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
         : '-',
   },
+];
+
+export const getAvailableUserColumns = () => [
+  {
+    id: 'first_name',
+    sortId: 'first_name',
+    label: 'User Full Name',
+    sortable: false,
+  },
+  {
+    id: 'email',
+    sortId: 'email',
+    label: 'Email Address',
+    sortable: false,
+  },
+  {
+    id: 'org_id',
+    sortId: 'org_id',
+    label: 'Org Name',
+    sortable: false,
+  },
+];
+
+export const getAvailableProjectsColumns = () => [
+  {
+    id: 'account_name',
+    sortId: 'account_name',
+    label: 'Account Name',
+    sortable: false,
+  },
+  {
+    id: 'project_name',
+    sortId: 'project_name',
+    label: 'Project Name',
+    sortable: false,
+  },
+  {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    sortable: false,
+  }
 ];

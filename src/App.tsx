@@ -21,6 +21,8 @@ import {
   MANAGE_PROFILE_CREATE,
   MANAGE_PROFILE_EDIT,
   MANAGE_USER_GROUP,
+  MANAGE_USER_GROUP_CREATE,
+  MANAGE_USER_GROUP_EDIT,
   NOT_MATCH,
   PROFILE,
   PROJECT,
@@ -90,6 +92,9 @@ const CreateProfile = lazy(
 );
 const UserGroupList = lazy(
   () => import('./admin/pages/manage-user-group/user-group-list/user-group-list')
+);
+const CreateUserGroup = lazy(
+  () => import('./admin/pages/manage-user-group/create-user-group/create-user-group')
 );
 
 // Loading component for Suspense fallback
@@ -165,6 +170,8 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 />
                 <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
                 <Route path={MANAGE_USER_GROUP} element={<UserGroupList />} />
+                <Route path={MANAGE_USER_GROUP_CREATE} element={<CreateUserGroup />} />
+                <Route path={MANAGE_USER_GROUP_EDIT} element={<CreateUserGroup />} />
               </Route>
               {/* Page not found */}
               <Route path={NOT_MATCH} element={<NotFound />} />

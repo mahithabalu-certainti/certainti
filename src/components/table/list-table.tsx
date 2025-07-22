@@ -3,6 +3,7 @@ import {
   Checkbox,
   IconButton,
   Table as MuiTable,
+  Switch,
   TableBody,
   TableCell,
   TableContainer,
@@ -93,6 +94,9 @@ const ListTable = <T extends RowData>({
   expandAllParent = false,
   expandAllChild = false,
   skillTypeIds,
+  actionColumnName,
+  toggleData,
+  toggleClick,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -617,11 +621,16 @@ const ListTable = <T extends RowData>({
     if (editDisableLevel?.includes(row._level)) {
       return;
     }
-    if (!column.editable) return;
+    // check if 'conditionallyEdit' have or not
+    const conditionallyEdit = column.conditionallyEdit?.key
+      ? // If yes
+        row[column.conditionallyEdit.key] ===
+          column.conditionallyEdit.matchValue && column.editable
+      : column.editable;
+    if (!conditionallyEdit) return;
     if (Object.keys(editingCells).length > 0) {
       return;
     }
-
     // Determine which fields to enable for editing
     const fieldsToEdit = shouldEnableMultipleEdit(visibleColumns, column.id);
     const newEditingCells: MultipleEditingCells = {};
@@ -970,7 +979,8 @@ const ListTable = <T extends RowData>({
                 </TableCell>
               )}
 
-              {actionMenuItems?.length > 0 && isAvailableAction && (
+              {(actionDisplayMode === 'toggle' ||
+                (actionMenuItems?.length > 0 && isAvailableAction)) && (
                 <TableCell
                   sx={{
                     width: actionWidth,
@@ -979,7 +989,7 @@ const ListTable = <T extends RowData>({
                     textAlign: 'center',
                   }}
                 >
-                  Action
+                  {actionColumnName || 'Action'}
                 </TableCell>
               )}
             </TableRow>
@@ -1152,13 +1162,18 @@ const ListTable = <T extends RowData>({
                           cellValue !== ''
                             ? cellValue
                             : '-';
-
+                        // check if 'conditionallyEdit' have or not
+                        const conditionallyEdit = column.conditionallyEdit?.key
+                          ? // If yes
+                            row[column.conditionallyEdit.key] ===
+                              column.conditionallyEdit.matchValue &&
+                            column.editable
+                          : column.editable;
                         const isFirstDataColumn =
                           column.id === visibleColumns[0].id;
                         const isChildRows = isFirstDataColumn && rowLevel !== 0;
-
                         const isEditableCell =
-                          column.editable &&
+                          conditionallyEdit &&
                           !isEditingAnyCell &&
                           !editDisableLevel?.includes(row._level);
 
@@ -1400,7 +1415,7 @@ const ListTable = <T extends RowData>({
                               </span>
                             ) : (
                               <>
-                                {actionDisplayMode === 'icon' ? (
+                                {actionDisplayMode === 'icon' && (
                                   <Box className='w-full inline-flex items-center justify-center gap-2'>
                                     {actionMenuItems.map((item, index) => {
                                       if (item.hide) return null;
@@ -1435,7 +1450,8 @@ const ListTable = <T extends RowData>({
                                       );
                                     })}
                                   </Box>
-                                ) : (
+                                )}
+                                {actionDisplayMode === 'dropdown' && (
                                   <TableActionButton
                                     actions={actionMenuItems.map((item) => ({
                                       ...item,
@@ -1451,6 +1467,33 @@ const ListTable = <T extends RowData>({
                             )}
                           </TableCell>
                         )}
+                      {actionDisplayMode === 'toggle' && (
+                        <TableCell
+                          sx={{
+                            padding: '0px !important',
+                            whiteSpace: 'nowrap',
+                            width: actionWidth,
+                            minWidth: actionWidth,
+                            maxWidth: actionWidth,
+                            height: '32px !important',
+                            minHeight: '32px !important',
+                            maxHeight: '32px !important',
+                            background:
+                              expandable && isExpanded ? '#ECECEC' : '#fff',
+                          }}
+                        >
+                          <div className='text-center'>
+                            <Switch
+                              size='small'
+                              color='success'
+                              onChange={(_e, checked) =>
+                                toggleClick && toggleClick(rowId, checked)
+                              }
+                              checked={toggleData?.includes(rowId)}
+                            />
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                     {component === 'account' &&
                       rowLevel > 0 &&

@@ -4,17 +4,18 @@ import { ListTable } from '../../../../components/table';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { getUserGroupColumns } from './columns';
 import { UserGroupList } from '../../../types';
-import { MANAGE_PROFILE } from '../../../../routes/routes';
+import { MANAGE_USER_GROUP } from '../../../../routes/routes';
 import {
   ActionItem,
-  // CellEditData,
-  // FieldChangeValue,
+  CellEditData,
+  FieldChangeValue,
 } from '../../../../components/table/types';
-import { DeleteIcon, EditIcon } from '../../../../assets';
+import { EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
-import { UPDATE_USER_PROFILE } from '../../../../api/graphql/queries/profile-query';
 import { userClient } from '../../../../api/graphql/clients/client';
 import { useManageUserGroupList } from '../../../service';
+import { UPDATE_USER_GROUP } from '../../../../api/graphql/queries/user-group-query';
+import { useToast } from '../../../../hooks';
 
 interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -38,8 +39,9 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   refreshUserGroupTrigger,
 }) => {
   const navigate = useNavigate();
-  const [userGroupList, setUserGroupList] = useState<UserGroupList[]>();
-  const [updateUserProfile] = useMutation(UPDATE_USER_PROFILE, {
+  const { errorToast } = useToast();
+  const [userGroupList, setUserGroupList] = useState<UserGroupList[]>([]);
+  const [userGroupUpdate] = useMutation(UPDATE_USER_GROUP, {
     client: userClient,
   });
 
@@ -56,6 +58,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
           ...rest,
           usergrouptype: usergrouptype.group_type_name,
           is_consultant_only_group: is_consultant_only_group ? 'Yes' : 'No',
+          usergroup_type: usergrouptype.type
         };
       }) || [];
     setUserGroupList(reShape);
@@ -74,14 +77,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   const getRowId = (row: UserGroupList) => row.rid;
 
   const handleEdit = (row: UserGroupList) => {
-    navigate(MANAGE_PROFILE + '/edit/' + row.rid);
-  };
-
-  const handleDelete = (row: UserGroupList) => {
-    // navigate(`/admin/manage-user/${row.id}`, {
-    //   state: { user: row },
-    // });
-    console.log('trigger row delete:', row);
+    navigate(MANAGE_USER_GROUP + '/edit/' + row.rid);
   };
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -109,11 +105,6 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   };
 
   const actionButtons: ActionItem<UserGroupList>[] = [
-    // {
-    //   label: 'View',
-    //   onClick: (row: UserGroupList) => handleView(row),
-    //   hide: !isProfileViewEnable,
-    // },
     {
       label: 'Edit',
       onClick: (row: UserGroupList) => handleEdit(row),
@@ -124,14 +115,54 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
       },
       hide: !isProfileEditEnable,
     },
-    {
-      label: 'Delete',
-      onClick: (row: UserGroupList) => handleDelete(row),
-      icon: DeleteIcon,
-      // hide: !isProfileDeleteEnable,
-      hide: true,
-    },
   ];
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousGroupLists = [...userGroupList];
+    // Find the matching user
+    const matchedUser = userGroupList.find((user) => user.rid === rowId);
+    if (!matchedUser) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (res, item) => {
+        const key = item.editId || item.columnId;
+        res[key] = item.value;
+        return res;
+      },
+      {
+        group_rid: rowId,
+      }
+    );
+
+    try {
+      const res = await userGroupUpdate({
+        variables: { input: updateData },
+      });
+      const result = res.data?.userGroupUpdate;
+      if (result?.success === true && result.usergroup) {
+        const updatedUserGroup = result.usergroup;
+        setUserGroupList((prevGroupList) =>
+          prevGroupList.map((groups) =>
+            groups.rid === updatedUserGroup.rid
+              ? {
+                  ...groups,
+                  group_name: updatedUserGroup.group_name,
+                  modified_datetime: updatedUserGroup.modified_datetime,
+                }
+              : groups
+          )
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update filed');
+        setUserGroupList(previousGroupLists);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setUserGroupList(previousGroupLists);
+    }
+  };
 
   const profileColumns = getUserGroupColumns();
 
@@ -148,7 +179,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
       }}
       stickyHeader={true}
       stickyColumnsCount={2}
-      selectable={true}
+      selectable={false}
       onSelectionChange={onSelectionChange}
       actionWidth={60}
       actionDisplayMode='dropdown'
@@ -164,6 +195,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
+      onCellEdit={handleCellEdit}
     />
   );
 };

@@ -1,15 +1,15 @@
-import { Suspense, useState } from 'react';
-import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
+import { Suspense, useMemo, useState } from 'react';
+import { NewFilterIcon, RefreshIcon, ManageUserIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
-import { MANAGE_PROFILE_CREATE } from '../../../../routes';
+import { MANAGE_USER_GROUP_CREATE } from '../../../../routes';
 import { FilterModal } from '../../../../components';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { FilterType } from '../../../types';
-import { exportProfileList } from '../../../service';
-import { useToast } from '../../../../hooks';
-import { getManageProfileFilterFields } from './helpers';
+import { exportUserGroupList, useGetUserGroupTypes } from '../../../service';
+import { getManageUserGroupFilterFields } from './helpers';
 import { UserGroupTable } from '../table';
+import { SelectOption } from '../../../../consultant/types';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -25,20 +25,29 @@ export const UserGroupList: React.FC = () => {
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
     limit: 100,
-    sortBy: 'profile_name',
+    sortBy: 'group_name',
     sortOrder: 'ASC',
   });
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const { errorToast } = useToast();
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const [refreshUserGroupTrigger, setRefreshUserGroupTrigger] =
-    useState<number>(Date.now());
+    useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+
+  const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
+
+  const allGroupTypes: SelectOption[] = useMemo(
+    () =>
+      allUserGroupTypes.data?.data.groupTypes.map((groupTypes) => ({
+        label: groupTypes.group_type_name,
+        value: groupTypes.rid,
+      })) || [],
+    [allUserGroupTypes.data?.data.groupTypes]
+  );
 
   const onRefreshClick = () => {
     setRefreshUserGroupTrigger(Date.now());
@@ -51,12 +60,8 @@ export const UserGroupList: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
 
-  const handleSelectionChange = (selectedIds: string[]) => {
-    setSelectedGroupId(selectedIds);
-  };
-
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'profile_name';
+    const defaultSortField = 'group_name';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -78,28 +83,16 @@ export const UserGroupList: React.FC = () => {
   };
 
   const handleExport = async () => {
-    if (selectedGroupId.length > 1) {
-      errorToast('Please select just one profile to proceed with export.');
-      return;
-    }
-
-    if (selectedGroupId.length === 0) {
-      errorToast('Please select a profile before exporting.');
-      return;
-    }
-
     setIsExporting(true);
-
-    const profileId = selectedGroupId[0];
     try {
-      await exportProfileList(profileId);
+      await exportUserGroupList();
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
       setIsExporting(false);
     }
   };
-  const profileFilterFields = getManageProfileFilterFields();
+  const userGroupFilterFields = getManageUserGroupFilterFields(allGroupTypes);
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -107,9 +100,9 @@ export const UserGroupList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <UserIcon
-              alt='manage user'
-              className='h-7 w-7 rounded bg-[#BE3EB5] p-[7px]'
+            <ManageUserIcon
+              alt='manage user group'
+              className='h-7 w-7 rounded [&>path:first-child]:fill-[#BE3EB5]'
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
@@ -130,7 +123,7 @@ export const UserGroupList: React.FC = () => {
           </button>
           <TextButton
             label='Create Group'
-            onClick={() => navigate(MANAGE_PROFILE_CREATE)}
+            onClick={() => navigate(MANAGE_USER_GROUP_CREATE)}
             sx={{
               ...BUTTON_STYLES,
               width: '119px',
@@ -171,7 +164,7 @@ export const UserGroupList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={profileFilterFields}
+                filterFields={userGroupFilterFields}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
@@ -198,8 +191,11 @@ export const UserGroupList: React.FC = () => {
           <UserGroupTable
             appliedFilters={appliedFilters as Record<string, FilterCondition>}
             tableParams={tableParams}
-            setTableParams={setTableParams}
-            onSelectionChange={handleSelectionChange}
+            setTableParams={(data) => {
+              setTableParams(data);
+              onRefreshClick();
+            }}
+            onSelectionChange={() => {}}
             isProfileViewEnable
             isProfileEditEnable
             isProfileDeleteEnable
