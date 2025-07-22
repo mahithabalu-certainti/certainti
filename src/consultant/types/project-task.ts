@@ -18,25 +18,39 @@ export interface ProjectResourcesListParams {
 }
 
 export type ProjectTaskListType = {
-  id: string;
-  rid?: string;
-  project_task_id?: string;
-  resource_number?: string;
-  resource_code?: string;
-  resource_ref_id?: string;
+  rid: string;
+  r_number: string;
+  account_rid: string;
+  account_name: string;
+  project_rid: string;
+  project_name: string | null;
+  project_code: string;
+  project_resource_code: string;
+  resource_rid: string;
+  resource_code: string;
+  fiscal_year: number;
+  start_date: string;
+  end_date: string;
   resource_name: string;
-  resource_org_name: string;
+  resource_type_rid: string;
+  resource_type_name: string;
   resource_role: string;
-  status: ProjectResourceStatus;
-  country: string;
-  region: string;
-  currency: string;
-  cost: string | number;
-  effort: number;
-  fiscal_year?: string | number;
-  start_date?: string;
-  end_date?: string;
-  currency_symbol?: string;
+  status_rid: string;
+  country_rid: string;
+  country_name: string;
+  region_rid: string;
+  region_name: string;
+  currency_rid: string;
+  currency_symbol: string;
+  resource_orgname: string | null;
+  total_hours_pro_task: string;
+  total_cost_pro_task: string;
+  description: string;
+  comments: string | null;
+  created_by: string;
+  modified_by: string;
+  created_datetime: string;
+  modified_datetime: string;
   // need to modidy list data based on mock data or api response
 };
 

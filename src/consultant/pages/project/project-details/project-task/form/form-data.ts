@@ -59,22 +59,22 @@ export const ProjectTaskFormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createTextField('project_task_id', 'Project Task ID', {
-            required: false,
-            regex: PROJECT_TASK_REGEX.RESOURCE_CODE,
-            regexErrorMessage:
-              'Please enter 3-50 characters. Special characters are not allowed.',
-            placeholder: 'Enter Project Task ID',
-            disabled: disableFields,
-          }),
-          createTextField('resource_code', 'Resource Code', {
-            required: false,
-            regex: PROJECT_TASK_REGEX.FULL_NAME,
-            regexErrorMessage:
-              'Please enter 3-100 characters, including at least one letter. Special characters and numbers are not allowed.',
-            placeholder: 'Enter Resource Code',
-            disabled: disableFields,
-          }),
+          // createTextField('project_task_id', 'Project Task ID', {
+          //   required: false,
+          //   regex: PROJECT_TASK_REGEX.RESOURCE_CODE,
+          //   regexErrorMessage:
+          //     'Please enter 3-50 characters. Special characters are not allowed.',
+          //   placeholder: 'Enter Project Task ID',
+          //   disabled: disableFields,
+          // }),
+          // createTextField('resource_code', 'Resource Code', {
+          //   required: false,
+          //   regex: PROJECT_TASK_REGEX.FULL_NAME,
+          //   regexErrorMessage:
+          //     'Please enter 3-100 characters, including at least one letter. Special characters and numbers are not allowed.',
+          //   placeholder: 'Enter Resource Code',
+          //   disabled: disableFields,
+          // }),
           // createSelectField('resource_type', 'Resource Type', {
           //   options: PROJECT_TASK_TYPE_OPTIONS,
           //   placeholder: '-Select-',
