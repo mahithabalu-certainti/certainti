@@ -164,13 +164,17 @@ export const AccountDetails = () => {
       ...(exportType !== 'resource' && { resourceRid }),
       ...(exportType === 'cost' && { fiscalYear }),
     };
-
     const attachmentPayload = {
       accountRid: accountid || rNumber,
       entityId:
         exportType === 'attachments' ? accountid || rNumber : resourceRid,
       attachmentLevel: exportType === 'attachments' ? 'account' : 'resource',
+      ...(exportType === 'resource_attachments' && {
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+      }),
     };
+    console.log('attachmentPayload', attachmentPayload);
 
     if (exportType === 'project') {
       exportProjectData(exportType, {
