@@ -4,6 +4,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { fetchImportListByRid, listAllImportedDatasQuery, listAllStageFailures,listAllLoadFailures } from "../utils/rawQueries";
 import { setInlineForImports } from "../utils/helpers";
+import { generateSasUrl } from "../utils/blob";
 
 
 export default class ImportGraphqlServices {
@@ -118,6 +119,7 @@ export default class ImportGraphqlServices {
       if(result[0][0]) {
         const fetchUserDetails : any = await mainSequelize.query(rawQueries.fetchUserDetailsById(result[0][0].imports.imported_by))
         delete result[0][0].imports.imported_by
+        result[0][0].imports.document_url = await generateSasUrl(result[0][0].imports.document_url)
         result[0][0].imports.imported_on = new Date(result[0][0].imports.imported_on).toISOString()
         result[0][0].imports.imported_by = fetchUserDetails[0][0].imported_by
 

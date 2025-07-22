@@ -3,6 +3,7 @@ import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
 import { generateExcelBase64, handleErrorResponse, handleSuccessResponse, validateImportListByRidRequest, validateImportListRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
+import { generateSasUrl } from '../utils/blob';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -38,26 +39,32 @@ async function fetchAllImportList(req: Request, res: Response) {
             return
         }
 
-        let flatData = result.data.flatMap((d : any) => {
-            return d.imports == null ? [] : d.imports.map((data : any) => ({
-                rid : data.rid,
-                r_number : data.r_number,
-                file_name : data.file_name,
-                format : data.format,
-                size : data.size,
-                entity : data.entity,
-                total_records : data.total_records,
-                fiscal : data.fiscal,
-                records_loaded_successfully : data.records_loaded_successfully,
-                records_failed_to_load : data.records_failed_to_load,
-                records_with_warning : data.records_with_warning,
-                status : data.status,
-                status_descriptions : data.status_description,
-                imported_on : new Date(data.imported_on).toISOString(),
-                imported_by : data.imported_by,
+        let flatData = (
+        await Promise.all(
+            result.data.flatMap((d: any) => {
+            if (!d.imports) return [];
+            return d.imports.map(async (data: any) => ({
+                rid: data.rid,
+                r_number: data.r_number,
+                file_name: data.file_name,
+                format: data.format,
+                size: data.size,
+                entity: data.entity,
+                total_records: data.total_records,
+                fiscal: data.fiscal,
+                records_loaded_successfully: data.records_loaded_successfully,
+                records_failed_to_load: data.records_failed_to_load,
+                records_with_warning: data.records_with_warning,
+                status: data.status,
+                status_descriptions: data.status_description,
+                imported_on: new Date(data.imported_on).toISOString(),
+                imported_by: data.imported_by,
+                document_url: await generateSasUrl(data.document_url)
+            }));
             })
         )
-        })
+        ).flat();
+
         if (importedByFilter) {
         const conditionObj = importedByFilter;
         if (conditionObj.contains) {
