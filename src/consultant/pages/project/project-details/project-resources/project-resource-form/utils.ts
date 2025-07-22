@@ -10,12 +10,12 @@ export const projectResourcesPayloadData = (
   const data: Partial<ProjectResourceNewPayload> = {
     account_rid: formData.account_rid,
     project_rid: formData.project_rid,
-    resource_name: formData.resource_name || null,
+    // resource_name: formData.resource_name || null,
     resource_code: formData.resource_code,
-    resource_type_rid: formData.resource_type_rid,
-    resource_orgname: formData.resource_orgname || null,
-    designation: formData.designation || null,
-    resource_role: formData.resource_role || null,
+    // resource_type_rid: formData.resource_type_rid,
+    // resource_orgname: formData.resource_orgname || null,
+    // designation: formData.designation || null,
+    // resource_role: formData.resource_role || null,
     assigned_skill_role_type_rid: formData.assigned_skill_role_type_rid || null,
     skill_role_rid: showSkillRoleOthersField ? formData.skill_role_rid : null,
     skill_role_others: showSkillRoleOthersField
