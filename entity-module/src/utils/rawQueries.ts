@@ -56,7 +56,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     else if (sort === 'records_failed_to_load') sortValue = `a.records_failed_to_load ${sortBy}`;
     else if (sort === 'status') sortValue = `a.document_status ${sortBy}`;
     else if (sort === 'imported_on') sortValue = `a.uploaded_datetime ${sortBy}`;
-    else if (sort === 'status_description') sortValue = `a.status_description ${sortBy}`;
+    else if (sort === 'status_description') sortValue = `a.upload_failure_reason ${sortBy}`;
     else if (sort === 'import_type') sortValue = `a.import_type ${sortBy}`;           
     else if (sort === 'imported_by') sortValue = `a.uploaded_by_user_rid ${sortBy}`;
     else if (sort === 'records_with_warning') sortValue = `a.total_staging_warning_count ${sortBy}`;
