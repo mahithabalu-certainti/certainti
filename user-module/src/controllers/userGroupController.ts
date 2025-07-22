@@ -169,16 +169,30 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
+     if (!validatedData) return;
+    let parsedFilters: Record<string, any> = {};
 
-    const { is_consultant_only_group,account_rid,group_rid} = validatedData;
+    try {
+      parsedFilters = JSON.parse(validatedData.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const page: number = parseInt(validatedData.page, 10) || 1;
+    const limit: number = parseInt(validatedData.limit, 10) || 10;
+
+    const { is_consultant_only_group,account_rid,group_rid,sortBy,sortOrder} = validatedData;
     let account;
     if(!group_rid)
     {
-       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid);
+       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid,page,limit,sortBy,sortOrder);
     }
     else
     {
-    account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid);
+      account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid,page,limit,sortBy,sortOrder);
     }
     
     
@@ -206,53 +220,6 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
   }
 }
 
-/**
- * Retrieves a list of active users that can be updated to a group
- * 
- * @param {Request} req - Express request object containing filter parameters
- * @param {Response} res - Express response object
- * @returns {Promise<void>} - Promise representing the completion of the operation
- */
-async function getActiveUsersForUpdate(req: Request, res: Response): Promise<void> {
-   const methodName = "List Active Users For Grouping Update";
-    try {
-    const validatedData = await validateRequest(
-      req,
-      listActiveUserGroupSchema,
-      "",
-      res,
-      "GET"
-    );
-    // If validation fails, validateRequest will handle the response
-    if (!validatedData) return;
-
-    const { is_consultant_only_group,account_rid,group_rid} = validatedData;
-    
-    const account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid);
-
-    if (account.statusCode === constants.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, account.data);
-    } else {
-      errorLog(methodName, account.errorMessage);
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        account.errorMessage
-      );
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      constants.FAILED,
-      constants.FAILED_MESSAGE,
-      error.message
-    );
-  }
-}
 
 /**
  * Retrieves all users associated with a specific account
