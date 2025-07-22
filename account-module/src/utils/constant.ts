@@ -146,10 +146,4 @@ export const rawQueries = {
     FROM ${MAIN_SCHEMA_NAME}.user 
     WHERE rid IN (:userIds)
   `,
-
-  GET_ACCOUNTS: `
-    SELECT rid, account_name 
-    FROM ${MAIN_SCHEMA_NAME}.account 
-    WHERE rid IN (:attachmentIds)
-  `,
 }

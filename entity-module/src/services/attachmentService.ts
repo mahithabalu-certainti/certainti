@@ -83,6 +83,11 @@ async createAttachment(
         await this.createAttachmentTables(accountNumber);
 
         const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid);
+        
+        if(name.length > 100) {
+            throw new Error("Document name cannot exceed 100 characters");
+        }
+
         // Create the attachment record
         const attachmentModel = await Attachment.create({
             browse_file: url,

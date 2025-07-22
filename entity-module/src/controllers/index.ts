@@ -5,6 +5,7 @@ import projectController from "./projectController";
 import attachmentController from "./attachmentController";
 import projectResourcesController from "./projectResourcesController";
 import importListController from './importListController';
+import projectTaskController from './projectTaskController';
 
 const controller = {
     resoucesController,
@@ -13,7 +14,8 @@ const controller = {
     projectController,
     attachmentController,
     projectResourcesController,
-    importListController
+    importListController,
+    projectTaskController
 };
 
 export default controller;
