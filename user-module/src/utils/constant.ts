@@ -58,7 +58,7 @@ export const constants = {
      LEFT JOIN trd365.account acc
       ON acc.rid = ps.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
-      ON uga.entity_rid = ps.rid 
+      ON uga.entity_rid = ps.project_rid 
       AND uga.entity_type = 'PROJECT'
       AND uga.group_rid = :group_rid -- only works if group_rid is provided
     WHERE {whereClauses}
