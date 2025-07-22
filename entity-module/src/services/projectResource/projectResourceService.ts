@@ -870,11 +870,7 @@ export class ProjectResourceService {
         project_rid
       );
 
-      // let resourceData = null;
-
-      // if(projectResourceData.resource_code){
-        
-      // }
+      let resourceData = null;
 
       const existingProjectResource =
         await this.projectResourceSchema.fetchExistingProjectResource(
@@ -891,12 +887,20 @@ export class ProjectResourceService {
         };
       }
 
-      const resourceData =
+      resourceData =
         await this.projectResourceSchema.validateResourceById(
           validAccountNumber,
           existingProjectResource?.resource_rid,
           account_rid
         );
+
+        if(projectResourceData.resource_code){
+          resourceData = await this.projectResourceSchema.validateResourceByCode(
+            validAccountNumber,
+            projectResourceData.resource_code,
+            projectResourceData.account_rid
+          );
+        }
 
         if (!resourceData) {
           return {
@@ -930,6 +934,7 @@ export class ProjectResourceService {
           projectResourceData,
           userId,
           projectData,
+          resourceData,
           transaction
         );
 

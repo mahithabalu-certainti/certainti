@@ -4286,6 +4286,7 @@ export class ProjectResourceSchemaService {
     projectResourceData: IUpdateInlineProjectResource,
     userId: string,
     projectData: any,
+    resourceData: Resources,
     transaction: Transaction
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
@@ -4299,6 +4300,10 @@ export class ProjectResourceSchemaService {
       project_rid,
       ...fieldsToUpdate
     } = projectResourceData;
+
+    if (fieldsToUpdate.resource_code) {
+      fieldsToUpdate.resource_rid = resourceData.rid;
+    }
 
     const updateProjectResource = await ProjectResource.update(
       {
@@ -4339,6 +4344,7 @@ export class ProjectResourceSchemaService {
 
     return existingData;
   }
+  
 
   async fetchProjectResourceDetails(
     accountNumber: string,
