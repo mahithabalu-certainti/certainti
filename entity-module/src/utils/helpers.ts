@@ -8,6 +8,8 @@ import { ResourceSkill } from "../models/resourceSkill";
 import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "./azureSecrets";
 import { Attachment } from "../models/attachments";
+import { ProjectTask } from "../models/projectTask";
+import SchemaService from "../services/schemaService";
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -165,6 +167,11 @@ export const validateProjectResourceRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
   if(!data.project_resource_rid) return STATUS_MESSAGE.fiscalIdMissing
+}
+
+export const validateProjectTaskRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.rid) return STATUS_MESSAGE.projectIdMissing
 }
 
 export const setProject = (dbData : any, requestData : any) => {
@@ -746,6 +753,8 @@ export async function uploadToAzureBlob(
 
     // Get connection string from secrets manager
     const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    // const connectionString = "storage-account-connection-string";
+    // const connectionString = await getSecret("storage-account-connection-string");
     const containerName = 'account';
 
     if (!connectionString) {
@@ -882,6 +891,64 @@ export const setInlineForImports = (dbData : any, requestData : any) => {
     newData.fiscal_year = requestData.fiscal_year != dbData.fiscal_year ? requestData.fiscal_year : dbData.fiscal_year
     return newData;
   } else {
-    return null
+    return null;
+  }
+}
+
+
+export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any) => {
+  let newData : any = {}
+  let dataStorage;
+  let newDataArray = []
+  if(requestData.fiscal_year != undefined) {
+    newData.fiscal_year = dbData.fiscal_year != requestData.fiscal_year ? requestData.fiscal_year : dbData.fiscal_year
+    dataStorage = `fiscal_year = ${newData.fiscal_year}`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.effort_project_task_level != undefined) {
+    newData.effort_project_task_level = requestData.effort_project_task_level != dbData.effort_project_task_level ? requestData.effort_project_task_level : dbData.effort_project_task_level
+    dataStorage = `effort_project_task_level = ${newData.effort_project_task_level}`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.cost_project_task_level != undefined) {
+    newData.cost_project_task_level = requestData.cost_project_task_level != dbData.cost_project_task_level ? requestData.cost_project_task_level : dbData.cost_project_task_level
+    dataStorage = `cost_project_task_level = ${newData.cost_project_task_level}`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.country_rid != undefined) {
+    newData.country_rid = requestData.country_rid != dbData.country_rid ? requestData.country_rid : dbData.country_rid
+    dataStorage = `country_rid = '${newData.country_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.region_rid != undefined) {
+    newData.region_rid = requestData.region_rid != dbData.region_rid ? requestData.region_rid : dbData.region_rid
+    dataStorage = `region_rid = '${newData.region_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.resource_rid != undefined) {
+    newData.resource_rid = requestData.resource_rid != dbData.resource_rid ? requestData.resource_rid : dbData.resource_rid
+    dataStorage = `resource_rid = '${newData.resource_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.comments != undefined) {
+    newData.comments = requestData.comments != dbData.comments ? requestData.comments : dbData.comments
+    dataStorage = `comments = '${newData.comments.replace(/'/g, "''")}'`
+    newDataArray.push(dataStorage)
+  }
+
+  if(newDataArray.length < 1) {
+    return {
+      statusMessage : STATUS_MESSAGE.noDataToUpdate,
+      data : newDataArray
+    }
+  } else {
+    dataStorage = `modified_by = '${requestData.userId}'`
+    newDataArray.push(dataStorage)
+    dataStorage = `modified_datetime = NOW()`
+    newDataArray.push(dataStorage)
+    return {
+      statusMessage : null,
+      data : newDataArray
+    }
   }
 }
