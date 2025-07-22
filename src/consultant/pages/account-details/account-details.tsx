@@ -58,6 +58,8 @@ import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
+import { exportImportsData } from '../../services/import';
+import { ImportsListURLParams } from '../../types/imports';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -103,6 +105,11 @@ export const AccountDetails = () => {
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
+  const isImportExportEnable = checkPermission(
+    permission,
+    AllPermissions.IMPORTS_EXPORT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -137,13 +144,24 @@ export const AccountDetails = () => {
       fiscalYear: convertedFiscalYear,
     });
 
+  const [importsParams, setImportsParams] = useState<ImportsListURLParams>({
+    page: 1,
+    limit: 100,
+    sort: 'r_number',
+    sort_by: 'asc',
+    filters: {},
+    fiscal_year: convertedFiscalYear,
+    account_rid: accountid || '',
+  });
+
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
-      searchParams.get('list') !== 'attachments'
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'imports'
     ) {
       return;
     }
@@ -189,6 +207,8 @@ export const AccountDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+    } else if (exportType === 'imports') {
+      exportImportsData(importsParams);
     } else {
       exportData(exportType, exportPayload);
     }
@@ -254,7 +274,12 @@ export const AccountDetails = () => {
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
-    if (tab === 'details') {
+    if (
+      tab === 'details' ||
+      searchParams.get('attachment_entity') ||
+      searchParams.get('file_id') ||
+      searchParams.get('upload')
+    ) {
       return true;
     }
 
@@ -264,6 +289,8 @@ export const AccountDetails = () => {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
       return !isAttachmentViewEnable;
+    } else if (list === 'imports') {
+      return !isImportExportEnable;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -366,6 +393,8 @@ export const AccountDetails = () => {
               activeKey: 'imports',
             }}
             accountInActive={accountInActive}
+            setExportType={setExportType}
+            setImportsParams={setImportsParams}
           />
         );
       default:

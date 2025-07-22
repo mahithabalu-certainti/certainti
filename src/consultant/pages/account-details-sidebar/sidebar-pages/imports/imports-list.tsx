@@ -1,8 +1,8 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AllPermissions } from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
-import { useEffect, useState } from 'react';
-import { ImportsList } from '../../../../types/imports';
+import { useEffect, useMemo, useState } from 'react';
+import { ImportsList, ImportsListURLParams } from '../../../../types/imports';
 import { getImportsListColumns } from './columns';
 import { getImportsFilterFields } from './helpers';
 import {
@@ -12,18 +12,19 @@ import {
 import { SectionTabPanel } from '../../../../../components';
 import { ImportIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
-import { AccountDetailsResponse } from '../../../../types';
+import { AccountDetailsResponse, ExportType } from '../../../../types';
 import ImportFile from './import-file/import-file';
 import { useImportListList } from '../../../../services/import';
 import ImportDetails from './import-details/import-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { getFiscalYears } from '../../../../../common-utils';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
 import { IMPORT_UPDATE } from '../../../../../api/graphql/queries/import-query';
 import { useToast } from '../../../../../hooks';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const ImportsTabs: ResourceTabs[] = [
   {
@@ -44,18 +45,14 @@ interface AccountDetailsProps extends AccountDetailsResponse {
 
 interface ImportsProps {
   accountDetails?: AccountDetailsProps;
-  //   setExportType?: (
-  //     type: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
-  //   ) => void;
-  //   setAttachmentParams: React.Dispatch<
-  //     React.SetStateAction<AttachmentsListExportParams>
-  //   >;
+  setExportType?: (type: ExportType) => void;
+  setImportsParams: React.Dispatch<React.SetStateAction<ImportsListURLParams>>;
   accountInActive: boolean;
 }
 
 const Imports: React.FC<ImportsProps> = ({
-  //   setExportType,
-  //   setAttachmentParams,
+  setExportType,
+  setImportsParams,
   accountInActive,
   accountDetails,
 }) => {
@@ -85,6 +82,36 @@ const Imports: React.FC<ImportsProps> = ({
     client: resourceClient,
   });
 
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  // Permissions
+  const importsEnable = checkPermission(modules, AllModules.IMPORTS);
+  const isImportExportEnable = checkPermission(
+    permission,
+    AllPermissions.IMPORTS_EXPORT
+  );
+  const importsViewEnable = checkPermission(
+    permission,
+    AllPermissions.IMPORTS_VIEW_EDIT
+  );
+
+  const importViewEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.IMPORTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    importViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [importViewEditFields]);
+
   const { data, isLoading, isError } = useImportListList(
     {
       page: currentPage + 1,
@@ -108,17 +135,28 @@ const Imports: React.FC<ImportsProps> = ({
     }
   }, [data]);
 
-  //   useEffect(() => {
-  //     if (setExportType) {
-  //       setExportType('attachments');
-  //     }
-  //     setAttachmentParams({
-  //       sortBy: sortField,
-  //       sortOrder: sortOrder,
-  //       filters: appliedFilters,
-  //     });
-  //     // eslint-disable-next-line react-hooks/exhaustive-deps
-  //   }, [sortField, sortOrder, appliedFilters]);
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('imports');
+    }
+    setImportsParams({
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sort: sortField,
+      sort_by: sortOrder,
+      filters: appliedFilters,
+      account_rid: accountid || '',
+      fiscal_year: convertedFiscalYear,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    sortField,
+    sortOrder,
+    appliedFilters,
+    currentPage,
+    rowsPerPage,
+    convertedFiscalYear,
+  ]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -143,7 +181,14 @@ const Imports: React.FC<ImportsProps> = ({
   };
 
   const handleImport = () => {
-    setShowUploads(!showUploads);
+    const newShowUploads = !showUploads;
+    setShowUploads(newShowUploads);
+    if (newShowUploads) {
+      searchParams.set('upload', 'true');
+    } else {
+      searchParams.delete('upload');
+    }
+    navigate({ search: searchParams.toString() }, { replace: true });
   };
 
   const headerButtons = [
@@ -171,8 +216,10 @@ const Imports: React.FC<ImportsProps> = ({
     setSortField(property);
   };
 
-  const handleDownload = (rowId: string) => {
-    console.log('Download clicked', rowId);
+  const handleDownload = (documentUrl: string) => {
+    if (documentUrl) {
+      window.open(documentUrl, '_blank');
+    }
   };
 
   const handleDocument = (rowId: string) => {
@@ -191,9 +238,15 @@ const Imports: React.FC<ImportsProps> = ({
   const importsColumns = getImportsListColumns(
     handleDocument,
     handleDownload,
-    fiscalYears
+    fiscalYears,
+    permissionMap,
+    isImportExportEnable
   );
-  const importsFilterFields = getImportsFilterFields(fiscalYears);
+
+  const importsFilterFields = getImportsFilterFields(
+    fiscalYears,
+    permissionMap
+  );
 
   const getRowId = (row: ImportsList) => row.rid;
 
@@ -239,6 +292,8 @@ const Imports: React.FC<ImportsProps> = ({
       setImportsList(previousImports);
     }
   };
+
+  if (!importsEnable || !importsViewEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -300,7 +355,7 @@ const Imports: React.FC<ImportsProps> = ({
               rowsPerPageOptions={[25, 50, 100]}
               rowsPerPage={rowsPerPage}
               currentPage={currentPage}
-              totalItems={0}
+              totalItems={totalItems}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
               sortBy={sortField}

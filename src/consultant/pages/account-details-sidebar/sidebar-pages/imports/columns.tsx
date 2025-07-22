@@ -1,13 +1,15 @@
-import { ImportsIcon } from '../../../../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import TextButton from '../../../../../components/button/text-button';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { SelectOption } from '../../../../types';
 import { ImportsList } from '../../../../types/imports';
 
 export const getImportsListColumns = (
   handleDocument: (rowId: string) => void,
-  handleDownload: (rowId: string) => void,
-  fiscalYears: SelectOption[]
+  handleDownload: (documentUrl: string) => void,
+  fiscalYears: SelectOption[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  isImportExportEnable?: boolean
 ): ListTableColumn<ImportsList>[] => [
   {
     id: 'r_number',
@@ -16,6 +18,8 @@ export const getImportsListColumns = (
     width: 140,
     sortable: true,
     sticky: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
     sx: {
       position: 'sticky',
       left: 0,
@@ -39,6 +43,9 @@ export const getImportsListColumns = (
     label: 'File Name',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['file_name']?.edit &&
+      !permissionMap?.['file_name']?.read,
   },
   {
     id: 'format',
@@ -46,6 +53,7 @@ export const getImportsListColumns = (
     label: 'Format',
     width: 140,
     sortable: true,
+    hide: !permissionMap?.['format']?.edit && !permissionMap?.['format']?.read,
   },
   {
     id: 'size',
@@ -53,6 +61,7 @@ export const getImportsListColumns = (
     label: 'Size',
     width: 140,
     sortable: true,
+    hide: !permissionMap?.['size']?.edit && !permissionMap?.['size']?.read,
   },
   {
     id: 'fiscal',
@@ -61,7 +70,9 @@ export const getImportsListColumns = (
     label: 'Fiscal Year',
     width: 140,
     sortable: true,
-    editable: true,
+    hide: !permissionMap?.['fiscal']?.edit && !permissionMap?.['fiscal']?.read,
+    editable:
+      permissionMap?.['fiscal']?.edit && permissionMap?.['fiscal']?.read,
     render: (row: ImportsList) => row.fiscal && `FY-${row.fiscal}`,
     field: {
       type: 'select',
@@ -76,6 +87,7 @@ export const getImportsListColumns = (
     label: 'Entity',
     width: 160,
     sortable: true,
+    hide: !permissionMap?.['entity']?.edit && !permissionMap?.['entity']?.read,
   },
   {
     id: 'total_records',
@@ -83,6 +95,9 @@ export const getImportsListColumns = (
     label: 'Total Records',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['total_records']?.edit &&
+      !permissionMap?.['total_records']?.read,
     sx: {
       textAlign: 'right',
     },
@@ -93,6 +108,9 @@ export const getImportsListColumns = (
     label: 'Records Loaded Successfully',
     width: 220,
     sortable: true,
+    hide:
+      !permissionMap?.['records_loaded_successfully']?.edit &&
+      !permissionMap?.['records_loaded_successfully']?.read,
     sx: {
       textAlign: 'right',
     },
@@ -103,6 +121,9 @@ export const getImportsListColumns = (
     label: 'Records with Warning',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['records_with_warning']?.edit &&
+      !permissionMap?.['records_with_warning']?.read,
     sx: {
       textAlign: 'right',
     },
@@ -113,6 +134,9 @@ export const getImportsListColumns = (
     label: 'Records Failed to Load',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['records_failed_to_load']?.edit &&
+      !permissionMap?.['records_failed_to_load']?.read,
     sx: {
       textAlign: 'right',
     },
@@ -123,14 +147,18 @@ export const getImportsListColumns = (
     label: 'Status',
     width: 140,
     sortable: true,
+    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
   },
-  // {
-  //   id: 'status_description',
-  //   sortId: 'status_description',
-  //   label: 'Status Description',
-  //   width: 240,
-  //   sortable: true,
-  // },
+  {
+    id: 'status_descriptions',
+    sortId: 'status_description',
+    label: 'Status Description',
+    width: 240,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['status_description']?.edit &&
+    //   !permissionMap?.['status_description']?.read,
+  },
   // {
   //   id: 'import_type',
   //   sortId: 'import_type',
@@ -144,6 +172,9 @@ export const getImportsListColumns = (
     label: 'Imported By',
     width: 180,
     sortable: true,
+    hide:
+      !permissionMap?.['imported_by']?.edit &&
+      !permissionMap?.['imported_by']?.read,
   },
   {
     id: 'imported_on',
@@ -151,6 +182,9 @@ export const getImportsListColumns = (
     label: 'Imported On',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['imported_on']?.edit &&
+      !permissionMap?.['imported_on']?.read,
     render: (row: ImportsList) => formatDateToYYYYMMDDWithTime(row.imported_on),
   },
   {
@@ -158,19 +192,13 @@ export const getImportsListColumns = (
     sortId: 'download',
     label: 'Download',
     width: 110,
+    hide: !isImportExportEnable,
     render: (row: ImportsList) => (
-      <button
-        style={{
-          border: '1px solid #CBD6E2',
-          boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-          background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-        }}
-        className=' px-1 ml-0.5 py-[1px] rounded-[2px] flex gap-1 items-center cursor-pointer'
-        onClick={() => handleDownload(row.rid)}
-      >
-        <ImportsIcon className='w-3.5 h-3' />
-        <span className='text-[#2D3E4F]'>Download</span>
-      </button>
+      <TextButton
+        label='Download'
+        sx={{ width: '80px', minWidth: '80px', maxWidth: '80px', ml: 1 }}
+        onClick={() => handleDownload(row.document_url)}
+      />
     ),
   },
 ];

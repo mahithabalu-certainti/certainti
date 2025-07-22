@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useImportDetails } from '../../../../../services/import';
+import React, { useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  downloadImportFailureData,
+  useImportDetails,
+} from '../../../../../services/import';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
 import DetailsSection, {
@@ -8,54 +11,47 @@ import DetailsSection, {
 } from '../../../../../../components/details-section/details';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { ImportDetailsIcon } from '../../../../../../assets';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
-import ImportErrorTable from './table/import-error-table';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../../common-utils';
+import { FailureType, ImportEntityType } from '../../../../../types/imports';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ImportDetailsProps {
   handleBackClick: () => void;
 }
-type ViewType = 'basic' | 'warning' | 'failed';
 
 const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
   const { accountid } = useParams();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fileId = searchParams.get('file_id') || undefined;
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const initialViewType = (() => {
-    const type = searchParams.get('view_type');
-    return type === 'warning' || type === 'failed' ? type : 'basic';
-  })();
-  const [viewType, setViewType] = useState<ViewType>(initialViewType);
+  const { data, isLoading, error } = useImportDetails(accountid, fileId);
 
-  const shouldFetchDetails = viewType === 'basic';
-  const { data, isLoading, error } = useImportDetails(
-    accountid,
-    fileId,
-    shouldFetchDetails
-  );
-
-  const updateViewType = (newType: ViewType) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (newType === 'basic') {
-      newParams.delete('view_type');
-    } else {
-      newParams.set('view_type', newType);
-    }
-    navigate({ search: newParams.toString() }, { replace: true });
-    setViewType(newType);
+  const handleExportFailureData = (
+    type: FailureType,
+    entity: ImportEntityType
+  ) => {
+    downloadImportFailureData(accountid || '', fileId || '', type, entity);
   };
 
-  const headerButtons = [
-    {
-      label: 'Back',
-      variant: 'outlined' as const,
-      disabled: false,
-      onClick: () => updateViewType('basic'),
-      sx: { width: '48px', minWidth: '48px' },
-      hide: viewType === 'basic',
-    },
-  ];
+  const importsViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.IMPORTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    importsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [importsViewEditFields]);
 
   const basicInfo: DetailItem[] = [
     {
@@ -88,7 +84,12 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       value: data?.records_failed_to_load ? (
         <span
           className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
-          onClick={() => updateViewType('failed')}
+          onClick={() =>
+            handleExportFailureData(
+              'load-failure',
+              data?.entity as ImportEntityType
+            )
+          }
         >
           View Load Failures
           {`(${data.records_failed_to_load})`}
@@ -132,7 +133,12 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       value: data?.records_failed_to_stage ? (
         <span
           className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
-          onClick={() => updateViewType('warning')}
+          onClick={() =>
+            handleExportFailureData(
+              'staging-failure',
+              data?.entity as ImportEntityType
+            )
+          }
         >
           View staging failures
           {`(${data.records_failed_to_stage})`}
@@ -142,11 +148,11 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       ),
       key: 'records_with_warning',
     },
-    // {
-    //   label: 'Status Description',
-    //   value: data?.status_description,
-    //   key: 'status_description',
-    // },
+    {
+      label: 'Status Description',
+      value: data?.status_description,
+      key: 'status_description',
+    },
     {
       label: 'Records Loaded Successfully',
       value: data?.records_loaded_successfully,
@@ -182,6 +188,9 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     },
   ];
 
+  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const auditDetails = applyHidePermission(auditInfo, permissionMap);
+
   return (
     <div className='border border-[#CBD6E2]'>
       <SectionHeader
@@ -194,9 +203,9 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
           />
         }
         className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-        showBackArrow={viewType === 'basic'}
+        showBackArrow={true}
         onBackClick={handleBackClick}
-        buttons={headerButtons}
+        buttons={[]}
       />
       {isLoading ? (
         <DetailsSectionSkeleton className='p-0 m-0' />
@@ -208,23 +217,17 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
         </div>
       ) : (
         <>
-          {viewType === 'basic' ? (
-            <>
-              <DetailsSection
-                title='Basic Information'
-                data={basicInfo}
-                customStyle='pt-0 mt-0'
-              />
-              <DetailsSection
-                title='Audit Information'
-                data={auditInfo}
-                customStyle='pt-0 mt-0'
-                isAudit={true}
-              />
-            </>
-          ) : (
-            <ImportErrorTable fileId={fileId || ''} type={viewType} />
-          )}
+          <DetailsSection
+            title='Basic Information'
+            data={basicDetails}
+            customStyle='pt-0 mt-0'
+          />
+          <DetailsSection
+            title='Audit Information'
+            data={auditDetails}
+            customStyle='pt-0 mt-0'
+            isAudit={true}
+          />
         </>
       )}
     </div>

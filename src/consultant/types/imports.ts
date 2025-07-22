@@ -12,10 +12,11 @@ export type ImportsList = {
   records_with_warning: number | null;
   records_failed_to_stage?: number | null;
   status: string;
-  status_description?: string | null;
+  status_descriptions?: string | null;
   import_type?: string | null;
   imported_by: string;
   imported_on: string;
+  document_url: string;
 };
 
 export interface ImportsListURLParams {
@@ -41,12 +42,6 @@ export interface ImportListResponse {
   };
 }
 
-export type ImportErrorRecord = {
-  id: string;
-  reason: string;
-  description: string;
-};
-
 export interface ImportsDetails {
   rid: string;
   size: string;
@@ -63,6 +58,8 @@ export interface ImportsDetails {
   records_failed_to_stage: number;
   records_loaded_successfully: number;
   imported_by: string;
+  status_description: string;
+  document_url: string;
 }
 
 export interface ImportDetailsResponse {
@@ -73,3 +70,12 @@ export interface ImportDetailsResponse {
     imports: ImportsDetails;
   };
 }
+
+export type FailureType = 'staging-failure' | 'load-failure';
+
+export type ImportEntityType =
+  | 'resource'
+  | 'resource_cost'
+  | 'resource_skill'
+  | 'project'
+  | 'project_resource';
