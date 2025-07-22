@@ -1264,7 +1264,7 @@ export class ProjectResourceSchemaService {
     accountNumber: string,
     projectCode: string,
     projectResourceData: ICreateProjectResource | IUpdateProjectResource,
-    resourceData: any,
+    resourceData: Resources,
     fiscalYear: number,
     userId: string,
     transaction: Transaction
