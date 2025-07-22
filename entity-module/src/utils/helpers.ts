@@ -952,3 +952,20 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     }
   }
 }
+
+export const validateAccountSettingRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.fiscal_start_date) return STATUS_MESSAGE.fiscalStartDateMissing
+  if(!data.fiscal_end_date) return STATUS_MESSAGE.fiscalEndDateMissing
+  if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
+  if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
+  if(typeof data.auto_access_rd !== 'boolean') return STATUS_MESSAGE.autoAccessmentMissing
+}
+
+export const validateProjectSettingRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
+  if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
+  if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
+}

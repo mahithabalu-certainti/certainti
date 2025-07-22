@@ -8,6 +8,7 @@ import projectResourceRoutes from "./projectResourceRoutes";
 import projectTaskRoutes from "./projectTaskRoutes";
 import { errorLog, successLog } from "../utils/helpers";
 import importRoutes from './importRoutes'
+import settingRoutes from '../routes/settingsRoutes'
 
 const routes: Router = Router();
 
@@ -37,5 +38,6 @@ routes.use("/attachment", attachmentRoutes);
 routes.use("/project_resources", projectResourceRoutes);
 routes.use("/import", importRoutes);
 routes.use("/project_tasks", projectTaskRoutes);
+routes.use('/settings', settingRoutes)
 
 export default routes;

@@ -6,6 +6,7 @@ import attachmentController from "./attachmentController";
 import projectResourcesController from "./projectResourcesController";
 import importListController from './importListController';
 import projectTaskController from './projectTaskController';
+import settingController from '../controllers/settingsController'
 
 const controller = {
     resoucesController,
@@ -15,7 +16,8 @@ const controller = {
     attachmentController,
     projectResourcesController,
     importListController,
-    projectTaskController
+    projectTaskController,
+    settingController
 };
 
 export default controller;

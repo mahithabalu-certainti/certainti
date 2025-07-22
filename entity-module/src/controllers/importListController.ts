@@ -3,6 +3,7 @@ import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
 import { generateExcelBase64, handleErrorResponse, handleSuccessResponse, validateImportListByRidRequest, validateImportListRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
+import { generateSasUrl } from '../utils/blob';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -38,26 +39,32 @@ async function fetchAllImportList(req: Request, res: Response) {
             return
         }
 
-        let flatData = result.data.flatMap((d : any) => {
-            return d.imports == null ? [] : d.imports.map((data : any) => ({
-                rid : data.rid,
-                r_number : data.r_number,
-                file_name : data.file_name,
-                format : data.format,
-                size : data.size,
-                entity : data.entity,
-                total_records : data.total_records,
-                fiscal : data.fiscal,
-                records_loaded_successfully : data.records_loaded_successfully,
-                records_failed_to_load : data.records_failed_to_load,
-                records_with_warning : data.records_with_warning,
-                status : data.status,
-                status_descriptions : data.status_description,
-                imported_on : new Date(data.imported_on).toISOString(),
-                imported_by : data.imported_by,
+        let flatData = (
+        await Promise.all(
+            result.data.flatMap((d: any) => {
+            if (!d.imports) return [];
+            return d.imports.map(async (data: any) => ({
+                rid: data.rid,
+                r_number: data.r_number,
+                file_name: data.file_name,
+                format: data.format,
+                size: data.size,
+                entity: data.entity,
+                total_records: data.total_records,
+                fiscal: data.fiscal,
+                records_loaded_successfully: data.records_loaded_successfully,
+                records_failed_to_load: data.records_failed_to_load,
+                records_with_warning: data.records_with_warning,
+                status: data.status,
+                status_descriptions: data.status_description,
+                imported_on: new Date(data.imported_on).toISOString(),
+                imported_by: data.imported_by,
+                document_url: await generateSasUrl(data.document_url)
+            }));
             })
         )
-        })
+        ).flat();
+
         if (importedByFilter) {
         const conditionObj = importedByFilter;
         if (conditionObj.contains) {
@@ -537,41 +544,10 @@ async function exportAllImportedData (req : Request, res : Response) {
         return;  
 }
 
-async function exportImportListPerRow (req : Request, res : Response) {
-        const {account_rid, rid} = req.params
-        const result : any = await importServices.fetchImportById(account_rid, rid)
-        if(result.statusCode == HttpStatus.SUCCESS) {
-            let finalData : any = result.data.imports
-            finalData = {
-                "Import ID" : finalData.r_number,
-                "File Name" : finalData.file_name,
-                "Format" : finalData.format,
-                "Size" : finalData.size,
-                "Entity" : finalData.entity,
-                "Total Records" : finalData.total_records,
-                "Fiscal Year" : finalData.fiscal,
-                "Records Loaded Successfully" : finalData.records_loaded_successfully,
-                "Records Failed to Load" : finalData.records_failed_to_load,
-                "Records with Warning" : finalData.records_with_warning,
-                "Status" : finalData.status,
-                "Status Description" : finalData.status_description,
-                "Imported On" : finalData.imported_on.slice(0, 10),
-                "Imported By" : finalData.imported_by,
-            }
-            let finalDataArray = []
-            finalDataArray.push(finalData)
-             const base64Response = await generateExcelBase64(finalDataArray, "Imports")
-            handleSuccessResponse(res, base64Response);
-            return;
-        }
-}
-
-
 export default {
     fetchAllImportList,
     importListByRid,
     exportAllImportedData,
-    exportImportListPerRow,
     exportStagingFailureList,
     exportLoadFailureList
 }
