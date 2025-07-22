@@ -43,6 +43,7 @@ export default class SettingService {
             updatedResult = await rawQueries.updateSetting(schemaName, data, orgDb, mainDb)
             if(updatedResult) {
                 let findProjectFiscal : any = await orgDb.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
+                findProjectFiscal[0][0].project_fiscal_id = findProjectFiscal[0][0].rid
                 findProjectFiscal[0][0].account_id = findProjectFiscal[0][0].account_rid
                 await this.projectIngestion.updateProjectFiscalRegion(fetchParent[0][0].r_number, findProjectFiscal[0][0], findProjectFiscal[0][0].project_code)
                 await orgDb.query(rawQueries.insertProjectTimeline(schemaName, data))
