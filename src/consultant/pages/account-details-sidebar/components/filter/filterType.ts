@@ -203,11 +203,20 @@ export type FieldConfig = {
   options?: { option: string; value: string }[];
   required?: boolean;
   dependsOn?: string;
+  onChange?: boolean;
   minDate?: Date;
   maxDate?: Date;
   filterOptions?: { option: string; value: string }[];
   operatorOption?: { option: string; value: string }[];
 };
+
+export type FilterValue =
+  | string
+  | string[]
+  | number
+  | undefined
+  | undefined[]
+  | { from?: string; to?: string };
 
 export interface FilterComponentProps {
   value: string;
@@ -227,4 +236,5 @@ export interface FilterComponentProps {
   setCurrentPage: (page: number) => void;
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  onFilterChange?: (fieldName: string, value: FilterValue) => void;
 }

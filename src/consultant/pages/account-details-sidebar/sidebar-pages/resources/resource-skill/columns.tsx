@@ -19,7 +19,8 @@ export const getResourceSkillColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
-  resourceInActive?: boolean
+  resourceInActive?: boolean,
+  attachmentCreateEnable?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -273,6 +274,7 @@ export const getResourceSkillColumns = (
     label: 'Attachments',
     width: 100,
     sortable: false,
+    hide: !attachmentCreateEnable,
     render: (row) => (
       <TextButton
         label='Add'

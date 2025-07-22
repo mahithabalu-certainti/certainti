@@ -163,6 +163,7 @@ export enum AllModules {
   TIMELINE = 'timeline',
   USER_MANAGEMENT = 'user_management',
   PROFILE_MANAGEMENT = 'profile_management',
+  ATTACHMENTS = 'attachments',
 }
 
 // export enum AllPermissions {
@@ -275,6 +276,7 @@ export enum AllPermissions {
   ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
   ACCOUNT_IMPORTS_OVERVIEW = 'account_imports_overview',
   ACCOUNT_IMPORTS_TIMELINE = 'account_imports_timeline',
+  ATTACHMENT_CREATE = 'attachments_create',
 }
 
 export interface Country {

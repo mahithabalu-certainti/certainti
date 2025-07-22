@@ -36,8 +36,10 @@ export const fetchAllCountries =
  * React Query hook for fetching country list (view only)
  * @returns UseQueryResult with user details and query state
  */
-export const getDocumentInfoUrl = (): string => {
-  return 'api/attachment/document-type-category';
+export const getDocumentInfoUrl = (categoryId?: string): string => {
+  return categoryId
+    ? `api/attachment/document-type-category?category_rid=${categoryId}`
+    : 'api/attachment/document-type-category';
 };
 
 export const useGetAllCountries = () => {
@@ -72,6 +74,29 @@ export const useGetAllDocumentInfo = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+  });
+};
+
+export const fetchDocumentCategoryType = async (
+  categoryId: string
+): Promise<DocumentTypeResponse> => {
+  try {
+    const { data } = await resourceServiceApi.get<DocumentTypeResponse>(
+      getDocumentInfoUrl(categoryId)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching document category type :', error);
+    throw error;
+  }
+};
+
+export const useGetDocumentCategoryType = (categoryId: string) => {
+  return useQuery<DocumentTypeResponse, Error>({
+    queryKey: ['getDocumentCategoryType', categoryId],
+    queryFn: () => fetchDocumentCategoryType(categoryId),
+    retry: 0,
+    enabled: !!categoryId,
   });
 };
 

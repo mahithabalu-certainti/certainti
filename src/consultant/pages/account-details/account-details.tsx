@@ -98,12 +98,20 @@ export const AccountDetails = () => {
     AllPermissions.PROJECTS_EXPORT
   );
 
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [toggleEnabled, setToggleEnabled] = useState(false);
+  const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
+    Date.now()
+  );
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -126,7 +134,7 @@ export const AccountDetails = () => {
       sortBy: 'document_name',
       sortOrder: 'ASC',
       filters: {},
-      fiscalYear: String(convertedFiscalYear),
+      fiscalYear: convertedFiscalYear,
     });
 
   const [exportType, setExportType] = useState<ExportType>('resource');
@@ -183,6 +191,10 @@ export const AccountDetails = () => {
     }
   };
 
+  const onRefreshClick = () => {
+    setRefreshAccountDetails(Date.now());
+  };
+
   useEffect(() => {
     // Check Global filters and redirect if account is not in the list
     if (filters?.length > 0 && accountid) {
@@ -209,7 +221,8 @@ export const AccountDetails = () => {
 
   const { data, isPending, isError } = useAccountDetail(
     accountid as string,
-    isAccountDetailsEnable
+    isAccountDetailsEnable,
+    refreshAccountDetails
   );
   const accountViewEditFields = useMemo(
     () =>
@@ -247,7 +260,7 @@ export const AccountDetails = () => {
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
-      return false;
+      return !isAttachmentViewEnable;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -316,6 +329,7 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
+            refetchAccountDetails={onRefreshClick}
           />
         );
       case 'projects':

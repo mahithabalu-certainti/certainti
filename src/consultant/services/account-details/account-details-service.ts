@@ -8,7 +8,9 @@ import { AccountFieldsApiResponse } from '../../types';
  * @param accountId - The ID of the user to fetch
  * @returns Promise with user details
  */
-export const fetchAccountDetail = async (accountId: string): Promise<AccountFieldsApiResponse> => {
+export const fetchAccountDetail = async (
+  accountId: string
+): Promise<AccountFieldsApiResponse> => {
   try {
     const response = await accountServiceApi.get<AccountFieldsApiResponse>(
       AccountDetailUrl(accountId)
@@ -27,13 +29,14 @@ export const fetchAccountDetail = async (accountId: string): Promise<AccountFiel
  */
 export const useAccountDetail = (
   accountId: string,
-  isAccountDetailsEnable?: boolean
+  isAccountDetailsEnable?: boolean,
+  refreshTrigger?: number
 ) => {
   return useQuery<AccountFieldsApiResponse, Error>({
-    queryKey: ['accountDetail', accountId], // Unique query key
+    queryKey: ['accountDetail', accountId, refreshTrigger], // Unique query key
     queryFn: () => fetchAccountDetail(accountId),
     enabled: !!accountId && isAccountDetailsEnable, // Only fetch if userId exists
     gcTime: 0,
-    retry: 0, 
+    retry: 0,
   });
 };

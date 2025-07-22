@@ -3,14 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAttachmentList } from '../../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../../types/attachment';
-import { getResourceAttachmentColumns } from './column';
 import { ListTable } from '../../../../../../components/table';
 import { useParams } from 'react-router-dom';
 import {
+  AllModules,
   AllPermissions,
   useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
 } from '../../../../../../common-service';
-import { getFiscalYears } from '../../../../../../common-utils';
+import {
+  checkPermission,
+  getFiscalYears,
+} from '../../../../../../common-utils';
 import { SelectOption } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { ATTACHMENT_UPDATE } from '../../../../../../api/graphql/queries/attachment-query';
@@ -18,11 +22,13 @@ import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
 import {
   CellEditData,
+  FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
-
+import { getAttachmentTableColumns } from '../../../../../../components/Attachments/helpers';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
 interface ResourceSkillTableProps {
   fiscalYear?: number;
   appliedFilters?: Record<string, any>;
@@ -52,8 +58,11 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const { errorToast } = useToast();
   const { accountid } = useParams();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
+  const [currentCategory, setCurrentCategory] = useState<string>('');
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -89,16 +98,17 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   }, [data]);
 
-  const allDocumentInfo = useGetAllDocumentInfo();
   const fiscalYears = getFiscalYears(20);
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
-      allDocumentInfo.data?.data.documentTypes.map((type) => ({
+      categoryTypes.data?.data.documentTypes.map((type) => ({
         label: type.type_name,
         value: type.rid,
       })) || [],
-    [allDocumentInfo.data?.data.documentTypes]
+    [categoryTypes.data?.data.documentTypes]
   );
 
   const memoizedDocumentCategories: SelectOption[] = useMemo(
@@ -120,7 +130,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentPage(0);
   };
 
-  const costViewEditFields = useMemo(
+  const attachmentViewEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -130,11 +140,18 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    attachmentViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [attachmentViewEditFields]);
+
+  const attachmentEnable = checkPermission(modules, AllModules.ATTACHMENTS);
+
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
 
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
@@ -142,12 +159,25 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setOrderBy(property as keyof AttachmentList);
   };
 
-  const attachmentColumns = getResourceAttachmentColumns(
+  const handleDocumentCategory = (rid: string) => {
+    setCurrentCategory(rid);
+  };
+
+  const attachmentColumns = getAttachmentTableColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
-    permissionMap
+    handleDocumentCategory,
+    permissionMap,
+    categoryTypes.isLoading
   );
+
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'document_category' && event.value) {
+      setCurrentCategory(String(event.value));
+    }
+  };
+
   const getRowId = (row: AttachmentList) => row.rid;
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -183,11 +213,15 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       }
     );
 
-    if (hasDocType && !hasDocTypeOther) {
+    if (
+      hasDocCategory &&
+      hasDocType &&
+      !hasDocCategoryOther &&
+      !hasDocTypeOther
+    ) {
+      updateData['document_category_others'] = '';
       updateData['document_type_others'] = '';
     }
-    if (hasDocCategory && !hasDocCategoryOther)
-      updateData['document_category_others'] = '';
 
     try {
       const res = await updateAttachment({
@@ -217,6 +251,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   };
 
+  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
+
   return (
     <div>
       <ListTable
@@ -230,7 +266,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
           maxHeight: 'calc(100vh - 410px)',
           overflow: 'auto',
         }}
-        stickyHeader={false}
+        stickyHeader={true}
         stickyColumnsCount={1}
         selectable={false}
         actionWidth={80}
@@ -248,6 +284,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
         sortOrder={order.toUpperCase() as 'ASC' | 'DESC'}
         onSort={handleSortRequest}
         onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
       />
     </div>
   );

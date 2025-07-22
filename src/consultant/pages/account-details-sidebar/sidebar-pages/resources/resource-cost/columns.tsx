@@ -35,7 +35,8 @@ export const getResourceCostColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
-  resourceInActive?: boolean
+  resourceInActive?: boolean,
+  attachmentCreateEnable?: boolean
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -444,6 +445,7 @@ export const getResourceCostColumns = (
     label: 'Attachments',
     width: 100,
     sortable: false,
+    hide: !attachmentCreateEnable,
     render: (row) => (
       <TextButton
         label='Add'
