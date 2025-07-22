@@ -183,7 +183,6 @@ export const UPDATE_PROJECT_RESOURCE = gql`
         account_rid
         project_rid
         resource_rid
-        project_code
         project_resource_code
         fiscal_year
         start_date
