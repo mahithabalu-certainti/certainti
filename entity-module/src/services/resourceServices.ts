@@ -240,9 +240,7 @@ export class ResourceService {
      // const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"account_resources_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of resourceFields) {
-          console.log("field",field,field.read)
           if (field.read) {
-            console.log("in checkfield",field,field.read)
             allowedFieldSet.add(field.field_name);
           }
         }
@@ -252,9 +250,9 @@ export class ResourceService {
           allowedFieldSet.add(field.field_name);
         }
       }
-      console.log(allowedFieldSet)
+
       const labelMap: Record<string, string> = {
-        "account_name": "Account Name", // Maps to 'Name' in allowedFieldSet
+        "account_name": "Account Name",
         "resource_code": "Resource Code",
         "resource_name": "Name",
         "resource_type_rid": "Resource Type",
