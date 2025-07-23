@@ -720,11 +720,13 @@ export const CreateUserGroup: React.FC = () => {
                 totalItems={totalUsers}
                 onPageChange={userPageChange}
                 onRowsPerPageChange={userRowsPerPageChange}
-                actionColumnName='Add/Remove'
+                actionColumnName='Add / Remove'
                 stickyHeader
                 toggleClick={toggleUsers}
                 toggleData={addedUsers}
                 loading={availableUsers.isPending}
+                checkedToggleTooltip='Added'
+                unCheckedToggleTooltip='Removed'
               />
             </Suspense>
           </div>
@@ -753,11 +755,13 @@ export const CreateUserGroup: React.FC = () => {
                   totalItems={totalProjects}
                   onPageChange={projectPageChange}
                   onRowsPerPageChange={projectRowsPerPageChange}
-                  actionColumnName='Inclusion/Exclusion'
+                  actionColumnName='Exclusion / Inclusion'
                   toggleClick={toggleProjects}
                   toggleData={addedProjects}
                   disabledToggle={groupTypeNotCustom}
                   loading={availableProjects.isPending}
+                  checkedToggleTooltip='Inclusion'
+                  unCheckedToggleTooltip='Exclusion'
                 />
               </Suspense>
             </div>

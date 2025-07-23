@@ -245,9 +245,11 @@ export interface ListTableProps<T extends RowData> {
     othersSkillTypeId: string | null;
     othersSkillSubTypeId: string | null;
   };
-  actionColumnName?: string
-  toggleData?: string[]
-  disabledToggle?: boolean
+  actionColumnName?: string;
+  toggleData?: string[];
+  disabledToggle?: boolean;
+  checkedToggleTooltip?: string;
+  unCheckedToggleTooltip?: string;
   toggleClick?: (rowId: string, value: boolean) => void;
 }
 
