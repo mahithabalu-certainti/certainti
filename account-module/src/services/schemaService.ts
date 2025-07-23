@@ -1616,41 +1616,28 @@ class SchemaService {
     await sequelize.query(
       `
         INSERT INTO "${schemaName}"."account_details" (
-          account_rid, account_name, max_ai_interactions, 
-          autosend_interaction, fiscal_start_date, fiscal_end_date, 
-          interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
+          account_rid, account_name, 
+          interaction_cc_list,
           created_by, website, 
-          data_residency, data_storage, auto_access_rd,business_details
+          data_residency, data_storage,business_details
         ) 
         VALUES (
-          :account_rid, :account_name, :max_ai_interactions, 
-          :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
-          :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
+          :account_rid, :account_name, 
+          :interaction_cc_list, 
           :created_by,
           :website, 
-          :data_residency, :data_storage, :auto_access_rd,:business_details
+          :data_residency, :data_storage,:business_details
         );
       `,
       {
         replacements: {
           account_rid: account_rid,
           account_name: accountData.account_name,
-          max_ai_interactions: accountData.max_ai_interactions,
-          autosend_interaction: accountData.autosend_interaction,
-          fiscal_start_date: accountData.fiscal_start_date,
-          fiscal_end_date: accountData.fiscal_end_date,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
-          blended_rate_fte: accountData.blended_rate_fte
-            ? new Decimal(accountData.blended_rate_fte).toNumber().toString()
-            : null,
-          blended_rate_subcon: accountData.blended_rate_subcon
-            ? new Decimal(accountData.blended_rate_subcon).toNumber().toString()
-            : null,
           created_by: userId,
           website: accountData.website ?? null,
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
-          auto_access_rd: accountData.auto_access_rd,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
         },
@@ -1812,15 +1799,9 @@ class SchemaService {
       `
         UPDATE "${schemaName}"."account_details"
         SET 
-          max_ai_interactions = :max_ai_interactions,
-          autosend_interaction = :autosend_interaction,
           interaction_cc_list = :interaction_cc_list,
-          blended_rate_fte = :blended_rate_fte,
-          blended_rate_subcon = :blended_rate_subcon,
           modified_by = :modified_by,
-         
           website = :website,
-          auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
           business_details = :business_details
         WHERE account_rid = :account_rid;
@@ -1828,18 +1809,9 @@ class SchemaService {
       {
         replacements: {
           account_rid: account_rid,
-          max_ai_interactions: accountData.max_ai_interactions,
-          autosend_interaction: accountData.autosend_interaction,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
-          blended_rate_fte: accountData.blended_rate_fte
-            ? new Decimal(accountData.blended_rate_fte).toNumber().toString()
-            : null,
-          blended_rate_subcon: accountData.blended_rate_subcon
-            ? new Decimal(accountData.blended_rate_subcon).toNumber().toString()
-            : null,
           modified_by: userId,
           website: accountData.website ?? null,
-          auto_access_rd: accountData.auto_access_rd,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
           modified_datetime: new Date(),
