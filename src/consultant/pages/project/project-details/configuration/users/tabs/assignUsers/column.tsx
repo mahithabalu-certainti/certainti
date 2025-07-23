@@ -1,17 +1,17 @@
 import { ListTableColumn } from '../../../../../../../../components/table/types';
-import { Radio } from '@mui/material';
-
-interface AssignUsersColumnsProps {
-  selectionState: Record<string, 'inclusion' | 'exclusion' | null>;
-  handleInclusionChange: (userId: string) => void;
-  handleExclusionChange: (userId: string) => void;
-}
+import { Switch } from '@mui/material';
 
 export const getAccountAssignUsersColumns = ({
-  selectionState,
-  handleInclusionChange,
-  handleExclusionChange,
-}: AssignUsersColumnsProps): ListTableColumn<any>[] => [
+  onAssignChange,
+}: {
+  onAssignChange: (id: string, checked: boolean) => void;
+}): ListTableColumn<{
+  rid: string;
+  assign?: boolean;
+  full_name?: string;
+  organization?: string;
+  number_of_users?: number;
+}>[] => [
   {
     id: 'full_name',
     editId: 'full_name',
@@ -48,58 +48,11 @@ export const getAccountAssignUsersColumns = ({
     sortId: 'inclusion',
     label: 'Inclusion',
     width: 140,
-    render: (row: any) => (
-      <Radio
-        checked={selectionState[row.rid] === 'inclusion'}
-        onChange={() => handleInclusionChange(row.rid)}
-        color='primary'
-        sx={{
-          '& .MuiSvgIcon-root': {
-            fontSize: 20,
-          },
-          '& .MuiSvgIcon-root path': {
-            display: 'none',
-          },
-          '&:not(.Mui-checked) .MuiSvgIcon-root': {
-            border: '2px solid #C0C6CC',
-            borderRadius: '50%',
-          },
-          '&.Mui-checked .MuiSvgIcon-root': {
-            border: '5px solid #2A53DF',
-            borderRadius: '50%',
-            backgroundColor: '#fff',
-          },
-        }}
-      />
-    ),
-  },
-  {
-    id: 'exclusion',
-    sortId: 'exclusion',
-    label: 'Exclusion',
-    width: 140,
-    render: (row: any) => (
-      <Radio
-        checked={selectionState[row.rid] === 'exclusion'}
-        onChange={() => handleExclusionChange(row.rid)}
-        color='primary'
-        sx={{
-          '& .MuiSvgIcon-root': {
-            fontSize: 20,
-          },
-          '& .MuiSvgIcon-root path': {
-            display: 'none',
-          },
-          '&:not(.Mui-checked) .MuiSvgIcon-root': {
-            border: '2px solid #C0C6CC',
-            borderRadius: '50%',
-          },
-          '&.Mui-checked .MuiSvgIcon-root': {
-            border: '5px solid #2A53DF',
-            borderRadius: '50%',
-            backgroundColor: '#fff',
-          },
-        }}
+    render: (row: { rid: string; assign?: boolean }) => (
+      <Switch
+        checked={row.assign || false}
+        onChange={(e) => onAssignChange(row.rid, e.target.checked)}
+        color='success'
       />
     ),
   },

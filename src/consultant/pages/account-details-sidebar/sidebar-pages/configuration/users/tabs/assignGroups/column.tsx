@@ -53,35 +53,6 @@ export const getAccountAssignUsersColumns = ({
         checked={row.assign || false}
         onChange={(e) => onAssignChange(row.rid, e.target.checked)}
         color='success'
-        sx={{
-          width: 40,
-          height: 20,
-          padding: 0,
-          display: 'flex',
-          borderRadius: '15px !important',
-          '& .MuiSwitch-switchBase': {
-            transitionDuration: '300ms',
-            '&.Mui-checked': {
-              transform: 'translateX(20px)',
-              color: '#fff',
-              '& + .MuiSwitch-track': {
-                backgroundColor: '#2e7d32',
-                opacity: 1,
-              },
-            },
-            '& .MuiSwitch-thumb': {
-              boxShadow: '0 2px 4px 0 rgb(0 35 11 / 20%)',
-              width: 14,
-              height: 14,
-              margin: '-6px',
-            },
-            '& .MuiSwitch-track': {
-              backgroundColor: '#ccc',
-              opacity: 1,
-              transition: 'background-color 0.3s',
-            },
-          },
-        }}
       />
     ),
   },

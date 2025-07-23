@@ -3,8 +3,6 @@ import { ListTable } from '../../../../../../../../components/table';
 import { getAccountAssignUsersColumns } from './column';
 import { UserGorupMockData } from '../../../../../../../../admin/mockdata/user-group';
 
-type SelectionType = 'inclusion' | 'exclusion' | null;
-
 const AssignUsers: React.FC = () => {
   const actionMenuItems = [
     {
@@ -24,34 +22,23 @@ const AssignUsers: React.FC = () => {
     },
   ];
 
-  const [selectionState, setSelectionState] = useState<
-    Record<string, SelectionType>
-  >({});
-
-  const handleInclusionChange = (userId: string) => {
-    setSelectionState((prev) => ({
-      ...prev,
-      [userId]: prev[userId] === 'inclusion' ? null : 'inclusion',
-    }));
-  };
-
-  const handleExclusionChange = (userId: string) => {
-    setSelectionState((prev) => ({
-      ...prev,
-      [userId]: prev[userId] === 'exclusion' ? null : 'exclusion',
-    }));
-  };
-
-  const userData = UserGorupMockData?.data?.users || [];
+  const initialData = UserGorupMockData?.data?.users || [];
+  const [userData, setUserData] = useState(initialData);
   const getRowId = (row: any) => row.rid;
+
+  const handleAssignChange = (rowId: string, checked: boolean) => {
+    setUserData((prevData) =>
+      prevData.map((row) =>
+        row.rid === rowId ? { ...row, assign: checked } : row
+      )
+    );
+  };
 
   return (
     <ListTable
       data={userData}
       columns={getAccountAssignUsersColumns({
-        selectionState,
-        handleInclusionChange,
-        handleExclusionChange,
+        onAssignChange: handleAssignChange,
       })}
       getRowId={getRowId}
       hoverHighlight={false}
