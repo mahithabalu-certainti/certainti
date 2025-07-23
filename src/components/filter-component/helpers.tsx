@@ -330,6 +330,7 @@ export const NewMultiSelectFilterControl: React.FC<{
   const menuItems = useMemo(() => {
     return options.map((option) => (
       <MenuItem
+        title={option}
         key={option}
         value={option}
         dense
@@ -566,6 +567,7 @@ export const NewStatusFilterControl: React.FC<{
     >
       {options?.map((option) => (
         <MenuItem
+          title={option.label}
           key={option.label}
           value={option.value}
           sx={{
@@ -929,6 +931,7 @@ export const EnumSelectFilterControl: React.FC<{
           >
             {valueOptions.map((item) => (
               <MenuItem
+                title={item.label}
                 key={item.label}
                 value={item.value}
                 dense
