@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
-import { AssignUsers, AssignGroups } from './tabs';
+
 interface TabItem {
   label: string;
   content: React.ReactNode;
 }
 
-const Users: React.FC = () => {
+interface UsersProps {
+  tabs: TabItem[];
+}
+
+const Users: React.FC<UsersProps> = ({ tabs }) => {
   const [activeTab, setActiveTab] = useState(0);
 
-  const tabs: TabItem[] = [
-    {
-      label: 'Assign Users',
-      content: <AssignUsers />,
-    },
-    {
-      label: 'Assign Group',
-      content: <AssignGroups />,
-    },
-  ];
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };

@@ -116,6 +116,7 @@ const icons = {
   AttachmentIcon: () => import('./AttachmentIcon.svg?react'),
   ConfigIcon: () => import('./config-icon.svg?react'),
   importDetailsIcon: () => import('./import-details-icon.svg?react'),
+  ManageGroupIcon: () => import('./Managegroup.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -241,3 +242,4 @@ export const AcceptIcon = createLazySvgIcon('AcceptIcon');
 export const ConfigIcon = createLazySvgIcon('ConfigIcon');
 export const Attachment = createLazySvgIcon('AttachmentIcon');
 export const ImportDetailsIcon = createLazySvgIcon('importDetailsIcon');
+export const ManageGroup = createLazySvgIcon('ManageGroupIcon');

@@ -11,6 +11,7 @@ import { useRef } from 'react';
 import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
+import { AssignGroups, AssignUsers } from './users';
 
 interface ConfigurationProps {
   accountDetails: {
@@ -46,7 +47,14 @@ const Configuration: React.FC<ConfigurationProps> = ({ accountDetails }) => {
   const renderContent = () => {
     switch (list) {
       case 'users':
-        return <Users />;
+        return (
+          <Users
+            tabs={[
+              { label: 'Assign Users', content: <AssignUsers /> },
+              { label: 'Assign Group', content: <AssignGroups /> },
+            ]}
+          />
+        );
       case 'settings':
         return (
           <Settings ref={settingsFormRef} accountDetails={accountDetails} />
