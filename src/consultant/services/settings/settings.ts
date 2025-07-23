@@ -6,7 +6,7 @@ interface SettingsPayload {
   flag: string;
   fiscal_start_date?: string;
   fiscal_end_date?: string;
-  max_ai_interactions: number;
+  max_ai_interactions: number | undefined;
   autosend_interaction: boolean;
   auto_access_rd: boolean;
   blended_rate_fte: string;

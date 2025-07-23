@@ -69,15 +69,6 @@ export const AccountDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
-  const [accountDetailsObj, setAccountDetailsObj] = useState<{
-    account_id: string;
-    account_rid: string;
-    account_name: string;
-  }>({
-    account_id: '',
-    account_rid: '',
-    account_name: '',
-  });
 
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
@@ -259,15 +250,6 @@ export const AccountDetails = () => {
     isAccountDetailsEnable,
     refreshAccountDetails
   );
-  useEffect(() => {
-    if (data?.data?.accountById) {
-      const account_id = data.data.accountById.r_number || '';
-      const account_rid = data.data.accountById.rid || '';
-      const account_name = data.data.accountById.account_name || '';
-
-      setAccountDetailsObj({ account_id, account_rid, account_name });
-    }
-  }, [data]);
 
   const accountViewEditFields = useMemo(
     () =>
@@ -419,7 +401,15 @@ export const AccountDetails = () => {
           />
         );
       case 'configuration':
-        return <Configuration accountDetails={accountDetailsObj} />;
+        return (
+          <Configuration
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'configuration',
+            }}
+            refetchAccountDetails={onRefreshClick}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -514,21 +504,21 @@ export const AccountDetails = () => {
         name: 'Configuration',
         key: 'configuration',
         id: AllMenus.CONFIGURATION,
-        disabled: false,
+        disabled: disable,
         icon: ConfigIcon,
         subMenu: [
           {
             name: 'Users',
             key: 'users',
             id: AllMenus.USERS,
-            disabled: false,
+            disabled: disable,
             icon: ResourcesIcon,
           },
           {
             name: 'Settings',
             key: 'settings',
             id: AllMenus.ACCOUNT_SETTINGS,
-            disabled: false,
+            disabled: disable,
             icon: SettingIcon,
           },
         ],

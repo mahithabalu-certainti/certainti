@@ -172,6 +172,25 @@ export const ProjectDetails = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+  const [projectDetailsObj, setProjectDetailsObj] = useState<{
+    account_rid: string;
+    projectFiscalRid: string;
+    projectID: string;
+    autosend_interaction: boolean;
+    blended_rate_fte: string;
+    blended_rate_subcon: string;
+    auto_access_rd: boolean;
+    max_ai_interactions: number;
+  }>({
+    account_rid: '',
+    projectFiscalRid: '',
+    projectID: '',
+    autosend_interaction: false,
+    blended_rate_fte: '',
+    blended_rate_subcon: '',
+    auto_access_rd: false,
+    max_ai_interactions: 0,
+  });
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const projectDownloadIsEnable = checkPermission(
     permission,
@@ -217,18 +236,25 @@ export const ProjectDetails = () => {
 
   useEffect(() => {
     if (data?.data) {
+      const project = data.data.project;
+      console.log(project);
       setProjectDetails(transformProjectData(data.data));
-      setProjectData(data.data.project);
+      setProjectData(project);
       setFiscalYear({
-        year: data.data.project.fiscal_year,
-        startDate: formatDate(
-          data.data.project.fiscal_year,
-          data.data.project.fiscal_start_date
-        ),
-        endDate: formatDate(
-          data.data.project.fiscal_year,
-          data.data.project.fiscal_end_date
-        ),
+        year: project.fiscal_year,
+        startDate: formatDate(project.fiscal_year, project.fiscal_start_date),
+        endDate: formatDate(project.fiscal_year, project.fiscal_end_date),
+      });
+
+      setProjectDetailsObj({
+        account_rid: project.account_rid || '',
+        projectFiscalRid: project.rid || '',
+        projectID: project.project_rid || '',
+        autosend_interaction: project.auto_send_ai_interaction,
+        blended_rate_fte: project.blended_rate_fte || '',
+        blended_rate_subcon: project.blended_rate_subcon || '',
+        auto_access_rd: project.auto_access_rd,
+        max_ai_interactions: project.max_ai_interaction ?? 0,
       });
     }
   }, [data]);
@@ -368,6 +394,8 @@ export const ProjectDetails = () => {
             projectID={projectData?.project_rid || ''}
             accountID={accountID || ''}
             projectFiscalRid={projectData?.rid || ''}
+            projectDetails={projectDetailsObj}
+            refetchProjectDetails={onRefreshClick}
           />
         );
       default:

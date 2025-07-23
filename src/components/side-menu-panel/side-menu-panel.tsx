@@ -30,6 +30,20 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   const [localActiveKey, setLocalActiveKey] = useState(activeKey);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Initialize active key from URL parameters on mount
+  useEffect(() => {
+    const listParam = searchParams.get('list');
+    const subMenuParam = searchParams.get('subMenu');
+
+    if (subMenuParam) {
+      // If there's a subMenu parameter, that's the active key
+      setLocalActiveKey(subMenuParam);
+    } else if (listParam) {
+      // If only list parameter exists, that's the active key
+      setLocalActiveKey(listParam);
+    }
+  }, []); // Empty dependency array - only run on mount
   const { modules } = useSelector((state: RootState) => state.permission);
 
   useEffect(() => {
@@ -66,49 +80,36 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     }
   }, [accountMenus, localActiveKey]);
 
-  const handleSelect = (key: string) => {
+  const handleSelect = (key: string, parentKey?: string) => {
     // Don't proceed if clicking the same active key
     if (localActiveKey === key) return;
 
     setLocalActiveKey(key);
     onSelect(key);
 
+    // Common search params to delete
     searchParams.delete('res_id');
     searchParams.delete('tab');
     searchParams.delete('attachment_entity');
+    searchParams.delete('file_id');
+    searchParams.delete('upload');
 
-    searchParams.set('list', key);
-    searchParams.delete('subMenu');
+    if (parentKey) {
+      // Submenu item - check if navigation is actually needed
+      const currentList = searchParams.get('list');
+      const currentSubMenu = searchParams.get('subMenu');
 
-    navigate({ search: searchParams.toString() }, { replace: true });
-  };
-
-  const handleSubMenuSelect = (parentKey: string, subKey: string) => {
-    // Don't proceed if clicking the same active submenu
-    if (localActiveKey === subKey) return;
-
-    setLocalActiveKey(subKey);
-    onSelect(subKey);
-
-    // Get current params to avoid unnecessary changes
-    const currentList = searchParams.get('list');
-    const currentSubMenu = searchParams.get('subMenu');
-
-    // Only update if the params are actually different
-    if (currentList !== parentKey || currentSubMenu !== subKey) {
-      searchParams.delete('res_id');
-      searchParams.delete('tab');
-      searchParams.delete('attachment_entity');
-
-      searchParams.set('list', parentKey);
-      searchParams.set('subMenu', subKey);
-
-      navigate({ search: searchParams.toString() }, { replace: true });
-      searchParams.delete('file_id');
-      searchParams.delete('upload');
-      searchParams.set('list', key);
+      // Only update if the params are actually different
+      if (currentList !== parentKey || currentSubMenu !== key) {
+        searchParams.set('list', parentKey);
+        searchParams.set('subMenu', key);
+        navigate({ search: searchParams.toString() }, { replace: true });
+      }
     } else {
+      // Main menu item
       searchParams.set('list', key);
+      searchParams.delete('subMenu');
+      navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
 
@@ -166,6 +167,21 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       });
     }
   }, [localActiveKey, accountMenus]);
+
+  // Also expand parent items based on URL parameters on initial load
+  useEffect(() => {
+    const listParam = searchParams.get('list');
+    const subMenuParam = searchParams.get('subMenu');
+
+    if (listParam && subMenuParam) {
+      // If we have both parameters, expand the parent
+      setExpandedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(listParam);
+        return newSet;
+      });
+    }
+  }, [accountMenus]); // Run when accountMenus is ready
 
   const renderMenuItem = (item: MenuItem): React.ReactNode => {
     if (item.hide) return null;
@@ -258,7 +274,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
             {item.subMenu?.map((submenu) => (
               <li key={submenu.key} className='min-h-[32px] mb-1'>
                 <button
-                  onClick={() => handleSubMenuSelect(item.key, submenu.key)}
+                  onClick={() => handleSelect(submenu.key, item.key)}
                   disabled={submenu.disabled}
                   className={`${
                     localActiveKey === submenu.key

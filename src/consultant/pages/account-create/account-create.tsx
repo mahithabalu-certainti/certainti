@@ -33,11 +33,7 @@ import {
   YesNo,
 } from '../../types';
 import { AccFormData, newKeyContactFields } from './form-data';
-import {
-  DATA_STORAGE_OPTIONS,
-  transformFormData,
-  transformKeyContactsFromAPI,
-} from './utils';
+import { transformFormData, transformKeyContactsFromAPI } from './utils';
 import {
   checkPermission,
   formatDateToYYYYMMDDWithTime,
@@ -79,7 +75,6 @@ export const AccountForm: React.FC = () => {
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
-  const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
@@ -94,7 +89,6 @@ export const AccountForm: React.FC = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
-  console.log('modules from account-create', permission);
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const accountViewEnable = checkPermission(
     permission,
@@ -395,15 +389,9 @@ export const AccountForm: React.FC = () => {
     }
     if (data.fieldName === 'is_parent') {
       if (data.fieldValue === YesNo.Yes) {
-        setDataResidency(
-          DATA_STORAGE_OPTIONS.filter(
-            (item) => item.value !== 'store_in_parent'
-          )
-        );
         setIsParentAccountRequired(false);
       } else {
         setIsParentAccountRequired(true);
-        setDataResidency(DATA_STORAGE_OPTIONS);
       }
     }
     // show others field if industry is selected as Others
@@ -436,7 +424,6 @@ export const AccountForm: React.FC = () => {
     memoizedParentAccounts,
     memoizedCurrency,
     memoizedState,
-    dataResidency,
     memoizedIndustry,
     isParentAccountRequired,
     keyContacts,

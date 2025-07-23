@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Box } from '@mui/material';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
@@ -13,21 +7,49 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { useUpdateSettings } from '../../../../../services/settings';
 import { AllPermissions } from '../../../../../../common-service';
+import dayjs from 'dayjs';
 
 interface SettingsHandles {
   submitForm: () => void;
   resetForm: () => void;
 }
 
-interface SettingsProps {
-  accountDetails: {
-    account_id: string;
-    account_rid: string;
-    account_name: string;
-  };
+interface UpdateSettingsSuccess {
+  statusMessage: string;
 }
+
+interface SettingsProps {
+  accountDetails?: {
+    account_rid: string;
+    fiscal_start_date: string;
+    fiscal_end_date: string;
+    autosend_interaction: boolean;
+    blended_rate_fte: string;
+    blended_rate_subcon: string;
+    auto_access_rd: boolean;
+    max_ai_interactions: number;
+  };
+  refetchAccountDetails: () => void;
+}
+
+type FormValueType = string | number | boolean | object | string[] | null;
+
+interface FormValues extends Record<string, FormValueType> {
+  fiscal_start_date: string;
+  fiscal_end_date: string;
+  max_interaction_follow_up: string;
+  blended_rate_fte: string;
+  blended_rate_subcon: string;
+  auto_assessment: string;
+  auto_send_ai_interaction: string;
+}
+
 const Settings = forwardRef<SettingsHandles, SettingsProps>(
-  ({ accountDetails }, ref) => {
+  ({ accountDetails, refetchAccountDetails }, ref) => {
+    const formRef = useRef<HTMLFormElement>(null);
+    const { successToast } = useToast();
+    const updateSettings = useUpdateSettings();
+
     // Permission Management
     const { permission } = useSelector((state: RootState) => state.permission);
     const settingsViewEditFields = useMemo(
@@ -37,6 +59,7 @@ const Settings = forwardRef<SettingsHandles, SettingsProps>(
         )?.fields ?? [],
       [permission]
     );
+
     const permissionMap = useMemo(() => {
       const map: Record<string, { read: boolean; edit: boolean }> = {};
       settingsViewEditFields.forEach((item) => {
@@ -45,93 +68,97 @@ const Settings = forwardRef<SettingsHandles, SettingsProps>(
       return map;
     }, [settingsViewEditFields]);
 
-    const formRef = useRef<HTMLFormElement>(null);
-
-    const [formValues, setFormValues] = useState<
-      Record<string, string | string[] | boolean | number | null | object>
-    >({});
-    const [key, setKey] = useState(0);
-
-    const { successToast, errorToast } = useToast();
-    const updateSettings = useUpdateSettings();
-
-    const handleFormSubmit = (data: object) => {
-      const typedData = data as Record<
-        string,
-        string | string[] | boolean | number | null | object
-      >;
-
-      const parseBoolean = (value: unknown): boolean => {
-        if (value === 'Yes') return true;
-        if (value === 'No') return false;
-        return Boolean(value);
+    const formValues = useMemo<FormValues>(() => {
+      const defaultValues: FormValues = {
+        fiscal_start_date: '',
+        fiscal_end_date: '',
+        max_interaction_follow_up: '',
+        blended_rate_fte: '',
+        blended_rate_subcon: '',
+        auto_assessment: 'No',
+        auto_send_ai_interaction: 'No',
       };
 
+      if (!accountDetails) return defaultValues;
+
+      return {
+        ...defaultValues,
+        fiscal_start_date: accountDetails.fiscal_start_date
+          ? dayjs(accountDetails.fiscal_start_date).format('MM/DD')
+          : '',
+        fiscal_end_date: accountDetails.fiscal_end_date
+          ? dayjs(accountDetails.fiscal_end_date).format('MM/DD')
+          : '',
+        max_interaction_follow_up:
+          accountDetails.max_ai_interactions !== undefined
+            ? String(accountDetails.max_ai_interactions)
+            : '',
+        blended_rate_fte: accountDetails.blended_rate_fte || '',
+        blended_rate_subcon: accountDetails.blended_rate_subcon || '',
+        auto_assessment: accountDetails.auto_access_rd ? 'Yes' : 'No',
+        auto_send_ai_interaction: accountDetails.autosend_interaction
+          ? 'Yes'
+          : 'No',
+      };
+    }, [accountDetails]);
+
+    const handleFormSubmit = (data: object) => {
+      const formData = data as FormValues;
+
       const payload = {
-        account_rid: accountDetails.account_rid,
+        account_rid: accountDetails?.account_rid ?? '',
         flag: 'account',
-        fiscal_start_date: String(typedData.fiscal_start_date),
-        fiscal_end_date: String(typedData.fiscal_end_date),
-        max_ai_interactions: Number(typedData.max_interaction_follow_up),
-        autosend_interaction: parseBoolean(typedData.auto_send_ai_interaction),
-        auto_access_rd: parseBoolean(typedData.auto_assessment),
-        blended_rate_fte: String(typedData.blended_rate_fte),
-        blended_rate_subcon: String(typedData.blended_rate_subcon),
+        fiscal_start_date: formData.fiscal_start_date,
+        fiscal_end_date: formData.fiscal_end_date,
+        max_ai_interactions: Number(formData.max_interaction_follow_up) || 0,
+        autosend_interaction: formData.auto_send_ai_interaction === 'Yes',
+        auto_access_rd: formData.auto_assessment === 'Yes',
+        blended_rate_fte: formData.blended_rate_fte,
+        blended_rate_subcon: formData.blended_rate_subcon,
       };
 
       updateSettings.mutate(payload, {
-        onSuccess: (res: any) => {
-          successToast(res?.statusMessage);
-          setFormValues({});
-          setKey((prevKey) => prevKey + 1);
-        },
-        onError: (err: any) => {
-          errorToast(
-            err?.response?.data?.statusMessage || 'Failed to update settings'
-          );
+        onSuccess: (res: UpdateSettingsSuccess) => {
+          successToast(res.statusMessage);
+          refetchAccountDetails();
         },
       });
     };
 
     useImperativeHandle(ref, () => ({
       submitForm: () => {
-        if (formRef.current) {
-          formRef.current.requestSubmit();
-        }
+        formRef.current?.requestSubmit();
       },
       resetForm: () => {
-        setFormValues({});
-        setKey((prevKey) => prevKey + 1);
+        formRef.current?.reset();
       },
     }));
 
     return (
-      <div key={key}>
-        <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-          <Box
-            className='bg-white'
-            sx={{
-              minHeight: '560px',
-              maxHeight: '560px',
-              overflowY: 'auto',
-              '& .grid': {
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr) !important',
-                gap: '1rem',
-              },
-              '& .grid > div': {
-                gridColumn: 'span 1 !important',
-              },
-            }}
-          >
-            <FormBuilder
-              data={settingsFormFields(permissionMap)}
-              formRef={formRef}
-              outData={handleFormSubmit}
-              values={formValues}
-            />
-          </Box>
-        </div>
+      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
+        <Box
+          className='bg-white'
+          sx={{
+            minHeight: '560px',
+            maxHeight: '560px',
+            overflowY: 'auto',
+            '& .grid': {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr) !important',
+              gap: '1rem',
+            },
+            '& .grid > div': {
+              gridColumn: 'span 1 !important',
+            },
+          }}
+        >
+          <FormBuilder
+            data={settingsFormFields(permissionMap)}
+            formRef={formRef}
+            outData={handleFormSubmit}
+            values={formValues}
+          />
+        </Box>
       </div>
     );
   }

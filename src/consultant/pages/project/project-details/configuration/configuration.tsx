@@ -16,6 +16,19 @@ interface ConfigurationProps {
   projectID: string;
   accountID: string;
   projectFiscalRid: string;
+  projectDetails?: ProjectDetailsType;
+  refetchProjectDetails: () => void;
+}
+
+interface ProjectDetailsType {
+  account_rid: string;
+  projectFiscalRid: string;
+  projectID: string;
+  autosend_interaction: boolean;
+  blended_rate_fte: string;
+  blended_rate_subcon: string;
+  auto_access_rd: boolean;
+  max_ai_interactions: number;
 }
 
 const AttachmentTabs: ResourceTabs[] = [
@@ -31,31 +44,43 @@ const AttachmentTabs: ResourceTabs[] = [
     disable: true,
   },
 ];
-
 const Configuration: React.FC<ConfigurationProps> = ({
   projectID,
   accountID,
   projectFiscalRid,
+  projectDetails,
+  refetchProjectDetails,
 }) => {
   const settingsFormRef = useRef<{
     submitForm: () => void;
     resetForm: () => void;
   }>(null);
   const [searchParams] = useSearchParams();
+  // const navigate = useNavigate();
   const list = searchParams.get('subMenu');
 
   const settingProps = {
     account_rid: accountID,
     project_rid: projectID,
     project_fiscal_rid: projectFiscalRid,
+    auto_access_rd: projectDetails?.auto_access_rd,
+    autosend_interaction: projectDetails?.autosend_interaction,
+    blended_rate_fte: projectDetails?.blended_rate_fte,
+    blended_rate_subcon: projectDetails?.blended_rate_subcon,
+    max_ai_interactions: projectDetails?.max_ai_interactions,
   };
-
   const renderContent = () => {
     switch (list) {
       case 'users':
         return <Users />;
       case 'settings':
-        return <Settings ref={settingsFormRef} projectDetails={settingProps} />;
+        return (
+          <Settings
+            ref={settingsFormRef}
+            projectDetails={settingProps}
+            refetchProjectDetails={refetchProjectDetails}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -77,18 +102,18 @@ const Configuration: React.FC<ConfigurationProps> = ({
   };
 
   const headerButtons = [
-    {
-      label: 'Cancel',
-      variant: 'outlined' as 'outlined',
-      onClick: () => {
-        settingsFormRef?.current?.resetForm();
-      },
-      hide: false,
-      disabled: false,
-    },
+    // {
+    //   label: 'Cancel',
+    //   variant: 'outlined' as 'outlined',
+    //   onClick: () => {
+    //     navigate('/account');
+    //   },
+    //   hide: false,
+    //   disabled: false,
+    // },
     {
       label: 'Save',
-      variant: 'contained' as 'contained',
+      variant: 'contained' as const,
       onClick: () => {
         settingsFormRef?.current?.submitForm();
       },

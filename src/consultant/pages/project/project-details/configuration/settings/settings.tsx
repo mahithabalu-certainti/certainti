@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { Box } from '@mui/material';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
@@ -19,15 +13,31 @@ interface SettingsHandles {
   resetForm: () => void;
 }
 
+interface UpdateSettingsSuccess {
+  statusMessage: string;
+}
+
 interface SettingsProps {
-  projectDetails: {
+  projectDetails?: {
     account_rid: string;
     project_rid: string;
     project_fiscal_rid: string;
+    autosend_interaction?: boolean;
+    blended_rate_fte?: string;
+    blended_rate_subcon?: string;
+    auto_access_rd?: boolean;
+    max_ai_interactions?: number;
   };
+  refetchProjectDetails?: () => void;
 }
+
 const Settings = forwardRef<SettingsHandles, SettingsProps>(
-  ({ projectDetails }, ref) => {
+  ({ projectDetails, refetchProjectDetails }, ref) => {
+    const formRef = useRef<HTMLFormElement>(null);
+    const { successToast } = useToast();
+    const updateSettings = useUpdateSettings();
+
+    // Permission Management
     const { permission } = useSelector((state: RootState) => state.permission);
     const settingsViewEditFields = useMemo(
       () =>
@@ -36,6 +46,7 @@ const Settings = forwardRef<SettingsHandles, SettingsProps>(
         )?.fields ?? [],
       [permission]
     );
+
     const permissionMap = useMemo(() => {
       const map: Record<string, { read: boolean; edit: boolean }> = {};
       settingsViewEditFields.forEach((item) => {
@@ -44,93 +55,89 @@ const Settings = forwardRef<SettingsHandles, SettingsProps>(
       return map;
     }, [settingsViewEditFields]);
 
-    const formRef = useRef<HTMLFormElement>(null);
-
-    const [formValues, setFormValues] = useState<
-      Record<string, string | string[] | boolean | number | null | object>
-    >({});
-    const [key, setKey] = useState(0);
-
-    const { successToast, errorToast } = useToast();
-    const updateSettings = useUpdateSettings();
-
-    const handleFormSubmit = (data: object) => {
-      const typedData = data as Record<
-        string,
-        string | string[] | boolean | number | null | object
-      >;
-
-      const parseBoolean = (value: unknown): boolean => {
-        if (value === 'Yes') return true;
-        if (value === 'No') return false;
-        return Boolean(value);
+    const formValues = useMemo(() => {
+      const defaultValues = {
+        max_interaction_follow_up: '',
+        blended_rate_fte: '',
+        blended_rate_subcon: '',
+        auto_assessment: 'No',
+        auto_send_ai_interaction: 'No',
       };
 
+      if (!projectDetails) return defaultValues;
+
+      return {
+        ...defaultValues,
+        max_interaction_follow_up:
+          projectDetails.max_ai_interactions !== undefined
+            ? String(projectDetails.max_ai_interactions)
+            : '',
+        blended_rate_fte: projectDetails.blended_rate_fte || '',
+        blended_rate_subcon: projectDetails.blended_rate_subcon || '',
+        auto_assessment: projectDetails.auto_access_rd ? 'Yes' : 'No',
+        auto_send_ai_interaction: projectDetails.autosend_interaction
+          ? 'Yes'
+          : 'No',
+      };
+    }, [projectDetails]);
+
+    const handleFormSubmit = (data: object) => {
+      const formData = data as typeof formValues;
+
       const payload = {
-        account_rid: projectDetails.account_rid,
-        project_rid: projectDetails.project_rid,
-        project_fiscal_rid: projectDetails.project_fiscal_rid,
+        account_rid: projectDetails?.account_rid ?? '',
+        project_rid: projectDetails?.project_rid ?? '',
+        project_fiscal_rid: projectDetails?.project_fiscal_rid ?? '',
         flag: 'project',
-        max_ai_interactions: Number(typedData.max_interaction_follow_up),
-        autosend_interaction: parseBoolean(typedData.auto_send_ai_interaction),
-        auto_access_rd: parseBoolean(typedData.auto_assessment),
-        blended_rate_fte: String(typedData.blended_rate_fte),
-        blended_rate_subcon: String(typedData.blended_rate_subcon),
+        max_ai_interactions: Number(formData.max_interaction_follow_up) || 0,
+        autosend_interaction: formData.auto_send_ai_interaction === 'Yes',
+        auto_access_rd: formData.auto_assessment === 'Yes',
+        blended_rate_fte: formData.blended_rate_fte,
+        blended_rate_subcon: formData.blended_rate_subcon,
       };
 
       updateSettings.mutate(payload, {
-        onSuccess: (res: any) => {
-          successToast(res?.statusMessage);
-          setFormValues({});
-          setKey((prevKey) => prevKey + 1);
-        },
-        onError: (err: any) => {
-          errorToast(
-            err?.response?.data?.statusMessage || 'Failed to update settings'
-          );
+        onSuccess: (res: UpdateSettingsSuccess) => {
+          successToast(res.statusMessage);
+          refetchProjectDetails?.();
         },
       });
     };
 
     useImperativeHandle(ref, () => ({
       submitForm: () => {
-        if (formRef.current) {
-          formRef.current.requestSubmit();
-        }
+        formRef.current?.requestSubmit();
       },
       resetForm: () => {
-        setFormValues({});
-        setKey((prevKey) => prevKey + 1);
+        formRef.current?.reset();
       },
     }));
 
     return (
-      <div key={key}>
-        <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-          <Box
-            className='bg-white'
-            sx={{
-              minHeight: '560px',
-              maxHeight: '560px',
-              overflowY: 'auto',
-              '& .grid': {
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr) !important',
-                gap: '1rem',
-              },
-              '& .grid > div': {
-                gridColumn: 'span 1 !important',
-              },
-            }}
-          >
-            <FormBuilder
-              data={settingsFormFields(permissionMap)}
-              formRef={formRef}
-              outData={handleFormSubmit}
-              values={formValues}
-            />
-          </Box>
-        </div>
+      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
+        <Box
+          className='bg-white'
+          sx={{
+            minHeight: '560px',
+            maxHeight: '560px',
+            overflowY: 'auto',
+            '& .grid': {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr) !important',
+              gap: '1rem',
+            },
+            '& .grid > div': {
+              gridColumn: 'span 1 !important',
+            },
+          }}
+        >
+          <FormBuilder
+            data={settingsFormFields(permissionMap)}
+            formRef={formRef}
+            outData={handleFormSubmit}
+            values={formValues}
+          />
+        </Box>
       </div>
     );
   }
