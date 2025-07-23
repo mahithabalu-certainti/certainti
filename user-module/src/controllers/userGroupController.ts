@@ -430,8 +430,17 @@ async function getAccountGroups(req: Request, res: Response): Promise<void> {
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
+     let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(validatedData.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
     
-    const account = await services.userGroupService.getAccountGroups(req.params.accountid,validatedData.page,validatedData.limit);
+    const account = await services.userGroupService.getAccountGroups(req.params.accountid,validatedData.page,validatedData.limit,validatedData.sortBy,validatedData.sortOrder,parsedFilters);
 
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);

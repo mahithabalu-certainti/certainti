@@ -839,7 +839,18 @@ async getAccountUsers(
     // Step 4: Fetch users
    const { rows: users, count } = await User.findAndCountAll({
       where: basewhereClause,
-      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
+      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm",
+        [Sequelize.literal(`(
+        CASE
+          WHEN "User"."is_consultant_firm" = true THEN "User"."org_id"
+          ELSE (
+            SELECT account_name
+            FROM ${MAIN_SCHEMA_NAME}.account
+            WHERE account.rid = "User".org_id
+          )
+        END
+      )`), "organization_name"]
+      ],
       include: [
         {
           model: Status,
@@ -985,8 +996,6 @@ async getAccountUsers(
  */
 async getAccountGroups(
   account_rid?: string,
-  project_rid?:string,
-  entity_type:string = 'ACCOUNT',
   page: number = 1,
   limit: number = 10,
   sortBy: string = "first_name", 
@@ -1053,6 +1062,7 @@ async getAccountGroups(
             "user_count"
         ]
       ],
+      where:whereClause,
       include: [
         {
         model: UserGroupType,
@@ -1069,6 +1079,7 @@ async getAccountGroups(
 
   // 2. Get mapped groups for this account
   const mappedGroups = await UserGroup.findAll({
+    where:whereClause,
     attributes: [
       "rid",
       "group_name",
