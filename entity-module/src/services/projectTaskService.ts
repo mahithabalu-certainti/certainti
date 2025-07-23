@@ -817,9 +817,9 @@ async getProjectTaskById(
       };
     }
 
-    const [resourceTypeData, regionData, countryData] = await Promise.all([
+    const [resourceTypeData, regionData, countryData, currencyData, statusData] = await Promise.all([
       (task as any).resource?.resource_type_rid ? mainSequelize.query(
-        `SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeRid`,
+        rawQueries.GET_RESOURCE_TYPES,
         { 
           replacements: { resourceTypeRid: (task as any).resource?.resource_type_rid },
           type: 'SELECT'
@@ -827,7 +827,7 @@ async getProjectTaskById(
       ) : Promise.resolve([]),
 
       task.region_rid ? mainSequelize.query(
-        `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :regionRid`,
+        rawQueries.GET_REGIONS,
         {
           replacements: { regionRid: task.region_rid },
           type: 'SELECT'
@@ -835,9 +835,23 @@ async getProjectTaskById(
       ) : Promise.resolve([]),
 
       task.country_rid ? mainSequelize.query(
-        `SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :countryRid`,
+        rawQueries.GET_COUNTRIES,
         {
           replacements: { countryRid: task.country_rid },
+          type: 'SELECT'
+        }
+      ) : Promise.resolve([]),
+      task.currency_rid ? mainSequelize.query(
+        rawQueries.GET_CURRENCIES,
+        {
+          replacements: { currencyRid: task.currency_rid },
+          type: 'SELECT'
+        }
+      ) : Promise.resolve([]),
+      task.status_rid ? mainSequelize.query(
+        rawQueries.GET_STATUSES,
+        {
+          replacements: { statusRid: task.status_rid },
           type: 'SELECT'
         }
       ) : Promise.resolve([])
@@ -846,6 +860,8 @@ async getProjectTaskById(
     const [resourceType] = resourceTypeData;
     const [region] = regionData;
     const [country] = countryData;
+    const [currency] = currencyData;
+    const [status] = statusData;
 
     const attachments = await this.fetchAttachmentsBytaskId(taskRid);
     let mappedAttachments = [];
@@ -908,14 +924,17 @@ async getProjectTaskById(
       resource_type_name: (resourceType as any)?.resource_type_name || null,
       resource_role: taskWithUserDetails.dataValues.resource?.resource_role,
       status_rid: taskWithUserDetails.dataValues.status_rid,
+      status_name: (status as any)?.status_name || null,
       country_rid: taskWithUserDetails.dataValues.country_rid,
       country_name: (country as any)?.country_name || null,
       region_rid: taskWithUserDetails.dataValues.region_rid,
       region_name: (region as any)?.state_name || null,
       currency_rid: taskWithUserDetails.dataValues.currency_rid,
+      currency_symbol: (currency as any)?.currency_symbol || null,
+      currency_name: (currency as any)?.currency_name || null,
       resource_orgname: taskWithUserDetails.dataValues.resource?.resource_orgname,
-      effort_project_task_level: taskWithUserDetails.dataValues.effort_project_task_level,
-      cost_project_task_level: taskWithUserDetails.dataValues.cost_project_task_level,
+      total_hours_pro_task: taskWithUserDetails.dataValues.total_hours_pro_task,
+      total_cost_pro_task: taskWithUserDetails.dataValues.total_cost_pro_task,
       description: taskWithUserDetails.dataValues.description,
       comments: taskWithUserDetails.dataValues.comments,
       attachment: mappedAttachments,

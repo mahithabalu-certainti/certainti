@@ -534,6 +534,21 @@ export const rawQueries = {
     FROM ${MAIN_SCHEMA_NAME}.user 
     WHERE rid IN (:userIds)
   `,
+  GET_RESOURCE_TYPES: `
+  SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRid)
+  `,
+  GET_COUNTRIES:`
+  SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
+  `,
+  GET_REGIONS:`
+  SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:regionRid)
+  `,
+  GET_CURRENCIES:`
+  SELECT rid, currency_symbol, currency_name FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRid)
+  `,
+  GET_STATUSES:`
+  SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:statusRid)
+  `,
   fetchUserDetailsById (userId : string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`
   },
