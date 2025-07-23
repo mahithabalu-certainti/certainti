@@ -269,7 +269,8 @@ export interface IProjectService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;

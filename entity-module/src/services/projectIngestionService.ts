@@ -590,7 +590,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -602,7 +602,8 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      projectPointOfContact
+      projectPointOfContact,
+      projectPointOfContactEmail
     );
 
     return await ProjectSummary.create(summaryData);
@@ -1491,7 +1492,8 @@ class ProjectIngestionService {
     rawFilters: Record<string, any> = {},
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
-    graphqlData: any
+    graphqlData: any,
+    accessibleIds: string[]
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1607,6 +1609,7 @@ class ProjectIngestionService {
       whereProject = {
         account_rid: accountData.rid,
         ...(bothParentAndChild ? parentFilters : {}),
+        ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       whereFiscal = {
         account_rid: accountData.rid,
@@ -1781,7 +1784,8 @@ class ProjectIngestionService {
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
     timezone: string,
-    userId: string
+    userId: string,
+    accessibleIds: string[]
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1848,6 +1852,7 @@ class ProjectIngestionService {
     const whereProject: Record<string, any> = {
       account_rid: accountData.rid,
       ...(bothParentAndChild ? parentFilters : {}),
+      ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
     };
 
     const whereFiscal: Record<string, any> = {

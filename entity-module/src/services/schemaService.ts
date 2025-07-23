@@ -3699,6 +3699,40 @@ async fetchAccountsByIds(accountRids: string[]) {
     }
   }
 
+  async getUserProfileType(userRid: string): Promise<{ profileName: string, email: string } | null> {
+  const mainDbSequelize = await initMainDbSequelize();
+
+  try {
+    const results = await mainDbSequelize.query<{ profile_name: string; email: string }>(
+      `
+      SELECT p.profile_name, u.email
+      FROM ${MAIN_SCHEMA_NAME}.user u
+      JOIN ${MAIN_SCHEMA_NAME}.profile p ON u.profile_rid = p.rid 
+      WHERE u.rid = :userRid
+      LIMIT 1
+      `,
+      {
+        replacements: { userRid },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    // Return renamed keys to match camelCase (optional)
+    return {
+      profileName: results[0].profile_name,
+      email: results[0].email,
+    };
+  } catch (error) {
+    console.error("Error fetching user profile info:", error);
+    throw new Error("Failed to get user profile information");
+  }
+}
+
+
   async getAccessibleAccountInfo(userRid: string): Promise<
     Array<{
       id: string;

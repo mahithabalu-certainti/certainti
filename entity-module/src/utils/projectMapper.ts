@@ -189,7 +189,8 @@ export class ProjectMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    projectPointOfContact: string | null
+    projectPointOfContact: string | null,
+    projectPointOfContactEmail: string | null
   ) {
     return {
       project_code: projectData.project_code,
@@ -249,6 +250,7 @@ export class ProjectMapper {
 
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
+      project_point_of_contact_email:projectPointOfContactEmail
     };
   }
 

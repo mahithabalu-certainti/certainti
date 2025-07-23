@@ -840,10 +840,11 @@ async getAccountUsers(
       order,
     });
 
-    const userRids = users.map((u: any) => u.rid);
+    const userRids = users.map((u) => u.rid);
     const groupedUserSet = new Set<string>();
     const accessSet = new Set<string>();
     const userToGroupsMap: Map<string, Set<string>> = new Map();
+    const userCommentsMap: Map<string, string | undefined> = new Map();
     let groupRids: string[] = [];
 
     if (account_rid) {
@@ -879,30 +880,44 @@ async getAccountUsers(
             { group_rid: { [Op.in]: groupRids } },
           ]
         },
-        attributes: ["user_rid", "group_rid", "access_type"],
+        attributes: ["user_rid", "group_rid", "access_type", "comment"],
       });
 
       // Step 8: Build access maps
-      const userAccessMap = new Map<string, string>();   // user_rid → access_type
+      const userAccessMap = new Map<string, { access_type: string, comment?: string }>(); // user_rid → access_type
       const groupAccessMap = new Map<string, string>();  // group_rid → access_type
 
-      accessRecords.forEach(({ user_rid, group_rid, access_type }) => {
-        if (user_rid) userAccessMap.set(user_rid, access_type);
+      accessRecords.forEach(({ user_rid, group_rid, access_type, comment }) => {
+        if (user_rid) userAccessMap.set(user_rid, { access_type, comment });
         if (group_rid) groupAccessMap.set(group_rid, access_type);
       });
 
       // Step 9: Determine access for each user
       userRids.forEach((userRid) => {
         let hasAccess = false;
-
+        let comment: string | null = null;
         const userAccess = userAccessMap.get(userRid);
-        if (userAccess === 'EXCLUDE') {
+        const userGroups = userToGroupsMap.get(userRid) || new Set();
+
+        if (userAccess?.access_type === 'EXCLUDE') {
           hasAccess = false;
-        } else if (userAccess === 'INCLUDE') {
+
+          const groupHasAccess = Array.from(userGroups).some(
+            g => groupAccessMap.get(g) === 'INCLUDE'
+          );
+
+          if (groupHasAccess) {
+            comment = userAccess?.comment || null;
+          } else {
+            comment = userAccess?.comment || null;
+          }
+
+        } else if (userAccess?.access_type === 'INCLUDE') {
           hasAccess = true;
+          comment = userAccess.comment || null;
+
         } else {
-          const groups = userToGroupsMap.get(userRid) || new Set();
-          for (const group of groups) {
+          for (const group of userGroups) {
             const groupAccess = groupAccessMap.get(group);
             if (groupAccess === 'EXCLUDE') {
               hasAccess = false;
@@ -918,6 +933,8 @@ async getAccountUsers(
         } else {
           accessSet.delete(userRid);
         }
+
+        if (comment) userCommentsMap.set(userRid, comment);
       });
     }
 
@@ -926,12 +943,13 @@ async getAccountUsers(
       ...user.toJSON(),
       is_grouped: groupedUserSet.has(user.rid),
       has_access: accessSet.has(user.rid),
+      comment: userCommentsMap.get(user.rid) || null,
     }));
 
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: usersWithFlags,count:count },
+      data: { users: usersWithFlags, count },
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);
@@ -1772,7 +1790,6 @@ private createUserCountCondition(operator: string, value: number): any {
     }
 
     const groupData = userGroupById.toJSON() as any;
-    console.log(groupData)
     
     // Add created_by info
     if (groupData.user) {
@@ -1855,7 +1872,6 @@ async listUserGroupById(
 
 private async getFormattedAccountsForGroup(groupType: string, groupRid: string): Promise<any[]> {
   const sequelize = await initSequelize();
-  console.log("groupType",groupType)
 
   if (groupType === "DEFAULT") {
     return await sequelize.query(
@@ -1894,7 +1910,6 @@ private async getFormattedAccountsForGroup(groupType: string, groupRid: string):
 
 private async getFormattedProjectsForGroup(groupType: string, groupRid: string): Promise<any[]> {
   const sequelize = await initSequelize();
-  console.log("groupType",groupType)
 
   if (groupType === "DEFAULT") {
     return await sequelize.query(
@@ -1926,7 +1941,7 @@ private async getFormattedProjectsForGroup(groupType: string, groupRid: string):
       ps.account_rid,
       acc.account_name,
       CASE 
-        WHEN uga.rid IS NOT NULL THEN true
+        WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
         ELSE false
       END as has_access,
       uga.access_type
@@ -2357,10 +2372,11 @@ async assignUserAccessToAccount({
     const now = new Date();
     const created: string[] = [];
     const updated: string[] = [];
+    let comment: string | null = '';
 
     for (const user of users) {
       if (!user.is_modified) continue;
-
+      comment = '';
       const access_type = user.is_enabled ? "INCLUDE" : "EXCLUDE";
 
       const whereClause: any = {
@@ -2372,10 +2388,34 @@ async assignUserAccessToAccount({
       const existing = await UserGroupEntityAccess.findOne({
         where: whereClause,
       });
+      
 
+    // If user is disabled, check if they belong to a group that has access to the account
+    if (!user.is_enabled) {
+    const userGroups = await UserGroupMapping.findAll({
+      where: { user_rid: user.rid },
+      attributes: ['group_rid'],
+    });
+
+    const groupRids = userGroups.map(g => g.group_rid);
+
+    if (groupRids.length > 0) {
+      const groupHasAccess = await UserGroupAccountMapping.findOne({
+        where: {
+          group_rid: { [Op.in]: groupRids },
+          account_rid,
+        },
+      });
+
+      if (groupHasAccess) {
+        comment = `Access Disabled on ${dayjs().format('YYYY-MM-DD, hh:mm:ss A')}  `;
+      }
+    }
+  }
       if (existing) {
         await existing.update({
           access_type,
+          comment,
           modified_by: userId,
           modified_datetime: now,
         });
@@ -2383,6 +2423,7 @@ async assignUserAccessToAccount({
       } else {
         await UserGroupEntityAccess.create({
           user_rid: user.rid ?? null,
+          comment,
           group_rid: null,
           entity_type: "ACCOUNT",
           entity_rid:account_rid,
@@ -2538,7 +2579,6 @@ async  assignEntityAccessToProjects({
 
     let updated = 0;
     let failed = 0;
-    console.log(projects)
 
       for (const [project_rid, has_access_enabled] of Object.entries(projects)) {
       if (!project_rid) {
@@ -2851,7 +2891,6 @@ async getUserGroupType(type: string): Promise<{
   data?: { groupTypes: any; count: number };
 }> {
   try {
-    console.log("type",type)
     const whereClause =
       type === 'All'
         ? {} // no filter

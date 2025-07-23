@@ -38,6 +38,7 @@ export class KeyContactService {
     let technicalConsultant = "-";
     let financialConsultant = "-";
     let projectPointOfContact = "-";
+    let projectPointOfContactEmail = '-';
 
     if (keyContacts) {
       const keyContactIds = [
@@ -105,15 +106,19 @@ export class KeyContactService {
       projectPointOfContact = pointOfContact
         ? pointOfContact.key_contact_name
         : null;
+      projectPointOfContactEmail = pointOfContact
+        ? pointOfContact.key_contact_email
+        : null;
     } else {
       return {
         technicalConsultant: null,
         financialConsultant: null,
         projectPointOfContact: null,
+        projectPointOfContactEmail:null
       };
     }
 
-    return { technicalConsultant, financialConsultant, projectPointOfContact };
+    return { technicalConsultant, financialConsultant, projectPointOfContact,projectPointOfContactEmail };
   }
 
   async deleteKeyContactDetails(

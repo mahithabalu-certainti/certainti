@@ -2173,7 +2173,7 @@ if (includeDependencies) {
    * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
    * A promise that resolves to an object containing the status, message, and the list of profiles.
    */
-  async exportUserprofiles(profileId: string): Promise<{
+  async exportUserprofiles(profileId: string,userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -2182,12 +2182,27 @@ if (includeDependencies) {
     try {
       const workbook = new ExcelJS.Workbook();
       const headerSheet = workbook.addWorksheet("Headers");
-      const headers = [
-        "Profile Name",
-        "Profile Description",
-        "Created On",
-        "Created By",
-      ];
+      const allowedFieldsForExport = await this.getAllowedExportFields(userId,"profile_view_edit");
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      const labelMap: Record<string, string> = {
+        profile_name: "Profile Name",
+        profile_description: "Profile Description",
+        created_datetime: "Created On",
+        created_by: "Created By",
+      };
+      const headers: string[] = [];
+
+      for (const field of Object.keys(labelMap)) {
+        if (allowedFieldSet.has(field)) {
+          headers.push(labelMap[field]);
+        }
+      }
+
       headerSheet.addRow(headers);
       const profile = await Profile.findByPk(profileId, {
         include: [
@@ -2207,12 +2222,13 @@ if (includeDependencies) {
         const createdDate = profile.created_datetime
           ? new Date(profile.created_datetime).toISOString().slice(0, 10)
           : "";
-        headerSheet.addRow([
-          profile.profile_name,
-          profile.profile_description,
-          createdDate,
-          createdByName,
-        ]);
+        const fieldsToExport = Object.keys(labelMap).filter(field =>
+          allowedFieldSet.has(field)
+        );
+
+        // Add dynamic headers
+        const headers = fieldsToExport.map(field => labelMap[field]);
+        headerSheet.addRow(headers);
       }
       const sheet = workbook.addWorksheet("Menu");
 
