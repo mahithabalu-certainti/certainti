@@ -290,6 +290,15 @@ class SchemaService {
         qualifying_project_rd_credits_fte_fed numeric(18,2),
         qualifying_project_rd_credits_subcon_fed numeric(18,2),
         qualifying_project_rd_credits_fed numeric(18,2),
+        total_project_res_hours_fte numeric(18,2),
+        total_project_res_hours_subcon numeric(18,2),
+        total_project_res_cost_fte numeric(18,2),
+        total_project_res_cost_subcon numeric(18,2),
+        total_project_res_cost_nonlabor numeric(18,2),
+        total_project_task_hours_fte numeric(18,2),
+        total_project_task_hours_subcon numeric(18,2),
+        total_project_task_cost_fte numeric(18,2),
+        total_project_task_cost_subcon numeric(18,2),
         CONSTRAINT account_fiscal_pkey PRIMARY KEY (rid),
         CONSTRAINT account_fiscal_r_number_key UNIQUE (r_number)
 );
@@ -967,7 +976,9 @@ class SchemaService {
         target_load_end_timestamp TIMESTAMPTZ,
         target_load_error_records_count INT,
         target_ai_records_processed INT,
-        target_ai_error_records_count INT
+        target_ai_error_records_count INT,
+        total_staging_warning_count INT,
+        fiscal_year INT
       );
     `);
   }
