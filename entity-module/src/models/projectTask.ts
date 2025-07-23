@@ -28,8 +28,8 @@ interface ProjectTaskAttributes {
   region_rid?: string | null;
   currency_rid?: string | null;
 
-  effort_project_task_level?: number | null;
-  cost_project_task_level?: number | null;
+  total_hours_pro_task?: number | null;
+  total_cost_pro_task?: number | null;
 
   salary?: number | null;
   bonus?: number | null;
@@ -68,8 +68,8 @@ export class ProjectTask
   public region_rid?: string | null;
   public currency_rid?: string | null;
 
-  public effort_project_task_level?: number | null;
-  public cost_project_task_level?: number | null;
+  public total_hours_pro_task?: number | null;
+  public total_cost_pro_task?: number | null;
 
   public salary?: number | null;
   public insurance?: number | null;
@@ -111,8 +111,8 @@ export class ProjectTask
         region_rid: { type: DataTypes.STRING(50) },
         currency_rid: { type: DataTypes.STRING(50) },
 
-        effort_project_task_level: { type: DataTypes.DECIMAL(18, 2) },
-        cost_project_task_level: { type: DataTypes.DECIMAL(18, 2) },
+        total_hours_pro_task: { type: DataTypes.DECIMAL(18, 2) },
+        total_cost_pro_task: { type: DataTypes.DECIMAL(18, 2) },
 
         salary: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
         bonus: { type: DataTypes.DECIMAL(18, 2), allowNull: true },

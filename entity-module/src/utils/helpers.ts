@@ -905,14 +905,14 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     dataStorage = `fiscal_year = ${newData.fiscal_year}`
     newDataArray.push(dataStorage)
   }
-  if(requestData.effort_project_task_level != undefined) {
-    newData.effort_project_task_level = requestData.effort_project_task_level != dbData.effort_project_task_level ? requestData.effort_project_task_level : dbData.effort_project_task_level
-    dataStorage = `effort_project_task_level = ${newData.effort_project_task_level}`
+  if(requestData.total_hours_pro_task != undefined) {
+    newData.total_hours_pro_task = requestData.total_hours_pro_task != dbData.total_hours_pro_task ? requestData.total_hours_pro_task : dbData.total_hours_pro_task
+    dataStorage = `total_hours_pro_task = ${newData.total_hours_pro_task}`
     newDataArray.push(dataStorage)
   }
-  if(requestData.cost_project_task_level != undefined) {
-    newData.cost_project_task_level = requestData.cost_project_task_level != dbData.cost_project_task_level ? requestData.cost_project_task_level : dbData.cost_project_task_level
-    dataStorage = `cost_project_task_level = ${newData.cost_project_task_level}`
+  if(requestData.total_cost_pro_task != undefined) {
+    newData.total_cost_pro_task = requestData.total_cost_pro_task != dbData.total_cost_pro_task ? requestData.total_cost_pro_task : dbData.total_cost_pro_task
+    dataStorage = `total_cost_pro_task = ${newData.total_cost_pro_task}`
     newDataArray.push(dataStorage)
   }
   if(requestData.country_rid != undefined) {

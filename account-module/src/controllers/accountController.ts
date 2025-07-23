@@ -398,30 +398,9 @@ async function accountById(req: Request, res: Response): Promise<void> {
 async function listOrgAccounts(req: Request, res: Response): Promise<void> {
    const methodName = "List Org account";
     try {
-       const value = await validateRequest(req, listOrgAccountSchema, res,"GET");
-    if (!value) {
-      return;
-    }
-    let parsedFilters: Record<string, any> = {};
-      try {
-      if (value.filters) {
-        parsedFilters = JSON.parse(value.filters);
-      }
-    
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
+       
   
-    const account = await accountServices.listAllAccounts({
-  page: value.page,
-  limit: value.limit,
-  sortBy: value.sortBy,
-  sortOrder: value.sortOrder,
-  filters: parsedFilters,
-});
+    const account = await accountServices.listAllAccounts();
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -450,7 +429,34 @@ async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   const methodName = "List global account";
   try {
     const userId = req.headers['x-user-id'] as string;
-    const account = await accountServices.listGlobalAccounts(userId);
+    const value = await validateRequest(req, listOrgAccountSchema, res,"GET");
+    if (!value) {
+      return;
+    }
+    let parsedFilters: Record<string, any> = {};
+      try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    if(!userId)
+    {
+      return
+    }
+    const account = await accountServices.listGlobalAccounts(
+      userId,
+      value.page,
+      value.limit,
+      value.sortBy,
+      value.sortOrder,
+      parsedFilters,
+    );
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

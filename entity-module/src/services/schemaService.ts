@@ -1846,45 +1846,51 @@ class SchemaService {
       const accessibleProjectsCondition = includeProjectFilter
         ? `ps.project_rid = ANY(ARRAY[?]::text[])`
         : "1=1";
-      // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
-      const projectIdsQuery = bothParentAndChild
-        ? `
-          SELECT DISTINCT ps.project_rid
-          ${commonJoins}
-          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-            ON pfs.project_rid = ps.project_rid 
-            AND pfs.account_rid = ps.account_rid
-          WHERE ${accessibleProjectsCondition}
-          ${accountMeta.length > 0 ? 'AND acc.rid IN (' + accountMeta.map(a => `'${a}'`).join(',') + ')' : ''}
-          ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
-          ${fiscalYearClause}
-        `
-        : `
-    SELECT DISTINCT ps.project_rid
-    ${commonJoins}
-    INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-      ON pfs.project_rid = ps.project_rid 
-      AND pfs.account_rid = ps.account_rid
-      ${fiscalYearClause}
-    WHERE ${accessibleProjectsCondition}
-     ${accountMeta.length > 0 ? 'AND acc.rid IN (' + accountMeta.map(a => `'${a}'`).join(',') + ')' : ''}
-    ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-  `;
 
-      // Updated replacements array
-      const projectIdsReplacements = bothParentAndChild
-        ? [
-            accessibleIds, // For project_rid = ANY(?)
-            ...(accountMeta.length > 0 ? [accountMeta] : []), // For acc.rid = ANY(?)
-            ...whereReplacementsParent,
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-          ]
-        : [
-            accessibleIds,
-             ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-            ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsChild,
-          ];
+      // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
+      const accountMetaClause = accountMeta.length > 0
+      ? `AND acc.rid = ANY(?)`
+      : "";
+
+    const projectIdsQuery = bothParentAndChild
+      ? `
+        SELECT DISTINCT ps.project_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
+        WHERE ${accessibleProjectsCondition}
+        ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
+        ${accountMetaClause}
+        ${fiscalYearClause}
+      `
+      : `
+        SELECT DISTINCT ps.project_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
+        WHERE ${accessibleProjectsCondition}
+        ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ${accountMetaClause}
+        ${fiscalYearClause}
+      `;
+
+    const projectIdsReplacements = bothParentAndChild
+  ? [
+      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+      ...whereReplacementsParent,
+      ...(accountMeta.length > 0 ? [accountMeta] : []),
+      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+    ]
+  : [
+      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+      ...whereReplacementsChild,
+      ...(accountMeta.length > 0 ? [accountMeta] : []),
+      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+    ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
@@ -2173,65 +2179,50 @@ class SchemaService {
       const accessibleProjectsCondition = includeProjectFilter
         ? `ps.project_rid = ANY(ARRAY[?]::text[])`
         : "1=1";
-      const projectIdsQuery = bothParentAndChild
-        ? `
-          SELECT DISTINCT ps.project_rid
-          ${commonJoins}
-          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+
+      const accountMetaClause = accountMeta.length > 0
+      ? `AND acc.rid = ANY(?)`
+      : "";
+
+    const projectIdsQuery = bothParentAndChild
+      ? `
+        SELECT DISTINCT ps.project_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
           ON pfs.project_rid = ps.project_rid 
           AND pfs.account_rid = ps.account_rid
-          WHERE ${accessibleProjectsCondition}
-          ${
-            accountMeta.length > 0
-              ? "WHERE acc.rid IN (" +
-                accountMeta.map(() => "?").join(",") +
-                ")"
-              : ""
-          }
-          ${
-            filterWhereSQLParent
-              ? (accountMeta.length > 0 ? "AND" : "WHERE") +
-                ` ${filterWhereSQLParent}`
-              : ""
-          }
-          ${fiscalYearClause}
-        `
-        : `
-          SELECT DISTINCT ps.project_rid
-          ${commonJoins}
-          INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
-            ON pfs.project_rid = ps.project_rid 
-            AND pfs.account_rid = ps.account_rid
-            WHERE ${accessibleProjectsCondition}
-            ${fiscalYearClause}
-          ${
-            accountMeta.length > 0
-              ? "WHERE acc.rid IN (" +
-                accountMeta.map(() => "?").join(",") +
-                ")"
-              : ""
-          }
-          ${
-            filterWhereSQLChild
-              ? (accountMeta.length > 0 ? "AND" : "WHERE") +
-                ` ${filterWhereSQLChild}`
-              : ""
-          }
-        `;
+        WHERE ${accessibleProjectsCondition}
+        ${filterWhereSQLParent ? `AND ${filterWhereSQLParent}` : ""}
+        ${accountMetaClause}
+        ${fiscalYearClause}
+      `
+      : `
+        SELECT DISTINCT ps.project_rid
+        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
+        INNER JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs 
+          ON pfs.project_rid = ps.project_rid 
+          AND pfs.account_rid = ps.account_rid
+        WHERE ${accessibleProjectsCondition}
+        ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
+        ${accountMetaClause}
+        ${fiscalYearClause}
+      `;
 
-      const projectIdsReplacements = bothParentAndChild
-        ? [
-          accessibleIds,
-            ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsParent,
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-          ]
-        : [
-          accessibleIds,
-            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-            ...(accountMeta.length > 0 ? accountMeta : []),
-            ...whereReplacementsChild,
-          ];
+    const projectIdsReplacements = bothParentAndChild
+  ? [
+      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+      ...whereReplacementsParent,
+      ...(accountMeta.length > 0 ? [accountMeta] : []),
+      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+    ]
+  : [
+      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+      ...whereReplacementsChild,
+      ...(accountMeta.length > 0 ? [accountMeta] : []),
+      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+    ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
@@ -2941,6 +2932,7 @@ class SchemaService {
         replacements.push(condition);
       }
     }
+    
     return {
       conditions,
       replacements,
