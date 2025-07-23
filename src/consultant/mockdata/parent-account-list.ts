@@ -5,7 +5,7 @@ export const mockParentAccountList: ParentAccountApiResponse = {
   statusCodeValue: 'Success',
   statusMessage: '',
   data: {
-    gloablAcconunt: [
+    globalAccount: [
       {
         rid: '51efae3a-86a8-44e0-8426-5ff7e7f13501',
         account_name: 'Wipro-Global',

@@ -243,11 +243,11 @@ export const AccountForm: React.FC = () => {
 
   const memoizedParentAccounts: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunt.map((account) => ({
+      parentAccount.data?.data.globalAccount.map((account) => ({
         label: account.account_name,
         value: account.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunt]
+    [parentAccount.data?.data.globalAccount]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(

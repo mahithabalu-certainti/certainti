@@ -2,7 +2,7 @@ import { CommonApiResponse } from '../../common-service';
 
 export interface ParentAccountApiResponse extends CommonApiResponse {
   data: {
-    gloablAcconunt: GloablAcconunts[];
+    globalAccount: GloablAcconunts[];
   };
 }
 
