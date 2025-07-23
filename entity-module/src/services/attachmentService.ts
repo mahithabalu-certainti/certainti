@@ -321,16 +321,16 @@ async getAttachments(
       if (projectResourceIds.length > 0) {
         const projectResourceAttachments = await fetchAttachments(model, 'project_resource', projectResourceIds);
         projectChildAttachments.push(...projectResourceAttachments);
+      }
         
-        // 🔹 Fetch all project_tasks under project_resources in one call
-        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, projectResourceIds);
+        // 🔹 Fetch all project_tasks under projects in one call
+        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, projectIds);
         const projectTaskIds = projectTasks.map(t => t.rid);
 
         if (projectTaskIds.length > 0) {
           const projectTaskAttachments = await fetchAttachments(model, 'project_task', projectTaskIds);
           projectChildAttachments.push(...projectTaskAttachments);
         }
-      }
 
       return projectChildAttachments;
     };
@@ -375,7 +375,8 @@ async getAttachments(
       const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
       allAttachments.push(...projectResourceAttachments);
 
-      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, [entityId]);
+      const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_rid]);
       const projectTaskIds = projectTasks.map(t => t.rid);
       if (projectTaskIds.length > 0) {
         const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
@@ -394,13 +395,23 @@ async getAttachments(
 
     // 🔷 Other direct levels
     else {
+      if (!whereClause[Op.and]) {
+        whereClause[Op.and] = [];
+      }
+      
       if (entityId) {
         whereClause[Op.and].push({ attach_to: entityId });
       } else if (attachmentLevel) {
         whereClause[Op.and].push({ attachment_level: attachmentLevel });
       }
-      const result = await AttachmentModel.findAll({ where: whereClause });
-      allAttachments.push(...result);
+
+      try {
+        const result = await AttachmentModel.findAll({ where: whereClause });
+        allAttachments.push(...result);
+      } catch (error) {
+        console.error('Error fetching attachments:', error);
+        throw new Error('Failed to fetch attachments');
+      }
     }
 
     // 🔷 Fetch display names
@@ -548,10 +559,11 @@ async getAttachments(
           bType.localeCompare(aType);
       });
     }
-     
+    
+    let filteredAttachments = [];
     // Apply uploaded_by filter if present
     if (uploadedByFilter) {
-      const filteredAttachments = attachments.filter(attachment => {
+        filteredAttachments = attachments.filter(attachment => {
         const uploadedBy = attachment.uploaded_by?.toLowerCase() || '';
         const operator = Object.keys(uploadedByFilter)[0];
         const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
@@ -562,6 +574,12 @@ async getAttachments(
           default: return false;
         }
       });
+
+      // Add "mb" suffix to size values for attachments
+      filteredAttachments = filteredAttachments.map(attachment => ({
+      ...attachment,
+      size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
+      }));
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -712,19 +730,18 @@ async exportAttachments(
       if (projectResourceIds.length > 0) {
         const projectResourceAttachments = await fetchAttachments(model, 'project_resource', projectResourceIds);
         projectChildAttachments.push(...projectResourceAttachments);
+      }
 
-        // 🔹 Fetch all project_tasks under project_resources in one call
-        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, projectResourceIds);
+        // 🔹 Fetch all project_tasks under projects in one call
+        const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, projectIds);
         const projectTaskIds = projectTasks.map(t => t.rid);
 
         if (projectTaskIds.length > 0) {
           const projectTaskAttachments = await fetchAttachments(model, 'project_task', projectTaskIds);
           projectChildAttachments.push(...projectTaskAttachments);
         }
-      }
-
-      return projectChildAttachments;
-    };
+        return projectChildAttachments;
+      };
 
     // 🔷 Non-parent account logic with batched optimized fetches
     if (attachmentLevel === 'account' && entityId) {
@@ -765,8 +782,8 @@ async exportAttachments(
     else if (attachmentLevel === 'project_resource' && entityId) {
       const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
       allAttachments.push(...projectResourceAttachments);
-
-      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectResourceIds(schemaNumber, [entityId]);
+      const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_rid]);
       const projectTaskIds = projectTasks.map(t => t.rid);
       if (projectTaskIds.length > 0) {
         const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
@@ -785,13 +802,23 @@ async exportAttachments(
 
     // 🔷 Other direct levels
     else {
+      if (!whereClause[Op.and]) {
+        whereClause[Op.and] = [];
+      }
+      
       if (entityId) {
         whereClause[Op.and].push({ attach_to: entityId });
       } else if (attachmentLevel) {
         whereClause[Op.and].push({ attachment_level: attachmentLevel });
       }
-      const result = await AttachmentModel.findAll({ where: whereClause });
-      allAttachments.push(...result);
+
+      try {
+        const result = await AttachmentModel.findAll({ where: whereClause });
+        allAttachments.push(...result);
+      } catch (error) {
+        console.error('Error fetching attachments:', error);
+        throw new Error('Failed to fetch attachments');
+      }
     }
 
     // 🔷 Fetch display names
@@ -937,7 +964,7 @@ async exportAttachments(
      
     // Apply uploaded_by filter if present
     if (uploadedByFilter) {
-      let filteredAttachments = attachments.filter(attachment => {
+        let filteredAttachments = attachments.filter(attachment => {
         const uploadedBy = attachment.uploaded_by?.toLowerCase() || '';
         const operator = Object.keys(uploadedByFilter)[0];
         const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
@@ -949,7 +976,13 @@ async exportAttachments(
         }
       });
 
-      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
+      // Add "mb" suffix to size values for attachments
+      filteredAttachments = filteredAttachments.map(attachment => ({
+        ...attachment,
+        size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
+      }));
+
+      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"accounts_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of allowedFieldsForExport) {
           if (field.read) {
@@ -971,8 +1004,7 @@ async exportAttachments(
         };
 
       // Add names to attachments and format for export
-      //filteredAttachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
-    attachments = attachments.map((at) => {
+    filteredAttachments = filteredAttachments.map((at) => {
     const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
     const filtered: Record<string, any> = {};
     for (const [fieldKey, value] of Object.entries(rawMapped)) {
@@ -1144,31 +1176,43 @@ async getAttachmentSummary(
     const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
 
     const schemaNumberMap = new Map<string, string>();
-    await Promise.all(accounts.map(async acc => {
-      if ((acc as { storage_type: string }).storage_type === "store_in_parent") {
-        const parent = await this.schemaService.fetchParentAccount((acc as { parent_account_rid: string }).parent_account_rid);
-        schemaNumberMap.set((acc as { rid: string }).rid, parent);
-      } else {
-        schemaNumberMap.set((acc as {rid: string; r_number: string}).rid, (acc as {rid: string; r_number: string}).r_number);
-      }
-    }));
 
-    const schemaAttachmentMap = new Map<string, any[]>();
-    attachmentsRaw.forEach(att => {
-      const schemaNumber = schemaNumberMap.get(att.account_rid);
-      if (schemaNumber) {
-        if (!schemaAttachmentMap.has(schemaNumber)) {
-          schemaAttachmentMap.set(schemaNumber, []);
+    await Promise.all(
+      accounts.map(async (account) => {
+        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
+        const { rid, storage_type, r_number, parent_account_rid } = acc;
+
+        if (storage_type === "store_in_parent") {
+          const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
+          schemaNumberMap.set(rid, parent);
+        } else {
+          schemaNumberMap.set(rid, r_number);
         }
-        schemaAttachmentMap.get(schemaNumber)!.push(att);
+      })
+    );
+
+    // Group attachments by schemaNumber
+    const schemaAttachmentMap = new Map<string, any[]>();
+
+    attachmentsRaw.forEach((att) => {
+      const schemaNumber = schemaNumberMap.get(att.account_rid);
+      if (!schemaNumber) return;
+
+      if (!schemaAttachmentMap.has(schemaNumber)) {
+        schemaAttachmentMap.set(schemaNumber, []);
       }
+      schemaAttachmentMap.get(schemaNumber)!.push(att);
     });
 
+    // Build attachment display names for each schemaNumber group
     const attachmentDisplayNames: Record<string, string> = {};
-    await Promise.all(Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-      const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
-      Object.assign(attachmentDisplayNames, displayNames);
-    }));
+
+    await Promise.all(
+      Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
+        const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+        Object.assign(attachmentDisplayNames, displayNames);
+      })
+    );
 
     // Map enriched data
     const documentTypeIds = [...new Set(attachmentsRaw.map(att => att.document_type_rid))];
@@ -1283,11 +1327,17 @@ async getAttachmentSummary(
     // Pagination AFTER sorting
     const paginatedAttachments = attachments.slice((page - 1) * limit, page * limit);
 
+    // Add "mb" suffix to size values for paginated attachments
+    const paginatedAttachmentsWithSizeSuffix = paginatedAttachments.map(attachment => ({
+      ...attachment,
+      size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
+    }));
+
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
       data: {
-        attachments: paginatedAttachments,
+        attachments: paginatedAttachmentsWithSizeSuffix,
         totalCount: attachments.length
       }
     };
@@ -1414,31 +1464,43 @@ async exportAttachmentSummary(
     const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
 
     const schemaNumberMap = new Map<string, string>();
-    await Promise.all(accounts.map(async acc => {
-      if ((acc as { storage_type: string }).storage_type === "store_in_parent") {
-        const parent = await this.schemaService.fetchParentAccount((acc as { parent_account_rid: string }).parent_account_rid);
-        schemaNumberMap.set((acc as { rid: string }).rid, parent);
-      } else {
-        schemaNumberMap.set((acc as {rid: string; r_number: string}).rid, (acc as {rid: string; r_number: string}).r_number);
-      }
-    }));
 
-    const schemaAttachmentMap = new Map<string, any[]>();
-    attachmentsRaw.forEach(att => {
-      const schemaNumber = schemaNumberMap.get(att.account_rid);
-      if (schemaNumber) {
-        if (!schemaAttachmentMap.has(schemaNumber)) {
-          schemaAttachmentMap.set(schemaNumber, []);
+    await Promise.all(
+      accounts.map(async (account) => {
+        const acc = account as { rid: string; storage_type: string; r_number: string; parent_account_rid: string };
+        const { rid, storage_type, r_number, parent_account_rid } = acc;
+
+        if (storage_type === "store_in_parent") {
+          const parent = await this.schemaService.fetchParentAccount(parent_account_rid);
+          schemaNumberMap.set(rid, parent);
+        } else {
+          schemaNumberMap.set(rid, r_number);
         }
-        schemaAttachmentMap.get(schemaNumber)!.push(att);
+      })
+    );
+
+    // Group attachments by schemaNumber
+    const schemaAttachmentMap = new Map<string, any[]>();
+
+    attachmentsRaw.forEach((att) => {
+      const schemaNumber = schemaNumberMap.get(att.account_rid);
+      if (!schemaNumber) return;
+
+      if (!schemaAttachmentMap.has(schemaNumber)) {
+        schemaAttachmentMap.set(schemaNumber, []);
       }
+      schemaAttachmentMap.get(schemaNumber)!.push(att);
     });
 
+    // Build attachment display names for each schemaNumber group
     const attachmentDisplayNames: Record<string, string> = {};
-    await Promise.all(Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-      const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
-      Object.assign(attachmentDisplayNames, displayNames);
-    }));
+
+    await Promise.all(
+      Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
+        const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+        Object.assign(attachmentDisplayNames, displayNames);
+      })
+    );
 
     // Map enriched data
     const documentTypeIds = [...new Set(attachmentsRaw.map(att => att.document_type_rid))];
@@ -1549,6 +1611,12 @@ async exportAttachmentSummary(
     }
   });
 
+    // Add "mb" suffix to size values for attachments
+    attachments = attachments.map(attachment => ({
+      ...attachment,
+      size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
+    }));
+
     const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of allowedFieldsForExport) {
@@ -1622,7 +1690,7 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (projectResource as { r_number?: string })?.r_number || attachment.attach_to;
           break;
-        case 'project_Task':
+        case 'project_task':
           const projectTask = await this.projectIngestionService.fetchProjectTaskById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (projectTask as { r_number?: string })?.r_number || attachment.attach_to;
           break;

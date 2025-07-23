@@ -98,7 +98,10 @@ export class ProjectHistory
         },
       }
     );
+      return ProjectHistory;
+  }
 
+    static setupAssociations() {
     ProjectHistory.belongsTo(ProjectFiscal, {
       foreignKey: 'project_rid',
       targetKey: 'rid',
@@ -110,9 +113,8 @@ export class ProjectHistory
       sourceKey: 'rid',
       as: 'ProjectHistory',
     });
-
-    return ProjectHistory;
   }
+
 }
 
 
