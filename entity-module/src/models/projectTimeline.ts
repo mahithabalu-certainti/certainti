@@ -96,10 +96,7 @@ export class ProjectTimeline
         },
       }
     );
-    return model;
-  } 
-
-    static setupAssociations() {
+    
       ProjectTimeline.belongsTo(Project, {
         foreignKey: 'entity_rid',
         targetKey: 'rid',
@@ -111,7 +108,8 @@ export class ProjectTimeline
         sourceKey: 'rid',
         as: 'ProjectTimeline',
       });
-}
+      return model;
+  } 
 }
 
 export async function setupProjectTimelineSeq(sequelize: Sequelize, schemaName: string) {
