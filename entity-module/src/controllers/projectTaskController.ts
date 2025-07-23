@@ -149,7 +149,6 @@ async function exportAllProjectTasks(req: Request, res: Response): Promise<void>
       }
     }
     const tasks = await taskService.listProjectTasksExport(userId,value.accountRid,value.projectRid,value.projectResourceRid,value.filters,value.search,value.sortBy,value.sortOrder);
-
     if (tasks.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, await generateExcelBase64(tasks?.data?.tasks,"All Tasks"));
