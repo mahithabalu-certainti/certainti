@@ -86,6 +86,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     refreshAttachments
   );
 
+  const totalItems = data?.count || 0;
+
   useEffect(() => {
     if (setCount) {
       setCount(data?.count || 0);
@@ -277,7 +279,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={rowsPerPage}
         currentPage={currentPage}
-        totalItems={0}
+        totalItems={totalItems}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={orderBy}

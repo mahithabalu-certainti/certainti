@@ -104,6 +104,11 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       searchParams.set('subMenu', subKey);
 
       navigate({ search: searchParams.toString() }, { replace: true });
+      searchParams.delete('file_id');
+      searchParams.delete('upload');
+      searchParams.set('list', key);
+    } else {
+      searchParams.set('list', key);
     }
   };
 

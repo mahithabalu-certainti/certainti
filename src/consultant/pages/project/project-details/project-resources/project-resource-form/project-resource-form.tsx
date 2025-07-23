@@ -317,7 +317,7 @@ const ProjectResourceForm: React.FC = () => {
 
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project {'>'} {projectResourceData?.resource_name}
+              Project {'>'} {projectResourceData?.resource_code}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
@@ -355,6 +355,8 @@ const ProjectResourceForm: React.FC = () => {
           formRef={formRef}
           layout={Layout.TYPE_1}
           onChange={onChangeField}
+          keyStart='start_date'
+          keyEnd='end_date'
         />
       </div>
     </>

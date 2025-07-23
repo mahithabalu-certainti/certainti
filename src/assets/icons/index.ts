@@ -114,6 +114,7 @@ const icons = {
   RejectIcon: () => import('./RejectIcon.svg?react'),
   AcceptIcon: () => import('./AcceptIcon.svg?react'),
   AttachmentIcon: () => import('./AttachmentIcon.svg?react'),
+  importDetailsIcon: () => import('./import-details-icon.svg?react'),
   ConfigIcon: () => import('./config-icon.svg?react'),
 };
 
@@ -239,3 +240,4 @@ export const RejectIcon = createLazySvgIcon('RejectIcon');
 export const AcceptIcon = createLazySvgIcon('AcceptIcon');
 export const ConfigIcon = createLazySvgIcon('ConfigIcon');
 export const Attachment = createLazySvgIcon('AttachmentIcon');
+export const ImportDetailsIcon = createLazySvgIcon('importDetailsIcon');

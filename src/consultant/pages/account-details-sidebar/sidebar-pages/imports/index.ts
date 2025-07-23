@@ -1,1 +1,1 @@
-export { default as Import } from './imports';
+export { default as Import } from './imports-list';
