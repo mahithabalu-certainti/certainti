@@ -1572,7 +1572,7 @@ class ProjectIngestionService {
         account_rid: accountData.rid,
       };
 
-      projectData = await Project.findAll({
+        projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
         order: fullOrder,

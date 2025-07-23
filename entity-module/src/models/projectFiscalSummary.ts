@@ -507,10 +507,7 @@ export class ProjectFiscalSummary
         underscored: true,
       }
     );
-    return ProjectFiscalSummary;
-  }
 
-    static setupAssociations() {
     ProjectFiscalSummary.belongsTo(ProjectSummary, {
       foreignKey: "project_rid",
       as: "project",
@@ -520,6 +517,7 @@ export class ProjectFiscalSummary
       foreignKey: "project_rid",
       as: "ProjectFiscal",
     });
-  } 
+    return ProjectFiscalSummary;
+  }
 }
 
