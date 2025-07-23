@@ -162,16 +162,16 @@ export const AccountForm: React.FC = () => {
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-        desc: status.status_description,
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
       })) || [],
     [statusOptions?.data?.data?.status]
   );
 
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
-      (option) => option.label.toLowerCase() === 'active'
+      (option) => option?.label?.toLowerCase() === 'active'
     );
     return activeOption?.value || '';
   }, [memoizedStatus]);
@@ -243,9 +243,9 @@ export const AccountForm: React.FC = () => {
 
   const memoizedParentAccounts: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.globalAccount.map((account) => ({
-        label: account.account_name,
-        value: account.rid,
+      parentAccount.data?.data?.globalAccount.map((account) => ({
+        label: account?.account_name,
+        value: account?.rid,
       })) || [],
     [parentAccount.data?.data.globalAccount]
   );

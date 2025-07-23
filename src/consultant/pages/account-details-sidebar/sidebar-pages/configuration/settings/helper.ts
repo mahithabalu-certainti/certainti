@@ -9,7 +9,8 @@ import {
 import { FormType } from '../../../../../types';
 
 export const settingsFormFields = (
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  disableFiscalDates: boolean = false
 ): FormType[] => {
   return useMemo(
     () => [
@@ -20,8 +21,9 @@ export const settingsFormFields = (
           createFiscalDateField('fiscal_start_date', 'Fiscal Start', {
             required: true,
             disabled:
-              permissionMap?.['fiscal_start_date']?.read &&
-              !permissionMap?.['fiscal_start_date']?.edit,
+              disableFiscalDates ||
+              (permissionMap?.['fiscal_start_date']?.read &&
+                !permissionMap?.['fiscal_start_date']?.edit),
             hide:
               !permissionMap?.['fiscal_start_date']?.read &&
               !permissionMap?.['fiscal_start_date']?.edit,
@@ -29,8 +31,9 @@ export const settingsFormFields = (
           createFiscalDateField('fiscal_end_date', 'Fiscal End', {
             required: true,
             disabled:
-              permissionMap?.['fiscal_end_date']?.read &&
-              !permissionMap?.['fiscal_end_date']?.edit,
+              disableFiscalDates ||
+              (permissionMap?.['fiscal_end_date']?.read &&
+                !permissionMap?.['fiscal_end_date']?.edit),
             hide:
               !permissionMap?.['fiscal_end_date']?.read &&
               !permissionMap?.['fiscal_end_date']?.edit,

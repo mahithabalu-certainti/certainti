@@ -60,6 +60,12 @@ const Settings = forwardRef<SettingsHandles, SettingsProps>(
       [permission]
     );
 
+    const disableFiscalDates = useMemo(() => {
+      return Boolean(
+        accountDetails?.fiscal_start_date && accountDetails?.fiscal_end_date
+      );
+    }, [accountDetails]);
+
     const permissionMap = useMemo(() => {
       const map: Record<string, { read: boolean; edit: boolean }> = {};
       settingsViewEditFields.forEach((item) => {
@@ -153,7 +159,7 @@ const Settings = forwardRef<SettingsHandles, SettingsProps>(
           }}
         >
           <FormBuilder
-            data={settingsFormFields(permissionMap)}
+            data={settingsFormFields(permissionMap, disableFiscalDates)}
             formRef={formRef}
             outData={handleFormSubmit}
             values={formValues}
