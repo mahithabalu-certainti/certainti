@@ -819,7 +819,7 @@ async getProjectTaskById(
 
     const [resourceTypeData, regionData, countryData, currencyData, statusData] = await Promise.all([
       (task as any).resource?.resource_type_rid ? mainSequelize.query(
-        `SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeRid`,
+        rawQueries.GET_RESOURCE_TYPES,
         { 
           replacements: { resourceTypeRid: (task as any).resource?.resource_type_rid },
           type: 'SELECT'
@@ -827,7 +827,7 @@ async getProjectTaskById(
       ) : Promise.resolve([]),
 
       task.region_rid ? mainSequelize.query(
-        `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :regionRid`,
+        rawQueries.GET_REGIONS,
         {
           replacements: { regionRid: task.region_rid },
           type: 'SELECT'
@@ -835,21 +835,21 @@ async getProjectTaskById(
       ) : Promise.resolve([]),
 
       task.country_rid ? mainSequelize.query(
-        `SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :countryRid`,
+        rawQueries.GET_COUNTRIES,
         {
           replacements: { countryRid: task.country_rid },
           type: 'SELECT'
         }
       ) : Promise.resolve([]),
       task.currency_rid ? mainSequelize.query(
-        `SELECT rid, currency_symbol, currency_name FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currencyRid`,
+        rawQueries.GET_CURRENCIES,
         {
           replacements: { currencyRid: task.currency_rid },
           type: 'SELECT'
         }
       ) : Promise.resolve([]),
       task.status_rid ? mainSequelize.query(
-        `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :statusRid`,
+        rawQueries.GET_STATUSES,
         {
           replacements: { statusRid: task.status_rid },
           type: 'SELECT'
