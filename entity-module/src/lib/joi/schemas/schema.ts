@@ -1391,51 +1391,6 @@ const createProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  auto_send_ai_interaction: Joi.boolean().required(),
-  auto_access_rd: Joi.boolean().optional().allow(null).default(false),
-  max_ai_interaction: Joi.number().greater(0).required(),
-  blended_rate_fte: Joi.string()
-  .pattern(decimal18_2Regex)
-  .messages({
-    "string.pattern.base": "Blended Rate FTE must have up to 16 digits before the decimal and up to 2 decimal places",
-  })
-  .custom((value, helpers) => {
-    try {
-      const num = new Decimal(value);
-      if (num.lte(0)) {
-        return helpers.error("any.invalid");
-      }
-      return value; 
-    } catch (err) {
-      return helpers.error("any.invalid");
-    }
-  })
-  .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
-  })
-  .optional()
-  .allow(null),
-  blended_rate_subcon: Joi.string()
-  .pattern(decimal18_2Regex)
-  .messages({
-    "string.pattern.base": "Blended Rate Sub Con must have up to 16 digits before the decimal and up to 2 decimal places",
-  })
-  .custom((value, helpers) => {
-    try {
-      const num = new Decimal(value);
-      if (num.lte(0)) {
-        return helpers.error("any.invalid");
-      }
-      return value; 
-    } catch (err) {
-      return helpers.error("any.invalid");
-    }
-  })
-  .messages({
-    "any.invalid": "Blended Rate Sub Con must be a valid positive number",
-  })
-  .optional()
-  .allow(null),
   comments: Joi.string().max(2000).allow(null).allow(""),
   key_contacts: Joi.array()
   .items(
@@ -1670,53 +1625,6 @@ const updateProjectSchema = Joi.object({
   .optional()
   .allow(null),
   last_rd_ai_assess_by: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
-  auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
-  auto_access_rd: Joi.boolean().optional().allow(null).default(false),
-  max_ai_interaction: Joi.number().greater(0).optional().allow(null),
-
-  blended_rate_fte: Joi.string()
-  .pattern(decimal18_2Regex)
-  .messages({
-    "string.pattern.base": "Blended Rate FTE  must have up to 16 digits before the decimal and up to 2 decimal places",
-  })
-  .custom((value, helpers) => {
-    try {
-      const num = new Decimal(value);
-      if (num.lte(0)) {
-        return helpers.error("any.invalid");
-      }
-      return value; 
-    } catch (err) {
-      return helpers.error("any.invalid");
-    }
-  })
-  .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
-  })
-  .optional()
-  .allow(null),
-  blended_rate_subcon: Joi.string()
-  .pattern(decimal18_2Regex)
-  .messages({
-    "string.pattern.base": "Blened Rate SUB Con must have up to 16 digits before the decimal and up to 2 decimal places",
-  })
-  .custom((value, helpers) => {
-    try {
-      const num = new Decimal(value);
-      if (num.lte(0)) {
-        return helpers.error("any.invalid");
-      }
-      return value; 
-    } catch (err) {
-      return helpers.error("any.invalid");
-    }
-  })
-  .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
-  })
-  .optional()
-  .allow(null),
-
   project_description: Joi.string().max(2000).allow(null).allow(""),
   key_contacts: Joi.array()
     .items(
