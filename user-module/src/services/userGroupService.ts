@@ -345,14 +345,13 @@ async assignUserToUserGroups(
         userId
       });
 
-      const accountsWithEnabledAccess = modifiedAccounts.filter(a => a.is_enabled);
-      if (accountsWithEnabledAccess.length > 0) {
+    
         await this.assignEntityAccessToAccount({
           group_rid,
-          accounts: accountsWithEnabledAccess,
+          accounts: modifiedAccounts,
           userId
         });
-      }
+      
     }
 
     // Assign projects
@@ -677,7 +676,7 @@ async getActiveUsersForUpdate(
     const offset = (page - 1) * limit;
 
     // Step 3: Paginated query of all active users
-    const { rows: paginatedUsers, count: totalCount } = await User.findAndCountAll({
+    const { rows: allActiveUsers, count: totalCount } = await User.findAndCountAll({
       where: whereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", 
         "is_consultant_firm",
@@ -702,12 +701,10 @@ async getActiveUsersForUpdate(
           attributes: [],
         },
       ],
-      order,
-      limit,
-      offset,
+      order
     });
 
-    const allUserRids = paginatedUsers.map(u => u.rid);
+    const allUserRids = allActiveUsers.map(u => u.rid);
 
     // Step 4: Fetch group mappings for paginated users
     const userGroupMappings = await UserGroupMapping.findAll({
@@ -726,7 +723,7 @@ async getActiveUsersForUpdate(
     });
 
     // Step 5: Add flags and filter out users in other groups
-    const finalUsers = paginatedUsers
+    const finalUsers = allActiveUsers
       .map(u => {
         const plain = u.get({ plain: true });
         const userGroups = groupedUserMap.get(plain.rid) || [];
@@ -741,13 +738,16 @@ async getActiveUsersForUpdate(
         };
       })
       .filter(u => !u.in_other_group); // Only keep users not in other groups
+      
+    //  Now apply pagination
+    const paginatedUsers = finalUsers.slice(offset, offset + limit);
 
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
       data: {
-        users: finalUsers,
-        count: totalCount,
+        users: paginatedUsers,
+        count: finalUsers.length,
       },
     };
   } catch (err: any) {
@@ -2286,7 +2286,7 @@ async assignEntityAccessToAccount({
   errorMessage?: string;
 }> {
   try {
-    if (!accounts || (!user_rid || !group_rid)) {
+    if (!accounts) {
       return {
         statusCode: constants.BAD_REQUEST,
         message: constants.BAD_REQUEST_MESSAGE,
@@ -2450,7 +2450,7 @@ async assignUserAccessToAccount({
 
     return {
       statusCode: constants.SUCCESS,
-      message: `Access updated successfully. Created: ${created.length}, Updated: ${updated.length}`,
+      message: constants.SUCCESS_MESSAGE,
       data: {
         created,
         updated,
@@ -2536,7 +2536,7 @@ async assignGroupAccessToAccount({
 
     return {
       statusCode: constants.SUCCESS,
-      message: `Access updated successfully. Created: ${created.length}, Updated: ${updated.length}`,
+      message: constants.SUCCESS_MESSAGE,
       data: {
         created,
         updated,
