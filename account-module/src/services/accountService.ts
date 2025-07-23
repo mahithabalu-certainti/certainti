@@ -1625,7 +1625,7 @@ async listGlobalAccounts(
             required: false,
             where: childWhereClauseBase,
             separate: true,
-            order: [['account_name', 'ASC']]
+            order: [[sortBy, sortOrder]],
           }
         ],
         order: [[sortBy, sortOrder]],
@@ -1657,7 +1657,7 @@ async listGlobalAccounts(
           attributes: ['rid', 'account_name'],
           required: false,
           separate: true,
-          order: [['account_name', 'ASC']]
+          order: [[sortBy, sortOrder]],
         }
       ],
       order: [[sortBy, sortOrder]],
