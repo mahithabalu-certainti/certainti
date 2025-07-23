@@ -1941,7 +1941,7 @@ private async getFormattedProjectsForGroup(groupType: string, groupRid: string):
       ps.account_rid,
       acc.account_name,
       CASE 
-        WHEN uga.rid IS NOT NULL THEN true
+        WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
         ELSE false
       END as has_access,
       uga.access_type
