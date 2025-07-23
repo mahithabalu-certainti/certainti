@@ -92,8 +92,8 @@ export const getProfileColumns = (
     width: 160,
     sortable: true,
     hide:
-      !permissionMap?.['created_on']?.read &&
-      !permissionMap?.['created_on']?.edit,
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
     render: (row: ManageProfileList) => getDateFormat(row.created_datetime),
   },
   {

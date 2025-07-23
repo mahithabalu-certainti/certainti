@@ -12,7 +12,13 @@ import {
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { INavItem } from '../../consultant/types';
-import { ACCOUNT, MAIN_ROUTE, NOT_FOUND, PROJECT } from '../../routes';
+import {
+  ACCOUNT,
+  ATTACHMENTS,
+  MAIN_ROUTE,
+  NOT_FOUND,
+  PROJECT,
+} from '../../routes';
 
 export const accountNavItems: INavItem[] = [
   {
@@ -76,9 +82,9 @@ export const accountNavItems: INavItem[] = [
     id: MenuOption.ATTACHMENTS,
     icon: AttachmentIcon,
     name: 'Attachments',
-    link: NOT_FOUND,
+    link: ATTACHMENTS,
     type: 'link',
-    matchLink: '',
+    matchLink: ATTACHMENTS,
   },
   {
     id: '',

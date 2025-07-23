@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_COST } from '../../../../../../api/graphql/queries/resource-query';
 import { ResourceCostList } from '../../../../../types/resource-cost';
@@ -23,6 +23,9 @@ import { ResourceTypeEnum } from '../../../../resource-form/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import Uploads from '../../../../../../components/Attachments/upload';
+import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup.tsx';
+import { checkPermission } from '../../../../../../common-utils/common-utils.ts';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -40,6 +43,7 @@ interface ResourceCostTableProps {
   refreshCostTrigger?: number;
   setCount?: (count: number) => void;
   resourceType: ResourceTypeEnum;
+  resourceInActive?: boolean;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -57,8 +61,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   refreshCostTrigger,
   setCount,
   resourceType,
+  resourceInActive,
 }) => {
   const navigate = useNavigate();
+  const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
   const [resourceCostList, setResourceCostList] = useState<ResourceCostList[]>(
     []
@@ -67,11 +73,18 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     client: resourceClient,
   });
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const [searchParams] = useSearchParams();
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const { permission } = useSelector((state: RootState) => state.permission);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
 
   const {
     data: costList,
@@ -92,6 +105,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     undefined,
     refreshCostTrigger
   );
+
   useEffect(() => {
     if (setCount) {
       setCount(costList?.count || 0);
@@ -115,7 +129,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     [currency.data?.data.currency]
   );
 
-  //permissions
+  // Permissions
   const costViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -132,18 +146,24 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     return map;
   }, [costViewEditFields]);
 
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
     navigate(RESOURCECOST + '/edit/' + cost.r_number, {
       state: { ...accountDetails, costInfo: data, cost: true },
     });
   };
+
   const updateStatusAccept = useUpdateCostAccept();
+
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
-  // handles page limit change
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
     setCurrentPage(0);
@@ -165,7 +185,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      // hide: !isResourceCostDeleteEnable,
       hide: true,
     },
   ];
@@ -199,6 +218,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       },
     });
   };
+
   const getConditionMenuItems = (row: ResourceCostList) => {
     let statusLabel = '';
     switch (row.status_name) {
@@ -208,7 +228,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       case 'Anomaly':
         statusLabel = 'Anomaly';
         break;
-
       default:
         return [];
     }
@@ -219,25 +238,42 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         onClick: handleAccept,
         icon: AcceptIcon,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
         onClick: handleReject,
         icon: RejectIcon,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
       },
     ];
   };
 
   const isFullTime = resourceType?.toLowerCase() === ResourceTypeEnum.FULL_TIME;
 
+  const showUploads = searchParams.get('attachment_entity') === 'resource_cost';
+
+  const handleAttachmentClick = (rowId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource_cost');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+    setSelectedRowId(rowId);
+  };
+
   const getRowId = (row: ResourceCostList) => row?.rid || '';
+
   const resourceCostColumns = getResourceCostColumns(
     memoizedCurrency,
     isFullTime,
-    permissionMap
+    permissionMap,
+    accountInActive,
+    handleAttachmentClick,
+    resourceInActive,
+    attachmentCreateEnable
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -269,12 +305,60 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
             cost.rid === updatedResourceCost.rid ? updatedResourceCost : cost
           )
         );
+        successToast('Resource cost updated successfully');
+      } else if (result?.statusCode === 210) {
+        setConfirmationState({
+          isOpen: true,
+          message:
+            result?.statusMessage ||
+            'Compensation details already exist for the resource',
+          onConfirm: async () => {
+            try {
+              const updatedPayload = {
+                ...updateData,
+                user_preference: 'accept',
+              };
+              const confirmRes = await updateResourceCost({
+                variables: { data: updatedPayload },
+              });
+              const confirmResult = confirmRes.data?.updateResourceCostInline;
+              if (confirmResult?.statusCode === 200 && confirmResult.data) {
+                const updatedResourceCost = confirmResult.data;
+                setResourceCostList((prevCost) =>
+                  prevCost.map((cost) =>
+                    cost.rid === updatedResourceCost.rid
+                      ? updatedResourceCost
+                      : cost
+                  )
+                );
+                successToast('Resource cost updated successfully');
+              } else {
+                errorToast(
+                  confirmResult?.statusMessage ||
+                    'Failed to update resource cost'
+                );
+                setResourceCostList(previousCostList);
+              }
+            } catch (error) {
+              errorToast(
+                (error as Error)?.message || 'Failed to update resource cost'
+              );
+              setResourceCostList(previousCostList);
+            } finally {
+              setConfirmationState((prev) => ({
+                ...prev,
+                isOpen: false,
+                message: '',
+              }));
+            }
+          },
+        });
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setResourceCostList(previousCostList);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setResourceCostList(previousCostList);
     }
   };
@@ -285,40 +369,58 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   return (
     <div>
-      <ListTable
-        data={resourceCostList}
-        columns={resourceCostColumns}
-        getRowId={getRowId}
-        hoverHighlight={false}
-        tableStyle={{
-          borderBottom: '1px solid #CBD6E2',
-          height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
-          overflow: 'auto',
+      {showUploads ? (
+        <Uploads accountId={accountid} attachID={selectedRowId} />
+      ) : (
+        <ListTable
+          data={resourceCostList}
+          columns={resourceCostColumns}
+          getRowId={getRowId}
+          hoverHighlight={false}
+          tableStyle={{
+            borderBottom: '1px solid #CBD6E2',
+            height: '100%',
+            maxHeight: 'calc(100vh - 410px)',
+            overflow: 'auto',
+          }}
+          stickyHeader={true}
+          stickyColumnsCount={1}
+          selectable={false}
+          actionWidth={80}
+          actionDisplayMode='dropdown'
+          actionMenuItems={actionMenuItems}
+          conditionMenuItems={
+            !hideStatusAction
+              ? (row: ResourceCostList) => getConditionMenuItems(row)
+              : undefined
+          }
+          loading={isLoading}
+          error={error ? 'Failed to load resource cost data' : undefined}
+          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPage={rowsPerPage}
+          currentPage={currentPage}
+          totalItems={costList?.count ?? 0}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortBy={costorderBy}
+          sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
+          onSort={handleSortRequest}
+          onCellEdit={handleCellEdit}
+        />
+      )}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
         }}
-        stickyHeader={true}
-        stickyColumnsCount={1}
-        selectable={false}
-        actionWidth={80}
-        actionDisplayMode='dropdown'
-        actionMenuItems={actionMenuItems}
-        conditionMenuItems={
-          !hideStatusAction
-            ? (row: ResourceCostList) => getConditionMenuItems(row)
-            : undefined
-        }
-        loading={isLoading}
-        error={error ? 'Failed to load resource cost data' : undefined}
-        rowsPerPageOptions={[25, 50, 100]}
-        rowsPerPage={rowsPerPage}
-        currentPage={currentPage}
-        totalItems={costList?.count ?? 0}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortBy={costorderBy}
-        sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
-        onSort={handleSortRequest}
-        onCellEdit={handleCellEdit}
+        onCancel={() => {
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
       />
     </div>
   );

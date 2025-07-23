@@ -8,13 +8,16 @@ import { NewProjectData } from '../../../../types/project';
 import { KeyContactProps } from '../../../account-details/utils';
 import {
   applyHidePermission,
+  checkPermission,
   costDisplay,
   getDateFormat,
 } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+import DetailsTable from '../../../../../components/details-section/details-table';
 import { AllPermissions, Permissions } from '../../../../../common-service';
+import { getDetailsAttachmentColumns } from '../../../../../components/details-section/helpers';
 interface DetailItem {
   key?: string;
   label: string;
@@ -82,7 +85,31 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const commentsHide =
     !permissionMap['comments']?.read && !permissionMap['comments']?.edit;
 
-  console.log('permissionMap', permissionMap);
+  const isAttachmentViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+
+  const attachmentColumns = getDetailsAttachmentColumns(
+    attachmentPermissionMap
+  );
+
   const basicInfo: DetailItem[] = [
     {
       key: 'project_code',
@@ -405,6 +432,15 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               data={commentsDetails as DetailItem[]}
             />
           )}
+          {projectDetails?.attachment &&
+            projectDetails?.attachment.length > 0 &&
+            isAttachmentViewEnable && (
+              <DetailsTable
+                title='Attachments'
+                columns={attachmentColumns}
+                data={projectDetails?.attachment || []}
+              />
+            )}
           <DetailsSection
             title='Audit Information'
             data={auditInfoDetails as DetailItem[]}

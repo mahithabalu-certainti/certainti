@@ -38,8 +38,8 @@ export interface ProfileResponse {
   depended_by_module?: string[];
   depended_by_permission?: string[];
   updatedByDependsOn?: boolean;
-  is_modified?: boolean
-  has_extended_permission?: boolean
+  is_modified?: boolean;
+  has_extended_permission?: boolean;
   hasReadExtendedPermsission?: boolean;
   hasEditExtendedPermsission?: boolean;
 }
@@ -163,6 +163,8 @@ export enum AllModules {
   TIMELINE = 'timeline',
   USER_MANAGEMENT = 'user_management',
   PROFILE_MANAGEMENT = 'profile_management',
+  ATTACHMENTS = 'attachments',
+  IMPORTS = 'imports',
 }
 
 // export enum AllPermissions {
@@ -268,6 +270,16 @@ export enum AllPermissions {
   ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
   USER_VIEW_PERMISSION = 'user_view_permission',
   PROFILE_PERMISSION_VIEW = 'profile_permission_view',
+  ACCOUNT_PROJECTS_TIMELINE = 'account_projects_timeline',
+  ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_overview',
+  ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
+  ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
+  ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
+  ACCOUNT_IMPORTS_OVERVIEW = 'account_imports_overview',
+  ACCOUNT_IMPORTS_TIMELINE = 'account_imports_timeline',
+  ATTACHMENT_CREATE = 'attachments_create',
+  IMPORTS_VIEW_EDIT = 'imports_view_edit',
+  IMPORTS_EXPORT = 'imports_export',
 }
 
 export interface Country {
@@ -368,4 +380,29 @@ export interface GetStatusApiResponse extends CommonApiResponse {
   data: {
     status: StatusItem[];
   };
+}
+
+export interface DocumentType {
+  rid: string;
+  type_name: string;
+  type_description: string | null;
+  category_rid: string;
+}
+
+export interface DocumentCategory {
+  rid: string;
+  category_name: string;
+  category_description: string | null;
+}
+
+export interface DocumentTypeResponseData {
+  documentTypes: DocumentType[];
+  documentCategories: DocumentCategory[];
+}
+
+export interface DocumentTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: DocumentTypeResponseData;
 }

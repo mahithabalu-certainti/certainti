@@ -1,7 +1,7 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { styled, SxProps } from '@mui/material/styles';
 import React, { useState } from 'react';
-import { ArrowDownIcon, ArrowUpIcon, AddIcon } from '../../../../../assets';
+import { AddIcon, ArrowUpIcon } from '../../assets';
 
 interface ImportDropdownItem {
   label: string;
@@ -80,23 +80,13 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
           />
         )}
 
-        {open ? (
-          <ArrowUpIcon
-            alt='arrowUp'
-            className='mr-1'
-            onClick={(event: React.MouseEvent) =>
-              handleClick(event as React.MouseEvent<HTMLButtonElement>)
-            }
-          />
-        ) : (
-          <ArrowDownIcon
-            alt='arrowDown'
-            className='mr-1'
-            onClick={(event: React.MouseEvent) =>
-              handleClick(event as React.MouseEvent<HTMLButtonElement>)
-            }
-          />
-        )}
+        <ArrowUpIcon
+          alt='arrow'
+          className={`mx-1 transition-transform duration-300 ${!open ? 'rotate-180' : 'rotate-0'}`}
+          onClick={(event: React.MouseEvent) =>
+            handleClick(event as React.MouseEvent<HTMLButtonElement>)
+          }
+        />
       </StyledButton>
 
       <Menu

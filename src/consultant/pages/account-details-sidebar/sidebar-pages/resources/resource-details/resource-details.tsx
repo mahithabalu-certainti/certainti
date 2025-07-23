@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { ResourceData } from '../../../../../types';
@@ -8,8 +7,11 @@ import DetailsSection, {
 } from '../../../../../../components/details-section/details';
 import {
   applyHidePermission,
+  checkPermission,
   formatDateToYYYYMMDDWithTime,
 } from '../../../../../../common-utils';
+import DetailsTable from '../../../../../../components/details-section/details-table';
+import { getDetailsAttachmentColumns } from '../../../../../../components/details-section/helpers';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
@@ -43,16 +45,33 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     return map;
   }, [viewResourceEditFields]);
 
+  const isAttachmentViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+
+  const attachmentColumns = getDetailsAttachmentColumns(
+    attachmentPermissionMap
+  );
+
   if (isLoading || !resourceData) {
-    return (
-      // <div className='flex items-center justify-center h-64'>
-      //   <CircularProgress />
-      //   <Typography variant='body1' className='ml-4'>
-      //     Loading resource details...
-      //   </Typography>
-      // </div>
-      <DetailsSectionSkeleton />
-    );
+    return <DetailsSectionSkeleton />;
   }
 
   if (error) {
@@ -71,16 +90,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       </div>
     );
   }
-
-  // if (!resourceData) {
-  //   return (
-  //     <div className='flex flex-col items-center justify-center h-64 p-4'>
-  //       <Typography variant='h6' color='textSecondary'>
-  //         No resource details available
-  //       </Typography>
-  //     </div>
-  //   );
-  // }
 
   const basicInfo: DetailItem[] = [
     {
@@ -177,6 +186,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     auditInfo,
     resourcePermissionMap
   );
+
   return (
     <div>
       <DetailsSection
@@ -190,6 +200,15 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetailsInfo} />
       <DetailsSection title='Comments' data={descriptionDetails} />
+      {resourceData?.attachment &&
+        resourceData?.attachment.length > 0 &&
+        isAttachmentViewEnable && (
+          <DetailsTable
+            title='Attachments'
+            columns={attachmentColumns}
+            data={resourceData.attachment || []}
+          />
+        )}
       <DetailsSection
         title='Audit Information'
         data={auditInfoDetails}

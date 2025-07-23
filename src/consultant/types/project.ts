@@ -1,4 +1,5 @@
 import { CommonApiResponse } from '../../common-service';
+import { AttachmentList } from './attachment';
 
 export interface globalFilters {
   [key: string]: string[];
@@ -127,6 +128,7 @@ export interface NewProjectData {
   key_contact_status?: Status;
   project_fiscal_id?: string;
   project_fiscal_rid?: string;
+  attachment?: AttachmentList[];
 }
 
 export interface ProjectTypeItem {
@@ -224,4 +226,10 @@ export type ProjectFiscalSummary = {
   created_datetime: string;
   project_fiscal_rid: string;
   rid: string;
+};
+
+export type FiscalYearType = {
+  year?: number;
+  startDate?: string;
+  endDate?: string;
 };

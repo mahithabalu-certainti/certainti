@@ -87,12 +87,12 @@ export const getUserColumns = (
     label: 'Profile',
     width: 200,
     sortable: true,
-    // editable:
-    //   permissionMap?.['profile_rid']?.read &&
-    //   permissionMap?.['profile_rid']?.edit,
-    // hide:
-    //   !permissionMap?.['profile_rid']?.read &&
-    //   !permissionMap?.['profile_rid']?.edit,
+    editable:
+      permissionMap?.['profile_rid']?.read &&
+      permissionMap?.['profile_rid']?.edit,
+    hide:
+      !permissionMap?.['profile_rid']?.read &&
+      !permissionMap?.['profile_rid']?.edit,
     field: {
       type: 'select',
       required: true,

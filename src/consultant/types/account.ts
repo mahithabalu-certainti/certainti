@@ -142,6 +142,10 @@ export enum OthersEnum {
   Others = 'others',
 }
 
+export enum ResourceType {
+  full_time = 'full-time',
+}
+
 export enum enumValue {
   Yes = 'Yes',
   No = 'No',
@@ -411,3 +415,36 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
     keyContactRoles: keyContactRoles[];
   };
 }
+
+export interface FormField {
+  id: string;
+  label: string;
+  type:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'select'
+    | 'radio'
+    | 'textarea'
+    | 'checkbox';
+  required?: boolean;
+  hide?: boolean;
+  options?: { value: string; label: string }[];
+  placeholder?: string;
+  rows?: number;
+  fullWidth?: boolean;
+  resetDependsFields?: string[];
+  validation?: Array<{
+    regex: RegExp;
+    errorMessage: string;
+  }>;
+}
+
+export type ExportType =
+  | 'resource'
+  | 'cost'
+  | 'skill'
+  | 'project'
+  | 'attachments'
+  | 'imports'
+  | 'resource_attachments';

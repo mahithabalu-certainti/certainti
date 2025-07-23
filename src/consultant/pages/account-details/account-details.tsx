@@ -51,10 +51,15 @@ import { AccountState } from '../../../store/type';
 import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
+  ExportType,
   MenuItem,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
+import { exportAttachmentsData } from '../../services/attachments/attachments-service';
+import { AttachmentsListExportParams } from '../../types/attachment';
+import { exportImportsData } from '../../services/import';
+import { ImportsListURLParams } from '../../types/imports';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -95,12 +100,25 @@ export const AccountDetails = () => {
     AllPermissions.PROJECTS_EXPORT
   );
 
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
+  const isImportExportEnable = checkPermission(
+    permission,
+    AllPermissions.IMPORTS_EXPORT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [toggleEnabled, setToggleEnabled] = useState(false);
+  const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
+    Date.now()
+  );
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -117,15 +135,33 @@ export const AccountDetails = () => {
     fiscalYear: String(convertedFiscalYear),
     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
-  const [exportType, setExportType] = useState<
-    'resource' | 'cost' | 'skill' | 'project'
-  >('resource');
-  const handleExport = (
-    exportType: 'resource' | 'cost' | 'skill' | 'project'
-  ) => {
+
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+    });
+
+  const [importsParams, setImportsParams] = useState<ImportsListURLParams>({
+    page: 1,
+    limit: 100,
+    sort: 'r_number',
+    sort_by: 'asc',
+    filters: {},
+    fiscal_year: convertedFiscalYear,
+    account_rid: accountid || '',
+  });
+
+  const [exportType, setExportType] = useState<ExportType>('resource');
+
+  const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'resources' &&
-      searchParams.get('list') !== 'projects'
+      searchParams.get('list') !== 'projects' &&
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'imports'
     ) {
       return;
     }
@@ -146,6 +182,16 @@ export const AccountDetails = () => {
       ...(exportType !== 'resource' && { resourceRid }),
       ...(exportType === 'cost' && { fiscalYear }),
     };
+    const attachmentPayload = {
+      accountRid: accountid || rNumber,
+      entityId:
+        exportType === 'attachments' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'attachments' ? 'account' : 'resource',
+      ...(exportType === 'resource_attachments' && {
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+      }),
+    };
 
     if (exportType === 'project') {
       exportProjectData(exportType, {
@@ -153,9 +199,23 @@ export const AccountDetails = () => {
         timezone,
         bothParentAndChild: toggleEnabled,
       });
+    } else if (
+      exportType === 'attachments' ||
+      exportType === 'resource_attachments'
+    ) {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
+    } else if (exportType === 'imports') {
+      exportImportsData(importsParams);
     } else {
       exportData(exportType, exportPayload);
     }
+  };
+
+  const onRefreshClick = () => {
+    setRefreshAccountDetails(Date.now());
   };
 
   useEffect(() => {
@@ -184,7 +244,8 @@ export const AccountDetails = () => {
 
   const { data, isPending, isError } = useAccountDetail(
     accountid as string,
-    isAccountDetailsEnable
+    isAccountDetailsEnable,
+    refreshAccountDetails
   );
   const accountViewEditFields = useMemo(
     () =>
@@ -213,7 +274,12 @@ export const AccountDetails = () => {
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
-    if (tab === 'details') {
+    if (
+      tab === 'details' ||
+      searchParams.get('attachment_entity') ||
+      searchParams.get('file_id') ||
+      searchParams.get('upload')
+    ) {
       return true;
     }
 
@@ -221,6 +287,10 @@ export const AccountDetails = () => {
       return !isResourcesExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
+    } else if (list === 'attachments') {
+      return !isAttachmentViewEnable;
+    } else if (list === 'imports') {
+      return !isImportExportEnable;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -284,7 +354,14 @@ export const AccountDetails = () => {
           />
         );
       case 'attachments':
-        return <Attachments />;
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+            refetchAccountDetails={onRefreshClick}
+          />
+        );
       case 'projects':
         return (
           <Projects
@@ -311,10 +388,13 @@ export const AccountDetails = () => {
       case 'imports':
         return (
           <Import
-            data={{
+            accountDetails={{
               ...(data?.data as AccountDetailsResponse),
               activeKey: 'imports',
             }}
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setImportsParams={setImportsParams}
           />
         );
       default:

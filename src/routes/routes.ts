@@ -58,5 +58,11 @@ export const PROJECT_CREATE = `${PROJECT}/create`;
 export const PROJECT_EDIT = `${PROJECT}/edit/:projectid`;
 export const PROJECT_DETAILS = `${PROJECT}/details/:projectid`;
 
+//Project resources route
+export const PROJECT_RESOURCE = '/project/resource';
+export const PROJECT_RESOURCE_CREATE = `${PROJECT_RESOURCE}/create`;
+export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
+// ATTACHMENT ROUTES
+export const ATTACHMENTS = '/attachments';
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

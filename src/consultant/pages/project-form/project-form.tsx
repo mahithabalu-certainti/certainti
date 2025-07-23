@@ -299,6 +299,7 @@ const ProjectForm: React.FC = () => {
     memoizedRole,
     account?.keyContact,
     isEditView,
+    permissionMap,
   ]);
 
   const removeKeyContactInfo = (fieldIndex: number) => {

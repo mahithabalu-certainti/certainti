@@ -1,4 +1,5 @@
 import { REGEX_PATTERNS } from '../../../../../../common-utils';
+import TextButton from '../../../../../../components/button/text-button';
 import {
   DependencyRowData,
   ListOption,
@@ -15,7 +16,11 @@ export const getResourceSkillColumns = (
   handleSkillType: (rid: string) => void,
   skillTypeLoading: boolean,
   subTypeLoading: boolean,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountInActive: boolean,
+  handleAttachmentClick?: (rowId: string) => void,
+  resourceInActive?: boolean,
+  attachmentCreateEnable?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -81,6 +86,108 @@ export const getResourceSkillColumns = (
         handleSkillType(String(rowData.skill_type_rid));
         return String(rowData.skill_type_rid);
       },
+      dependencies: [
+        {
+          dependsOn: 'skill_subtype_name',
+          condition: (value) => !value,
+          action: 'enable',
+          message: '',
+        },
+        {
+          dependsOn: ['skill_subtype_name', 'skill_type_name'],
+          condition: (value, rowData) => {
+            const skillSubtype = rowData.skill_subtype_name;
+            const skillType = value;
+            const bothFieldsHaveValues =
+              skillType &&
+              skillType !== '' &&
+              skillSubtype &&
+              skillSubtype !== '';
+
+            if (!bothFieldsHaveValues) {
+              return false;
+            }
+
+            const typeFound = skillTypeOptions.find(
+              (opt) => String(opt.value) === String(skillType)
+            );
+            const subtypeFound = skillSubTypeOptions.find(
+              (opt) => String(opt.value) === String(skillSubtype)
+            );
+
+            const directlyShowModal =
+              String(skillType).toLowerCase() === OthersEnum.Others ||
+              String(skillSubtype).toLowerCase() === OthersEnum.Others;
+
+            // Show modal if either is "Others"
+            const shouldShowModal =
+              typeFound?.label.toLowerCase() === OthersEnum.Others ||
+              subtypeFound?.label.toLowerCase() === OthersEnum.Others;
+            return shouldShowModal || directlyShowModal;
+          },
+          action: 'show_modal',
+          modalFields: [
+            {
+              id: 'skill_type_others',
+              editId: 'skill_type_others',
+              label: 'Skill Type(Others)',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Skill Type(Others)',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage: 'Skill type must more than 2 characters.',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_64,
+                  errorMessage: 'Max length exceeded.',
+                },
+                {
+                  regex:
+                    REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                  errorMessage:
+                    'Cannot start or end with a space or special character',
+                },
+                {
+                  regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
+                  errorMessage:
+                    "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
+                },
+              ],
+            },
+            {
+              id: 'skill_subtype_others',
+              editId: 'skill_subtype_others',
+              label: 'Skill SubType(Others)',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter Skill SubType(Others)',
+              validation: [
+                {
+                  regex: REGEX_PATTERNS.MIN_3,
+                  errorMessage: 'Skill subtype must more than 2 characters.',
+                },
+                {
+                  regex: REGEX_PATTERNS.MAX_64,
+                  errorMessage: 'Max length exceeded.',
+                },
+                {
+                  regex:
+                    REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                  errorMessage:
+                    'Cannot start or end with a space or special character',
+                },
+                {
+                  regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
+                  errorMessage:
+                    "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
   },
   {
@@ -113,8 +220,8 @@ export const getResourceSkillColumns = (
         {
           dependsOn: 'skill_type_name',
           condition: (value) => !value,
-          action: 'disabled',
-          message: 'Please select a skill type first',
+          action: 'enable',
+          message: '',
         },
         {
           dependsOn: ['skill_type_name', 'skill_subtype_name'],
@@ -138,11 +245,15 @@ export const getResourceSkillColumns = (
               (opt) => String(opt.value) === String(skillSubtype)
             );
 
+            const directlyShowModal =
+              String(skillType).toLowerCase() === OthersEnum.Others ||
+              String(skillSubtype).toLowerCase() === OthersEnum.Others;
+
             // Show modal if either is "Others"
             const shouldShowModal =
               typeFound?.label.toLowerCase() === OthersEnum.Others ||
               subtypeFound?.label.toLowerCase() === OthersEnum.Others;
-            return shouldShowModal;
+            return shouldShowModal || directlyShowModal;
           },
           action: 'show_modal',
           modalFields: [
@@ -262,5 +373,21 @@ export const getResourceSkillColumns = (
     sortable: true,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'attachments',
+    sortId: 'attachments',
+    label: 'Attachments',
+    width: 100,
+    sortable: false,
+    hide: !attachmentCreateEnable,
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
+        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
   },
 ];

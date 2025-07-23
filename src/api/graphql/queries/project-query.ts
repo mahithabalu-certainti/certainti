@@ -165,3 +165,61 @@ export const UPDATE_PROJECT = gql`
     }
   }
 `;
+
+export const UPDATE_PROJECT_RESOURCE = gql`
+  mutation UpdateProjectResource($data: updateInlineProjectResource!) {
+    updateProjectResource(data: $data) {
+      statusCode
+      statusCodeValue
+      statusMessage
+      data {
+        rid
+        r_number
+        eid
+        created_by
+        modified_by
+        created_datetime
+        modified_datetime
+        account_rid
+        project_rid
+        resource_rid
+        project_resource_code
+        fiscal_year
+        start_date
+        end_date
+        resource_code
+        resource_name
+        resource_type_rid
+        designation
+        resource_role
+        assigned_skill_role_type_rid
+        total_hours_pro_res
+        total_cost_pro_res
+        status_rid
+        country_rid
+        region_rid
+        currency_rid
+        resource_orgname
+        effort_project_resource_level
+        cost_project_resource_level
+        qre_final
+        qre_percent
+        salary
+        bonus
+        insurance
+        deductions
+        description
+        country_name
+        country_code
+        region_name
+        currency_name
+        currency_symbol
+        created_name
+        modified_name
+        status_name
+        resource_type_name
+        assigned_skill_role
+      }
+    }
+  }
+`;

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import {
@@ -22,11 +22,12 @@ import {
   FieldChangeEvent,
   FieldChangeValue,
 } from '../../../../../../components/table/types';
-import { OthersEnum } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import Uploads from '../../../../../../components/Attachments/upload';
+import { checkPermission } from '../../../../../../common-utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -43,6 +44,7 @@ interface ResourceSkillTableProps {
   isResourceSkillDeleteEnable?: boolean;
   refreshSkillTrigger?: number;
   setCount?: (count: number) => void;
+  resourceInActive: boolean;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -57,13 +59,17 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   isResourceSkillEditEnable,
   refreshSkillTrigger,
   setCount,
+  resourceInActive,
 }) => {
   const navigate = useNavigate();
+  const { accountid } = useParams();
   const { errorToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  const [searchParams] = useSearchParams();
   const [resourceSkillList, setResourceSkillList] = useState<
     ResourceSkillList[]
   >([]);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [updateResourceSkill] = useMutation(UPDATE_RESOURCE_SKILL, {
     client: resourceClient,
   });
@@ -101,6 +107,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(skillList.resourceSkill);
     }
   }, [skillList]);
+
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
 
   //permissions
   const skillViewEditFields = useMemo(
@@ -194,26 +205,20 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     return finalData;
   }, [skillSubType]);
 
-  const othersSkillTypeId = useMemo(() => {
-    const data = skillType as SkillType[];
-    const others = data?.find(
-      (item) => item.skill_type_name.toLowerCase() === OthersEnum.Others
-    );
-    return others?.rid || null;
-  }, [skillType]);
-
-  const othersSkillSubTypeId = useMemo(() => {
-    const data = skillSubType as SkillSubtype[];
-    const others = data?.find(
-      (item) => item.skill_subtype_name?.toLowerCase() === OthersEnum.Others
-    );
-    return others?.rid || null;
-  }, [skillSubType]);
-
   const getRowId = (row: ResourceSkillList) => row?.rid || '';
 
   const handleSkillType = (rid: string) => {
     setCurrentSkillType(rid);
+  };
+
+  const handleAttachmentClick = (rowId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource_skill');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+    setSelectedRowId(rowId);
   };
 
   const resourceSkillColumns = getResourceSkillColumns(
@@ -223,7 +228,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     handleSkillType,
     skillTypeLoading,
     subTypeLoading,
-    permissionMap
+    permissionMap,
+    accountInActive,
+    handleAttachmentClick,
+    resourceInActive,
+    attachmentCreateEnable
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
@@ -294,43 +303,47 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       setResourceSkillList(previousSkillList);
     }
   };
+
+  const showUploads =
+    searchParams.get('attachment_entity') === 'resource_skill';
+
   return (
     <div>
-      <ListTable
-        data={resourceSkillList}
-        columns={resourceSkillColumns}
-        getRowId={getRowId}
-        hoverHighlight={false}
-        stickyHeader={false}
-        stickyColumnsCount={1}
-        tableStyle={{
-          borderBottom: '1px solid #CBD6E2',
-          height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
-          overflow: 'auto',
-        }}
-        selectable={true}
-        actionWidth={80}
-        actionDisplayMode='dropdown'
-        actionMenuItems={actionMenuItems}
-        loading={isLoading}
-        error={error ? 'Failed to load resource' : undefined}
-        rowsPerPageOptions={[25, 50, 100]}
-        rowsPerPage={rowsPerPage}
-        currentPage={currentPage}
-        totalItems={skillList?.count ?? 0}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortBy={skillOrderBy}
-        sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
-        onSort={handleSortRequest}
-        onCellEdit={handleCellEdit}
-        onFieldChange={handleFieldChange}
-        skillTypeIds={{
-          othersSkillTypeId,
-          othersSkillSubTypeId,
-        }}
-      />
+      {showUploads ? (
+        <Uploads accountId={accountid} attachID={selectedRowId} />
+      ) : (
+        <ListTable
+          data={resourceSkillList}
+          columns={resourceSkillColumns}
+          getRowId={getRowId}
+          hoverHighlight={false}
+          stickyHeader={false}
+          stickyColumnsCount={1}
+          tableStyle={{
+            borderBottom: '1px solid #CBD6E2',
+            height: '100%',
+            maxHeight: 'calc(100vh - 410px)',
+            overflow: 'auto',
+          }}
+          selectable={true}
+          actionWidth={80}
+          actionDisplayMode='dropdown'
+          actionMenuItems={actionMenuItems}
+          loading={isLoading}
+          error={error ? 'Failed to load resource' : undefined}
+          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPage={rowsPerPage}
+          currentPage={currentPage}
+          totalItems={skillList?.count ?? 0}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortBy={skillOrderBy}
+          sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
+          onSort={handleSortRequest}
+          onCellEdit={handleCellEdit}
+          onFieldChange={handleFieldChange}
+        />
+      )}
     </div>
   );
 };
