@@ -286,15 +286,13 @@ export class Project
         underscored: true,
       }
     );
-      return model;
-  }
-
-    static setupAssociations() {
-    Project.hasMany(ProjectFiscal, {
+      
+      Project.hasMany(ProjectFiscal, {
       foreignKey: "project_rid",
       sourceKey: "rid",
       as: "ProjectFiscal",
     });
+  return model;
   }
 }
 
