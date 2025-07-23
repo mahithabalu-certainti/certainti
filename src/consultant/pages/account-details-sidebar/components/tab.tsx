@@ -1,7 +1,6 @@
 import { Box, Menu, MenuItem, Switch, Tab, Tabs } from '@mui/material';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ResourceFilterIcon, RefreshIcon } from '../../../../assets';
-import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
   getCostFilterFields,
   getSkillFilterFields,
@@ -42,6 +41,7 @@ import {
   FieldOptionType,
   getAttachmentsFilterFields,
 } from '../../../../components/Attachments/helpers';
+import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';

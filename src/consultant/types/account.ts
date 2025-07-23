@@ -446,4 +446,5 @@ export type ExportType =
   | 'skill'
   | 'project'
   | 'attachments'
+  | 'imports'
   | 'resource_attachments';

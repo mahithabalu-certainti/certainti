@@ -5,12 +5,14 @@ interface DetailsSectionSkeletonProps {
   fullColumn?: boolean;
   isAudit?: boolean;
   rows?: number;
+  className?: string;
 }
 
 const DetailsSectionSkeleton: React.FC<DetailsSectionSkeletonProps> = ({
   fullColumn = false,
   isAudit = false,
   rows = 9,
+  className = '',
 }) => {
   const getGridCols = () => {
     if (fullColumn) return 'grid-cols-1';
@@ -29,7 +31,7 @@ const DetailsSectionSkeleton: React.FC<DetailsSectionSkeletonProps> = ({
   });
 
   return (
-    <div className='pt-2 mt-3'>
+    <div className={className ?? 'pt-2 mt-3'}>
       <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
         <SingleSkeleton width={120} height={18} variant='text' />
       </div>
