@@ -98,9 +98,9 @@ export const getAvailableUserColumns = () => [
     sortable: false,
   },
   {
-    id: 'org_id',
-    sortId: 'org_id',
-    label: 'Org Name',
+    id: 'organization_name',
+    sortId: 'organization_name',
+    label: 'Organisation Name',
     sortable: false,
   },
 ];

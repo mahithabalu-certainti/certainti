@@ -95,6 +95,7 @@ const ListTable = <T extends RowData>({
   expandAllChild = false,
   actionColumnName,
   toggleData,
+  disabledToggle,
   toggleClick,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -1432,6 +1433,7 @@ const ListTable = <T extends RowData>({
                                 toggleClick && toggleClick(rowId, checked)
                               }
                               checked={toggleData?.includes(rowId)}
+                              disabled={disabledToggle}
                             />
                           </div>
                         </TableCell>
@@ -1496,7 +1498,8 @@ const ListTable = <T extends RowData>({
                       visibleColumns.length +
                       (selectable ? 1 : 0) +
                       (actionMenuItems?.length > 0 ? 1 : 0) +
-                      (conditionMenuItems ? 1 : 0)
+                      (actionDisplayMode === 'toggle' ? 1 : 0) +
+                      (toggleData ? 1 : 0)
                     }
                     sx={{ height: '10px !important' }}
                   ></TableCell>

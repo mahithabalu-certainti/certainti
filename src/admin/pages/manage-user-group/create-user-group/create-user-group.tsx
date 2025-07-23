@@ -132,7 +132,7 @@ export const CreateUserGroup: React.FC = () => {
     },
     tabs === Tabs.PROJECT
   );
-  const allUserGroupTypes = useGetUserGroupTypes();
+  const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const userGroupDetails = useGetUserGroupDetails(groupId as string);
 
   // Variables
@@ -147,22 +147,29 @@ export const CreateUserGroup: React.FC = () => {
   const commonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
   );
-  const allGroupTypes: SelectOption[] = useMemo(
-    () =>
-      allUserGroupTypes.data?.data.groupTypes
-        .filter(
-          (item) =>
-            item.is_consultant_only_group === groupInformation.isConsultantOnly
-        )
-        .map((groupTypes) => ({
-          label: groupTypes.group_type_name,
-          value: groupTypes.rid,
-        })) || [],
-    [allUserGroupTypes.data?.data.groupTypes, groupInformation.isConsultantOnly]
-  );
+  const allGroupTypes: SelectOption[] = useMemo(() => {
+    const groupTypes = allUserGroupTypes.data?.data.groupTypes || [];
+    return groupTypes
+      .filter((item) => {
+        const isConsultantMatch =
+          item.is_consultant_only_group === groupInformation.isConsultantOnly;
+        return isEditView
+          ? isConsultantMatch
+          : item.type === 'CUSTOM' && isConsultantMatch;
+      })
+      .map(({ group_type_name, rid }) => ({
+        label: group_type_name,
+        value: rid,
+      }));
+  }, [
+    allUserGroupTypes.data?.data.groupTypes,
+    groupInformation.isConsultantOnly,
+    isEditView,
+  ]);
   const currentGroupType = allUserGroupTypes.data?.data.groupTypes.find(
     (item) => item.rid === groupInformation.groupType
-  )?.group_type_name;
+  );
+  const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
 
   // UseEffects
   useEffect(() => {
@@ -662,8 +669,9 @@ export const CreateUserGroup: React.FC = () => {
                   <button
                     aria-describedby={accountId}
                     onClick={handleAccountsModal}
-                    className={`border border-[#ccc] rounded text-left px-[10px] py-[7px] text-xs cursor-pointer ${groupInformationError.accounts ? 'border-red-500' : ''}`}
+                    className={`border border-[#ccc] rounded text-left px-[10px] py-[7px] text-xs ${groupInformationError.accounts ? 'border-red-500' : ''} ${groupTypeNotCustom ? 'bg-[#f3f4f6] text-[#00000061]' : 'cursor-pointer'}`}
                     type='button'
+                    disabled={groupTypeNotCustom}
                   >
                     {selectAccountCount.parent} Accounts{' '}
                     {selectAccountCount.child} Childs
@@ -679,7 +687,7 @@ export const CreateUserGroup: React.FC = () => {
                   setAccountCollapse={setAccountCollapse}
                   selectedAccounts={selectedAccounts}
                   setSelectedAccounts={setSelectedAccounts}
-                  currentGroupType={currentGroupType as string}
+                  currentGroupType={currentGroupType?.group_type_name as string}
                 />
                 {groupInformationError.groupName && (
                   <span className='text-red-500 text-[11px]'>
@@ -748,6 +756,7 @@ export const CreateUserGroup: React.FC = () => {
                   actionColumnName='Inclusion/Exclusion'
                   toggleClick={toggleProjects}
                   toggleData={addedProjects}
+                  disabledToggle={groupTypeNotCustom}
                   loading={availableProjects.isPending}
                 />
               </Suspense>
@@ -803,12 +812,35 @@ const AccountModal: React.FC<AccountModalProps> = ({
   }
   const parentRid = findParentRid(accounts, selectedAccounts);
 
-  const toggleAccount = (id: string, checked: boolean) => {
-    setSelectedAccounts(
-      checked
-        ? [...selectedAccounts, id]
-        : selectedAccounts.filter((oldId) => oldId !== id)
-    );
+  const toggleAccount = (
+    id: string,
+    checked: boolean,
+    parentId?: string,
+    childrens?: AccountList[]
+  ) => {
+    if (isCustomChildClientFirmSelected) {
+      setSelectedAccounts(
+        checked
+          ? [...selectedAccounts, id]
+          : selectedAccounts.filter((oldId) => oldId !== id)
+      );
+    } else {
+      setSelectedAccounts(
+        checked
+          ? parentId
+            ? [...selectedAccounts, id].concat(parentId) //when child choose parent should active
+            : [...selectedAccounts, id]
+          : childrens //when Parent Remove child should remove
+            ? selectedAccounts.filter(
+                (oldId) =>
+                  !childrens
+                    .map((it) => it.rid)
+                    .concat(id)
+                    .includes(oldId)
+              )
+            : selectedAccounts.filter((oldId) => oldId !== id)
+      );
+    }
   };
 
   return (
@@ -838,7 +870,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
         },
       }}
     >
-      <div className='p-6'>
+      <div className='p-4'>
         {accounts.map((item, i) => {
           const isChecked = selectedAccounts.includes(item.rid);
           const checkBoxDisabled = ifGlobalClientAccountSelect
@@ -851,7 +883,12 @@ const AccountModal: React.FC<AccountModalProps> = ({
               ? true
               : false;
           return (
-            <div key={i}>
+            <div
+              key={i}
+              className={`text-sm border border-[#ccc] bg-[#f4f4f4] ${
+                i === 0 ? 'border-t border-[#ccc]' : 'border-t-0'
+              }`}
+            >
               <div className='flex items-center'>
                 <ArrowDownIcon
                   className={`cursor-pointer ${accountCollapse.includes(item.rid) ? 'rotate-[-90deg]' : ''}`}
@@ -877,7 +914,14 @@ const AccountModal: React.FC<AccountModalProps> = ({
                       mr: 1,
                     }}
                     checked={isChecked}
-                    onChange={(_e, checked) => toggleAccount(item.rid, checked)}
+                    onChange={(_e, checked) =>
+                      toggleAccount(
+                        item.rid,
+                        checked,
+                        undefined,
+                        item.child_accounts
+                      )
+                    }
                     disabled={checkBoxDisabled}
                   />
                   {item.account_name}
@@ -893,7 +937,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                     : checkBoxDisabled;
                   return (
                     <label
-                      className={`block pl-8 ${childCheckBoxDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`border-t border-t-[#f3f3f3] bg-white block pl-8 ${childCheckBoxDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                       key={j}
                     >
                       <Checkbox
@@ -908,7 +952,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                         }}
                         checked={isChildChecked}
                         onChange={(_e, checked) =>
-                          toggleAccount(child.rid, checked)
+                          toggleAccount(child.rid, checked, item.rid)
                         }
                         disabled={childCheckBoxDisabled}
                       />

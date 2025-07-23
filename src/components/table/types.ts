@@ -247,6 +247,7 @@ export interface ListTableProps<T extends RowData> {
   };
   actionColumnName?: string
   toggleData?: string[]
+  disabledToggle?: boolean
   toggleClick?: (rowId: string, value: boolean) => void;
 }
 
