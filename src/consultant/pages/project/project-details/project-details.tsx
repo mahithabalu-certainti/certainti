@@ -315,7 +315,7 @@ export const ProjectDetails = () => {
           />
         );
       case 'projectsTask':
-        return <ProjectTask />;
+        return <ProjectTask projectID={projectID} accountID={accountID} />;
 
       case 'interactions':
         return <NotFound />;

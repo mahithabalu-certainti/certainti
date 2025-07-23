@@ -11,9 +11,9 @@ export interface ProjectResourcesListParams {
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
-  // accountNumber?: string;
   fiscalYear?: string | number;
-  id?: string;
+  // id?: string;
+  accountRid?: string;
   projectRid?: string;
 }
 
@@ -54,10 +54,10 @@ export type ProjectTaskListType = {
   // need to modidy list data based on mock data or api response
 };
 
-export interface ProjectResourcesApiResponse extends CommonApiResponse {
+export interface ProjectTaskApiResponse extends CommonApiResponse {
   data: {
-    projectResources: ProjectTaskListType[];
-    count: number;
+    tasks: ProjectTaskListType[];
+    totalCount: number;
   };
 }
 

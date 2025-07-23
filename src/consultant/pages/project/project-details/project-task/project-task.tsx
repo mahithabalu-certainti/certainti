@@ -49,7 +49,14 @@ const projectTabs: ProjectsTabs[] = [
   },
 ];
 
-export const ProjectTask = () => {
+export const ProjectTask = ({
+  projectID,
+  accountID,
+}: {
+  projectID?: string;
+  accountID?: string;
+}) => {
+  console.log('projectID', projectID, accountID);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
     projectsTabs,
@@ -70,10 +77,10 @@ export const ProjectTask = () => {
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
-  //   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-  //     {}
-  //   );
-  //   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  // const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+  //   {}
+  // );
+  // const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -81,29 +88,35 @@ export const ProjectTask = () => {
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const navigate = useNavigate();
-  const [
-    ,
-    // refreshProjectsTrigger
-    setRefreshProjectsTrigger,
-  ] = useState<number>(Date.now());
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const accountRID = 'D001-1b18d36d-5c6f-45d6-8bd3-bd1b12d7bffc';
+  const projectRID = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';
+  const { data, isLoading, error } = useProjectTask(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+      accountRid: accountRID,
+      projectRid: projectRID,
+    },
+    undefined,
+    refreshProjectsTrigger
+  );
+  const taskId = searchParams.get('pro_task_id');
+  const accountId = searchParams.get('pro_acc_id');
 
-  const { data, isLoading, error } = useProjectTask({
-    page: currentPage + 1,
-    limit: rowsPerPage,
-    sortBy: sortField,
-    sortOrder: sortOrder,
-    filters: appliedFilters,
-    fiscalYear: convertedFiscalYear,
-    // accountNumber: accountDetails?.data?.accountById.r_number || '',
-  });
-  const detailsResourceId = searchParams.get('pro_res_id');
   // get project resource detail
   // project resource details
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useProjectTaskDetail(detailsResourceId || '');
+  } = useProjectTaskDetail(taskId || '', accountId || '');
 
   const totalItems = data?.count || 0;
 
@@ -164,7 +177,7 @@ export const ProjectTask = () => {
     setProjectResData(null);
     setShowFilter(false);
     // clear query params
-    searchParams.delete('pro_res_id');
+    searchParams.delete('pro_task_id');
     searchParams.delete('page');
     navigate({
       pathname: location.pathname,
@@ -194,7 +207,8 @@ export const ProjectTask = () => {
   const getRowId = (row: any) => row.project_rid;
   const handleProjectTaskClick = (row: any) => {
     searchParams.set('page', 'details');
-    searchParams.set('pro_res_id', row?.rid ?? '');
+    searchParams.set('pro_task_id', row?.rid ?? '');
+    searchParams.set('pro_acc_id', row?.account_rid ?? '');
     navigate({ search: searchParams.toString() });
     setProjectResData(row);
     setShowProjectResourceDetails(true);

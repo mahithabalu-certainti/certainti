@@ -1,5 +1,6 @@
 import {
   costDisplay,
+  formatDateToYYYYMMDDWithTime,
   // formatDateToYYYYMMDDWithTime,
   valueDisplay,
 } from '../../../../../common-utils';
@@ -86,11 +87,13 @@ export const getProjectTaskColumns = (
     width: 160,
   },
   {
-    id: 'task_date',
+    id: 'start_date',
     label: 'Task Date',
     sortable: true,
-    sortId: 'task_date',
+    sortId: 'start_date',
     width: 160,
+    render: (row: ProjectTaskListType) =>
+      row.start_date ? formatDateToYYYYMMDDWithTime(row.start_date) : '-',
   },
   // {
   //   id: 'fiscal_year',

@@ -6,9 +6,9 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { api } from '../../../api/api';
+import { api, resourceServiceApi } from '../../../api/api';
 import {
-  ProjectResourcesApiResponse,
+  ProjectTaskApiResponse,
   ProjectTaskListType,
   ProjectResourcesListParams,
   ProjectResourceStatus,
@@ -16,7 +16,7 @@ import {
   ProjectResourcePayload,
   //   ProjectTaskDetailsType,
 } from '../../types/project-task';
-import { DetailURL, ProjectResourcesURL } from '../urls/project-task-url';
+import { DetailURL, ProjectTaskURL } from '../urls/project-task-url';
 
 export const mockData = {
   statusCode: 200,
@@ -74,7 +74,7 @@ export const mockData = {
   },
 };
 
-const resourceDetails = {
+export const resourceDetails = {
   statusCode: 200,
   statusCodeValue: 'OK',
   statusMessage: 'OK',
@@ -109,7 +109,8 @@ export const useProjectTask = (
     { projectTask: ProjectTaskListType[]; count: number },
     Error,
     { projectTask: ProjectTaskListType[]; count: number }
-  >
+  >,
+  refreshProjectsTrigger?: number
 ): UseQueryResult<
   { projectTask: ProjectTaskListType[]; count: number },
   Error
@@ -119,57 +120,50 @@ export const useProjectTask = (
     Error,
     { projectTask: ProjectTaskListType[]; count: number }
   >({
-    queryKey: ['projectTask', params],
+    queryKey: ['projectTask', params, refreshProjectsTrigger],
     queryFn: async () => {
-      // const res = await fetchProjectTask(params);
+      const res = await fetchProjectTask(params);
       return {
-        projectTask: mockData.data.projectTask,
-        count: mockData.data.count,
-        // projectTask:
-        //   res.data.projectTask || mockData.data.projectTask,
-        // count: mockData.data.count || res.data.count,
+        // projectTask: mockData.data.projectTask,
+        // count: mockData.data.count,
+        projectTask: res.data.tasks,
+        count: res.data.totalCount,
       };
     },
     ...options,
     retry: 0,
-    //   enabled: !!params.resourceRid && !!params.accountNumber,
+    enabled: !!params.accountRid && !!params.projectRid,
   });
 };
 
 export const fetchProjectTask = async (
   params: ProjectResourcesListParams
-): Promise<ProjectResourcesApiResponse> => {
-  const { data } = await api.get<ProjectResourcesApiResponse>(
-    ProjectResourcesURL(params)
+): Promise<ProjectTaskApiResponse> => {
+  const { data } = await resourceServiceApi.get<ProjectTaskApiResponse>(
+    ProjectTaskURL(params)
   );
   return data;
 };
 
 export const fetchDetails = async (
-  resourceId: string,
-  projectNumber?: string
+  taskId: string,
+  accountRid?: string
 ): Promise<ProjectResourceDetailsApiResponse> => {
   const response = await api.get<ProjectResourceDetailsApiResponse>(
-    DetailURL(resourceId, projectNumber ?? '')
+    DetailURL(taskId, accountRid ?? '')
   );
   return response.data;
 };
 
-export const useProjectTaskDetail = (
-  resourceId: string,
-  accountNumber?: string
-) => {
+export const useProjectTaskDetail = (taskId: string, accountRid?: string) => {
   return useQuery<ProjectResourceDetailsApiResponse, Error>({
-    queryKey: ['project-resource-detail', resourceId, accountNumber],
+    queryKey: ['project-resource-detail', taskId, accountRid],
     queryFn: async () => {
-      // fetchDetails(resourceId, accountNumber)
-      return {
-        ...resourceDetails,
-      };
+      return fetchDetails(taskId, accountRid);
     },
     retry: 0,
     gcTime: 0,
-    enabled: !!resourceId,
+    enabled: !!taskId && !!accountRid,
   });
 };
 
