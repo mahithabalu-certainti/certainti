@@ -533,7 +533,19 @@ async getActiveUsersForGrouping(
     // Step 2: Get ACTIVE users
     const allUsers = await User.findAll({
       where: whereClause,
-      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
+      attributes: [
+      "rid", 
+      "email", 
+      "status_rid", 
+      "first_name", 
+      "org_id", 
+      "is_consultant_firm",
+      [Sequelize.literal(`(
+        SELECT account_name
+        FROM ${MAIN_SCHEMA_NAME}.account
+        WHERE account.rid = "User".org_id
+      )`), "organization_name"]
+    ],
       include: [
         {
           model: Status,
@@ -650,16 +662,17 @@ async getActiveUsersForUpdate(
       }
 
       orgIdsToFilter = accountRidArray;
-      whereClause[Op.or] = [{ org_id: { [Op.in]: orgIdsToFilter } }];
+      whereClause.org_id = { [Op.in]: orgIdsToFilter };
     }
-    const order: any[] = [];
-    const allowedSortFields: (keyof User)[] = ["first_name"];
-    const sortField = allowedSortFields.includes(sortBy as keyof User) ? sortBy : "first_name";
+    // Step 2: Prepare sorting
+    const allowedSortFields = ["first_name", "email"]; // Add more fields as needed
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "first_name";
     const sortDirection = ["asc", "desc"].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : "ASC";
-    order.push([sortField, sortDirection]);
+    const order: any[] = [[sortField, sortDirection]];
+    const offset = (page - 1) * limit;
 
-    // Step 1: Users based on account/consultant filter
-    const usersFromAccounts = await User.findAll({
+    // Step 3: Paginated query of all active users
+    const { rows: paginatedUsers, count: totalCount } = await User.findAndCountAll({
       where: whereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
       include: [
@@ -670,72 +683,53 @@ async getActiveUsersForUpdate(
           attributes: [],
         },
       ],
-      order
+      order,
+      limit,
+      offset,
     });
 
-    // Step 2: Users already in the group
-    const assignedMappings = await UserGroupMapping.findAll({
-      where: { group_rid },
-      attributes: ["user_rid"],
-    });
-    const assignedUserRids = assignedMappings.map(m => m.user_rid);
+    const allUserRids = paginatedUsers.map(u => u.rid);
 
-    const usersInGroup = await User.findAll({
+    // Step 4: Fetch group mappings for paginated users
+    const userGroupMappings = await UserGroupMapping.findAll({
       where: {
-        rid: { [Op.in]: assignedUserRids },
+        user_rid: { [Op.in]: allUserRids }
       },
-      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
-      include: [
-        {
-          model: Status,
-          as: "status",
-          where: { status_description: "active" },
-          attributes: [],
-        },
-      ],
-      order
+      attributes: ["user_rid", "group_rid"]
     });
 
-    // Step 3: Combine both user lists
-    const combinedUserMap = new Map<string, any>();
-
-    const addUsersWithFlag = (users: any[], isGrouped: boolean) => {
-      for (const user of users) {
-        const plainUser = user.get({ plain: true });
-        if (combinedUserMap.has(plainUser.rid)) {
-          // Already added, just mark grouped if not yet set
-          const existing = combinedUserMap.get(plainUser.rid);
-          if (isGrouped) {
-            existing.grouped = true;
-            existing.has_access = true;
-          }
-        } else {
-          combinedUserMap.set(plainUser.rid, {
-            ...plainUser,
-            grouped: isGrouped,
-            has_access: isGrouped,
-          });
-        }
+    const groupedUserMap = new Map<string, string[]>();
+    userGroupMappings.forEach(m => {
+      if (!groupedUserMap.has(m.user_rid)) {
+        groupedUserMap.set(m.user_rid, []);
       }
-    };
-
-    addUsersWithFlag(usersFromAccounts, false);
-    addUsersWithFlag(usersInGroup, true);
-    const combinedUsers = Array.from(combinedUserMap.values());
-    const sortedUsers = combinedUsers.sort((a, b) => {
-      const valA = a[sortField]?.toString().toLowerCase() || '';
-      const valB = b[sortField]?.toString().toLowerCase() || '';
-      return sortDirection === 'ASC' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      groupedUserMap.get(m.user_rid)?.push(m.group_rid);
     });
 
-    const total = sortedUsers.length;
-    const offset = (page - 1) * limit;
-    const paginatedUsers = sortedUsers.slice(offset, offset + limit);
+    // Step 5: Add flags and filter out users in other groups
+    const finalUsers = paginatedUsers
+      .map(u => {
+        const plain = u.get({ plain: true });
+        const userGroups = groupedUserMap.get(plain.rid) || [];
+        const isGrouped = userGroups.includes(group_rid!);
+        const inOtherGroup = userGroups.length > 0 && !isGrouped;
+
+        return {
+          ...plain,
+          grouped: isGrouped,
+          has_access: isGrouped,
+          in_other_group: inOtherGroup,
+        };
+      })
+      .filter(u => !u.in_other_group); // Only keep users not in other groups
 
     return {
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
-      data: { users: paginatedUsers,count: total},
+      data: {
+        users: finalUsers,
+        count: totalCount,
+      },
     };
   } catch (err: any) {
     return this.throwServiceError(err as Error);

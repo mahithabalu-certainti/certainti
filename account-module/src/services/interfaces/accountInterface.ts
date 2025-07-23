@@ -71,7 +71,15 @@ export interface IAccountService {
     data?: { accountById: any; accountDetails: any };
   }>;
 
-  listGlobalAccounts(userId:string): Promise<{
+  listGlobalAccounts(
+    userId:string,
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: string,
+    filters?: Record<string, any>
+  
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

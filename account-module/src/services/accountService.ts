@@ -1504,19 +1504,7 @@ async accountById(account_id: string): Promise<{
     
     return result;
   }
- async listAllAccounts({
-  page,
-  limit,
-  sortBy = 'organisation_name',
-  sortOrder = 'ASC',
-  filters = {},
-}: {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: string;
-  filters?: Record<string, any>;
-} = {}): Promise<{
+ async listAllAccounts(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -1524,13 +1512,9 @@ async accountById(account_id: string): Promise<{
 }> {
   try {
     const repository = await this.getAccountRepository();
-
-    const parsedFilters = typeof filters === 'string' ? 
-      (filters === '{}' ? {} : JSON.parse(filters)) : filters;
-    const { whereClause } = this.buildWhereClause(parsedFilters, '');
   
     const queryOptions: any = {
-      where: {...whereClause,
+      where: {
               organisation_name: { [Op.ne]: null }},
       include: [
         {
@@ -1542,17 +1526,12 @@ async accountById(account_id: string): Promise<{
         },
       ],
       attributes: ['rid', 'account_name', 'organisation_name', 'r_number'],
-      order: [[sortBy, sortOrder.toUpperCase()]],
+      order: [['organisation_name', 'ASC']],
     };
-    if (page && limit) {
-      const offset = (page - 1) * limit;
-      queryOptions.limit = limit;
-      queryOptions.offset = offset;
-    }
+    
 
-    const [accountData, count] = await Promise.all([
-      repository.findAll(queryOptions),
-      page && limit ? repository.count({ where: whereClause }) : Promise.resolve(0),
+    const [accountData] = await Promise.all([
+      repository.findAll(queryOptions)
     ]);
 
       const orgData = await this.schemaService.getOrgInfo();
@@ -1561,8 +1540,7 @@ async accountById(account_id: string): Promise<{
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           accountData,
-          orgData,
-          ...(page && limit ? { count } : {}),
+          orgData
         },
       };
     } catch (err) {
@@ -1570,7 +1548,14 @@ async accountById(account_id: string): Promise<{
     }
   }
   
-async listGlobalAccounts(userId: string): Promise<{
+async listGlobalAccounts(
+ userId:string,
+  page: number | undefined,
+  limit: number | undefined,
+  sortBy: string = "account_name", 
+  sortOrder: string = "ASC",
+  globalFilters: Record<string, string[]> = {},
+): Promise<{
   statusCode: number;
   message: string;
   errorMessage?: string;
@@ -1579,8 +1564,20 @@ async listGlobalAccounts(userId: string): Promise<{
   try {
     const userGroupType = await this.schemaService.getUserGroupType(userId);
     const isCustomGlobal = userGroupType === 'DEFAULT';
-
+    if(!userId)
+    {
+       return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "User Id is required in headers",
+          data: { gloablAcconunt: [], count: 0 }
+        };;
+    }
     const repository = await this.getAccountRepository();
+    const paginationOptions: any = {};
+    if (limit !== undefined && page !== undefined) {
+      paginationOptions.limit = limit;
+      paginationOptions.offset = (page - 1) * limit;
+    }
 
     if (!isCustomGlobal) {
       const accessibleAccountsInfo = await this.schemaService.getAccessibleAccountInfo(userId);
@@ -1628,10 +1625,11 @@ async listGlobalAccounts(userId: string): Promise<{
             required: false,
             where: childWhereClauseBase,
             separate: true,
-            order: [['account_name', 'ASC']]
+            order: [[sortBy, sortOrder]],
           }
         ],
-        order: [['account_name', 'ASC']]
+        order: [[sortBy, sortOrder]],
+        ...paginationOptions
       });
 
       return {
@@ -1659,10 +1657,11 @@ async listGlobalAccounts(userId: string): Promise<{
           attributes: ['rid', 'account_name'],
           required: false,
           separate: true,
-          order: [['account_name', 'ASC']]
+          order: [[sortBy, sortOrder]],
         }
       ],
-      order: [['account_name', 'ASC']]
+      order: [[sortBy, sortOrder]],
+      ...paginationOptions
     });
 
     return {
