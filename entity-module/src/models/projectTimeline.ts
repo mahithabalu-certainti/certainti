@@ -96,21 +96,22 @@ export class ProjectTimeline
         },
       }
     );
-
-    ProjectTimeline.belongsTo(Project, {
-      foreignKey: 'entity_rid',
-      targetKey: 'rid',
-      as: 'project',
-    });
-
-    Project.hasMany(ProjectTimeline, {
-      foreignKey: 'entity_rid',
-      sourceKey: 'rid',
-      as: 'ProjectTimeline',
-    });
-
     return model;
-  }
+  } 
+
+    static setupAssociations() {
+      ProjectTimeline.belongsTo(Project, {
+        foreignKey: 'entity_rid',
+        targetKey: 'rid',
+        as: 'project',
+      });
+
+      Project.hasMany(ProjectTimeline, {
+        foreignKey: 'entity_rid',
+        sourceKey: 'rid',
+        as: 'ProjectTimeline',
+      });
+}
 }
 
 export async function setupProjectTimelineSeq(sequelize: Sequelize, schemaName: string) {
