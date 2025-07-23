@@ -56,18 +56,22 @@ export const exportUserGroupList = async () => {
   return response; // Return the response to track completion
 };
 
-export const fetchUserGroupTypes = async (queryParams?: UserGroupParam) => {
+export const fetchUserGroupTypes = async (queryParams: UserGroupParam) => {
   const response = await userServiceApi.get<UserGroupTypesApiResponse>(
-    `/api/user_group/groupType?${buildQueryString(queryParams || {})}`
+    `/api/user_group/groupType?${buildQueryString(queryParams)}`
   );
   return response.data;
 };
 
-export const useGetUserGroupTypes = (queryParams?: UserGroupParam) => {
+export const useGetUserGroupTypes = (queryParams: UserGroupParam) => {
   return useQuery<UserGroupTypesApiResponse, Error>({
     queryKey: ['getUserGroupTypes'],
     queryFn: () => fetchUserGroupTypes(queryParams),
     retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 

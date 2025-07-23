@@ -95,6 +95,9 @@ const ListTable = <T extends RowData>({
   expandAllChild = false,
   actionColumnName,
   toggleData,
+  disabledToggle,
+  checkedToggleTooltip,
+  unCheckedToggleTooltip,
   toggleClick,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -965,7 +968,9 @@ const ListTable = <T extends RowData>({
                       : rowsPerPage
                 }
                 columnsCount={
-                  visibleColumns.length + (conditionMenuItems ? 1 : 0)
+                  visibleColumns.length +
+                  (conditionMenuItems ? 1 : 0) +
+                  (actionDisplayMode === 'toggle' ? 1 : 0)
                 }
                 selectable={selectable}
                 hasActions={
@@ -1429,14 +1434,25 @@ const ListTable = <T extends RowData>({
                           }}
                         >
                           <div className='text-center'>
-                            <Switch
-                              size='small'
-                              color='success'
-                              onChange={(_e, checked) =>
-                                toggleClick && toggleClick(rowId, checked)
+                            <Tooltip
+                              title={
+                                toggleData?.includes(rowId)
+                                  ? checkedToggleTooltip
+                                  : unCheckedToggleTooltip
                               }
-                              checked={toggleData?.includes(rowId)}
-                            />
+                              arrow
+                              placement='top'
+                            >
+                              <Switch
+                                size='small'
+                                color='success'
+                                onChange={(_e, checked) =>
+                                  toggleClick && toggleClick(rowId, checked)
+                                }
+                                checked={toggleData?.includes(rowId)}
+                                disabled={disabledToggle}
+                              />
+                            </Tooltip>
                           </div>
                         </TableCell>
                       )}

@@ -142,9 +142,9 @@ export const getImportsFilterFields = (
       value: 'status_description',
       type: 'text',
       operatorOption: nonReqTextOptions,
-      // hide:
-      //   !permissionMap?.['status_description']?.edit &&
-      //   !permissionMap?.['status_description']?.read,
+      hide:
+        !permissionMap?.['status_description']?.edit &&
+        !permissionMap?.['status_description']?.read,
     },
     // {
     //   name: 'Import Type',
