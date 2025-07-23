@@ -58,7 +58,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
           ...rest,
           usergrouptype: usergrouptype.group_type_name,
           is_consultant_only_group: is_consultant_only_group ? 'Yes' : 'No',
-          usergroup_type: usergrouptype.type
+          usergroup_type: usergrouptype.type,
         };
       }) || [];
     setUserGroupList(reShape);
@@ -73,6 +73,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   }, [appliedFilters]);
 
   const totalItems = data?.data?.count || 0;
+  const prefixGroupName = 'G-';
 
   const getRowId = (row: UserGroupList) => row.rid;
 
@@ -128,7 +129,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (res, item) => {
         const key = item.editId || item.columnId;
-        res[key] = item.value;
+        res[key] = prefixGroupName + item.value;
         return res;
       },
       {
@@ -164,12 +165,10 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
     }
   };
 
-  const profileColumns = getUserGroupColumns();
-
   return (
     <ListTable
       data={(userGroupList || []) as UserGroupList[]}
-      columns={profileColumns}
+      columns={getUserGroupColumns(prefixGroupName)}
       getRowId={getRowId}
       hoverHighlight={false}
       tableStyle={{

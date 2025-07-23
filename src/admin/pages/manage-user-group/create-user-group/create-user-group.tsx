@@ -170,8 +170,23 @@ export const CreateUserGroup: React.FC = () => {
     (item) => item.rid === groupInformation.groupType
   );
   const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
+  const prefixGroupName = 'G-';
 
   // UseEffects
+  useEffect(() => {
+    // Get Global accounts list only in create
+    dispatch(fetchAccountsThunk());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!isEditView) {
+      //When create select all project by default
+      setAddedProjects(
+        availableProjects.data?.data.projects.map((item) => item.project_rid) ||
+          []
+      );
+    }
+  }, [availableProjects.data?.data.projects, isEditView]);
   useEffect(() => {
     let parentCount = 0;
     let childCount = 0;
@@ -188,11 +203,6 @@ export const CreateUserGroup: React.FC = () => {
     setSelectAccountCount({ parent: parentCount, child: childCount });
   }, [selectedAccounts, accounts]);
   useEffect(() => {
-    // Get Global accounts list only in create
-    dispatch(fetchAccountsThunk());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
     if (isEditView && userGroupData) {
       const {
         group_name,
@@ -204,7 +214,7 @@ export const CreateUserGroup: React.FC = () => {
       } = userGroupData;
       setGroupInformation({
         ...groupInformation,
-        groupName: group_name,
+        groupName: group_name.replace(/^G-/, ''),
         isConsultantOnly: is_consultant_only_group,
         groupType: group_type_rid,
       });
@@ -325,7 +335,7 @@ export const CreateUserGroup: React.FC = () => {
       }
     } else if (tabs === Tabs.PROJECT) {
       const commonData = {
-        group_name: groupInformation.groupName,
+        group_name: prefixGroupName + groupInformation.groupName,
         is_consultant_only_group: groupInformation.isConsultantOnly,
         accounts: selectedAccounts.map((id) => ({
           rid: id,
@@ -511,14 +521,19 @@ export const CreateUserGroup: React.FC = () => {
                 <label className='text-[13px] font-[600] text-[#2D3E4F]'>
                   Group Name <span className='text-red-500'> *</span>
                 </label>
-                <input
-                  type='text'
-                  name='groupName'
-                  placeholder='Enter Group Name'
-                  className={`placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${groupInformationError.groupName ? 'border-red-500' : 'border-gray-300'}`}
-                  onChange={updatedForm}
-                  value={groupInformation.groupName}
-                />
+                <div className='relative'>
+                  <input
+                    type='text'
+                    name='groupName'
+                    placeholder='Enter Group Name'
+                    className={`pl-9 placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${groupInformationError.groupName ? 'border-red-500' : 'border-gray-300'}`}
+                    onChange={updatedForm}
+                    value={groupInformation.groupName}
+                  />
+                  <span className='absolute left-0 top-1/2 -translate-y-1/2 text-sm border-r border-r-[#d1d5dc] px-1 py-1 pl-[10px]'>
+                    {prefixGroupName}
+                  </span>
+                </div>
                 {groupInformationError.groupName && (
                   <span className='text-red-500 text-[11px]'>
                     {groupInformationError.groupName}
@@ -868,13 +883,13 @@ const AccountModal: React.FC<AccountModalProps> = ({
           mt: 0.5,
           borderRadius: '8px',
           border: '1px solid #CBD6E2',
-          maxHeight: 200,
+          maxHeight: 250,
           width: 600,
           background: 'white',
         },
       }}
     >
-      <div className='p-4'>
+      <div>
         {accounts.map((item, i) => {
           const isChecked = selectedAccounts.includes(item.rid);
           const checkBoxDisabled = ifGlobalClientAccountSelect
@@ -887,13 +902,8 @@ const AccountModal: React.FC<AccountModalProps> = ({
               ? true
               : false;
           return (
-            <div
-              key={i}
-              className={`text-sm border border-[#ccc] bg-[#f4f4f4] ${
-                i === 0 ? 'border-t border-[#ccc]' : 'border-t-0'
-              }`}
-            >
-              <div className='flex items-center'>
+            <div key={i} className='text-xs'>
+              <div className='flex items-center bg-[#f4f4f4] pt-1 pb-1 pl-4 border-t border-[#fff] font-bold'>
                 <ArrowDownIcon
                   className={`cursor-pointer ${accountCollapse.includes(item.rid) ? 'rotate-[-90deg]' : ''}`}
                   onClick={() =>
@@ -941,7 +951,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                     : checkBoxDisabled;
                   return (
                     <label
-                      className={`border-t border-t-[#f3f3f3] bg-white block pl-8 ${childCheckBoxDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`border-t border-t-[#f3f3f3] bg-white block pl-8 pt-1 pb-1 ${childCheckBoxDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                       key={j}
                     >
                       <Checkbox

@@ -103,6 +103,8 @@ export interface TableField {
   renderValue?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  prefix?: string;
+  prefixRegex?: RegExp;
   options?: ListOption[];
   validation?: FieldValidation[];
   dependencies?: DependencyRule[];

@@ -2,7 +2,9 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { UserGroupList } from '../../../types';
 
-export const getUserGroupColumns = (): ListTableColumn<UserGroupList>[] => [
+export const getUserGroupColumns = (
+  prefixGroupName: string
+): ListTableColumn<UserGroupList>[] => [
   {
     id: 'group_name',
     editId: 'group_name',
@@ -15,6 +17,8 @@ export const getUserGroupColumns = (): ListTableColumn<UserGroupList>[] => [
       type: 'text',
       required: true,
       placeholder: 'Enter Group Name',
+      prefix: prefixGroupName,
+      prefixRegex: /^G-/,
       validation: [
         {
           regex: /^.{2,64}$/,
@@ -123,5 +127,5 @@ export const getAvailableProjectsColumns = () => [
     sortId: 'project_code',
     label: 'Project Code',
     sortable: false,
-  }
+  },
 ];
