@@ -6,11 +6,17 @@ import {
 } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
-import { useState } from 'react';
+import { useRef } from 'react';
 import { AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
+
+interface ConfigurationProps {
+  projectID: string;
+  accountID: string;
+  projectFiscalRid: string;
+}
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -26,24 +32,30 @@ const AttachmentTabs: ResourceTabs[] = [
   },
 ];
 
-const Configuration: React.FC = () => {
-  const [showFilter, setShowFilter] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, string | number | boolean>
-  >({});
-  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  console.log(currentPage);
-  const handleFilter = () => setShowFilter(!showFilter);
+const Configuration: React.FC<ConfigurationProps> = ({
+  projectID,
+  accountID,
+  projectFiscalRid,
+}) => {
+  const settingsFormRef = useRef<{
+    submitForm: () => void;
+    resetForm: () => void;
+  }>(null);
   const [searchParams] = useSearchParams();
   const list = searchParams.get('subMenu');
+
+  const settingProps = {
+    account_rid: accountID,
+    project_rid: projectID,
+    project_fiscal_rid: projectFiscalRid,
+  };
 
   const renderContent = () => {
     switch (list) {
       case 'users':
         return <Users />;
       case 'settings':
-        return <Settings />;
+        return <Settings ref={settingsFormRef} projectDetails={settingProps} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -69,7 +81,7 @@ const Configuration: React.FC = () => {
       label: 'Cancel',
       variant: 'outlined' as 'outlined',
       onClick: () => {
-        // settingsFormRef?.current?.resetForm();
+        settingsFormRef?.current?.resetForm();
       },
       hide: false,
       disabled: false,
@@ -78,7 +90,7 @@ const Configuration: React.FC = () => {
       label: 'Save',
       variant: 'contained' as 'contained',
       onClick: () => {
-        // settingsFormRef?.current?.submitForm();
+        settingsFormRef?.current?.submitForm();
       },
       hide: false,
       disabled: false,
@@ -98,14 +110,14 @@ const Configuration: React.FC = () => {
         <SectionTabPanel
           tabs={AttachmentTabs}
           filterVisibility={false}
-          showFilter={showFilter}
-          contextKey='account-settings'
-          appliedFilters={appliedFilters}
-          setAppliedFilters={setAppliedFilters}
-          setCurrentPage={setCurrentPage}
-          handleFilter={handleFilter}
-          sortFilterCount={sortFilterCount}
-          setSortFilterCount={setSortFilterCount}
+          showFilter={false}
+          contextKey='project-settings'
+          appliedFilters={{}}
+          setAppliedFilters={() => {}}
+          setCurrentPage={() => {}}
+          handleFilter={() => {}}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
         />
       </div>
       <ResourceTableHeader

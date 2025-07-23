@@ -120,7 +120,8 @@ export enum AllMenus {
   CHECKLIST_TEMPLATE = 'checklist_template',
   CONFIGURATION = 'configuration',
   USERS = 'users',
-  SETTINGS = 'settings',
+  ACCOUNT_SETTINGS = 'manage_account_settings',
+  PROJECT_SETTINGS = 'manage_project_settings',
 }
 
 // export enum AllModules {
@@ -278,6 +279,8 @@ export enum AllPermissions {
   ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
   ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
   ATTACHMENT_CREATE = 'attachments_create',
+  ACCOUNT_SETTINGS_VIEW_EDIT = 'account_settings_view_edit',
+  PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
 }
 
 export interface Country {

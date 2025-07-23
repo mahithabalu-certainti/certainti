@@ -494,7 +494,7 @@ export const AccountDetails = () => {
           {
             name: 'Settings',
             key: 'settings',
-            id: AllMenus.SETTINGS,
+            id: AllMenus.ACCOUNT_SETTINGS,
             disabled: false,
             icon: SettingIcon,
           },

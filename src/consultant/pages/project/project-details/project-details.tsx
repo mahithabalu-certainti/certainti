@@ -21,6 +21,7 @@ import {
   ResourcesIcon,
   SettingIcon,
   TechSummaryIcon,
+  ConfigIcon,
 } from '../../../../assets';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
@@ -126,7 +127,7 @@ const sideMenuItems: MenuItem[] = [
     key: 'configuration',
     id: AllMenus.CONFIGURATION,
     disabled: false,
-    icon: ChecklistIcon,
+    icon: ConfigIcon,
     subMenu: [
       {
         name: 'Users',
@@ -138,7 +139,7 @@ const sideMenuItems: MenuItem[] = [
       {
         name: 'Settings',
         key: 'settings',
-        id: AllMenus.SETTINGS,
+        id: AllMenus.PROJECT_SETTINGS,
         disabled: false,
         icon: SettingIcon,
       },
@@ -205,6 +206,7 @@ export const ProjectDetails = () => {
     projectID || '',
     refreshProjectDetails
   );
+
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
@@ -361,7 +363,13 @@ export const ProjectDetails = () => {
       case 'checklists':
         return <NotFound />;
       case 'configuration':
-        return <Configuration />;
+        return (
+          <Configuration
+            projectID={projectData?.project_rid || ''}
+            accountID={accountID || ''}
+            projectFiscalRid={projectData?.rid || ''}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
