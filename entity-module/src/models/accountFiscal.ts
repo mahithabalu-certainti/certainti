@@ -47,6 +47,11 @@ export interface AccountFiscalAttributes {
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
+  total_project_res_hours_fte?: number | null;
+  total_project_res_hours_subcon?: number | null;
+  total_project_res_cost_fte?: number | null;
+  total_project_res_cost_subcon?: number | null;
+  total_project_res_cost_nonlabor?: number | null;
 }
 
 interface AccountFiscalCreationAttributes
@@ -114,6 +119,12 @@ export class AccountFiscal
 
   public created_by?: string;
   public modified_by?: string;
+
+  public total_project_res_hours_fte?: number | null;
+  public total_project_res_hours_subcon?: number | null;
+  public total_project_res_cost_fte?: number | null;
+  public total_project_res_cost_subcon?: number | null;
+  public total_project_res_cost_nonlabor?: number | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     const model = AccountFiscal.init(
@@ -286,6 +297,27 @@ export class AccountFiscal
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
+        total_project_res_hours_fte: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_project_res_hours_subcon: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_project_res_cost_fte: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_project_res_cost_subcon: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_project_res_cost_nonlabor: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+
        
        
       },
