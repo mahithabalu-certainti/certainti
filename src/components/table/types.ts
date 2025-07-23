@@ -244,6 +244,7 @@ export interface ListTableProps<T extends RowData> {
     othersSkillTypeId: string | null;
     othersSkillSubTypeId: string | null;
   };
+  showEmptyRow?: boolean;
 }
 
 export interface EditingCell {
