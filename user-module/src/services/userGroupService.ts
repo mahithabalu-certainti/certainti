@@ -541,9 +541,14 @@ async getActiveUsersForGrouping(
       "org_id", 
       "is_consultant_firm",
       [Sequelize.literal(`(
-        SELECT account_name
-        FROM ${MAIN_SCHEMA_NAME}.account
-        WHERE account.rid = "User".org_id
+        CASE
+          WHEN "User"."is_consultant_firm" = true THEN "User"."org_id"
+          ELSE (
+            SELECT account_name
+            FROM ${MAIN_SCHEMA_NAME}.account
+            WHERE account.rid = "User".org_id
+          )
+        END
       )`), "organization_name"]
     ],
       include: [
@@ -674,7 +679,21 @@ async getActiveUsersForUpdate(
     // Step 3: Paginated query of all active users
     const { rows: paginatedUsers, count: totalCount } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm"],
+      attributes: ["rid", "email", "status_rid", "first_name", "org_id", 
+        "is_consultant_firm",
+      [
+    Sequelize.literal(`(
+      CASE
+        WHEN "User"."is_consultant_firm" = true THEN "User"."org_id"
+        ELSE (
+          SELECT account_name
+          FROM ${MAIN_SCHEMA_NAME}.account
+          WHERE account.rid = "User".org_id
+        )
+      END
+    )`),
+    "organization_name"
+  ]],
       include: [
         {
           model: Status,
