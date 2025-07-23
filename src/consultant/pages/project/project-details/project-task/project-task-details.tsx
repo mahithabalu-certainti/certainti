@@ -1,13 +1,13 @@
 import { CircularProgress, Typography } from '@mui/material';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import { TruncateWithTooltip } from '../../../../../components/truncate-with-tooltip';
-import { getDateFormat } from '../../../../../common-utils';
+import { getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
 
 interface ErrorProps {
   message?: string;
 }
 interface ResourceDetailsProps {
-  resourceData?: ProjectTaskDetailsType;
+  projectTaskData?: ProjectTaskDetailsType;
   isDetailsLoading?: boolean;
   detailsError?: ErrorProps | null | undefined;
 }
@@ -95,73 +95,72 @@ const DetailsSection: React.FC<{
         <div className='text-sm my-[6px] px-6 grid gap-y-3'>
           {fullColumn
             ? data.map((item, index) => (
+              <div
+                key={index}
+                className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
+              >
+                <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
+                  {item.label}
+                </div>
+                <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
+                  <TruncateWithTooltip
+                    text={String(item.value)}
+                    maxWidth={'100%'}
+                    className='truncate inline-block max-w-full'
+                    alwaysShowTooltip={true}
+                    tooltipMaxWidth={'50vw'}
+                  >
+                    {renderValue(item.value)}
+                  </TruncateWithTooltip>
+                </div>
+              </div>
+            ))
+            : leftColumn.map((leftItem, index) => {
+              const midItem = middleColumn[index];
+              const rightItem = isAudit ? undefined : rightColumn[index];
+
+              const itemsToRender = isAudit
+                ? [leftItem, midItem]
+                : [leftItem, midItem, rightItem];
+
+              return (
                 <div
                   key={index}
-                  className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
-                >
-                  <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
-                    {item.label}
-                  </div>
-                  <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
-                    <TruncateWithTooltip
-                      text={String(item.value)}
-                      maxWidth={'100%'}
-                      className='truncate inline-block max-w-full'
-                      alwaysShowTooltip={true}
-                      tooltipMaxWidth={'50vw'}
-                    >
-                      {renderValue(item.value)}
-                    </TruncateWithTooltip>
-                  </div>
-                </div>
-              ))
-            : leftColumn.map((leftItem, index) => {
-                const midItem = middleColumn[index];
-                const rightItem = isAudit ? undefined : rightColumn[index];
-
-                const itemsToRender = isAudit
-                  ? [leftItem, midItem]
-                  : [leftItem, midItem, rightItem];
-
-                return (
-                  <div
-                    key={index}
-                    className={`grid grid-cols-1 gap-6 ${
-                      isAudit ? 'md:grid-cols-2 w-full' : 'md:grid-cols-3'
+                  className={`grid grid-cols-1 gap-6 ${isAudit ? 'md:grid-cols-2 w-full' : 'md:grid-cols-3'
                     }`}
-                  >
-                    {itemsToRender.map(
-                      (item, idx) =>
-                        item && (
-                          <div
-                            key={idx}
-                            className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0'
-                          >
-                            <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
-                              {item.label}
-                            </div>
-                            <div className='font-medium text-[13px] truncate min-w-0'>
-                              <TruncateWithTooltip
-                                // text={String(item.value)}
-                                maxWidth={'100%'}
-                                className='truncate inline-block max-w-full'
-                                alwaysShowTooltip={
-                                  item.value &&
+                >
+                  {itemsToRender.map(
+                    (item, idx) =>
+                      item && (
+                        <div
+                          key={idx}
+                          className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0'
+                        >
+                          <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
+                            {item.label}
+                          </div>
+                          <div className='font-medium text-[13px] truncate min-w-0'>
+                            <TruncateWithTooltip
+                              // text={String(item.value)}
+                              maxWidth={'100%'}
+                              className='truncate inline-block max-w-full'
+                              alwaysShowTooltip={
+                                item.value &&
                                   item.value !== 'empty' &&
                                   item.value !== '-'
-                                    ? true
-                                    : false
-                                }
-                              >
-                                {renderValue(item.value, item.label)}
-                              </TruncateWithTooltip>
-                            </div>
+                                  ? true
+                                  : false
+                              }
+                            >
+                              {renderValue(item.value, item.label)}
+                            </TruncateWithTooltip>
                           </div>
-                        )
-                    )}
-                  </div>
-                );
-              })}
+                        </div>
+                      )
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
     </>
@@ -169,19 +168,19 @@ const DetailsSection: React.FC<{
 };
 
 const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
-  resourceData,
+  projectTaskData,
   isDetailsLoading,
   detailsError,
   // accountId,
 }) => {
-  // const resourceData = resourceDetails?.data?.projectResourceDetails;
+  // const projectTaskData = resourceDetails?.data?.projectResourceDetails;
 
   if (isDetailsLoading) {
     return (
       <div className='flex items-center justify-center h-64'>
         <CircularProgress />
         <Typography variant='body1' className='ml-4'>
-          Loading resource details...
+          Loading task details...
         </Typography>
       </div>
     );
@@ -191,7 +190,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     return (
       <div className='flex flex-col items-center justify-center h-64 p-4'>
         <Typography variant='h6' color='error' className='mb-2'>
-          Error loading resource details
+          Error loading task details
         </Typography>
         <Typography
           variant='body2'
@@ -199,64 +198,59 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
           className='text-center'
         >
           {detailsError?.message ||
-            'Failed to fetch resource details. Please try again later.'}
+            'Failed to fetch task details. Please try again later.'}
         </Typography>
       </div>
     );
   }
 
-  if (!resourceData) {
+  if (!projectTaskData) {
     return (
       <div className='flex flex-col items-center justify-center h-64 p-4'>
         <Typography variant='h6' color='textSecondary'>
-          No resource details available
+          No task details available
         </Typography>
       </div>
     );
   }
 
   const basicInfo: DetailItem[] = [
-    { label: 'Resource Code', value: resourceData.resource_code },
-    { label: 'Resource Type', value: resourceData.resource_type },
-    { label: 'Resource Org Name', value: resourceData.resource_org_name },
-    { label: 'Resource Name', value: resourceData.resource_name },
-    { label: 'Designation', value: resourceData.designation },
-    { label: 'Resource Role', value: resourceData.resource_role },
-    { label: 'Fiscal Year', value: resourceData.fiscal_year },
-    { label: 'Status', value: resourceData.status },
+    { label: 'Resource Code', value: projectTaskData.resource_code },
+    { label: 'Resource Name', value: projectTaskData.resource_name },
+    { label: 'Resource Type', value: projectTaskData.resource_type_name },
+    // { label: 'Resource Org Name', value: projectTaskData.resource_orgname }, 
+    { label: 'Resource Role', value: projectTaskData.resource_role },
   ];
   const locationInfo: DetailItem[] = [
-    { label: 'Country', value: resourceData.country },
-    { label: 'Region', value: resourceData.region },
-    { label: 'Currency', value: resourceData.currency },
+    { label: 'Country', value: projectTaskData.country_name },
+    { label: 'Region', value: projectTaskData.region_name },
+    { label: 'Currency', value: projectTaskData.currency_name },
   ];
+
   const projectDetails: DetailItem[] = [
     {
       label: 'Effective From',
-      value: getDateFormat(resourceData.resource_effective_from ?? undefined),
+      value: getDateFormat(projectTaskData.start_date ?? undefined),
     },
     {
       label: 'End Date',
-      value: getDateFormat(resourceData.resource_enddate ?? undefined),
+      value: getDateFormat(projectTaskData.end_date ?? undefined),
     },
-    { label: 'Cost', value: resourceData.cost },
-    { label: 'Effort', value: resourceData.effort },
+    { label: 'Cost', value: projectTaskData.total_cost_pro_task },
+    { label: 'Effort', value: projectTaskData.total_hours_pro_task },
   ];
 
   const auditInfo: DetailItem[] = [
-    { label: 'Record ID', value: resourceData.project_id },
-    { label: 'Created On', value: resourceData.created_on },
-    { label: 'Updated On', value: resourceData.updated_on },
-    { label: 'Project Resource ID', value: resourceData.project_resource_id },
-    { label: 'Created By', value: resourceData.created_by },
-    { label: 'Updated By', value: resourceData.updated_by },
-    {
-      label: 'Project Resource Code',
-      value: resourceData.project_resource_code,
-    },
+    { label: 'Record ID', value: projectTaskData.r_number },
+    { label: 'Project Task ID', value: projectTaskData.r_number },
+    { label: 'Created On', value: getDateTimeFormat(projectTaskData.created_datetime ?? undefined) },
+    { label: 'Created By', value: projectTaskData.created_by },
+    { label: 'Updated On', value: getDateTimeFormat(projectTaskData.modified_datetime ?? undefined) },
+    { label: 'Updated By', value: projectTaskData.modified_by },
+
   ];
   const description: DetailItem[] = [
-    { label: 'Comments', value: resourceData.comments },
+    { label: 'Comments', value: projectTaskData.comments },
   ];
 
   return (
@@ -279,6 +273,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
       <DetailsSection
         title='Audit Information'
         data={auditInfo as DetailItem[]}
+        isAudit={true}
       />
     </div>
   );

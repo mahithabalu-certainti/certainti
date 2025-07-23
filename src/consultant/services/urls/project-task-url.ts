@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { ProjectResourcesListParams } from '../../types/project-task';
+import { ProjectResourcesListParams, ProjectTaskListExportParams } from '../../types/project-task';
 
 export const baseUrl = import.meta.env.VITE_RESOURCE_URL;
 export const getProjectTaskUrl = (accountRid: string, projectRid: string) =>
@@ -43,7 +43,32 @@ export const ProjectTaskURL = ({
 };
 
 export const DetailURL = (taskId: string, accountRid: string) => {
-  console.log('detail page-url', accountRid, taskId);
-  // return '';
   return `${baseUrl}/api/project_tasks/detail?accountRid=${accountRid}&taskRid=${taskId}`;
+};
+
+export const getProjectTaskExportURL = ({
+  sortBy,
+  sortOrder,
+  filters,
+  fiscalYear,
+  projectRid,
+  accountRid,
+}: ProjectTaskListExportParams): string => {
+  const baseUrl = 'api/project_tasks/list/export';
+  const searchParams = new URLSearchParams();
+  if (accountRid !== undefined) {
+    searchParams.set('accountRid', accountRid.toString());
+  }
+  if (projectRid !== undefined) {
+    searchParams.set('projectRid', projectRid.toString());
+  }
+  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

@@ -41,6 +41,8 @@ import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { ProjectTask } from './project-task/project-task';
+import { ProjectTaskListExportParams } from '../../../types/project-task';
+import { exportProjectTaskData } from '../../../services/project/project-task-service';
 // import ProjectTask from './project-task/project-task';
 
 const sideMenuItems: MenuItem[] = [
@@ -142,6 +144,12 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectTaskListExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
 
   const navigate = useNavigate();
   // Permission Mangement
@@ -215,32 +223,53 @@ export const ProjectDetails = () => {
 
   const checkExport = () => {
     const list = searchParams.get('list');
+    const page = searchParams.get('page');
+    if (page === 'details') {
+      return true;
+    }
+
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
+    } else if (list === 'projectsTask') {
+      return false;
     } else {
       return true;
     }
   };
 
+  const accountEx = 'D001-1b18d36d-5c6f-45d6-8bd3-bd1b12d7bffc';
+  const projectEx = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';
   const handleExport = (exportType: ExportType) => {
-    if (searchParams.get('list') !== 'attachments') {
-      return;
-    }
+    const list = searchParams.get('list');
 
-    const attachmentPayload = {
-      accountRid: accountID,
-      entityId: projectID,
-      attachmentLevel: 'project',
-    };
-    if (exportType === 'attachments') {
+    if (list === 'attachments' && exportType === 'attachments') {
+      const attachmentPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
       });
-    } else {
       return;
     }
+
+    if (list === 'projectsTask' && exportType === 'projectTask') {
+      const projectTaskExportPayload = {
+        accountRid: accountEx,
+        projectRid: projectEx,
+      };
+
+      exportProjectTaskData({ ...projectTaskExportPayload, ...projectTaskParams });
+      return;
+    }
+
+    return;
   };
+
+
 
   const menuItems = [
     {
@@ -315,7 +344,12 @@ export const ProjectDetails = () => {
           />
         );
       case 'projectsTask':
-        return <ProjectTask projectID={projectID} accountID={accountID} />;
+        return <ProjectTask
+          projectID={projectID}
+          accountID={accountID}
+          setExportType={setExportType}
+          setProjectTaskParams={setProjectTaskParams}
+        />;
 
       case 'interactions':
         return <NotFound />;
@@ -387,11 +421,10 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
-          }`}
+          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px]'
+            : 'w-[220px] min-w-[220px] max-w-[220px]'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

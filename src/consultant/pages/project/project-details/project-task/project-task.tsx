@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
@@ -18,10 +19,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 // import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
 import { AllMenus, AllPermissions } from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
-import { ProjectTaskListType } from '../../../../types/project-task';
+import { ProjectTaskDetailsType, ProjectTaskListExportParams, ProjectTaskListType } from '../../../../types/project-task';
 import { RootState } from '../../../../../store/store';
 import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
+import { ExportType } from '../../../../types';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -52,9 +54,17 @@ const projectTabs: ProjectsTabs[] = [
 export const ProjectTask = ({
   projectID,
   accountID,
+  setExportType,
+  setProjectTaskParams,
 }: {
   projectID?: string;
   accountID?: string;
+  setExportType?: (
+    type: ExportType
+  ) => void;
+  setProjectTaskParams: React.Dispatch<
+    React.SetStateAction<ProjectTaskListExportParams>
+  >;
 }) => {
   console.log('projectID', projectID, accountID);
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -72,7 +82,7 @@ export const ProjectTask = ({
   >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-  const [sortField, setSortField] = useState<string>('created_datetime');
+  const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
@@ -108,20 +118,19 @@ export const ProjectTask = ({
     refreshProjectsTrigger
   );
   const taskId = searchParams.get('pro_task_id');
-  const accountId = searchParams.get('pro_acc_id');
-
+  // const accountId = searchParams.get('pro_acc_id');
   // get project resource detail
   // project resource details
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useProjectTaskDetail(taskId || '', accountId || '');
+  } = useProjectTaskDetail(taskId || '', accountRID || '');
 
   const totalItems = data?.count || 0;
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'project_code';
+    const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -144,7 +153,8 @@ export const ProjectTask = ({
     }
   }, [searchParams]);
 
-  const resourceData = resourceDetails?.data?.projectResourceDetails;
+  const resourceData = resourceDetails?.data;
+
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -192,6 +202,17 @@ export const ProjectTask = ({
     //       }
     //   );
   };
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('projectTask');
+    }
+    setProjectTaskParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+    });
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
 
   const handleCreateProjectResource = () => {
     navigate({
@@ -208,7 +229,7 @@ export const ProjectTask = ({
   const handleProjectTaskClick = (row: any) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_task_id', row?.rid ?? '');
-    searchParams.set('pro_acc_id', row?.account_rid ?? '');
+    // searchParams.set('pro_acc_id', row?.account_rid ?? '');
     navigate({ search: searchParams.toString() });
     setProjectResData(row);
     setShowProjectResourceDetails(true);
@@ -249,14 +270,14 @@ export const ProjectTask = ({
           count={totalItems}
           showBackArrow={resourceData ? true : false}
           headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
-          projectResourceNumber={resourceData?.resource_code}
+          projectResourceNumber={resourceData?.projectResourceDetails?.resource_code}
           onBackClick={handleBackClick}
         />
         <div className='border border-[#CBD6E2]'>
           {showProjectResourceDetails ? (
             <ProjectTaskDetails
-              resourceData={
-                resourceDetails?.data?.projectResourceDetails || undefined
+              projectTaskData={
+                resourceData as unknown as ProjectTaskDetailsType || undefined
               }
               isDetailsLoading={isDetailsLoading}
               detailsError={detailsError}
@@ -288,7 +309,7 @@ export const ProjectTask = ({
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSorting}
-              selectable={true}
+              selectable={false}
               onSelectionChange={(selectedIds: unknown) =>
                 console.log('Selected:', selectedIds)
               }

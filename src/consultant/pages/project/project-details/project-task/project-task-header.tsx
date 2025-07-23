@@ -55,7 +55,7 @@ const ProjectTaskTableHeader: React.FC<ProjectResourceTableHeaderProps> = ({
                 {title}
               </h1>
               <div className='text-[13px] font-semibold text-[#2D3E4F] pl-1.5'>
-                {value !== 'projects-resources' && projectResourceNumber}
+                {value !== 'projects-task' && projectResourceNumber}
               </div>
             </div>
             {value !== 'project-resource-details' && (

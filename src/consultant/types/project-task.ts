@@ -4,7 +4,14 @@ export enum ProjectResourceStatus {
   active = 'Active',
   inactive = 'Inactive',
 }
-
+export interface ProjectTaskListExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  projectRid?: string;
+  accountRid?: string;
+}
 export interface ProjectResourcesListParams {
   page?: number;
   limit?: number;
@@ -62,38 +69,66 @@ export interface ProjectTaskApiResponse extends CommonApiResponse {
 }
 
 export interface ProjectTaskDetailsType {
-  id: string;
-  project_resource_number?: string;
-  project_resource_id?: string;
-  resource_code?: string;
-  project_resource_code?: string;
-  resource_name?: string;
-  project_name?: string;
-  project_id?: string;
-  resource_ref_id?: string;
-  resource_full_name?: string;
-  resource_type?: string;
-  resource_org_name?: string;
-  resource_role?: string;
-  status?: ProjectResourceStatus;
-  country?: string;
-  region?: string;
-  currency?: string;
-  resource_effective_from?: string;
-  resource_enddate?: string;
-  designation?: string;
-  effort?: number;
-  cost?: string | number;
-  cost_project_tasks?: number | string;
-  blended_cost?: number | string;
-  blended_cost_project_tasks?: number | string;
-  financeEffort?: number;
-  comments?: string;
-  fiscal_year?: string;
-  created_on?: string;
-  created_by?: string;
-  updated_on?: string;
-  updated_by?: string;
+  rid: string;
+  r_number: string;
+  account_rid: string;
+  account_name: string;
+  project_rid: string;
+  project_name: string | null;
+  project_code: string;
+  resource_rid: string;
+  resource_code: string;
+  fiscal_year: number;
+  start_date: string;
+  end_date: string;
+  resource_name: string;
+  resource_type_rid: string;
+  resource_type_name: string;
+  resource_role: string;
+  status_rid: string;
+  country_rid: string;
+  country_name: string;
+  region_rid: string;
+  region_name: string;
+  currency_rid: string;
+  resource_orgname: string | null;
+  description: string;
+  comments: string | null;
+  attachment: Attachment[];
+  created_datetime: string;
+  modified_datetime: string;
+  created_by: string;
+  modified_by: string;
+  currency_name: string;
+  total_cost_pro_task: string;
+  total_hours_pro_task: string;
+}
+
+export interface Attachment {
+  rid: string;
+  r_number: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
+  account_rid: string;
+  browse_file: string;
+  document_name: string;
+  attach_to: string;
+  attachment_level: string;
+  fiscal_year: number;
+  format: string;
+  size_in_mb: string;
+  document_category_rid: string;
+  document_type_rid: string;
+  document_category_others: string | null;
+  document_type_others: string | null;
+  comments: string | null;
+  document_rid: string;
+  document_type: string;
+  document_category: string;
+  uploaded_by: string;
+  attached_to: string;
 }
 
 export type ProjectResourcePayload = {

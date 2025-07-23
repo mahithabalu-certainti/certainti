@@ -420,13 +420,13 @@ export interface FormField {
   id: string;
   label: string;
   type:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'select'
-    | 'radio'
-    | 'textarea'
-    | 'checkbox';
+  | 'text'
+  | 'number'
+  | 'email'
+  | 'select'
+  | 'radio'
+  | 'textarea'
+  | 'checkbox';
   required?: boolean;
   hide?: boolean;
   options?: { value: string; label: string }[];
@@ -447,4 +447,5 @@ export type ExportType =
   | 'project'
   | 'attachments'
   | 'imports'
-  | 'resource_attachments';
+  | 'resource_attachments'
+  | 'projectTask';

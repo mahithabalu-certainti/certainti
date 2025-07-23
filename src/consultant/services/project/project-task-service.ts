@@ -14,9 +14,10 @@ import {
   ProjectResourceStatus,
   ProjectResourceDetailsApiResponse,
   ProjectResourcePayload,
+  ProjectTaskListExportParams,
   //   ProjectTaskDetailsType,
 } from '../../types/project-task';
-import { DetailURL, ProjectTaskURL } from '../urls/project-task-url';
+import { DetailURL, getProjectTaskExportURL, ProjectTaskURL } from '../urls/project-task-url';
 
 export const mockData = {
   statusCode: 200,
@@ -216,3 +217,38 @@ export const useUpdateProjectTask = (
     ...options,
   });
 };
+
+export const exportProjectTaskData = async (
+  params: ProjectTaskListExportParams
+) => {
+  console.log("export-params", params)
+  try {
+    const response = await resourceServiceApi.get(getProjectTaskExportURL(params));
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'project_task_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
