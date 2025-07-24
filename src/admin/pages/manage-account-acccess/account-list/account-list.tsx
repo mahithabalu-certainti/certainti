@@ -19,7 +19,11 @@ import {
 } from './helper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { AllPermissions, useGetAllCountries } from '../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../common-service';
 import { SelectOption } from '../../../../consultant/types';
 import { useFetchIndustrys } from '../../../../consultant/services/account';
 import {
@@ -27,6 +31,8 @@ import {
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
 import { FilterState } from '../../../../consultant/types/account-filter';
+import { checkPermission } from '../../../../common-utils';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -122,7 +128,9 @@ const AccountList = () => {
       }));
     }
   };
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const userViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
@@ -177,7 +185,44 @@ const AccountList = () => {
   };
 
   const filtercolumn = getFilterFields();
-
+  const manageaccountIsEnable = checkPermission(
+    modules,
+    AllModules.MANAGE_ACCOUNT_ACCESS
+  );
+  const accountViewEnable = checkPermission(
+    permission,
+    AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+  );
+  const userViewEdit = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapListView = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEdit.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEdit]);
+  // const permissionMapListView = {
+  //   assign: {
+  //     read: true,
+  //     edit: false,
+  //   },
+  // };
+  const disabled =
+    permissionMapListView?.['assign']?.read &&
+    !permissionMapListView?.['assign']?.edit;
+  const hide =
+    !permissionMapListView?.['assign']?.read &&
+    !permissionMapListView?.['assign']?.edit;
+  // console.log(permissionMapListView);
+  console.log('dis', disabled);
+  console.log('hide', hide);
+  if (!manageaccountIsEnable || !accountViewEnable) return <AccessRestricted />;
   return (
     <div>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
@@ -289,6 +334,8 @@ const AccountList = () => {
             setAddedProjects={setAddedProjects}
             appliedFilters={appliedFilters}
             setAppliedFilters={setAppliedFilters}
+            disabled={disabled}
+            hide={hide}
           />
         </div>
       )}

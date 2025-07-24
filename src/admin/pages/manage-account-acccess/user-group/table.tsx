@@ -20,10 +20,14 @@ interface UserTableProps {
   setAppliedFilters: React.Dispatch<
     React.SetStateAction<Record<string, FilterType>>
   >;
+  disabled?: boolean;
+  hide?: boolean;
 }
 export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   appliedFilters,
   setAppliedFilters,
+  disabled,
+  hide,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -161,7 +165,8 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
     });
   };
   const projectColumns = manageUserGroupColumns(handleAccountName);
-
+  // console.log('addedProjects', disabled);
+  // console.log('hide', hide);
   return (
     <div className='pt-1'>
       <ListTable
@@ -199,6 +204,8 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
         actionColumnName='Add/Remove'
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
+        disabledToggle={disabled}
+        hideToggle={hide}
       />
     </div>
   );

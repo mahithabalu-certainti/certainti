@@ -14,6 +14,8 @@ interface UserTabProps {
   setAppliedFilters: React.Dispatch<
     React.SetStateAction<Record<string, FilterType>>
   >;
+  disabled?: boolean;
+  hide?: boolean;
 }
 
 const UserTab: React.FC<UserTabProps> = ({
@@ -21,6 +23,8 @@ const UserTab: React.FC<UserTabProps> = ({
   setAddedProjects,
   appliedFilters,
   setAppliedFilters,
+  disabled,
+  hide,
 }) => {
   const [searchParams] = useSearchParams();
   const accountList = searchParams.get('accountList');
@@ -37,6 +41,8 @@ const UserTab: React.FC<UserTabProps> = ({
                   <ManageAccountUserListTable
                     appliedFilters={appliedFilters}
                     setAppliedFilters={setAppliedFilters}
+                    disabled={disabled}
+                    hide={hide}
                   />
                 ),
               },
@@ -46,6 +52,8 @@ const UserTab: React.FC<UserTabProps> = ({
                   <ManageAccountUserGroupTable
                     appliedFilters={appliedFilters}
                     setAppliedFilters={setAppliedFilters}
+                    disabled={disabled}
+                    hide={hide}
                   />
                 ),
               },
@@ -59,6 +67,8 @@ const UserTab: React.FC<UserTabProps> = ({
             type={type}
             setAddedProjects={setAddedProjects}
             appliedFilters={appliedFilters}
+            disabled={disabled}
+            hide={hide}
           />
         </div>
       )}

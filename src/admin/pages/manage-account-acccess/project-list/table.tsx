@@ -16,11 +16,15 @@ interface UserTableProps {
     React.SetStateAction<{ [rid: string]: boolean }>
   >;
   appliedFilters: Record<string, FilterType>;
+  disabled?: boolean;
+  hide?: boolean;
 }
 export const ManageAccountListTable: React.FC<UserTableProps> = ({
   type = 'user',
   setAddedProjects,
   appliedFilters,
+  disabled,
+  hide,
 }) => {
   const [searchParams] = useSearchParams();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
@@ -144,6 +148,8 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
         actionColumnName='Inculsion/Exclusion'
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
+        disabledToggle={disabled}
+        hideToggle={hide}
         component='Account-Access'
       />
     </div>

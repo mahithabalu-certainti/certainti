@@ -15,6 +15,8 @@ interface AcoountTableProps {
   setAppliedFilters: React.Dispatch<
     React.SetStateAction<Record<string, FilterType>>
   >;
+  disabled?: boolean;
+  hide?: boolean;
 }
 export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   appliedFilters,

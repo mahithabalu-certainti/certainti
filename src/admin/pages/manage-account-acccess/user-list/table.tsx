@@ -21,10 +21,14 @@ interface UserTableProps {
   setAppliedFilters: React.Dispatch<
     React.SetStateAction<Record<string, FilterType>>
   >;
+  disabled?: boolean;
+  hide?: boolean;
 }
 export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
   appliedFilters,
   setAppliedFilters,
+  disabled,
+  hide,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -185,7 +189,6 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
     });
   };
 
-  console.log('addedProjects', userList);
   return (
     <div className='pt-1'>
       <ListTable
@@ -222,6 +225,8 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
         actionColumnName='Add/Remove'
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
+        disabledToggle={disabled}
+        hideToggle={hide}
         component='Account-User-Access'
       />
     </div>
