@@ -31,7 +31,7 @@ import { ProjectResourceFormData } from './form-data';
 // import { useGetResourceType } from '../../../../../services/resource-list';
 import {
   useGetProjectResourceCode,
-  useGetProjectResourceRollSkill,
+  // useGetProjectResourceRollSkill,
   useGetProjectResourceSkillType,
 } from '../../../../../services/project-resources/project-resources-form-service';
 import { projectResourcesPayloadData } from './utils';
@@ -91,7 +91,7 @@ const ProjectResourceForm: React.FC = () => {
   );
   // const projectResourceTypeOptions = useGetResourceType();
   const projectResourceSkillTypeOptions = useGetProjectResourceSkillType();
-  const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();
+  // const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
@@ -140,16 +140,16 @@ const ProjectResourceForm: React.FC = () => {
     [projectResourceSkillTypeOptions?.data?.data?.resourceRolesSubType]
   );
 
-  const memoizedProjectResourceRollSkill: SelectOption[] = useMemo(
-    () =>
-      projectResourceRollSkillOptions?.data?.data?.resourceRoles.map(
-        (item) => ({
-          label: item.skill_role_name,
-          value: item.rid,
-        })
-      ) || [],
-    [projectResourceRollSkillOptions?.data?.data?.resourceRoles]
-  );
+  // const memoizedProjectResourceRollSkill: SelectOption[] = useMemo(
+  //   () =>
+  //     projectResourceRollSkillOptions?.data?.data?.resourceRoles.map(
+  //       (item) => ({
+  //         label: item.skill_role_name,
+  //         value: item.rid,
+  //       })
+  //     ) || [],
+  //   [projectResourceRollSkillOptions?.data?.data?.resourceRoles]
+  // );
 
   // const memoizedProjectTypes: SelectOption[] = useMemo(
   //   () =>
@@ -233,7 +233,7 @@ const ProjectResourceForm: React.FC = () => {
 
       setIsResourceType(
         selectedResource?.resource_type_name?.toLowerCase() ===
-          ResourceType.full_time
+        ResourceType.full_time
       );
     }
     if (data.fieldName === 'assigned_skill_role_type_rid') {
@@ -259,7 +259,7 @@ const ProjectResourceForm: React.FC = () => {
 
     setIsResourceType(
       selectedProjectResourceType?.resource_type_name?.toLowerCase() ===
-        ResourceType.full_time
+      ResourceType.full_time
     );
   }, [
     memoizedProjectResourceCode,
@@ -285,13 +285,13 @@ const ProjectResourceForm: React.FC = () => {
   const formConfig = ProjectResourceFormData(
     memoizedProjectResourceCode,
     // memoizedProjectTypes,
-    memoizedProjectResourceSkillType,
-    memoizedProjectResourceRollSkill,
+    // memoizedProjectResourceSkillType,
+    // memoizedProjectResourceRollSkill,
     memoizedStatus,
     memoizedCountry,
     memoizedState,
     memoizedCurrency,
-    showSkillRoleOthersField,
+    // showSkillRoleOthersField,
     isResourceType,
     states.isLoading,
     isEditView,
