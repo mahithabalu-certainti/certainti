@@ -43,8 +43,9 @@ export const getAccountAssignUsersColumns = ({
     sortable: true,
   },
   {
-    id: 'assign',
-    label: 'Assign',
+    id: 'exclusion_inclusion',
+    editId: 'exclusion_inclusion',
+    label: 'Exclusion / Inclusion',
     width: 100,
     sortId: 'assign',
     sortable: false,
