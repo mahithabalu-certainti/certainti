@@ -35,6 +35,7 @@ export interface AssignUserAccess {
   user_rid?: string;
   access_type?: string;
   users?: userList;
+  entity_type?: string;
   projects?: {
     [rid: string]: boolean;
   };

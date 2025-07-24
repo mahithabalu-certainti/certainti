@@ -16,11 +16,11 @@ export const getConfigAssignUserAccessURL = (entity_type: string): string => {
 
 export const fetchConfigAssignUsersList = async (
   accountId: string,
-  project_rid: string,
-  params: ConfigAssignUserListParms
+  params: ConfigAssignUserListParms,
+  project_rid?: string
 ): Promise<{ users: ConfigAssignUserList[]; count: number }> => {
   const response = await userServiceApi.get<ConfigAssignUserListApiResponse>(
-    getConfigAssignUsersListURL(accountId, project_rid, params)
+    getConfigAssignUsersListURL(accountId, params, project_rid)
   );
   return {
     users: response.data.data.users,
@@ -30,17 +30,17 @@ export const fetchConfigAssignUsersList = async (
 
 export const useConfigAssignUsersList = (
   accountId: string,
-  project_rid: string,
   params: ConfigAssignUserListParms,
+  project_rid?: string,
   refreshTrigger?: number
 ): UseQueryResult<{ users: ConfigAssignUserList[]; count: number }, Error> => {
   return useQuery<{ users: ConfigAssignUserList[]; count: number }, Error>({
     queryKey: ['configAssignUsers', params, refreshTrigger],
-    queryFn: () => fetchConfigAssignUsersList(accountId, project_rid, params),
+    queryFn: () => fetchConfigAssignUsersList(accountId, params, project_rid),
     staleTime: 0,
     gcTime: 0,
     retry: 0,
-    enabled: !!accountId && !!project_rid,
+    enabled: !!accountId,
   });
 };
 

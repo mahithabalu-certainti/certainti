@@ -2,8 +2,8 @@ import { ConfigAssignUserListParms } from '../../types';
 
 export const getConfigAssignUsersListURL = (
   accountId: string,
-  project_rid: string,
-  { sortBy, sortOrder, filters, entity_type }: ConfigAssignUserListParms
+  { sortBy, sortOrder, filters, entity_type }: ConfigAssignUserListParms,
+  project_rid?: string
 ) => {
   console.log();
   const baseUrl = `/api/user_group/account/${accountId}/users`;

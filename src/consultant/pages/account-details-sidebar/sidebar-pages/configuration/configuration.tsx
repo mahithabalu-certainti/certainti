@@ -10,7 +10,6 @@ import { useRef, useState } from 'react';
 import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
-import { AssignGroups, AssignUsers } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
 
 const AttachmentTabs: ResourceTabs[] = [
@@ -78,7 +77,7 @@ const Configuration: React.FC = () => {
       label: 'Save',
       variant: 'contained' as const,
       onClick: () => handleSubmit(),
-      hide: false,
+      hide: list === 'users',
       disabled: false,
       loading: isFormSaving,
     },
