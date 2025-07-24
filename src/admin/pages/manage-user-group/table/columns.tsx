@@ -3,7 +3,8 @@ import { ListTableColumn } from '../../../../components/table/types';
 import { UserGroupList } from '../../../types';
 
 export const getUserGroupColumns = (
-  prefixGroupName: string
+  prefixGroupName: string,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<UserGroupList>[] => [
   {
     id: 'group_name',
@@ -11,7 +12,12 @@ export const getUserGroupColumns = (
     sortId: 'group_name',
     label: 'Group Name',
     sortable: true,
-    editable: true,
+    editable:
+      permissionMap?.['group_name']?.read &&
+      permissionMap?.['group_name']?.edit,
+    hide:
+      !permissionMap?.['group_name']?.read &&
+      !permissionMap?.['group_name']?.edit,
     conditionallyEdit: { key: 'usergroup_type', matchValue: 'CUSTOM' },
     field: {
       type: 'text',
@@ -49,6 +55,9 @@ export const getUserGroupColumns = (
     sortId: 'usergrouptype',
     label: 'Group Type',
     sortable: true,
+    hide:
+      !permissionMap?.['group_type_rid']?.read &&
+      !permissionMap?.['group_type_rid']?.edit,
   },
   {
     id: 'is_consultant_only_group',
@@ -56,6 +65,9 @@ export const getUserGroupColumns = (
     sortId: 'is_consultant_only_group',
     label: 'Is Consultant Firm',
     sortable: true,
+    hide:
+      !permissionMap?.['is_consultant_only_group']?.read &&
+      !permissionMap?.['is_consultant_only_group']?.edit,
   },
   {
     id: 'user_count',
@@ -63,6 +75,9 @@ export const getUserGroupColumns = (
     sortId: 'user_count',
     label: 'Users Count',
     sortable: true,
+    hide:
+      !permissionMap?.['user_count']?.read &&
+      !permissionMap?.['user_count']?.edit,
   },
   {
     id: 'created_datetime',
@@ -70,6 +85,9 @@ export const getUserGroupColumns = (
     sortId: 'created_datetime',
     label: 'Created On',
     sortable: true,
+    hide:
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
     render: (row: UserGroupList) =>
       row.created_datetime
         ? formatDateToYYYYMMDDWithTime(row.created_datetime)
@@ -81,6 +99,9 @@ export const getUserGroupColumns = (
     sortId: 'modified_datetime',
     label: 'Updated On',
     sortable: true,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
     render: (row: UserGroupList) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)

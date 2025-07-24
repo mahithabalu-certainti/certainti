@@ -40,6 +40,7 @@ import { fetchAccountsThunk } from '../../../../store/slices';
 import { useToast } from '../../../../hooks';
 import { MANAGE_USER_GROUP } from '../../../../routes';
 import { UserListParams } from '../../../types/manage-user';
+import { AllPermissions } from '../../../../common-service';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -113,6 +114,23 @@ export const CreateUserGroup: React.FC = () => {
     (state: RootState) => state.account
   );
 
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const userGroupViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.USER_GROUP_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userGroupViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userGroupViewEditFields]);
+
   // API Hooks
   const createUserGroup = useCreateUserGroup();
   const updateUserGroup = useUpdateUserGroup();
@@ -171,6 +189,15 @@ export const CreateUserGroup: React.FC = () => {
   );
   const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
   const prefixGroupName = 'G-';
+  const isGroupNameDisabled =
+    isEditView &&
+    permissionMap?.['group_name']?.read &&
+    !permissionMap?.['group_name']?.edit;
+  const isAccountDisabled =
+    isEditView &&
+    permissionMap?.['accounts']?.read &&
+    !permissionMap?.['accounts']?.edit;
+
 
   // UseEffects
   useEffect(() => {
@@ -517,199 +544,215 @@ export const CreateUserGroup: React.FC = () => {
         {tabs === Tabs.FORM && (
           <div className='w-full flex flex-col gap-2'>
             <div className='w-full flex flex-row gap-2'>
-              <div className='w-1/2 flex flex-col gap-1'>
-                <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-                  Group Name <span className='text-red-500'> *</span>
-                </label>
-                <div className='relative'>
-                  <input
-                    type='text'
-                    name='groupName'
-                    placeholder='Enter Group Name'
-                    className={`pl-9 placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${groupInformationError.groupName ? 'border-red-500' : 'border-gray-300'}`}
-                    onChange={updatedForm}
-                    value={groupInformation.groupName}
-                  />
-                  <span className='absolute left-0 top-1/2 -translate-y-1/2 text-sm border-r border-r-[#d1d5dc] px-1 py-1 pl-[10px]'>
-                    {prefixGroupName}
-                  </span>
+              {isEditView && permissionMap?.['group_name']?.read && (
+                <div className='w-1/2 flex flex-col gap-1'>
+                  <label className='text-[13px] font-[600] text-[#2D3E4F]'>
+                    Group Name <span className='text-red-500'> *</span>
+                  </label>
+                  <div className='relative'>
+                    <input
+                      type='text'
+                      name='groupName'
+                      placeholder='Enter Group Name'
+                      className={`pl-9 placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${groupInformationError.groupName ? 'border-red-500' : 'border-gray-300'} ${isGroupNameDisabled ? 'bg-[#f3f4f6] text-[#00000061]' : ''}`}
+                      onChange={updatedForm}
+                      value={groupInformation.groupName}
+                      disabled={isGroupNameDisabled}
+                    />
+                    <span className='absolute left-0 top-1/2 -translate-y-1/2 text-sm border-r border-r-[#d1d5dc] px-1 py-1 pl-[10px]'>
+                      {prefixGroupName}
+                    </span>
+                  </div>
+                  {groupInformationError.groupName && (
+                    <span className='text-red-500 text-[11px]'>
+                      {groupInformationError.groupName}
+                    </span>
+                  )}
                 </div>
-                {groupInformationError.groupName && (
-                  <span className='text-red-500 text-[11px]'>
-                    {groupInformationError.groupName}
-                  </span>
+              )}
+              {isEditView &&
+                permissionMap?.['is_consultant_only_group']?.read && (
+                  <div className='w-1/2 flex flex-col gap-1'>
+                    <label className='text-[13px] font-[600] text-[#2D3E4F]'>
+                      Is Consultant Only Group ?{' '}
+                      <span className='text-red-500'> *</span>
+                    </label>
+                    <div className='flex gap-4'>
+                      <label className={`cursor-pointer flex items-center`}>
+                        <input
+                          type='radio'
+                          name='isConsultantOnly'
+                          onChange={updatedForm}
+                          value={YesNo.Yes}
+                          checked={groupInformation.isConsultantOnly}
+                          disabled={isEditView}
+                        />
+                        <span className='text-[13px] text-[#7D98B6] ml-2'>
+                          Yes
+                        </span>
+                      </label>
+                      <label className={`cursor-pointer flex items-center`}>
+                        <input
+                          type='radio'
+                          name='isConsultantOnly'
+                          onChange={updatedForm}
+                          value={YesNo.No}
+                          checked={!groupInformation.isConsultantOnly}
+                          disabled={isEditView}
+                        />
+                        <span className='text-[13px] text-[#7D98B6] ml-2'>
+                          No
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                 )}
-              </div>
-              <div className='w-1/2 flex flex-col gap-1'>
-                <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-                  Is Consultant Only Group ?{' '}
-                  <span className='text-red-500'> *</span>
-                </label>
-                <div className='flex gap-4'>
-                  <label className={`cursor-pointer flex items-center`}>
-                    <input
-                      type='radio'
-                      name='isConsultantOnly'
-                      onChange={updatedForm}
-                      value={YesNo.Yes}
-                      checked={groupInformation.isConsultantOnly}
-                      disabled={isEditView}
-                    />
-                    <span className='text-[13px] text-[#7D98B6] ml-2'>Yes</span>
-                  </label>
-                  <label className={`cursor-pointer flex items-center`}>
-                    <input
-                      type='radio'
-                      name='isConsultantOnly'
-                      onChange={updatedForm}
-                      value={YesNo.No}
-                      checked={!groupInformation.isConsultantOnly}
-                      disabled={isEditView}
-                    />
-                    <span className='text-[13px] text-[#7D98B6] ml-2'>No</span>
-                  </label>
-                </div>
-              </div>
             </div>
             <div className='w-full flex flex-row gap-2'>
-              <div className='w-1/2 flex flex-col gap-1'>
-                <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-                  Group Type <span className='text-red-500'> *</span>
-                </label>
-                {allUserGroupTypes.isPending ? (
-                  commonSkeleton
-                ) : (
-                  <Select
-                    name='groupType'
-                    className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                    displayEmpty
-                    fullWidth
-                    size='small'
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          maxWidth: 300,
-                          maxHeight: 300,
-                          marginTop: '4px',
-                          boxShadow:
-                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                          '& .MuiMenuItem-root': {
-                            fontSize: '13px',
-                            padding: '6px 12px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+              {isEditView && permissionMap?.['group_type_rid']?.read && (
+                <div className='w-1/2 flex flex-col gap-1'>
+                  <label className='text-[13px] font-[600] text-[#2D3E4F]'>
+                    Group Type <span className='text-red-500'> *</span>
+                  </label>
+                  {allUserGroupTypes.isPending ? (
+                    commonSkeleton
+                  ) : (
+                    <Select
+                      name='groupType'
+                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                      displayEmpty
+                      fullWidth
+                      size='small'
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxWidth: 300,
+                            maxHeight: 300,
+                            marginTop: '4px',
+                            boxShadow:
+                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                            '& .MuiMenuItem-root': {
+                              fontSize: '13px',
+                              padding: '6px 12px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            },
                           },
                         },
-                      },
-                    }}
-                    sx={{
-                      height: '32px',
-                      fontSize: '13px',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused': {
-                          boxShadow: 'none',
-                        },
-                      },
-                      '.MuiSelect-select': {
-                        padding: '6px 6px',
-                      },
-                      '&.Mui-disabled': {
-                        backgroundColor: '#f3f4f6',
-                      },
-                      '& svg': {
-                        color: '#7D98B6',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: groupInformationError.groupType
-                          ? '1px solid #ef4444'
-                          : '1px solid #CBD6E2',
-                        borderRadius: '2px',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: groupInformationError.groupType
-                          ? '1px solid #ef4444'
-                          : '1px solid #CBD6E2',
-                      },
-                    }}
-                    value={groupInformation.groupType}
-                    onChange={updatedForm}
-                    disabled={isEditView}
-                  >
-                    <MenuItem
-                      key='default'
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
                       }}
-                      value=''
-                      title=''
+                      sx={{
+                        height: '32px',
+                        fontSize: '13px',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused': {
+                            boxShadow: 'none',
+                          },
+                        },
+                        '.MuiSelect-select': {
+                          padding: '6px 6px',
+                        },
+                        '&.Mui-disabled': {
+                          backgroundColor: '#f3f4f6',
+                        },
+                        '& svg': {
+                          color: '#7D98B6',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: groupInformationError.groupType
+                            ? '1px solid #ef4444'
+                            : '1px solid #CBD6E2',
+                          borderRadius: '2px',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: groupInformationError.groupType
+                            ? '1px solid #ef4444'
+                            : '1px solid #CBD6E2',
+                        },
+                      }}
+                      value={groupInformation.groupType}
+                      onChange={updatedForm}
+                      disabled={isEditView}
                     >
-                      Choose Group Type
-                    </MenuItem>
-                    {allGroupTypes.map((item, i) => {
-                      return (
-                        <MenuItem
-                          key={i}
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                          }}
-                          value={item.value}
-                          title={item.label}
-                        >
-                          {item.label}
-                        </MenuItem>
-                      );
-                    })}
-                  </Select>
-                )}
-                {groupInformationError.groupType && (
-                  <span className='text-red-500 text-[11px]'>
-                    {groupInformationError.groupType}
-                  </span>
-                )}
-              </div>
-              <div className='w-1/2 flex flex-col gap-1'>
-                <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-                  Accounts <span className='text-red-500'> *</span>
-                </label>
-                {loading ? (
-                  commonSkeleton
-                ) : (
-                  <button
-                    aria-describedby={accountId}
-                    onClick={handleAccountsModal}
-                    className={`border border-[#ccc] rounded text-left px-[10px] py-[7px] text-xs ${groupInformationError.accounts ? 'border-red-500' : ''} ${groupTypeNotCustom ? 'bg-[#f3f4f6] text-[#00000061]' : 'cursor-pointer'}`}
-                    type='button'
-                    disabled={groupTypeNotCustom}
-                  >
-                    {selectAccountCount.parent} Accounts{' '}
-                    {selectAccountCount.child} Childs
-                  </button>
-                )}
-                <AccountModal
-                  isOpen={isAccountModalOpen}
-                  filterAnchorEl={accountAnchorEl}
-                  filterId={accountId}
-                  handleClose={handleCloseAccountModel}
-                  accounts={accounts}
-                  accountCollapse={accountCollapse}
-                  setAccountCollapse={setAccountCollapse}
-                  selectedAccounts={selectedAccounts}
-                  setSelectedAccounts={setSelectedAccounts}
-                  currentGroupType={currentGroupType?.group_type_name as string}
-                />
-                {groupInformationError.groupName && (
-                  <span className='text-red-500 text-[11px]'>
-                    {groupInformationError.accounts}
-                  </span>
-                )}
-              </div>
+                      <MenuItem
+                        key='default'
+                        sx={{
+                          color: '#425A76',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                        }}
+                        value=''
+                        title=''
+                      >
+                        Choose Group Type
+                      </MenuItem>
+                      {allGroupTypes.map((item, i) => {
+                        return (
+                          <MenuItem
+                            key={i}
+                            sx={{
+                              color: '#425A76',
+                              fontSize: '13px',
+                              fontWeight: '500',
+                            }}
+                            value={item.value}
+                            title={item.label}
+                          >
+                            {item.label}
+                          </MenuItem>
+                        );
+                      })}
+                    </Select>
+                  )}
+                  {groupInformationError.groupType && (
+                    <span className='text-red-500 text-[11px]'>
+                      {groupInformationError.groupType}
+                    </span>
+                  )}
+                </div>
+              )}
+              {isEditView && permissionMap?.['accounts']?.read && (
+                <div className='w-1/2 flex flex-col gap-1'>
+                  <label className='text-[13px] font-[600] text-[#2D3E4F]'>
+                    Accounts <span className='text-red-500'> *</span>
+                  </label>
+                  {loading ? (
+                    commonSkeleton
+                  ) : (
+                    <button
+                      aria-describedby={accountId}
+                      onClick={handleAccountsModal}
+                      className={`border border-[#ccc] rounded text-left px-[10px] py-[7px] text-xs ${groupInformationError.accounts ? 'border-red-500' : ''} ${groupTypeNotCustom || isAccountDisabled ? 'bg-[#f3f4f6] text-[#00000061]' : 'cursor-pointer'}`}
+                      type='button'
+                      disabled={groupTypeNotCustom || isAccountDisabled}
+                    >
+                      {selectAccountCount.parent} Accounts{' '}
+                      {selectAccountCount.child} Childs
+                    </button>
+                  )}
+                  <AccountModal
+                    isOpen={isAccountModalOpen}
+                    filterAnchorEl={accountAnchorEl}
+                    filterId={accountId}
+                    handleClose={handleCloseAccountModel}
+                    accounts={accounts}
+                    accountCollapse={accountCollapse}
+                    setAccountCollapse={setAccountCollapse}
+                    selectedAccounts={selectedAccounts}
+                    setSelectedAccounts={setSelectedAccounts}
+                    currentGroupType={
+                      currentGroupType?.group_type_name as string
+                    }
+                  />
+                  {groupInformationError.groupName && (
+                    <span className='text-red-500 text-[11px]'>
+                      {groupInformationError.accounts}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
