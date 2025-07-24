@@ -119,9 +119,9 @@ export enum AllMenus {
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
   CONFIGURATION = 'configuration',
-  USERS = 'users',
   ACCOUNT_SETTINGS = 'manage_account_settings',
   PROJECT_SETTINGS = 'manage_project_settings',
+  MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
 }
 
 // export enum AllModules {
@@ -286,6 +286,7 @@ export enum AllPermissions {
   PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
   IMPORTS_VIEW_EDIT = 'imports_view_edit',
   IMPORTS_EXPORT = 'imports_export',
+  MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
 }
 
 export interface Country {

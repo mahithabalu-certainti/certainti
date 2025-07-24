@@ -76,6 +76,7 @@ export const AccountDetails = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
@@ -502,7 +503,7 @@ export const AccountDetails = () => {
           {
             name: 'Users',
             key: 'users',
-            id: AllMenus.USERS,
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
             icon: ResourcesIcon,
           },

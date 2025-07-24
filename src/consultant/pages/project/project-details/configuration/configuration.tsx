@@ -169,7 +169,7 @@ const Configuration: React.FC = () => {
         titleIcon={getTitleIcon()}
         buttons={headerButtons}
         count={count}
-        showItemCount={true}
+        showItemCount={list !== 'settings'}
       />
       {renderContent()}
     </div>

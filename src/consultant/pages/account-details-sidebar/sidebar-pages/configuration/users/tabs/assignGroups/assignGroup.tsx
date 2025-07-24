@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ListTable } from '../../../../../../../../components/table';
 import { getConfigAssignGroupsColumns } from './column';
 import { useParams } from 'react-router-dom';
@@ -12,6 +12,9 @@ import {
   useConfigAssignGroupsList,
   useUpdateConfigAssignUserAccess,
 } from '../../../../../../../services/configuration/user-config-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../../common-service';
 interface AssignGroupsProps {
   reFetchData: number;
   setCount: (value: number) => void;
@@ -45,6 +48,24 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     tableParams,
     reFetchData
   );
+
+  // Permission Management
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const accountGroupViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountGroupViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountGroupViewEditFields]);
 
   const updateAssignUserList = useUpdateConfigAssignUserAccess('account');
   const totalItems = data?.count || 0;
@@ -156,7 +177,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
           groups: updatedProjects,
           account_rid: accountid,
           access_type: 'GROUP',
-          entity_type: 'Account',
+          entity_type: 'ACCOUNT',
         } as Partial<AssignUserAccess>,
         {
           onSuccess: () => {
@@ -203,6 +224,9 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       actionColumnName='Assign'
+      disabledToggle={
+        !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
+      }
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
     />

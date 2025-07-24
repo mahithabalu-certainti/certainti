@@ -133,7 +133,7 @@ const sideMenuItems: MenuItem[] = [
       {
         name: 'Users',
         key: 'users',
-        id: AllMenus.USERS,
+        id: AllMenus.MANAGE_ACCOUNT_ACCESS,
         disabled: false,
         icon: ResourcesIcon,
       },

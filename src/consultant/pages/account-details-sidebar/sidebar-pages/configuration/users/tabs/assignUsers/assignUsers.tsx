@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useToast } from '../../../../../../../../hooks';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AssignUserAccess,
   ConfigAssignUserList,
@@ -12,6 +12,9 @@ import {
 } from '../../../../../../../services/configuration/user-config-service';
 import { getAccountAssignUsersColumns } from './column';
 import { ListTable } from '../../../../../../../../components/table';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../../common-service';
 
 interface AssignUserProps {
   reFetchData: number;
@@ -40,6 +43,24 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   const [, setAddedProjects] = useState<
     { rid: string; is_enabled: boolean; is_modified: boolean }[]
   >([]);
+
+  // Permission Management
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const accountUsersViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountUsersViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountUsersViewEditFields]);
 
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountid || '',
@@ -206,6 +227,9 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       actionColumnName='Assign'
+      disabledToggle={
+        !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
+      }
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
     />

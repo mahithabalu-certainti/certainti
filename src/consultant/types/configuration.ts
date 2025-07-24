@@ -59,6 +59,7 @@ export interface ConfigAssignGroupsListApiResponse extends CommonApiResponse {
 //Mutation
 export interface AssignUserAccess {
   account_rid: string;
+  project_rid: string;
   user_rid?: string;
   access_type?: string;
   users?: userList;

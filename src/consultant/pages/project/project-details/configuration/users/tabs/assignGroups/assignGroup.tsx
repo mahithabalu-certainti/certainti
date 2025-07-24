@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ListTable } from '../../../../../../../../components/table';
 import { getConfigAssignGroupsColumns } from './column';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -12,6 +12,9 @@ import {
   useConfigAssignGroupsList,
   useUpdateConfigAssignUserAccess,
 } from '../../../../../../../services/configuration/user-config-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../../common-service';
 
 interface AssignGroupsProps {
   reFetchData: number;
@@ -38,10 +41,28 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   const [assignGroupList, setAssignGroupList] = useState<
     ConfigAssignGroupsList[]
   >([]);
+  const [, setAddedProjects] = useState<
+    { rid: string; is_enabled: boolean; is_modified: boolean }[]
+  >([]);
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [addedProjects, setAddedProjects] = useState<Record<string, boolean>>(
-    {}
+
+  // Permission Management
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectGroupViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
   );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectGroupViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectGroupViewEditFields]);
 
   const { data, isLoading, isError } = useConfigAssignGroupsList(
     accountId,
@@ -49,7 +70,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     reFetchData,
     projectid || ''
   );
-  const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
+  const updateAssignGroupList = useUpdateConfigAssignUserAccess('account');
   const totalItems = data?.count || 0;
 
   useEffect(() => {
@@ -81,16 +102,17 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
 
   useEffect(() => {
     if (data?.groups?.length) {
-      const accessibleUsers = data.groups.filter(
+      const accessibleGroups = data.groups.filter(
         (group) => group.has_access === true
       );
-      setAddedAccounts(accessibleUsers.map((group) => group.rid));
-      const initialProjects: Record<string, boolean> = {};
-      accessibleUsers.forEach((group) => {
-        initialProjects[group.rid] = true;
-      });
-
-      setAddedProjects(initialProjects);
+      setAddedAccounts(accessibleGroups.map((group) => group.rid));
+      setAddedProjects(
+        accessibleGroups.map((group) => ({
+          rid: group.rid,
+          is_enabled: true,
+          is_modified: true,
+        }))
+      );
     }
   }, [data?.groups]);
 
@@ -135,29 +157,45 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-    const updatedProjects = {
-      ...addedProjects,
-      [rowId]: checked,
-    };
 
-    setAddedProjects(updatedProjects);
-    updateAssignUserList.mutate(
-      {
-        projects: updatedProjects,
-        account_rid: accountId,
-        user_rid: rowId,
-      } as Partial<AssignUserAccess>,
-      {
-        onSuccess: () => {
-          setAssignGroupList(updatedUserList);
-          successToast('Updated successfully');
-        },
-        onError: () => {
-          setAssignGroupList(previousUserList);
-          errorToast('Failed to Update.');
-        },
+    setAddedProjects((prev) => {
+      const updatedProjects = [...prev];
+      const existingIndex = prev.findIndex((item) => item.rid === rowId);
+
+      if (existingIndex !== -1) {
+        updatedProjects[existingIndex] = {
+          ...updatedProjects[existingIndex],
+          is_enabled: checked,
+          is_modified: true,
+        };
+      } else if (checked) {
+        updatedProjects.push({
+          rid: rowId,
+          is_enabled: true,
+          is_modified: true,
+        });
       }
-    );
+      updateAssignGroupList.mutate(
+        {
+          groups: updatedProjects,
+          account_rid: accountId,
+          project_rid: projectid,
+          access_type: 'GROUP',
+          entity_type: 'PROJECT',
+        } as Partial<AssignUserAccess>,
+        {
+          onSuccess: () => {
+            setAssignGroupList(updatedUserList);
+            successToast('Updated successfully');
+          },
+          onError: () => {
+            setAssignGroupList(previousUserList);
+            errorToast('Failed to Update.');
+          },
+        }
+      );
+      return updatedProjects;
+    });
   };
 
   return (
@@ -193,6 +231,9 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
       checkedToggleTooltip='Inclusion'
+      disabledToggle={
+        !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
+      }
       unCheckedToggleTooltip='Exclusion'
     />
   );
