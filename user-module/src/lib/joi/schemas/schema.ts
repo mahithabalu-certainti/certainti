@@ -115,7 +115,9 @@ const listProjectUserGroupSchema = Joi.object({
   access_type: Joi.string().required().label("Type"),
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
-   filters: Joi.string().default("{}"),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
 
 const listProjectOfAccountSchema = Joi.object({
@@ -126,7 +128,7 @@ const listProjectOfAccountSchema = Joi.object({
   group_rid: Joi.string().optional().label("Group Id"),
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
-   filters: Joi.string().default("{}"),
+  filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("first_name"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
