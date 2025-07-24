@@ -12,6 +12,7 @@ import { isValidTimezone } from "../utils/helpers";
 import { ProjectAccessView } from "../utils/types";
 import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
+import UserService from "./userService";
 
 
 
@@ -299,6 +300,11 @@ async assignUserToUserGroups(
       projects,
       userId,
     });
+
+     await UserGroup.update({modified_by: userId,
+      modified_datetime: new Date()}, {
+        where: { rid: group_rid },
+      });
 
     return {
       statusCode: constants.SUCCESS,
@@ -1633,7 +1639,8 @@ private createUserCountCondition(operator: string, value: number): any {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    timezone:string
+    timezone:string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1658,6 +1665,15 @@ private createUserCountCondition(operator: string, value: number): any {
       else {
         orderArray = [[finalSortBy, finalSortOrder]];
       }
+       const userService = new UserService();
+       const allowedFieldsForExport = await userService.getAllowedExportFields(userId,"user_group_view_edit");
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      console.log(allowedFieldSet)
       const userGroup = await UserGroup.findAll(
         {
           where: whereClause,
@@ -1688,10 +1704,23 @@ private createUserCountCondition(operator: string, value: number): any {
             model: User,
              as: "user",
             attributes: ['first_name','last_name'],
+          },
+          {
+            model: UserGroupType,
+             as: "usergrouptype",
+            attributes: ['group_type_name','type'],
           }],
         }
       );
-
+      const labelMap: Record<string, string> = {
+        "group_name": "Group Name",
+        "group_type_rid": "Group Type",
+        "account_name": "Account Name",
+        "is_consultant_only_group": "Is Consultant Only Group",
+        "user_count": "User Count",
+        "created_datetime": "Created On",
+        "modified_datetime": "Updated On"
+      };
       // Transform the results to replace user IDs with usernames
       const transformedData = userGroup.map(userGrp => {
       const result = userGrp.get({ plain: true });
@@ -1701,15 +1730,25 @@ private createUserCountCondition(operator: string, value: number): any {
         date
           ? moment(date).tz(isValidTZ ? timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
           : null;
+      
+       
 
-      return {
-        "Group Name": result.group_name,
-        "Account Name": result?.account_name ?? null,
-        "Is Consultant Only Group": result.is_consultant_only_group ? 'Yes' : 'No',
-        "User Count": result.user_count ?? 0,
-        "Created On": formatDate(result.created_datetime),
-        "Updated On": formatDate(result.modified_datetime)
+       const exportData: Record<string, string | number> = {};   
+        let resultMap =  {
+        "group_name": result.group_name ?? '-',
+        "group_type_rid":result?.usergrouptype?.group_type_name ?? '-',
+        "account_name": result?.account_name ?? '-',
+        "is_consultant_only_group": result.is_consultant_only_group ? 'Yes' : 'No',
+        "user_count": result.user_count ?? 0,
+        "created_datetime": formatDate(result.created_datetime) ?? '-',
+        "modified_datetime": formatDate(result.modified_datetime) ?? '-'
       };
+       for (const [field, value] of Object.entries(resultMap)) {
+          if (allowedFieldSet.has(field)) {
+            exportData[labelMap[field]] = value;
+          }
+         }
+         return exportData
       });
        return {
         statusCode: constants.SUCCESS,
@@ -2415,7 +2454,7 @@ async assignUserAccessToAccount({
       
 
     // If user is disabled, check if they belong to a group that has access to the account
-    if (!user.is_enabled) {
+    if (user.is_modified) {
     const userGroups = await UserGroupMapping.findAll({
       where: { user_rid: user.rid },
       attributes: ['group_rid'],
@@ -2430,10 +2469,19 @@ async assignUserAccessToAccount({
           account_rid,
         },
       });
-
-      if (groupHasAccess) {
-        comment = `Access Disabled on ${dayjs().format('YYYY-MM-DD, hh:mm:ss A')}  `;
+      if(!user.is_enabled)
+      {
+          if (groupHasAccess) {
+                  comment = `Access Disabled on ${dayjs().format('YYYY-MM-DD, hh:mm:ss A')}  `;
+                }
       }
+      else
+      {
+        if (groupHasAccess) {
+                  comment = '';
+                }
+      }
+      
     }
   }
       if (existing) {
@@ -2825,7 +2873,7 @@ async  getProjectsWithUserAccessFlag(
    let joinCondition = '';
    let extraJoin = '';
    let isGroupedSelect = '';
-   if (type === 'user') {
+   if (type === 'USER') {
     joinCondition = `
       (uga.user_rid = :entity_rid OR uga.group_rid = ugm.group_rid)
     `;

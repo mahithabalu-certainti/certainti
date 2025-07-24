@@ -556,6 +556,7 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
 
     let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string || "";
 
     try {
       parsedFilters = JSON.parse(validatedData.filters);
@@ -570,7 +571,9 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
       parsedFilters,
       validatedData.sortBy,
       validatedData.sortOrder,
-      validatedData.timezone
+      validatedData.timezone,
+      userId
+
     );
     
     if (result.statusCode === constants.SUCCESS) {
