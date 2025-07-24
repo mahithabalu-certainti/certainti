@@ -37,8 +37,8 @@ export const fetchConfigAssignUsersList = async (
 export const useConfigAssignUsersList = (
   accountId: string,
   params: ConfigAssignUserListParms,
-  project_rid?: string,
-  refreshTrigger?: number
+  refreshTrigger?: number,
+  project_rid?: string
 ): UseQueryResult<{ users: ConfigAssignUserList[]; count: number }, Error> => {
   return useQuery<{ users: ConfigAssignUserList[]; count: number }, Error>({
     queryKey: ['configAssignUsers', params, refreshTrigger],
@@ -94,8 +94,8 @@ export const fetchConfigAssignGroupsList = async (
 export const useConfigAssignGroupsList = (
   accountId: string,
   params: ConfigAssignGroupsListParms,
-  project_rid?: string,
-  refreshTrigger?: number
+  refreshTrigger?: number,
+  project_rid?: string
 ): UseQueryResult<
   { groups: ConfigAssignGroupsList[]; count: number },
   Error

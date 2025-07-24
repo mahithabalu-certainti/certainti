@@ -46,8 +46,8 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountId,
     tableParams,
-    projectid || '',
-    reFetchData
+    reFetchData,
+    projectid || ''
   );
   const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
   const totalItems = data?.count || 0;

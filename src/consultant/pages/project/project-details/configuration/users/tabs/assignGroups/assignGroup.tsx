@@ -46,8 +46,8 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   const { data, isLoading, isError } = useConfigAssignGroupsList(
     accountId,
     tableParams,
-    projectid || '',
-    reFetchData
+    reFetchData,
+    projectid || ''
   );
   const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
   const totalItems = data?.count || 0;

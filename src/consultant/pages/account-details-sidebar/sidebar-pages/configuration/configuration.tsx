@@ -11,8 +11,13 @@ import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
 import SectionHeader from '../../../../../components/details-section/section-header';
+import { clearFilters } from '../../components/filter/utils';
+import {
+  getAssignGroupsFilterFields,
+  getAssignUserFilterFields,
+} from './helper';
 
-const AttachmentTabs: ResourceTabs[] = [
+const ConfigTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
@@ -30,16 +35,50 @@ const Configuration: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean | string[]>
+  >({});
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('');
+  const [reFetchData, setReFetchData] = useState<number>(Date.now());
+  const [count, setCount] = useState<number>(0);
+
   const list = searchParams.get('subMenu');
+  const tabParam = searchParams.get('tab');
 
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
   };
 
+  const handleResetTabChange = () => {
+    setSortField('');
+    setCount(0);
+    setAppliedFilters({});
+    clearFilters(`account-settings-${tabParam}`);
+    setSortFilterCount(0);
+  };
+
   const renderContent = () => {
     switch (list) {
       case 'users':
-        return <Users />;
+        return (
+          <Users
+            reFetchData={reFetchData}
+            handleReset={handleResetTabChange}
+            setCount={setCount}
+            filterParams={{
+              page: currentPage,
+              sortBy: sortField,
+              filters: appliedFilters,
+              sortOrder,
+              limit: 100,
+              entity_type: '',
+            }}
+          />
+        );
       case 'settings':
         return <Settings formRef={formRef} setIsFormSaving={setIsFormSaving} />;
       default:
@@ -56,7 +95,12 @@ const Configuration: React.FC = () => {
       case 'users':
         return <ResourceProfileIcon alt='users-header-icon' />;
       case 'settings':
-        return <RealatedListDetailsIcon alt='settings-header-icon' />;
+        return (
+          <RealatedListDetailsIcon
+            alt='settings-header-icon'
+            className='w-7 h-7'
+          />
+        );
       default:
         return null;
     }
@@ -73,33 +117,60 @@ const Configuration: React.FC = () => {
     },
   ];
 
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const onRefreshClick = () => {
+    setReFetchData(Date.now());
+  };
+
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField =
+      tabParam === 'assign_users' ? 'first_name' : 'group_name';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setSortOrder(defaultSortOrder);
+      setSortField(defaultSortField);
+    } else {
+      setSortFilterCount(1);
+      setSortOrder(apiOrder);
+      setSortField(sortBy);
+    }
+  };
+
+  const filterFields =
+    tabParam === 'assign_users'
+      ? getAssignUserFilterFields()
+      : getAssignGroupsFilterFields();
+
   return (
-    <div className='flex flex-col h-full w-full p-2'>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-        }}
-      >
-        <SectionTabPanel
-          tabs={AttachmentTabs}
-          filterVisibility={false}
-          showFilter={false}
-          contextKey='account-settings'
-          appliedFilters={{}}
-          setAppliedFilters={() => {}}
-          setCurrentPage={() => {}}
-          handleFilter={() => {}}
-          sortFilterCount={0}
-          setSortFilterCount={() => {}}
-        />
-      </div>
+    <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
+      <SectionTabPanel
+        tabs={ConfigTabs}
+        filterMenu={filterFields}
+        filterVisibility={list !== 'settings'}
+        showFilter={showFilter}
+        contextKey={`account-settings-${tabParam}`}
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        setCurrentPage={setCurrentPage}
+        handleFilter={handleFilter}
+        handleSorting={handleSorting}
+        sortFilterCount={sortFilterCount}
+        setSortFilterCount={setSortFilterCount}
+        showRefresh={list !== 'settings'}
+        onRefreshClick={onRefreshClick}
+      />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
         titleIcon={getTitleIcon()}
         buttons={headerButtons}
+        count={count}
+        showItemCount={true}
       />
       {renderContent()}
     </div>

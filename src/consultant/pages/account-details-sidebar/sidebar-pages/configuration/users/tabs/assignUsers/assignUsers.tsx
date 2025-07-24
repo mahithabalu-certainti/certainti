@@ -13,9 +13,18 @@ import {
 import { getAccountAssignUsersColumns } from './column';
 import { ListTable } from '../../../../../../../../components/table';
 
-const AssignUsers: React.FC = () => {
+interface AssignUserProps {
+  reFetchData: number;
+  setCount: (value: number) => void;
+  filterParams: ConfigAssignUserListParms;
+}
+
+const AssignUsers: React.FC<AssignUserProps> = ({
+  reFetchData,
+  filterParams,
+  setCount,
+}) => {
   const { accountid } = useParams();
-  console.log(accountid);
   const { successToast, errorToast } = useToast();
   const [tableParams, setTableParams] = useState<ConfigAssignUserListParms>({
     sortBy: 'first_name',
@@ -34,7 +43,8 @@ const AssignUsers: React.FC = () => {
 
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountid || '',
-    tableParams
+    tableParams,
+    reFetchData
   );
   const updateAssignUserList = useUpdateConfigAssignUserAccess('account');
   const totalItems = data?.count || 0;
@@ -46,8 +56,25 @@ const AssignUsers: React.FC = () => {
         isColorEnabled: user.has_access && user.is_grouped,
       }));
       setAssignUserList(userData);
+      setCount(data?.count || 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  useEffect(() => {
+    if (
+      filterParams.sortBy ||
+      (filterParams.filters && Object.keys(filterParams.filters).length)
+    ) {
+      setTableParams((prev) => ({
+        ...prev,
+        page: filterParams.page + 1,
+        sortBy: filterParams.sortBy || 'first_name',
+        sortOrder: filterParams.sortOrder,
+        filters: filterParams.filters,
+      }));
+    }
+  }, [filterParams]);
 
   useEffect(() => {
     if (data?.users?.length) {

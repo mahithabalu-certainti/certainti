@@ -12,8 +12,17 @@ import {
   useConfigAssignGroupsList,
   useUpdateConfigAssignUserAccess,
 } from '../../../../../../../services/configuration/user-config-service';
+interface AssignGroupsProps {
+  reFetchData: number;
+  setCount: (value: number) => void;
+  filterParams: ConfigAssignGroupsListParms;
+}
 
-const AssignGroups: React.FC = () => {
+const AssignGroups: React.FC<AssignGroupsProps> = ({
+  reFetchData,
+  filterParams,
+  setCount,
+}) => {
   const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
   const [tableParams, setTableParams] = useState<ConfigAssignGroupsListParms>({
@@ -33,7 +42,8 @@ const AssignGroups: React.FC = () => {
 
   const { data, isLoading, isError } = useConfigAssignGroupsList(
     accountid || '',
-    tableParams
+    tableParams,
+    reFetchData
   );
 
   const updateAssignUserList = useUpdateConfigAssignUserAccess('account');
@@ -47,8 +57,25 @@ const AssignGroups: React.FC = () => {
       }));
 
       setAssignGroupList(groupsData || []);
+      setCount(data?.count || 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  useEffect(() => {
+    if (
+      filterParams.sortBy ||
+      (filterParams.filters && Object.keys(filterParams.filters).length)
+    ) {
+      setTableParams((prev) => ({
+        ...prev,
+        page: filterParams.page + 1,
+        sortBy: filterParams.sortBy || 'group_name',
+        sortOrder: filterParams.sortOrder,
+        filters: filterParams.filters,
+      }));
+    }
+  }, [filterParams]);
 
   useEffect(() => {
     if (data?.groups?.length) {
