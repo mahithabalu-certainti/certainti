@@ -4,18 +4,18 @@ import { checkUserStatusMiddleware } from '../middlewares/azureMiddleware';
 
 const routes = Router();
 
-routes.post("/create", checkUserStatusMiddleware("NA"), controller.userGroupController.createUserGroup);
-routes.post("/update", checkUserStatusMiddleware("NA"), controller.userGroupController.updateUserGroup);
+routes.post("/create", checkUserStatusMiddleware("user_group_create"), controller.userGroupController.createUserGroup);
+routes.post("/update", checkUserStatusMiddleware("user_group_view_edit"), controller.userGroupController.updateUserGroup);
 //lists the group type
 routes.get("/groupType", checkUserStatusMiddleware("NA"), controller.userGroupController.getUserGroupType);
 
 
 //list all the groups
-routes.get("/list", checkUserStatusMiddleware("NA"), controller.userGroupController.listUserGroup);
+routes.get("/list", checkUserStatusMiddleware("user_group_view_edit"), controller.userGroupController.listUserGroup);
 //list all the accounts associated to the group  !applicable only if its a custom type
-routes.get("/list/:groupId", checkUserStatusMiddleware("NA"), controller.userGroupController.listGroupDetailsById);
+routes.get("/list/:groupId", checkUserStatusMiddleware("user_group_view_edit"), controller.userGroupController.listGroupDetailsById);
 //exports all group
-routes.get("/export", checkUserStatusMiddleware("NA"), controller.userGroupController.exportUserGroup);
+routes.get("/export", checkUserStatusMiddleware("user_export"), controller.userGroupController.exportUserGroup);
 // routes.get("/account/:accountId/projects", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountProjects);
 
 routes.get("/listUsers", checkUserStatusMiddleware("NA"), controller.userGroupController.getActiveUsersForGrouping);
