@@ -38,9 +38,9 @@ export const getAccountAssignUsersColumns = ({
     sortable: true,
   },
   {
-    id: 'inclusion',
-    sortId: 'inclusion',
-    label: 'Inclusion',
+    id: 'exclusion_inclusion',
+    sortId: 'excluxion_inclusion',
+    label: 'Exclusion / Inclusion',
     width: 140,
     render: (row: { rid: string; assign?: boolean }) => (
       <Switch

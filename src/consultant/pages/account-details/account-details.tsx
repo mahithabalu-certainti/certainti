@@ -401,15 +401,7 @@ export const AccountDetails = () => {
           />
         );
       case 'configuration':
-        return (
-          <Configuration
-            accountDetails={{
-              ...(data?.data as AccountDetailsResponse),
-              activeKey: 'configuration',
-            }}
-            refetchAccountDetails={onRefreshClick}
-          />
-        );
+        return <Configuration />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>

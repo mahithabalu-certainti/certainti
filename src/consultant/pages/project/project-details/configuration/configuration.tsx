@@ -12,25 +12,6 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { Users } from './users';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
 
-interface ConfigurationProps {
-  projectID: string;
-  accountID: string;
-  projectFiscalRid: string;
-  projectDetails?: ProjectDetailsType;
-  refetchProjectDetails: () => void;
-}
-
-interface ProjectDetailsType {
-  account_rid: string;
-  projectFiscalRid: string;
-  projectID: string;
-  autosend_interaction: boolean;
-  blended_rate_fte: string;
-  blended_rate_subcon: string;
-  auto_access_rd: boolean;
-  max_ai_interactions: number;
-}
-
 const AttachmentTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
@@ -44,13 +25,7 @@ const AttachmentTabs: ResourceTabs[] = [
     disable: true,
   },
 ];
-const Configuration: React.FC<ConfigurationProps> = ({
-  projectID,
-  accountID,
-  projectFiscalRid,
-  projectDetails,
-  refetchProjectDetails,
-}) => {
+const Configuration: React.FC = () => {
   const settingsFormRef = useRef<{
     submitForm: () => void;
     resetForm: () => void;
@@ -59,28 +34,12 @@ const Configuration: React.FC<ConfigurationProps> = ({
   // const navigate = useNavigate();
   const list = searchParams.get('subMenu');
 
-  const settingProps = {
-    account_rid: accountID,
-    project_rid: projectID,
-    project_fiscal_rid: projectFiscalRid,
-    auto_access_rd: projectDetails?.auto_access_rd,
-    autosend_interaction: projectDetails?.autosend_interaction,
-    blended_rate_fte: projectDetails?.blended_rate_fte,
-    blended_rate_subcon: projectDetails?.blended_rate_subcon,
-    max_ai_interactions: projectDetails?.max_ai_interactions,
-  };
   const renderContent = () => {
     switch (list) {
       case 'users':
         return <Users />;
       case 'settings':
-        return (
-          <Settings
-            ref={settingsFormRef}
-            projectDetails={settingProps}
-            refetchProjectDetails={refetchProjectDetails}
-          />
-        );
+        return <Settings ref={settingsFormRef} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>

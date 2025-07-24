@@ -172,25 +172,7 @@ export const ProjectDetails = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
-  const [projectDetailsObj, setProjectDetailsObj] = useState<{
-    account_rid: string;
-    projectFiscalRid: string;
-    projectID: string;
-    autosend_interaction: boolean;
-    blended_rate_fte: string;
-    blended_rate_subcon: string;
-    auto_access_rd: boolean;
-    max_ai_interactions: number;
-  }>({
-    account_rid: '',
-    projectFiscalRid: '',
-    projectID: '',
-    autosend_interaction: false,
-    blended_rate_fte: '',
-    blended_rate_subcon: '',
-    auto_access_rd: false,
-    max_ai_interactions: 0,
-  });
+
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const projectDownloadIsEnable = checkPermission(
     permission,
@@ -244,17 +226,6 @@ export const ProjectDetails = () => {
         year: project.fiscal_year,
         startDate: formatDate(project.fiscal_year, project.fiscal_start_date),
         endDate: formatDate(project.fiscal_year, project.fiscal_end_date),
-      });
-
-      setProjectDetailsObj({
-        account_rid: project.account_rid || '',
-        projectFiscalRid: project.rid || '',
-        projectID: project.project_rid || '',
-        autosend_interaction: project.auto_send_ai_interaction,
-        blended_rate_fte: project.blended_rate_fte || '',
-        blended_rate_subcon: project.blended_rate_subcon || '',
-        auto_access_rd: project.auto_access_rd,
-        max_ai_interactions: project.max_ai_interaction ?? 0,
       });
     }
   }, [data]);
@@ -389,15 +360,7 @@ export const ProjectDetails = () => {
       case 'checklists':
         return <NotFound />;
       case 'configuration':
-        return (
-          <Configuration
-            projectID={projectData?.project_rid || ''}
-            accountID={accountID || ''}
-            projectFiscalRid={projectData?.rid || ''}
-            projectDetails={projectDetailsObj}
-            refetchProjectDetails={onRefreshClick}
-          />
-        );
+        return <Configuration />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>

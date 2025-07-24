@@ -11,15 +11,6 @@ import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { AccountDetailsResponse } from '../../../../types';
-
-interface AccountDetailsProps extends AccountDetailsResponse {
-  activeKey: string;
-}
-interface ConfigurationProps {
-  accountDetails: AccountDetailsProps;
-  refetchAccountDetails: () => void;
-}
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -35,29 +26,12 @@ const AttachmentTabs: ResourceTabs[] = [
   },
 ];
 
-const Configuration: React.FC<ConfigurationProps> = ({
-  accountDetails,
-  refetchAccountDetails,
-}) => {
+const Configuration: React.FC = () => {
   const settingsFormRef = useRef<{
     submitForm: () => void;
     resetForm: () => void;
   }>(null);
   const [searchParams] = useSearchParams();
-
-  const accountSettings = {
-    account_rid: accountDetails?.accountById?.rid || '',
-    fiscal_start_date: accountDetails?.accountDetails?.fiscal_start_date || '',
-    fiscal_end_date: accountDetails?.accountDetails?.fiscal_end_date || '',
-    autosend_interaction:
-      accountDetails?.accountDetails?.autosend_interaction ?? false,
-    blended_rate_fte: accountDetails?.accountDetails?.blended_rate_fte || '',
-    blended_rate_subcon:
-      accountDetails?.accountDetails?.blended_rate_subcon || '',
-    auto_access_rd: accountDetails?.accountDetails?.auto_access_rd ?? false,
-    max_ai_interactions:
-      accountDetails?.accountDetails?.max_ai_interactions || 0,
-  };
 
   // const navigate = useNavigate();
   const list = searchParams.get('subMenu');
@@ -67,13 +41,7 @@ const Configuration: React.FC<ConfigurationProps> = ({
       case 'users':
         return <Users />;
       case 'settings':
-        return (
-          <Settings
-            ref={settingsFormRef}
-            accountDetails={accountSettings}
-            refetchAccountDetails={refetchAccountDetails}
-          />
-        );
+        return <Settings ref={settingsFormRef} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
