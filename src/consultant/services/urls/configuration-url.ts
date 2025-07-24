@@ -41,7 +41,6 @@ export const getConfigAssignUsersListURL = (
 
 export const getConfigAssignGroupsListURL = (
   accountId: string,
-  project_rid: string,
   {
     sortBy,
     sortOrder,
@@ -49,7 +48,8 @@ export const getConfigAssignGroupsListURL = (
     entity_type,
     page,
     limit,
-  }: ConfigAssignGroupsListParms
+  }: ConfigAssignGroupsListParms,
+  project_rid?: string
 ) => {
   const baseUrl = `/api/user_group/account/${accountId}/groups`;
   const searchParams = new URLSearchParams();

@@ -7,7 +7,7 @@ export const getConfigAssignGroupsColumns =
       id: 'group_name',
       editId: 'group_name',
       sortId: 'group_name',
-      label: 'Group Names',
+      label: 'Group Name',
       width: '45%',
       sortable: true,
       sticky: true,
