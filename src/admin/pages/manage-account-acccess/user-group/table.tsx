@@ -13,8 +13,18 @@ import {
   ManageUserListParms,
 } from '../../../types/manage-account';
 import { useToast } from '../../../../hooks';
-
-export const ManageAccountUserGroupTable: React.FC = () => {
+import { FilterType } from '../../../types';
+interface UserTableProps {
+  isProfileViewEnable?: boolean;
+  appliedFilters: Record<string, FilterType>;
+  setAppliedFilters: React.Dispatch<
+    React.SetStateAction<Record<string, FilterType>>
+  >;
+}
+export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
+  appliedFilters,
+  setAppliedFilters,
+}) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
@@ -35,7 +45,14 @@ export const ManageAccountUserGroupTable: React.FC = () => {
   const accountId = searchParams.get('accountid') || '';
   const { successToast } = useToast();
   const { data, isLoading, isError } = useManageAccountAccessGroupList(
-    tableParams,
+    {
+      page: tableParams.page,
+      limit: tableParams.limit,
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      entity_type: 'Account',
+      filters: appliedFilters,
+    },
     accountId
   );
   const totalItems = data?.data?.count;
@@ -44,6 +61,7 @@ export const ManageAccountUserGroupTable: React.FC = () => {
     searchParams.delete('username');
     searchParams.delete('groupname');
     navigate({ search: searchParams.toString() });
+    setAppliedFilters({});
   };
   useEffect(() => {
     if (data) {

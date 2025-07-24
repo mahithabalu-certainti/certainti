@@ -10,7 +10,7 @@ export const manageUserListColumns = (
   {
     id: 'first_name',
     sortId: 'first_name',
-    label: 'User List Names',
+    label: 'User Name',
     width: 200,
     sortable: true,
     sticky: true,

@@ -8,24 +8,28 @@ import {
   ManageAccountsProjectList,
   ManageUserListParms,
 } from '../../../types/manage-account';
+import { FilterType } from '../../../types';
 
 interface UserTableProps {
   type?: string;
   setAddedProjects: React.Dispatch<
     React.SetStateAction<{ [rid: string]: boolean }>
   >;
+  appliedFilters: Record<string, FilterType>;
 }
 export const ManageAccountListTable: React.FC<UserTableProps> = ({
   type = 'user',
   setAddedProjects,
+  appliedFilters,
 }) => {
   const [searchParams] = useSearchParams();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
-    // sortBy: 'project_name',
-    // sortOrder: 'DESC',
+    sortBy: 'project_name',
+    sortOrder: 'DESC',
     access_type: type,
     page: 1,
     limit: 100,
+    // filters: appliedFilters,
   });
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
   const [projectList, setProjectList] = useState<ManageAccountsProjectList[]>(
@@ -36,7 +40,14 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
   const { data, isLoading, isError } = useManageProjectAccessList(
     accountId,
     entityId,
-    tableParams
+    {
+      page: tableParams.page,
+      limit: tableParams.limit,
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      access_type: type,
+      filters: appliedFilters,
+    }
   );
   useEffect(() => {
     if (data) {
@@ -46,7 +57,7 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
       }));
       setProjectList(usersWithColor);
     }
-  }, [data]);
+  }, [data, tableParams]);
   useEffect(() => {
     if (data?.data?.projects?.length) {
       const accessibleUsers = data.data.projects.filter(
