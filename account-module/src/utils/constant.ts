@@ -149,7 +149,7 @@ export const rawQueries = {
 }
 
 export const DEFAULT_ACCOUNT_DETAILS = {
-  fiscal_startDate : "03/24",
-  fiscal_endDate : "04/25",
-  max_ai_interaction : 5
+  fiscalStart : "04/01",
+  fiscalEnd : "03/31",
+  maxAiInteraction : 5
 }

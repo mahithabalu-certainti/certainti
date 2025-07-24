@@ -1646,10 +1646,10 @@ class SchemaService {
         replacements: {
           account_rid: account_rid,
           account_name: accountData.account_name,
-          max_ai_interactions: DEFAULT_ACCOUNT_DETAILS.max_ai_interaction,
+          max_ai_interactions: DEFAULT_ACCOUNT_DETAILS.maxAiInteraction,
           autosend_interaction: false,
-          fiscal_start_date: DEFAULT_ACCOUNT_DETAILS.fiscal_startDate,
-          fiscal_end_date: DEFAULT_ACCOUNT_DETAILS.fiscal_endDate,
+          fiscal_start_date: DEFAULT_ACCOUNT_DETAILS.fiscalStart,
+          fiscal_end_date: DEFAULT_ACCOUNT_DETAILS.fiscalEnd,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
           blended_rate_fte: accountData.blended_rate_fte
             ? new Decimal(accountData.blended_rate_fte).toNumber().toString()
