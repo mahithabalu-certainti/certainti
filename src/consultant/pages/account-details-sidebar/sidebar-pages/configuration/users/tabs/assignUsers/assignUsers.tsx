@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { ListTable } from '../../../../../../../../components/table';
 import { getAccountAssignUsersColumns } from './column';

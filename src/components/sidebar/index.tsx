@@ -95,7 +95,7 @@ const sideNavAdminItems: AdminNavItem[] = [
       },
       {
         id: MenuOption.MANAGE_USER_ACCESS,
-        name: 'Manage User Access',
+        name: 'Manage Account Access',
         icon: ManageUserAccessIcon,
         link: MANAGE_USER_ACCESS,
         matchLink: MANAGE_USER_ACCESS,

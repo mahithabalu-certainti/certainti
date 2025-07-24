@@ -973,7 +973,9 @@ const ListTable = <T extends RowData>({
                   (actionDisplayMode === 'toggle' ? 1 : 0)
                 }
                 selectable={selectable}
-                hasActions={actionMenuItems?.length > 0}
+                hasActions={
+                  actionMenuItems?.length > 0 || actionDisplayMode === 'toggle'
+                }
                 stickyColumnsCount={stickyColumnsCount}
               />
             )}
@@ -986,7 +988,8 @@ const ListTable = <T extends RowData>({
                     visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
-                    (conditionMenuItems ? 1 : 0)
+                    (conditionMenuItems ? 1 : 0) +
+                    (actionDisplayMode === 'toggle' ? 1 : 0)
                   }
                   align='center'
                 >
@@ -1003,7 +1006,8 @@ const ListTable = <T extends RowData>({
                     visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
-                    (conditionMenuItems ? 1 : 0)
+                    (conditionMenuItems ? 1 : 0) +
+                    (actionDisplayMode === 'toggle' ? 1 : 0)
                   }
                   align='center'
                 >
@@ -1493,7 +1497,8 @@ const ListTable = <T extends RowData>({
                               visibleColumns.length +
                               (selectable ? 1 : 0) +
                               (actionMenuItems?.length > 0 ? 1 : 0) +
-                              (conditionMenuItems ? 1 : 0)
+                              (conditionMenuItems ? 1 : 0) +
+                              (actionDisplayMode === 'toggle' ? 1 : 0)
                             }
                           />
                         </TableRow>
@@ -1512,8 +1517,8 @@ const ListTable = <T extends RowData>({
                       visibleColumns.length +
                       (selectable ? 1 : 0) +
                       (actionMenuItems?.length > 0 ? 1 : 0) +
-                      (actionDisplayMode === 'toggle' ? 1 : 0) +
-                      (toggleData ? 1 : 0)
+                      (conditionMenuItems ? 1 : 0) +
+                      (actionDisplayMode === 'toggle' ? 1 : 0)
                     }
                     sx={{ height: '10px !important' }}
                   ></TableCell>

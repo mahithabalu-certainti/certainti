@@ -10,6 +10,7 @@ import { useRef, useState } from 'react';
 import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
+import { AssignGroups, AssignUsers } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
 
 const AttachmentTabs: ResourceTabs[] = [

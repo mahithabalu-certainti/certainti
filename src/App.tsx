@@ -14,6 +14,7 @@ import {
   ADMIN_CREATE_USER,
   ADMIN_EDIT_USER,
   ADMIN_MANAGE_USER,
+  MANAGE_USER_ACCESS,
   ADMIN_MANAGE_USER_DETAILS,
   ATTACHMENTS,
   LOGIN,
@@ -96,10 +97,17 @@ const CreateProfile = lazy(
   () => import('./admin/pages/manage-profile/create-profile/create-profile')
 );
 const UserGroupList = lazy(
-  () => import('./admin/pages/manage-user-group/user-group-list/user-group-list')
+  () =>
+    import('./admin/pages/manage-user-group/user-group-list/user-group-list')
 );
 const CreateUserGroup = lazy(
-  () => import('./admin/pages/manage-user-group/create-user-group/create-user-group')
+  () =>
+    import(
+      './admin/pages/manage-user-group/create-user-group/create-user-group'
+    )
+);
+const ManageAccountAccess = lazy(
+  () => import('./admin/pages/manage-account-acccess/account-list/account-list')
 );
 
 // Loading component for Suspense fallback
@@ -168,6 +176,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
               <Route element={<AppLayout />}>
                 <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
                 <Route
+                  path={MANAGE_USER_ACCESS}
+                  element={<ManageAccountAccess />}
+                />
+                <Route
                   path={ADMIN_MANAGE_USER_DETAILS}
                   element={<ManageUserDetails />}
                 />
@@ -184,8 +196,14 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 />
                 <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
                 <Route path={MANAGE_USER_GROUP} element={<UserGroupList />} />
-                <Route path={MANAGE_USER_GROUP_CREATE} element={<CreateUserGroup />} />
-                <Route path={MANAGE_USER_GROUP_EDIT} element={<CreateUserGroup />} />
+                <Route
+                  path={MANAGE_USER_GROUP_CREATE}
+                  element={<CreateUserGroup />}
+                />
+                <Route
+                  path={MANAGE_USER_GROUP_EDIT}
+                  element={<CreateUserGroup />}
+                />
               </Route>
               {/* Page not found */}
               <Route path={NOT_MATCH} element={<NotFound />} />
