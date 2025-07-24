@@ -147,3 +147,9 @@ export const rawQueries = {
     WHERE rid IN (:userIds)
   `,
 }
+
+export const DEFAULT_ACCOUNT_DETAILS = {
+  fiscal_startDate : "03/24",
+  fiscal_endDate : "04/25",
+  max_ai_interaction : 5
+}
