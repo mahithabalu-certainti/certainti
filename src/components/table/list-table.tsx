@@ -99,6 +99,7 @@ const ListTable = <T extends RowData>({
   checkedToggleTooltip,
   unCheckedToggleTooltip,
   toggleClick,
+  showEmptyRow = true,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -1510,6 +1511,7 @@ const ListTable = <T extends RowData>({
             {!loading &&
               !error &&
               component !== 'account' &&
+              showEmptyRow &&
               flattenedData.length > 0 && (
                 <TableRow sx={{ height: '10px !important' }}>
                   <TableCell

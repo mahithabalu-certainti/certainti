@@ -43,6 +43,7 @@ import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { Configuration } from './configuration';
+import { Financial } from './financial-highlights';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -311,7 +312,7 @@ export const ProjectDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <NotFound />;
+        return <Financial projectDetails={projectData} />;
       case 'projectDetails':
         return (
           <ProjectDetailsData
