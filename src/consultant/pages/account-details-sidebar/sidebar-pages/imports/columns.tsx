@@ -155,9 +155,9 @@ export const getImportsListColumns = (
     label: 'Status Description',
     width: 240,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['status_description']?.edit &&
-    //   !permissionMap?.['status_description']?.read,
+    hide:
+      !permissionMap?.['status_description']?.edit &&
+      !permissionMap?.['status_description']?.read,
   },
   // {
   //   id: 'import_type',
