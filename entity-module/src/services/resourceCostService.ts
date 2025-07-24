@@ -216,9 +216,9 @@ class ResourceCostService {
         finalSortBy,
         finalSortOrder,
         search,
+        userId,
         account_rid,
-        project_rid,
-        userId
+        project_rid
       );
     } catch (err) {
       console.log("Error ", err);
