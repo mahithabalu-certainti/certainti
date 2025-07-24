@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ListTableColumn } from '../../../../components/table/types';
-import { ManageAccountList } from '../../../types/manage-account';
+import { ManageAccountsProjectList } from '../../../types/manage-account';
 
 export const manageUserAccountListColumns = () // selectedUserRid: any
 : ListTableColumn<any>[] => [
@@ -20,7 +20,7 @@ export const manageUserAccountListColumns = () // selectedUserRid: any
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ManageAccountList) => {
+    render: (row: ManageAccountsProjectList) => {
       return row.project_code;
     },
   },
@@ -40,7 +40,7 @@ export const manageUserAccountListColumns = () // selectedUserRid: any
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ManageAccountList) => {
+    render: (row: ManageAccountsProjectList) => {
       return row.project_name;
     },
   },

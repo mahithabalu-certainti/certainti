@@ -968,9 +968,7 @@ const ListTable = <T extends RowData>({
                       : rowsPerPage
                 }
                 columnsCount={
-                  visibleColumns.length +
-                  (conditionMenuItems ? 1 : 0) +
-                  (actionDisplayMode === 'toggle' ? 1 : 0)
+                  visibleColumns.length + (conditionMenuItems ? 1 : 0)
                 }
                 selectable={selectable}
                 hasActions={
@@ -1445,7 +1443,9 @@ const ListTable = <T extends RowData>({
                             >
                               <Switch
                                 size='small'
-                                color='success'
+                                color={
+                                  row.isColorEnabled ? 'warning' : 'success'
+                                }
                                 onChange={(_e, checked) =>
                                   toggleClick && toggleClick(rowId, checked)
                                 }

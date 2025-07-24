@@ -26,7 +26,7 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
   });
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
 
-  const accountId = searchParams.get('userid') ?? '';
+  const accountId = searchParams.get('accountid') ?? '';
   const entityId = searchParams.get('accountList') ?? '';
   const { data, isLoading, isError } = useManageProjectAccessList(
     accountId,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ListTableColumn } from '../../../../components/table/types';
 import {
   ManageAccountList,
@@ -7,7 +6,7 @@ import {
 
 export const manageUserListColumns = (
   onClick: (row: ManageAccountsUserList) => void
-): ListTableColumn<any>[] => [
+): ListTableColumn<ManageAccountsUserList>[] => [
   {
     id: 'first_name',
     sortId: 'first_name',
@@ -47,8 +46,8 @@ export const manageUserListColumns = (
     sortable: true,
   },
   {
-    id: 'org_id',
-    sortId: 'org_id',
+    id: 'organization_name',
+    sortId: 'organization_name',
     label: 'Organization Name',
     width: 300,
     sortable: true,

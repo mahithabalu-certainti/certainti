@@ -21,7 +21,9 @@ import { useMutation } from '@tanstack/react-query';
 export const fetchManageuserList = async (
   params: UserAccountListParams = { entity_type: '' }
 ) => {
-  const userListId = new URLSearchParams(window.location.search).get('userid');
+  const userListId = new URLSearchParams(window.location.search).get(
+    'accountid'
+  );
 
   if (!userListId) {
     throw new Error('User ID is missing from URL');
@@ -46,7 +48,9 @@ export const fetchManageGroupList = async (
     entity_type: '',
   }
 ) => {
-  const userListId = new URLSearchParams(window.location.search).get('userid');
+  const userListId = new URLSearchParams(window.location.search).get(
+    'accountid'
+  );
   if (!userListId) throw new Error('User ID missing from URL');
 
   const queryParams = {
