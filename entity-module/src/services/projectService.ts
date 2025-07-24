@@ -975,7 +975,7 @@ export class ProjectService {
   isdefaultparent: boolean,
   isPOC: boolean = false,
   userEmail?: string,
-  isCustomGlobal: boolean = false // <- new flag
+  isCustomGlobal: boolean = false
 ): Promise<string[]> {
   const mainDbSequelize = await initMainDbSequelize();
   const MAIN_SCHEMA_NAME = "trd365";
@@ -987,8 +987,8 @@ export class ProjectService {
   if (isCustomGlobal) {
     // If isPOC is also true, restrict to POC email
     if (isPOC && userEmail) {
-      accessControlWhere += ` AND ps.project_point_of_contact_email = ?`;
-      replacements.push(userEmail);
+      accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+      replacements.push(userEmail, userEmail);
     }
     // Else allow all projects (no extra access checks)
   } else {
@@ -1061,14 +1061,15 @@ export class ProjectService {
 
     // Only non-global users can be further filtered by POC
     if (isPOC && userEmail) {
-      accessControlWhere += ` AND ps.project_point_of_contact_email = ?`;
-      replacements.push(userEmail);
+      accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+      replacements.push(userEmail, userEmail);
     }
     }
 
-    const query = `
+  const query = `
     SELECT DISTINCT ps.project_rid
     FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
     ${accessControlWhere}
   `;
 

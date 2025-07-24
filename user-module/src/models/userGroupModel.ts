@@ -21,7 +21,8 @@ interface UserGroupAttributes {
   modified_datetime?: Date;
   is_consultant_only_group:boolean;
   user_count?:number;
-   account_name?: string
+  account_name?: string;
+  usergrouptype?:UserGroupType
 }
 
 // Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
@@ -45,6 +46,7 @@ export class UserGroup
   public is_consultant_only_group!:boolean;
   public account_name?: string
   public user_count?:number;
+  public usergrouptype?:UserGroupType
 
 
   static initialize(sequelize: Sequelize) {

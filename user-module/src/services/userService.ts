@@ -9,6 +9,8 @@ import moment, { Moment } from "moment";
 import "moment-timezone";
 import { Status } from "../models/statusModel";
 import { PermissionObjectMapping } from "../models/permissionObjectMappingModel";
+import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
+import { UserGroupMapping } from "../models/userGroupMappingModel";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -175,6 +177,38 @@ class UserService {
           errorMessage: "User not found",
         };
       }
+
+      console.log(user)
+
+      //REstrict if user belongs the group if the user belongs to any group
+      if (user.org_id !== org_id) {
+        // Step 1: Get group_rids of the user
+        const groupMappings = await UserGroupMapping.findAll({
+          where: { user_rid: userId },
+          attributes: ['group_rid'],
+          raw: true
+        });
+        const groupRids = groupMappings.map(g => g.group_rid);
+
+        // Step 2: Check user_group_entity_access for direct or group-based access
+        const accessExists = await UserGroupEntityAccess.findOne({
+          where: {
+            [Op.or]: [
+              { user_rid: userId },
+              { group_rid: { [Op.in]: groupRids } }
+            ]
+          }
+        });
+
+        if (accessExists) {
+          return {
+            statusCode: constants.BAD_REQUEST,
+            message: constants.BAD_REQUEST_MESSAGE,
+            errorMessage: "Cannot change organization: Please remove user access in the current organization before updating",
+          };
+        }
+      }
+
 
       const updatedData = await repository.update(
         {

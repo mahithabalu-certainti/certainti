@@ -309,7 +309,7 @@ async function getProjectUsers(req: Request, res: Response): Promise<void> {
     const page: number = parseInt(validatedData.page, 10) || 1;
     const limit: number = parseInt(validatedData.limit, 10) || 10;
     const projectUsers = await services.userGroupService.getProjectsWithUserAccessFlag(
-      validatedData.entity_type,
+      validatedData.access_type,
       validatedData.account_rid,
       validatedData.entity_rid,
       page,
@@ -556,6 +556,7 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
 
     let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string || "";
 
     try {
       parsedFilters = JSON.parse(validatedData.filters);
@@ -570,7 +571,9 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
       parsedFilters,
       validatedData.sortBy,
       validatedData.sortOrder,
-      validatedData.timezone
+      validatedData.timezone,
+      userId
+
     );
     
     if (result.statusCode === constants.SUCCESS) {
@@ -659,7 +662,7 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { users, account_rid,groups,access_type} = validatedData;
+    const { users, account_rid,groups,access_type,entity_type,project_rid} = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -671,7 +674,9 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
       result = await services.userGroupService.assignUserAccessToAccount({
       users,
       account_rid,
-      userId
+      userId,
+      entity_type,
+      project_rid
     } );
     }
     if(access_type === "GROUP")
@@ -679,7 +684,9 @@ async function assignEntityAccessToAccount(req: Request, res: Response): Promise
       result = await services.userGroupService.assignGroupAccessToAccount({
       groups,
       account_rid,
-      userId
+      userId,
+      entity_type,
+      project_rid
     } );
     }
     
