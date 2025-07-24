@@ -74,7 +74,7 @@ export const getProjectListManageAccessUrl = (
   const queryParams = buildQueryString({
     account_rid: accountId,
     entity_rid: entityId,
-    entity_type: params,
+    ...params,
   });
   return `/api/user_group/project/users?${queryParams}`;
 };

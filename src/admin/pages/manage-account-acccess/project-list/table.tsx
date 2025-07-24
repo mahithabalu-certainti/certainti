@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ListTable } from '../../../../components/table';
 import { manageUserAccountListColumns } from './column';
 import { useSearchParams } from 'react-router-dom';
 import { useManageProjectAccessList } from '../../../service/manage-account-access/manage-account-service';
-import { ManageUserListParms } from '../../../types/manage-account';
+import {
+  ManageAccountsProjectList,
+  ManageUserListParms,
+} from '../../../types/manage-account';
 
 interface UserTableProps {
   type?: string;
@@ -18,14 +21,16 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
 }) => {
   const [searchParams] = useSearchParams();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
-    sortBy: 'frist_name',
-    sortOrder: 'DESC',
-    entity_type: type,
+    // sortBy: 'project_name',
+    // sortOrder: 'DESC',
+    access_type: type,
     page: 1,
     limit: 100,
   });
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-
+  const [projectList, setProjectList] = useState<ManageAccountsProjectList[]>(
+    []
+  );
   const accountId = searchParams.get('accountid') ?? '';
   const entityId = searchParams.get('accountList') ?? '';
   const { data, isLoading, isError } = useManageProjectAccessList(
@@ -33,8 +38,24 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
     entityId,
     tableParams
   );
-  const projectListData = data?.data?.projects;
+  useEffect(() => {
+    if (data) {
+      const usersWithColor = (data?.data?.projects || []).map((user) => ({
+        ...user,
+        isColorEnabled: user.has_access && user.is_grouped,
+      }));
+      setProjectList(usersWithColor);
+    }
+  }, [data]);
+  useEffect(() => {
+    if (data?.data?.projects?.length) {
+      const accessibleUsers = data.data.projects.filter(
+        (project) => project.has_access === true
+      );
 
+      setAddedAccounts(accessibleUsers.map((project) => project.project_rid));
+    }
+  }, [data?.data?.projects]);
   const handlePageChange = (newPage: number) => {
     setTableParams((prev) => ({
       ...prev,
@@ -75,7 +96,7 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
   return (
     <div>
       <ListTable
-        data={projectListData || []}
+        data={projectList || []}
         columns={projectColumns}
         getRowId={getRowId}
         hoverHighlight={false}

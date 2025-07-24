@@ -39,12 +39,13 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
     }));
   };
   const updateAccountAccessList = useUpdateAccountAccesseDetails();
-  console.log('updateAccountAccessList', updateAccountAccessList);
   const commonSuccess = updateAccountAccessList.isSuccess;
-  const accountId = searchParams.get('accountid');
+  const accountId = searchParams.get('accountid') || '';
   const [userList, setUserList] = useState<ManageAccountsUserList[]>([]);
-  const { data, isLoading, isError } =
-    useManageAccountAccessUserList(tableParams);
+  const { data, isLoading, isError } = useManageAccountAccessUserList(
+    tableParams,
+    accountId
+  );
   useEffect(() => {
     if (data) {
       const usersWithColor = (data?.data?.users || []).map((user) => ({
@@ -113,30 +114,6 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
 
   const projectColumns = manageUserListColumns(handleAccountName);
 
-  // const toggleProjects = (rowId: string, checked: boolean) => {
-  //   if (checked) {
-  //     setAddedAccounts((prev) => [...prev, rowId]);
-  //     setAddedProjects((prev) => {
-  //       const alreadyExists = prev.some((item) => item.rid === rowId);
-  //       if (!alreadyExists) {
-  //         return [
-  //           ...prev,
-  //           {
-  //             rid: rowId,
-  //             is_enabled: true,
-  //             is_modified: true,
-  //           },
-  //         ];
-  //       }
-  //       return prev;
-  //     });
-  //   } else {
-  //     setAddedAccounts((prev) => prev.filter((item) => item !== rowId));
-
-  //     setAddedProjects((prev) => prev.filter((item) => item.rid !== rowId));
-  //   }
-  // };
-  console.log('addedAccounts', addedAccounts);
   const toggleProjects = (rowId: string, checked: boolean) => {
     const previousUserList = [...userList];
     const updatedUserList = userList.map((user) => {

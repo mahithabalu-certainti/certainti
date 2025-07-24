@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NewFilterIcon, UserIcon } from '../../../../assets';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
@@ -8,6 +8,7 @@ import UserTab from './tab';
 import { BUTTON_STYLES } from '../../manage-user-detail/styles';
 import TextButton from '../../../../components/button/text-button';
 import { useUpdateProjectAccesseDetails } from '../../../service/manage-account-access/manage-account-service';
+import { useToast } from '../../../../hooks';
 
 const AccountList = () => {
   const [tableParams, setTableParams] = useState<ProjectListParams>({
@@ -35,9 +36,17 @@ const AccountList = () => {
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
 
   const projectListAccess = useUpdateProjectAccesseDetails();
+  const commonSuccess = projectListAccess.isSuccess;
   const [addedProjects, setAddedProjects] = useState<{
     [rid: string]: boolean;
   }>({});
+  const { successToast } = useToast();
+  useEffect(() => {
+    if (commonSuccess) {
+      successToast('projects updated successfully');
+      handleBack();
+    }
+  }, [commonSuccess]);
   const handleSubmit = () => {
     const constructData: Partial<any> = {
       account_rid: accountId,
@@ -49,6 +58,7 @@ const AccountList = () => {
 
     projectListAccess.mutate(constructData);
   };
+
   return (
     <div>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>

@@ -6,7 +6,7 @@ import {
   ManageAccountGroupListApiResponse,
   ManageAccountProjectListApiResponse,
   ManageAccountUserListApiResponse,
-  UserAccountListParams,
+  ManageUserListParms,
 } from '../../types/manage-account';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -19,13 +19,10 @@ import {
 import { useMutation } from '@tanstack/react-query';
 
 export const fetchManageuserList = async (
-  params: UserAccountListParams = { entity_type: '' }
+  params: ManageUserListParms,
+  accountId: string
 ) => {
-  const userListId = new URLSearchParams(window.location.search).get(
-    'accountid'
-  );
-
-  if (!userListId) {
+  if (!accountId) {
     throw new Error('User ID is missing from URL');
   }
 
@@ -37,21 +34,17 @@ export const fetchManageuserList = async (
     ...(params.searchTerm && { search: params.searchTerm }),
   };
 
-  const url = getManageUserListUrl(userListId, queryParams);
+  const url = getManageUserListUrl(accountId, queryParams);
   const response =
     await userServiceApi.get<ManageAccountUserListApiResponse>(url);
   return response.data;
 };
 
 export const fetchManageGroupList = async (
-  params: UserAccountListParams = {
-    entity_type: '',
-  }
+  params: ManageUserListParms,
+  accountId: string
 ) => {
-  const userListId = new URLSearchParams(window.location.search).get(
-    'accountid'
-  );
-  if (!userListId) throw new Error('User ID missing from URL');
+  if (!accountId) throw new Error('User ID missing from URL');
 
   const queryParams = {
     sortBy: params.sortBy || 'createdAt',
@@ -61,7 +54,7 @@ export const fetchManageGroupList = async (
     ...(params.searchTerm && { search: params.searchTerm }),
   };
 
-  const url = getManageGroupListUrl(userListId, queryParams);
+  const url = getManageGroupListUrl(accountId, queryParams);
   const response =
     await userServiceApi.get<ManageAccountGroupListApiResponse>(url);
   return response.data;
@@ -69,15 +62,8 @@ export const fetchManageGroupList = async (
 export const fetchManageProjectAccessList = async (
   accountId: string,
   entityId: string,
-  params: UserAccountListParams = {
-    entity_type: '',
-  }
+  params: ManageUserListParms
 ) => {
-  //   const queryParams: UserListParams = {
-  //     entity_type: params || 'group',
-  //     ...params,
-  //   };
-
   const url = getProjectListManageAccessUrl(accountId, entityId, params);
   const response =
     await userServiceApi.get<ManageAccountProjectListApiResponse>(url);
@@ -85,39 +71,35 @@ export const fetchManageProjectAccessList = async (
 };
 
 export const useManageAccountAccessUserList = (
-  params: UserAccountListParams = {
-    entity_type: '',
-  },
+  params: ManageUserListParms,
+  accountId: string,
   refreshProfileTrigger?: number
 ) => {
   return useQuery<ManageAccountUserListApiResponse, Error>({
     queryKey: ['manageAccountUser', params, refreshProfileTrigger],
-    queryFn: () => fetchManageuserList(params),
+    queryFn: () => fetchManageuserList(params, accountId),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     retry: 0,
   });
 };
 export const useManageAccountAccessGroupList = (
-  params: UserAccountListParams = {
-    entity_type: '',
-  },
+  params: ManageUserListParms,
+  accountId: string,
   refreshProfileTrigger?: number
 ) => {
   return useQuery<ManageAccountGroupListApiResponse, Error>({
     queryKey: ['manageAccountGroup', params, refreshProfileTrigger],
-    queryFn: () => fetchManageGroupList(params),
-    staleTime: 0, // No cache
-    gcTime: 0, // Immediately remove from cache
+    queryFn: () => fetchManageGroupList(params, accountId),
+    staleTime: 0,
+    gcTime: 0,
     retry: 0,
   });
 };
 export const useManageProjectAccessList = (
   accountId: string,
   entityId: string,
-  params: UserAccountListParams = {
-    entity_type: '',
-  },
+  params: ManageUserListParms,
   refreshProfileTrigger?: number
 ) => {
   return useQuery<ManageAccountProjectListApiResponse, Error>({

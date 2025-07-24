@@ -27,6 +27,7 @@ export interface ManageAccountsProjectList {
   account_rid: string;
   access_type: string;
   has_access: boolean;
+  is_grouped: boolean;
 }
 export type ManageAccountsGroupList = {
   rid: string;
@@ -37,6 +38,7 @@ export type ManageAccountsGroupList = {
   type: string;
   has_access: boolean;
   user_count: string;
+  isDisabledToggle?: boolean;
 };
 export type ManageAccountsUserList = {
   rid: string;
@@ -49,11 +51,14 @@ export type ManageAccountsUserList = {
   has_access: boolean;
 };
 export interface ManageUserListParms {
-  entity_type: string;
+  entity_type?: string;
   sortBy?: string;
   sortOrder?: SortOrder;
   page?: number;
   limit?: number;
+  access_type?: string;
+  filters?: Filters;
+  searchTerm?: string;
 }
 export interface ManageAccountUserListApiResponse extends CommonApiResponse {
   data: {
