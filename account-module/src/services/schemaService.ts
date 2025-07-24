@@ -1648,8 +1648,8 @@ class SchemaService {
           account_name: accountData.account_name,
           max_ai_interactions: DEFAULT_ACCOUNT_DETAILS.maxAiInteraction,
           autosend_interaction: false,
-          fiscal_start_date: DEFAULT_ACCOUNT_DETAILS.fiscalStart,
-          fiscal_end_date: DEFAULT_ACCOUNT_DETAILS.fiscalEnd,
+          fiscal_start_date: accountData.fiscal_start_date,
+          fiscal_end_date: accountData.fiscal_end_date,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
           blended_rate_fte: accountData.blended_rate_fte
             ? new Decimal(accountData.blended_rate_fte).toNumber().toString()

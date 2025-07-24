@@ -605,3 +605,11 @@ export interface ISettingsServices {
     statusMessage : string
   }>
 }
+
+export interface IFinancialHighlights {
+  summaryHighlightsList(data : any) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }>
+}

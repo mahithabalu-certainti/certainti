@@ -129,7 +129,8 @@ export const STATUS_MESSAGE = {
   fiscalEndDateMissing : "Fiscal Enddate missing",
   autoAccessmentMissing : "Auto Assessment missing",
   autoSendMissing : "Autosend Interaction missing",
-  maxAiMissing : "Max AI Interaction missing"
+  maxAiMissing : "Max AI Interaction missing",
+  accountSummaryHighlightsSuccess : "Financial Summary fetched successfully"
 }
 
 export const TYPES = {
@@ -671,4 +672,17 @@ export const ALPHANUMERIC_CONDITIONS = {
 export const UPDATE_FLAG = {
   project : "project",
   account : "account"
+}
+
+export const SUMMARY_HIGHLIGHTS_FLAG = {
+  all : "all",
+  rdQualified : "rd_qualified"
+}
+
+export const DEFAULT_PROJECT_DETAILS = {
+  maxAiInteraction : 5
+}
+
+export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
+  statewise : "state",
 }

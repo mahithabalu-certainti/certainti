@@ -1,4 +1,5 @@
 import { ProjectResource } from "../models/projectResource";
+import { DEFAULT_PROJECT_DETAILS } from "./constants";
 import {
   ICreateProject,
   ICreateProjectResource,
@@ -83,7 +84,7 @@ export class ProjectMapper {
       region_rid: data.region_rid || null,
       currency_rid: data.currency_rid || null,
 
-      max_ai_interaction: data.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
       auto_access_rd: data.auto_access_rd ?? false,
 
