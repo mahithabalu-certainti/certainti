@@ -10,6 +10,10 @@ import { exportUserGroupList, useGetUserGroupTypes } from '../../../service';
 import { getManageUserGroupFilterFields } from './helpers';
 import { UserGroupTable } from '../table';
 import { SelectOption } from '../../../../consultant/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllPermissions } from '../../../../common-service';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -18,6 +22,10 @@ const BUTTON_STYLES = {
 };
 
 export const UserGroupList: React.FC = () => {
+  // hooks
+  const navigate = useNavigate();
+
+  // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterType>
   >({});
@@ -28,7 +36,6 @@ export const UserGroupList: React.FC = () => {
     sortBy: 'group_name',
     sortOrder: 'ASC',
   });
-  const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -38,8 +45,37 @@ export const UserGroupList: React.FC = () => {
     useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
 
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const isUserGroupCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_GROUP_CREATE
+  );
+  const isUserGroupExportEnable = checkPermission(
+    permission,
+    AllPermissions.USER_GROUP_EXPORT
+  );
+  const userGroupViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.USER_GROUP_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userGroupViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userGroupViewEditFields]);
+
+  // API Hooks
   const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
 
+  // Variables
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
   const allGroupTypes: SelectOption[] = useMemo(
     () =>
       allUserGroupTypes.data?.data.groupTypes.map((groupTypes) => ({
@@ -48,18 +84,15 @@ export const UserGroupList: React.FC = () => {
       })) || [],
     [allUserGroupTypes.data?.data.groupTypes]
   );
+  const userGroupFilterFields = getManageUserGroupFilterFields(allGroupTypes, permissionMap);
 
+  // Functions
   const onRefreshClick = () => {
     setRefreshUserGroupTrigger(Date.now());
   };
-
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
-
-  const isFilterOpen = Boolean(anchorEl);
-  const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
-
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'group_name';
     const defaultSortOrder = 'ASC';
@@ -81,7 +114,6 @@ export const UserGroupList: React.FC = () => {
       }));
     }
   };
-
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -92,7 +124,6 @@ export const UserGroupList: React.FC = () => {
       setIsExporting(false);
     }
   };
-  const userGroupFilterFields = getManageUserGroupFilterFields(allGroupTypes);
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -121,16 +152,18 @@ export const UserGroupList: React.FC = () => {
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
-          <TextButton
-            label='Create Group'
-            onClick={() => navigate(MANAGE_USER_GROUP_CREATE)}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '119px',
-              minWidth: '119px',
-              maxWidth: '119px',
-            }}
-          />
+          {isUserGroupCreateEnable && (
+            <TextButton
+              label='Create Group'
+              onClick={() => navigate(MANAGE_USER_GROUP_CREATE)}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '119px',
+                minWidth: '119px',
+                maxWidth: '119px',
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -172,17 +205,19 @@ export const UserGroupList: React.FC = () => {
               />
             </Suspense>
           </div>
-          <TextButton
-            label='Export'
-            sx={{
-              ...BUTTON_STYLES,
-              width: '74px',
-              minWidth: '74px',
-              maxWidth: '74px',
-            }}
-            onClick={handleExport}
-            loading={isExporting}
-          />
+          {isUserGroupExportEnable && (
+            <TextButton
+              label='Export'
+              sx={{
+                ...BUTTON_STYLES,
+                width: '74px',
+                minWidth: '74px',
+                maxWidth: '74px',
+              }}
+              onClick={handleExport}
+              loading={isExporting}
+            />
+          )}
         </div>
       </div>
 
@@ -196,9 +231,7 @@ export const UserGroupList: React.FC = () => {
               onRefreshClick();
             }}
             onSelectionChange={() => {}}
-            isProfileViewEnable
             isProfileEditEnable
-            isProfileDeleteEnable
             refreshUserGroupTrigger={refreshUserGroupTrigger}
           />
         </Suspense>
