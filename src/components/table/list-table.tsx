@@ -1451,7 +1451,9 @@ const ListTable = <T extends RowData>({
                                   toggleClick && toggleClick(rowId, checked)
                                 }
                                 checked={toggleData?.includes(rowId)}
-                                disabled={disabledToggle}
+                                disabled={Boolean(
+                                  disabledToggle || row?.isDisabledToggle
+                                )}
                               />
                             </Tooltip>
                           </div>
