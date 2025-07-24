@@ -4,7 +4,6 @@ export const LOGIN = '/login';
 export const PROFILE = '/profile';
 
 export const MANAGE_USER = '/manage-user';
-export const MANAGE_USER_GROUP = '/manage-user-group';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
 export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
@@ -27,6 +26,11 @@ export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
 export const MANAGE_PROFILE_EDIT = `${MANAGE_PROFILE}/edit/:profileId`;
 export const MANAGE_PROFILE_VIEW = `${MANAGE_PROFILE}/view/:profileId`;
+/** USER GROUP ROUTES */
+export const MANAGE_USER_GROUP = `${ADMIN}/manage-user-group`;
+export const MANAGE_USER_GROUP_CREATE = `${MANAGE_USER_GROUP}/create`;
+export const MANAGE_USER_GROUP_EDIT = `${MANAGE_USER_GROUP}/edit/:groupId`;
+
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;

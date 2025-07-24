@@ -103,6 +103,8 @@ export interface TableField {
   renderValue?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  prefix?: string;
+  prefixRegex?: RegExp;
   options?: ListOption[];
   validation?: FieldValidation[];
   dependencies?: DependencyRule[];
@@ -144,6 +146,7 @@ export type ListTableColumn<T> = {
   hide?: boolean;
   render?: (row: T) => React.ReactNode;
   field?: TableField;
+  conditionallyEdit?: { key: string; matchValue: string };
 };
 
 export interface ActionItem<T extends RowData> {
@@ -208,7 +211,7 @@ export interface ListTableProps<T extends RowData> {
   onSelectionChange?: (selectedIds: string[]) => void;
   // Actions
   actionWidth: string | number;
-  actionDisplayMode?: 'dropdown' | 'icon';
+  actionDisplayMode?: 'dropdown' | 'icon' | 'toggle';
   actionMenuItems?: ActionItem<T>[];
   // condition
   conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];
@@ -244,6 +247,12 @@ export interface ListTableProps<T extends RowData> {
     othersSkillTypeId: string | null;
     othersSkillSubTypeId: string | null;
   };
+  actionColumnName?: string;
+  toggleData?: string[];
+  disabledToggle?: boolean;
+  checkedToggleTooltip?: string;
+  unCheckedToggleTooltip?: string;
+  toggleClick?: (rowId: string, value: boolean) => void;
 }
 
 export interface EditingCell {

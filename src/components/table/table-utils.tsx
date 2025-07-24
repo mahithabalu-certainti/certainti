@@ -95,7 +95,10 @@ export const renderFields = <T extends RowData>({
   const fieldError = editingCell.error || dependencies.errorMessage;
 
   const commonProps = {
-    value: editingCell.value || '',
+    value:
+      (column.field?.prefix && column.field?.prefixRegex
+        ? editingCell.value.toString().replace(column.field?.prefixRegex, '')
+        : editingCell.value) || '',
     onChange: handleChange,
     onKeyDown: handleKeyDown,
     disabled: isFieldDisabled,
@@ -109,7 +112,7 @@ export const renderFields = <T extends RowData>({
       width: '100%',
       '& .MuiOutlinedInput-input': {
         fontSize: '13px',
-        padding: '5px 8px',
+        padding: column.field?.prefix ? '5px 8px 5px 36px' : '5px 8px',
         height: '20px',
       },
       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
@@ -162,7 +165,16 @@ export const renderFields = <T extends RowData>({
 
   switch (column?.field?.type) {
     case 'text':
-      return <TextField {...commonProps} type='text' autoFocus />;
+      return (
+        <div className='relative'>
+          <TextField {...commonProps} type='text' autoFocus />
+          {column.field.prefix && (
+            <span className='absolute left-0 top-1/2 -translate-y-1/2 text-sm border-r border-r-[#d1d5dc] px-1 py-1 pl-[10px]'>
+              {column.field.prefix}
+            </span>
+          )}
+        </div>
+      );
 
     case 'select':
       return (
