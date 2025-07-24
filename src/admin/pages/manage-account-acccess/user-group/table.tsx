@@ -29,15 +29,15 @@ export const ManageAccountUserGroupTable: React.FC = () => {
   const [, setAddedProjects] = useState<
     { rid: string; is_enabled: boolean; is_modified: boolean }[]
   >([]);
-
+  const [groupList, setGroupList] = useState<ManageAccountsGroupList[]>([]);
   const updateAccountAccessList = useUpdateAccountAccesseDetails();
   const commonSuccess = updateAccountAccessList.isSuccess;
-  const accountId = searchParams.get('accountid');
+  const accountId = searchParams.get('accountid') || '';
   const { successToast } = useToast();
-  const { data, isLoading, isError } =
-    useManageAccountAccessGroupList(tableParams);
-
-  const groupListData = data?.data?.groups || [];
+  const { data, isLoading, isError } = useManageAccountAccessGroupList(
+    tableParams,
+    accountId
+  );
   const totalItems = data?.data?.count;
   const handleBack = () => {
     searchParams.delete('accountList');
@@ -45,6 +45,16 @@ export const ManageAccountUserGroupTable: React.FC = () => {
     searchParams.delete('groupname');
     navigate({ search: searchParams.toString() });
   };
+  useEffect(() => {
+    if (data) {
+      const usedisableToggle = (data?.data?.groups || []).map((group) => ({
+        ...group,
+        isDisabledToggle: group.type !== 'CUSTOM',
+      }));
+
+      setGroupList(usedisableToggle || []);
+    }
+  }, [data]);
   useEffect(() => {
     if (commonSuccess) {
       successToast('group updated successfully');
@@ -137,7 +147,7 @@ export const ManageAccountUserGroupTable: React.FC = () => {
   return (
     <div className='pt-1'>
       <ListTable
-        data={groupListData || []}
+        data={groupList || []}
         columns={projectColumns}
         getRowId={getRowId}
         hoverHighlight={false}

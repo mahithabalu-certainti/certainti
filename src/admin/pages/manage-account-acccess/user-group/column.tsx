@@ -22,14 +22,18 @@ export const manageUserGroupColumns = (
       borderBottom: '1px solid #CBD6E2 !important',
     },
     render: (row: ManageAccountsGroupList) => {
+      const isDisabled = row.isDisabledToggle;
+
       return (
         <span
           style={{
             color: '#2D3E4F',
             fontWeight: 500,
-            cursor: 'pointer',
+            cursor: isDisabled ? 'default' : 'pointer',
           }}
-          onClick={() => onClick(row)}
+          onClick={() => {
+            if (!isDisabled) onClick(row);
+          }}
         >
           {row.group_name}
         </span>
