@@ -219,7 +219,6 @@ export const ProjectDetails = () => {
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
-      console.log(project);
       setProjectDetails(transformProjectData(data.data));
       setProjectData(project);
       setFiscalYear({

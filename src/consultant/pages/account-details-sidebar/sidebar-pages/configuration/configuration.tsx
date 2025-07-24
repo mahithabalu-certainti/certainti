@@ -6,7 +6,7 @@ import {
 } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
@@ -27,21 +27,22 @@ const AttachmentTabs: ResourceTabs[] = [
 ];
 
 const Configuration: React.FC = () => {
-  const settingsFormRef = useRef<{
-    submitForm: () => void;
-    resetForm: () => void;
-  }>(null);
   const [searchParams] = useSearchParams();
-
+  const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
+  const formRef = useRef<HTMLFormElement>(null);
   // const navigate = useNavigate();
   const list = searchParams.get('subMenu');
+
+  const handleSubmit = () => {
+    formRef.current?.requestSubmit();
+  };
 
   const renderContent = () => {
     switch (list) {
       case 'users':
         return <Users />;
       case 'settings':
-        return <Settings ref={settingsFormRef} />;
+        return <Settings formRef={formRef} setIsFormSaving={setIsFormSaving} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -75,11 +76,10 @@ const Configuration: React.FC = () => {
     {
       label: 'Save',
       variant: 'contained' as const,
-      onClick: () => {
-        settingsFormRef?.current?.submitForm();
-      },
+      onClick: () => handleSubmit(),
       hide: false,
       disabled: false,
+      loading: isFormSaving,
     },
   ];
 

@@ -1,4 +1,4 @@
-import { useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useMemo } from 'react';
 import { Box } from '@mui/material';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
@@ -12,9 +12,9 @@ import { useUpdateSettings } from '../../../../../services/settings';
 import { useFetchAccountFields } from '../../../../../services/account';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
-interface SettingsHandles {
-  submitForm: () => void;
-  resetForm: () => void;
+interface SettingsProps {
+  formRef: React.RefObject<HTMLFormElement>;
+  setIsFormSaving: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface UpdateSettingsSuccess {
@@ -33,11 +33,10 @@ interface FormValues extends Record<string, FormValueType> {
   auto_send_ai_interaction: string;
 }
 
-const Settings = forwardRef<SettingsHandles>((_, ref) => {
-  const formRef = useRef<HTMLFormElement>(null);
+const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
   const { successToast } = useToast();
   const updateSettings = useUpdateSettings();
-  const isSaving = updateSettings.isPending;
+
   const { accountid } = useParams();
 
   const { data, isLoading, refetch } = useFetchAccountFields(
@@ -117,23 +116,15 @@ const Settings = forwardRef<SettingsHandles>((_, ref) => {
       blended_rate_fte: formData.blended_rate_fte,
       blended_rate_subcon: formData.blended_rate_subcon,
     };
-
+    setIsFormSaving(true);
     updateSettings.mutate(payload, {
       onSuccess: (res: UpdateSettingsSuccess) => {
         successToast(res.statusMessage);
+        setIsFormSaving(false);
         refetch();
       },
     });
   };
-
-  useImperativeHandle(ref, () => ({
-    submitForm: () => {
-      formRef.current?.requestSubmit();
-    },
-    resetForm: () => {
-      formRef.current?.reset();
-    },
-  }));
 
   if (isLoading) {
     return <SkeletonForm />;
@@ -162,11 +153,10 @@ const Settings = forwardRef<SettingsHandles>((_, ref) => {
           formRef={formRef}
           outData={handleFormSubmit}
           values={formValues}
-          loading={isSaving}
         />
       </Box>
     </div>
   );
-});
+};
 
 export default Settings;
