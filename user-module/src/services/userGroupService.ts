@@ -2472,7 +2472,11 @@ async assignUserAccessToAccount({
       if(!user.is_enabled)
       {
           if (groupHasAccess) {
-                  comment = `Access Disabled on ${dayjs().format('YYYY-MM-DD, hh:mm:ss A')}  `;
+                 const user = await User.findOne({
+                  where: { rid: userId },
+                  attributes: ["first_name"],
+                });
+                  comment = `${user?.first_name}  Disabled Access on ${dayjs().format('YYYY-MM-DD, hh:mm:ss A')}  `;
                 }
       }
       else
