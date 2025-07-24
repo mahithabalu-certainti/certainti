@@ -13,7 +13,17 @@ import {
   useUpdateConfigAssignUserAccess,
 } from '../../../../../../../services/configuration/user-config-service';
 
-const AssignGroups: React.FC = () => {
+interface AssignGroupsProps {
+  reFetchData: number;
+  setCount: (value: number) => void;
+  filterParams: ConfigAssignGroupsListParms;
+}
+
+const AssignGroups: React.FC<AssignGroupsProps> = ({
+  reFetchData,
+  filterParams,
+  setCount,
+}) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast, errorToast } = useToast();
@@ -36,7 +46,8 @@ const AssignGroups: React.FC = () => {
   const { data, isLoading, isError } = useConfigAssignGroupsList(
     accountId,
     projectid || '',
-    tableParams
+    tableParams,
+    reFetchData
   );
   const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
   const totalItems = data?.count || 0;
@@ -47,10 +58,26 @@ const AssignGroups: React.FC = () => {
         ...group,
         isDisabledToggle: group.type !== 'CUSTOM',
       }));
-
       setAssignGroupList(groupsData || []);
+      setCount(data?.count || 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  useEffect(() => {
+    if (
+      filterParams.sortBy ||
+      (filterParams.filters && Object.keys(filterParams.filters).length)
+    ) {
+      setTableParams((prev) => ({
+        ...prev,
+        page: filterParams.page + 1,
+        sortBy: filterParams.sortBy || 'group_name',
+        sortOrder: filterParams.sortOrder,
+        filters: filterParams.filters,
+      }));
+    }
+  }, [filterParams]);
 
   useEffect(() => {
     if (data?.groups?.length) {
@@ -165,6 +192,8 @@ const AssignGroups: React.FC = () => {
       actionColumnName='Exclusion / Inclusion'
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
+      checkedToggleTooltip='Inclusion'
+      unCheckedToggleTooltip='Exclusion'
     />
   );
 };

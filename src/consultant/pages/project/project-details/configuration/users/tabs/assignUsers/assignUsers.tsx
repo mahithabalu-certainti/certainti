@@ -13,7 +13,17 @@ import {
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../../../../../hooks';
 
-const AssignUsers: React.FC = () => {
+interface AssignUserProps {
+  reFetchData: number;
+  setCount: (value: number) => void;
+  filterParams: ConfigAssignUserListParms;
+}
+
+const AssignUsers: React.FC<AssignUserProps> = ({
+  reFetchData,
+  filterParams,
+  setCount,
+}) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast, errorToast } = useToast();
@@ -36,7 +46,8 @@ const AssignUsers: React.FC = () => {
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountId,
     tableParams,
-    projectid || ''
+    projectid || '',
+    reFetchData
   );
   const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
   const totalItems = data?.count || 0;
@@ -48,8 +59,25 @@ const AssignUsers: React.FC = () => {
         isColorEnabled: user.has_access && user.is_grouped,
       }));
       setAssignUserList(userData);
+      setCount(data?.count || 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  useEffect(() => {
+    if (
+      filterParams.sortBy ||
+      (filterParams.filters && Object.keys(filterParams.filters).length)
+    ) {
+      setTableParams((prev) => ({
+        ...prev,
+        page: filterParams.page + 1,
+        sortBy: filterParams.sortBy || 'first_name',
+        sortOrder: filterParams.sortOrder,
+        filters: filterParams.filters,
+      }));
+    }
+  }, [filterParams]);
 
   useEffect(() => {
     if (data?.users?.length) {
@@ -167,6 +195,8 @@ const AssignUsers: React.FC = () => {
       actionColumnName='Exclusion / Inclusion'
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
+      checkedToggleTooltip='Inclusion'
+      unCheckedToggleTooltip='Exclusion'
     />
   );
 };

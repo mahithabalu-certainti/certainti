@@ -25,7 +25,7 @@ interface TabPanelProps {
   contextKey: string;
 
   setCurrentPage: (page: number) => void;
-  appliedFilters: Record<string, string | number | boolean>;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
   setAppliedFilters: (
     filters: Record<string, string | number | boolean>
   ) => void;
