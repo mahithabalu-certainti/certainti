@@ -1,7 +1,7 @@
 import { ListTableColumn } from '../../../../../../../../components/table/types';
 import { ConfigAssignUserList } from '../../../../../../../types';
 
-export const getAccountAssignUsersColumns =
+export const getConfigAssignUsersColumns =
   (): ListTableColumn<ConfigAssignUserList>[] => [
     {
       id: 'first_name',

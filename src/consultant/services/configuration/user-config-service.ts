@@ -1,9 +1,15 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { userServiceApi } from '../../../api/api';
-import { getConfigAssignUsersListURL } from '../urls';
+import {
+  getConfigAssignGroupsListURL,
+  getConfigAssignUsersListURL,
+} from '../urls';
 import {
   AssignUserAccess,
   AssignUserAccessApiResponse,
+  ConfigAssignGroupsList,
+  ConfigAssignGroupsListApiResponse,
+  ConfigAssignGroupsListParms,
   ConfigAssignUserList,
   ConfigAssignUserListApiResponse,
   ConfigAssignUserListParms,
@@ -69,4 +75,37 @@ export const updateConfigAssignUserAccess = async (
     console.error('Error fetching user details:', error);
     throw error;
   }
+};
+
+export const fetchConfigAssignGroupsList = async (
+  accountId: string,
+  project_rid: string,
+  params: ConfigAssignGroupsListParms
+): Promise<{ groups: ConfigAssignGroupsList[]; count: number }> => {
+  const response = await userServiceApi.get<ConfigAssignGroupsListApiResponse>(
+    getConfigAssignGroupsListURL(accountId, project_rid, params)
+  );
+  return {
+    groups: response.data.data.groups,
+    count: response.data.data.count,
+  };
+};
+
+export const useConfigAssignGroupsList = (
+  accountId: string,
+  project_rid: string,
+  params: ConfigAssignGroupsListParms,
+  refreshTrigger?: number
+): UseQueryResult<
+  { groups: ConfigAssignGroupsList[]; count: number },
+  Error
+> => {
+  return useQuery<{ groups: ConfigAssignGroupsList[]; count: number }, Error>({
+    queryKey: ['configAssignGroups', params, refreshTrigger],
+    queryFn: () => fetchConfigAssignGroupsList(accountId, project_rid, params),
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: !!accountId && !!project_rid && !!params.entity_type,
+  });
 };

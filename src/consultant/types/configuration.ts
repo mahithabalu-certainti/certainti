@@ -14,17 +14,44 @@ export type ConfigAssignUserList = {
 };
 
 export interface ConfigAssignUserListParms {
+  page: number;
+  limit: number;
   entity_type: string;
   sortBy?: string;
-  filters?: string;
+  filters?: object;
   sortOrder?: SortOrder;
-  page?: number;
-  limit?: number;
 }
 
 export interface ConfigAssignUserListApiResponse extends CommonApiResponse {
   data: {
     users: ConfigAssignUserList[];
+    count: number;
+  };
+}
+
+export interface ConfigAssignGroupsListParms {
+  page: number;
+  limit: number;
+  entity_type: string;
+  sortBy?: string;
+  filters?: object;
+  sortOrder?: SortOrder;
+}
+
+export type ConfigAssignGroupsList = {
+  rid: string;
+  group_name: string;
+  is_consultant_only_group: boolean;
+  group_type_name: string;
+  group_type_description: string;
+  type: string;
+  has_access: boolean;
+  user_count: string;
+};
+
+export interface ConfigAssignGroupsListApiResponse extends CommonApiResponse {
+  data: {
+    groups: ConfigAssignGroupsList[];
     count: number;
   };
 }

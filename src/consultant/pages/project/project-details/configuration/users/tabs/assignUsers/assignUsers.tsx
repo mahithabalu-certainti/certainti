@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ListTable } from '../../../../../../../../components/table';
-import { getAccountAssignUsersColumns } from './column';
+import { getConfigAssignUsersColumns } from './column';
 import {
   AssignUserAccess,
   ConfigAssignUserList,
@@ -35,8 +35,8 @@ const AssignUsers: React.FC = () => {
 
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountId,
-    projectid || '',
-    tableParams
+    tableParams,
+    projectid || ''
   );
   const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
   const totalItems = data?.count || 0;
@@ -138,12 +138,12 @@ const AssignUsers: React.FC = () => {
   return (
     <ListTable
       data={assignUserList}
-      columns={getAccountAssignUsersColumns()}
+      columns={getConfigAssignUsersColumns()}
       getRowId={getRowId}
       hoverHighlight={false}
       tableStyle={{
         height: '100%',
-        maxHeight: 'calc(100vh - 290px)',
+        maxHeight: 'calc(100vh - 320px)',
         overflow: 'auto',
         paddingTop: '2px',
       }}
