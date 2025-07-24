@@ -156,11 +156,11 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
           )
         );
       } else {
-        errorToast(result?.message || 'Failed to update filed');
+        errorToast(result?.message || 'Failed to update field');
         setUserGroupList(previousGroupLists);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setUserGroupList(previousGroupLists);
     }
   };
