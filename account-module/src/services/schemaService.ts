@@ -2,7 +2,7 @@ import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
-import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 import { getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
@@ -1627,28 +1627,41 @@ class SchemaService {
     await sequelize.query(
       `
         INSERT INTO "${schemaName}"."account_details" (
-          account_rid, account_name, 
-          interaction_cc_list,
+          account_rid, account_name, max_ai_interactions, 
+          autosend_interaction, fiscal_start_date, fiscal_end_date, 
+          interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
           created_by, website, 
-          data_residency, data_storage,business_details
+          data_residency, data_storage, auto_access_rd,business_details
         ) 
         VALUES (
-          :account_rid, :account_name, 
-          :interaction_cc_list, 
+          :account_rid, :account_name, :max_ai_interactions, 
+          :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
+          :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
           :created_by,
           :website, 
-          :data_residency, :data_storage,:business_details
+          :data_residency, :data_storage, :auto_access_rd,:business_details
         );
       `,
       {
         replacements: {
           account_rid: account_rid,
           account_name: accountData.account_name,
+          max_ai_interactions: DEFAULT_ACCOUNT_DETAILS.maxAiInteraction,
+          autosend_interaction: false,
+          fiscal_start_date: DEFAULT_ACCOUNT_DETAILS.fiscalStart,
+          fiscal_end_date: DEFAULT_ACCOUNT_DETAILS.fiscalEnd,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
+          blended_rate_fte: accountData.blended_rate_fte
+            ? new Decimal(accountData.blended_rate_fte).toNumber().toString()
+            : null,
+          blended_rate_subcon: accountData.blended_rate_subcon
+            ? new Decimal(accountData.blended_rate_subcon).toNumber().toString()
+            : null,
           created_by: userId,
           website: accountData.website ?? null,
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
+          auto_access_rd: false,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
         },
