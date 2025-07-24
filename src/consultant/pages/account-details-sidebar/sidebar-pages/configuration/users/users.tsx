@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 
 interface TabItem {
   label: string;
@@ -11,10 +12,22 @@ interface UsersProps {
 }
 
 const Users: React.FC<UsersProps> = ({ tabs }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = Number(searchParams.get('tabIndex')) || 0;
+
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const tabParam = Number(searchParams.get('tabIndex'));
+    if (!isNaN(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+    searchParams.set('tabIndex', newValue.toString());
+    setSearchParams(searchParams, { replace: true });
   };
 
   return (
@@ -51,7 +64,7 @@ const Users: React.FC<UsersProps> = ({ tabs }) => {
             ))}
           </Tabs>
         </Box>
-        <Box>{tabs[activeTab].content}</Box>
+        <Box>{tabs[activeTab]?.content}</Box>
       </div>
     </div>
   );

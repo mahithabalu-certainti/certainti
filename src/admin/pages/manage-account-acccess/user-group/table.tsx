@@ -12,6 +12,7 @@ import {
   ManageAccountsGroupList,
   ManageUserListParms,
 } from '../../../types/manage-account';
+import { useToast } from '../../../../hooks';
 
 export const ManageAccountUserGroupTable: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -25,32 +26,31 @@ export const ManageAccountUserGroupTable: React.FC = () => {
   });
 
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [addedProjects, setAddedProjects] = useState<
+  const [, setAddedProjects] = useState<
     { rid: string; is_enabled: boolean; is_modified: boolean }[]
   >([]);
 
   const updateAccountAccessList = useUpdateAccountAccesseDetails();
-  const accountId = searchParams.get('userid');
-
+  const commonSuccess = updateAccountAccessList.isSuccess;
+  const accountId = searchParams.get('accountid');
+  const { successToast } = useToast();
   const { data, isLoading, isError } =
     useManageAccountAccessGroupList(tableParams);
 
   const groupListData = data?.data?.groups || [];
   const totalItems = data?.data?.count;
-
-  const handleSubmit = () => {
-    const constructData = {
-      groups: addedProjects,
-      account_rid: accountId,
-      access_type: 'GROUP',
-    } as Partial<AccountAccessDetail>;
-    updateAccountAccessList.mutate(constructData);
+  const handleBack = () => {
+    searchParams.delete('accountList');
+    searchParams.delete('username');
+    searchParams.delete('groupname');
+    navigate({ search: searchParams.toString() });
   };
-
   useEffect(() => {
-    handleSubmit();
-  }, [addedProjects]);
-
+    if (commonSuccess) {
+      successToast('group updated successfully');
+      handleBack();
+    }
+  }, [commonSuccess]);
   useEffect(() => {
     if (data?.data?.groups?.length) {
       const accessibleUsers = data.data.groups.filter(
@@ -95,9 +95,10 @@ export const ManageAccountUserGroupTable: React.FC = () => {
 
   const getRowId = (row: ManageAccountsGroupList) => row.rid || '';
 
-  const handleAccountName = (project: ManageAccountsGroupList) => {
-    searchParams.set('accountList', project.rid);
-    searchParams.set('type', 'group');
+  const handleAccountName = (group: ManageAccountsGroupList) => {
+    searchParams.set('accountList', group.rid);
+    searchParams.delete('username');
+    searchParams.set('groupname', group.group_name);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -105,32 +106,32 @@ export const ManageAccountUserGroupTable: React.FC = () => {
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-
     setAddedProjects((prev) => {
+      const updatedProjects = [...prev];
       const existingIndex = prev.findIndex((item) => item.rid === rowId);
 
       if (existingIndex !== -1) {
-        const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
+        updatedProjects[existingIndex] = {
+          ...updatedProjects[existingIndex],
           is_enabled: checked,
           is_modified: true,
         };
-        return updated;
       } else if (checked) {
-        return [
-          ...prev,
-          {
-            rid: rowId,
-            is_enabled: true,
-            is_modified: true,
-          },
-        ];
+        updatedProjects.push({
+          rid: rowId,
+          is_enabled: true,
+          is_modified: true,
+        });
       }
-      return prev;
+      updateAccountAccessList.mutate({
+        groups: updatedProjects,
+        account_rid: accountId,
+        access_type: 'GROUP',
+      } as Partial<AccountAccessDetail>);
+
+      return updatedProjects;
     });
   };
-
   const projectColumns = manageUserGroupColumns(handleAccountName);
 
   return (
@@ -147,14 +148,16 @@ export const ManageAccountUserGroupTable: React.FC = () => {
         }}
         stickyHeader
         stickyColumnsCount={2}
-        selectable
+        selectable={false}
         onSelectionChange={(selectedIds) =>
           console.log('Selected:', selectedIds)
         }
         actionWidth={80}
         actionDisplayMode='toggle'
         loading={isLoading}
-        error={isError ? 'Failed to load Account Groups' : undefined}
+        error={
+          isError ? 'Failed to load Manage Account Groups Access' : undefined
+        }
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}

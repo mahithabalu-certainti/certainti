@@ -42,7 +42,7 @@ export type ManageAccountsUserList = {
   rid: string;
   email: string;
   status_rid: string;
-  frist_name: string;
+  first_name: string;
   org_id: string;
   is_consult_firm: boolean;
   is_grouped: boolean;
@@ -73,8 +73,18 @@ export interface ManageAccountProjectListApiResponse extends CommonApiResponse {
     count: number;
   };
 }
+type Industry = {
+  rid: string;
+  industry_name: string;
+  industry_name_other: string;
+};
+type Country = {
+  rid: string;
+  country_name: string;
+};
 export type ManageAccountList = {
   rid?: string;
+  industry_name_other?: string;
   group_name?: string;
   is_consultant_only_group?: boolean;
   group_type_name?: string;
@@ -82,6 +92,8 @@ export type ManageAccountList = {
   project_code?: string;
   project_name?: string;
   account_name?: string;
+  country?: Country | null;
+  industry?: Industry;
 };
 export interface AccountAccessDetail {
   account_rid: string;

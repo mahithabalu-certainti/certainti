@@ -8,9 +8,11 @@ import {
 } from '../../../service/manage-account-access/manage-account-service';
 import {
   AccountAccessDetail,
+  ManageAccountsUserList,
   ManageUserListParms,
 } from '../../../types/manage-account';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useToast } from '../../../../hooks';
 
 interface UserTableProps {
   isProfileViewEnable?: boolean;
@@ -19,14 +21,15 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
-    sortBy: 'frist_name',
+    sortBy: 'first_name',
     sortOrder: 'DESC',
-    entity_type: 'Account',
+    entity_type: 'ACCOUNT',
     page: 1,
     limit: 100,
   });
+  const { successToast } = useToast();
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [addedProjects, setAddedProjects] = useState<
+  const [, setAddedProjects] = useState<
     { rid: string; is_enabled: boolean; is_modified: boolean }[]
   >([]);
   const handlePageChange = (newPage: number) => {
@@ -36,29 +39,34 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
     }));
   };
   const updateAccountAccessList = useUpdateAccountAccesseDetails();
-  // const commonSuccess = updateAccountAccessList.isSuccess;
-  const accountId = searchParams.get('userid');
-
-  const handleSubmit = () => {
-    const constructData = {
-      users: addedProjects,
-      account_rid: accountId,
-      access_type: 'USER',
-    } as Partial<AccountAccessDetail>;
-    updateAccountAccessList.mutate(constructData);
-  };
+  console.log('updateAccountAccessList', updateAccountAccessList);
+  const commonSuccess = updateAccountAccessList.isSuccess;
+  const accountId = searchParams.get('accountid');
+  const [userList, setUserList] = useState<ManageAccountsUserList[]>([]);
   const { data, isLoading, isError } =
     useManageAccountAccessUserList(tableParams);
-  const userListData = data?.data?.users ?? [];
-  const hasMountedRef = useRef(false);
-
   useEffect(() => {
-    if (hasMountedRef.current) {
-      handleSubmit();
-    } else {
-      hasMountedRef.current = true;
+    if (data) {
+      const usersWithColor = (data?.data?.users || []).map((user) => ({
+        ...user,
+        isColorEnabled: user.has_access && user.is_grouped,
+      }));
+      setUserList(usersWithColor);
     }
-  }, [addedProjects]);
+  }, [data]);
+
+  const handleBack = () => {
+    searchParams.delete('accountList');
+    searchParams.delete('username');
+    searchParams.delete('groupname');
+    navigate({ search: searchParams.toString() });
+  };
+  useEffect(() => {
+    if (commonSuccess) {
+      successToast('user updated successfully');
+      handleBack();
+    }
+  }, [commonSuccess]);
   useEffect(() => {
     if (data?.data?.users?.length) {
       const accessibleUsers = data.data.users.filter(
@@ -92,45 +100,103 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
       sortOrder: apiOrder,
     }));
   };
-  const getRowId = (row: any) => {
+  const getRowId = (row: ManageAccountsUserList) => {
     return row.rid || '';
   };
 
-  const handleAccountName = (project: any) => {
-    searchParams.set('accountList', project.rid);
-    searchParams.set('type', 'user');
+  const handleAccountName = (user: ManageAccountsUserList) => {
+    searchParams.set('accountList', user.rid);
+    searchParams.delete('groupname');
+    searchParams.set('username', user.first_name);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
   const projectColumns = manageUserListColumns(handleAccountName);
 
-  const toggleProjects = (rowId: string, checked: boolean) => {
-    if (checked) {
-      setAddedAccounts((prev) => [...prev, rowId]);
-      setAddedProjects((prev) => {
-        const alreadyExists = prev.some((item) => item.rid === rowId);
-        if (!alreadyExists) {
-          return [
-            ...prev,
-            {
-              rid: rowId,
-              is_enabled: true,
-              is_modified: true,
-            },
-          ];
-        }
-        return prev;
-      });
-    } else {
-      setAddedAccounts((prev) => prev.filter((item) => item !== rowId));
+  // const toggleProjects = (rowId: string, checked: boolean) => {
+  //   if (checked) {
+  //     setAddedAccounts((prev) => [...prev, rowId]);
+  //     setAddedProjects((prev) => {
+  //       const alreadyExists = prev.some((item) => item.rid === rowId);
+  //       if (!alreadyExists) {
+  //         return [
+  //           ...prev,
+  //           {
+  //             rid: rowId,
+  //             is_enabled: true,
+  //             is_modified: true,
+  //           },
+  //         ];
+  //       }
+  //       return prev;
+  //     });
+  //   } else {
+  //     setAddedAccounts((prev) => prev.filter((item) => item !== rowId));
 
-      setAddedProjects((prev) => prev.filter((item) => item.rid !== rowId));
-    }
+  //     setAddedProjects((prev) => prev.filter((item) => item.rid !== rowId));
+  //   }
+  // };
+  console.log('addedAccounts', addedAccounts);
+  const toggleProjects = (rowId: string, checked: boolean) => {
+    const previousUserList = [...userList];
+    const updatedUserList = userList.map((user) => {
+      if (user.rid === rowId) {
+        const newHasAccess = checked;
+        const newToggleBgColor = newHasAccess && user.is_grouped;
+        return {
+          ...user,
+          has_access: newHasAccess,
+          isColorEnabled: newToggleBgColor,
+        };
+      }
+      return user;
+    });
+
+    setAddedAccounts((prev) =>
+      checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
+    );
+    setAddedProjects((prev) => {
+      const updatedProjects = [...prev];
+      const existingIndex = prev.findIndex((item) => item.rid === rowId);
+
+      if (existingIndex !== -1) {
+        updatedProjects[existingIndex] = {
+          ...updatedProjects[existingIndex],
+          is_enabled: checked,
+          is_modified: true,
+        };
+      } else if (checked) {
+        updatedProjects.push({
+          rid: rowId,
+          is_enabled: true,
+          is_modified: true,
+        });
+      }
+      updateAccountAccessList.mutate(
+        {
+          users: updatedProjects,
+          account_rid: accountId,
+          access_type: 'USER',
+        } as Partial<AccountAccessDetail>,
+        {
+          onSuccess: () => {
+            setUserList(updatedUserList);
+          },
+          onError: () => {
+            setUserList(previousUserList);
+          },
+        }
+      );
+
+      return updatedProjects;
+    });
   };
+
+  console.log('addedProjects', userList);
   return (
     <div className='pt-1'>
       <ListTable
-        data={userListData || []}
+        data={userList || []}
         columns={projectColumns}
         getRowId={getRowId}
         hoverHighlight={false}
@@ -148,7 +214,9 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
         actionWidth={80}
         actionDisplayMode='toggle'
         loading={isLoading}
-        error={isError ? 'Failed to load Manage Account Access' : undefined}
+        error={
+          isError ? 'Failed to load Manage Account User Access' : undefined
+        }
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}

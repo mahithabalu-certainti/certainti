@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ManageGroup } from '../../../../assets';
 import { ListTable } from '../../../../components/table';
-import { ActionItem } from '../../../../components/table/types';
 import { ProjectListParams } from '../../../../consultant/types/project';
 import { manageAccountListColumns } from './column';
-import { Suspense, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchAccountsThunk } from '../../../../store/slices';
-import { RootState } from '../../../../store/store';
-import { ManageAccountList } from '../../../types/manage-account';
+import { Suspense } from 'react';
 import { AccountList } from '../../../../consultant/types';
+import { useAccounts } from '../../../../consultant/services/account';
 
 interface AcoountTableProps {
   tableParams: ProjectListParams;
@@ -21,19 +16,6 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   setTableParams,
 }) => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const actionButtons: ActionItem<AccountList>[] = [
-    {
-      label: 'Edit',
-      onClick: () => () => console.log('Edit row'),
-      icon: ManageGroup,
-      iconStyle: {
-        height: '15px',
-        width: '24px',
-      },
-      hide: false,
-    },
-  ];
   const handlePageChange = (newPage: number) => {
     setTableParams((prev) => ({
       ...prev,
@@ -56,27 +38,35 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
       sortOrder: apiOrder,
     }));
   };
-  const getRowId = (row: ManageAccountList) => {
-    return row.rid || '';
-  };
+  const getRowId = (row: AccountList) => row.rid;
   const [searchParams] = useSearchParams();
-  const handleAccountName = (account: ManageAccountList) => {
-    searchParams.set('userid', account.rid || '');
+  const handleAccountName = (account: AccountList) => {
+    searchParams.set('accountid', account.rid || '');
+    searchParams.set('accountname', account.account_name || '');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
-  const { accounts, loading, error, count } = useSelector(
-    (state: RootState) => state.account
+  const {
+    data,
+    isLoading: loading,
+    isError,
+  } = useAccounts(
+    {
+      page: tableParams.page,
+      limit: tableParams.limit,
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      // filters: appliedFilters,
+    }
+    // refreshAccountTrigger
   );
-
-  useEffect(() => {
-    dispatch(fetchAccountsThunk() as any);
-  }, []);
+  const totalCount = data?.count || 0;
   const projectColumns = manageAccountListColumns(handleAccountName);
+  console.log('data', data);
   return (
     <div>
       <Suspense fallback={null}>
         <ListTable
-          data={accounts || []}
+          data={data?.accounts || []}
           columns={projectColumns}
           getRowId={getRowId}
           hoverHighlight={false}
@@ -86,7 +76,7 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
             overflow: 'auto',
           }}
           stickyHeader={true}
-          stickyColumnsCount={count}
+          stickyColumnsCount={10}
           selectable={true}
           expandAllParent={false}
           expandable={true}
@@ -97,13 +87,13 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
           }
           actionWidth={60}
           actionDisplayMode='icon'
-          actionMenuItems={actionButtons}
+          // actionMenuItems={actionButtons}
           loading={loading}
-          error={error ? 'Failed to load Accounts' : undefined}
+          error={isError ? 'Failed to load Accounts' : undefined}
           rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={tableParams.limit}
           currentPage={(tableParams.page ?? 1) - 1}
-          totalItems={10}
+          totalItems={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
           sortBy={tableParams.sortBy}
