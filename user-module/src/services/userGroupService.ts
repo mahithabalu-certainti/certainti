@@ -2408,6 +2408,8 @@ async assignUserAccessToAccount({
   users,
   account_rid,
   userId,
+  entity_type,
+  project_rid,
 }: {
   users?: Array<{
     rid: string;
@@ -2416,6 +2418,8 @@ async assignUserAccessToAccount({
   }>;
   account_rid: string;
   userId: string;
+  entity_type: "ACCOUNT" | "PROJECT";
+  project_rid?:string
 }): Promise<{
   statusCode: number;
   message: string;
@@ -2432,6 +2436,16 @@ async assignUserAccessToAccount({
       };
     }
 
+    const entity_rid = entity_type === 'PROJECT' ? project_rid : account_rid;
+    if (!entity_rid){
+       return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage:
+          "Missing required identifiers project id",
+      };
+    }
+
     const now = new Date();
     const created: string[] = [];
     const updated: string[] = [];
@@ -2443,8 +2457,8 @@ async assignUserAccessToAccount({
       const access_type = user.is_enabled ? "INCLUDE" : "EXCLUDE";
 
       const whereClause: any = {
-        entity_type: "ACCOUNT",
-        entity_rid: account_rid,
+        entity_type:entity_type,
+        entity_rid: entity_type === 'PROJECT' ? project_rid : account_rid,
       };
        whereClause.user_rid = user.rid;
 
@@ -2501,8 +2515,8 @@ async assignUserAccessToAccount({
           user_rid: user.rid ?? null,
           comment,
           group_rid: null,
-          entity_type: "ACCOUNT",
-          entity_rid:account_rid,
+          entity_type,
+          entity_rid,
           access_type,
           created_by: userId,
           created_datetime: now,
@@ -2533,6 +2547,8 @@ async assignGroupAccessToAccount({
   groups,
   account_rid,
   userId,
+  entity_type,
+  project_rid
 }: {
   groups?: Array<{
     rid: string;
@@ -2541,6 +2557,8 @@ async assignGroupAccessToAccount({
   }>;
   account_rid: string;
   userId: string;
+  entity_type: "ACCOUNT" | "PROJECT",
+  project_rid?:string
 }): Promise<{
   statusCode: number;
   message: string;
@@ -2843,7 +2861,7 @@ else
  */
 
 async  getProjectsWithUserAccessFlag(
-  type:string,
+  access_type:string,
   account_rid: string,
   entity_rid: string,
   page: number = 1,
@@ -2877,7 +2895,7 @@ async  getProjectsWithUserAccessFlag(
    let joinCondition = '';
    let extraJoin = '';
    let isGroupedSelect = '';
-   if (type === 'USER') {
+   if (access_type === 'USER') {
     joinCondition = `
       (uga.user_rid = :entity_rid OR uga.group_rid = ugm.group_rid)
     `;

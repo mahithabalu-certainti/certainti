@@ -100,6 +100,9 @@ const assignUserToAccountSchema = Joi.object({
     .label("Users"),
   access_type:Joi.string().required().label("Access type"),
   account_rid: Joi.string().required().label("Account Name"),
+  entity_type:Joi.string().required().label("Entity type"),
+  project_rid: Joi.string().optional().label("Project rid"),
+
 });
 
 const listUserGroupTypeSchema = Joi.object({
@@ -109,7 +112,7 @@ const listUserGroupTypeSchema = Joi.object({
 const listProjectUserGroupSchema = Joi.object({
   account_rid: Joi.string().required().label("Account Id"),
   entity_rid: Joi.string().required().label("User Id/Project Id"),
-  entity_type: Joi.string().required().label("Type"),
+  access_type: Joi.string().required().label("Type"),
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
    filters: Joi.string().default("{}"),
@@ -124,6 +127,8 @@ const listProjectOfAccountSchema = Joi.object({
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
    filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
 const assignUserToProjectSchema = Joi.object({
