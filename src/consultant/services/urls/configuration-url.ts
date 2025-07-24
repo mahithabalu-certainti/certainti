@@ -1,0 +1,31 @@
+import { ConfigAssignUserListParms } from '../../types';
+
+export const getConfigAssignUsersListURL = (
+  accountId: string,
+  project_rid: string,
+  { sortBy, sortOrder, filters, entity_type }: ConfigAssignUserListParms
+) => {
+  console.log();
+  const baseUrl = `/api/user_group/account/${accountId}/users`;
+  const searchParams = new URLSearchParams();
+
+  //   searchParams.set('page', page.toString());
+  //   searchParams.set('limit', limit.toString());
+  searchParams.set('sortBy', sortBy as string);
+  searchParams.set('sortOrder', sortOrder as string);
+
+  // Only add filters if the object has properties
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+
+  if (entity_type !== undefined) {
+    searchParams.set('entity_type', entity_type);
+  }
+
+  if (project_rid !== undefined) {
+    searchParams.set('project_rid', project_rid);
+  }
+
+  return `${baseUrl}?${searchParams.toString()}`;
+};

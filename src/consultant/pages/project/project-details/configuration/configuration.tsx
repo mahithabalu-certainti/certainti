@@ -55,55 +55,42 @@ const Configuration: React.FC = () => {
       case 'users':
         return <ResourceProfileIcon alt='users-header-icon' />;
       case 'settings':
-        return <RealatedListDetailsIcon alt='settings-header-icon' />;
+        return (
+          <RealatedListDetailsIcon
+            alt='settings-header-icon'
+            className='w-7 h-7'
+          />
+        );
       default:
         return null;
     }
   };
 
   const headerButtons = [
-    // {
-    //   label: 'Cancel',
-    //   variant: 'outlined' as 'outlined',
-    //   onClick: () => {
-    //     navigate('/account');
-    //   },
-    //   hide: false,
-    //   disabled: false,
-    // },
     {
       label: 'Save',
       variant: 'contained' as const,
       onClick: () => handleSubmit(),
-      hide: false,
+      hide: list === 'users',
       disabled: false,
       loading: isFormSaving,
     },
   ];
 
   return (
-    <div className='flex flex-col h-full w-full p-2'>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-        }}
-      >
-        <SectionTabPanel
-          tabs={AttachmentTabs}
-          filterVisibility={false}
-          showFilter={false}
-          contextKey='project-settings'
-          appliedFilters={{}}
-          setAppliedFilters={() => {}}
-          setCurrentPage={() => {}}
-          handleFilter={() => {}}
-          sortFilterCount={0}
-          setSortFilterCount={() => {}}
-        />
-      </div>
+    <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
+      <SectionTabPanel
+        tabs={AttachmentTabs}
+        filterVisibility={false}
+        showFilter={false}
+        contextKey='project-settings'
+        appliedFilters={{}}
+        setAppliedFilters={() => {}}
+        setCurrentPage={() => {}}
+        handleFilter={() => {}}
+        sortFilterCount={0}
+        setSortFilterCount={() => {}}
+      />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
         titleIcon={getTitleIcon()}

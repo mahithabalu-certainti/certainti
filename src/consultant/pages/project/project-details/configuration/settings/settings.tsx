@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Box } from '@mui/material';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
 import { useToast } from '../../../../../../hooks';
@@ -10,6 +9,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useUpdateSettings } from '../../../../../services/settings';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 import { useProjectDetail } from '../../../../../services/project';
+import { Box } from '@mui/material';
 
 interface SettingsProps {
   formRef: React.RefObject<HTMLFormElement>;
@@ -112,35 +112,32 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
     });
   };
 
-  if (isLoading) {
-    return <SkeletonForm />;
-  }
-
   return (
-    <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-      <Box
-        className='bg-white'
-        sx={{
-          minHeight: '560px',
-          maxHeight: '560px',
-          overflowY: 'auto',
-          '& .grid': {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr) !important',
-            gap: '1rem',
-          },
-          '& .grid > div': {
-            gridColumn: 'span 1 !important',
-          },
-        }}
-      >
-        <FormBuilder
-          data={settingsFormFields(permissionMap)}
-          formRef={formRef}
-          outData={handleFormSubmit}
-          values={formValues}
-        />
-      </Box>
+    <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] py-5'>
+      {isLoading ? (
+        <SkeletonForm sectionCount={1} showSectionHead={false} />
+      ) : (
+        <Box
+          className='bg-white'
+          sx={{
+            '& .grid': {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr) !important',
+              gap: '1rem',
+            },
+            '& .grid > div': {
+              gridColumn: 'span 1 !important',
+            },
+          }}
+        >
+          <FormBuilder
+            data={settingsFormFields(permissionMap)}
+            formRef={formRef}
+            outData={handleFormSubmit}
+            values={formValues}
+          />
+        </Box>
+      )}
     </div>
   );
 };
