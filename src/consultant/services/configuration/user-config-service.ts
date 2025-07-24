@@ -79,11 +79,11 @@ export const updateConfigAssignUserAccess = async (
 
 export const fetchConfigAssignGroupsList = async (
   accountId: string,
-  project_rid: string,
-  params: ConfigAssignGroupsListParms
+  params: ConfigAssignGroupsListParms,
+  project_rid?: string
 ): Promise<{ groups: ConfigAssignGroupsList[]; count: number }> => {
   const response = await userServiceApi.get<ConfigAssignGroupsListApiResponse>(
-    getConfigAssignGroupsListURL(accountId, project_rid, params)
+    getConfigAssignGroupsListURL(accountId, params, project_rid)
   );
   return {
     groups: response.data.data.groups,
@@ -93,8 +93,8 @@ export const fetchConfigAssignGroupsList = async (
 
 export const useConfigAssignGroupsList = (
   accountId: string,
-  project_rid: string,
   params: ConfigAssignGroupsListParms,
+  project_rid?: string,
   refreshTrigger?: number
 ): UseQueryResult<
   { groups: ConfigAssignGroupsList[]; count: number },
@@ -102,10 +102,10 @@ export const useConfigAssignGroupsList = (
 > => {
   return useQuery<{ groups: ConfigAssignGroupsList[]; count: number }, Error>({
     queryKey: ['configAssignGroups', params, refreshTrigger],
-    queryFn: () => fetchConfigAssignGroupsList(accountId, project_rid, params),
+    queryFn: () => fetchConfigAssignGroupsList(accountId, params, project_rid),
     staleTime: 0,
     gcTime: 0,
     retry: 0,
-    enabled: !!accountId && !!project_rid && !!params.entity_type,
+    enabled: !!accountId && !!params.entity_type,
   });
 };

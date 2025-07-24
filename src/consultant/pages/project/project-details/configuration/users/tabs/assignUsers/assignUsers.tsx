@@ -167,6 +167,8 @@ const AssignUsers: React.FC = () => {
       actionColumnName='Exclusion / Inclusion'
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
+      checkedToggleTooltip='Inclusion'
+      unCheckedToggleTooltip='Exclusion'
     />
   );
 };

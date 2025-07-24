@@ -30,7 +30,6 @@ const Configuration: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
-  // const navigate = useNavigate();
   const list = searchParams.get('subMenu');
 
   const handleSubmit = () => {
@@ -64,15 +63,6 @@ const Configuration: React.FC = () => {
   };
 
   const headerButtons = [
-    // {
-    //   label: 'Cancel',
-    //   variant: 'outlined' as 'outlined',
-    //   onClick: () => {
-    //     navigate('/account');
-    //   },
-    //   hide: false,
-    //   disabled: false,
-    // },
     {
       label: 'Save',
       variant: 'contained' as const,

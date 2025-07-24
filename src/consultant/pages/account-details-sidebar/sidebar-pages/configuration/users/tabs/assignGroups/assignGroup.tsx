@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ListTable } from '../../../../../../../../components/table';
 import { getConfigAssignGroupsColumns } from './column';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useToast } from '../../../../../../../../hooks';
 import {
   AssignUserAccess,
@@ -14,14 +14,12 @@ import {
 } from '../../../../../../../services/configuration/user-config-service';
 
 const AssignGroups: React.FC = () => {
-  const { projectid } = useParams();
-  const [searchParams] = useSearchParams();
+  const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
-  const accountId = searchParams.get('accountID') || '';
   const [tableParams, setTableParams] = useState<ConfigAssignGroupsListParms>({
     sortBy: 'group_name',
     sortOrder: 'ASC',
-    entity_type: 'PROJECT',
+    entity_type: 'ACCOUNT',
     page: 1,
     limit: 100,
   });
@@ -29,16 +27,16 @@ const AssignGroups: React.FC = () => {
     ConfigAssignGroupsList[]
   >([]);
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [addedProjects, setAddedProjects] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [, setAddedProjects] = useState<
+    { rid: string; is_enabled: boolean; is_modified: boolean }[]
+  >([]);
 
   const { data, isLoading, isError } = useConfigAssignGroupsList(
-    accountId,
-    tableParams,
-    projectid || ''
+    accountid || '',
+    tableParams
   );
-  const updateAssignUserList = useUpdateConfigAssignUserAccess('project');
+
+  const updateAssignUserList = useUpdateConfigAssignUserAccess('account');
   const totalItems = data?.count || 0;
 
   useEffect(() => {
@@ -58,12 +56,13 @@ const AssignGroups: React.FC = () => {
         (group) => group.has_access === true
       );
       setAddedAccounts(accessibleUsers.map((group) => group.rid));
-      const initialProjects: Record<string, boolean> = {};
-      accessibleUsers.forEach((group) => {
-        initialProjects[group.rid] = true;
-      });
-
-      setAddedProjects(initialProjects);
+      setAddedProjects(
+        accessibleUsers.map((group) => ({
+          rid: group.rid,
+          is_enabled: true,
+          is_modified: true,
+        }))
+      );
     }
   }, [data?.groups]);
 
@@ -108,29 +107,43 @@ const AssignGroups: React.FC = () => {
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-    const updatedProjects = {
-      ...addedProjects,
-      [rowId]: checked,
-    };
+    setAddedProjects((prev) => {
+      const updatedProjects = [...prev];
+      const existingIndex = prev.findIndex((item) => item.rid === rowId);
 
-    setAddedProjects(updatedProjects);
-    updateAssignUserList.mutate(
-      {
-        projects: updatedProjects,
-        account_rid: accountId,
-        user_rid: rowId,
-      } as Partial<AssignUserAccess>,
-      {
-        onSuccess: () => {
-          setAssignGroupList(updatedUserList);
-          successToast('Updated successfully');
-        },
-        onError: () => {
-          setAssignGroupList(previousUserList);
-          errorToast('Failed to Update.');
-        },
+      if (existingIndex !== -1) {
+        updatedProjects[existingIndex] = {
+          ...updatedProjects[existingIndex],
+          is_enabled: checked,
+          is_modified: true,
+        };
+      } else if (checked) {
+        updatedProjects.push({
+          rid: rowId,
+          is_enabled: true,
+          is_modified: true,
+        });
       }
-    );
+      updateAssignUserList.mutate(
+        {
+          groups: updatedProjects,
+          account_rid: accountid,
+          access_type: 'GROUP',
+          entity_type: 'Account',
+        } as Partial<AssignUserAccess>,
+        {
+          onSuccess: () => {
+            setAssignGroupList(updatedUserList);
+            successToast('Updated successfully');
+          },
+          onError: () => {
+            setAssignGroupList(previousUserList);
+            errorToast('Failed to Update.');
+          },
+        }
+      );
+      return updatedProjects;
+    });
   };
 
   return (
@@ -162,11 +175,9 @@ const AssignGroups: React.FC = () => {
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
-      actionColumnName='Exclusion / Inclusion'
+      actionColumnName='Assign'
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
-      checkedToggleTooltip='Inclusion'
-      unCheckedToggleTooltip='Exclusion'
     />
   );
 };
