@@ -20,13 +20,16 @@ interface UserTableProps {
   hide?: boolean;
 }
 export const ManageAccountListTable: React.FC<UserTableProps> = ({
-  type = 'user',
+  // type = 'user',
   setAddedProjects,
   appliedFilters,
   disabled,
   hide,
 }) => {
   const [searchParams] = useSearchParams();
+  const username = searchParams.get('username');
+  const groupname = searchParams.get('groupname');
+  const type = username ? 'USER' : groupname ? 'GROUP' : '';
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
     sortBy: 'project_name',
     sortOrder: 'DESC',
@@ -132,7 +135,7 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
           console.log('Selected:', selectedIds)
         }
         actionWidth={130}
-        actionDisplayMode='toggle'
+        actionDisplayMode={hide ? undefined : 'toggle'}
         actionMenuItems={[]}
         loading={isLoading}
         error={isError ? 'Failed to load projects' : undefined}
@@ -149,7 +152,6 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
         disabledToggle={disabled}
-        hideToggle={hide}
         component='Account-Access'
       />
     </div>
