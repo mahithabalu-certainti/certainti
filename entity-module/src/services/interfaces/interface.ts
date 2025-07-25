@@ -531,7 +531,7 @@ export interface IProjectResourceService {
     errorMessage?: string;
     data?: { projectResource: any; attachment: any };
   }>;
-  getResourceCodes(accountId: string): Promise<{
+  getResourceCodes(accountId: string, search: string | null): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

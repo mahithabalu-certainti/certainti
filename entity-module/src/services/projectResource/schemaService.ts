@@ -5027,14 +5027,22 @@ export class ProjectResourceSchemaService {
     return filtered;
   }
 
-  async listResourceCodes(accountNumber: string, accountId: string) {
+  async listResourceCodes(accountNumber: string, accountId: string, search: string | null) {
     const { Resources } = await this.getModels(accountNumber);
 
+    const whereClause: any = {
+      account_rid: accountId,
+    };
+    
+    if (search) {
+      whereClause.resource_code = {
+        [Op.iLike]: `%${search}%`,
+      };
+    }
+  
     let resourceCodes = await Resources.findAll({
       attributes: ["rid", "resource_code", "resource_type_rid"],
-      where: {
-        account_rid: accountId,
-      },
+      where: whereClause,
     });
 
     if(resourceCodes && resourceCodes.length > 0){
