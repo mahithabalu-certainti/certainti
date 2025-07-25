@@ -1,4 +1,5 @@
 import { ProjectResource } from "../models/projectResource";
+import { DEFAULT_PROJECT_DETAILS } from "./constants";
 import {
   ICreateProject,
   ICreateProjectResource,
@@ -46,7 +47,7 @@ export class ProjectMapper {
       total_cost_subcon: projectData.total_cost_subcon || null,
       auto_send_ai_interaction: projectData.auto_send_ai_interaction,
       auto_access_rd: projectData.auto_access_rd ?? false,
-      max_ai_interaction: projectData.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       blended_rate_fte: projectData.blended_rate_fte || null,
       blended_rate_subcon: projectData.blended_rate_subcon,
       project_description: projectData.project_description || null,
@@ -83,7 +84,7 @@ export class ProjectMapper {
       region_rid: data.region_rid || null,
       currency_rid: data.currency_rid || null,
 
-      max_ai_interaction: data.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
       auto_access_rd: data.auto_access_rd ?? false,
 
@@ -287,7 +288,7 @@ export class ProjectMapper {
       region_rid: projectData.region_rid || null,
       currency_rid: projectData.currency_rid || null,
 
-      max_ai_interaction: projectData.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
       auto_access_rd: projectData.auto_access_rd ?? false,
 
