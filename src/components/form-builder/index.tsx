@@ -34,7 +34,6 @@ import {
 
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
-import { ALLOWED_COUNTRIES } from '../../common-utils';
 import {
   FormType,
   FormTypeFields,
@@ -1491,7 +1490,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <PhoneInput
             country='us'
-            onlyCountries={ALLOWED_COUNTRIES}
             value={fieldValue}
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
