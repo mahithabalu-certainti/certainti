@@ -5,15 +5,16 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { FinancialIcon } from '../../../../../assets';
 import SummayListTable from './summary/summay-list';
 import { NewProjectData } from '../../../../types/project';
+import { useSearchParams } from 'react-router-dom';
 
-const AttachmentTabs = [
+const FinancialTabs = [
   {
-    id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
+    id: AllPermissions.PROJECT_FINANCIAL_OVERVIEW,
     name: 'Overview',
     hide: false,
   },
   {
-    id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
+    id: AllPermissions.PROJECT_FINANCIAL_TIMELINE,
     name: 'Timeline',
     hide: false,
     disable: true,
@@ -28,28 +29,34 @@ const Financial: React.FC<ProjectFinancialProps> = ({ projectDetails }) => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
-  const [selectedTab, setSelectedTab] = useState<string>('summary');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') || 'summary';
 
   const tabs = [
     { label: 'Summary', value: 'summary' },
     { label: 'Resource Cost', value: 'resource_cost' },
   ];
 
+  const handleTabChange = (value: string) => {
+    searchParams.set('tab', value);
+    setSearchParams(searchParams);
+  };
+
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
       <SectionTabPanel
-        tabs={AttachmentTabs}
+        tabs={FinancialTabs}
         filterMenu={[]}
-        filterVisibility={false}
-        showFilter={false}
-        contextKey='project-financial'
+        filterVisibility={tabParam === 'resource_cost'}
+        showFilter={tabParam === 'resource_cost'}
+        contextKey='project-financial-resource-cost'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={() => {}}
         handleFilter={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={false}
+        showRefresh={tabParam === 'resource_cost'}
       />
       <SectionHeader
         title='Financial Summary'
@@ -63,15 +70,15 @@ const Financial: React.FC<ProjectFinancialProps> = ({ projectDetails }) => {
       />
       <SectionHeaderTab
         tabs={tabs}
-        onTabChange={setSelectedTab}
-        defaultValue='summary'
+        onTabChange={handleTabChange}
+        defaultValue={tabParam}
       />
 
       <div className='border border-t-0 border-[#CBD6E2] p-3'>
-        {selectedTab === 'summary' && (
+        {tabParam === 'summary' && (
           <SummayListTable projectDetails={projectDetails} />
         )}
-        {selectedTab === 'resource_cost' && (
+        {tabParam === 'resource_cost' && (
           <div>Resource Cost content goes here</div>
         )}
       </div>

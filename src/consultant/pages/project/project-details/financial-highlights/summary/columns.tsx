@@ -1,5 +1,6 @@
 import { ListTableColumn } from '../../../../../../components/table/types';
 import {
+  SummaryClaimJurisdiction,
   SummaryDetailedMetric,
   SummaryQRE,
   SummaryRdCredits,
@@ -11,7 +12,7 @@ export const getResourceMetricColumns =
   (): ListTableColumn<SummaryResourceMetric>[] => [
     {
       id: 'metric',
-      label: 'Metric',
+      label: 'Metrics',
       sortable: false,
       sortId: 'metric',
       width: '16%',
@@ -31,20 +32,29 @@ export const getResourceMetricColumns =
       sortable: false,
       sortId: 'fte',
       width: '28%',
+      sx: {
+        textAlign: 'right',
+      },
     },
     {
-      id: 'sub_con',
+      id: 'subcon',
       label: 'Sub Con',
       sortable: false,
-      sortId: 'sub_con',
+      sortId: 'subcon',
       width: '28%',
+      sx: {
+        textAlign: 'right',
+      },
     },
     {
-      id: 'non_labor',
+      id: 'nonlabor',
       label: 'Non Labor',
       sortable: false,
-      sortId: 'non_labor',
+      sortId: 'nonlabor',
       width: '28%',
+      sx: {
+        textAlign: 'right',
+      },
     },
   ];
 
@@ -71,7 +81,7 @@ export const getDetailedMetricColumns =
       label: 'Project Level',
       sortable: false,
       sortId: 'project_level',
-      width: '22%',
+      width: '28%',
       sx: {
         textAlign: 'right',
       },
@@ -81,7 +91,7 @@ export const getDetailedMetricColumns =
       label: 'Project Resource Level',
       sortable: false,
       sortId: 'project_resource_level',
-      width: '22%',
+      width: '28%',
       sx: {
         textAlign: 'right',
       },
@@ -91,24 +101,17 @@ export const getDetailedMetricColumns =
       label: 'Project Task Level',
       sortable: false,
       sortId: 'project_task_level',
-      width: '22%',
+      width: '28%',
       sx: {
         textAlign: 'right',
       },
-    },
-    {
-      id: 'approved',
-      label: 'Approved',
-      sortable: false,
-      sortId: 'approved',
-      width: '22%',
     },
   ];
 
 export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
   {
     id: 'rd_percent_potential',
-    label: 'RD Percent Potential',
+    label: 'QRE Percent Potential',
     sortable: false,
     sortId: 'rd_percent_potential',
     width: '30%',
@@ -120,11 +123,12 @@ export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
       zIndex: 10,
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
+      textAlign: 'right',
     },
   },
   {
     id: 'rd_percent_adjustment',
-    label: 'RD Percent Adjustment',
+    label: 'QRE Percent Adjustment',
     sortable: false,
     sortId: 'rd_percent_adjustment',
     width: '30%',
@@ -134,7 +138,7 @@ export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
   },
   {
     id: 'rd_percent_final',
-    label: 'RD Percent Final',
+    label: 'QRE Percent Final',
     sortable: false,
     sortId: 'rd_percent_final',
     width: '30%',
@@ -159,21 +163,28 @@ export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
       zIndex: 10,
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
+      textAlign: 'right',
     },
   },
   {
-    id: 'qre_sub_con',
+    id: 'qre_subcon',
     label: 'QRE Sub Con',
     sortable: false,
-    sortId: 'qre_sub_con',
+    sortId: 'qre_subcon',
     width: '25%',
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
-    id: 'qre_non_labor',
+    id: 'qre_nonlabor',
     label: 'QRE Non Labor',
     sortable: false,
-    sortId: 'qre_non_labor',
+    sortId: 'qre_nonlabor',
     width: '25%',
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'qre_final',
@@ -181,6 +192,9 @@ export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
     sortable: false,
     sortId: 'qre_final',
     width: '25%',
+    sx: {
+      textAlign: 'right',
+    },
   },
 ];
 
@@ -199,27 +213,87 @@ export const getRdCreditsColumns = (): ListTableColumn<SummaryRdCredits>[] => [
       zIndex: 10,
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
+      textAlign: 'right',
     },
   },
   {
-    id: 'rd_credits_sub_con',
+    id: 'rd_credits_subcon',
     label: 'RD Credits Sub Con',
     sortable: false,
-    sortId: 'rd_credits_sub_con',
+    sortId: 'rd_credits_subcon',
     width: '25%',
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
-    id: 'rd_credits_non_labor',
+    id: 'rd_credits_nonlabor',
     label: 'RD Credits Non Labor',
     sortable: false,
-    sortId: 'rd_credits_non_labor',
+    sortId: 'rd_credits_nonlabor',
     width: '25%',
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'rd_credits_total',
-    label: 'RD Credits Total',
+    label: 'RD Credits Final',
     sortable: false,
     sortId: 'rd_credits_total',
     width: '25%',
+    sx: {
+      textAlign: 'right',
+    },
   },
 ];
+
+export const getClaimJurisdictionColumns =
+  (): ListTableColumn<SummaryClaimJurisdiction>[] => [
+    {
+      id: 'name',
+      label: 'Claim Jurisdiction',
+      sortable: false,
+      sortId: 'name',
+      width: '25%',
+      sticky: true,
+      sx: {
+        position: 'sticky',
+        left: 0,
+        background: '#fff',
+        zIndex: 10,
+        borderRight: '1px solid #CBD6E2 !important',
+        borderBottom: '1px solid #CBD6E2 !important',
+      },
+    },
+    {
+      id: 'rd_credits_fte',
+      label: 'RD Credits - FTE',
+      sortable: false,
+      sortId: 'rd_credits_fte',
+      width: '25%',
+      sx: {
+        textAlign: 'right',
+      },
+    },
+    {
+      id: 'rd_credits_subcon',
+      label: 'RD Credits - SubCon',
+      sortable: false,
+      sortId: 'rd_credits_subcon',
+      width: '25%',
+      sx: {
+        textAlign: 'right',
+      },
+    },
+    {
+      id: 'rd_credits_nonlabor',
+      label: 'RD Credits - NonLabor',
+      sortable: false,
+      sortId: 'rd_credits_nonlabor',
+      width: '25%',
+      sx: {
+        textAlign: 'right',
+      },
+    },
+  ];

@@ -245,6 +245,16 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
             >
               {item.name}
             </span>
+            {!isCollapsed && (
+              <AdminSubmenuActiveIcon
+                className={`w-[12px] h-[12px] flex-shrink-0 ${
+                  isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}
+                style={{
+                  transition: 'opacity 250ms ease-in-out',
+                }}
+              />
+            )}
             {!isCollapsed && hasSubmenus && (
               <div
                 className='w-3 h-3 flex-shrink-0'

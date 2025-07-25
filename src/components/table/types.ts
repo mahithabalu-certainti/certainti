@@ -217,6 +217,7 @@ export interface ListTableProps<T extends RowData> {
   conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];
   // State
   loading?: boolean;
+  loadindRowCount?: number;
   error?: string;
   // Pagination
   rowsPerPageOptions?: number[];
