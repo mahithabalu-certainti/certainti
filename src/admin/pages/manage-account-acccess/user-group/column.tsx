@@ -33,9 +33,9 @@ export const manageUserGroupColumns = (
             if (!isDisabled && isAlreadyAdded) onClick(row);
           }}
           className={
-            isDisabled && isAlreadyAdded
-              ? ''
-              : 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+            !isDisabled && isAlreadyAdded
+              ? 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+              : ''
           }
         >
           {row.group_name}

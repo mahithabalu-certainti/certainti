@@ -40,9 +40,6 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   });
 
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [, setAddedProjects] = useState<
-    { rid: string; is_enabled: boolean; is_modified: boolean }[]
-  >([]);
   const [groupList, setGroupList] = useState<ManageAccountsGroupList[]>([]);
   const updateAccountAccessList = useUpdateAccountAccesseDetails();
   const commonSuccess = updateAccountAccessList.isSuccess;
@@ -90,14 +87,6 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
       );
 
       setAddedAccounts(accessibleUsers.map((group) => group.rid));
-
-      setAddedProjects(
-        accessibleUsers.map((group) => ({
-          rid: group.rid,
-          is_enabled: true,
-          is_modified: true,
-        }))
-      );
     }
   }, [data?.data?.groups]);
 
@@ -134,42 +123,55 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
+  function buildUpdatedGroupsList(rowId: string, checked: boolean) {
+    return groupList.map((group) => ({
+      rid: group.rid,
+      is_enabled: group.rid === rowId ? checked : group.has_access,
+      is_modified: group.rid === rowId,
+    }));
+  }
+
   const toggleProjects = (rowId: string, checked: boolean) => {
+    const previousGroupList = [...groupList];
+    const updatedGroupList = groupList.map((group) => {
+      if (group.rid === rowId) {
+        return {
+          ...group,
+          has_access: checked,
+        };
+      }
+      return group;
+    });
+
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-    setAddedProjects((prev) => {
-      const updatedProjects = [...prev];
-      const existingIndex = prev.findIndex((item) => item.rid === rowId);
 
-      if (existingIndex !== -1) {
-        updatedProjects[existingIndex] = {
-          ...updatedProjects[existingIndex],
-          is_enabled: checked,
-          is_modified: true,
-        };
-      } else if (checked) {
-        updatedProjects.push({
-          rid: rowId,
-          is_enabled: true,
-          is_modified: true,
-        });
-      }
-      updateAccountAccessList.mutate({
-        groups: updatedProjects,
+    const updatedGroups = buildUpdatedGroupsList(rowId, checked);
+
+    updateAccountAccessList.mutate(
+      {
+        groups: updatedGroups,
         account_rid: accountId,
         access_type: 'GROUP',
         entity_type: 'ACCOUNT',
-      } as Partial<AccountAccessDetail>);
-
-      return updatedProjects;
-    });
+      } as Partial<AccountAccessDetail>,
+      {
+        onSuccess: () => {
+          setGroupList(updatedGroupList);
+          successToast('Updated successfully');
+        },
+        onError: () => {
+          setGroupList(previousGroupList);
+          // errorToast('Failed to Update.');
+        },
+      }
+    );
   };
   const projectColumns = manageUserGroupColumns(
     handleAccountName,
     addedAccounts
   );
-
   return (
     <div className='pt-1'>
       <ListTable

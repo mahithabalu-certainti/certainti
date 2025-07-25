@@ -33,6 +33,7 @@ import {
 import { FilterState } from '../../../../consultant/types/account-filter';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -68,6 +69,9 @@ const AccountList = () => {
     setAppliedFilters({});
     navigate({ search: searchParams.toString() });
   };
+  const handleBackAccount = () => {
+    navigate(MANAGE_ACCOUNT_ACCESS);
+  };
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
@@ -80,7 +84,6 @@ const AccountList = () => {
   const username = searchParams.get('username');
   const groupname = searchParams.get('groupname');
   const tabIndex = searchParams.get('tabIndex');
-
   const name = username || groupname || '';
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
 
@@ -218,8 +221,8 @@ const AccountList = () => {
   return (
     <div>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
-        <div className='flex h-[33px]'>
-          <div className='flex items-center justify-center'>
+        <div className='flex w-full justify-between h-[33px]'>
+          <div className='flex items-center  justify-center'>
             <UserIcon
               alt='manage user'
               className='h-7 w-7 rounded bg-[#BE3EB5] p-[7px]'
@@ -233,6 +236,21 @@ const AccountList = () => {
               </div>
             </div>
           </div>
+
+          {accountId && !type && (
+            <div className='flex-end'>
+              <TextButton
+                label='Cancel'
+                onClick={handleBackAccount}
+                sx={{
+                  ...BUTTON_STYLES,
+                  width: '74px',
+                  minWidth: '74px',
+                  maxWidth: '74px',
+                }}
+              />
+            </div>
+          )}
         </div>
         <div className='flex gap-3 justify-center items-center'></div>
       </div>

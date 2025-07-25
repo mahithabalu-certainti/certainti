@@ -14,7 +14,8 @@ import {
   ADMIN_CREATE_USER,
   ADMIN_EDIT_USER,
   ADMIN_MANAGE_USER,
-  MANAGE_USER_ACCESS,
+  // MANAGE_USER_ACCESS,
+  MANAGE_ACCOUNT_ACCESS,
   ADMIN_MANAGE_USER_DETAILS,
   ATTACHMENTS,
   LOGIN,
@@ -176,7 +177,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
               <Route element={<AppLayout />}>
                 <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
                 <Route
-                  path={MANAGE_USER_ACCESS}
+                  path={MANAGE_ACCOUNT_ACCESS}
                   element={<ManageAccountAccess />}
                 />
                 <Route
