@@ -223,12 +223,14 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
-      actionColumnName='Assign'
+      actionColumnName='Add / Remove'
       disabledToggle={
         !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
       }
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
+      checkedToggleTooltip='Added'
+      unCheckedToggleTooltip='Removed'
     />
   );
 };
