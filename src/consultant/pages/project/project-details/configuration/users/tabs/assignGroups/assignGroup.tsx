@@ -83,15 +83,10 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   }, [data]);
 
   useEffect(() => {
-    if (
-      filterParams.sortBy ||
-      (filterParams.filters && Object.keys(filterParams.filters).length)
-    ) {
+    if (filterParams.filters && Object.keys(filterParams.filters).length) {
       setTableParams((prev) => ({
         ...prev,
         page: filterParams.page + 1,
-        sortBy: filterParams.sortBy || 'group_name',
-        sortOrder: filterParams.sortOrder,
         filters: filterParams.filters,
       }));
     }

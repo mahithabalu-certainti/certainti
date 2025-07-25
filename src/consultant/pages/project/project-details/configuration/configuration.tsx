@@ -42,9 +42,6 @@ const Configuration: React.FC = () => {
   >({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [sortField, setSortField] = useState<string>('');
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [count, setCount] = useState<number>(0);
 
@@ -69,11 +66,9 @@ const Configuration: React.FC = () => {
   };
 
   const handleResetTabChange = () => {
-    setSortField('');
     setCount(0);
     setAppliedFilters({});
     clearFilters(`project-settings-${tabParam}`);
-    setSortFilterCount(0);
   };
 
   const renderContent = () => {
@@ -86,9 +81,7 @@ const Configuration: React.FC = () => {
             setCount={setCount}
             filterParams={{
               page: currentPage,
-              sortBy: sortField,
               filters: appliedFilters,
-              sortOrder,
               limit: 100,
               entity_type: '',
             }}
@@ -140,23 +133,6 @@ const Configuration: React.FC = () => {
     setReFetchData(Date.now());
   };
 
-  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField =
-      tabParam === 'assign_users' ? 'first_name' : 'group_name';
-    const defaultSortOrder = 'ASC';
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
-
-    if (!sortBy) {
-      setSortFilterCount(0);
-      setSortOrder(defaultSortOrder);
-      setSortField(defaultSortField);
-    } else {
-      setSortFilterCount(1);
-      setSortOrder(apiOrder);
-      setSortField(sortBy);
-    }
-  };
-
   const filterFields =
     tabParam === 'assign_users'
       ? getAssignUserFilterFields()
@@ -177,9 +153,9 @@ const Configuration: React.FC = () => {
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={handleSorting}
-        sortFilterCount={sortFilterCount}
-        setSortFilterCount={setSortFilterCount}
+        handleSorting={() => {}}
+        sortFilterCount={0}
+        setSortFilterCount={() => {}}
         showRefresh={list !== 'settings'}
         onRefreshClick={onRefreshClick}
         hideTabPanel={hideSection}

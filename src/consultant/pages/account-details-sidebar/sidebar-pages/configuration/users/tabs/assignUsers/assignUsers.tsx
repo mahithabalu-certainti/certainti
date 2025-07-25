@@ -80,15 +80,10 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   }, [data]);
 
   useEffect(() => {
-    if (
-      filterParams.sortBy ||
-      (filterParams.filters && Object.keys(filterParams.filters).length)
-    ) {
+    if (filterParams.filters && Object.keys(filterParams.filters).length) {
       setTableParams((prev) => ({
         ...prev,
         page: filterParams.page + 1,
-        sortBy: filterParams.sortBy || 'first_name',
-        sortOrder: filterParams.sortOrder,
         filters: filterParams.filters,
       }));
     }

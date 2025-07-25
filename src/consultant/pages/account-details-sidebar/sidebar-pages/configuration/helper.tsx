@@ -16,12 +16,6 @@ const numberOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
 ];
 
-// const enumOptions: { option: string; value: string }[] = [
-//   { option: 'Equals', value: 'equals' },
-//   { option: 'Not Equals', value: 'not_equals' },
-//   { option: 'In', value: 'in' },
-// ];
-
 export const getAssignUserFilterFields = (): FieldConfig[] => [
   {
     name: 'User Full Name',
@@ -34,12 +28,6 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
     value: 'email',
     type: 'text',
     operatorOption: textOptions,
-  },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
   },
 ];
 
@@ -55,11 +43,5 @@ export const getAssignGroupsFilterFields = (): FieldConfig[] => [
     value: 'user_count',
     type: 'number',
     operatorOption: numberOptions,
-  },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
   },
 ];
