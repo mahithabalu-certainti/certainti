@@ -40,6 +40,6 @@ routes.use("/project_resources", projectResourceRoutes);
 routes.use("/import", importRoutes);
 routes.use("/project_tasks", projectTaskRoutes);
 routes.use('/settings', settingRoutes)
-routes.use('/financial_highlight', financialRoutes)
+routes.use('/financialHighlight', financialRoutes)
 
 export default routes;
