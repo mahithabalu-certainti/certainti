@@ -174,6 +174,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
           users: updatedProjects,
           account_rid: accountId,
           access_type: 'USER',
+          entity_type: 'ACCOUNT',
         } as Partial<AccountAccessDetail>,
         {
           onSuccess: () => {
@@ -208,7 +209,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
           console.log('Selected:', selectedIds)
         }
         actionWidth={80}
-        actionDisplayMode='toggle'
+        actionDisplayMode={hide ? undefined : 'toggle'}
         loading={isLoading}
         error={
           isError ? 'Failed to load Manage Account User Access' : undefined
@@ -226,7 +227,6 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
         disabledToggle={disabled}
-        hideToggle={hide}
         component='Account-User-Access'
       />
     </div>

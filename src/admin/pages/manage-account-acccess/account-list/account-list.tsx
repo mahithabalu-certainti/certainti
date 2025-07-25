@@ -207,21 +207,13 @@ const AccountList = () => {
     });
     return map;
   }, [userViewEdit]);
-  // const permissionMapListView = {
-  //   assign: {
-  //     read: true,
-  //     edit: false,
-  //   },
-  // };
+
   const disabled =
     permissionMapListView?.['assign']?.read &&
     !permissionMapListView?.['assign']?.edit;
   const hide =
     !permissionMapListView?.['assign']?.read &&
     !permissionMapListView?.['assign']?.edit;
-  // console.log(permissionMapListView);
-  console.log('dis', disabled);
-  console.log('hide', hide);
   if (!manageaccountIsEnable || !accountViewEnable) return <AccessRestricted />;
   return (
     <div>

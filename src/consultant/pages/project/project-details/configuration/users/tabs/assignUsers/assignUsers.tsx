@@ -38,16 +38,14 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     page: 1,
     limit: 100,
   });
-  const [, setAddedProjects] = useState<
-    { rid: string; is_enabled: boolean; is_modified: boolean }[]
-  >([]);
   const [assignUserList, setAssignUserList] = useState<ConfigAssignUserList[]>(
     []
   );
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
+
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
-  const projectusersViewEditFields = useMemo(
+  const projectUsersAssignViewEditFields = useMemo(
     () =>
       permission.find(
         (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
@@ -57,11 +55,11 @@ const AssignUsers: React.FC<AssignUserProps> = ({
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    projectusersViewEditFields.forEach((item) => {
+    projectUsersAssignViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [projectusersViewEditFields]);
+  }, [projectUsersAssignViewEditFields]);
 
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountId,
@@ -105,13 +103,6 @@ const AssignUsers: React.FC<AssignUserProps> = ({
         (user) => user.has_access === true
       );
       setAddedAccounts(accessibleUsers.map((user) => user.rid));
-      setAddedProjects(
-        accessibleUsers.map((user) => ({
-          rid: user.rid,
-          is_enabled: true,
-          is_modified: true,
-        }))
-      );
     }
   }, [data?.users]);
 
@@ -141,6 +132,14 @@ const AssignUsers: React.FC<AssignUserProps> = ({
 
   const getRowId = (row: ConfigAssignUserList) => row.rid;
 
+  function buildUpdatedUsersList(rowId: string, checked: boolean) {
+    return assignUserList.map((user) => ({
+      rid: user.rid,
+      is_enabled: user.rid === rowId ? checked : user.has_access,
+      is_modified: user.rid === rowId,
+    }));
+  }
+
   const toggleProjects = (rowId: string, checked: boolean) => {
     const previousUserList = [...assignUserList];
     const updatedUserList = assignUserList.map((user) => {
@@ -159,46 +158,35 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-    setAddedProjects((prev) => {
-      const updatedProjects = [...prev];
-      const existingIndex = prev.findIndex((item) => item.rid === rowId);
 
-      if (existingIndex !== -1) {
-        updatedProjects[existingIndex] = {
-          ...updatedProjects[existingIndex],
-          is_enabled: checked,
-          is_modified: true,
-        };
-      } else if (checked) {
-        updatedProjects.push({
-          rid: rowId,
-          is_enabled: true,
-          is_modified: true,
-        });
+    const updatedProjects = buildUpdatedUsersList(rowId, checked);
+
+    updateAssignUserList.mutate(
+      {
+        users: updatedProjects,
+        account_rid: accountId,
+        project_rid: projectid,
+        access_type: 'USER',
+        entity_type: 'PROJECT',
+      } as Partial<AssignUserAccess>,
+      {
+        onSuccess: () => {
+          setAssignUserList(updatedUserList);
+          successToast('Updated successfully');
+        },
+        onError: () => {
+          setAssignUserList(previousUserList);
+          errorToast('Failed to Update.');
+        },
       }
-      updateAssignUserList.mutate(
-        {
-          users: updatedProjects,
-          account_rid: accountId,
-          project_rid: projectid,
-          access_type: 'USER',
-          entity_type: 'PROJECT',
-        } as Partial<AssignUserAccess>,
-        {
-          onSuccess: () => {
-            setAssignUserList(updatedUserList);
-            successToast('Updated successfully');
-          },
-          onError: () => {
-            setAssignUserList(previousUserList);
-            errorToast('Failed to Update.');
-          },
-        }
-      );
-
-      return updatedProjects;
-    });
+    );
   };
+
+  const disabledToggle =
+    permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
+
+  const hideToggle =
+    !permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
 
   return (
     <ListTable
@@ -215,8 +203,8 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       stickyHeader={true}
       stickyColumnsCount={1}
       selectable={false}
-      actionWidth={120}
-      actionDisplayMode='toggle'
+      actionWidth={80}
+      actionDisplayMode={hideToggle ? undefined : 'toggle'}
       actionMenuItems={[]}
       loading={isLoading}
       error={isError ? 'Failed to load user data' : ''}
@@ -232,9 +220,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       actionColumnName='Exclusion / Inclusion'
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
-      disabledToggle={
-        !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
-      }
+      disabledToggle={disabledToggle}
       checkedToggleTooltip='Inclusion'
       unCheckedToggleTooltip='Exclusion'
     />

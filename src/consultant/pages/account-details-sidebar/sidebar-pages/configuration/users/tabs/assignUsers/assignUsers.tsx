@@ -40,13 +40,10 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     []
   );
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [, setAddedProjects] = useState<
-    { rid: string; is_enabled: boolean; is_modified: boolean }[]
-  >([]);
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
-  const accountUsersViewEditFields = useMemo(
+  const accountAssignUsersViewEditFields = useMemo(
     () =>
       permission.find(
         (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
@@ -56,11 +53,11 @@ const AssignUsers: React.FC<AssignUserProps> = ({
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    accountUsersViewEditFields.forEach((item) => {
+    accountAssignUsersViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [accountUsersViewEditFields]);
+  }, [accountAssignUsersViewEditFields]);
 
   const { data, isLoading, isError } = useConfigAssignUsersList(
     accountid || '',
@@ -103,13 +100,6 @@ const AssignUsers: React.FC<AssignUserProps> = ({
         (user) => user.has_access === true
       );
       setAddedAccounts(accessibleUsers.map((user) => user.rid));
-      setAddedProjects(
-        accessibleUsers.map((user) => ({
-          rid: user.rid,
-          is_enabled: true,
-          is_modified: true,
-        }))
-      );
     }
   }, [data?.users]);
 
@@ -139,6 +129,14 @@ const AssignUsers: React.FC<AssignUserProps> = ({
 
   const getRowId = (row: ConfigAssignUserList) => row.rid;
 
+  function buildUpdatedUsersList(rowId: string, checked: boolean) {
+    return assignUserList.map((user) => ({
+      rid: user.rid,
+      is_enabled: user.rid === rowId ? checked : user.has_access,
+      is_modified: user.rid === rowId,
+    }));
+  }
+
   const toggleProjects = (rowId: string, checked: boolean) => {
     const previousUserList = [...assignUserList];
     const updatedUserList = assignUserList.map((user) => {
@@ -157,45 +155,33 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-    setAddedProjects((prev) => {
-      const updatedProjects = [...prev];
-      const existingIndex = prev.findIndex((item) => item.rid === rowId);
+    const updatedProjects = buildUpdatedUsersList(rowId, checked);
 
-      if (existingIndex !== -1) {
-        updatedProjects[existingIndex] = {
-          ...updatedProjects[existingIndex],
-          is_enabled: checked,
-          is_modified: true,
-        };
-      } else if (checked) {
-        updatedProjects.push({
-          rid: rowId,
-          is_enabled: true,
-          is_modified: true,
-        });
+    updateAssignUserList.mutate(
+      {
+        users: updatedProjects,
+        account_rid: accountid,
+        access_type: 'USER',
+        entity_type: 'ACCOUNT',
+      } as Partial<AssignUserAccess>,
+      {
+        onSuccess: () => {
+          setAssignUserList(updatedUserList);
+          successToast('Updated successfully');
+        },
+        onError: () => {
+          setAssignUserList(previousUserList);
+          errorToast('Failed to Update.');
+        },
       }
-      updateAssignUserList.mutate(
-        {
-          users: updatedProjects,
-          account_rid: accountid,
-          access_type: 'USER',
-          entity_type: 'ACCOUNT',
-        } as Partial<AssignUserAccess>,
-        {
-          onSuccess: () => {
-            setAssignUserList(updatedUserList);
-            successToast('Updated successfully');
-          },
-          onError: () => {
-            setAssignUserList(previousUserList);
-            errorToast('Failed to Update.');
-          },
-        }
-      );
-
-      return updatedProjects;
-    });
+    );
   };
+
+  const disabledToggle =
+    permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
+
+  const hideToggle =
+    !permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
 
   return (
     <ListTable
@@ -205,7 +191,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       hoverHighlight={false}
       tableStyle={{
         height: '100%',
-        maxHeight: 'calc(100vh - 290px)',
+        maxHeight: 'calc(100vh - 320px)',
         overflow: 'auto',
         paddingTop: '2px',
       }}
@@ -213,7 +199,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       stickyColumnsCount={1}
       selectable={false}
       actionWidth={120}
-      actionDisplayMode='toggle'
+      actionDisplayMode={hideToggle ? undefined : 'toggle'}
       actionMenuItems={[]}
       loading={isLoading}
       error={isError ? 'Failed to load user data' : ''}
@@ -227,13 +213,11 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       actionColumnName='Add / Remove'
-      disabledToggle={
-        !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
-      }
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
       checkedToggleTooltip='Added'
       unCheckedToggleTooltip='Removed'
+      disabledToggle={disabledToggle}
     />
   );
 };

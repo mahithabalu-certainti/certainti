@@ -6,6 +6,11 @@ import {
   ConfigAssignGroupsListParms,
   ConfigAssignUserListParms,
 } from '../../../../../types';
+import { RootState } from '../../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../../../common-service';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
 
 interface UserProps {
   reFetchData: number;
@@ -22,6 +27,17 @@ const Users: React.FC<UserProps> = ({
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') || 'assign_users';
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accessPageIsEnable = checkPermission(
+    modules,
+    AllModules.MANAGE_ACCOUNT_ACCESS
+  );
+  const accessPageViewEnable = checkPermission(
+    permission,
+    AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+  );
 
   useEffect(() => {
     if (!searchParams.get('tab')) {
@@ -40,6 +56,8 @@ const Users: React.FC<UserProps> = ({
     searchParams.set('tab', value);
     setSearchParams(searchParams);
   };
+
+  if (!accessPageIsEnable || !accessPageViewEnable) return <AccessRestricted />;
 
   return (
     <div>

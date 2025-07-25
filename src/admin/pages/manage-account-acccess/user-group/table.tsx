@@ -159,14 +159,14 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
         groups: updatedProjects,
         account_rid: accountId,
         access_type: 'GROUP',
+        entity_type: 'ACCOUNT',
       } as Partial<AccountAccessDetail>);
 
       return updatedProjects;
     });
   };
   const projectColumns = manageUserGroupColumns(handleAccountName);
-  // console.log('addedProjects', disabled);
-  // console.log('hide', hide);
+
   return (
     <div className='pt-1'>
       <ListTable
@@ -186,7 +186,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
           console.log('Selected:', selectedIds)
         }
         actionWidth={80}
-        actionDisplayMode='toggle'
+        actionDisplayMode={hide ? undefined : 'toggle'}
         loading={isLoading}
         error={
           isError ? 'Failed to load Manage Account Groups Access' : undefined
@@ -205,7 +205,6 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
         disabledToggle={disabled}
-        hideToggle={hide}
       />
     </div>
   );
