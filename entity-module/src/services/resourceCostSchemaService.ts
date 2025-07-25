@@ -1078,7 +1078,9 @@ async executeQueriesForFinancialHighlights(
         prf.rd_credits_total,
         prf.resource_rid,
         prf.project_fiscal_rid,
+        prf.fiscal_year,
         prf.country_rid,
+        prf.region_rid,
         pf.project_code,
         pf.r_number,
         pf.project_name,
@@ -1147,9 +1149,10 @@ async executeQueriesForFinancialHighlights(
     };
 
     // Fetch all reference data in parallel
-    const [resourceTypeMap, countryMap] = await Promise.all([
+    const [resourceTypeMap, countryMap,regionMap] = await Promise.all([
       fetchReferenceMap('resource_type', 'rid', 'resource_type_name'),
-      fetchReferenceMap('country', 'rid', 'country_code')
+      fetchReferenceMap('country', 'rid', 'country_code'),
+      fetchReferenceMap('state', 'rid', 'state_name')
     ]);
 
     // Helper function to assign reference data
@@ -1162,6 +1165,10 @@ async executeQueriesForFinancialHighlights(
       // Assign country code
       result.country_code = result.country_rid 
         ? countryMap.get(result.country_rid) || null 
+        : null;
+
+      result.region_name = result.region_rid 
+        ? regionMap.get(result.region_rid) || null 
         : null;
     };
 
@@ -1191,6 +1198,22 @@ async executeQueriesForFinancialHighlights(
     }
     // Handle sorting by country_code
     else if (sortBy === "country_code") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory
+      results.sort((a: any, b: any) => {
+        const aCode = a.country_code || "";
+        const bCode = b.country_code || "";
+        return sortOrder === "ASC"
+          ? aCode.localeCompare(bCode)
+          : bCode.localeCompare(aCode);
+      });
+
+      // Apply pagination
+      results = results.slice(offset, offset + limit) as any;
+    }
+    else if (sortBy === "state_name") {
       // Assign reference data first
       results.forEach(assignReferenceData);
       
@@ -1240,6 +1263,10 @@ async executeQueriesForFinancialHighlights(
       ...new Set(projectResourceFiscal.map((prf: any) => prf.country_rid)),
     ].filter(Boolean);
 
+    const regionIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.region_rid))
+    ].filter(Boolean);
+
     // Fetch detailed reference information if needed
     const referencePromises = [];
 
@@ -1275,7 +1302,23 @@ async executeQueriesForFinancialHighlights(
       referencePromises.push(Promise.resolve([]));
     }
 
-    const [resourceTypes, countries] = await Promise.all(referencePromises);
+    if (regionIds.length > 0) {
+      const regionQuery = `
+        SELECT rid, state_name
+        FROM ${MAIN_SCHEMA_NAME}.state
+        WHERE rid IN (:regionIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(regionQuery, {
+          replacements: { regionIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    const [resourceTypes, countries,regions] = await Promise.all(referencePromises);
 
     // Create maps for quick lookup
     const resourceTypeDetailMap: any = (resourceTypes as any[]).reduce((map: any, rt: any) => {
@@ -1285,6 +1328,11 @@ async executeQueriesForFinancialHighlights(
 
     const countryDetailMap: any = (countries as any[]).reduce((map: any, country: any) => {
       map[country.rid] = country;
+      return map;
+    }, {});
+
+    const regionDetailMap: any = (regions as any[]).reduce((map: any, region: any) => {
+      map[region.rid] = region;
       return map;
     }, {});
 
@@ -1307,6 +1355,12 @@ async executeQueriesForFinancialHighlights(
         prf.country_code = null;
         prf.country_name = null;
       }
+
+      if (prf.region_rid && regionDetailMap[prf.region_rid]) {
+        prf.region_name = regionDetailMap[prf.region_rid].state_name;
+      } else {
+        prf.region_name = null;
+      }
     });
 
     return {
@@ -1322,6 +1376,7 @@ async executeQueriesForFinancialHighlights(
     return this.createErrorResponse("Error executing database queries");
   }
 }
+
   /**
    * Executes the main and count queries and formats the response
    *
