@@ -87,9 +87,14 @@ async listProjectTasks(
     });
 
 let resourceFilter: Record<string, any> | undefined;
+let projectNameFilter: Record<string, any> | undefined;
     if (filters.resource_name) {
     resourceFilter = filters.resource_name;
     delete filters.resource_name;
+    }
+    if (filters.project_name) {
+    projectNameFilter = filters.project_name;
+    delete filters.project_name;
     }
 
     // ✅ Build where clause with project filter
@@ -200,28 +205,17 @@ let resourceFilter: Record<string, any> | undefined;
       modified_datetime: task.modified_datetime
     }));
 
-    // ✅ Handle resource_type_name filter on formattedTasks
-    if (resourceFilter) {
-
+    if (resourceFilter || projectNameFilter) {
     formattedTasks = formattedTasks.filter(task => {
-    const fieldValue = (task.resource_name ?? "").trim();
+    const resourcePass = resourceFilter
+      ? this.applyTextFilter(task.resource_name, resourceFilter)
+      : true;
 
-    if (resourceFilter.equals !== undefined) {
-      return fieldValue.toLowerCase() === resourceFilter.equals.trim().toLowerCase();
-    }
-    if (resourceFilter.not_equals !== undefined) {
-      return fieldValue.toLowerCase() !== resourceFilter.not_equals.trim().toLowerCase() || fieldValue === null || fieldValue === "";
-    }
-    if (resourceFilter.contains !== undefined) {
-      return fieldValue.toLowerCase().includes(resourceFilter.contains.trim().toLowerCase());
-    }
-    if (resourceFilter.is_empty !== undefined) {
-      return resourceFilter.is_empty
-        ? fieldValue === ""
-        : fieldValue !== "";
-    }
+    const projectPass = projectNameFilter
+      ? this.applyTextFilter(task.project_name, projectNameFilter)
+      : true;
 
-    return true; // No filtering if no valid operator is provided
+    return resourcePass && projectPass;
   });
 }
 
@@ -426,9 +420,14 @@ async listProjectTasksExport(
     });
 
     let resourceFilter: Record<string, any> | undefined;
+    let projectNameFilter: Record<string, any> | undefined;
     if (filters.resource_name) {
     resourceFilter = filters.resource_name;
     delete filters.resource_name;
+    }
+    if (filters.project_name) {
+    projectNameFilter = filters.project_name;
+    delete filters.project_name;
     }
 
     // ✅ Build where clause with project filter
@@ -539,28 +538,17 @@ async listProjectTasksExport(
       modified_datetime: task.modified_datetime
     }));
 
-     // ✅ Handle resource_type_name filter on formattedTasks
-    if (resourceFilter) {
-
+     if (resourceFilter || projectNameFilter) {
     formattedTasks = formattedTasks.filter(task => {
-    const fieldValue = (task.resource_name ?? "").trim();
+    const resourcePass = resourceFilter
+      ? this.applyTextFilter(task.resource_name, resourceFilter)
+      : true;
 
-    if (resourceFilter.equals !== undefined) {
-      return fieldValue.toLowerCase() === resourceFilter.equals.trim().toLowerCase();
-    }
-    if (resourceFilter.not_equals !== undefined) {
-      return fieldValue.toLowerCase() !== resourceFilter.not_equals.trim().toLowerCase() || fieldValue === null || fieldValue === "";
-    }
-    if (resourceFilter.contains !== undefined) {
-      return fieldValue.toLowerCase().includes(resourceFilter.contains.trim().toLowerCase());
-    }
-    if (resourceFilter.is_empty !== undefined) {
-      return resourceFilter.is_empty
-        ? fieldValue === ""
-        : fieldValue !== "";
-    }
+    const projectPass = projectNameFilter
+      ? this.applyTextFilter(task.project_name, projectNameFilter)
+      : true;
 
-    return true; // No filtering if no valid operator is provided
+    return resourcePass && projectPass;
   });
 }
 
@@ -1141,7 +1129,6 @@ private buildRawWhereClause(
           case 'is_empty': condition['$resource.resource_type_rid$'] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
         }
         break;  
-      case 'project_rid':     
       case 'country_rid':
       case 'region_rid':    
         switch (operator.toLowerCase()) {
@@ -1224,6 +1211,26 @@ async fetchAttachmentsBytaskId(task_rid: string): Promise<any[]> {
     } catch (err) {
       throw new Error("Error adding user details" + (err as Error).message);
     }
+  }
+
+
+    applyTextFilter(fieldValue: string, filter: any): boolean {
+    const value = (fieldValue ?? "").trim().toLowerCase();
+
+    if (filter.equals !== undefined) {
+      return value === filter.equals.trim().toLowerCase();
+    }
+    if (filter.not_equals !== undefined) {
+      return value !== filter.not_equals.trim().toLowerCase() || value === null || value === "";
+    }
+    if (filter.contains !== undefined) {
+      return value.includes(filter.contains.trim().toLowerCase());
+    }
+    if (filter.is_empty !== undefined) {
+      return filter.is_empty ? value === "" : value !== "";
+    }
+
+    return true; // No filtering if no valid operator is provided
   }
 
 
