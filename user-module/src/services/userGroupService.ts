@@ -2943,8 +2943,11 @@ async  getProjectsWithUserAccessFlag(
     orderByClause = `ORDER BY ps.${sortField} ${sortDirection.toUpperCase()}`;
   }
 
+  const queryTemplate = access_type === 'USER' 
+    ? constants.SQL_GET_USER_PROJECTS 
+    : constants.SQL_GET_PROJECTS;
   // Main query with both access_type and has_access fields
-  const query =constants.SQL_GET_PROJECTS
+  const query =queryTemplate
     .replace('{whereClauses}', baseWhereClauses.join(' AND '))
     .replace('{orderByClause}', orderByClause)
     .replace('{joinCondition}',joinCondition)
