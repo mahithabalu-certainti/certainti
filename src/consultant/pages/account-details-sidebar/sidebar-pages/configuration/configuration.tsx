@@ -8,7 +8,7 @@ import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
 import { ResourceTabs } from '../resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { clearFilters } from '../../components/filter/utils';
@@ -16,6 +16,9 @@ import {
   getAssignGroupsFilterFields,
   getAssignUserFilterFields,
 } from './helper';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../../../../common-utils';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -48,6 +51,19 @@ const Configuration: React.FC = () => {
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const accessPageIsEnable = checkPermission(
+    modules,
+    AllModules.MANAGE_ACCOUNT_ACCESS
+  );
+  const accessPageViewEnable = checkPermission(
+    permission,
+    AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+  );
 
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
@@ -147,6 +163,9 @@ const Configuration: React.FC = () => {
       ? getAssignUserFilterFields()
       : getAssignGroupsFilterFields();
 
+  const hideSection =
+    list === 'users' ? !accessPageIsEnable || !accessPageViewEnable : false;
+
   return (
     <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
@@ -164,6 +183,7 @@ const Configuration: React.FC = () => {
         setSortFilterCount={setSortFilterCount}
         showRefresh={list !== 'settings'}
         onRefreshClick={onRefreshClick}
+        hideTabPanel={hideSection}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
@@ -171,6 +191,7 @@ const Configuration: React.FC = () => {
         buttons={headerButtons}
         count={count}
         showItemCount={list !== 'settings'}
+        hideSection={hideSection}
       />
       {renderContent()}
     </div>

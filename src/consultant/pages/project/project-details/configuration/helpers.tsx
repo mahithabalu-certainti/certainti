@@ -36,12 +36,6 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
     operatorOption: textOptions,
   },
   {
-    name: 'Organization Name',
-    value: 'organization_name',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
     name: 'Sort Options',
     value: 'sort_options',
     type: 'system-sort',

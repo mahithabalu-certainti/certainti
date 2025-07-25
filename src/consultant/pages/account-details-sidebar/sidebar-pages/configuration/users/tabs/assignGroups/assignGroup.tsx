@@ -39,9 +39,6 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     ConfigAssignGroupsList[]
   >([]);
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
-  const [, setAddedProjects] = useState<
-    { rid: string; is_enabled: boolean; is_modified: boolean }[]
-  >([]);
 
   const { data, isLoading, isError } = useConfigAssignGroupsList(
     accountid || '',
@@ -51,7 +48,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
-  const accountGroupViewEditFields = useMemo(
+  const accountAssignGroupViewEditFields = useMemo(
     () =>
       permission.find(
         (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
@@ -61,13 +58,13 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    accountGroupViewEditFields.forEach((item) => {
+    accountAssignGroupViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [accountGroupViewEditFields]);
+  }, [accountAssignGroupViewEditFields]);
 
-  const updateAssignUserList = useUpdateConfigAssignUserAccess('account');
+  const updateAssignGroupList = useUpdateConfigAssignUserAccess('account');
   const totalItems = data?.count || 0;
 
   useEffect(() => {
@@ -104,13 +101,6 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
         (group) => group.has_access === true
       );
       setAddedAccounts(accessibleUsers.map((group) => group.rid));
-      setAddedProjects(
-        accessibleUsers.map((group) => ({
-          rid: group.rid,
-          is_enabled: true,
-          is_modified: true,
-        }))
-      );
     }
   }, [data?.groups]);
 
@@ -140,9 +130,17 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
 
   const getRowId = (row: ConfigAssignGroupsList) => row.rid;
 
+  function buildUpdatedGroupsList(rowId: string, checked: boolean) {
+    return assignGroupList.map((group) => ({
+      rid: group.rid,
+      is_enabled: group.rid === rowId ? checked : group.has_access,
+      is_modified: group.rid === rowId,
+    }));
+  }
+
   const toggleProjects = (rowId: string, checked: boolean) => {
-    const previousUserList = [...assignGroupList];
-    const updatedUserList = assignGroupList.map((group) => {
+    const previousGroupList = [...assignGroupList];
+    const updatedGroupList = assignGroupList.map((group) => {
       if (group.rid === rowId) {
         return {
           ...group,
@@ -155,44 +153,34 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     setAddedAccounts((prev) =>
       checked ? [...prev, rowId] : prev.filter((item) => item !== rowId)
     );
-    setAddedProjects((prev) => {
-      const updatedProjects = [...prev];
-      const existingIndex = prev.findIndex((item) => item.rid === rowId);
 
-      if (existingIndex !== -1) {
-        updatedProjects[existingIndex] = {
-          ...updatedProjects[existingIndex],
-          is_enabled: checked,
-          is_modified: true,
-        };
-      } else if (checked) {
-        updatedProjects.push({
-          rid: rowId,
-          is_enabled: true,
-          is_modified: true,
-        });
+    const updatedGroups = buildUpdatedGroupsList(rowId, checked);
+
+    updateAssignGroupList.mutate(
+      {
+        groups: updatedGroups,
+        account_rid: accountid,
+        access_type: 'GROUP',
+        entity_type: 'ACCOUNT',
+      } as Partial<AssignUserAccess>,
+      {
+        onSuccess: () => {
+          setAssignGroupList(updatedGroupList);
+          successToast('Updated successfully');
+        },
+        onError: () => {
+          setAssignGroupList(previousGroupList);
+          errorToast('Failed to Update.');
+        },
       }
-      updateAssignUserList.mutate(
-        {
-          groups: updatedProjects,
-          account_rid: accountid,
-          access_type: 'GROUP',
-          entity_type: 'ACCOUNT',
-        } as Partial<AssignUserAccess>,
-        {
-          onSuccess: () => {
-            setAssignGroupList(updatedUserList);
-            successToast('Updated successfully');
-          },
-          onError: () => {
-            setAssignGroupList(previousUserList);
-            errorToast('Failed to Update.');
-          },
-        }
-      );
-      return updatedProjects;
-    });
+    );
   };
+
+  const disabledToggle =
+    permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
+
+  const hideToggle =
+    !permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
 
   return (
     <ListTable
@@ -210,7 +198,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       stickyColumnsCount={1}
       selectable={false}
       actionWidth={200}
-      actionDisplayMode='toggle'
+      actionDisplayMode={hideToggle ? undefined : 'toggle'}
       actionMenuItems={[]}
       loading={isLoading}
       error={isError ? 'Failed to load group data' : ''}
@@ -224,9 +212,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
       actionColumnName='Assign'
-      disabledToggle={
-        !(permissionMap?.['assign']?.read && permissionMap?.['assign']?.edit)
-      }
+      disabledToggle={disabledToggle}
       toggleClick={toggleProjects}
       toggleData={addedAccounts}
     />

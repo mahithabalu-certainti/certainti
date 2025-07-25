@@ -935,6 +935,7 @@ const ListTable = <T extends RowData>({
                       minWidth: actionWidth,
                       maxWidth: actionWidth,
                       textAlign: 'center',
+                      textWrap: 'nowrap',
                     }}
                   >
                     {actionColumnName || 'Action'}

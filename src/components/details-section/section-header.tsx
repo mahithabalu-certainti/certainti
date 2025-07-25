@@ -15,6 +15,7 @@ interface SectionHeaderButton {
 }
 
 interface SectionHeaderProps {
+  hideSection?: boolean;
   title: string;
   titleIcon?: React.ReactNode;
   count?: number;
@@ -28,6 +29,7 @@ interface SectionHeaderProps {
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
+  hideSection = false,
   title,
   titleIcon,
   count = 0,
@@ -39,6 +41,10 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   showItemCount = false,
   className,
 }) => {
+  if (hideSection) {
+    return null;
+  }
+
   return (
     <div
       className={
