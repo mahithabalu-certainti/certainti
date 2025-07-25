@@ -177,7 +177,10 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
                 detailed_metrics : detailsMetricArray,
                 rd_percent : rdPercentArray,
                 qre : qreArray,
-                rd_credits : rdCreditsArray
+                rd_credits : rdCreditsArray,
+                claim_status : {
+                    status : result.data.resource_metrics.claim_status
+                }
             }
             handleSuccessResponse(res, finalData)
             return;

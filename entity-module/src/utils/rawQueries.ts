@@ -1323,7 +1323,8 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         COALESCE(pf.total_subcon_prj, 0) AS total_subcon,
         COALESCE(pf.total_nonlabor_prj, 0) AS total_nonlabor,
         p.project_name,
-        a.account_rid
+        a.account_rid,
+        pf.claim_status
         FROM
 		${schemaName}.account_details a
         LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
@@ -1335,7 +1336,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         AND
 		pf.rid = '${project_fiscal_rid}'
 		GROUP BY
-		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj, p.project_name
+		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj, p.project_name, pf.claim_status
     ),
     calculate_hours_fte AS (
         SELECT DISTINCT ON (ad.account_rid)
@@ -1496,7 +1497,8 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
         'nonlabor', rm.total_nonlabor,
-        'project_name', rm.project_name
+        'project_name', rm.project_name,
+        'claim_status', rm.claim_status
         ) AS resource_metrics,
 
         jsonb_build_object(
