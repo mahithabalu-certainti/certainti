@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// import { ManageAccountUserGroupTable } from '../user-group/table';
-// import { ManageAccountUserListTable } from '../user-list/table';
 import { useSearchParams } from 'react-router-dom';
 import { ManageAccountListTable } from '../project-list/table';
 import { FilterType } from '../../../types';
-import Users from '../../../../components/tab/user';
+
 interface UserTabProps {
   type?: string;
   setAddedProjects: React.Dispatch<
@@ -22,7 +19,7 @@ const UserTab: React.FC<UserTabProps> = ({
   type,
   setAddedProjects,
   appliedFilters,
-  setAppliedFilters,
+  // setAppliedFilters,
   disabled,
   hide,
 }) => {

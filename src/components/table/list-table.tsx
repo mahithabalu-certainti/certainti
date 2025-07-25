@@ -96,7 +96,6 @@ const ListTable = <T extends RowData>({
   actionColumnName,
   toggleData,
   disabledToggle,
-  hideToggle,
   checkedToggleTooltip,
   unCheckedToggleTooltip,
   toggleClick,
@@ -927,20 +926,18 @@ const ListTable = <T extends RowData>({
               )}
 
               {(actionDisplayMode === 'toggle' ||
-                (actionMenuItems?.length > 0 && isAvailableAction)) &&
-                !hideToggle && (
-                  <TableCell
-                    sx={{
-                      width: actionWidth,
-                      minWidth: actionWidth,
-                      maxWidth: actionWidth,
-                      textAlign: 'center',
-                      textWrap: 'nowrap',
-                    }}
-                  >
-                    {actionColumnName || 'Action'}
-                  </TableCell>
-                )}
+                (actionMenuItems?.length > 0 && isAvailableAction)) && (
+                <TableCell
+                  sx={{
+                    width: actionWidth,
+                    minWidth: actionWidth,
+                    maxWidth: actionWidth,
+                    textAlign: 'center',
+                  }}
+                >
+                  {actionColumnName || 'Action'}
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
 
@@ -1420,7 +1417,7 @@ const ListTable = <T extends RowData>({
                             )}
                           </TableCell>
                         )}
-                      {actionDisplayMode === 'toggle' && !hideToggle && (
+                      {actionDisplayMode === 'toggle' && (
                         <TableCell
                           sx={{
                             padding: '0px !important',

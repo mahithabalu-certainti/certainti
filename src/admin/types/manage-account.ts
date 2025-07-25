@@ -101,6 +101,7 @@ export type ManageAccountList = {
   industry?: Industry;
 };
 export interface AccountAccessDetail {
+  entity_type: string;
   account_rid: string;
   access_type: string;
   users?: userList;

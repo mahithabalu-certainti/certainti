@@ -102,6 +102,7 @@ export const useManageProjectAccessList = (
   params: ManageUserListParms,
   refreshProfileTrigger?: number
 ) => {
+  console.log('useManageProjectAccessList', accountId, entityId, params);
   return useQuery<ManageAccountProjectListApiResponse, Error>({
     queryKey: [
       'manageProjectAccessList',
@@ -114,6 +115,7 @@ export const useManageProjectAccessList = (
     staleTime: 0,
     gcTime: 0,
     retry: 0,
+    enabled: !!accountId && !!entityId,
   });
 };
 
