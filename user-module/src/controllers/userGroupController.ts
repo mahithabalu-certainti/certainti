@@ -165,7 +165,7 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
       listActiveUserGroupSchema,
       "",
       res,
-      "GET"
+      "POST"
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
@@ -173,7 +173,7 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
     let parsedFilters: Record<string, any> = {};
 
     try {
-      parsedFilters = JSON.parse(validatedData.filters);
+      parsedFilters = validatedData.filters;
     } catch (error) {
       errorLog(
         methodName,
@@ -188,11 +188,11 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
     let account;
     if(!group_rid)
     {
-       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid,page,limit,sortBy,sortOrder);
+       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid,page,limit,sortBy,sortOrder,parsedFilters);
     }
     else
     {
-      account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid,page,limit,sortBy,sortOrder);
+      account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid,page,limit,sortBy,sortOrder,parsedFilters);
     }
     
     

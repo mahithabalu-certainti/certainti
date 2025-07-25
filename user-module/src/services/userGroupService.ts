@@ -492,7 +492,8 @@ async getActiveUsersForGrouping(
   page: number = 1,
   limit: number = 10,
   sortBy: string = "first_name", 
-  sortOrder: string = "ASC"
+  sortOrder: string = "ASC",
+  filters: Record<string, any> = {}
 ): Promise<{
   statusCode: number;
   message: string;
@@ -500,7 +501,7 @@ async getActiveUsersForGrouping(
   data?: { users: any,count:number };
 }> {
   try {
-    const whereClause: any = {};
+    let basewhereClause: any = {};
     let orgIdsToFilter: string[] = [];
     const offset = (page - 1) * limit;
     const order: any[] = [];
@@ -511,7 +512,7 @@ async getActiveUsersForGrouping(
 
     // Step 1: If consultant-only group, filter directly
     if (is_consultant_only_group) {
-      whereClause.is_consultant_firm = true;
+      basewhereClause.is_consultant_firm = true;
     } else if (account_rid) {
       const accountRidArray: string[] = Array.isArray(account_rid)
         ? account_rid
@@ -530,14 +531,20 @@ async getActiveUsersForGrouping(
       orgIdsToFilter = accountRidArray;
 
       // Filter users belonging to these orgs or consultants
-      whereClause[Op.or] = [
+      basewhereClause[Op.or] = [
         { org_id: { [Op.in]: orgIdsToFilter } },
       ];
+    }
+    if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+      const { whereClause } = this.buildWhereClause(filters);
+      if (whereClause && Object.keys(whereClause).length > 0) {
+        Object.assign(basewhereClause, whereClause);
+      }
     }
 
     // Step 2: Get ACTIVE users
     const allUsers = await User.findAll({
-      where: whereClause,
+      where: basewhereClause,
       attributes: [
       "rid", 
       "email", 
@@ -643,7 +650,8 @@ async getActiveUsersForUpdate(
   page: number = 1,
   limit: number = 10,
   sortBy: string = "first_name", 
-  sortOrder: string = "ASC"
+  sortOrder: string = "ASC",
+  filters: Record<string, any> = {}
 ): Promise<{
   statusCode: number;
   message: string;
@@ -651,11 +659,11 @@ async getActiveUsersForUpdate(
   data?: { users: any,count:number };
 }> {
   try {
-    const whereClause: any = {};
+    const basewhereClause: any = {};
     let orgIdsToFilter: string[] = [];
 
     if (is_consultant_only_group) {
-      whereClause.is_consultant_firm = true;
+      basewhereClause.is_consultant_firm = true;
     } else if (account_rid) {
       const accountRidArray: string[] = Array.isArray(account_rid)
         ? account_rid
@@ -672,7 +680,13 @@ async getActiveUsersForUpdate(
       }
 
       orgIdsToFilter = accountRidArray;
-      whereClause.org_id = { [Op.in]: orgIdsToFilter };
+      basewhereClause.org_id = { [Op.in]: orgIdsToFilter };
+    }
+     if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+      const { whereClause } = this.buildWhereClause(filters);
+      if (whereClause && Object.keys(whereClause).length > 0) {
+        Object.assign(basewhereClause, whereClause);
+      }
     }
     // Step 2: Prepare sorting
     const allowedSortFields = ["first_name", "email"]; // Add more fields as needed
@@ -683,7 +697,7 @@ async getActiveUsersForUpdate(
 
     // Step 3: Paginated query of all active users
     const { rows: allActiveUsers, count: totalCount } = await User.findAndCountAll({
-      where: whereClause,
+      where: basewhereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", 
         "is_consultant_firm",
       [
