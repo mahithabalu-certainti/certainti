@@ -74,10 +74,6 @@ export const ProfileList: React.FC = () => {
     permission,
     AllPermissions.PROFILE_DELETE
   );
-  const isProfileEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_PERMISSION_VIEW_EDIT
-  );
   const profileViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
@@ -254,7 +250,6 @@ export const ProfileList: React.FC = () => {
             setTableParams={setTableParams}
             onSelectionChange={handleSelectionChange}
             isProfileViewEnable={isProfileViewEnable}
-            isProfileEditEnable={isProfileEditEnable}
             isProfileDeleteEnable={isProfileDeleteEnable}
             refreshProfileTrigger={refreshProfileTrigger}
           />

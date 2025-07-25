@@ -231,7 +231,6 @@ export enum AllModules {
 // }
 
 export enum AllPermissions {
-  USER_ASSIGN_PERMISSION = 'user_assign_permission',
   PROJECTS_CREATE = 'projects_create',
   ACCOUNTS_CREATE = 'accounts_create',
   ACCOUNT_RESOURCES_CREATE = 'account_resources_create',
@@ -251,7 +250,6 @@ export enum AllPermissions {
   ACCOUNT_RESOURCES_DELETE = 'account_resources_delete',
   ACCOUNT_RESOURCE_COST_DELETE = 'account_resource_cost_delete',
   ACCOUNT_RESOURCE_SKILL_DELETE = 'account_resource_skill_delete',
-  PROFILE_PERMISSION_VIEW_EDIT = 'profile_permission_view_edit',
   PROJECTS_TASK_EXPORT = 'projects_task_export',
   ACCOUNT_RESOURCES_EXPORT = 'account_resources_export',
   ACCOUNT_RESOURCES_COST_EXPORT = 'account_resources_cost_export',
@@ -272,8 +270,6 @@ export enum AllPermissions {
   ACCOUNTS_VIEW_EDIT = 'accounts_view_edit',
   PROJECTS_TASK_VIEW_EDIT = 'projects_task_view_edit',
   ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
-  USER_VIEW_PERMISSION = 'user_view_permission',
-  PROFILE_PERMISSION_VIEW = 'profile_permission_view',
   ACCOUNT_PROJECTS_TIMELINE = 'account_projects_timeline',
   ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_overview',
   ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
