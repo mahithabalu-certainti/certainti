@@ -377,3 +377,21 @@ export interface IUpdateInlineProjectResource {
   description?: string | null;
   modified_by?: string;
 }
+
+export interface ICreateProjectTask {
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_id: string;
+  resource_code: string;
+  total_hours_pro_task?: number;
+  total_cost_pro_task?: number;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  comments?: string | null;
+  created_by: string;
+  modified_by?: string;
+}

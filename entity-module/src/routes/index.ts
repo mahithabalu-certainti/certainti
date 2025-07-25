@@ -5,9 +5,9 @@ import resourceSkillRoutes from "./resourceSkillRoutes";
 import projectRoutes from "./projectRoutes";
 import attachmentRoutes from "./attachmentRoutes";
 import projectResourceRoutes from "./projectResourceRoutes";
-import projectTaskRoutes from "./projectTaskRoutes";
 import { errorLog, successLog } from "../utils/helpers";
-import importRoutes from './importRoutes'
+import importRoutes from './importRoutes';
+import projectTaskRoutes from './projectTaskRoutes'
 
 const routes: Router = Router();
 

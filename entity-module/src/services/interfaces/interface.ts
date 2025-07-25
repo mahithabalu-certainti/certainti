@@ -3,6 +3,7 @@ import {
   ICreateAttachment,
   ICreateProject,
   ICreateProjectResource,
+  ICreateProjectTask,
   ICreateResource,
   IResourceCost,
   IResourceSkill,
@@ -14,16 +15,16 @@ import {
 } from "../../utils/types";
 
 export interface IProjectGraphQlServices {
-  inLineEditProject(data : any) : Promise<{
+  inLineEditProject(data: any): Promise<{
     statusCode: number;
     statusMessage: string;
-}> 
+  }>;
 }
 
 export interface IResourceService {
   createResource(
     resourceData: ICreateResource,
-    userId: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -80,19 +81,20 @@ export interface IResourceService {
 
 export interface IResourceCostService {
   exportResourceCostList(
-    search: any, 
-    parsedFilters: Record<string, any>, 
-    sortBy: any, 
-    sortOrder: any, 
-    accountNumber: any, 
+    search: any,
+    parsedFilters: Record<string, any>,
+    sortBy: any,
+    sortOrder: any,
+    accountNumber: any,
     fiscalYear: any,
-    userId:string,
-    resourceRid: any): Promise<{
-      statusCode: number;
-      message: string;
-      errorMessage?: string;
-      data?: { resourceCost: any };
-    }>;
+    userId: string,
+    resourceRid: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCost: any };
+  }>;
   resourceCostList(
     page: number,
     limit: number,
@@ -113,7 +115,7 @@ export interface IResourceCostService {
   createResourceCost(
     resourceCostData: IResourceCost,
     userId: string,
-    userPreference: string,
+    userPreference: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -124,7 +126,7 @@ export interface IResourceCostService {
   updateResourceCost(
     resourceCostData: IUpdateResourceCost,
     userId: string,
-    userPreference: string,
+    userPreference: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -146,7 +148,7 @@ export interface IResourceCostService {
     id: string,
     accountNumber: string,
     action: string,
-    type: string,
+    type: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -166,10 +168,10 @@ export interface IResourceSkillService {
   getSkillTypes(): Promise<{
     statusCode: number;
     message: string;
-    errorMessage?: string; 
+    errorMessage?: string;
     data?: { skillTypes: any[] };
   }>;
-  
+
   createResourceSkill(
     resourceSkillData: IResourceSkill,
     userId: string
@@ -206,8 +208,11 @@ export interface IResourceSkillService {
     errorMessage?: string;
     data?: { resourceSkill: any; count: number };
   }>;
-  
-  resourceSkillById(id: string,accountNumber: string): Promise<{
+
+  resourceSkillById(
+    id: string,
+    accountNumber: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -227,18 +232,24 @@ export interface IResourceSkillService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { resourceSkill: any; };
+    data?: { resourceSkill: any };
   }>;
 }
 
 export interface IProjectService {
-  createProject(projectData: ICreateProject, userId: string): Promise<{
+  createProject(
+    projectData: ICreateProject,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { project: any };
   }>;
-  updateProject(projectData: IUpdateProject, userId: string): Promise<{
+  updateProject(
+    projectData: IUpdateProject,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -258,7 +269,7 @@ export interface IProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any, attachment: any };
+    data?: { project: any; attachment: any };
   }>;
   projectList(
     accountId: string,
@@ -274,7 +285,7 @@ export interface IProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projects: any, totalCount: number };
+    data?: { projects: any; totalCount: number };
   }>;
   allProjectList(
     fiscal_year: number,
@@ -286,19 +297,18 @@ export interface IProjectService {
     sortOrder: string,
     globalFilters: Record<string, string[]>,
     userId: string,
-    bothParentAndChild: boolean, 
+    bothParentAndChild: boolean
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projects: any, count: number };
+    data?: { projects: any; count: number };
   }>;
-  getProjectClassification(
-  ): Promise<{
+  getProjectClassification(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectClassifications: any, count: number };
+    data?: { projectClassifications: any; count: number };
   }>;
   exportProjectList(
     accountId: string,
@@ -308,13 +318,13 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     bothParentAndChild: boolean,
-    timezone:string,
-    userId:string
+    timezone: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projects: any, totalCount: number };
+    data?: { projects: any; totalCount: number };
   }>;
   exportAllProjectList(
     fiscal_year: number,
@@ -325,107 +335,131 @@ export interface IProjectService {
     globalFilters: Record<string, string[]>,
     userId: string,
     bothParentAndChild: boolean,
-    timezone:string
+    timezone: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projects: any, count: number };
+    data?: { projects: any; count: number };
   }>;
 }
 
 export interface IResourceGraphQlServices {
-  inLineEditResources(data : any) : Promise<{
-    statusCode: number;
-    statusMessage: string;
-} | undefined>
+  inLineEditResources(data: any): Promise<
+    | {
+        statusCode: number;
+        statusMessage: string;
+      }
+    | undefined
+  >;
 }
 
 export interface IResourceCostGraphQlService {
-  inlineEditResourceCost(data : any) : Promise<{
-    statusCode: number;
-    statusMesage: string;
-    statusMessage?: undefined;
-} | {
-    statusCode: number;
-    statusMessage: string;
-    statusMesage?: undefined;
-} | undefined>
+  inlineEditResourceCost(data: any): Promise<
+    | {
+        statusCode: number;
+        statusMesage: string;
+        statusMessage?: undefined;
+      }
+    | {
+        statusCode: number;
+        statusMessage: string;
+        statusMesage?: undefined;
+      }
+    | undefined
+  >;
 }
 
 export interface IResourceSkillGraphQlService {
-  updateInlineResourceSkill(data : any) : Promise<{
-    statusCode: number;
-    statusMessage: string;
-} | undefined>
+  updateInlineResourceSkill(data: any): Promise<
+    | {
+        statusCode: number;
+        statusMessage: string;
+      }
+    | undefined
+  >;
 }
 export interface IAttachmentService {
-   createAttachment(attachmentData: ICreateAttachment, userId: string, file: Express.Multer.File): Promise<{
+  createAttachment(
+    attachmentData: ICreateAttachment,
+    userId: string,
+    file: Express.Multer.File
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { attachment: any };
   }>;
 
-  getAttachments(userId: string,
-  attachmentLevel: string,
-  entityId: string,
-  accountRid: string,
-  page:number,
-  limit:number,
-  search: string,
-  filters: Record<string, any>,
-  sortBy: string,
-  sortOrder: string,
-  fiscalYear:number, graphqlData : any):Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { attachments: any[]; totalCount: number };
-  }>
+  getAttachments(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { attachments: any[]; totalCount: number };
+  }>;
 
-  exportAttachments(userId: string,
-  attachmentLevel: string,
-  entityId: string,
-  accountRid: string,
-  search: string,
-  filters: Record<string, any>,
-  sortBy: string,
-  sortOrder: string,
-  fiscalYear:number, graphqlData : any):Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { attachments: any[] };
-  }>
+  exportAttachments(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { attachments: any[] };
+  }>;
 
-  getAttachmentSummary(userId: string,
-  page:number,
-  limit:number,
-  search: string,
-  filters: Record<string, any>,
-  globalFilters: Record<string, any>,
-  sortBy: string,
-  sortOrder: string,
-  fiscalYear:number):Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { attachments: any[]; totalCount: number };
-  }>
+  getAttachmentSummary(
+    userId: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    globalFilters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { attachments: any[]; totalCount: number };
+  }>;
 
-  exportAttachmentSummary(userId: string,
-  search: string,
-  filters: Record<string, any>,
-  globalFilters: Record<string, any>,
-  sortBy: string,
-  sortOrder: string,
-  fiscalYear:number):Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { attachments: any[] };
-  }>
+  exportAttachmentSummary(
+    userId: string,
+    search: string,
+    filters: Record<string, any>,
+    globalFilters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { attachments: any[] };
+  }>;
 
   getDocumentTypeAndCategory(category_rid: string): Promise<{
     statusCode: number;
@@ -436,23 +470,32 @@ export interface IAttachmentService {
 }
 
 export interface IProjectResourceService {
-  createProjectResource(projectResourceData: ICreateProjectResource, userId: string): Promise<{
+  createProjectResource(
+    projectResourceData: ICreateProjectResource,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { projectResource: any };
   }>;
-  updateProjectResource(projectResourceData: IUpdateProjectResource, userId: string): Promise<{
+  updateProjectResource(
+    projectResourceData: IUpdateProjectResource,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { projectResource: any };
   }>;
-  projectResourceDetails(projectResourceId: string, accountId: string): Promise<{
+  projectResourceDetails(
+    projectResourceId: string,
+    accountId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResource: any, attachment: any };
+    data?: { projectResource: any; attachment: any };
   }>;
   getResourceCodes(accountId: string): Promise<{
     statusCode: number;
@@ -480,12 +523,12 @@ export interface IProjectResourceService {
     limit: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string,
+    sortOrder: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResources: any , count: number };
+    data?: { projectResources: any; count: number };
   }>;
   exportProjectResources(
     accountId: string,
@@ -504,7 +547,7 @@ export interface IProjectResourceService {
 }
 
 export interface IAttachmentGraphqlServices {
-  updateInlineAttachment (data : any) : Promise<{
+  updateInlineAttachment(data: any): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -513,84 +556,124 @@ export interface IAttachmentGraphqlServices {
 }
 
 export interface IImportListGraphqlServices {
-  listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : any, fiscal_year : number) : Promise<{
+  listAllImportedData(
+    page: number,
+    limit: number,
+    sort: string,
+    sortBy: string,
+    account_rid: string,
+    filters: any,
+    fiscal_year: number
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { resourceRolesSubType: any };
   }>;
-  fetchUserDetails(userRids: string[]) :  Promise<any[]>
-  fetchImportById(account_rid : any, rid : any) : Promise<{
-    statusCode: number;
-    data: {};
-} | {
-    statusCode: number;
-    data: null;
-}>
+  fetchUserDetails(userRids: string[]): Promise<any[]>;
+  fetchImportById(
+    account_rid: any,
+    rid: any
+  ): Promise<
+    | {
+        statusCode: number;
+        data: {};
+      }
+    | {
+        statusCode: number;
+        data: null;
+      }
+  >;
 
-  listAllStageFailures(account_rid : string, import_rid : string,entity_type:string) : Promise<{
-    statusCode: number;
-    data: {};
-} | {
-    statusCode: number;
-    data: null;
-}>
+  listAllStageFailures(
+    account_rid: string,
+    import_rid: string,
+    entity_type: string
+  ): Promise<
+    | {
+        statusCode: number;
+        data: {};
+      }
+    | {
+        statusCode: number;
+        data: null;
+      }
+  >;
 
-  listAllLoadFailures(account_rid : string, rid : string,entity_type:string) : Promise<{
+  listAllLoadFailures(
+    account_rid: string,
+    rid: string,
+    entity_type: string
+  ): Promise<
+    | {
+        statusCode: number;
+        data: {};
+      }
+    | {
+        statusCode: number;
+        data: null;
+      }
+  >;
+}
+
+export interface IProjectTaskIngestionService {
+  createProjectTask(
+    projectTaskData: ICreateProjectTask,
+    userId: string
+  ): Promise<{
     statusCode: number;
-    data: {};
-} | {
-    statusCode: number;
-    data: null;
-}>
+    message: string;
+    errorMessage?: string;
+    data?: { projectTask: any };
+  }>;
 }
 export interface IProjectTaskService {
   listProjectTasks(
-  accountRid: string,
-  projectRid: string,
-  projectResourceRid: string,
-  filters: Record<string, any>,
-  search: string,
-  page: number,
-  limit: number,
-  sortBy: string,
-  sortOrder: string
-): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { tasks: any[]; totalCount: number };
-}>;
+    accountRid: string,
+    projectRid: string,
+    projectResourceRid: string,
+    filters: Record<string, any>,
+    search: string,
+    page: number,
+    limit: number,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }>;
 
   listProjectTasksExport(
-  userId: string,  
-  accountRid: string,
-  projectRid: string,
-  projectResourceRid: string,
-  filters: Record<string, any>,
-  search: string,
-  sortBy: string,
-  sortOrder: string
-): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { tasks: any[]; totalCount: number };
-}>;
+    userId: string,
+    accountRid: string,
+    projectRid: string,
+    projectResourceRid: string,
+    filters: Record<string, any>,
+    search: string,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }>;
 
   getProjectTaskById(
-  accountRid: string,
-  taskRid: string
-): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: any;
-}>
+    accountRid: string,
+    taskRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
 }
 
 export interface IProjectTaskGraphqlServices {
-  updateInlineAttachment (data : any) : Promise<{
+  updateInlineAttachment(data: any): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

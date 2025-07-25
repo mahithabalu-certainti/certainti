@@ -276,7 +276,7 @@ export class ProjectResourceSchemaService {
   }
 
   async validateProjectById(accountNumber: string, projectId: string) {
-    const { Project } = await this.getModels(accountNumber);
+    const { ProjectFiscal } = await this.getModels(accountNumber);
     const projectData = await ProjectFiscal.findOne({
       where: {
         rid: projectId,

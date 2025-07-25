@@ -1,7 +1,10 @@
+import { ProjectFiscal } from "../models/projectFiscal";
 import { ProjectResource } from "../models/projectResource";
+import { Resources } from "../models/resource";
 import {
   ICreateProject,
   ICreateProjectResource,
+  ICreateProjectTask,
   IUpdateProject,
   IUpdateProjectResource,
 } from "./types";
@@ -857,6 +860,43 @@ export class ProjectResourceMapper {
       insurance: updateProjectResource.insurance ?? null,
       description: updateProjectResource.description ?? null,
       modified_by: userId,
+    };
+  }
+}
+
+export class ProjectTaskMapper {
+  static mapToProjectTask(
+    projectTask: ICreateProjectTask,
+    startDate: moment.Moment | null,
+    endDate: moment.Moment | null,
+    userId: string,
+    projectResourceCode: string,
+    projectData: ProjectFiscal,
+    resourceData: Resources,
+  ) {
+    return {
+      eid: null,
+      created_by: userId,
+      created_datetime: new Date(),
+
+      account_rid: projectTask.account_rid,
+      project_rid: projectData.project_rid,
+      project_fiscal_rid: projectTask.project_fiscal_rid,
+      resource_rid: resourceData.rid!,
+      project_resource_code: projectResourceCode,
+      fiscal_year: projectData.fiscal_year,
+
+      start_date: startDate ? startDate.toDate() : null,
+      end_date: endDate ? endDate.toDate() : null,
+
+      total_hours_pro_task: projectTask.total_hours_pro_task || null,
+      total_cost_pro_task: projectTask.total_cost_pro_task || null,
+
+      country_rid: projectTask.country_rid || null,
+      region_rid: projectTask.region_rid || null,
+      currency_rid: projectTask.currency_rid || null,
+
+      comments: projectTask.comments || null,
     };
   }
 }

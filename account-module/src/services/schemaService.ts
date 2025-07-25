@@ -90,6 +90,9 @@ class SchemaService {
       await this.createAttachmentTimeline(schemaName, sequelize);
       await this.createResourceFiscalRegionTable(schemaName, sequelize);
 
+      await this.createProjectTaskTable(schemaName, sequelize);
+      await this.createProjectTaskTimeLineTable(schemaName, sequelize);
+
       await transaction.commit();
     } catch (Err) {
       console.log("Table createng err", Err);
@@ -290,6 +293,19 @@ class SchemaService {
         qualifying_project_rd_credits_fte_fed numeric(18,2),
         qualifying_project_rd_credits_subcon_fed numeric(18,2),
         qualifying_project_rd_credits_fed numeric(18,2),
+        total_project_res_hours_fte numeric(18, 2) NULL,
+        total_project_res_hours_subcon numeric(18, 2) NULL,
+        total_project_res_cost_fte numeric(18, 2) NULL,
+        total_project_res_cost_subcon numeric(18, 2) NULL,
+        total_project_res_cost_nonlabor numeric(18, 2) NULL,
+        total_project_task_hours_fte numeric(18, 2) NULL,
+        total_project_task_hours_subcon numeric(18, 2) NULL,
+        total_project_task_cost_fte numeric(18, 2) NULL,
+        total_project_task_cost_subcon numeric(18, 2) NULL,
+        total_project_res_hours numeric(18, 2) NULL,
+        total_project_res_cost numeric(18, 2) NULL,
+        total_project_task_hours numeric(18, 2) NULL,
+        total_project_task_cost numeric(18, 2) NULL,
         CONSTRAINT account_fiscal_pkey PRIMARY KEY (rid),
         CONSTRAINT account_fiscal_r_number_key UNIQUE (r_number)
 );
@@ -365,6 +381,19 @@ class SchemaService {
         qualifying_project_rd_credits_subcon_fed numeric(18, 2) NULL,
         qualifying_project_rd_credits_fed numeric(18, 2) NULL,
         region_rid varchar(50) NULL,
+        total_project_res_hours_fte numeric(18, 2) NULL,
+        total_project_res_hours_subcon numeric(18, 2) NULL,
+        total_project_res_cost_fte numeric(18, 2) NULL,
+        total_project_res_cost_subcon numeric(18, 2) NULL,
+        total_project_res_cost_nonlabor numeric(18, 2) NULL,
+        total_project_task_hours_fte numeric(18, 2) NULL,
+        total_project_task_hours_subcon numeric(18, 2) NULL,
+        total_project_task_cost_fte numeric(18, 2) NULL,
+        total_project_task_cost_subcon numeric(18, 2) NULL,
+        total_project_res_hours numeric(18, 2) NULL,
+        total_project_res_cost numeric(18, 2) NULL,
+        total_project_task_hours numeric(18, 2) NULL,
+        total_project_task_cost numeric(18, 2) NULL,
         CONSTRAINT account_fiscal_region_r_number_key UNIQUE (r_number)
       );
     `);
@@ -779,14 +808,13 @@ class SchemaService {
         created_datetime TIMESTAMP DEFAULT NOW(),
         modified_datetime TIMESTAMP,
         eid VARCHAR(120),
-        project_code VARCHAR(50) NOT NULL,
         project_rid VARCHAR(50) NOT NULL,
+        project_fiscal_rid VARCHAR(50) NOT NULL,
         resource_rid VARCHAR(50) NOT NULL,
         fiscal_year integer NOT NULL,
         project_resource_code VARCHAR(100) NOT NULL,
         start_date DATE,
         end_date DATE,
-        resource_code VARCHAR(100),
         resource_name VARCHAR(200),
         resource_type_rid VARCHAR(100),
         designation VARCHAR(100),
@@ -1210,6 +1238,70 @@ class SchemaService {
     `);
   }
 
+  private async createProjectTaskTable(schemaName: string, sequelize: any){
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_tasks_seq START 1`
+    );
+  
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".project_task (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) DEFAULT (('PTA-'::text || lpad(nextval('"${schemaName}".project_tasks_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid varchar(120) NULL,
+        created_by varchar(255) NOT NULL,
+        modified_by varchar(255) NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NULL,
+        account_rid varchar(50) NOT NULL,
+        project_rid varchar(50) NOT NULL,
+        project_fiscal_rid varchar(50) NOT NULL,
+        project_resource_code varchar(50) NOT NULL,
+        resource_rid varchar(50) NOT NULL,
+        fiscal_year int4 NOT NULL,
+        start_date timestamptz NULL,
+        end_date timestamptz NULL,
+        country_rid varchar(50) NULL,
+        region_rid varchar(50) NULL,
+        currency_rid varchar(50) NULL,
+        total_hours_pro_task numeric(18, 2) NULL,
+        total_cost_pro_task numeric(18, 2) NULL,
+        "comments" varchar(2000) NULL,
+        CONSTRAINT project_task_r_number_key UNIQUE (r_number)
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
+  }
+
+  private async createProjectTaskTimeLineTable(schemaName: string, sequelize: any){
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_task_timeline_seq START 1`
+    );
+  
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".project_task_timeline (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) DEFAULT (('PTAT-'::text || lpad(nextval('"${schemaName}".project_task_timeline_seq'::regclass)::text, 10, '0'::text))) NULL,
+        created_by varchar(50) NULL,
+        modified_by varchar(50) NULL,
+        event_datetime timestamptz NOT NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NOT NULL,
+        account_rid varchar(50) NOT NULL,
+        entity_rid varchar(50) NOT NULL,
+        event_name varchar(100) NOT NULL,
+        event_type varchar(100) NOT NULL,
+        event_status varchar(100) NOT NULL,
+        CONSTRAINT project_task_timeline_pkey PRIMARY KEY (rid),
+        CONSTRAINT project_task_timeline_r_number_key UNIQUE (r_number)
+      );
+    `);
+  }
+
   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_history_seq START 1`
@@ -1494,10 +1586,9 @@ class SchemaService {
         project_resource_rid varchar(50) NOT NULL,
         account_rid varchar(50) NOT NULL,
         project_rid varchar(50) NOT NULL,
+        project_fiscal_rid VARCHAR(50) NOT NULL,
         resource_rid varchar(50) NOT NULL,
         fiscal_year integer NOT NULL,
-        project_code varchar(50) NOT NULL,
-        resource_code varchar(100) NOT NULL,
         resource_name varchar(200) NULL,
         resource_type_rid varchar(100) NULL,
         designation varchar(200) NULL,
@@ -1559,10 +1650,9 @@ class SchemaService {
         modified_datetime timestamptz NULL,
         account_rid varchar(50) NOT NULL,
         project_rid varchar(50) NOT NULL,
+        project_fiscal_rid VARCHAR(50) NOT NULL,
         resource_rid varchar(50) NOT NULL,
         fiscal_year integer NOT NULL,
-        project_code varchar(50) NOT NULL,
-        resource_code varchar(100) NOT NULL,
         resource_name varchar(200) NULL,
         resource_type_rid varchar(100) NULL,
         designation varchar(200) NULL,

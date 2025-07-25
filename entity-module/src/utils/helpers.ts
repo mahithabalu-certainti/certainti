@@ -906,12 +906,12 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     newDataArray.push(dataStorage)
   }
   if(requestData.effort_project_task_level != undefined) {
-    newData.effort_project_task_level = requestData.effort_project_task_level != dbData.effort_project_task_level ? requestData.effort_project_task_level : dbData.effort_project_task_level
+    newData.effort_project_task_level = requestData.effort_project_task_level != dbData.total_hours_pro_task ? requestData.effort_project_task_level : dbData.total_hours_pro_task
     dataStorage = `effort_project_task_level = ${newData.effort_project_task_level}`
     newDataArray.push(dataStorage)
   }
   if(requestData.cost_project_task_level != undefined) {
-    newData.cost_project_task_level = requestData.cost_project_task_level != dbData.cost_project_task_level ? requestData.cost_project_task_level : dbData.cost_project_task_level
+    newData.cost_project_task_level = requestData.cost_project_task_level != dbData.total_cost_pro_task ? requestData.cost_project_task_level : dbData.total_cost_pro_task
     dataStorage = `cost_project_task_level = ${newData.cost_project_task_level}`
     newDataArray.push(dataStorage)
   }

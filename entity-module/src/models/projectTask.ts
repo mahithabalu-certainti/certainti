@@ -1,9 +1,5 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
-import  AccountDetails from "./accountDetails";
-import { Project } from "./project";
-import { ProjectResource } from "./projectResource";
-import { Resources } from "./resource";
 
 interface ProjectTaskAttributes {
   rid?: string;
@@ -16,6 +12,7 @@ interface ProjectTaskAttributes {
 
   account_rid: string;
   project_rid: string;
+  project_fiscal_rid: string;
   project_resource_code: string;
   resource_rid: string;
   fiscal_year: number;
@@ -23,21 +20,14 @@ interface ProjectTaskAttributes {
   start_date?: Date | null;
   end_date?: Date | null;
 
-  status_rid: string | null;
   country_rid?: string | null;
   region_rid?: string | null;
   currency_rid?: string | null;
 
-  effort_project_task_level?: number | null;
-  cost_project_task_level?: number | null;
+  total_hours_pro_task?: number | null;
+  total_cost_pro_task?: number | null;
 
-  salary?: number | null;
-  bonus?: number | null;
-  insurance?: number | null;
-  deductions?: number | null;
   comments?: string | null;
-
-  description?: string | null;
 }
 
 type ProjectTaskCreationAttributes = Optional<ProjectTaskAttributes, "rid">;
@@ -47,8 +37,8 @@ export class ProjectTask
   implements ProjectTaskAttributes
 {
   public rid!: string;
-  public r_number!: string;
-  public eid!: string | null;
+  public r_number?: string;
+  public eid?: string;
   public created_by!: string;
   public modified_by?: string;
   public created_datetime!: Date;
@@ -56,70 +46,116 @@ export class ProjectTask
 
   public account_rid!: string;
   public project_rid!: string;
+  public project_fiscal_rid!: string;
   public project_resource_code!: string;
   public resource_rid!: string;
+
   public fiscal_year!: number;
 
-  public start_date?: Date | null;
-  public end_date?: Date | null;
+  public start_date?: Date;
+  public end_date?: Date;
 
-  public status_rid!: string | null;
   public country_rid?: string | null;
   public region_rid?: string | null;
   public currency_rid?: string | null;
 
-  public effort_project_task_level?: number | null;
-  public cost_project_task_level?: number | null;
+  public total_hours_pro_task?: number;
+  public total_cost_pro_task?: number;
 
-  public salary?: number | null;
-  public insurance?: number | null;
-  public deductions?: number | null;
-  public bonus?: number | null;
-  public comments?: string | null;
-  public description?: string | null;
+  public comments?: string;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectTask.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          allowNull: false,
           primaryKey: true,
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
         },
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
           unique: true,
         },
-        eid: { type: DataTypes.STRING(120), allowNull: true },
-        created_by: { type: DataTypes.STRING, allowNull: false },
-        modified_by: { type: DataTypes.STRING },
-        created_datetime: { type: DataTypes.DATE, allowNull: false },
-        modified_datetime: { type: DataTypes.DATE },
-
-        account_rid: { type: DataTypes.STRING(50), allowNull: false },
-        project_rid: { type: DataTypes.STRING(50), allowNull: false },
-        project_resource_code: { type: DataTypes.STRING(100), allowNull: false },
-        resource_rid: { type: DataTypes.STRING(50), allowNull: false },
-        fiscal_year: { type: DataTypes.INTEGER, allowNull: false },
-
-        start_date: { type: DataTypes.DATE },
-        end_date: { type: DataTypes.DATE },
-
-        status_rid: { type: DataTypes.STRING(50) },
-        country_rid: { type: DataTypes.STRING(50) },
-        region_rid: { type: DataTypes.STRING(50) },
-        currency_rid: { type: DataTypes.STRING(50) },
-
-        effort_project_task_level: { type: DataTypes.DECIMAL(18, 2) },
-        cost_project_task_level: { type: DataTypes.DECIMAL(18, 2) },
-
-        salary: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
-        bonus: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
-        insurance: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
-        deductions: { type: DataTypes.DECIMAL(18, 2), allowNull: true },
-        comments: { type: DataTypes.TEXT, allowNull: true},
-        description: { type: DataTypes.STRING(2000), allowNull: true },
+        eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+        created_by: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        account_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_fiscal_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_resource_code: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        resource_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        fiscal_year: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        start_date: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        end_date: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        country_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        region_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        currency_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        total_hours_pro_task: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_cost_pro_task: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        comments: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
       },
       {
         sequelize,
@@ -135,27 +171,27 @@ export class ProjectTask
 
   static associate(models: any) {
     ProjectTask.belongsTo(models.AccountDetails, {
-      foreignKey: 'account_rid',
-      targetKey: 'account_rid',
-      as: 'account'
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account",
     });
 
-    ProjectTask.belongsTo(models.Project, {
-      foreignKey: 'project_rid',
-      targetKey: 'rid',
-      as: 'project'
+    ProjectTask.belongsTo(models.ProjectFiscal, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project",
     });
 
     ProjectTask.belongsTo(models.ProjectResource, {
-      foreignKey: 'project_resource_rid',
-      targetKey: 'rid',
-      as: 'projectResource'
+      foreignKey: "project_resource_rid",
+      targetKey: "rid",
+      as: "projectResource",
     });
 
     ProjectTask.belongsTo(models.Resources, {
-      foreignKey: 'resource_rid',
-      targetKey: 'rid',
-      as: 'resource'
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "resource",
     });
   }
 }
