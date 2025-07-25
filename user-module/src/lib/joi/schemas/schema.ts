@@ -153,7 +153,7 @@ const listActiveUserGroupSchema = Joi.object({
   group_rid:Joi.string().optional().allow('',null),
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
-  filters: Joi.string().default("{}"),
+  filters: Joi.object().default("{}"),
   sortBy: Joi.string().default("first_name"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   account_rid: Joi.alternatives().try(
