@@ -1016,6 +1016,7 @@ export class ProjectTaskSchemaService {
             fiscal_year: fiscalYear,
             project_code: projectData.project_code,
             project_rid: projectData.project_rid,
+            project_fiscal_rid: projectData.rid,
             project_type_rid: projectData.project_type_rid,
             region_rid,
             total_cost_from_tasks: total_cost || null,

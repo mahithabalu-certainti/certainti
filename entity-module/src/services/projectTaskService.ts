@@ -75,7 +75,7 @@ async listProjectTasks(
     });
 
     ProjectTaskModel.belongsTo(ProjectFiscalModel, {
-      foreignKey: 'project_rid',
+      foreignKey: 'project_fiscal_rid',
       targetKey: 'rid',
       as: 'project'
     });
@@ -86,10 +86,16 @@ async listProjectTasks(
       as: 'resource'
     });
 
+let resourceFilter: Record<string, any> | undefined;
+    if (filters.resource_name) {
+    resourceFilter = filters.resource_name;
+    delete filters.resource_name;
+    }
+
     // ✅ Build where clause with project filter
     const { whereClause } = this.buildRawWhereClause(filters, search);
     whereClause[Op.and] = whereClause[Op.and] || [];
-    whereClause[Op.and].push({ project_rid: projectRid });
+    whereClause[Op.and].push({ project_fiscal_rid: projectRid });
     if (projectResourceRid) {
       whereClause[Op.and].push({ project_resource_rid: projectResourceRid });
     }
@@ -165,6 +171,7 @@ async listProjectTasks(
       account_rid: task.account_rid,
       account_name: (task as any).account?.account_name || null,
       project_rid: task.project_rid,
+      project_fiscal_rid: task.project_fiscal_rid,
       project_name: (task as any).project?.project_name || null,
       project_code: (task as any).project?.project_code || null,
       project_resource_code: task.project_resource_code,
@@ -193,8 +200,34 @@ async listProjectTasks(
       modified_datetime: task.modified_datetime
     }));
 
+    // ✅ Handle resource_type_name filter on formattedTasks
+    if (resourceFilter) {
+
+    formattedTasks = formattedTasks.filter(task => {
+    const fieldValue = (task.resource_name ?? "").trim();
+
+    if (resourceFilter.equals !== undefined) {
+      return fieldValue.toLowerCase() === resourceFilter.equals.trim().toLowerCase();
+    }
+    if (resourceFilter.not_equals !== undefined) {
+      return fieldValue.toLowerCase() !== resourceFilter.not_equals.trim().toLowerCase() || fieldValue === null || fieldValue === "";
+    }
+    if (resourceFilter.contains !== undefined) {
+      return fieldValue.toLowerCase().includes(resourceFilter.contains.trim().toLowerCase());
+    }
+    if (resourceFilter.is_empty !== undefined) {
+      return resourceFilter.is_empty
+        ? fieldValue === ""
+        : fieldValue !== "";
+    }
+
+    return true; // No filtering if no valid operator is provided
+  });
+}
+
+
     // ✅ Handle special sorting cases
-    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_cost_pro_task', 'total_hours_pro_task', 'description', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
+    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_cost_pro_task', 'total_hours_pro_task', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -381,7 +414,7 @@ async listProjectTasksExport(
     });
 
     ProjectTaskModel.belongsTo(ProjectFiscalModel, {
-      foreignKey: 'project_rid',
+      foreignKey: 'project_fiscal_rid',
       targetKey: 'rid',
       as: 'project'
     });
@@ -392,10 +425,16 @@ async listProjectTasksExport(
       as: 'resource'
     });
 
+    let resourceFilter: Record<string, any> | undefined;
+    if (filters.resource_name) {
+    resourceFilter = filters.resource_name;
+    delete filters.resource_name;
+    }
+
     // ✅ Build where clause with project filter
     const { whereClause } = this.buildRawWhereClause(filters, search);
     whereClause[Op.and] = whereClause[Op.and] || [];
-    whereClause[Op.and].push({ project_rid: projectRid });
+    whereClause[Op.and].push({ project_fiscal_rid: projectRid });
     if (projectResourceRid) {
       whereClause[Op.and].push({ project_resource_rid: projectResourceRid });
     }
@@ -471,6 +510,7 @@ async listProjectTasksExport(
       account_rid: task.account_rid,
       account_name: (task as any).account?.account_name || null,
       project_rid: task.project_rid,
+      project_fiscal_rid: task.project_fiscal_rid,
       project_name: (task as any).project?.project_name || null,
       project_code: (task as any).project?.project_code || null,
       project_resource_code: task.project_resource_code,
@@ -499,8 +539,33 @@ async listProjectTasksExport(
       modified_datetime: task.modified_datetime
     }));
 
+     // ✅ Handle resource_type_name filter on formattedTasks
+    if (resourceFilter) {
+
+    formattedTasks = formattedTasks.filter(task => {
+    const fieldValue = (task.resource_name ?? "").trim();
+
+    if (resourceFilter.equals !== undefined) {
+      return fieldValue.toLowerCase() === resourceFilter.equals.trim().toLowerCase();
+    }
+    if (resourceFilter.not_equals !== undefined) {
+      return fieldValue.toLowerCase() !== resourceFilter.not_equals.trim().toLowerCase() || fieldValue === null || fieldValue === "";
+    }
+    if (resourceFilter.contains !== undefined) {
+      return fieldValue.toLowerCase().includes(resourceFilter.contains.trim().toLowerCase());
+    }
+    if (resourceFilter.is_empty !== undefined) {
+      return resourceFilter.is_empty
+        ? fieldValue === ""
+        : fieldValue !== "";
+    }
+
+    return true; // No filtering if no valid operator is provided
+  });
+}
+
     // ✅ Handle special sorting cases
-    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_hours_pro_task', 'total_cost_pro_task', 'description', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
+    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_hours_pro_task', 'total_cost_pro_task', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -647,7 +712,6 @@ async listProjectTasksExport(
         "start_date": "Task Date",
         "total_cost_pro_task": "Cost",
         "total_hours_pro_task": "Effort in Hrs",
-        "description": "Task Description",
         "comments": "Comments",
         "region_name": "Region",
         "country_name": "Country",
@@ -770,7 +834,7 @@ async getProjectTaskById(
     });
 
     ProjectTaskModel.belongsTo(ProjectFiscalModel, {
-      foreignKey: 'project_rid',
+      foreignKey: 'project_fiscal_rid',
       targetKey: 'rid',
       as: 'project'
     });
@@ -899,6 +963,7 @@ async getProjectTaskById(
       account_rid: taskWithUserDetails.dataValues.account_rid,
       account_name: taskWithUserDetails.dataValues.account?.account_name || null,
       project_rid: taskWithUserDetails.dataValues.project_rid,
+      project_fiscal_rid: taskWithUserDetails.dataValues.project_fiscal_rid,
       project_name: taskWithUserDetails.dataValues.project?.project_name || null,
       project_code: taskWithUserDetails.dataValues.project?.project_code || null,
       project_resource_rid: taskWithUserDetails.dataValues.project_resource_rid,
@@ -923,7 +988,6 @@ async getProjectTaskById(
       resource_orgname: taskWithUserDetails.dataValues.resource?.resource_orgname,
       total_hours_pro_task: taskWithUserDetails.dataValues.total_hours_pro_task,
       total_cost_pro_task: taskWithUserDetails.dataValues.total_cost_pro_task,
-      description: taskWithUserDetails.dataValues.description,
       comments: taskWithUserDetails.dataValues.comments,
       attachment: mappedAttachments,
       created_datetime: taskWithUserDetails.dataValues.created_datetime,
@@ -1029,7 +1093,6 @@ private buildRawWhereClause(
         }
         break;  
       case 'comments':        
-      case 'description':
       case 'r_number':    
         switch (operator.toLowerCase()) {
           case 'equals': condition[field] = { [Op.iLike]: value }; break;
@@ -1078,7 +1141,6 @@ private buildRawWhereClause(
           case 'is_empty': condition['$resource.resource_type_rid$'] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
         }
         break;  
-      case 'resource_rid':
       case 'project_rid':     
       case 'country_rid':
       case 'region_rid':    

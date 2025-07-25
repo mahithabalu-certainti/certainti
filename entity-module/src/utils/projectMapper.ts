@@ -553,6 +553,7 @@ export class ProjectMapper {
 export class ProjectResourceMapper {
   static mapToProjectResource(
     projectResource: ICreateProjectResource,
+    projectId: any,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     userId: string,
@@ -564,7 +565,8 @@ export class ProjectResourceMapper {
       created_datetime: new Date(),
 
       account_rid: projectResource.account_rid,
-      project_rid: projectResource.project_rid,
+      project_rid: projectId,
+      project_fiscal_rid: projectResource.project_fiscal_rid,
       resource_rid: projectResource.resource_id,
       project_code: projectResource.project_code,
       project_resource_code: projectResourceCode,
@@ -613,6 +615,7 @@ export class ProjectResourceMapper {
 
   static mapToProjectResourceFiscalRegion(
     projectResource: ICreateProjectResource | IUpdateProjectResource,
+    projectId: string,
     fiscalYear: number,
     userId: string,
     resourceId: string
@@ -622,7 +625,8 @@ export class ProjectResourceMapper {
       created_datetime: new Date(),
 
       account_rid: projectResource.account_rid,
-      project_rid: projectResource.project_rid,
+      project_rid: projectId,
+      project_fiscal_rid: projectResource.project_fiscal_rid,
       resource_rid: resourceId,
       fiscal_year: fiscalYear,
 
@@ -654,13 +658,12 @@ export class ProjectResourceMapper {
 
   static mapToProjectFiscal(
     data: any,
-    projectId: string,
+    projectId:any,
     fiscalYear: number,
     userId: string
   ) {
     return {
       project_rid: projectId,
-
       created_datetime: new Date(),
       created_by: userId,
       modified_by: null,
@@ -837,6 +840,7 @@ export class ProjectResourceMapper {
     return {
       project_resource_rid: updateProjectResource.rid,
       project_rid: updateProjectResource.project_rid,
+      project_fiscal_rid: updateProjectResource.project_fiscal_rid,
       account_rid: updateProjectResource.account_rid,
       resource_id: updateProjectResource.resource_rid,
       resource_code: resourceData.resource_code,

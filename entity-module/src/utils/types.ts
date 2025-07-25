@@ -304,7 +304,7 @@ export interface ICreateAttachment {
 
 
 export interface ICreateProjectResource {
-  project_rid: string;
+  project_fiscal_rid: string;
   account_rid: string;
   resource_id: string;
   project_code: string;
@@ -335,7 +335,7 @@ export interface ICreateProjectResource {
 }
 export interface IUpdateProjectResource {
   project_resource_rid: string;
-  project_rid: string;
+  project_fiscal_rid: string;
   account_rid: string;
   resource_id: string;
   resource_code: string;
@@ -365,7 +365,7 @@ export interface IUpdateProjectResource {
 
 export interface IUpdateInlineProjectResource {
   project_resource_rid: string;
-  project_rid: string;
+  project_fiscal_rid: string;
   account_rid: string;
   resource_code?: string;
   resource_name?: string;

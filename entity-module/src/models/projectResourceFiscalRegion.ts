@@ -12,7 +12,7 @@ interface ProjectResourceFiscalRegionAttributes {
 
   account_rid: string;
   project_rid: string;
-  project_fiscal_rid?: string;
+  project_fiscal_rid: string;
   resource_rid: string;
   fiscal_year: number;
 
@@ -76,7 +76,7 @@ export class ProjectResourceFiscalRegion
 
   public account_rid!: string;
   public project_rid!: string;
-  public project_fiscal_rid?: string;
+  public project_fiscal_rid!: string;
   public resource_rid!: string;
   public fiscal_year!: number;
 

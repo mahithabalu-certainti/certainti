@@ -376,7 +376,7 @@ async getAttachments(
       allAttachments.push(...projectResourceAttachments);
 
       const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
-      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_rid]);
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_fiscal_rid]);
       const projectTaskIds = projectTasks.map(t => t.rid);
       if (projectTaskIds.length > 0) {
         const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
@@ -706,7 +706,7 @@ async exportAttachments(
         const resourceCostAttachments = await fetchAttachments(model, 'resource_cost', allResourceCostIds);
         resourceCostSkillAttachments.push(...resourceCostAttachments);
       }
-
+    
       // 🔹 Fetch all resource_skills in one call
       const resourceSkills = await this.resourceSkillService.getResourceSkillsByResourceIds(schemaNumber, resourceIds);
       const allResourceSkillIds = resourceSkills.map(rs => rs.rid);
@@ -783,7 +783,7 @@ async exportAttachments(
       const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
       allAttachments.push(...projectResourceAttachments);
       const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
-      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_rid]);
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_fiscal_rid]);
       const projectTaskIds = projectTasks.map(t => t.rid);
       if (projectTaskIds.length > 0) {
         const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
