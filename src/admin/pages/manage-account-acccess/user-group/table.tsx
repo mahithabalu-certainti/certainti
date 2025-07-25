@@ -200,11 +200,13 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
-        component='Account-Access'
+        component='Manage-Account-Group-Access'
         actionColumnName='Add/Remove'
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
         disabledToggle={disabled}
+        checkedToggleTooltip='Added'
+        unCheckedToggleTooltip='Removed'
       />
     </div>
   );
