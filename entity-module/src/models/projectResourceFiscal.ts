@@ -14,6 +14,7 @@ interface ProjectResourceFiscalAttributes {
   project_resource_rid: string;
   account_rid: string;
   project_rid: string;
+  project_fiscal_rid?: string;
   resource_rid: string;
   fiscal_year: number;
 
@@ -78,6 +79,7 @@ export class ProjectResourceFiscal
   public project_resource_rid!: string;
   public account_rid!: string;
   public project_rid!: string;
+  public project_fiscal_rid?: string;
   public resource_rid!: string;
   public fiscal_year!: number;
   
@@ -142,6 +144,7 @@ export class ProjectResourceFiscal
         project_resource_rid: { type: DataTypes.STRING(50), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         project_rid: { type: DataTypes.STRING(50), allowNull: false },
+        project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: false },
         resource_rid: { type: DataTypes.STRING(50), allowNull: false },
         fiscal_year: { type: DataTypes.INTEGER, allowNull: false },
 
