@@ -456,8 +456,8 @@ async function resourceCostsForFinancialHighlights(req: Request, res: Response):
       value.sortOrder,
       value.accountNumber,
       value.fiscalYear,
-      value.project_rid,
-      value.account_rid
+      value.projectRid,
+      value.accountRid
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
@@ -498,7 +498,7 @@ async function resourceCostsForFinancialHighlights(req: Request, res: Response):
 async function exportResourceCostsForFinancialHighlights(req: Request, res: Response): Promise<void> {
   const methodName = "export resourceCosts";
   try {
-    const { account_rid, project_rid } = req.params;
+    const { accountRid, projectRid } = req.params;
     const value = await validateRequest(
       req,
       exportResourceCostSchemaForFinancialHighlights,
@@ -527,8 +527,8 @@ async function exportResourceCostsForFinancialHighlights(req: Request, res: Resp
       value.sortOrder,
       value.accountNumber,
       value.fiscalYear,
-      value.project_rid,
-      value.account_rid,
+      value.projectRid,
+      value.accountRid,
       userId
     );
 

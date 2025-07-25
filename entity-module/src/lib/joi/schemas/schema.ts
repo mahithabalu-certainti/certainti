@@ -2271,7 +2271,7 @@ const projectTaskByIdSchema = Joi.object({
 
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  projectRid: Joi.string().pattern(uuidRegex).max(255).optional(),
   page: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("1"),
@@ -2282,7 +2282,7 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
   filters: Joi.string().default("{}").optional(),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  account_rid: Joi.string().max(255).required(),
+  accountRid: Joi.string().max(255).required(),
   accountNumber: Joi.string().max(255).required(),
   fiscalYear: Joi.number()
     .integer()
@@ -2299,12 +2299,12 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
 });
 
 const exportResourceCostSchemaForFinancialHighlights = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  projectRid: Joi.string().pattern(uuidRegex).max(255).optional(),
   search: Joi.string().max(255).optional().allow("").allow(null),
   filters: Joi.string().default("{}").optional(),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  account_rid: Joi.string().max(255).required(),
+  accountRid: Joi.string().max(255).required(),
   accountNumber: Joi.string().max(255).required(),
   fiscalYear: Joi.number()
     .integer()

@@ -132,14 +132,14 @@ async function fetchAllImportList(req: Request, res: Response) {
 
 async function exportStagingFailureList (req : Request, res : Response) {
     try {
-        const { account_rid, import_rid, entity_type } = req.params;
+        const { accountRid, importRid, entityType } = req.params;
 
-        const validation = validateStagingErrorListRequest(account_rid, import_rid, entity_type);
+        const validation = validateStagingErrorListRequest(accountRid, importRid, entityType);
         if (validation) {
             return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation);
         }
 
-        const result = await importServices.listAllStageFailures(account_rid, import_rid, entity_type);
+        const result = await importServices.listAllStageFailures(accountRid, importRid, entityType);
 
         if (result.statusCode !== HttpStatus.SUCCESS) {
             return handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
@@ -150,7 +150,7 @@ async function exportStagingFailureList (req : Request, res : Response) {
         let finalPaginatedData: any[] = [];
         let failureType = "";
 
-        switch (entity_type) {
+        switch (entityType) {
             case "project":
                 failureType = "Import - Load Failures - Project";
                 finalPaginatedData = results.map((data) => ({
@@ -273,14 +273,14 @@ async function exportStagingFailureList (req : Request, res : Response) {
 
 async function exportLoadFailureList(req: Request, res: Response) {
     try {
-        const { account_rid, import_rid, entity_type } = req.params;
+        const { accountRid, importRid, entityType } = req.params;
 
-        const validation = validateLoadErrorListRequest(account_rid, import_rid, entity_type);
+        const validation = validateLoadErrorListRequest(accountRid, importRid, entityType);
         if (validation) {
             return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation);
         }
 
-        const result = await importServices.listAllLoadFailures(account_rid, import_rid, entity_type);
+        const result = await importServices.listAllLoadFailures(accountRid, importRid, entityType);
 
         if (result.statusCode !== HttpStatus.SUCCESS) {
             return handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
@@ -291,7 +291,7 @@ async function exportLoadFailureList(req: Request, res: Response) {
         let finalPaginatedData: any[] = [];
         let failureType = "";
 
-        switch (entity_type) {
+        switch (entityType) {
             case "project":
                 failureType = "Import - Load Failures - Project";
                 finalPaginatedData = results.map((data) => ({
