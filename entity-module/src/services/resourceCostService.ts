@@ -42,6 +42,190 @@ class ResourceCostService {
     return this.mainDbSequelize;
   }
 
+/**
+   * Retrieves a paginated list of resource costs for a specific account and fiscal year.
+   * Supports filtering, sorting, and searching functionality.
+   *
+   * @param page - Page number for pagination
+   * @param limit - Number of records per page
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource cost data or error message
+   */
+  async resourceCostsForFinancialHighlights(
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    project_rid: string,
+    account_rid:string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResourceFiscal: any; count: number };
+  }> {
+    try {
+      const offset = (page - 1) * limit;
+      const [finalSortBy, finalSortOrder] =
+        resourceCostSchemaService.getSortParametersForFinancialHighlights(sortBy, sortOrder);
+
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      // Check if account-specific schema exists
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const tableName = "project_resource_fiscal";
+      const schemaAndTableValidation =
+        await resourceCostSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+      const sequelize = await this.getOrgSequelize();
+      if (!sequelize) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Database connection not available"
+        );
+      }
+
+      // Process currency filters if present
+      if (filters && filters.country !== undefined) {
+        const currencyFilterResult =
+          await resourceCostSchemaService.processCountryFilter(filters);
+        if (currencyFilterResult) {
+          return currencyFilterResult;
+        }
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(search);
+      let filterConditions = resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results
+      return await resourceCostSchemaService.executeQueriesForFinancialHighlights(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        limit,
+        offset,
+        search,
+        account_rid,
+        project_rid
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+ /**
+   * Retrieves a  list of resource costs for a specific account and fiscal year for downloadind  as excel.
+   * Supports filtering, sorting, and searching functionality.
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource cost data or error message
+   */
+  async exportResourceCostsForFinancialHighlights(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    project_rid:string,
+    account_rid:string,
+    userId:string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { financialHighlights: any };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        resourceCostSchemaService.getSortParametersForFinancialHighlights(sortBy, sortOrder);
+
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      // Check if account-specific schema exists
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const tableName = "project_resource_fiscal";
+      const schemaAndTableValidation =
+        await resourceCostSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+      const sequelize = await this.getOrgSequelize();
+      if (!sequelize) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Database connection not available"
+        );
+      }
+
+      // Process currency filters if present
+      if (filters && filters.country) {
+        const currencyFilterResult =
+          await resourceCostSchemaService.processCountryFilter(filters);
+        if (currencyFilterResult) {
+          return currencyFilterResult;
+        }
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(search);
+      let filterConditions = resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results
+      return await resourceCostSchemaService.exportresourceCostDetailsForFinancialHighlights(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        search,
+        userId,
+        account_rid,
+        project_rid
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
   /**
    * Retrieves a paginated list of resource costs for a specific account and fiscal year.
    * Supports filtering, sorting, and searching functionality.
