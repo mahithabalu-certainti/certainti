@@ -235,11 +235,11 @@ export const UserTable: React.FC<IUserTableProps> = ({
           )
         );
       } else {
-        errorToast(result?.message || 'Failed to update filed');
+        errorToast(result?.message || 'Failed to update field');
         setUsers(previousUsers);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setUsers(previousUsers);
     }
   };
