@@ -53,6 +53,20 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
+    fiscal_start_date: Joi.string()
+    .pattern(/^\d{2}\/\d{2}$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Fiscal Start Date must be in the format MM/DD",
+    }),
+
+  fiscal_end_date: Joi.string()
+    .pattern(/^\d{2}\/\d{2}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "Fiscal End Date must be in the format MM/DD",
+    }),
   interaction_cc_list: Joi.string().allow(null).label("Interaction CC List"),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
@@ -147,6 +161,20 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }).label("Region"),
+  fiscal_start_date: Joi.string()
+    .pattern(/^\d{2}\/\d{2}$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Fiscal Start Date must be in the format MM/DD",
+    }),
+
+  fiscal_end_date: Joi.string()
+    .pattern(/^\d{2}\/\d{2}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "Fiscal End Date must be in the format MM/DD",
+    }),
   interaction_cc_list: Joi.string().allow(null).label("Interaction cc list"),
   modified_by: Joi.string().max(255).optional(),
   logo_action:Joi.string().max(255).optional().allow("").allow(null),
