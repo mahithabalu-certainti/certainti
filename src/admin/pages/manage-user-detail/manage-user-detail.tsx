@@ -42,34 +42,25 @@ export const ManageUserDetails: React.FC = () => {
     permission,
     AllPermissions.USER_DELETE
   );
+  const isProfileViewEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW_EDIT
+  );
   // const isUserSuspendEnable = checkPermission(
   //   permission,
   //   AllPermissions.USER_SUSPEND
   // );
-  const isUserViewPermissionEnable = checkPermission(
-    permission,
-    AllPermissions.USER_VIEW_PERMISSION
-  );
   // const isUserResetPasswordEnable = checkPermission(
   //   permission,
   //   AllPermissions.USER_RESET_PASSWORD
   // );
-  const isUserAssignPermissionEnable = checkPermission(
-    permission,
-    AllPermissions.USER_ASSIGN_PERMISSION
-  );
 
   const MENU_ITEMS = [
     {
       label: 'Assign Permission to User',
       onClick: () =>
         navigate(ADMIN_MANAGE_USER + '/extended-permission/' + userDetail?.rid),
-      hide: !isUserAssignPermissionEnable,
-    },
-    {
-      label: 'View Permissions',
-      onClick: () => console.log('View Permissions clicked'),
-      hide: !isUserViewPermissionEnable,
+      hide: !isProfileViewEditEnable,
     },
   ];
 

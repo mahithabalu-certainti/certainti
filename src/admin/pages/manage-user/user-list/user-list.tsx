@@ -67,6 +67,10 @@ const UserList: React.FC = () => {
     permission,
     AllPermissions.USER_VIEW_EDIT
   );
+  const isProfileViewEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW_EDIT
+  );
   const isUserDeleteEnable = checkPermission(
     permission,
     AllPermissions.USER_DELETE
@@ -82,14 +86,6 @@ const UserList: React.FC = () => {
   const isUserExportEnable = checkPermission(
     permission,
     AllPermissions.USER_EXPORT
-  );
-  const isUserViewPermissionEnable = checkPermission(
-    permission,
-    AllPermissions.USER_VIEW_PERMISSION
-  );
-  const isUserAssignPermissionEnable = checkPermission(
-    permission,
-    AllPermissions.USER_ASSIGN_PERMISSION
   );
   const userViewEditFields = useMemo(
     () =>
@@ -158,7 +154,7 @@ const UserList: React.FC = () => {
   const MENU_ITEMS = [
     {
       label: 'Assign Permissions to User',
-      hide: !isUserAssignPermissionEnable,
+      hide: !isProfileViewEditEnable,
       onClick: () => {
         if (selectedUserId.length === 1) {
           navigate(
@@ -170,11 +166,6 @@ const UserList: React.FC = () => {
           errorToast('You must select a user to assign permissions.');
         }
       },
-    },
-    {
-      label: 'View Permissions',
-      onClick: () => console.log('View Permissions clicked'),
-      hide: !isUserViewPermissionEnable,
     },
     {
       label: 'Export',

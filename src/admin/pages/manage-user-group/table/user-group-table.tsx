@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
@@ -16,13 +16,14 @@ import { userClient } from '../../../../api/graphql/clients/client';
 import { useManageUserGroupList } from '../../../service';
 import { UPDATE_USER_GROUP } from '../../../../api/graphql/queries/user-group-query';
 import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { AllPermissions } from '../../../../common-service';
 
 interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
   tableParams: UserListParams;
-  isProfileViewEnable?: boolean;
   isProfileEditEnable?: boolean;
-  isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
   refreshUserGroupTrigger?: number;
@@ -31,9 +32,7 @@ interface IUserTableProps {
 export const UserGroupTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
-  // isProfileViewEnable,
   isProfileEditEnable,
-  // isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
   refreshUserGroupTrigger,
@@ -44,6 +43,23 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   const [userGroupUpdate] = useMutation(UPDATE_USER_GROUP, {
     client: userClient,
   });
+
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const userGroupViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.USER_GROUP_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userGroupViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userGroupViewEditFields]);
 
   const { data, isPending, isError } = useManageUserGroupList(
     tableParams,
@@ -168,7 +184,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   return (
     <ListTable
       data={(userGroupList || []) as UserGroupList[]}
-      columns={getUserGroupColumns(prefixGroupName)}
+      columns={getUserGroupColumns(prefixGroupName, permissionMap)}
       getRowId={getRowId}
       hoverHighlight={false}
       tableStyle={{
