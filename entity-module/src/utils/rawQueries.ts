@@ -322,13 +322,19 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
     `
     WITH resource_metrics AS (
         SELECT DISTINCT ON (a.account_rid) 
-            a.total_projects_rd_credits, a.total_fte, a.total_subcon, a.account_rid
+            a.total_projects_rd_credits, a.total_fte, a.total_subcon,
+            SUM(COALESCE(pf.total_nonlabor_prj, 0)) AS  total_nonlabor,
+            a.account_rid
         FROM 
-        ${schemaName}.account_fiscal a 
+        ${schemaName}.account_fiscal a
+        LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
             a.account_rid = '${account_rid}'
             AND
             a.fiscal_year = ${fiscal_year} 
+        GROUP BY
+        a.account_rid,a.total_projects_rd_credits,a.total_fte, a.total_subcon
     ),
     calculate_hours_fte AS (
         SELECT DISTINCT ON (ad.account_rid)
@@ -460,6 +466,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         'metric','No Of Resources',
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
+        'nonlabor', rm.total_nonlabor,
         'total_projects_rd_credits', rm.total_projects_rd_credits
         ) AS resource_metrics,
 
@@ -552,7 +559,8 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         SELECT 
         DISTINCT ON (a.account_rid)  
         SUM(COALESCE(pf.total_fte_prj, 0)) AS total_fte, 
-        SUM(COALESCE(pf.total_subcon_prj, 0)) AS total_subcon, 
+        SUM(COALESCE(pf.total_subcon_prj, 0)) AS total_subcon,
+        SUM(COALESCE(pf.total_nonlabor_prj, 0)) AS total_nonlabor, 
         a.account_rid
         FROM
 		${schemaName}.account_details a
@@ -715,6 +723,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         'metric','No Of Resources',
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
+        'nonlabor', rm.total_nonlabor,
         'total_projects_rd_credits', crcp.total_projects_rd_credits
         ) AS resource_metrics,
 
@@ -1289,6 +1298,268 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         FROM
         ${schemaName}.account_details ad
         LEFT JOIN calculate_rd_credits_projects crcp ON crcp.account_rid = ad.account_rid
+        LEFT JOIN calculate_resource_metrics rm ON rm.account_rid = ad.account_rid
+        LEFT JOIN calculate_hours_fte chf ON chf.account_rid = ad.account_rid
+        LEFT JOIN calculate_cost_fte ccf ON ccf.account_rid = ad.account_rid
+        LEFT JOIN calculate_hours_subcon csh ON csh.account_rid = ad.account_rid
+        LEFT JOIN calculate_cost_subcon scc ON scc.account_rid = ad.account_rid
+        LEFT JOIN calculate_cost_nonlabor ccn ON ccn.account_rid = ad.account_rid
+        LEFT JOIN calculate_rd_credits_federal rdf ON rdf.account_rid = ad.account_rid
+        LEFT JOIN calculate_rd_credits_statewise rds ON rds.account_rid = ad.account_rid
+        LEFT JOIN calculate_rd_credits_total trd ON trd.account_rid = ad.account_rid
+        WHERE
+        ad.account_rid = '${account_rid}'
+    `
+    return query
+}
+
+export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : string, fiscal_year : number, project_fiscal_rid : string) => {
+    let query = 
+    `
+    WITH calculate_resource_metrics AS (
+        SELECT 
+        DISTINCT ON (a.account_rid)  
+        COALESCE(pf.total_fte_prj, 0) AS total_fte, 
+        COALESCE(pf.total_subcon_prj, 0) AS total_subcon,
+        COALESCE(pf.total_nonlabor_prj, 0) AS total_nonlabor,
+        p.project_name,
+        a.account_rid,
+        pf.claim_status
+        FROM
+		${schemaName}.account_details a
+        LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+        WHERE 
+        a.account_rid = '${account_rid}'
+        AND
+        pf.fiscal_year = ${fiscal_year}
+        AND
+		pf.rid = '${project_fiscal_rid}'
+		GROUP BY
+		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj, p.project_name, pf.claim_status
+    ),
+    calculate_hours_fte AS (
+        SELECT DISTINCT ON (ad.account_rid)
+                ad.account_rid,
+                COALESCE(pf.total_effort_fte_prj,0) AS project_level, 
+                COALESCE(pf.total_effort_fte_from_prj_res,0) AS project_resource_level, 
+                COALESCE(pf.total_effort_fte_from_tasks,0) AS project_task_level
+            FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid,pf.total_effort_fte_prj,pf.total_effort_fte_from_prj_res,pf.total_effort_fte_from_tasks 
+    ),
+    calculate_hours_subcon AS (
+        SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            COALESCE(pf.total_effort_subcon_prj,0) AS project_level, 
+            COALESCE(pf.total_effort_subcon_from_prj_res,0) AS project_resource_level, 
+            COALESCE(pf.total_effort_subcon_from_tasks,0) AS project_task_level
+            FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid, pf.total_effort_subcon_prj,pf.total_effort_subcon_from_prj_res, pf.total_effort_subcon_from_tasks
+            ),
+    calculate_cost_fte AS (
+        SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            COALESCE(pf.total_cost_fte_prj,0) AS project_level, 
+            COALESCE(pf.total_cost_fte_from_prj_res,0) AS project_resource_level, 
+            COALESCE(pf.total_cost_fte_from_tasks,0) AS project_task_level
+        FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid, pf.total_cost_fte_prj, pf.total_cost_fte_from_prj_res, pf.total_cost_fte_from_tasks
+    ),
+    calculate_cost_subcon AS (
+        SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            COALESCE(pf.total_cost_subcon_prj,0) AS project_level, 
+            COALESCE(pf.total_cost_subcon_from_prj_res,0) AS project_resource_level, 
+            COALESCE(pf.total_cost_subcon_from_tasks,0) AS project_task_level
+        FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid, pf.total_cost_subcon_prj, pf.total_cost_subcon_from_prj_res, pf.total_cost_subcon_from_tasks
+    ),
+    calculate_cost_nonlabor AS (
+    SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            COALESCE(pf.total_cost_nonlabor_prj,0) AS project_level, 
+            COALESCE(pf.total_cost_nonlabor_from_prj_res,0) AS project_resource_level
+        FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid, pf.total_cost_nonlabor_prj, pf.total_cost_nonlabor_from_prj_res
+    ),
+    calculate_rd_credits_federal AS (
+        SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            COALESCE(pf.rd_credits_fte_fed_level,0) AS rd_credits_fte,
+            COALESCE(pf.rd_credits_subcon_fed_level,0) AS rd_credits_subcon,
+            COALESCE(pf.rd_credits_nonlabor_fed_level, 0) AS rd_credits_nonlabor,
+            COALESCE(pf.rd_credits_total) AS rd_credits_total
+        FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid, pf.rd_credits_fte_fed_level, pf.rd_credits_subcon_fed_level,pf.rd_credits_nonlabor_fed_level,pf.rd_credits_total  
+    ),
+    calculate_rd_credits_statewise AS (
+    SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            COALESCE(pf.qre_fte,0) AS qre_fte,
+            COALESCE(pf.qre_subcon,0) AS qre_subcon,
+            COALESCE(pf.qre_nonlabor, 0) AS qre_nonlabor,
+            COALESCE(pf.qre_final, 0) AS qre_final
+        FROM
+            ${schemaName}.account_details ad
+			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid, pf.qre_fte, pf.qre_subcon, pf.qre_nonlabor, pf.qre_final
+    ),
+    calculate_rd_credits_total AS (
+            SELECT DISTINCT ON (ad.account_rid) ad.account_rid, 
+            COALESCE(pf.rd_percent_potential_ai,0) AS rd_percent_potential,
+            COALESCE(pf.rd_percent_adjustment,0) AS rd_percent_adjustment,
+            COALESCE(pf.rd_percent_final,0) AS rd_percent_final
+        FROM
+            ${schemaName}.account_details ad
+			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid,pf.rd_percent_potential_ai,pf.rd_percent_adjustment,pf.rd_percent_final
+        )
+    
+    SELECT 
+        jsonb_build_object(
+        'metric','No Of Resources',
+        'fte', rm.total_fte,
+        'subcon', rm.total_subcon,
+        'nonlabor', rm.total_nonlabor,
+        'project_name', rm.project_name,
+        'claim_status', rm.claim_status
+        ) AS resource_metrics,
+
+        jsonb_build_object(
+        'metric_name', 'FTE Hours',
+        'project_level', chf.project_level,
+        'project_resource_level', chf.project_resource_level,
+        'project_task_level', chf.project_task_level
+        ) AS fte_hours,
+
+        jsonb_build_object(
+        'metric_name', 'FTE Cost',
+        'project_level', ccf.project_level,
+        'project_resource_level', ccf.project_resource_level,
+        'project_task_level', ccf.project_task_level
+        ) AS fte_cost,
+
+        jsonb_build_object(
+        'metric_name', 'Sub Con Hours',
+        'project_level', csh.project_level,
+        'project_resource_level', csh.project_resource_level,
+        'project_task_level', csh.project_task_level
+        ) AS subcon_hours,
+
+        jsonb_build_object(
+        'metric_name', 'Sub Con Cost',
+        'project_level', scc.project_level,
+        'project_resource_level', scc.project_resource_level,
+        'project_task_level', scc.project_task_level
+        ) AS subcon_cost,
+
+        jsonb_build_object(
+        'metric_name', 'Non Labor Cost',
+        'project_level', ccn.project_level,
+        'project_resource_level', ccn.project_resource_level
+        ) AS nonlabor_cost,
+
+        jsonb_build_object(
+        'name', 'rd_credits',
+        'rd_credits_fte', rdf.rd_credits_fte,
+        'rd_credits_subcon', rdf.rd_credits_subcon,
+        'rd_credits_nonlabor', rdf.rd_credits_nonlabor,
+        'rd_credits_total', rdf.rd_credits_total
+        ) AS rd_credits,
+
+        jsonb_build_object(
+        'name' ,'qre',
+        'qre_fte', rds.qre_fte,
+        'qre_subcon', rds.qre_subcon,
+        'qre_nonlabor', rds.qre_nonlabor,
+        'qre_final', rds.qre_final
+        ) AS qre,
+
+        jsonb_build_object(
+        'name','rd_percent',
+        'rd_percent_potential', trd.rd_percent_potential,
+        'rd_percent_adjustment', trd.rd_percent_adjustment,
+        'rd_percent_final', trd.rd_percent_final
+        ) AS rd_percent
+        
+        FROM
+        ${schemaName}.account_details ad
         LEFT JOIN calculate_resource_metrics rm ON rm.account_rid = ad.account_rid
         LEFT JOIN calculate_hours_fte chf ON chf.account_rid = ad.account_rid
         LEFT JOIN calculate_cost_fte ccf ON ccf.account_rid = ad.account_rid
