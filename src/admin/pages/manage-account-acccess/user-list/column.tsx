@@ -1,11 +1,9 @@
 import { ListTableColumn } from '../../../../components/table/types';
-import {
-  ManageAccountList,
-  ManageAccountsUserList,
-} from '../../../types/manage-account';
+import { ManageAccountsUserList } from '../../../types/manage-account';
 
 export const manageUserListColumns = (
-  onClick: (row: ManageAccountsUserList) => void
+  onClick: (row: ManageAccountsUserList) => void,
+  addedAccounts: string[]
 ): ListTableColumn<ManageAccountsUserList>[] => [
   {
     id: 'first_name',
@@ -23,15 +21,19 @@ export const manageUserListColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ManageAccountList) => {
+    render: (row: ManageAccountsUserList) => {
+      const isAlreadyAdded =
+        Array.isArray(addedAccounts) && addedAccounts.includes(row.rid);
       return (
         <span
-          style={{
-            color: '#2D3E4F',
-            fontWeight: 500,
-            cursor: 'pointer',
+          onClick={() => {
+            if (isAlreadyAdded) onClick(row);
           }}
-          onClick={() => onClick(row as unknown as ManageAccountsUserList)}
+          className={
+            isAlreadyAdded
+              ? 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+              : ''
+          }
         >
           {row.first_name}
         </span>

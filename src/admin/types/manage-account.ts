@@ -75,7 +75,7 @@ export interface ManageAccountGroupListApiResponse extends CommonApiResponse {
 export interface ManageAccountProjectListApiResponse extends CommonApiResponse {
   data: {
     projects: ManageAccountsProjectList[];
-    count: number;
+    totalCount: number;
   };
 }
 type Industry = {
@@ -88,7 +88,7 @@ type Country = {
   country_name: string;
 };
 export type ManageAccountList = {
-  rid?: string;
+  rid: string;
   industry_name_other?: string;
   group_name?: string;
   is_consultant_only_group?: boolean;

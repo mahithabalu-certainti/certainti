@@ -86,8 +86,8 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
             overflow: 'auto',
           }}
           stickyHeader={true}
-          stickyColumnsCount={10}
-          selectable={true}
+          stickyColumnsCount={1}
+          selectable={false}
           expandAllParent={false}
           expandable={true}
           childrenKey='child_accounts'

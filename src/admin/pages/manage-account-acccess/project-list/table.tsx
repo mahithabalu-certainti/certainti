@@ -31,8 +31,8 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
   const groupname = searchParams.get('groupname');
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
-    sortBy: 'project_name',
-    sortOrder: 'DESC',
+    sortBy: 'project_code',
+    sortOrder: 'ASC',
     access_type: type,
     page: 1,
     limit: 100,
@@ -56,6 +56,8 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
       filters: appliedFilters,
     }
   );
+  const totalCount = data?.data?.totalCount || 0;
+
   useEffect(() => {
     if (data) {
       const usersWithColor = (data?.data?.projects || []).map((user) => ({
@@ -122,19 +124,12 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
           height: '100%',
           maxHeight: 'calc(100vh - 180px)',
           overflow: 'auto',
+          borderTop: '1px solid #CBD6E2',
         }}
         stickyHeader={true}
-        stickyColumnsCount={2}
-        selectable={true}
-        expandAllParent={true}
-        expandable={true}
-        childrenKey='ProjectFiscal'
-        maxNestingLevel={2}
-        editDisableLevel={[0]}
-        onSelectionChange={(selectedIds) =>
-          console.log('Selected:', selectedIds)
-        }
-        actionWidth={130}
+        stickyColumnsCount={1}
+        selectable={false}
+        actionWidth={270}
         actionDisplayMode={hide ? undefined : 'toggle'}
         actionMenuItems={[]}
         loading={isLoading}
@@ -142,7 +137,7 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
-        totalItems={10}
+        totalItems={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={tableParams.sortBy}

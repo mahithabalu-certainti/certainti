@@ -34,7 +34,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
   const navigate = useNavigate();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
     sortBy: 'first_name',
-    sortOrder: 'DESC',
+    sortOrder: 'ASC',
     entity_type: 'ACCOUNT',
     page: 1,
     limit: 100,
@@ -50,6 +50,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
       page: newPage + 1,
     }));
   };
+  console.log('addedAccounts', addedAccounts);
   const updateAccountAccessList = useUpdateAccountAccesseDetails();
   const commonSuccess = updateAccountAccessList.isSuccess;
   const accountId = searchParams.get('accountid') || '';
@@ -65,6 +66,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
     },
     accountId
   );
+  const totalCount = data?.data?.count || 0;
   useEffect(() => {
     if (data) {
       const usersWithColor = (data?.data?.users || []).map((user) => ({
@@ -132,7 +134,10 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
-  const projectColumns = manageUserListColumns(handleAccountName);
+  const projectColumns = manageUserListColumns(
+    handleAccountName,
+    addedAccounts
+  );
 
   const toggleProjects = (rowId: string, checked: boolean) => {
     const previousUserList = [...userList];
@@ -217,7 +222,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
-        totalItems={10}
+        totalItems={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={tableParams.sortBy}

@@ -2,7 +2,8 @@ import { ListTableColumn } from '../../../../components/table/types';
 import { ManageAccountsGroupList } from '../../../types/manage-account';
 
 export const manageUserGroupColumns = (
-  onClick: (row: ManageAccountsGroupList) => void
+  onClick: (row: ManageAccountsGroupList) => void,
+  addedAccounts: string[]
 ): ListTableColumn<ManageAccountsGroupList>[] => [
   {
     id: 'group_name',
@@ -23,17 +24,19 @@ export const manageUserGroupColumns = (
     },
     render: (row: ManageAccountsGroupList) => {
       const isDisabled = row.isDisabledToggle;
+      const isAlreadyAdded =
+        Array.isArray(addedAccounts) && addedAccounts.includes(row.rid);
 
       return (
         <span
-          style={{
-            color: '#2D3E4F',
-            fontWeight: 500,
-            cursor: isDisabled ? 'default' : 'pointer',
-          }}
           onClick={() => {
-            if (!isDisabled) onClick(row);
+            if (!isDisabled && isAlreadyAdded) onClick(row);
           }}
+          className={
+            isDisabled && isAlreadyAdded
+              ? ''
+              : 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+          }
         >
           {row.group_name}
         </span>

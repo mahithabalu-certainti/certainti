@@ -9,7 +9,7 @@ export const manageAccountListColumns = (
     label: 'Account Name',
     sortable: true,
     sortId: 'account_name',
-    width: 230,
+    width: 380,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -38,7 +38,7 @@ export const manageAccountListColumns = (
     id: 'industry',
     sortId: 'industry',
     label: 'Industry',
-    width: 200,
+    width: 300,
     sortable: true,
     render: (row: AccountList) =>
       row?.industry_name_other
@@ -50,7 +50,7 @@ export const manageAccountListColumns = (
     editId: 'country_rid',
     sortId: 'country',
     label: 'Country',
-    width: 180,
+    width: 250,
     sortable: true,
     render: (row: AccountList) => row.country?.country_name || '-',
   },

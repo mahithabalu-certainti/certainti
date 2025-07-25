@@ -33,7 +33,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   const navigate = useNavigate();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
     sortBy: 'frist_name',
-    sortOrder: 'DESC',
+    sortOrder: 'ASC',
     entity_type: 'Account',
     page: 1,
     limit: 100,
@@ -165,7 +165,10 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
       return updatedProjects;
     });
   };
-  const projectColumns = manageUserGroupColumns(handleAccountName);
+  const projectColumns = manageUserGroupColumns(
+    handleAccountName,
+    addedAccounts
+  );
 
   return (
     <div className='pt-1'>
@@ -180,7 +183,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
           overflow: 'auto',
         }}
         stickyHeader
-        stickyColumnsCount={2}
+        stickyColumnsCount={1}
         selectable={false}
         onSelectionChange={(selectedIds) =>
           console.log('Selected:', selectedIds)

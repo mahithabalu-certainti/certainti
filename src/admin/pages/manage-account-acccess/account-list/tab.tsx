@@ -1,6 +1,9 @@
 import { useSearchParams } from 'react-router-dom';
 import { ManageAccountListTable } from '../project-list/table';
 import { FilterType } from '../../../types';
+import Users from '../../../../components/tab/user';
+import { ManageAccountUserListTable } from '../user-list/table';
+import { ManageAccountUserGroupTable } from '../user-group/table';
 
 interface UserTabProps {
   type?: string;
@@ -19,7 +22,7 @@ const UserTab: React.FC<UserTabProps> = ({
   type,
   setAddedProjects,
   appliedFilters,
-  // setAppliedFilters,
+  setAppliedFilters,
   disabled,
   hide,
 }) => {
@@ -30,7 +33,7 @@ const UserTab: React.FC<UserTabProps> = ({
     <div>
       {!accountList && (
         <div className=''>
-          {/* <Users
+          <Users
             tabs={[
               {
                 label: 'Users',
@@ -55,7 +58,7 @@ const UserTab: React.FC<UserTabProps> = ({
                 ),
               },
             ]}
-          /> */}
+          />
         </div>
       )}
       {accountList && (
