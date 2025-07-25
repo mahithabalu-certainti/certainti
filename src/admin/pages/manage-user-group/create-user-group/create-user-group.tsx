@@ -368,6 +368,7 @@ export const CreateUserGroup: React.FC = () => {
       account_rid: selectedAccounts,
       limit: userParams.limit?.toString() as string,
       page: userParams.page?.toString() as string,
+      group_rid: groupId as string
     });
   };
   const validateGroupName = (value: string) => {
