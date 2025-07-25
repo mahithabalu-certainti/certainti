@@ -182,17 +182,6 @@ export const transformFormData = (
     total_effort_subcon: String(formData.total_effort_subcon) || null,
     total_cost_fte: String(formData.total_cost_fte) || null,
     total_cost_subcon: String(formData.total_cost_subcon) || null,
-    auto_send_ai_interaction:
-      String(formData.auto_send_ai_interaction) === 'Yes',
-    auto_access_rd: String(formData.auto_access_rd) === 'Yes',
-    max_ai_interaction:
-      parseNullableNumber(formData.max_ai_interaction) || null,
-    blended_rate_fte: formData.blended_rate_fte
-      ? `${formData.blended_rate_fte}`
-      : null,
-    blended_rate_subcon: formData.blended_rate_subcon
-      ? `${formData.blended_rate_subcon}`
-      : null,
     comments: formData.comments || '',
     key_contacts:
       keyContactsTransformPayload(

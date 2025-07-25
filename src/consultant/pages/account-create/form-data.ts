@@ -3,7 +3,6 @@ import { FieldType, FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS } from './utils';
 import {
   createButton,
-  createEmptyField,
   createFiscalDateField,
   createImgButton,
   createRadioField,
@@ -169,7 +168,6 @@ export const AccFormData = (
   parentAccount: SelectOption[],
   currency: SelectOption[],
   state: SelectOption[],
-  dataResidency: SelectOption[],
   industrys: SelectOption[],
   isParentAccountRequired: boolean,
   keyContacts: FieldType[],
@@ -519,96 +517,6 @@ export const AccFormData = (
                 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-          }),
-          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
-            required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            disabled:
-              isEditView &&
-              permissionMap?.['blended_rate_fte']?.read &&
-              !permissionMap?.['blended_rate_fte']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['blended_rate_fte']?.read &&
-              !permissionMap?.['blended_rate_fte']?.edit,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            placeholder: 'Enter Blended Rate - FTE',
-          }),
-          createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
-            required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            disabled:
-              isEditView &&
-              permissionMap?.['blended_rate_subcon']?.read &&
-              !permissionMap?.['blended_rate_subcon']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['blended_rate_subcon']?.read &&
-              !permissionMap?.['blended_rate_subcon']?.edit,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            placeholder: 'Enter Blended Rate - SubCon',
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-          }),
-          createRadioField('auto_access_rd', 'Auto Assessment', {
-            radioOptions: YES_NO_OPTIONS,
-            required: true,
-            disabled:
-              isEditView &&
-              permissionMap?.['auto_access_rd']?.read &&
-              !permissionMap?.['auto_access_rd']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['auto_access_rd']?.read &&
-              !permissionMap?.['auto_access_rd']?.edit,
-          }),
-          createRadioField('autosend_interaction', 'Auto Send Interaction', {
-            radioOptions: YES_NO_OPTIONS,
-            required: true,
-            disabled:
-              isEditView &&
-              permissionMap?.['autosend_interaction']?.read &&
-              !permissionMap?.['autosend_interaction']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['autosend_interaction']?.read &&
-              !permissionMap?.['autosend_interaction']?.edit,
-          }),
-          createTextField('max_ai_interactions', 'Max Interaction Follow Up', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTERACTIONS,
-            regexErrorMessage:
-              'Max Interaction Follow Up must be between 1 and 10',
-            placeholder: 'Enter Max Interaction Follow Up',
-            disabled:
-              isEditView &&
-              permissionMap?.['max_ai_interactions']?.read &&
-              !permissionMap?.['max_ai_interactions']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['max_ai_interactions']?.read &&
-              !permissionMap?.['max_ai_interactions']?.edit,
-          }),
-          createRadioField('data_storage', 'Data Residency', {
-            required: true,
-            radioOptions: dataResidency,
-            disabled: isEditView,
-            hide:
-              isEditView &&
-              !permissionMap?.['data_storage']?.read &&
-              !permissionMap?.['data_storage']?.edit,
-          }),
         ],
       },
       {
@@ -697,7 +605,6 @@ export const AccFormData = (
       state,
       stateLoading,
       currency,
-      dataResidency,
       showOthersField,
       keyContacts,
       addNewKeyContact,

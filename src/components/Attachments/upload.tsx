@@ -135,9 +135,18 @@ const Uploads: React.FC<UploadsProps> = ({
         setLoading(false);
       }
     } catch (error) {
-      errorToast(
-        error instanceof Error ? error.message : 'Failed to upload the file.'
-      );
+      if (
+        (error as { response?: { status?: number } })?.response?.status === 400
+      ) {
+        const message =
+          (error as { response?: { data?: { statusMessage?: string } } })
+            ?.response?.data?.statusMessage || 'Upload failed.';
+        errorToast(message);
+      } else {
+        errorToast(
+          error instanceof Error ? error.message : 'Failed to upload the file.'
+        );
+      }
       showError('Failed to upload the file.');
       setLoading(false);
     }

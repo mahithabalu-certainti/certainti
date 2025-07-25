@@ -7,6 +7,7 @@ export type MenuItem = {
   hide?: boolean;
   disabled?: boolean;
   icon?: React.ElementType;
+  subMenu?: MenuItem[];
 };
 
 export type SidebarProps = {

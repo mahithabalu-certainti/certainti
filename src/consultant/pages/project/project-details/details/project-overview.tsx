@@ -286,51 +286,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
   ];
 
-  const settingInfo: DetailItem[] = [
-    {
-      key: 'blended_rate_fte',
-      label: 'Blended Rate - FTE',
-      value: costDisplay(
-        projectDetails?.blended_rate_fte,
-        projectDetails?.currency_symbol
-      ),
-    },
-    {
-      key: 'blended_rate_subcon',
-      label: 'Blended Rate - SubCon',
-      value: costDisplay(
-        projectDetails?.blended_rate_subcon,
-        projectDetails?.currency_symbol
-      ),
-    },
-    { label: '', value: 'empty' },
-    {
-      key: 'auto_access_rd',
-      label: 'Auto Assessment',
-      value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
-    },
-    {
-      key: 'autosend_interaction',
-      label: 'Auto Send Interaction',
-      value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
-    }, // need to Discuss
-
-    {
-      key: 'max_ai_interactions',
-      label: 'Max Interaction Follow up',
-      value: projectDetails?.max_ai_interaction,
-    },
-  ];
-
   const IdentityDetails = applyHidePermission(basicInfo, permissionMap);
   const descriptionDetails = applyHidePermission(description, permissionMap);
   const locationInfoDetails = applyHidePermission(locationInfo, permissionMap);
   const financialInfoDetails = applyHidePermission(
     financialInfo,
-    permissionMap
-  );
-  const settingInfoInfoDetails = applyHidePermission(
-    settingInfo,
     permissionMap
   );
 
@@ -421,10 +381,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           <DetailsSection
             title='Financial Information'
             data={financialInfoDetails as DetailItem[]}
-          />
-          <DetailsSection
-            title='Project Settings'
-            data={settingInfoInfoDetails as DetailItem[]}
           />
           {!commentsHide && (
             <DetailsSection

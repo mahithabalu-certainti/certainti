@@ -23,23 +23,29 @@ const SkeletonInput: React.FC<SkeletonInputProps> = ({
 
 interface SkeletonFormProps {
   sectionCount?: number;
+  showSectionHead?: boolean;
 }
 
-const SkeletonForm: React.FC<SkeletonFormProps> = ({ sectionCount = 2 }) => {
+const SkeletonForm: React.FC<SkeletonFormProps> = ({
+  sectionCount = 2,
+  showSectionHead = true,
+}) => {
   return (
     <div className='flex flex-col gap-4'>
       {Array.from({ length: sectionCount }).map((_, sectionIndex) => (
         <div key={sectionIndex}>
-          <div
-            className={`${sectionIndex === 0 ? 'border-b' : 'border'} mb-1 h-[30px] border-[#CBD6E2] flex items-center justify-start py-1 bg-[#ECECEC] px-10`}
-          >
-            <Skeleton
-              variant='rectangular'
-              width='10%'
-              height={10}
-              sx={{ borderRadius: '2px' }}
-            />
-          </div>
+          {showSectionHead && (
+            <div
+              className={`${sectionIndex === 0 ? 'border-b' : 'border'} mb-1 h-[30px] border-[#CBD6E2] flex items-center justify-start py-1 bg-[#ECECEC] px-10`}
+            >
+              <Skeleton
+                variant='rectangular'
+                width='10%'
+                height={10}
+                sx={{ borderRadius: '2px' }}
+              />
+            </div>
+          )}
 
           <div className='p-10 py-2'>
             <Grid container spacing={2}>

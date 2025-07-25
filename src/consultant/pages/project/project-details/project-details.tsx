@@ -19,7 +19,9 @@ import {
   ProjectDetailsIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TechSummaryIcon,
+  ConfigIcon,
 } from '../../../../assets';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
@@ -40,6 +42,8 @@ import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../../types/attachment';
+import { Configuration } from './configuration';
+import { Financial } from './financial-highlights';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -119,6 +123,29 @@ const sideMenuItems: MenuItem[] = [
     disabled: false,
     icon: ChecklistIcon,
   },
+  {
+    name: 'Configuration',
+    key: 'configuration',
+    id: AllMenus.CONFIGURATION,
+    disabled: false,
+    icon: ConfigIcon,
+    subMenu: [
+      {
+        name: 'Users',
+        key: 'users',
+        id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+        disabled: false,
+        icon: ResourcesIcon,
+      },
+      {
+        name: 'Settings',
+        key: 'settings',
+        id: AllMenus.PROJECT_SETTINGS,
+        disabled: false,
+        icon: SettingIcon,
+      },
+    ],
+  },
 ];
 
 export const ProjectDetails = () => {
@@ -146,6 +173,7 @@ export const ProjectDetails = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const projectDownloadIsEnable = checkPermission(
     permission,
@@ -180,6 +208,7 @@ export const ProjectDetails = () => {
     projectID || '',
     refreshProjectDetails
   );
+
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
@@ -190,18 +219,13 @@ export const ProjectDetails = () => {
 
   useEffect(() => {
     if (data?.data) {
+      const project = data.data.project;
       setProjectDetails(transformProjectData(data.data));
-      setProjectData(data.data.project);
+      setProjectData(project);
       setFiscalYear({
-        year: data.data.project.fiscal_year,
-        startDate: formatDate(
-          data.data.project.fiscal_year,
-          data.data.project.fiscal_start_date
-        ),
-        endDate: formatDate(
-          data.data.project.fiscal_year,
-          data.data.project.fiscal_end_date
-        ),
+        year: project.fiscal_year,
+        startDate: formatDate(project.fiscal_year, project.fiscal_start_date),
+        endDate: formatDate(project.fiscal_year, project.fiscal_end_date),
       });
     }
   }, [data]);
@@ -288,7 +312,7 @@ export const ProjectDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <NotFound />;
+        return <Financial projectDetails={projectData} />;
       case 'projectDetails':
         return (
           <ProjectDetailsData
@@ -335,6 +359,8 @@ export const ProjectDetails = () => {
         );
       case 'checklists':
         return <NotFound />;
+      case 'configuration':
+        return <Configuration />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
