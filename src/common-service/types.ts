@@ -199,6 +199,8 @@ export enum AllPermissions {
   IMPORTS_VIEW_EDIT = 'imports_view_edit',
   IMPORTS_EXPORT = 'imports_export',
   MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
+  PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
+  PROJECT_FINANCIAL_TIMELINE = 'project_financial_timeline',
 }
 
 export interface Country {

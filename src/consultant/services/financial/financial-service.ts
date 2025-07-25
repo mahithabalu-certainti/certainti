@@ -1,34 +1,43 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { ProjectFinancialSummary } from '../../types';
-import { mockProjectFinancialSummay } from '../../pages/project/project-details/financial-highlights/mock-response';
+import {
+  ProjectFinancialSummary,
+  ProjectFinancialSummaryListParams,
+  ProjectFinancialSummaryResponse,
+} from '../../types';
+import { resourceServiceApi } from '../../../api/api';
 
-// const FinancialSummaryURL = (accountId: string, projectId: string) => {
-//   return `/api/financial-summary/detail/${accountId}/${projectId}`;
-// };
+const FinancialSummaryURL = () => {
+  return `/api/financialHighlight/project`;
+};
 
 export const fetchProjectFinancialSummary = async (
-  accountId: string,
-  projectId: string
+  params: ProjectFinancialSummaryListParams
 ): Promise<ProjectFinancialSummary> => {
-  //   const response =
-  //     await resourceServiceApi.get<ProjectFinancialSummaryResponse>(
-  //       FinancialSummaryURL(accountId, projectId)
-  //     );
-  //   return response.data.data
-  console.log(accountId, projectId);
-  return mockProjectFinancialSummay.data;
+  const response =
+    await resourceServiceApi.post<ProjectFinancialSummaryResponse>(
+      FinancialSummaryURL(),
+      params
+    );
+  return response.data.data;
 };
 
 export const useProjectFinancialSummary = (
-  accountId: string,
-  projectId: string,
+  params: ProjectFinancialSummaryListParams,
   refreshSummary?: number
 ): UseQueryResult<ProjectFinancialSummary, Error> => {
   return useQuery<ProjectFinancialSummary, Error>({
-    queryKey: ['projectFinancialSummary', projectId, accountId, refreshSummary],
-    queryFn: () => fetchProjectFinancialSummary(accountId, projectId),
+    queryKey: [
+      'projectFinancialSummary',
+      params.account_rid,
+      params.project_fiscal_rid,
+      refreshSummary,
+    ],
+    queryFn: () => fetchProjectFinancialSummary(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!projectId && !!accountId,
+    enabled:
+      !!params.account_rid &&
+      !!params.project_fiscal_rid &&
+      !!params.fiscal_year,
   });
 };

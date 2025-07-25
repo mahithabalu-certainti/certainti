@@ -75,6 +75,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
+  loadindRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -93,13 +94,13 @@ const ListTable = <T extends RowData>({
   // Expansion
   expandAllParent = false,
   expandAllChild = false,
+  showEmptyRow = true,
   actionColumnName,
   toggleData,
   disabledToggle,
   checkedToggleTooltip,
   unCheckedToggleTooltip,
   toggleClick,
-  showEmptyRow = true,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -962,11 +963,12 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  component === 'account'
+                  loadindRowCount ||
+                  (component === 'account'
                     ? 20
                     : rowsPerPage > 20
                       ? 20
-                      : rowsPerPage
+                      : rowsPerPage)
                 }
                 columnsCount={
                   visibleColumns.length + (conditionMenuItems ? 1 : 0)
@@ -1120,7 +1122,7 @@ const ListTable = <T extends RowData>({
                             column.editable
                           : column.editable;
                         const isFirstDataColumn =
-                          column.id === visibleColumns[0].id;
+                          column.id === visibleColumns[0].id && expandable;
                         const isChildRows = isFirstDataColumn && rowLevel !== 0;
                         const isEditableCell =
                           conditionallyEdit &&
