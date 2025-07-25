@@ -1,3 +1,4 @@
+import { ManageUserListParms } from '../types/manage-account';
 import { UserListParams } from '../types/manage-user';
 import { buildQueryString } from './helpers';
 
@@ -37,9 +38,9 @@ export const getProfileListUrl = (params: UserListParams = {}): string => {
 };
 export const getManageUserListUrl = (
   userListId: string,
-  params: UserListParams = {}
+  params: ManageUserListParms = {}
 ): string => {
-  const defaultParams: UserListParams = {
+  const defaultParams: ManageUserListParms = {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
     ...params,
@@ -54,9 +55,9 @@ export const getManageUserListUrl = (
 
 export const getManageGroupListUrl = (
   userListId: string,
-  params: UserListParams = {}
+  params: ManageUserListParms = {}
 ): string => {
-  const defaultParams: UserListParams = {
+  const defaultParams: ManageUserListParms = {
     entity_type: 'ACCOUNT', // required param
     ...params,
   };
@@ -69,7 +70,7 @@ export const getManageGroupListUrl = (
 export const getProjectListManageAccessUrl = (
   accountId: string,
   entityId: string,
-  params: UserListParams = {}
+  params: ManageUserListParms = {}
 ): string => {
   const queryParams = buildQueryString({
     account_rid: accountId,

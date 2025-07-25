@@ -6,14 +6,23 @@ import { manageAccountListColumns } from './column';
 import { Suspense } from 'react';
 import { AccountList } from '../../../../consultant/types';
 import { useAccounts } from '../../../../consultant/services/account';
+import { FilterType } from '../../../types';
 
 interface AcoountTableProps {
+  appliedFilters: Record<string, FilterType>;
   tableParams: ProjectListParams;
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
+  setAppliedFilters: React.Dispatch<
+    React.SetStateAction<Record<string, FilterType>>
+  >;
+  disabled?: boolean;
+  hide?: boolean;
 }
 export const ManageAccountTable: React.FC<AcoountTableProps> = ({
+  appliedFilters,
   tableParams,
   setTableParams,
+  setAppliedFilters,
 }) => {
   const navigate = useNavigate();
   const handlePageChange = (newPage: number) => {
@@ -43,7 +52,9 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   const handleAccountName = (account: AccountList) => {
     searchParams.set('accountid', account.rid || '');
     searchParams.set('accountname', account.account_name || '');
+    searchParams.set('tabIndex', '0');
     navigate({ search: searchParams.toString() }, { replace: true });
+    setAppliedFilters({});
   };
   const {
     data,
@@ -55,13 +66,12 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
       limit: tableParams.limit,
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
-      // filters: appliedFilters,
+      filters: appliedFilters,
     }
     // refreshAccountTrigger
   );
   const totalCount = data?.count || 0;
   const projectColumns = manageAccountListColumns(handleAccountName);
-  console.log('data', data);
   return (
     <div>
       <Suspense fallback={null}>

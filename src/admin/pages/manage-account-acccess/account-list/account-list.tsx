@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { NewFilterIcon, UserIcon } from '../../../../assets';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
@@ -9,28 +9,77 @@ import { BUTTON_STYLES } from '../../manage-user-detail/styles';
 import TextButton from '../../../../components/button/text-button';
 import { useUpdateProjectAccesseDetails } from '../../../service/manage-account-access/manage-account-service';
 import { useToast } from '../../../../hooks';
+import { FilterType } from '../../../types';
+import { FilterModal } from '../../../../components';
+import {
+  getManageAccountFilterFields,
+  getManageGroupListFilterFields,
+  getManageProjectListFilterFields,
+  getManageUserListFilterFields,
+} from './helper';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import {
+  AllModules,
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../common-service';
+import { SelectOption } from '../../../../consultant/types';
+import { useFetchIndustrys } from '../../../../consultant/services/account';
+import {
+  formatFilterForApi,
+  getStoredFilters,
+} from '../../../../components/filter-component/utils';
+import { FilterState } from '../../../../consultant/types/account-filter';
+import { checkPermission } from '../../../../common-utils';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const AccountList = () => {
+  const [page, setPage] = useState<number>(1);
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, FilterType>
+  >({});
   const [tableParams, setTableParams] = useState<ProjectListParams>({
-    page: 1,
+    page: page,
     limit: 100,
     sortBy: 'account_name',
     sortOrder: 'ASC',
   });
+  useEffect(() => {
+    const saved = getStoredFilters();
+    if (saved) {
+      setAppliedFilters(
+        formatFilterForApi(saved as Record<string, FilterState>)
+      );
+    }
+  }, []);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const handleBack = () => {
     searchParams.delete('accountList');
     searchParams.delete('username');
     searchParams.delete('groupname');
+    setAppliedFilters({});
     navigate({ search: searchParams.toString() });
   };
-
+  const handleCloseFilter = () => {
+    setAnchorEl(null);
+  };
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
   const accountList = searchParams.get('accountList');
   const accountId = searchParams.get('accountid');
   const accountname = searchParams.get('accountname');
   const username = searchParams.get('username');
   const groupname = searchParams.get('groupname');
+  const tabIndex = searchParams.get('tabIndex');
 
   const name = username || groupname || '';
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
@@ -58,7 +107,122 @@ const AccountList = () => {
 
     projectListAccess.mutate(constructData);
   };
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'profile_name';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy: defaultSortField,
+        sortOrder: defaultSortOrder,
+      }));
+    } else {
+      setSortFilterCount(1);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
+    }
+  };
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const countriesList = useGetAllCountries();
+  const industry = useFetchIndustrys();
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
+  const allCountries = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.country_name,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const allIndustries: SelectOption[] = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.industry_name,
+      })) || [],
+    [industry.data?.data.industries]
+  );
+  const accountFilterFields = getManageAccountFilterFields(
+    allCountries,
+    allIndustries,
+    permissionMap
+  );
+  const userFilterFeilds = getManageUserListFilterFields();
+  const groupFilterFeilds = getManageGroupListFilterFields();
+  const projectFilterFeilds = getManageProjectListFilterFields();
+  const getFilterFields = () => {
+    if (!accountname) {
+      return accountFilterFields;
+    } else if (type === 'GROUP' || type === 'USER') {
+      return projectFilterFeilds;
+    } else if (tabIndex === '0') {
+      return userFilterFeilds;
+    } else if (tabIndex === '1') {
+      return groupFilterFeilds;
+    }
+  };
+
+  const filtercolumn = getFilterFields();
+  const manageaccountIsEnable = checkPermission(
+    modules,
+    AllModules.MANAGE_ACCOUNT_ACCESS
+  );
+  const accountViewEnable = checkPermission(
+    permission,
+    AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+  );
+  const userViewEdit = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapListView = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEdit.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEdit]);
+  // const permissionMapListView = {
+  //   assign: {
+  //     read: true,
+  //     edit: false,
+  //   },
+  // };
+  const disabled =
+    permissionMapListView?.['assign']?.read &&
+    !permissionMapListView?.['assign']?.edit;
+  const hide =
+    !permissionMapListView?.['assign']?.read &&
+    !permissionMapListView?.['assign']?.edit;
+  // console.log(permissionMapListView);
+  console.log('dis', disabled);
+  console.log('hide', hide);
+  if (!manageaccountIsEnable || !accountViewEnable) return <AccessRestricted />;
   return (
     <div>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
@@ -96,10 +260,33 @@ const AccountList = () => {
           <div className='relative h-[32px]'>
             <button
               className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
+              onClick={handleFilterModal}
             >
               <NewFilterIcon alt='filter-icon' />
               Filter
+              {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+              sortFilterCount > 0 ? (
+                <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                  <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                  <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                    {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                      sortFilterCount}
+                  </span>
+                </div>
+              ) : null}
             </button>
+            <Suspense fallback={null}>
+              <FilterModal
+                isOpen={isFilterOpen}
+                filterAnchorEl={anchorEl}
+                filterId={filterId}
+                filterFields={filtercolumn || []}
+                setAppliedFilters={setAppliedFilters}
+                setPage={setPage}
+                handleCloseFilter={handleCloseFilter}
+                handleSorting={handleSorting}
+              />
+            </Suspense>
           </div>
           {accountList && (
             <div className='flex items-center gap-3'>
@@ -133,14 +320,23 @@ const AccountList = () => {
       {!accountId && (
         <div className='border border-[#CBD6E2]'>
           <ManageAccountTable
+            appliedFilters={appliedFilters}
             tableParams={tableParams}
             setTableParams={setTableParams}
+            setAppliedFilters={setAppliedFilters}
           />
         </div>
       )}
       {accountId && (
         <div>
-          <UserTab type={type} setAddedProjects={setAddedProjects} />
+          <UserTab
+            type={type}
+            setAddedProjects={setAddedProjects}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            disabled={disabled}
+            hide={hide}
+          />
         </div>
       )}
     </div>

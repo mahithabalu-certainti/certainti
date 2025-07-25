@@ -1,12 +1,12 @@
 import { FieldConfig } from '../../../../consultant/types/account-filter';
 
-const textfieldOptions: { label: string; value: string }[] = [
+export const textfieldOptions: { label: string; value: string }[] = [
   { label: 'Contains', value: 'contains' },
   { label: 'Equals', value: 'equals' },
   { label: 'Not Equals', value: 'not_equals' },
 ];
 
-const dateOptions: { label: string; value: string }[] = [
+export const dateOptions: { label: string; value: string }[] = [
   { label: 'Equals', value: 'equals' },
   { label: 'Before', value: 'before' },
   { label: 'After', value: 'after' },

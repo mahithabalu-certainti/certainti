@@ -13,11 +13,23 @@ import {
 } from '../../../types/manage-account';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
+import { FilterType } from '../../../types';
 
 interface UserTableProps {
   isProfileViewEnable?: boolean;
+  appliedFilters: Record<string, FilterType>;
+  setAppliedFilters: React.Dispatch<
+    React.SetStateAction<Record<string, FilterType>>
+  >;
+  disabled?: boolean;
+  hide?: boolean;
 }
-export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
+export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
+  appliedFilters,
+  setAppliedFilters,
+  disabled,
+  hide,
+}) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [tableParams, setTableParams] = useState<ManageUserListParms>({
@@ -43,7 +55,14 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
   const accountId = searchParams.get('accountid') || '';
   const [userList, setUserList] = useState<ManageAccountsUserList[]>([]);
   const { data, isLoading, isError } = useManageAccountAccessUserList(
-    tableParams,
+    {
+      page: tableParams.page,
+      limit: tableParams.limit,
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      entity_type: 'ACCOUNT',
+      filters: appliedFilters,
+    },
     accountId
   );
   useEffect(() => {
@@ -109,6 +128,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
     searchParams.set('accountList', user.rid);
     searchParams.delete('groupname');
     searchParams.set('username', user.first_name);
+    setAppliedFilters({});
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -169,7 +189,6 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
     });
   };
 
-  console.log('addedProjects', userList);
   return (
     <div className='pt-1'>
       <ListTable
@@ -206,6 +225,8 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = () => {
         actionColumnName='Add/Remove'
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
+        disabledToggle={disabled}
+        hideToggle={hide}
         component='Account-User-Access'
       />
     </div>

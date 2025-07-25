@@ -3,15 +3,29 @@
 // import { ManageAccountUserListTable } from '../user-list/table';
 import { useSearchParams } from 'react-router-dom';
 import { ManageAccountListTable } from '../project-list/table';
-// import Users from '../../../../consultant/pages/account-details-sidebar/sidebar-pages/configuration/users/users';
+import { FilterType } from '../../../types';
+import Users from '../../../../components/tab/user';
 interface UserTabProps {
   type?: string;
   setAddedProjects: React.Dispatch<
     React.SetStateAction<{ [rid: string]: boolean }>
   >;
+  appliedFilters: Record<string, FilterType>;
+  setAppliedFilters: React.Dispatch<
+    React.SetStateAction<Record<string, FilterType>>
+  >;
+  disabled?: boolean;
+  hide?: boolean;
 }
 
-const UserTab: React.FC<UserTabProps> = ({ type, setAddedProjects }) => {
+const UserTab: React.FC<UserTabProps> = ({
+  type,
+  setAddedProjects,
+  appliedFilters,
+  setAppliedFilters,
+  disabled,
+  hide,
+}) => {
   const [searchParams] = useSearchParams();
   const accountList = searchParams.get('accountList');
 
@@ -23,11 +37,25 @@ const UserTab: React.FC<UserTabProps> = ({ type, setAddedProjects }) => {
             tabs={[
               {
                 label: 'Users',
-                content: <ManageAccountUserListTable />,
+                content: (
+                  <ManageAccountUserListTable
+                    appliedFilters={appliedFilters}
+                    setAppliedFilters={setAppliedFilters}
+                    disabled={disabled}
+                    hide={hide}
+                  />
+                ),
               },
               {
                 label: 'Group',
-                content: <ManageAccountUserGroupTable />,
+                content: (
+                  <ManageAccountUserGroupTable
+                    appliedFilters={appliedFilters}
+                    setAppliedFilters={setAppliedFilters}
+                    disabled={disabled}
+                    hide={hide}
+                  />
+                ),
               },
             ]}
           /> */}
@@ -38,6 +66,9 @@ const UserTab: React.FC<UserTabProps> = ({ type, setAddedProjects }) => {
           <ManageAccountListTable
             type={type}
             setAddedProjects={setAddedProjects}
+            appliedFilters={appliedFilters}
+            disabled={disabled}
+            hide={hide}
           />
         </div>
       )}
