@@ -294,7 +294,7 @@ class ProjectIngestionService {
   async addProjectFiscalRegion(
     accountNumber: string,
     projectData: ICreateProject,
-    projectFiscalData: any,
+    projectFiscalData: ProjectFiscal,
     projectId: string,
     userId: string
   ) {

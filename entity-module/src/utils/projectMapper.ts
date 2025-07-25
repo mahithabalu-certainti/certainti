@@ -553,7 +553,7 @@ export class ProjectMapper {
 export class ProjectResourceMapper {
   static mapToProjectResource(
     projectResource: ICreateProjectResource,
-    projectId: any,
+    projectId: string,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     userId: string,
