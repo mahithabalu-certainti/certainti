@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
 import {
-  AllModules,
   AllPermissions,
   Layout,
   OnChange,
@@ -30,8 +29,6 @@ import { UserDetail } from '../../../types/manage-user';
 import { FormData } from './form-data';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { checkPermission } from '../../../../common-utils';
-import { AccessRestricted } from '../../../../components/account-restricted';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { transFormPayload } from './utils';
 
@@ -72,14 +69,8 @@ export const CreateUser: React.FC = () => {
   const createUser = useCreateUserDetails();
 
   // Permission Mangement
-  const { modules, permission } = useSelector(
+  const { permission } = useSelector(
     (state: RootState) => state.permission
-  );
-
-  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
-  const isUserCreateEnable = checkPermission(
-    permission,
-    AllPermissions.USER_CREATE
   );
 
   const userViewEditFields = useMemo(
@@ -290,7 +281,6 @@ export const CreateUser: React.FC = () => {
     statusOptions.isLoading ||
     userRoles.isLoading;
 
-  if (!userIsEnable || !isUserCreateEnable) return <AccessRestricted />;
 
   return (
     <>

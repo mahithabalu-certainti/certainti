@@ -79,6 +79,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
+  const isViewAccountsEnable = useMemo(
+    () => checkPermission(permission, AllPermissions.ACCOUNTS_VIEW_EDIT),
+    [permission]
+  );
   const isViewProfileEnable = useMemo(
     () => checkPermission(permission, AllPermissions.PROFILE_VIEW_EDIT),
     [permission]
@@ -413,7 +417,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}
           >
-            {!showAdminSidebar && (
+            {!showAdminSidebar && isViewAccountsEnable && (
               <>
                 <div className='relative'>
                   <button

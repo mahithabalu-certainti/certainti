@@ -13,13 +13,7 @@ import { useToast } from '../../../../hooks';
 import { ProfileDetail } from '../../../types';
 import { ProfileHeaderDetail } from './profile-header-details';
 import { MANAGE_PROFILE } from '../../../../routes';
-import { AccessRestricted } from '../../../../components/account-restricted';
-import { useSelector } from 'react-redux';
-import { checkPermission } from '../../../../common-utils';
-import { RootState } from '../../../../store/store';
 import {
-  AllModules,
-  AllPermissions,
   ManageProfileResponse,
   ProfileResponse,
 } from '../../../../common-service';
@@ -47,22 +41,6 @@ export const CreateProfile: React.FC = () => {
   const commonSuccess = createProfile.isSuccess;
   const ProfilePermissionSuccess = createProfilePermission.isSuccess;
   const editSuccess = updateProfilePermission.isSuccess;
-
-  const { modules, permission } = useSelector(
-    (state: RootState) => state.permission
-  );
-  const isProfileEnable = checkPermission(
-    modules,
-    AllModules.PROFILE_MANAGEMENT
-  );
-  const isProfileCreateEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_CREATE
-  );
-  // const isProfileEditEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.PROFILE_EDIT
-  // );
 
   useEffect(() => {
     if (commonSuccess) {
@@ -129,8 +107,6 @@ export const CreateProfile: React.FC = () => {
       }
     }
   };
-
-  if (!isProfileEnable || !isProfileCreateEnable) return <AccessRestricted />;
 
   return (
     <>

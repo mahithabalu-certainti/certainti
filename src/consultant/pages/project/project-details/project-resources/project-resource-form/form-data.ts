@@ -50,14 +50,14 @@ export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
 export const ProjectResourceFormData = (
   projectResourceCodes: SelectResourceOption[],
   // projectTypes: SelectOption[],
-  projectResourceSkillType: SelectOption[],
-  projectResourceRollSkill: SelectOption[],
+  // projectResourceSkillType: SelectOption[],
+  // projectResourceRollSkill: SelectOption[],
   resourceStatusOptions: SelectOption[],
   country: SelectOption[],
   states: SelectOption[],
   // city: SelectOption[],
   currency: SelectOption[],
-  showSkillRoleOthersField: boolean,
+  // showSkillRoleOthersField: boolean,
   isResourceType: boolean,
   stateLoading?: boolean,
   // cityLoading?: boolean,
@@ -85,10 +85,10 @@ export const ProjectResourceFormData = (
     ? Number(projectPFY.year) === currentYear
       ? previousDate
       : (() => {
-          const date = new Date(projectPFY.endDate);
-          date.setDate(date.getDate() - 1);
-          return date;
-        })()
+        const date = new Date(projectPFY.endDate);
+        date.setDate(date.getDate() - 1);
+        return date;
+      })()
     : undefined;
 
   return useMemo(
@@ -199,57 +199,57 @@ export const ProjectResourceFormData = (
           //     !permissionMap?.['resource_role']?.read &&
           //     !permissionMap?.['resource_role']?.edit,
           // }),
-          createSelectField(
-            'assigned_skill_role_type_rid',
-            'Resource Skill Role Type',
-            {
-              options: projectResourceSkillType,
-              placeholder: 'Choose Resource Skill Role Type',
-              required: false,
-              onChange: true,
-              resetDependsFields: ['skill_role_rid', 'skill_role_others'],
-              disabled:
-                isEditView &&
-                permissionMap?.['assigned_skill_role_type_rid']?.read &&
-                !permissionMap?.['assigned_skill_role_type_rid']?.edit,
-              hide:
-                isEditView &&
-                !permissionMap?.['assigned_skill_role_type_rid']?.read &&
-                !permissionMap?.['assigned_skill_role_type_rid']?.edit,
-            }
-          ),
-          createSelectField('skill_role_rid', 'Resource Skill Role', {
-            options: projectResourceRollSkill,
-            placeholder: 'Choose Resource Skill Role',
-            required: true,
-            // hide: !showSkillRoleOthersField,
-            disabled:
-              isEditView &&
-              permissionMap?.['skill_role_rid']?.read &&
-              !permissionMap?.['skill_role_rid']?.edit,
-            hide:
-              (isEditView &&
-                !permissionMap?.['skill_role_rid']?.read &&
-                !permissionMap?.['skill_role_rid']?.edit) ||
-              !showSkillRoleOthersField,
-          }),
-          createTextField('skill_role_others', 'Resource Skill Role Others', {
-            required: true,
-            regex: PROJECT_RESOURCE_REGEX.ROLE,
-            regexErrorMessage:
-              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-            placeholder: 'Enter Resource Skill Role Others',
-            // hide: !showSkillRoleOthersField,
-            disabled:
-              isEditView &&
-              permissionMap?.['skill_role_others']?.read &&
-              !permissionMap?.['skill_role_others']?.edit,
-            hide:
-              (isEditView &&
-                !permissionMap?.['skill_role_others']?.read &&
-                !permissionMap?.['skill_role_others']?.edit) ||
-              !showSkillRoleOthersField,
-          }),
+          // createSelectField(
+          //   'assigned_skill_role_type_rid',
+          //   'Resource Skill Role Type',
+          //   {
+          //     options: projectResourceSkillType,
+          //     placeholder: 'Choose Resource Skill Role Type',
+          //     required: false,
+          //     onChange: true,
+          //     resetDependsFields: ['skill_role_rid', 'skill_role_others'],
+          //     disabled:
+          //       isEditView &&
+          //       permissionMap?.['assigned_skill_role_type_rid']?.read &&
+          //       !permissionMap?.['assigned_skill_role_type_rid']?.edit,
+          //     hide:
+          //       isEditView &&
+          //       !permissionMap?.['assigned_skill_role_type_rid']?.read &&
+          //       !permissionMap?.['assigned_skill_role_type_rid']?.edit,
+          //   }
+          // ),
+          // createSelectField('skill_role_rid', 'Resource Skill Role', {
+          //   options: projectResourceRollSkill,
+          //   placeholder: 'Choose Resource Skill Role',
+          //   required: true,
+          //   // hide: !showSkillRoleOthersField,
+          //   disabled:
+          //     isEditView &&
+          //     permissionMap?.['skill_role_rid']?.read &&
+          //     !permissionMap?.['skill_role_rid']?.edit,
+          //   hide:
+          //     (isEditView &&
+          //       !permissionMap?.['skill_role_rid']?.read &&
+          //       !permissionMap?.['skill_role_rid']?.edit) ||
+          //     !showSkillRoleOthersField,
+          // }),
+          // createTextField('skill_role_others', 'Resource Skill Role Others', {
+          //   required: true,
+          //   regex: PROJECT_RESOURCE_REGEX.ROLE,
+          //   regexErrorMessage:
+          //     'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
+          //   placeholder: 'Enter Resource Skill Role Others',
+          //   // hide: !showSkillRoleOthersField,
+          //   disabled:
+          //     isEditView &&
+          //     permissionMap?.['skill_role_others']?.read &&
+          //     !permissionMap?.['skill_role_others']?.edit,
+          //   hide:
+          //     (isEditView &&
+          //       !permissionMap?.['skill_role_others']?.read &&
+          //       !permissionMap?.['skill_role_others']?.edit) ||
+          //     !showSkillRoleOthersField,
+          // }),
 
           createSelectField('status_rid', 'Resource Status', {
             options: resourceStatusOptions,
@@ -471,9 +471,9 @@ export const ProjectResourceFormData = (
       projectResourceCodes,
       isEditView,
       permissionMap,
-      projectResourceSkillType,
-      projectResourceRollSkill,
-      showSkillRoleOthersField,
+      // projectResourceSkillType,
+      // projectResourceRollSkill,
+      // showSkillRoleOthersField,
       resourceStatusOptions,
       country,
       states,

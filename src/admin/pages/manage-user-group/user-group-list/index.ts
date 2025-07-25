@@ -1,2 +1,2 @@
 export * from './user-group-list';
-export * from './table';
+export * from './helpers';

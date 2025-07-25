@@ -448,7 +448,7 @@ export const ProjectResources = ({
           count={totalItems}
           showBackArrow={resourceData ? true : false}
           headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
-          projectResourceNumber={resourceData?.resource_code}
+          projectResourceNumber={resourceData?.r_number}
           onBackClick={handleBackClick}
         />
         <div className='border border-[#CBD6E2]'>

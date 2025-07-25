@@ -28,7 +28,6 @@ interface IUserTableProps {
   appliedFilters: Record<string, FilterCondition>;
   tableParams: UserListParams;
   isProfileViewEnable?: boolean;
-  isProfileEditEnable?: boolean;
   isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
@@ -39,7 +38,6 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
   // isProfileViewEnable,
-  isProfileEditEnable,
   // isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
@@ -156,7 +154,6 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
-      hide: !isProfileEditEnable,
     },
     {
       label: 'Delete',

@@ -1,20 +1,19 @@
 import { Suspense, useMemo, useState } from 'react';
-import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
+import { NewFilterIcon, RefreshIcon, ManageUserIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
-import { MANAGE_PROFILE_CREATE } from '../../../../routes';
+import { MANAGE_USER_GROUP_CREATE } from '../../../../routes';
 import { FilterModal } from '../../../../components';
-import { getManageProfileFilterFields } from './';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
-import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
-import { exportProfileList } from '../../../service';
-import { useToast } from '../../../../hooks';
+import { exportUserGroupList, useGetUserGroupTypes } from '../../../service';
+import { getManageUserGroupFilterFields } from './helpers';
+import { UserGroupTable } from '../table';
+import { SelectOption } from '../../../../consultant/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
-import { AllModules, AllPermissions } from '../../../../common-service';
-import { AccessRestricted } from '../../../../components/account-restricted';
+import { AllPermissions } from '../../../../common-service';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -22,7 +21,11 @@ const BUTTON_STYLES = {
   fontWeight: 600,
 };
 
-export const ProfileList: React.FC = () => {
+export const UserGroupList: React.FC = () => {
+  // hooks
+  const navigate = useNavigate();
+
+  // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterType>
   >({});
@@ -30,76 +33,68 @@ export const ProfileList: React.FC = () => {
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
     limit: 100,
-    sortBy: 'profile_name',
+    sortBy: 'group_name',
     sortOrder: 'ASC',
   });
-  const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const { errorToast } = useToast();
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const [refreshProfileTrigger, setRefreshProfileTrigger] = useState<number>(
-    Date.now()
-  );
+  const [refreshUserGroupTrigger, setRefreshUserGroupTrigger] =
+    useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
 
-  const onRefreshClick = () => {
-    setRefreshProfileTrigger(Date.now());
-  };
-
   // Permission Mangement
-  const { modules, permission } = useSelector(
-    (state: RootState) => state.permission
-  );
-  const isProfileEnable = checkPermission(
-    modules,
-    AllModules.PROFILE_MANAGEMENT
-  );
-  const isProfileCreateEnable = checkPermission(
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const isUserGroupCreateEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_CREATE
+    AllPermissions.USER_GROUP_CREATE
   );
-  const isProfileExportEnable = checkPermission(
+  const isUserGroupExportEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_EXPORT
+    AllPermissions.USER_GROUP_EXPORT
   );
-  const isProfileViewEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_VIEW_EDIT
-  );
-  const isProfileDeleteEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_DELETE
-  );
-  const profileViewEditFields = useMemo(
+  const userGroupViewEditFields = useMemo(
     () =>
-      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
-        ?.fields ?? [],
+      permission.find(
+        (item) => item.name === AllPermissions.USER_GROUP_VIEW_EDIT
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    profileViewEditFields.forEach((item) => {
+    userGroupViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [profileViewEditFields]);
+  }, [userGroupViewEditFields]);
+
+  // API Hooks
+  const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
+
+  // Variables
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
+  const allGroupTypes: SelectOption[] = useMemo(
+    () =>
+      allUserGroupTypes.data?.data.groupTypes.map((groupTypes) => ({
+        label: groupTypes.group_type_name,
+        value: groupTypes.rid,
+      })) || [],
+    [allUserGroupTypes.data?.data.groupTypes]
+  );
+  const userGroupFilterFields = getManageUserGroupFilterFields(allGroupTypes, permissionMap);
+
+  // Functions
+  const onRefreshClick = () => {
+    setRefreshUserGroupTrigger(Date.now());
+  };
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
-
-  const isFilterOpen = Boolean(anchorEl);
-  const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
-
-  const handleSelectionChange = (selectedIds: string[]) => {
-    setSelectedProfileId(selectedIds);
-  };
-
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'profile_name';
+    const defaultSortField = 'group_name';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -119,31 +114,16 @@ export const ProfileList: React.FC = () => {
       }));
     }
   };
-
   const handleExport = async () => {
-    if (selectedProfileId.length > 1) {
-      errorToast('Please select just one profile to proceed with export.');
-      return;
-    }
-
-    if (selectedProfileId.length === 0) {
-      errorToast('Please select a profile before exporting.');
-      return;
-    }
-
     setIsExporting(true);
-
-    const profileId = selectedProfileId[0];
     try {
-      await exportProfileList(profileId);
+      await exportUserGroupList();
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
       setIsExporting(false);
     }
   };
-  const profileFilterFields = getManageProfileFilterFields(permissionMap);
-  if (!isProfileEnable || !isProfileViewEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -151,16 +131,16 @@ export const ProfileList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <UserIcon
-              alt='manage user'
-              className='h-7 w-7 rounded bg-[#BE3EB5] p-[7px]'
+            <ManageUserIcon
+              alt='manage user group'
+              className='h-7 w-7 rounded [&>path:first-child]:fill-[#BE3EB5]'
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
                 Admin Permission
               </div>
               <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
-                Manage Profile
+                Manage User Group
               </div>
             </div>
           </div>
@@ -172,10 +152,10 @@ export const ProfileList: React.FC = () => {
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
-          {isProfileCreateEnable && (
+          {isUserGroupCreateEnable && (
             <TextButton
-              label='Create Profile'
-              onClick={() => navigate(MANAGE_PROFILE_CREATE)}
+              label='Create Group'
+              onClick={() => navigate(MANAGE_USER_GROUP_CREATE)}
               sx={{
                 ...BUTTON_STYLES,
                 width: '119px',
@@ -189,7 +169,7 @@ export const ProfileList: React.FC = () => {
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-          All Profiles
+          All Groups
         </div>
         <div className='flex items-center gap-3'>
           <div className='relative h-[32px]'>
@@ -217,7 +197,7 @@ export const ProfileList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={profileFilterFields}
+                filterFields={userGroupFilterFields}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
@@ -225,7 +205,7 @@ export const ProfileList: React.FC = () => {
               />
             </Suspense>
           </div>
-          {isProfileExportEnable && (
+          {isUserGroupExportEnable && (
             <TextButton
               label='Export'
               sx={{
@@ -241,17 +221,18 @@ export const ProfileList: React.FC = () => {
         </div>
       </div>
 
-      {/* Profile Table Section */}
       <div className='border border-[#CBD6E2]'>
         <Suspense fallback={null}>
-          <ProfileTable
+          <UserGroupTable
             appliedFilters={appliedFilters as Record<string, FilterCondition>}
             tableParams={tableParams}
-            setTableParams={setTableParams}
-            onSelectionChange={handleSelectionChange}
-            isProfileViewEnable={isProfileViewEnable}
-            isProfileDeleteEnable={isProfileDeleteEnable}
-            refreshProfileTrigger={refreshProfileTrigger}
+            setTableParams={(data) => {
+              setTableParams(data);
+              onRefreshClick();
+            }}
+            onSelectionChange={() => {}}
+            isProfileEditEnable
+            refreshUserGroupTrigger={refreshUserGroupTrigger}
           />
         </Suspense>
       </div>
@@ -259,4 +240,4 @@ export const ProfileList: React.FC = () => {
   );
 };
 
-export default ProfileList;
+export default UserGroupList;
