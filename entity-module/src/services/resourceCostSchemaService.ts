@@ -179,6 +179,12 @@ class ResourceCostSchemaService {
                 schema: schemaName, // Explicitly set schema
               });
               break;
+            case "project_resource_fiscal":
+              await sequelize.models.ProjectResourceFiscal.sync({
+                force: false,
+                schema: schemaName, // Explicitly set schema
+              });
+              break;
             case "resource_cost_history":
               await sequelize.models.ResourceCostHistory.sync({
                 force: false,
@@ -246,11 +252,97 @@ class ResourceCostSchemaService {
         return false;
       }
     }
+    if (tableName === "project_resource_fiscal") {
+      // First create the resources table
+      const resourcesTableCreated = await this.createTablesInSchema(
+        schemaName,
+        "project_resource_fiscal"
+      );
+      if (!resourcesTableCreated) {
+        console.error(
+          `Failed to create resources table in schema ${schemaName}`
+        );
+        return false;
+      }
+    }
 
     // Then create the requested table
     return await this.createTablesInSchema(schemaName, tableName);
   }
 
+/**
+ * Processes country filter by querying the main database for matching country RIDs
+ *
+ * @param filters - The filters object containing country filter
+ * @returns Promise with country RIDs or null
+ */
+async processCountryFilter(filters: Record<string, any>) {
+  // Check if country filter exists and has valid operators
+  if (!filters.country || typeof filters.country !== "object") {
+    return null;
+  }
+
+  const countryFilter = filters.country;
+
+  // Handle is_empty operator first
+  if (countryFilter.is_empty !== undefined) {
+    delete filters.country;
+    if (countryFilter.is_empty) {
+      // For is_empty: true, we want records where country_rid IS NULL or empty
+      filters.country_rid = {
+        is_empty: true,
+      };
+    } else {
+      // For is_empty: false, we want records where country_rid IS NOT NULL and not empty
+      filters.country_rid = {
+        is_not_empty: true,
+      };
+    }
+    return null;
+  }
+
+  // Handle equals operator for UUID
+  if (countryFilter.equals) {
+    delete filters.country;
+    filters.country_rid = {
+      equals: countryFilter.equals,
+    };
+  }
+
+  // Handle not_equals operator for UUID
+  else if (countryFilter.not_equals) {
+    delete filters.country;
+    filters.country_rid = {
+      not_equals: countryFilter.not_equals,
+    };
+  }
+
+  // Handle contains operator for UUID
+  else if (countryFilter.contains) {
+    delete filters.country;
+    filters.country_rid = {
+      contains: countryFilter.contains,
+    };
+  }
+
+  // Handle in operator for array of UUIDs
+  else if (countryFilter.in && Array.isArray(countryFilter.in)) {
+    delete filters.country;
+    filters.country_rid = {
+      in: countryFilter.in,
+    };
+  }
+
+  // Handle not_in operator for array of UUIDs
+  else if (countryFilter.not_in && Array.isArray(countryFilter.not_in)) {
+    delete filters.country;
+    filters.country_rid = {
+      not_in: countryFilter.not_in,
+    };
+  }
+
+  return null;
+}
   /**
    * Processes currency filter by querying the main database for matching currency RIDs
    *
@@ -324,6 +416,966 @@ class ResourceCostSchemaService {
 
     return null;
   }
+
+// async exportresourceCostDetailsForFinancialHighlights(
+//   schemaName: string,
+//   filterConditions: string,
+//   searchCondition: string,
+//   sortBy: string,
+//   sortOrder: string,
+//   search: string,
+//   userId: string,
+//   account_rid?: string,
+//   project_rid?: string
+// ) {
+//   try {
+//     const sequelize = await this.getDbConnection(schemaName);
+
+//     // Build account filter condition
+//     const accountFilter = account_rid ? ` AND prf.account_rid = :account_rid` : '';
+    
+//     // Build project filter condition
+//     const projectFilter = project_rid ? ` AND prf.project_rid = :project_rid` : '';
+
+//     // Build the base query without sorting or pagination
+//     let query = `
+//       SELECT 
+//         prf.total_cost_pro_res,
+//         prf.rd_percent_final,
+//         prf.qre_final,
+//         prf.rd_credits_total,
+//         prf.resource_rid,
+//         prf.project_fiscal_rid,
+//         prf.country_rid,
+//         pf.project_code,
+//         pf.r_number,
+//         pf.project_name,
+//         r.resource_code,
+//         r.resource_name,
+//         r.resource_type_rid
+//       FROM "${schemaName}"."project_resource_fiscal" prf
+//       INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
+//       INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
+//       WHERE 1=1 
+//       ${accountFilter}
+//       ${projectFilter}
+//       ${filterConditions}
+//       ${searchCondition}
+//     `;
+
+//     const replacements: any = {
+//       searchTerm: search ? `%${search}%` : null,
+//     };
+
+//     // Add account_rid if present
+//     if (account_rid) {
+//       replacements.account_rid = account_rid;
+//     }
+
+//     // Add project_rid if present
+//     if (project_rid) {
+//       replacements.project_rid = project_rid;
+//     }
+
+//     // Execute main query without sorting
+//     let results = await sequelize.query(query, {
+//       replacements,
+//       type: "SELECT",
+//     });
+
+//     const mainDbSequelize = await initMainDbSequelize();
+    
+//     // Fetch reference data maps
+//     const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+//       const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+//       const items = await mainDbSequelize.query(query, { type: "SELECT" });
+//       return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+//     };
+
+//     // Fetch all reference data in parallel
+//     const [resourceTypeMap, countryMap] = await Promise.all([
+//       fetchReferenceMap('resource_type', 'rid', 'resource_type_name'),
+//       fetchReferenceMap('country', 'rid', 'country_code')
+//     ]);
+
+//     // Helper function to assign reference data
+//     const assignReferenceData = (result: any) => {
+//       // Assign resource type name
+//       result.resource_type_name = result.resource_type_rid 
+//         ? resourceTypeMap.get(result.resource_type_rid) || null 
+//         : null;
+      
+//       // Assign country code
+//       result.country_code = result.country_rid 
+//         ? countryMap.get(result.country_rid) || null 
+//         : null;
+//     };
+
+//     // Handle sorting by resource_type_name
+//     if (sortBy === "resource_type_name") {
+//       // Assign reference data first
+//       results.forEach(assignReferenceData);
+      
+//       // Sort in memory, handling empty values to appear last
+//       results.sort((a: any, b: any) => {
+//         const aType = a.resource_type_name;
+//         const bType = b.resource_type_name;
+        
+//         // Handle null/undefined values
+//         if (!aType && !bType) return 0;
+//         if (!aType) return sortOrder === "ASC" ? 1 : -1;
+//         if (!bType) return sortOrder === "ASC" ? -1 : 1;
+        
+//         // Compare non-empty values
+//         return sortOrder === "ASC" 
+//           ? aType.localeCompare(bType)
+//           : bType.localeCompare(aType);
+//       });
+//     }
+//     // Handle sorting by country_code
+//     else if (sortBy === "country_code") {
+//       // Assign reference data first
+//       results.forEach(assignReferenceData);
+      
+//       // Sort in memory
+//       results.sort((a: any, b: any) => {
+//         const aCode = a.country_code || "";
+//         const bCode = b.country_code || "";
+//         return sortOrder === "ASC"
+//           ? aCode.localeCompare(bCode)
+//           : bCode.localeCompare(aCode);
+//       });
+//     }
+//     else {
+//       // Handle database-level sorting
+//       if (sortBy === "resource_code" || sortBy === "resource_name") {
+//         query += ` ORDER BY r."${sortBy}" ${sortOrder}`;
+//       }
+//       else if (sortBy === "project_code" || sortBy === "r_number" || sortBy === "project_name") {
+//         query += ` ORDER BY pf."${sortBy}" ${sortOrder}`;
+//       }
+//       else {
+//         // Default to project_resource_fiscal table fields
+//         query += ` ORDER BY prf."${sortBy}" ${sortOrder}`;
+//       }
+      
+//       results = await sequelize.query(query, {
+//         replacements,
+//         type: "SELECT",
+//       });
+
+//       // Assign reference data for database-sorted results
+//       results.forEach(assignReferenceData);
+//     }
+
+//     const projectResourceFiscal = results;
+
+//     // Extract all unique resource_type_rid and country_id values for detailed info
+//     const resourceTypeIds = [
+//       ...new Set(projectResourceFiscal.map((prf: any) => prf.resource_type_rid)),
+//     ].filter(Boolean);
+
+//     const countryIds = [
+//       ...new Set(projectResourceFiscal.map((prf: any) => prf.country_rid)),
+//     ].filter(Boolean);
+
+//     // Fetch detailed reference information if needed
+//     const referencePromises = [];
+
+//     if (resourceTypeIds.length > 0) {
+//       const resourceTypeQuery = `
+//         SELECT rid, resource_type_name
+//         FROM ${MAIN_SCHEMA_NAME}.resource_type 
+//         WHERE rid IN (:resourceTypeIds)
+//       `;
+//       referencePromises.push(
+//         mainDbSequelize.query(resourceTypeQuery, {
+//           replacements: { resourceTypeIds },
+//           type: "SELECT",
+//         })
+//       );
+//     } else {
+//       referencePromises.push(Promise.resolve([]));
+//     }
+
+//     if (countryIds.length > 0) {
+//       const countryQuery = `
+//         SELECT rid, country_code, country_name 
+//         FROM ${MAIN_SCHEMA_NAME}.country 
+//         WHERE rid IN (:countryIds)
+//       `;
+//       referencePromises.push(
+//         mainDbSequelize.query(countryQuery, {
+//           replacements: { countryIds },
+//           type: "SELECT",
+//         })
+//       );
+//     } else {
+//       referencePromises.push(Promise.resolve([]));
+//     }
+
+//     const [resourceTypes, countries] = await Promise.all(referencePromises);
+
+//     // Create maps for quick lookup
+//     const resourceTypeDetailMap: any = (resourceTypes as any[]).reduce((map: any, rt: any) => {
+//       map[rt.rid] = rt;
+//       return map;
+//     }, {});
+
+//     const countryDetailMap: any = (countries as any[]).reduce((map: any, country: any) => {
+//       map[country.rid] = country;
+//       return map;
+//     }, {});
+
+//     // Add detailed reference info to each project resource fiscal record
+//     projectResourceFiscal.forEach((prf: any) => {
+//       // Add detailed resource type info
+//       if (prf.resource_type_rid && resourceTypeDetailMap[prf.resource_type_rid]) {
+//         prf.resource_type_name = resourceTypeDetailMap[prf.resource_type_rid].resource_type_name;
+//       } else {
+//         prf.resource_type_name = null;
+//       }
+
+//       // Add detailed country info
+//       if (prf.country_rid && countryDetailMap[prf.country_rid]) {
+//         prf.country_code = countryDetailMap[prf.country_rid].country_code;
+//         prf.country_name = countryDetailMap[prf.country_rid].country_name;
+//       } else {
+//         prf.country_code = null;
+//         prf.country_name = null;
+//       }
+//     });
+
+//     // Get allowed fields for export using SchemaService
+//     const rawResult = projectResourceFiscal || [];
+//     console.log("Raw",rawResult);
+//     const schemaService = new SchemaService();
+    
+//     const [
+//       accountFields,
+//       resourceFields,
+//       projectFields,
+//       projectResourceFiscalFields
+//     ] = await Promise.all([
+//       schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+//       schemaService.getAllowedExportFields(userId, "account_resources_view_edit"),
+//       schemaService.getAllowedExportFields(userId, "projects_view_edit"), // Assuming this permission exists
+//       schemaService.getAllowedExportFields(userId, "financial_highlights_view_edit") // Assuming this permission exists
+//     ]);
+
+//     const allowedFieldSet = new Set<string>();
+    
+//     // Add project resource fiscal fields
+//     for (const field of projectResourceFiscalFields) {
+//       if (field.read) {
+//         allowedFieldSet.add(field.field_name);
+//       }
+//     }
+
+//     // Add required account fields
+//     const requiredAccountFields = new Set(["account_name"]);
+//     for (const field of accountFields) {
+//       if (field.read && requiredAccountFields.has(field.field_name)) {
+//         allowedFieldSet.add(field.field_name);
+//       }
+//     }
+
+//     // Add required resource fields
+//     const requiredResourceFields = new Set([
+//       "resource_code", 
+//       "resource_name", 
+//       "resource_type_rid"
+//     ]);
+//     for (const field of resourceFields) {
+//       if (field.read && requiredResourceFields.has(field.field_name)) {
+//         allowedFieldSet.add(field.field_name);
+//       }
+//     }
+
+//     // Add required project fields
+//     const requiredProjectFields = new Set([
+//       "project_code", 
+//       "project_name", 
+//       "r_number"
+//     ]);
+//     for (const field of projectFields) {
+//       if (field.read && requiredProjectFields.has(field.field_name)) {
+//         allowedFieldSet.add(field.field_name);
+//       }
+//     }
+
+//     console.log(allowedFieldSet);
+
+//     // Label mapping for export headers
+//     const labelMap: Record<string, string> = {
+//       "project_code": "Project Code",
+//       "r_number": "Project ID",
+//       "project_name": "Project Name", 
+//       "resource_code": "Resource Code",
+//       "resource_name": "Resource Name",
+//       "resource_type_rid": "Resource Type",
+//       "country_rid": "Country",
+//       "total_cost_pro_res": "Total Cost",
+//       "rd_percent_final": "R&D Percentage",
+//       "qre_final": "QRE Final",
+//       "rd_credits_total": "R&D Credits Total"
+//     };
+
+//     // Format number for export (similar to original function)
+//     const formatNumberForExport = (value: any): string => {
+//       if (value == null || value === '') return '-';
+    
+//       try {
+//         const decimalValue = new Decimal(value.toString());
+//         if (!decimalValue.isFinite()) return '-';
+    
+//         // Format the number with commas and 2 decimal places
+//         const [intPart, decPart] = decimalValue.toFixed(2).split('.');
+//         const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+//         return `${formattedInt}.${decPart}`;
+    
+//       } catch (error) {
+//         console.error('Error formatting number:', error);
+//         return '-';
+//       }
+//     };
+
+//     // Map data for export
+//     let exportData = rawResult.map((item: any) => {
+//       const exportData: Record<string, string> = {};
+      
+//       let resultMap = {
+//         "project_code": item.project_code || "-",
+//         "r_number": item.r_number || "-", 
+//         "project_name": item.project_name || "-",
+//         "resource_code": item.resource_code || "-",
+//         "resource_name": item.resource_name || "-",
+//         "resource_type_rid": item.resource_type_name || "-",
+//         "country_rid": item.country_code || "-",
+//         "total_cost_pro_res": formatNumberForExport(item.total_cost_pro_res) || "-",
+//         "rd_percent_final": formatNumberForExport(item.rd_percent_final) || "-",
+//         "qre_final": formatNumberForExport(item.qre_final) || "-",
+//         "rd_credits_total": formatNumberForExport(item.rd_credits_total) || "-"
+//       };
+
+//       for (const [field, value] of Object.entries(resultMap)) {
+//         if (allowedFieldSet.has(field)) {
+//           exportData[labelMap[field]] = value;
+//         }
+//       }
+//       return exportData;
+//     });
+
+//     return {
+//       statusCode: HttpStatus.SUCCESS,
+//       message: HttpStatus.SUCCESS_MESSAGE,
+//       data: {
+//         financialHighlights: exportData,
+//       },
+//     };
+//   } catch (error) {
+//     console.error("Error executing queries:", error);
+//     return this.createErrorResponse("Error executing database queries");
+//   }
+// }
+
+async exportresourceCostDetailsForFinancialHighlights(
+  schemaName: string,
+  filterConditions: string,
+  searchCondition: string,
+  sortBy: string,
+  sortOrder: string,
+  search: string,
+  userId: string,
+  account_rid?: string,
+  project_rid?: string
+) {
+  try {
+    const sequelize = await this.getDbConnection(schemaName);
+
+    // Build account filter condition
+    const accountFilter = account_rid ? ` AND prf.account_rid = :account_rid` : '';
+    
+    // Build project filter condition
+    const projectFilter = project_rid ? ` AND prf.project_rid = :project_rid` : '';
+
+    // Build the base query without sorting or pagination
+    let query = `
+      SELECT 
+        prf.total_cost_pro_res,
+        prf.rd_percent_final,
+        prf.qre_final,
+        prf.rd_credits_total,
+        prf.resource_rid,
+        prf.project_fiscal_rid,
+        prf.country_rid,
+        prf.fiscal_year,
+        pf.project_code,
+        pf.r_number,
+        pf.project_name,
+        r.resource_code,
+        r.resource_name,
+        r.resource_type_rid
+      FROM "${schemaName}"."project_resource_fiscal" prf
+      INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
+      INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
+      WHERE 1=1 
+      ${accountFilter}
+      ${projectFilter}
+      ${filterConditions}
+      ${searchCondition}
+    `;
+
+    const replacements: any = {
+      searchTerm: search ? `%${search}%` : null,
+    };
+
+    // Add account_rid if present
+    if (account_rid) {
+      replacements.account_rid = account_rid;
+    }
+
+    // Add project_rid if present
+    if (project_rid) {
+      replacements.project_rid = project_rid;
+    }
+
+    // Execute main query without sorting
+    let results = await sequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    const mainDbSequelize = await initMainDbSequelize();
+    
+    // Fetch reference data maps
+    const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+      const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+      const items = await mainDbSequelize.query(query, { type: "SELECT" });
+      return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+    };
+
+    // Fetch all reference data in parallel
+    const [resourceTypeMap, countryMap] = await Promise.all([
+      fetchReferenceMap('resource_type', 'rid', 'resource_type_name'),
+      fetchReferenceMap('country', 'rid', 'country_code')
+    ]);
+
+    // Helper function to assign reference data
+    const assignReferenceData = (result: any) => {
+      // Assign resource type name
+      result.resource_type_name = result.resource_type_rid 
+        ? resourceTypeMap.get(result.resource_type_rid) || null 
+        : null;
+      
+      // Assign country code
+      result.country_code = result.country_rid 
+        ? countryMap.get(result.country_rid) || null 
+        : null;
+    };
+
+    // Handle sorting by resource_type_name
+    if (sortBy === "resource_type_name") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory, handling empty values to appear last
+      results.sort((a: any, b: any) => {
+        const aType = a.resource_type_name;
+        const bType = b.resource_type_name;
+        
+        // Handle null/undefined values
+        if (!aType && !bType) return 0;
+        if (!aType) return sortOrder === "ASC" ? 1 : -1;
+        if (!bType) return sortOrder === "ASC" ? -1 : 1;
+        
+        // Compare non-empty values
+        return sortOrder === "ASC" 
+          ? aType.localeCompare(bType)
+          : bType.localeCompare(aType);
+      });
+    }
+    // Handle sorting by country_code
+    else if (sortBy === "country_code") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory
+      results.sort((a: any, b: any) => {
+        const aCode = a.country_code || "";
+        const bCode = b.country_code || "";
+        return sortOrder === "ASC"
+          ? aCode.localeCompare(bCode)
+          : bCode.localeCompare(aCode);
+      });
+    }
+    else {
+      // Handle database-level sorting
+      if (sortBy === "resource_code" || sortBy === "resource_name") {
+        query += ` ORDER BY r."${sortBy}" ${sortOrder}`;
+      }
+      else if (sortBy === "project_code" || sortBy === "r_number" || sortBy === "project_name") {
+        query += ` ORDER BY pf."${sortBy}" ${sortOrder}`;
+      }
+      else {
+        // Default to project_resource_fiscal table fields
+        query += ` ORDER BY prf."${sortBy}" ${sortOrder}`;
+      }
+      
+      results = await sequelize.query(query, {
+        replacements,
+        type: "SELECT",
+      });
+
+      // Assign reference data for database-sorted results
+      results.forEach(assignReferenceData);
+    }
+
+    const projectResourceFiscal = results;
+
+    // Extract all unique resource_type_rid and country_id values for detailed info
+    const resourceTypeIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.resource_type_rid)),
+    ].filter(Boolean);
+
+    const countryIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.country_rid)),
+    ].filter(Boolean);
+
+    // Fetch detailed reference information if needed
+    const referencePromises = [];
+
+    if (resourceTypeIds.length > 0) {
+      const resourceTypeQuery = `
+        SELECT rid, resource_type_name
+        FROM ${MAIN_SCHEMA_NAME}.resource_type 
+        WHERE rid IN (:resourceTypeIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(resourceTypeQuery, {
+          replacements: { resourceTypeIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    if (countryIds.length > 0) {
+      const countryQuery = `
+        SELECT rid, country_code, country_name 
+        FROM ${MAIN_SCHEMA_NAME}.country 
+        WHERE rid IN (:countryIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(countryQuery, {
+          replacements: { countryIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    const [resourceTypes, countries] = await Promise.all(referencePromises);
+
+    // Create maps for quick lookup
+    const resourceTypeDetailMap: any = (resourceTypes as any[]).reduce((map: any, rt: any) => {
+      map[rt.rid] = rt;
+      return map;
+    }, {});
+
+    const countryDetailMap: any = (countries as any[]).reduce((map: any, country: any) => {
+      map[country.rid] = country;
+      return map;
+    }, {});
+
+    // Add detailed reference info to each project resource fiscal record
+    projectResourceFiscal.forEach((prf: any) => {
+      // Add detailed resource type info
+      if (prf.resource_type_rid && resourceTypeDetailMap[prf.resource_type_rid]) {
+        prf.resource_type_name = resourceTypeDetailMap[prf.resource_type_rid].resource_type_name;
+      } else {
+        prf.resource_type_name = null;
+      }
+
+      // Add detailed country info
+      if (prf.country_rid && countryDetailMap[prf.country_rid]) {
+        prf.country_code = countryDetailMap[prf.country_rid].country_code;
+        prf.country_name = countryDetailMap[prf.country_rid].country_name;
+      } else {
+        prf.country_code = null;
+        prf.country_name = null;
+      }
+    });
+
+    // Label mapping for export headers
+    const labelMap: Record<string, string> = {
+      "project_code": "Project Ref Id",
+      "r_number": "Project Number",
+      "fiscal_year":"Fiscal Year",
+      "project_name": "Project Name", 
+      "resource_code": "Resource Ref Id",
+      "resource_name": "Resource Name",
+      "resource_type_name": "Resource Type",
+      "country_code": "Country",
+      "total_cost_pro_res": "Cost",
+      "rd_percent_final": "RD %",
+      "qre_final": "QRE",
+      "rd_credits_total": "RD Credits",
+    };
+
+    const exportData = projectResourceFiscal.map((row: any) => {
+      const mappedRow: Record<string, any> = {};
+      Object.keys(labelMap).forEach((key) => {
+        mappedRow[labelMap[key]] = row[key];
+      });
+      return mappedRow;
+    });
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        financialHighlights: exportData,
+      },
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      statusCode: 500,
+      message: "An error occurred while fetching resource cost details.",
+    };
+  }
+}
+async executeQueriesForFinancialHighlights(
+  schemaName: string,
+  filterConditions: string,
+  searchCondition: string,
+  sortBy: string,
+  sortOrder: string,
+  limit: number,
+  offset: number,
+  search: string,
+  account_rid?: string,
+  project_rid?: string
+) {
+  try {
+    const sequelize = await this.getDbConnection(schemaName);
+
+    // Build account filter condition
+    const accountFilter = account_rid ? ` AND prf.account_rid = :account_rid` : '';
+    
+    // Build project filter condition
+    const projectFilter = project_rid ? ` AND prf.project_rid = :project_rid` : '';
+
+    // Build the base query without sorting or pagination
+    let query = `
+      SELECT 
+        prf.total_cost_pro_res,
+        prf.rd_percent_final,
+        prf.qre_final,
+        prf.rd_credits_total,
+        prf.resource_rid,
+        prf.project_fiscal_rid,
+        prf.fiscal_year,
+        prf.country_rid,
+        prf.region_rid,
+        pf.project_code,
+        pf.r_number,
+        pf.project_name,
+        r.resource_code,
+        r.resource_name,
+        r.resource_type_rid
+      FROM "${schemaName}"."project_resource_fiscal" prf
+      INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
+      INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
+      WHERE 1=1 
+      ${accountFilter}
+      ${projectFilter}
+      ${filterConditions}
+      ${searchCondition}
+    `;
+
+    // Count query to get total records
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM "${schemaName}"."project_resource_fiscal" prf
+      INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
+      INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
+      WHERE 1=1
+      ${accountFilter}
+      ${projectFilter}
+      ${filterConditions}
+      ${searchCondition}
+    `;
+
+    const replacements: any = {
+      limit,
+      offset,
+      searchTerm: search ? `%${search}%` : null,
+    };
+
+    // Add account_rid if present
+    if (account_rid) {
+      replacements.account_rid = account_rid;
+    }
+
+    // Add project_rid if present
+    if (project_rid) {
+      replacements.project_rid = project_rid;
+    }
+
+    // Execute count query first
+    const countResult = await sequelize.query(countQuery, {
+      replacements,
+      type: "SELECT",
+      plain: true,
+    });
+
+    // Execute main query without sorting
+    let results = await sequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    const mainDbSequelize = await initMainDbSequelize();
+    
+    // Fetch reference data maps
+    const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
+      const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+      const items = await mainDbSequelize.query(query, { type: "SELECT" });
+      return new Map(items.map((item: any) => [item[idField], item[nameField]]));
+    };
+
+    // Fetch all reference data in parallel
+    const [resourceTypeMap, countryMap,regionMap] = await Promise.all([
+      fetchReferenceMap('resource_type', 'rid', 'resource_type_name'),
+      fetchReferenceMap('country', 'rid', 'country_code'),
+      fetchReferenceMap('state', 'rid', 'state_name')
+    ]);
+
+    // Helper function to assign reference data
+    const assignReferenceData = (result: any) => {
+      // Assign resource type name
+      result.resource_type_name = result.resource_type_rid 
+        ? resourceTypeMap.get(result.resource_type_rid) || null 
+        : null;
+      
+      // Assign country code
+      result.country_code = result.country_rid 
+        ? countryMap.get(result.country_rid) || null 
+        : null;
+
+      result.region_name = result.region_rid 
+        ? regionMap.get(result.region_rid) || null 
+        : null;
+    };
+
+    // Handle sorting by resource_type_name
+    if (sortBy === "resource_type_name") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory, handling empty values to appear last
+      results.sort((a: any, b: any) => {
+        const aType = a.resource_type_name;
+        const bType = b.resource_type_name;
+        
+        // Handle null/undefined values
+        if (!aType && !bType) return 0;
+        if (!aType) return sortOrder === "ASC" ? 1 : -1;
+        if (!bType) return sortOrder === "ASC" ? -1 : 1;
+        
+        // Compare non-empty values
+        return sortOrder === "ASC" 
+          ? aType.localeCompare(bType)
+          : bType.localeCompare(aType);
+      });
+
+      // Apply pagination
+      results = results.slice(offset, offset + limit) as any;
+    }
+    // Handle sorting by country_code
+    else if (sortBy === "country_code") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory
+      results.sort((a: any, b: any) => {
+        const aCode = a.country_code || "";
+        const bCode = b.country_code || "";
+        return sortOrder === "ASC"
+          ? aCode.localeCompare(bCode)
+          : bCode.localeCompare(aCode);
+      });
+
+      // Apply pagination
+      results = results.slice(offset, offset + limit) as any;
+    }
+    else if (sortBy === "state_name") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory
+      results.sort((a: any, b: any) => {
+        const aCode = a.country_code || "";
+        const bCode = b.country_code || "";
+        return sortOrder === "ASC"
+          ? aCode.localeCompare(bCode)
+          : bCode.localeCompare(aCode);
+      });
+
+      // Apply pagination
+      results = results.slice(offset, offset + limit) as any;
+    }
+    else {
+      // Handle database-level sorting
+      if (sortBy === "resource_code" || sortBy === "resource_name") {
+        query += ` ORDER BY r."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+      }
+      else if (sortBy === "project_code" || sortBy === "r_number" || sortBy === "project_name") {
+        query += ` ORDER BY pf."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+      }
+      else {
+        // Default to project_resource_fiscal table fields
+        query += ` ORDER BY prf."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+      }
+      
+      results = await sequelize.query(query, {
+        replacements,
+        type: "SELECT",
+      });
+
+      // Assign reference data for database-sorted results
+      results.forEach(assignReferenceData);
+    }
+
+    const projectResourceFiscal = results;
+    const totalCount = countResult ? (countResult as any).total : 0;
+
+    // Extract all unique resource_type_rid and country_id values for detailed info
+    const resourceTypeIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.resource_type_rid)),
+    ].filter(Boolean);
+
+    const countryIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.country_rid)),
+    ].filter(Boolean);
+
+    const regionIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.region_rid))
+    ].filter(Boolean);
+
+    // Fetch detailed reference information if needed
+    const referencePromises = [];
+
+    if (resourceTypeIds.length > 0) {
+      const resourceTypeQuery = `
+        SELECT rid, resource_type_name
+        FROM ${MAIN_SCHEMA_NAME}.resource_type 
+        WHERE rid IN (:resourceTypeIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(resourceTypeQuery, {
+          replacements: { resourceTypeIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    if (countryIds.length > 0) {
+      const countryQuery = `
+        SELECT rid, country_code, country_name 
+        FROM ${MAIN_SCHEMA_NAME}.country 
+        WHERE rid IN (:countryIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(countryQuery, {
+          replacements: { countryIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    if (regionIds.length > 0) {
+      const regionQuery = `
+        SELECT rid, state_name
+        FROM ${MAIN_SCHEMA_NAME}.state
+        WHERE rid IN (:regionIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(regionQuery, {
+          replacements: { regionIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    const [resourceTypes, countries,regions] = await Promise.all(referencePromises);
+
+    // Create maps for quick lookup
+    const resourceTypeDetailMap: any = (resourceTypes as any[]).reduce((map: any, rt: any) => {
+      map[rt.rid] = rt;
+      return map;
+    }, {});
+
+    const countryDetailMap: any = (countries as any[]).reduce((map: any, country: any) => {
+      map[country.rid] = country;
+      return map;
+    }, {});
+
+    const regionDetailMap: any = (regions as any[]).reduce((map: any, region: any) => {
+      map[region.rid] = region;
+      return map;
+    }, {});
+
+    // Add detailed reference info to each project resource fiscal record
+    projectResourceFiscal.forEach((prf: any) => {
+      // Add detailed resource type info
+      if (prf.resource_type_rid && resourceTypeDetailMap[prf.resource_type_rid]) {
+        // prf.resource_type_code = resourceTypeDetailMap[prf.resource_type_rid].resource_type_code;
+        prf.resource_type_name = resourceTypeDetailMap[prf.resource_type_rid].resource_type_name;
+      } else {
+        // prf.resource_type_code = null;
+        prf.resource_type_name = null;
+      }
+
+      // Add detailed country info
+      if (prf.country_rid && countryDetailMap[prf.country_rid]) {
+        prf.country_code = countryDetailMap[prf.country_rid].country_code;
+        prf.country_name = countryDetailMap[prf.country_rid].country_name;
+      } else {
+        prf.country_code = null;
+        prf.country_name = null;
+      }
+
+      if (prf.region_rid && regionDetailMap[prf.region_rid]) {
+        prf.region_name = regionDetailMap[prf.region_rid].state_name;
+      } else {
+        prf.region_name = null;
+      }
+    });
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        projectResourceFiscal: projectResourceFiscal,
+        count: parseInt(totalCount, 10),
+      },
+    };
+  } catch (error) {
+    console.error("Error executing queries:", error);
+    return this.createErrorResponse("Error executing database queries");
+  }
+}
 
   /**
    * Executes the main and count queries and formats the response
@@ -900,6 +1952,23 @@ class ResourceCostSchemaService {
    * @param search - The search term
    * @returns SQL fragment for search condition
    */
+  buildSearchConditionForFinancialHighlights(search: string): string {
+    if (!search) return "";
+
+    return `
+      AND (
+        rc.r_number ILIKE :searchTerm 
+        OR r.resource_full_name ILIKE :searchTerm
+      )
+    `;
+  }
+
+  /**
+   * Builds SQL search condition for resource cost queries
+   *
+   * @param search - The search term
+   * @returns SQL fragment for search condition
+   */
   buildSearchCondition(search: string): string {
     if (!search) return "";
 
@@ -911,6 +1980,35 @@ class ResourceCostSchemaService {
     `;
   }
 
+  /**
+   * Builds filter conditions including fiscal year filter
+   *
+   * @param filters - The filters object
+   * @param fiscalYear - The fiscal year to filter by
+   * @returns SQL fragment for filter conditions
+   */
+  buildFilterConditionsForFinancialHighlights(
+    filters: Record<string, any>,
+    fiscalYear: number
+  ): string {
+    let filterConditions = "";
+
+    if (filters && Object.keys(filters).length > 0) {
+      filterConditions = this.processFiltersForRawQueryForFinancialHighlights(filters);
+    }
+
+    if (fiscalYear === 0 || fiscalYear === undefined) {
+      return filterConditions;
+    }
+
+    const fiscalYearCondition = `
+      AND prf.fiscal_year = ${fiscalYear}`;
+
+    // Add fiscal year condition to filter conditions
+    filterConditions += fiscalYearCondition;
+
+    return filterConditions;
+  }
   /**
    * Builds filter conditions including fiscal year filter
    *
@@ -953,6 +2051,39 @@ class ResourceCostSchemaService {
       message: HttpStatus.FAILED_MESSAGE,
       errorMessage,
     };
+  }
+
+
+  /**
+   * Determines the appropriate sort parameters for resource skill queries.
+   * Validates the sort column and ensures the sort order is either ASC or DESC.
+   * Falls back to default values if invalid parameters are provided.
+   *
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @returns Tuple containing validated sort column and order
+   */
+  getSortParametersForFinancialHighlights( sortBy: string,sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "project_code",
+      "fiscal_year",
+      "r_number",
+      "project_name",
+      "resource_code",
+      "resource_name",
+      "resource_type_name",
+      "country_code",
+      "total_cost_pro_res",
+      "rd_percent_final",
+      "qre_final",
+      "rd_credits_total",
+    ];
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
   }
 
   /**
@@ -1071,6 +2202,98 @@ class ResourceCostSchemaService {
     return filterConditions;
   }
 
+  // Include the rest of your filter processing methods here...
+  processFiltersForRawQueryForFinancialHighlights(filters: Record<string, any>): string {
+    // Your existing implementation
+    let filterConditions = "";
+
+    // Define field types for proper filter handling
+    const alphanumericFields = [
+      "project_code",
+      "r_number",
+      "project_name",
+      "resource_code",
+      "resource_name",
+    ];
+    const numericFields = [
+      "fiscal_year",
+      "total_cost_pro_res",
+      "rd_percent_final",
+      "qre_final",
+      "rd_credits_total"
+    ];
+
+    // Process each filter
+    Object.entries(filters).forEach(([key, value]) => {
+
+      // Handle different filter types based on field type
+      if (typeof value === "object") {
+        if (alphanumericFields.includes(key)) {
+          filterConditions += this.processAlphanumericFilterForFinancialHighlights(key, value);
+        } else if (numericFields.includes(key)) {
+          filterConditions += this.processNumericFilterForFinancialHighlights(key, value);
+        } else {
+          filterConditions += this.processDefaultFilterForFinancialHighlights(key, value);
+        }
+      } else if (value !== undefined && value !== null) {
+        // Simple equality
+        filterConditions += this.processSimpleEqualityFilter(key, value);
+      }
+    });
+
+    return filterConditions;
+  }
+
+processAlphanumericFilterForFinancialHighlights(key: string, value: any): string {
+  let condition = "";
+
+  // Determine the correct table alias
+  const table =
+    ["resource_code", "resource_name"].includes(key)
+      ? "r"
+      : ["project_code", "r_number", "project_name"].includes(key)
+      ? "pf"
+      : "prf";
+
+  if (value.equals) {
+    condition += ` AND LOWER(${table}."${key}") = LOWER('${value.equals}')`;
+  } else if (value.not_equals) {
+    condition += ` AND (LOWER(${table}."${key}") != LOWER('${value.not_equals}') OR ${table}."${key}" IS NULL)`;
+  } else if (value.contains) {
+    condition += ` AND LOWER(${table}."${key}") LIKE LOWER('%${value.contains}%')`;
+  } else if (value.not_contains) {
+    condition += ` AND LOWER(${table}."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
+  } else if (value.starts_with) {
+    condition += ` AND LOWER(${table}."${key}") LIKE LOWER('${value.starts_with}%')`;
+  } else if (value.ends_with) {
+    condition += ` AND LOWER(${table}."${key}") LIKE LOWER('%${value.ends_with}')`;
+  } else if (value.is_empty !== undefined) {
+    if (value.is_empty) {
+      condition += ` AND (${table}."${key}" IS NULL OR ${table}."${key}" = '')`;
+    }
+  } else if (value.is_not_empty !== undefined) {
+    if (value.is_not_empty) {
+      condition += ` AND ${table}."${key}" IS NOT NULL AND ${table}."${key}" != ''`;
+    }
+  } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+    const values = value.in
+      .map((item: string) => `'${item.toLowerCase()}'`)
+      .join(",");
+    condition += ` AND LOWER(${table}."${key}") IN (${values})`;
+  } else if (
+    value.not_in &&
+    Array.isArray(value.not_in) &&
+    value.not_in.length > 0
+  ) {
+    const values = value.not_in
+      .map((item: string) => `'${item.toLowerCase()}'`)
+      .join(",");
+    condition += ` AND LOWER(${table}."${key}") NOT IN (${values})`;
+  }
+
+  return condition;
+}
+
   processAlphanumericFilter(key: string, value: any): string {
     let condition = "";
 
@@ -1113,6 +2336,57 @@ class ResourceCostSchemaService {
     return condition;
   }
 
+  processNumericFilterForFinancialHighlights(key: string, value: any): string {
+    // Your existing implementation
+    let condition = "";
+    // if(key === "fiscal_year") {
+    //   key = "fiscal_year";
+    // }
+    // else if(key === "effort_in_hrs") {
+    //   key = "effort_in_hrs";
+    // }
+    // else if(key === "bonus") {
+    //   key = "bonus";
+    // }
+    // else {
+    //   key = `${key}_cost`;
+    // }
+    if (value.equals !== undefined) {
+      condition += ` AND prf."${key}" = ${value.equals}`;
+    } else if (value.not_equals !== undefined) {
+      condition += ` AND (prf."${key}" != ${value.not_equals} OR prf."${key}" IS NULL)`;
+    } else if (value.greater_than !== undefined) {
+      condition += ` AND prf."${key}" > ${value.greater_than}`;
+    } else if (value.less_than !== undefined) {
+      condition += ` AND prf."${key}" < ${value.less_than}`;
+    } else if (
+      value.between &&
+      Array.isArray(value.between) &&
+      value.between.length === 2
+    ) {
+      condition += ` AND prf."${key}" BETWEEN ${value.between[0]} AND ${value.between[1]}`;
+    } else if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        condition += ` AND prf."${key}" IS NULL`;
+      }
+    } else if (value.is_not_empty !== undefined) {
+      if (value.is_not_empty) {
+        condition += ` AND prf."${key}" IS NOT NULL`;
+      }
+    } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+      const values = value.in.join(",");
+      condition += ` AND prf."${key}" IN (${values})`;
+    } else if (
+      value.not_in &&
+      Array.isArray(value.not_in) &&
+      value.not_in.length > 0
+    ) {
+      const values = value.not_in.join(",");
+      condition += ` AND prf."${key}" NOT IN (${values})`;
+    }
+
+    return condition;
+  }
   processNumericFilter(key: string, value: any): string {
     // Your existing implementation
     let condition = "";
@@ -1213,7 +2487,101 @@ class ResourceCostSchemaService {
 
     return condition;
   }
+  processDefaultFilterForFinancialHighlights(key: string, value: any): string {
+    let tableAlias = "prf";
+    
+  // Set alias based on key
+  const aliasMapR = ["resource_code","resource_name","resource_type_rid"];
+  const aliasMapAD = ["project_name","project_code","r_number"];
 
+  if (aliasMapR.includes(key)) {
+    tableAlias = "r";
+  } else if (aliasMapAD.includes(key)) {
+    tableAlias = "pf";
+  }
+    let condition = "";
+    const isUuidField = key.toLowerCase().includes("rid");
+
+    if (value.equals !== undefined) {
+      if (typeof value.equals === "string") {
+        if (isUuidField) {
+          condition += ` AND ${tableAlias}."${key}" = '${value.equals}'`;
+        } else {
+          condition += ` AND LOWER(${tableAlias}."${key}") = LOWER('${value.equals}')`;
+        }
+      } else {
+        condition += ` AND ${tableAlias}."${key}" = ${value.equals}`;
+      }
+    } else if (value.not_equals !== undefined) {
+      if (typeof value.not_equals === "string") {
+        if (isUuidField) {
+          condition += ` AND (${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL)`;
+        } else {
+          condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
+        }
+      } else {
+        condition += ` AND (${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL)`;
+      }
+    } else if (value.contains !== undefined) {
+      condition += ` AND LOWER(${tableAlias}."${key}") LIKE LOWER('%${value.contains}%')`;
+    } else if (value.not_contains !== undefined) {
+      condition += ` AND LOWER(${tableAlias}."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
+    } else if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        if (isUuidField) {
+          condition += ` AND ${tableAlias}."${key}" IS NULL`;
+        } else {
+          condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
+        }
+      }
+    } else if (value.is_not_empty !== undefined) {
+      if (value.is_not_empty) {
+        if (isUuidField) {
+          condition += ` AND ${tableAlias}."${key}" IS NOT NULL`;
+        } else {
+          condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}" != ''`;
+        }
+      }
+    } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+      if (typeof value.in[0] === "string") {
+        if (isUuidField) {
+          const values = value.in.map((item: string) => `'${item}'`).join(",");
+          condition += ` AND ${tableAlias}."${key}" IN (${values})`;
+        } else {
+          const values = value.in
+            .map((item: string) => `LOWER('${item}')`)
+            .join(",");
+          condition += ` AND LOWER(${tableAlias}."${key}") IN (${values})`;
+        }
+      } else {
+        const values = value.in.join(",");
+        condition += ` AND ${tableAlias}."${key}" IN (${values})`;
+      }
+    } else if (
+      value.not_in &&
+      Array.isArray(value.not_in) &&
+      value.not_in.length > 0
+    ) {
+      if (typeof value.not_in[0] === "string") {
+        if (isUuidField) {
+          const values = value.not_in
+            .map((item: string) => `'${item}'`)
+            .join(",");
+          condition += ` AND ${tableAlias}."${key}" NOT IN (${values})`;
+        } else {
+          const values = value.not_in
+            .map((item: string) => `LOWER('${item}')`)
+            .join(",");
+          condition += ` AND LOWER(${tableAlias}."${key}") NOT IN (${values})`;
+        }
+      } else {
+        const values = value.not_in.join(",");
+        condition += ` AND ${tableAlias}."${key}" NOT IN (${values})`;
+      }
+    }
+
+    return condition;
+  }
   processDefaultFilter(key: string, value: any): string {
     let tableAlias = "rc";
     

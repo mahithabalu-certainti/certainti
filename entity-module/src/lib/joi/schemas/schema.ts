@@ -2269,6 +2269,57 @@ const projectTaskByIdSchema = Joi.object({
   accountRid: Joi.string().pattern(uuidRegex).required(),
 })
 
+
+const listResourceCostSchemaForFinancialHighlights = Joi.object({
+  project_rid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("10"),
+  search: Joi.string().max(255).optional().allow("").allow(null),
+  filters: Joi.string().default("{}").optional(),
+  sortBy: Joi.string().default("created_datetime").optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  account_rid: Joi.string().max(255).required(),
+  accountNumber: Joi.string().max(255).required(),
+  fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+});
+
+const exportResourceCostSchemaForFinancialHighlights = Joi.object({
+  project_rid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  search: Joi.string().max(255).optional().allow("").allow(null),
+  filters: Joi.string().default("{}").optional(),
+  sortBy: Joi.string().default("created_datetime").optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  account_rid: Joi.string().max(255).required(),
+  accountNumber: Joi.string().max(255).required(),
+  fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2298,5 +2349,7 @@ export {
   exportListAttachmentSummarySchema,
   listProjectTasksSchema,
   projectTaskByIdSchema,
-  exportListProjectTasksSchema
+  exportListProjectTasksSchema,
+  listResourceCostSchemaForFinancialHighlights,
+  exportResourceCostSchemaForFinancialHighlights
 };

@@ -79,6 +79,39 @@ export interface IResourceService {
 }
 
 export interface IResourceCostService {
+    exportResourceCostsForFinancialHighlights(
+    search: any, 
+    parsedFilters: Record<string, any>, 
+    sortBy: any, 
+    sortOrder: any, 
+    accountNumber: any, 
+    fiscalYear: any,
+    project_id: string,
+    account_id:string,
+    userId:string
+  ): Promise<{
+      statusCode: number;
+      message: string;
+      errorMessage?: string;
+      data?: { financialHighlights: any };
+    }>;
+  resourceCostsForFinancialHighlights(
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    project_id: string,
+    account_id:string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResourceFiscal: any; count: number };
+  }>;
   exportResourceCostList(
     search: any, 
     parsedFilters: Record<string, any>, 
