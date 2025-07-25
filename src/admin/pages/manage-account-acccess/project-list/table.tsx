@@ -148,11 +148,13 @@ export const ManageAccountListTable: React.FC<UserTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
-        actionColumnName='Inculsion/Exclusion'
+        actionColumnName='Inculsion / Exclusion'
         toggleClick={toggleProjects}
         toggleData={addedAccounts}
         disabledToggle={disabled}
-        component='Account-Access'
+        component='Manage-Account-Project-Access'
+        checkedToggleTooltip='Inculsion'
+        unCheckedToggleTooltip='Exclusion'
       />
     </div>
   );
