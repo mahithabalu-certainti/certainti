@@ -53,10 +53,7 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
-  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
-  autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
-  auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
-  fiscal_start_date: Joi.string()
+    fiscal_start_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
@@ -71,29 +68,6 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Fiscal End Date must be in the format MM/DD",
     }),
   interaction_cc_list: Joi.string().allow(null).label("Interaction CC List"),
-  blended_rate_fte: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
-    .custom((value, helpers) => {
-      const numValue = parseFloat(value);
-      if (numValue < 0.0 || numValue > 999.99) {
-        return helpers.error("any.invalid");
-      }
-      return value;
-    }).messages({
-      "string.pattern.base": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
-      "any.invalid": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
-    }).allow(null).allow(""),
-  blended_rate_subcon: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
-  .custom((value, helpers) => {
-    const numValue = parseFloat(value);
-    if (numValue < 0.0 || numValue > 999.99) {
-      return helpers.error("any.invalid");
-    }
-    return value;
-  })
-  .messages({
-    "string.pattern.base": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
-    "any.invalid": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
-  }).allow(null).allow(""),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
   industry_rid: Joi.string().required().label("Industry"),
@@ -187,9 +161,6 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }).label("Region"),
-  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
-  autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
-  auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
@@ -205,29 +176,6 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": "Fiscal End Date must be in the format MM/DD",
     }),
   interaction_cc_list: Joi.string().allow(null).label("Interaction cc list"),
-  blended_rate_fte: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
-    .custom((value, helpers) => {
-      const numValue = parseFloat(value);
-      if (numValue < 0.0 || numValue > 999.99) {
-        return helpers.error("any.invalid");
-      }
-      return value;
-    }).messages({
-      "string.pattern.base": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
-      "any.invalid": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
-    }).allow(null).allow(""),
-  blended_rate_subcon: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
-  .custom((value, helpers) => {
-    const numValue = parseFloat(value);
-    if (numValue < 0.0 || numValue > 999.99) {
-      return helpers.error("any.invalid");
-    }
-    return value;
-  })
-  .messages({
-    "string.pattern.base": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
-    "any.invalid": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
-  }).allow(null).allow(""),
   modified_by: Joi.string().max(255).optional(),
   logo_action:Joi.string().max(255).optional().allow("").allow(null),
   industry_rid: Joi.string().required().label("Industry"),

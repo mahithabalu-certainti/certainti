@@ -125,7 +125,15 @@ export const STATUS_MESSAGE = {
   importListedSuccess : "Imports listed successfully",
   importsNoFound : "No imports found",
   importUpdatedSuccess : "Import updated successfully",
-  projectTaskNotFound : "Project Task not found"
+  projectTaskNotFound : "Project Task not found",
+  settingsUpdatedSuccess : "Operation updated successfully",
+  userIdMissingInHeader : "User-ID missing in headers",
+  fiscalStartDateMissing : "Fiscal Startdate missing",
+  fiscalEndDateMissing : "Fiscal Enddate missing",
+  autoAccessmentMissing : "Auto Assessment missing",
+  autoSendMissing : "Autosend Interaction missing",
+  maxAiMissing : "Max AI Interaction missing",
+  accountSummaryHighlightsSuccess : "Financial Summary fetched successfully"
 }
 
 export const TYPES = {
@@ -530,12 +538,85 @@ export const rawQueries = {
     FROM ${MAIN_SCHEMA_NAME}.user 
     WHERE rid IN (:userIds)
   `,
+  GET_RESOURCE_TYPES: `
+  SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRid)
+  `,
+  GET_COUNTRIES:`
+  SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
+  `,
+  GET_REGIONS:`
+  SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:regionRid)
+  `,
+  GET_CURRENCIES:`
+  SELECT rid, currency_symbol, currency_name FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRid)
+  `,
+  GET_STATUSES:`
+  SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:statusRid)
+  `,
   fetchUserDetailsById (userId : string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`
   },
   updateImport(schemaName : string, updatedData : any, rid : string) {
     return `UPDATE ${schemaName}.import SET fiscal_year = ${updatedData.fiscal_year} WHERE rid = '${rid}'`
-  }
+  },
+  async updateSetting(schemaName : string, data : any, orgDb : Sequelize, mainDb : Sequelize) {
+    let tableName : string[];
+    let whereParams : string = ``
+    let setValues : string;
+    let schema : string = ``
+    let dbConnection : any
+
+    if(data.flag == UPDATE_FLAG.project) {
+      tableName = [`project_fiscal`, `project_fiscal_summary`]
+      
+      setValues = `
+      blended_rate_fte = ${data.blended_rate_fte == '' ? null : parseFloat(data.blended_rate_fte)},
+      blended_rate_subcon = ${data.blended_rate_subcon == '' ? null : parseFloat(data.blended_rate_subcon) },
+      auto_send_ai_interaction = ${data.autosend_interaction},
+      max_ai_interaction = ${data.max_ai_interactions},
+      auto_access_rd = ${data.auto_access_rd},
+      modified_by = '${data.userId}',
+      modified_datetime = NOW()`
+    } else {
+      tableName = [`account_details`]
+      setValues = 
+      `
+      fiscal_start_date = '${data.fiscal_start_date}',
+      fiscal_end_date = '${data.fiscal_end_date}',
+      blended_rate_fte = ${data.blended_rate_fte == null ? null : parseFloat(data.blended_rate_fte)},
+      blended_rate_subcon = ${data.blended_rate_subcon == null ? null : parseFloat(data.blended_rate_subcon) },
+      autosend_interaction = ${data.autosend_interaction},
+      max_ai_interactions = ${data.max_ai_interactions},
+      auto_access_rd = ${data.auto_access_rd},
+      modified_by = '${data.userId}',
+      modified_datetime = NOW()`
+    }
+    for(let t of tableName) {
+      if(t == 'project_fiscal') {
+        schema = schemaName
+        whereParams = `WHERE account_rid = '${data.account_rid}' AND rid = '${data.project_fiscal_rid}'`
+        dbConnection = orgDb
+      }
+      else if(t == 'project_fiscal_summary') {
+        schema = MAIN_SCHEMA_NAME
+        whereParams = `WHERE account_rid = '${data.account_rid}' AND project_fiscal_rid = '${data.project_fiscal_rid}'`
+        dbConnection = mainDb
+      }
+      else if(t == 'account_details') {
+        schema = schemaName
+        whereParams = `WHERE account_rid = '${data.account_rid}'`
+        dbConnection = orgDb
+      }
+      let query = `
+      UPDATE ${schema}.${t}
+      SET
+      ${setValues}
+      ${whereParams}
+      `
+      await dbConnection.query(query)
+    }
+    return HttpStatus.SUCCESS_MESSAGE 
+  },
 }
 
 export const IMPORT_FILTER_COLUMNS : any = {
@@ -589,4 +670,22 @@ export const ALPHANUMERIC_CONDITIONS = {
   before : "before",
   after : "after",
 
+}
+
+export const UPDATE_FLAG = {
+  project : "project",
+  account : "account"
+}
+
+export const SUMMARY_HIGHLIGHTS_FLAG = {
+  all : "all",
+  rdQualified : "rd_qualified"
+}
+
+export const DEFAULT_PROJECT_DETAILS = {
+  maxAiInteraction : 5
+}
+
+export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
+  statewise : "state",
 }

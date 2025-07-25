@@ -517,7 +517,6 @@ export class ProjectFiscalSummary
       foreignKey: "project_rid",
       as: "ProjectFiscal",
     });
-
     return ProjectFiscalSummary;
   }
 }

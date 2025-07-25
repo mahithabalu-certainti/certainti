@@ -14,6 +14,8 @@ import {
   IImportListGraphqlServices,
   IProjectTaskService,
   IProjectTaskGraphqlServices,
+  ISettingsServices,
+  IFinancialHighlights,
   IProjectTaskIngestionService
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
@@ -46,6 +48,8 @@ class Services implements IServiceContainer {
   private _attachmentGraphqlServices? : IAttachmentGraphqlServices;
   private _importGraphqlService? : IImportListGraphqlServices;
   private _projectTaskGraphqlServices? : IProjectTaskGraphqlServices;
+  private _settingService? : ISettingsServices;
+  private _financialHighlightServices? : IFinancialHighlights
 
   constructor(
     logger: Logger,
@@ -124,6 +128,22 @@ class Services implements IServiceContainer {
     }
     return this._projectTaskGraphqlServices!
   }
+  get settingServices() : ISettingsServices {
+    if(!this._settingService) {
+      const {default : SettingService} = require('../services/settingsServices')
+      this._settingService = new SettingService()
+    }
+    return this._settingService!
+  }
+
+  get financialHighlightServies() : IFinancialHighlights {
+    if(!this._financialHighlightServices) {
+      const {default : FinancialHighlightsService } = require('../services/financialHighlightsServices')
+      this._financialHighlightServices = new FinancialHighlightsService()
+    }
+    return this._financialHighlightServices!
+  }
+
 }
 
 

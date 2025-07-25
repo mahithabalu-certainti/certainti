@@ -280,7 +280,8 @@ export interface IProjectService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -679,4 +680,19 @@ export interface IProjectTaskGraphqlServices {
     errorMessage?: string;
     data?: any;
   }>;
+}
+
+export interface ISettingsServices {
+  updateSettings(data : any) : Promise<{
+    statusCode : number
+    statusMessage : string
+  }>
+}
+
+export interface IFinancialHighlights {
+  summaryHighlightsList(data : any) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }>
 }

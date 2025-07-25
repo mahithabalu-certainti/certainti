@@ -905,14 +905,14 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     dataStorage = `fiscal_year = ${newData.fiscal_year}`
     newDataArray.push(dataStorage)
   }
-  if(requestData.effort_project_task_level != undefined) {
-    newData.effort_project_task_level = requestData.effort_project_task_level != dbData.total_hours_pro_task ? requestData.effort_project_task_level : dbData.total_hours_pro_task
-    dataStorage = `effort_project_task_level = ${newData.effort_project_task_level}`
+  if(requestData.total_hours_pro_task != undefined) {
+    newData.total_hours_pro_task = requestData.total_hours_pro_task != dbData.total_hours_pro_task ? requestData.total_hours_pro_task : dbData.total_hours_pro_task
+    dataStorage = `total_hours_pro_task = ${newData.total_hours_pro_task}`
     newDataArray.push(dataStorage)
   }
-  if(requestData.cost_project_task_level != undefined) {
-    newData.cost_project_task_level = requestData.cost_project_task_level != dbData.total_cost_pro_task ? requestData.cost_project_task_level : dbData.total_cost_pro_task
-    dataStorage = `cost_project_task_level = ${newData.cost_project_task_level}`
+  if(requestData.total_cost_pro_task != undefined) {
+    newData.total_cost_pro_task = requestData.total_cost_pro_task != dbData.total_cost_pro_task ? requestData.total_cost_pro_task : dbData.total_cost_pro_task
+    dataStorage = `total_cost_pro_task = ${newData.total_cost_pro_task}`
     newDataArray.push(dataStorage)
   }
   if(requestData.country_rid != undefined) {
@@ -951,4 +951,21 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
       data : newDataArray
     }
   }
+}
+
+export const validateAccountSettingRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.fiscal_start_date) return STATUS_MESSAGE.fiscalStartDateMissing
+  if(!data.fiscal_end_date) return STATUS_MESSAGE.fiscalEndDateMissing
+  if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
+  if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
+  if(typeof data.auto_access_rd !== 'boolean') return STATUS_MESSAGE.autoAccessmentMissing
+}
+
+export const validateProjectSettingRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
+  if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
+  if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
 }

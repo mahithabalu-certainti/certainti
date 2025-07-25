@@ -6,8 +6,11 @@ import projectRoutes from "./projectRoutes";
 import attachmentRoutes from "./attachmentRoutes";
 import projectResourceRoutes from "./projectResourceRoutes";
 import { errorLog, successLog } from "../utils/helpers";
-import importRoutes from './importRoutes';
-import projectTaskRoutes from './projectTaskRoutes'
+import projectTaskRoutes from "./projectTaskRoutes";
+
+import importRoutes from './importRoutes'
+import settingRoutes from '../routes/settingsRoutes'
+import financialRoutes from '../routes/financialHighlightsRoutes'
 
 const routes: Router = Router();
 
@@ -37,5 +40,7 @@ routes.use("/attachment", attachmentRoutes);
 routes.use("/project_resources", projectResourceRoutes);
 routes.use("/import", importRoutes);
 routes.use("/project_tasks", projectTaskRoutes);
+routes.use('/settings', settingRoutes)
+routes.use('/financial_highlight', financialRoutes)
 
 export default routes;

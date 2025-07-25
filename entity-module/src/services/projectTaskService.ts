@@ -14,6 +14,8 @@ import AccountDetails from "../models/accountDetails";
 import { Project } from "../models/project";
 import { Resources } from "../models/resource";
 import { ProjectFiscal } from "../models/projectFiscal";
+import currency from "currency.js";
+import Decimal from "decimal.js";
 
 
 export class ProjectTaskService {
@@ -129,8 +131,9 @@ async listProjectTasks(
 
     const regionRids = allTasks.map(task => task.region_rid).filter(rid => rid);
     const countryRids = allTasks.map(task => task.country_rid).filter(rid => rid);
+    const currencyRids = allTasks.map(task => task.currency_rid).filter(rid => rid);
 
-    const [regions, countries] = await Promise.all([
+    const [regions, countries, currencies] = await Promise.all([
       regionRids.length
         ? mainSequelize.query(
           `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:regionRids)`,
@@ -142,11 +145,18 @@ async listProjectTasks(
           `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRids)`,
           { replacements: { countryRids }, type: 'SELECT' }
         )
-        : []
+        : [],
+      currencyRids.length
+        ? mainSequelize.query(
+          `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
+          { replacements: { currencyRids }, type: 'SELECT' }
+        )
+        : []  
     ]);
 
     const regionMap = new Map(regions.map((region: any) => [region.rid, region.state_name]));
     const countryMap = new Map(countries.map((country: any) => [country.rid, country.country_name]));
+    const currencyMap = new Map(currencies.map((currency: any) => [currency.rid, currency.currency_symbol]));    
 
     // ✅ Format all tasks
     let formattedTasks = allTasks.map(task => ({
@@ -172,9 +182,10 @@ async listProjectTasks(
       region_rid: task.region_rid,
       region_name: regionMap.get(task.region_rid) || null,
       currency_rid: task.currency_rid,
+      currency_symbol: currencyMap.get(task.currency_rid) || null,
       resource_orgname: (task as any).resource?.resource_orgname || null,
-      effort_project_task_level: task.total_hours_pro_task,
-      cost_project_task_level: task.total_cost_pro_task,
+      total_hours_pro_task: task.total_hours_pro_task,
+      total_cost_pro_task: task.total_cost_pro_task,
       comments: task.comments,
       created_by: task.created_by,
       modified_by: task.modified_by, 
@@ -183,7 +194,7 @@ async listProjectTasks(
     }));
 
     // ✅ Handle special sorting cases
-    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'cost_project_task_level', 'effort_project_task_level', 'description', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
+    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_cost_pro_task', 'total_hours_pro_task', 'description', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -426,8 +437,9 @@ async listProjectTasksExport(
 
     const regionRids = allTasks.map(task => task.region_rid).filter(rid => rid);
     const countryRids = allTasks.map(task => task.country_rid).filter(rid => rid);
+    const currencyRids = allTasks.map(task => task.currency_rid).filter(rid => rid);
 
-    const [regions, countries] = await Promise.all([
+    const [regions, countries, currencies] = await Promise.all([
       regionRids.length
         ? mainSequelize.query(
           `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:regionRids)`,
@@ -439,11 +451,18 @@ async listProjectTasksExport(
           `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRids)`,
           { replacements: { countryRids }, type: 'SELECT' }
         )
-        : []
+        : [],
+      currencyRids.length
+        ? mainSequelize.query(
+          `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
+          { replacements: { currencyRids }, type: 'SELECT' }
+        )
+        : []  
     ]);
 
     const regionMap = new Map(regions.map((region: any) => [region.rid, region.state_name]));
     const countryMap = new Map(countries.map((country: any) => [country.rid, country.country_name]));
+    const currencyMap = new Map(currencies.map((currency : any) => [currency.rid, currency.currency_symbol]));
 
     // ✅ Format all tasks
     let formattedTasks = allTasks.map(task => ({
@@ -469,9 +488,10 @@ async listProjectTasksExport(
       region_rid: task.region_rid,
       region_name: regionMap.get(task.region_rid) || null,
       currency_rid: task.currency_rid,
+      currency_symbol: currencyMap.get(task.currency_rid) || null,
       resource_orgname: (task as any).resource?.resource_orgname || null,
-      effort_project_task_level: task.total_hours_pro_task,
-      cost_project_task_level: task.total_cost_pro_task,
+      total_hours_pro_task: task.total_hours_pro_task,
+      total_cost_pro_task: task.total_cost_pro_task,
       comments: task.comments,
       created_by: task.created_by,
       modified_by: task.modified_by, 
@@ -480,7 +500,7 @@ async listProjectTasksExport(
     }));
 
     // ✅ Handle special sorting cases
-    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'cost_project_task_level', 'effort_project_task_level', 'description', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
+    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_hours_pro_task', 'total_cost_pro_task', 'description', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -625,8 +645,8 @@ async listProjectTasksExport(
         "resource_type_name": "Resource Type",
         "resource_role": "Role",
         "start_date": "Task Date",
-        "cost_project_task_level": "Cost",
-        "effort_project_task_level": "Effort in Hrs",
+        "total_cost_pro_task": "Cost",
+        "total_hours_pro_task": "Effort in Hrs",
         "description": "Task Description",
         "comments": "Comments",
         "region_name": "Region",
@@ -639,21 +659,27 @@ async listProjectTasksExport(
         "country_rid":"country_name",
         "resource_rid": "resource_name",
         "account_rid": "account_name",
-        "project_rid": "project_name"
+        "project_rid": "project_name",
+        "currency_rid": "currency_symbol"
       };
 
-      const exportData = formattedTasks.map((task: any) => {
-      const row: Record<string, string> = {};
+      const exportDataPromises = formattedTasks.map(async (task: any) => {
+        const row: Record<string, string> = {};
 
-      for (const [field, label] of Object.entries(labelMap)) {
-       if (allowedFieldSet.has(field)) {
-      const actualField = fieldValueMap[field] || field; // fallback to same field if not mapped
-      row[label] = task[actualField] ?? "-";
-      }
-      }
+        for (const [field, label] of Object.entries(labelMap)) {
+          if (allowedFieldSet.has(field)) {
+            const actualField = fieldValueMap[field] || field;
+            if (field === 'total_cost_pro_task') {
+              row[label] = await this.formatNumberForExport(task[actualField], task.currency_symbol);
+            } else {
+              row[label] = task[actualField] ?? "-";
+            }
+          }
+        }
+        return row;
+      });
 
-      return row;
-    });
+      const exportData = await Promise.all(exportDataPromises);
      
     return {
       statusCode: HttpStatus.SUCCESS,
@@ -674,6 +700,38 @@ async listProjectTasksExport(
     };
   }
 }
+
+
+async formatNumberForExport(value: any, currency_symbol: string): Promise<string> {
+  if (value == null || value === '') return '-';
+
+  try {
+    const decimalValue = new Decimal(value.toString());
+    if (!decimalValue.isFinite()) return '-';
+
+    // Extract just the formatted currency pattern using a dummy value
+    const pattern = currency(0, {
+      symbol: currency_symbol || '$',
+      precision: 2,
+      pattern: '! #',
+      separator: ',',
+      decimal: '.',
+    }).format(); // e.g., "$ 0.00"
+
+    // Format actual value manually using Decimal
+    const [intPart, decPart] = decimalValue.toFixed().split('.');
+    const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    const formattedNumber = decPart ? `${formattedInt}.${decPart}` : formattedInt;
+    // Replace "0.00" in pattern with our real number
+    return pattern.replace('0.00', formattedNumber);
+
+  } catch (error) {
+    console.error('Error formatting number:', error);
+    return '-';
+  }
+}
+
 
 async getProjectTaskById(
   accountRid: string,
@@ -755,9 +813,9 @@ async getProjectTaskById(
       };
     }
 
-    const [resourceTypeData, regionData, countryData] = await Promise.all([
+    const [resourceTypeData, regionData, countryData, currencyData] = await Promise.all([
       (task as any).resource?.resource_type_rid ? mainSequelize.query(
-        `SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeRid`,
+        rawQueries.GET_RESOURCE_TYPES,
         { 
           replacements: { resourceTypeRid: (task as any).resource?.resource_type_rid },
           type: 'SELECT'
@@ -765,7 +823,7 @@ async getProjectTaskById(
       ) : Promise.resolve([]),
 
       task.region_rid ? mainSequelize.query(
-        `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :regionRid`,
+        rawQueries.GET_REGIONS,
         {
           replacements: { regionRid: task.region_rid },
           type: 'SELECT'
@@ -773,9 +831,16 @@ async getProjectTaskById(
       ) : Promise.resolve([]),
 
       task.country_rid ? mainSequelize.query(
-        `SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :countryRid`,
+        rawQueries.GET_COUNTRIES,
         {
           replacements: { countryRid: task.country_rid },
+          type: 'SELECT'
+        }
+      ) : Promise.resolve([]),
+      task.currency_rid ? mainSequelize.query(
+        rawQueries.GET_CURRENCIES,
+        {
+          replacements: { currencyRid: task.currency_rid },
           type: 'SELECT'
         }
       ) : Promise.resolve([])
@@ -784,6 +849,7 @@ async getProjectTaskById(
     const [resourceType] = resourceTypeData;
     const [region] = regionData;
     const [country] = countryData;
+    const [currency] = currencyData;
 
     const attachments = await this.fetchAttachmentsBytaskId(taskRid);
     let mappedAttachments = [];
@@ -846,14 +912,17 @@ async getProjectTaskById(
       resource_type_name: (resourceType as any)?.resource_type_name || null,
       resource_role: taskWithUserDetails.dataValues.resource?.resource_role,
       status_rid: taskWithUserDetails.dataValues.status_rid,
+      status_name: (status as any)?.status_name || null,
       country_rid: taskWithUserDetails.dataValues.country_rid,
       country_name: (country as any)?.country_name || null,
       region_rid: taskWithUserDetails.dataValues.region_rid,
       region_name: (region as any)?.state_name || null,
       currency_rid: taskWithUserDetails.dataValues.currency_rid,
+      currency_symbol: (currency as any)?.currency_symbol || null,
+      currency_name: (currency as any)?.currency_name || null,
       resource_orgname: taskWithUserDetails.dataValues.resource?.resource_orgname,
-      effort_project_task_level: taskWithUserDetails.dataValues.effort_project_task_level,
-      cost_project_task_level: taskWithUserDetails.dataValues.cost_project_task_level,
+      total_hours_pro_task: taskWithUserDetails.dataValues.total_hours_pro_task,
+      total_cost_pro_task: taskWithUserDetails.dataValues.total_cost_pro_task,
       description: taskWithUserDetails.dataValues.description,
       comments: taskWithUserDetails.dataValues.comments,
       attachment: mappedAttachments,
@@ -917,8 +986,8 @@ private buildRawWhereClause(
     const condition: any = {};
 
     switch (field) {
-      case 'cost_project_task_level':
-      case 'effort_project_task_level':  
+      case 'total_cost_pro_task':
+      case 'total_hours_pro_task':  
         switch (operator.toLowerCase()) {
           case 'equals': condition[field] = { [Op.eq]: Number(value) }; break;
           case 'not_equals': condition[field] = { [Op.or]: [{ [Op.ne]: Number(value) }, { [Op.is]: null }] }; break;

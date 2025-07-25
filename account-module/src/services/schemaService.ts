@@ -2,7 +2,7 @@ import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
-import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
 import { getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
@@ -995,7 +995,9 @@ class SchemaService {
         target_load_end_timestamp TIMESTAMPTZ,
         target_load_error_records_count INT,
         target_ai_records_processed INT,
-        target_ai_error_records_count INT
+        target_ai_error_records_count INT,
+        total_staging_warning_count INT,
+        fiscal_year INT
       );
     `);
   }
@@ -1725,8 +1727,8 @@ class SchemaService {
         replacements: {
           account_rid: account_rid,
           account_name: accountData.account_name,
-          max_ai_interactions: accountData.max_ai_interactions,
-          autosend_interaction: accountData.autosend_interaction,
+          max_ai_interactions: DEFAULT_ACCOUNT_DETAILS.maxAiInteraction,
+          autosend_interaction: false,
           fiscal_start_date: accountData.fiscal_start_date,
           fiscal_end_date: accountData.fiscal_end_date,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
@@ -1740,7 +1742,7 @@ class SchemaService {
           website: accountData.website ?? null,
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
-          auto_access_rd: accountData.auto_access_rd,
+          auto_access_rd: false,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
         },
@@ -1902,15 +1904,9 @@ class SchemaService {
       `
         UPDATE "${schemaName}"."account_details"
         SET 
-          max_ai_interactions = :max_ai_interactions,
-          autosend_interaction = :autosend_interaction,
           interaction_cc_list = :interaction_cc_list,
-          blended_rate_fte = :blended_rate_fte,
-          blended_rate_subcon = :blended_rate_subcon,
           modified_by = :modified_by,
-         
           website = :website,
-          auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
           business_details = :business_details
         WHERE account_rid = :account_rid;
@@ -1918,18 +1914,9 @@ class SchemaService {
       {
         replacements: {
           account_rid: account_rid,
-          max_ai_interactions: accountData.max_ai_interactions,
-          autosend_interaction: accountData.autosend_interaction,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
-          blended_rate_fte: accountData.blended_rate_fte
-            ? new Decimal(accountData.blended_rate_fte).toNumber().toString()
-            : null,
-          blended_rate_subcon: accountData.blended_rate_subcon
-            ? new Decimal(accountData.blended_rate_subcon).toNumber().toString()
-            : null,
           modified_by: userId,
           website: accountData.website ?? null,
-          auto_access_rd: accountData.auto_access_rd,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
           modified_datetime: new Date(),

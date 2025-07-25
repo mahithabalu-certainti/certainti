@@ -1,6 +1,7 @@
 import { ProjectFiscal } from "../models/projectFiscal";
 import { ProjectResource } from "../models/projectResource";
 import { Resources } from "../models/resource";
+import { DEFAULT_PROJECT_DETAILS } from "./constants";
 import {
   ICreateProject,
   ICreateProjectResource,
@@ -49,7 +50,7 @@ export class ProjectMapper {
       total_cost_subcon: projectData.total_cost_subcon || null,
       auto_send_ai_interaction: projectData.auto_send_ai_interaction,
       auto_access_rd: projectData.auto_access_rd ?? false,
-      max_ai_interaction: projectData.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       blended_rate_fte: projectData.blended_rate_fte || null,
       blended_rate_subcon: projectData.blended_rate_subcon,
       project_description: projectData.project_description || null,
@@ -86,7 +87,7 @@ export class ProjectMapper {
       region_rid: data.region_rid || null,
       currency_rid: data.currency_rid || null,
 
-      max_ai_interaction: data.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
       auto_access_rd: data.auto_access_rd ?? false,
 
@@ -192,7 +193,8 @@ export class ProjectMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    projectPointOfContact: string | null
+    projectPointOfContact: string | null,
+    projectPointOfContactEmail: string | null
   ) {
     return {
       project_code: projectData.project_code,
@@ -252,6 +254,7 @@ export class ProjectMapper {
 
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
+      project_point_of_contact_email:projectPointOfContactEmail
     };
   }
 
@@ -288,7 +291,7 @@ export class ProjectMapper {
       region_rid: projectData.region_rid || null,
       currency_rid: projectData.currency_rid || null,
 
-      max_ai_interaction: projectData.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
       auto_access_rd: projectData.auto_access_rd ?? false,
 

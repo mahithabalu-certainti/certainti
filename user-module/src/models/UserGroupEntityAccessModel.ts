@@ -16,6 +16,7 @@ interface UserGroupEntityAccessAttributes {
   group_rid?: string | null;
   entity_rid: string;
   user_rid?: string | null;
+  comment?: string | null;
   entity_type: 'ACCOUNT' | 'PROJECT';
   access_type: 'INCLUDE' | 'EXCLUDE';
   
@@ -32,6 +33,7 @@ export class UserGroupEntityAccess
 {
   public rid!: string;
   public group_rid?: string;
+  public comment?:string;
   public user_rid?: string;
   public created_by?: string;
   public modified_by?: string;
@@ -88,6 +90,10 @@ export class UserGroupEntityAccess
         access_type: {
           type: DataTypes.ENUM('INCLUDE', 'EXCLUDE'),
           allowNull: false,
+        },
+          comment: {
+          type: DataTypes.STRING,
+          allowNull: true,
         },
 
 

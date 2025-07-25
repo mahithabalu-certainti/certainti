@@ -9,6 +9,8 @@ import moment, { Moment } from "moment";
 import "moment-timezone";
 import { Status } from "../models/statusModel";
 import { PermissionObjectMapping } from "../models/permissionObjectMappingModel";
+import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
+import { UserGroupMapping } from "../models/userGroupMappingModel";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -175,6 +177,38 @@ class UserService {
           errorMessage: "User not found",
         };
       }
+
+      console.log(user)
+
+      //REstrict if user belongs the group if the user belongs to any group
+      if (user.org_id !== org_id) {
+        // Step 1: Get group_rids of the user
+        const groupMappings = await UserGroupMapping.findAll({
+          where: { user_rid: userId },
+          attributes: ['group_rid'],
+          raw: true
+        });
+        const groupRids = groupMappings.map(g => g.group_rid);
+
+        // Step 2: Check user_group_entity_access for direct or group-based access
+        const accessExists = await UserGroupEntityAccess.findOne({
+          where: {
+            [Op.or]: [
+              { user_rid: userId },
+              { group_rid: { [Op.in]: groupRids } }
+            ]
+          }
+        });
+
+        if (accessExists) {
+          return {
+            statusCode: constants.BAD_REQUEST,
+            message: constants.BAD_REQUEST_MESSAGE,
+            errorMessage: "Cannot change organization: Please remove user access in the current organization before updating",
+          };
+        }
+      }
+
 
       const updatedData = await repository.update(
         {
@@ -2173,7 +2207,7 @@ if (includeDependencies) {
    * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
    * A promise that resolves to an object containing the status, message, and the list of profiles.
    */
-  async exportUserprofiles(profileId: string): Promise<{
+  async exportUserprofiles(profileId: string,userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -2182,12 +2216,27 @@ if (includeDependencies) {
     try {
       const workbook = new ExcelJS.Workbook();
       const headerSheet = workbook.addWorksheet("Headers");
-      const headers = [
-        "Profile Name",
-        "Profile Description",
-        "Created On",
-        "Created By",
-      ];
+      const allowedFieldsForExport = await this.getAllowedExportFields(userId,"profile_view_edit");
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+      const labelMap: Record<string, string> = {
+        profile_name: "Profile Name",
+        profile_description: "Profile Description",
+        created_datetime: "Created On",
+        created_by: "Created By",
+      };
+      const headers: string[] = [];
+
+      for (const field of Object.keys(labelMap)) {
+        if (allowedFieldSet.has(field)) {
+          headers.push(labelMap[field]);
+        }
+      }
+
       headerSheet.addRow(headers);
       const profile = await Profile.findByPk(profileId, {
         include: [
@@ -2207,12 +2256,13 @@ if (includeDependencies) {
         const createdDate = profile.created_datetime
           ? new Date(profile.created_datetime).toISOString().slice(0, 10)
           : "";
-        headerSheet.addRow([
-          profile.profile_name,
-          profile.profile_description,
-          createdDate,
-          createdByName,
-        ]);
+        const fieldsToExport = Object.keys(labelMap).filter(field =>
+          allowedFieldSet.has(field)
+        );
+
+        // Add dynamic headers
+        const headers = fieldsToExport.map(field => labelMap[field]);
+        headerSheet.addRow(headers);
       }
       const sheet = workbook.addWorksheet("Menu");
 

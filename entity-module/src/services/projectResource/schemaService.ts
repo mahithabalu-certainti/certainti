@@ -3751,35 +3751,35 @@ export class ProjectResourceSchemaService {
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_fte_effort, 0)")
+            Sequelize.literal("COALESCE(total_effort_fte_from_prj_res, 0)")
           ),
           "effective_fte_effort",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_subcon_effort, 0)")
+            Sequelize.literal("COALESCE(total_effort_subcon_from_prj_res, 0)")
           ),
           "effective_subcon_effort",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_fte_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_fte_from_prj_res, 0)")
           ),
           "effective_fte_cost",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_subcon_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_subcon_from_prj_res, 0)")
           ),
           "effective_subcon_cost",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_nonlabor_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_nonlabor_from_prj_res, 0)")
           ),
           "effective_nonlabor_cost",
         ],
@@ -3817,11 +3817,11 @@ export class ProjectResourceSchemaService {
         total_project_hours: aggregates.effective_effort,
         total_fte: aggregates.effective_total_fte,
         total_subcon: aggregates.effective_total_subcon,
-        total_project_hours_fte: aggregates.effective_fte_effort,
-        total_project_hours_subcon: aggregates.effective_subcon_effort,
-        total_project_cost_fte: aggregates.effective_fte_cost,
-        total_project_cost_subcon: aggregates.effective_subcon_cost,
-        total_project_cost_nonlabor: aggregates.effective_nonlabor_cost,
+        total_project_res_hours_fte: aggregates.effective_fte_effort,
+        total_project_res_hours_subcon: aggregates.effective_subcon_effort,
+        total_project_res_cost_fte: aggregates.effective_fte_cost,
+        total_project_res_cost_subcon: aggregates.effective_subcon_cost,
+        total_project_res_cost_nonlabor: aggregates.effective_nonlabor_cost,
       },
       {
         where: {
@@ -4287,6 +4287,7 @@ export class ProjectResourceSchemaService {
     projectResourceData: IUpdateInlineProjectResource,
     userId: string,
     projectData: any,
+    resourceData: Resources,
     transaction: Transaction
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
@@ -4300,6 +4301,10 @@ export class ProjectResourceSchemaService {
       project_rid,
       ...fieldsToUpdate
     } = projectResourceData;
+
+    if (fieldsToUpdate.resource_code) {
+      fieldsToUpdate.resource_rid = resourceData.rid;
+    }
 
     const updateProjectResource = await ProjectResource.update(
       {
@@ -4340,6 +4345,7 @@ export class ProjectResourceSchemaService {
 
     return existingData;
   }
+  
 
   async fetchProjectResourceDetails(
     accountNumber: string,

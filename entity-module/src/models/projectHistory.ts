@@ -110,7 +110,6 @@ export class ProjectHistory
       sourceKey: 'rid',
       as: 'ProjectHistory',
     });
-
     return ProjectHistory;
   }
 }

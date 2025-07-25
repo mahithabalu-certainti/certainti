@@ -698,7 +698,8 @@ export class ProjectService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    bothParentAndChild: boolean = false
+    bothParentAndChild: boolean = false,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -718,6 +719,52 @@ export class ProjectService {
         accountData.parent_account_rid === ""
       ) {
         throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      
+      if (!isCustomGlobal ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
       let accountRNumber = accountData.r_number;
@@ -768,7 +815,8 @@ export class ProjectService {
         filters,
         finalMetaDataSortBy,
         finalMetaDataSortOrder,
-        {}
+        {},
+        accessibleIds
       );
 
       return {
@@ -813,6 +861,52 @@ export class ProjectService {
         accountData.parent_account_rid === ""
       ) {
         throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      
+      if (!isCustomGlobal ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
       let accountRNumber = accountData.r_number;
@@ -860,7 +954,8 @@ export class ProjectService {
         finalMetaDataSortBy,
         finalMetaDataSortOrder,
         timezone,
-        userId
+        userId,
+        accessibleIds
       );
 
       return {
@@ -876,14 +971,29 @@ export class ProjectService {
     }
   }
   async getAccessibleProjectIds(
-    userId: string,
-    isdefaultparent: boolean
-  ): Promise<string[]> {
-    const mainDbSequelize = await initMainDbSequelize();
-    const MAIN_SCHEMA_NAME = "trd365";
+  userId: string,
+  isdefaultparent: boolean,
+  isPOC: boolean = false,
+  userEmail?: string,
+  isCustomGlobal: boolean = false
+): Promise<string[]> {
+  const mainDbSequelize = await initMainDbSequelize();
+  const MAIN_SCHEMA_NAME = "trd365";
 
-    const replacements = [userId, userId];
+  const replacements: any[] = [];
 
+  let accessControlWhere = "WHERE 1=1";
+
+  if (isCustomGlobal) {
+    // If isPOC is also true, restrict to POC email
+    if (isPOC && userEmail) {
+      accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+      replacements.push(userEmail, userEmail);
+    }
+    // Else allow all projects (no extra access checks)
+  } else {
+    // Non-global user – apply account/project access checks
+    replacements.push(userId, userId);
     const accountAccessSubquery = `
     (
       EXISTS (
@@ -904,8 +1014,7 @@ export class ProjectService {
       )
     )
   `;
-
-    let accessControlWhere = `WHERE ${accountAccessSubquery}`;
+    accessControlWhere += ` AND ${accountAccessSubquery}`;
 
     if (!isdefaultparent) {
       // Add project-level access checks if not a parent group
@@ -947,12 +1056,20 @@ export class ProjectService {
         )
       )
     `;
-      replacements.push(userId, userId, userId, userId); // 4 more for project checks
+      replacements.push(userId, userId, userId, userId);
     }
 
-    const query = `
+    // Only non-global users can be further filtered by POC
+    if (isPOC && userEmail) {
+      accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+      replacements.push(userEmail, userEmail);
+    }
+    }
+
+  const query = `
     SELECT DISTINCT ps.project_rid
     FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
     ${accessControlWhere}
   `;
 
@@ -984,13 +1101,38 @@ export class ProjectService {
     try {
       const offset = (page - 1) * limit;
       const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
       const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
       if (!isCustomGlobal) {
         accessibleIds = await this.getAccessibleProjectIds(
           userId,
-          isDefaultParent
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
         );
         if (accessibleIds.length === 0) {
           return {
@@ -1078,13 +1220,38 @@ export class ProjectService {
         sortOrder: finalSortOrder,
       };
       const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
       const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
-      if (!isCustomGlobal) {
+      if (!isCustomGlobal ) {
         accessibleIds = await this.getAccessibleProjectIds(
           userId,
-          isDefaultParent
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
         );
         if (accessibleIds.length === 0) {
           return {

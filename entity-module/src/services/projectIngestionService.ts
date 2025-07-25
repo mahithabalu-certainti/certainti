@@ -590,7 +590,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -602,7 +602,8 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      projectPointOfContact
+      projectPointOfContact,
+      projectPointOfContactEmail
     );
 
     return await ProjectSummary.create(summaryData);
@@ -1491,7 +1492,8 @@ class ProjectIngestionService {
     rawFilters: Record<string, any> = {},
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
-    graphqlData: any
+    graphqlData: any,
+    accessibleIds: string[]
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1570,7 +1572,7 @@ class ProjectIngestionService {
         account_rid: accountData.rid,
       };
 
-      projectData = await Project.findAll({
+        projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
         order: fullOrder,
@@ -1607,6 +1609,7 @@ class ProjectIngestionService {
       whereProject = {
         account_rid: accountData.rid,
         ...(bothParentAndChild ? parentFilters : {}),
+        ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       whereFiscal = {
         account_rid: accountData.rid,
@@ -1781,7 +1784,8 @@ class ProjectIngestionService {
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
     timezone: string,
-    userId: string
+    userId: string,
+    accessibleIds: string[]
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1848,6 +1852,7 @@ class ProjectIngestionService {
     const whereProject: Record<string, any> = {
       account_rid: accountData.rid,
       ...(bothParentAndChild ? parentFilters : {}),
+      ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
     };
 
     const whereFiscal: Record<string, any> = {
@@ -2223,7 +2228,7 @@ class ProjectIngestionService {
     )}`;
 
     const query = `
-    SELECT rid,r_number 
+    SELECT rid,r_number,project_rid 
     FROM "${schemaName}".project_resource
     WHERE rid = :projectResourceId
   `;
@@ -2234,7 +2239,6 @@ class ProjectIngestionService {
       type: "SELECT",
       raw: true,
     });
-
     return result[0];
   }
 
@@ -2256,7 +2260,6 @@ class ProjectIngestionService {
       type: "SELECT",
       raw: true,
     });
-
     return result[0];
   }
 
@@ -2965,27 +2968,28 @@ class ProjectIngestionService {
     }
   }
 
-  /**
-   * Fetches project tasks for multiple project resource IDs using a single SQL query
-   *
-   * @param {string} accountNumber - Account number to determine schema
-   * @param {string[]} projectResourceIds - Array of project resource IDs
-   * @returns {Promise<any[]>} - Project_task data
-   */
-  async getProjectTasksByProjectResourceIds(
-    accountNumber: string,
-    projectResourceIds: string[]
-  ): Promise<any[]> {
-    try {
-      if (projectResourceIds.length === 0) return [];
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-        /\D/g,
-        ""
-      )}`;
-      const sequelize = await initOrgSequelize();
+/**
+ * Fetches project tasks for multiple project IDs using a single SQL query
+ *
+ * @param {string} accountNumber - Account number to determine schema
+ * @param {string[]} projectIds - Array of project IDs
+ * @returns {Promise<any[]>} - Project_task data
+ */
+async getProjectTasksByProjectIds(
+  accountNumber: string,
+  projectIds: string[]
+): Promise<any[]> {
+  try {
+    if (!projectIds?.length) return [];
+    
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+    const sequelize = await initOrgSequelize();
 
-      // Check if project_task table exists
-      const checkTableQuery = `
+    // Check if project_task table exists
+    const checkTableQuery = `
     SELECT EXISTS (
       SELECT 1 
       FROM information_schema.tables 
@@ -2994,32 +2998,32 @@ class ProjectIngestionService {
     );
   `;
 
-      const [tableExists] = await sequelize.query(checkTableQuery, {
-        type: "SELECT",
-      });
+    const [tableExists] = await sequelize.query(checkTableQuery, {
+      type: "SELECT",
+    });
 
-      if ((tableExists as any).exists === false) {
-        return [];
-      }
+    if ((tableExists as any).exists === false) {
+      return [];
+    }
 
-      const query = `
+    const query = `
       SELECT 
         pt.rid,
-        pt.project_resource_rid
+        pt.project_resource_code
       FROM "${schemaName}".project_task pt
-      WHERE pt.project_resource_rid IN (:projectResourceIds)
+      WHERE pt.project_rid IN (:projectIds)
       ORDER BY pt.created_datetime DESC
     `;
 
     const results = await sequelize.query(query, {
-      replacements: { projectResourceIds },
+      replacements: { projectIds },
       type: 'SELECT'
     });
 
     return results;
 
   } catch (error) {
-    console.error('Error fetching project tasks (bulk):', error);
+    console.error('Error fetching project tasks:', error);
     throw error;
   }
 }
