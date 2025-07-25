@@ -32,8 +32,13 @@ import {
   SelectOption,
   YesNo,
 } from '../../types';
+
 import { AccFormData, newKeyContactFields } from './form-data';
-import { transformFormData, transformKeyContactsFromAPI } from './utils';
+import {
+  DATA_STORAGE_OPTIONS,
+  transformFormData,
+  transformKeyContactsFromAPI,
+} from './utils';
 import {
   checkPermission,
   formatDateToYYYYMMDDWithTime,
@@ -74,6 +79,7 @@ export const AccountForm: React.FC = () => {
   const [logo, setLogo] = useState<File | null>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
+  const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
@@ -389,8 +395,14 @@ export const AccountForm: React.FC = () => {
     }
     if (data.fieldName === 'is_parent') {
       if (data.fieldValue === YesNo.Yes) {
+        setDataResidency(
+          DATA_STORAGE_OPTIONS.filter(
+            (item) => item.value !== 'store_in_parent'
+          )
+        );
         setIsParentAccountRequired(false);
       } else {
+        setDataResidency(DATA_STORAGE_OPTIONS);
         setIsParentAccountRequired(true);
       }
     }
@@ -424,6 +436,7 @@ export const AccountForm: React.FC = () => {
     memoizedParentAccounts,
     memoizedCurrency,
     memoizedState,
+    dataResidency,
     memoizedIndustry,
     isParentAccountRequired,
     keyContacts,
