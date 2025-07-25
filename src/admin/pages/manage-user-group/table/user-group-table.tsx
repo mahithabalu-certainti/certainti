@@ -83,6 +83,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   useEffect(() => {
     setTableParams((prev) => ({
       ...prev,
+      page: 1,
       filters: appliedFilters,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps

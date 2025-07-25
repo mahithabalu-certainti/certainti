@@ -1,4 +1,8 @@
-import { CommonApiResponse, ProfileResponse, UserRoles } from '../../common-service';
+import {
+  CommonApiResponse,
+  ProfileResponse,
+  UserRoles,
+} from '../../common-service';
 
 export type ManageUser = {
   id: string;
@@ -37,6 +41,7 @@ export interface UserListParams {
   searchTerm?: string;
   exportKey?: string;
   timezone?: string;
+  entity_type?: string;
 }
 
 // User Profile Type

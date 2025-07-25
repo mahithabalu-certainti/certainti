@@ -142,8 +142,8 @@ export const FormData = (
             placeholder: 'Choose Org Name',
             hide:
               isEditView &&
-              !permissionMap?.['org_id']?.read &&
-              !permissionMap?.['org_id']?.edit,
+              !permissionMap?.['org_rid']?.read &&
+              !permissionMap?.['org_rid']?.edit,
             disabled: isConsultantFirm === YesNo.Yes,
             defaultValue:
               isConsultantFirm === YesNo.Yes ? orgNames[0]?.value : org_id,

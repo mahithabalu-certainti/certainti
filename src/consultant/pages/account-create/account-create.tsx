@@ -32,6 +32,7 @@ import {
   SelectOption,
   YesNo,
 } from '../../types';
+
 import { AccFormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
@@ -78,8 +79,8 @@ export const AccountForm: React.FC = () => {
   const [logo, setLogo] = useState<File | null>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
-  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
+  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
@@ -167,16 +168,16 @@ export const AccountForm: React.FC = () => {
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-        desc: status.status_description,
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
       })) || [],
     [statusOptions?.data?.data?.status]
   );
 
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
-      (option) => option.label.toLowerCase() === 'active'
+      (option) => option?.label?.toLowerCase() === 'active'
     );
     return activeOption?.value || '';
   }, [memoizedStatus]);
@@ -248,11 +249,11 @@ export const AccountForm: React.FC = () => {
 
   const memoizedParentAccounts: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunt.map((account) => ({
-        label: account.account_name,
-        value: account.rid,
+      parentAccount.data?.data?.globalAccount.map((account) => ({
+        label: account?.account_name,
+        value: account?.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunt]
+    [parentAccount.data?.data.globalAccount]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
@@ -401,8 +402,8 @@ export const AccountForm: React.FC = () => {
         );
         setIsParentAccountRequired(false);
       } else {
-        setIsParentAccountRequired(true);
         setDataResidency(DATA_STORAGE_OPTIONS);
+        setIsParentAccountRequired(true);
       }
     }
     // show others field if industry is selected as Others

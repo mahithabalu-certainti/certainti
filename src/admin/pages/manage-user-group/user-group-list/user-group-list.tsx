@@ -117,7 +117,7 @@ export const UserGroupList: React.FC = () => {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await exportUserGroupList();
+      await exportUserGroupList(tableParams);
     } catch (error) {
       console.error('Export failed:', error);
     } finally {

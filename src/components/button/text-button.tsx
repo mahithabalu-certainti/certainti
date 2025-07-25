@@ -11,7 +11,6 @@ interface TextButtonProps {
   disabled?: boolean;
   onClick?: () => void;
 }
-
 const StyledButton = styled(Button)(() => {
   return {
     height: '24px !important',

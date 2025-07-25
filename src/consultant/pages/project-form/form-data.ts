@@ -8,7 +8,6 @@ import {
   createSelectField,
   createTextAreaField,
   createTextField,
-  PROJECT_YES_NO_OPTIONS,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
@@ -734,91 +733,6 @@ export const FormData = (
               isEditView &&
               !permissionMap?.['total_cost']?.read &&
               !permissionMap?.['total_cost']?.edit,
-          }),
-        ],
-      },
-      {
-        sectionName: 'Project Settings',
-        fillType: 'half',
-        fields: [
-          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
-            required: false,
-            placeholder: 'Enter Blended Rate - FTE',
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            disabled:
-              isEditView &&
-              permissionMap?.['blended_rate_fte']?.read &&
-              !permissionMap?.['blended_rate_fte']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['blended_rate_fte']?.read &&
-              !permissionMap?.['blended_rate_fte']?.edit,
-          }),
-          createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
-            required: false,
-            placeholder: 'Enter Blended Rate - SubCon',
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            disabled:
-              isEditView &&
-              permissionMap?.['blended_rate_subcon']?.read &&
-              !permissionMap?.['blended_rate_subcon']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['blended_rate_subcon']?.read &&
-              !permissionMap?.['blended_rate_subcon']?.edit,
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
-          }),
-          createRadioField('auto_access_rd', 'Auto Assessment', {
-            required: false,
-            radioOptions: PROJECT_YES_NO_OPTIONS,
-            disabled:
-              isEditView &&
-              permissionMap?.['auto_access_rd']?.read &&
-              !permissionMap?.['auto_access_rd']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['auto_access_rd']?.read &&
-              !permissionMap?.['auto_access_rd']?.edit,
-          }),
-          createRadioField(
-            'auto_send_ai_interaction',
-            'Auto Send Interaction',
-            {
-              required: true,
-              radioOptions: PROJECT_YES_NO_OPTIONS,
-              disabled:
-                isEditView &&
-                permissionMap?.['autosend_interaction']?.read &&
-                !permissionMap?.['autosend_interaction']?.edit,
-              hide:
-                isEditView &&
-                !permissionMap?.['autosend_interaction']?.read &&
-                !permissionMap?.['autosend_interaction']?.edit,
-            }
-          ),
-          createTextField('max_ai_interaction', 'Max Interaction Follow Up', {
-            required: true,
-            placeholder: 'Enter Max Interaction Follow Up',
-            regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
-            regexErrorMessage:
-              ' Max Interaction follow up must be a positive integer between 1 and 10.',
-            disabled:
-              isEditView &&
-              permissionMap?.['max_ai_interactions']?.read &&
-              !permissionMap?.['max_ai_interactions']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['max_ai_interactions']?.read &&
-              !permissionMap?.['max_ai_interactions']?.edit,
           }),
         ],
       },

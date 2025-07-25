@@ -247,13 +247,13 @@ export interface ListTableProps<T extends RowData> {
     othersSkillTypeId: string | null;
     othersSkillSubTypeId: string | null;
   };
-  showEmptyRow?: boolean;
   actionColumnName?: string;
   toggleData?: string[];
   disabledToggle?: boolean;
   checkedToggleTooltip?: string;
   unCheckedToggleTooltip?: string;
   toggleClick?: (rowId: string, value: boolean) => void;
+  showEmptyRow?: boolean;
 }
 
 export interface EditingCell {

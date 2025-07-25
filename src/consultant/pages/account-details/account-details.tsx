@@ -17,7 +17,9 @@ import {
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TimeSheetIcon,
+  ConfigIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -34,6 +36,7 @@ import {
   Projects,
   Resources,
   Timesheet,
+  Configuration,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -66,12 +69,14 @@ export const AccountDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
@@ -135,7 +140,6 @@ export const AccountDetails = () => {
     fiscalYear: String(convertedFiscalYear),
     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
-
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -247,6 +251,7 @@ export const AccountDetails = () => {
     isAccountDetailsEnable,
     refreshAccountDetails
   );
+
   const accountViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
@@ -267,7 +272,6 @@ export const AccountDetails = () => {
       setAccountDetailsForEdit(data.data);
     }
   }, [data, permissionMap]);
-
   const accountInActive =
     data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';
 
@@ -397,6 +401,8 @@ export const AccountDetails = () => {
             setImportsParams={setImportsParams}
           />
         );
+      case 'configuration':
+        return <Configuration />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -486,6 +492,29 @@ export const AccountDetails = () => {
         id: AllMenus.IMPORTS,
         disabled: disable,
         icon: ImportsIcon,
+      },
+      {
+        name: 'Configuration',
+        key: 'configuration',
+        id: AllMenus.CONFIGURATION,
+        disabled: disable,
+        icon: ConfigIcon,
+        subMenu: [
+          {
+            name: 'Users',
+            key: 'users',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: disable,
+            icon: ResourcesIcon,
+          },
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.ACCOUNT_SETTINGS,
+            disabled: disable,
+            icon: SettingIcon,
+          },
+        ],
       },
     ],
     [disable]
