@@ -168,6 +168,7 @@ export const AccFormData = (
   parentAccount: SelectOption[],
   currency: SelectOption[],
   state: SelectOption[],
+  dataResidency: SelectOption[],
   industrys: SelectOption[],
   isParentAccountRequired: boolean,
   keyContacts: FieldType[],
@@ -517,6 +518,15 @@ export const AccFormData = (
                 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
+          createRadioField('data_storage', 'Data Residency', {
+            required: true,
+            radioOptions: dataResidency,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['data_storage']?.read &&
+              !permissionMap?.['data_storage']?.edit,
+          }),
         ],
       },
       {
@@ -605,6 +615,7 @@ export const AccFormData = (
       state,
       stateLoading,
       currency,
+      dataResidency,
       showOthersField,
       keyContacts,
       addNewKeyContact,
