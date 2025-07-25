@@ -177,7 +177,6 @@ async listProjectTasks(
       resource_type_rid: (task as any).resource?.resource_type_rid || null,
       resource_type_name: resourceTypeMap.get((task as any).resource?.resource_type_rid) || null, // FIXED
       resource_role: (task as any).resource?.resource_role || null,
-      status_rid: task.status_rid,
       country_rid: task.country_rid,
       country_name: countryMap.get(task.country_rid) || null,
       region_rid: task.region_rid,
@@ -187,7 +186,6 @@ async listProjectTasks(
       resource_orgname: (task as any).resource?.resource_orgname || null,
       total_hours_pro_task: task.total_hours_pro_task,
       total_cost_pro_task: task.total_cost_pro_task,
-      description: task.description,
       comments: task.comments,
       created_by: task.created_by,
       modified_by: task.modified_by, 
@@ -485,7 +483,6 @@ async listProjectTasksExport(
       resource_type_rid: (task as any).resource?.resource_type_rid || null,
       resource_type_name: resourceTypeMap.get((task as any).resource?.resource_type_rid) || null, // FIXED
       resource_role: (task as any).resource?.resource_role || null,
-      status_rid: task.status_rid,
       country_rid: task.country_rid,
       country_name: countryMap.get(task.country_rid) || null,
       region_rid: task.region_rid,
@@ -495,7 +492,6 @@ async listProjectTasksExport(
       resource_orgname: (task as any).resource?.resource_orgname || null,
       total_hours_pro_task: task.total_hours_pro_task,
       total_cost_pro_task: task.total_cost_pro_task,
-      description: task.description,
       comments: task.comments,
       created_by: task.created_by,
       modified_by: task.modified_by, 
@@ -817,7 +813,7 @@ async getProjectTaskById(
       };
     }
 
-    const [resourceTypeData, regionData, countryData, currencyData, statusData] = await Promise.all([
+    const [resourceTypeData, regionData, countryData, currencyData] = await Promise.all([
       (task as any).resource?.resource_type_rid ? mainSequelize.query(
         rawQueries.GET_RESOURCE_TYPES,
         { 
@@ -847,13 +843,6 @@ async getProjectTaskById(
           replacements: { currencyRid: task.currency_rid },
           type: 'SELECT'
         }
-      ) : Promise.resolve([]),
-      task.status_rid ? mainSequelize.query(
-        rawQueries.GET_STATUSES,
-        {
-          replacements: { statusRid: task.status_rid },
-          type: 'SELECT'
-        }
       ) : Promise.resolve([])
     ]);
 
@@ -861,7 +850,6 @@ async getProjectTaskById(
     const [region] = regionData;
     const [country] = countryData;
     const [currency] = currencyData;
-    const [status] = statusData;
 
     const attachments = await this.fetchAttachmentsBytaskId(taskRid);
     let mappedAttachments = [];

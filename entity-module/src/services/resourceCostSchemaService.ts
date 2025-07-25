@@ -1897,7 +1897,7 @@ async executeQueriesForFinancialHighlights(
         "resource_designation": "Designation",
         "resource_role": "Role",
         "comments": "Comments",
-        "status": "Status",
+        "status_rid": "Status",
         "r_number": "Cost ID",                 // Assuming 'Cost ID' is same as 'Resource ID'
       };
 

@@ -5,8 +5,9 @@ import resourceSkillRoutes from "./resourceSkillRoutes";
 import projectRoutes from "./projectRoutes";
 import attachmentRoutes from "./attachmentRoutes";
 import projectResourceRoutes from "./projectResourceRoutes";
-import projectTaskRoutes from "./projectTaskRoutes";
 import { errorLog, successLog } from "../utils/helpers";
+import projectTaskRoutes from "./projectTaskRoutes";
+
 import importRoutes from './importRoutes'
 import settingRoutes from '../routes/settingsRoutes'
 import financialRoutes from '../routes/financialHighlightsRoutes'

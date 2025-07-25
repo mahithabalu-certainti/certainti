@@ -16,7 +16,7 @@ routes.get("/list", checkUserStatusMiddleware("user_group_view_edit"), controlle
 routes.get("/list/:groupId", checkUserStatusMiddleware("user_group_view_edit"), controller.userGroupController.listGroupDetailsById);
 //exports all group
 routes.get("/export", checkUserStatusMiddleware("user_group_export"), controller.userGroupController.exportUserGroup);
-routes.get("/listUsers", checkUserStatusMiddleware("NA"), controller.userGroupController.getActiveUsersForGrouping);
+routes.post("/listUsers", checkUserStatusMiddleware("NA"), controller.userGroupController.getActiveUsersForGrouping);
 //user group access
 routes.get("/account/:accountid/users", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountUsers);
 routes.get("/account/:accountid/groups", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountGroups);
