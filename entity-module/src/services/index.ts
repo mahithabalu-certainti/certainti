@@ -15,7 +15,8 @@ import {
   IProjectTaskService,
   IProjectTaskGraphqlServices,
   ISettingsServices,
-  IFinancialHighlights
+  IFinancialHighlights,
+  IProjectTaskIngestionService
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -24,6 +25,7 @@ import ResourceSkillService from "./resourceSkillService";
 import { AttachmentService } from "./attachmentService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectTaskService } from "./projectTaskService";
+import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -38,6 +40,7 @@ class Services implements IServiceContainer {
   attachmentServices: IAttachmentService;
   projectResourceServices: IProjectResourceService;
   projectTaskServices: IProjectTaskService;
+  projectTaskInjestionServices: IProjectTaskIngestionService;
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
@@ -53,7 +56,8 @@ class Services implements IServiceContainer {
     resourceService: IResourceService = new ResourceService(),
     resourceCostServices: IResourceCostService = new ResourceCostService(),
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
-    projectResourceServices: IProjectResourceService = new ProjectResourceService(logger)
+    projectResourceServices: IProjectResourceService = new ProjectResourceService(logger),
+    projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(),
   ) {
     try {
       this.logger = logger;
@@ -64,6 +68,7 @@ class Services implements IServiceContainer {
       this.attachmentServices = new AttachmentService(this.logger);
       this.projectResourceServices = projectResourceServices;
       this.projectTaskServices = new ProjectTaskService(this.logger);
+      this.projectTaskInjestionServices = projectTaskInjestionServices;
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");
