@@ -1213,6 +1213,7 @@ async getAccountGroups(
       const filterProcessors: Record<string, Function> = {
         'group_name': (value: any) => this.processTextFilter('group_name', value, whereClause),
         'first_name': (value: any) => this.processTextFilter('first_name', value, whereClause),
+        'email': (value: any) => this.processTextFilter('email', value, whereClause),
         'group_type': (value: any) => this.processTextFilter('group_type_rid', value, whereClause),
         'is_consultant_only_group': (value: any) => this.processBooleanFilter('is_consultant_only_group', value, whereClause),
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
@@ -1303,8 +1304,16 @@ private processUserCountFilter(value: any, whereClause: Record<string, any>): vo
     if ('greater_than' in value) {
       conditions.push(this.createUserCountCondition('>', value.greater_than));
     }
-    if ('lesser_than' in value) {
-      conditions.push(this.createUserCountCondition('<', value.lesser_than));
+    if ('less_than' in value) {
+      conditions.push(this.createUserCountCondition('<', value.less_than));
+    }
+    if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+      conditions.push({
+        [Op.and]: [
+          this.createUserCountCondition('>=', value.between[0]),
+          this.createUserCountCondition('<=', value.between[1]),
+        ]
+      });
     }
     if ('is_empty' in value) {
       conditions.push(
