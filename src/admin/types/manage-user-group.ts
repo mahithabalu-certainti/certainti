@@ -162,5 +162,5 @@ export interface FetchUsersByAccountBody{
   limit: string,
   is_consultant_only_group: boolean,
   account_rid: string[],
-  group_rid: string
+  group_rid?: string
 }
