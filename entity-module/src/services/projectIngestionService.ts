@@ -294,6 +294,7 @@ class ProjectIngestionService {
   async addProjectFiscalRegion(
     accountNumber: string,
     projectData: ICreateProject,
+    projectFiscalData: ProjectFiscal,
     projectId: string,
     userId: string
   ) {
@@ -316,6 +317,7 @@ class ProjectIngestionService {
 
     return ProjectFiscalRegion.create({
       ...baseData,
+      project_fiscal_rid: projectFiscalData.rid,
       default_metric_type: "project",
     });
   }
@@ -1265,7 +1267,8 @@ class ProjectIngestionService {
         default_metric_type: "project",
         effective_metric_type: null,
         created_by: projectData.created_by,
-        project_rid: projectData.project_fiscal_id, 
+        project_rid: projectData.project_id,
+        project_fiscal_rid: projectData.project_fiscal_id, 
 
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,
@@ -2228,7 +2231,7 @@ class ProjectIngestionService {
     )}`;
 
     const query = `
-    SELECT rid,r_number,project_rid 
+    SELECT rid,r_number,project_rid,project_fiscal_rid 
     FROM "${schemaName}".project_resource
     WHERE rid = :projectResourceId
   `;
@@ -2949,9 +2952,9 @@ class ProjectIngestionService {
       const query = `
       SELECT 
         ps.rid,
-        ps.project_rid
+        ps.project_fiscal_rid
       FROM "${schemaName}".project_resource ps
-      WHERE ps.project_rid IN (:projectIds)
+      WHERE ps.project_fiscal_rid IN (:projectIds)
       ORDER BY ps.created_datetime DESC
     `;
 
@@ -3011,7 +3014,7 @@ async getProjectTasksByProjectIds(
         pt.rid,
         pt.project_resource_code
       FROM "${schemaName}".project_task pt
-      WHERE pt.project_rid IN (:projectIds)
+      WHERE pt.project_fiscal_rid IN (:projectIds)
       ORDER BY pt.created_datetime DESC
     `;
 

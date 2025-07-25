@@ -12,7 +12,7 @@ interface ProjectResourceAttributes {
 
   account_rid: string;
   project_rid: string;
-  project_fiscal_rid?: string;
+  project_fiscal_rid: string;
   resource_rid: string;
   project_resource_code: string;
   fiscal_year: number;
@@ -63,7 +63,7 @@ export class ProjectResource
 
   public account_rid!: string;
   public project_rid!: string;
-  public project_fiscal_rid?: string;
+  public project_fiscal_rid!: string;
   public resource_rid!: string;
   public fiscal_year!: number;
   public project_resource_code!: string;

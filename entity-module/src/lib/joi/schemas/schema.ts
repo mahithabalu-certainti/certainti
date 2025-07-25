@@ -2009,7 +2009,7 @@ const getDocumentTypeAndCategorySchema = Joi.object({
 })
 
 const createProjectResourceSchema = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),
   assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
@@ -2099,7 +2099,7 @@ const createProjectResourceSchema = Joi.object({
 });
 
 const updateProjectResourceSchema = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),

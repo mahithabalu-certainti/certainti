@@ -213,6 +213,7 @@ export class ProjectService {
               await this.projectIngestion.addProjectFiscalRegion(
                 accountNumber,
                 projectData,
+                createdProjectFiscal,
                 existingProject.rid,
                 userId
               );
@@ -294,7 +295,8 @@ export class ProjectService {
             await this.projectIngestion.addProjectFiscalRegion(
               accountNumber,
               projectData,
-              createdProjectFiscal.rid,
+              createdProjectFiscal,
+              createdProjectFiscal.project_rid,
               userId
             );
           }

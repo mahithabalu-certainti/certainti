@@ -195,7 +195,7 @@ export class ProjectInjestionTaskService {
         };
       }
 
-      const projectData = await projectResourceSchema.validateProjectById(
+      const projectData = await projectResourceSchema.validateProjectFiscalById(
         accountNumber,
         project_fiscal_rid
       );
