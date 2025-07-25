@@ -2,7 +2,7 @@ import { Sequelize } from "sequelize"
 import { initOrgSequelize } from "../config/orgDataSource"
 import { initMainDbSequelize } from "../config/mainDataSource"
 import { HttpStatus, rawQueries, STATUS_MESSAGE, SUMMARY_HIGHLIGHTS_FLAG, SUMMARY_HIGHLIGHTS_TYPE_FLAG } from "../utils/constants"
-import { fetchIsRdQualifiedProjectQuery, fetchIsRdQualifiedProjectQueryRegion, summaryHighlightsQuery, summaryHighlightsQueryRegion } from "../utils/rawQueries"
+import { fetchIsRdQualifiedProjectQuery, fetchIsRdQualifiedProjectQueryRegion, fetchProjectQueryByPrjId, summaryHighlightsQuery, summaryHighlightsQueryRegion } from "../utils/rawQueries"
 
 export default class FinancialHighlightsService {
     private mainDbSequelize : Sequelize | null = null
@@ -56,6 +56,28 @@ export default class FinancialHighlightsService {
                 data : null
             }
         }
+    }
 
+    async projectFinancialHighlights(data : any) {
+        let mainDb = await this.getMainDbSequelize()
+        let orgDb = await this.getOrgDbSequelize()
+
+        let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+        let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
+
+        let result = await orgDb.query(fetchProjectQueryByPrjId(data.account_rid, schemaName, data.fiscal_year, data.project_fiscal_rid))
+        if(result[0].length > 0) {
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                statusMessage : STATUS_MESSAGE.accountSummaryHighlightsSuccess,
+                data : result[0][0]
+            }
+        } else {
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                statusMessage : STATUS_MESSAGE.accountSummaryHighlightsSuccess,
+                data : null
+            }
+        }
     }
 }

@@ -612,4 +612,9 @@ export interface IFinancialHighlights {
     statusMessage : string,
     data : any
   }>
+  projectFinancialHighlights(data : any) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }>
 }
