@@ -62,18 +62,21 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
                 name : result.data.federal.name,
                 rd_credits_fte : result.data.federal.rd_credits_fte,
                 rd_credits_subcon : result.data.federal.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.federal.rd_credits_nonlabor
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.state_wise.name,
                 rd_credits_fte : result.data.state_wise.rd_credits_fte,
-                rd_credits_subcon : result.data.state_wise.rd_credits_subcon
+                rd_credits_subcon : result.data.state_wise.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.state_wise.rd_credits_nonlabor
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.grand_total.name,
                 rd_credits_fte : result.data.grand_total.rd_credits_fte,
-                rd_credits_subcon : result.data.grand_total.rd_credits_subcon
+                rd_credits_subcon : result.data.grand_total.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.grand_total.rd_credits_nonlabor
             })
             let finalData = {
                 account_rid : data.account_rid,
@@ -105,6 +108,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             let rdPercentArray = []
             let qreArray = []
             let rdCreditsArray = []
+            let claimJurisdictionArray = []
 
             resourceMetricArray.push({
                 rid : uuid(),
@@ -152,6 +156,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
                 name : result.data.rd_credits.name,
                 rd_credits_fte : result.data.rd_credits.rd_credits_fte,
                 rd_credits_subcon : result.data.rd_credits.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.rd_credits.rd_credits_nonlabor,
                 rd_credits_total : result.data.rd_credits.rd_credits_total
             })
             qreArray.push({
@@ -169,12 +174,34 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
                 rd_percent_adjustment : result.data.rd_percent.rd_percent_adjustment,
                 rd_percent_final : result.data.rd_percent.rd_percent_final
             })
+            claimJurisdictionArray.push({
+                rid : uuid(),
+                name : result.data.federal.name,
+                rd_credits_fte : result.data.federal.rd_credits_fte,
+                rd_credits_subcon : result.data.federal.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.federal.rd_credits_nonlabor,
+            })
+            claimJurisdictionArray.push({
+                rid : uuid(),
+                name : result.data.state_wise.name,
+                rd_credits_fte : result.data.state_wise.rd_credits_fte,
+                rd_credits_subcon : result.data.state_wise.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.state_wise.rd_credits_nonlabor
+            })
+            claimJurisdictionArray.push({
+                rid : uuid(),
+                name : result.data.grand_total.name,
+                rd_credits_fte : result.data.grand_total.rd_credits_fte,
+                rd_credits_subcon : result.data.grand_total.rd_credits_subcon,
+                rd_credits_nonlabor : result.data.grand_total.rd_credits_nonlabor
+            })
             let finalData = {
                 account_rid : data.account_rid,
                 fiscal_year : data.fiscal_year,
                 project_name :  result.data.resource_metrics.project_name,
                 resource_metrics : resourceMetricArray,
                 detailed_metrics : detailsMetricArray,
+                claim_jurisdiction : claimJurisdictionArray,
                 rd_percent : rdPercentArray,
                 qre : qreArray,
                 rd_credits : rdCreditsArray,
