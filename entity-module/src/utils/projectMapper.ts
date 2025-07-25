@@ -658,7 +658,7 @@ export class ProjectResourceMapper {
 
   static mapToProjectFiscal(
     data: any,
-    projectId:any,
+    projectId: string,
     fiscalYear: number,
     userId: string
   ) {
