@@ -1,94 +1,103 @@
-// import { Box, Tab, Tabs, Typography } from '@mui/material';
-// import { useState } from 'react';
-// import { TabPanel } from './tab-panel';
-// import ProjectCostTab from './tab/project-cost';
-// import ResourceCostTab from './tab/resource';
-// import StateWiseTab from './tab/statewise';
-// import SummaryTab from './tab/summary';
-// import { a11yProps } from './utils';
+import { useSearchParams } from 'react-router-dom';
+import { AllPermissions } from '../../../../../common-service';
+import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
+import { useState } from 'react';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { FinancialIcon } from '../../../../../assets';
+import { StateWiseSummary, Summary } from './tab';
+import { NewProjectData } from '../../../../types/project';
+import { getFiscalYears } from '../../../../../common-utils';
 
-import { ComingSoon } from '../../../../../assets';
+const FinancialTabs = [
+  {
+    id: AllPermissions.ACCOUNT_FINANCIAL_OVERVIEW,
+    name: 'Overview',
+    hide: false,
+  },
+  {
+    id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    disable: true,
+  },
+];
 
-// const FinancialSummary = () => {
-//   // State for current tab
-//   const [currentTab, setCurrentTab] = useState(0);
+interface ProjectFinancialProps {
+  projectDetails: NewProjectData | null;
+}
 
-//   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-//     setCurrentTab(newValue);
-//   };
-//   return (
-//     <div className='container mx-auto py-8'>
-//       <div className='flex flex-col bg-white border rounded-md shadow-sm'>
-//         {/* Header */}
-//         <div className='flex justify-between items-center p-4 border-b'>
-//           <Typography variant='h6' component='h2' className='font-bold'>
-//             RD Eligible No of Projects: 11
-//           </Typography>
-//           <Typography variant='subtitle1' className='text-blue-600 font-medium'>
-//             2024
-//           </Typography>
-//         </div>
+const FinancialSummary: React.FC<ProjectFinancialProps> = ({
+  projectDetails,
+}) => {
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean>
+  >({});
+  const [fiscalyear, setFiscalyear] = useState('2025');
+  const [searchParams, setSearchParams] = useSearchParams();
 
-//         {/* Navigation Tabs */}
-//         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-//           <Tabs
-//             value={currentTab}
-//             onChange={handleTabChange}
-//             aria-label='RD Dashboard tabs'
-//             className='px-4'
-//             TabIndicatorProps={{
-//               style: {
-//                 backgroundColor: '#1976d2',
-//                 height: '3px',
-//               },
-//             }}
-//           >
-//             <Tab label='Summary' {...a11yProps(0)} className='font-medium' />
-//             <Tab
-//               label='State wise Summary'
-//               {...a11yProps(1)}
-//               className='font-medium'
-//             />
-//             <Tab
-//               label='Project Cost'
-//               {...a11yProps(2)}
-//               className='font-medium'
-//             />
-//             <Tab
-//               label='Resource Cost'
-//               {...a11yProps(3)}
-//               className='font-medium'
-//             />
-//           </Tabs>
-//         </Box>
+  const handleTabChange = (value: string) => {
+    searchParams.set('tab', value);
+    setSearchParams(searchParams);
+  };
 
-//         {/* Tab Contents */}
-//         <TabPanel value={currentTab} index={0}>
-//           <SummaryTab />
-//         </TabPanel>
+  const tabParam = searchParams.get('tab') || 'summary';
+  const headerButtons = [
+    {
+      label: 'Download',
+      variant: 'contained' as const,
+      onClick: () => {},
+      sx: {
+        width: '96px',
+        minWidth: '96px',
+      },
+    },
+  ];
+  const tabs = [
+    { label: 'Summary', value: 'summary' },
+    { label: 'State wise Summary', value: 'state_wise_summary' },
+  ];
 
-//         <TabPanel value={currentTab} index={1}>
-//           <StateWiseTab />
-//         </TabPanel>
-
-//         <TabPanel value={currentTab} index={2}>
-//           <ProjectCostTab />
-//         </TabPanel>
-
-//         <TabPanel value={currentTab} index={3}>
-//           <ResourceCostTab />
-//         </TabPanel>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default FinancialSummary;
-
-const FinancialSummary = () => {
   return (
-    <div className='flex items-center justify-center h-full'>
-      <ComingSoon alt='comingSoon' />
+    <div className='w-full pt-2 pl-2 pr-4 mb-1'>
+      {' '}
+      <SectionTabPanel
+        tabs={FinancialTabs}
+        filterMenu={[]}
+        filterVisibility={false}
+        showFilter={false}
+        contextKey='project-financial-resource-cost'
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        setCurrentPage={() => {}}
+        handleFilter={() => {}}
+        sortFilterCount={0}
+        setSortFilterCount={() => {}}
+        showRefresh={false}
+        allYears={getFiscalYears(20)}
+        fiscalYearValue={fiscalyear}
+        updatedYear={(e) => setFiscalyear(e.target.value)}
+      />
+      <SectionHeader
+        title='Financial Summary'
+        titleIcon={
+          <FinancialIcon
+            alt='financial-header-icon'
+            className='w-7 h-7 p-1.5 bg-[#ffeae5] rounded-full [&>path]:stroke-[#f16840]'
+          />
+        }
+        buttons={headerButtons}
+      />
+      <SectionHeaderTab
+        tabs={tabs}
+        onTabChange={handleTabChange}
+        defaultValue={tabParam}
+      />
+      <div className='border border-t-0 border-[#CBD6E2] p-3'>
+        {tabParam === 'summary' && <Summary projectDetails={projectDetails} />}
+        {tabParam === 'state_wise_summary' && (
+          <StateWiseSummary projectDetails={projectDetails} />
+        )}
+      </div>
     </div>
   );
 };

@@ -58,7 +58,7 @@ import {
   MenuItem,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
-import { ProjectListParams } from '../../types/project';
+import { NewProjectData, ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
@@ -68,7 +68,9 @@ export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [projectData, setProjectData] = useState<NewProjectData | null>(null);
 
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
@@ -339,7 +341,7 @@ export const AccountDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <FinancialSummary />;
+        return <FinancialSummary projectDetails={projectData} />;
       case 'details':
         return (
           <Details
