@@ -7,6 +7,8 @@ import { FinancialIcon } from '../../../../../assets';
 import { StateWiseSummary, Summary } from './tab';
 import { NewProjectData } from '../../../../types/project';
 import { getFiscalYears } from '../../../../../common-utils';
+import FinancialProjectCost from './tab/project-cost/project-cost';
+import FinancialResourceCost from './tab/resource-cost/resource-cost';
 
 const FinancialTabs = [
   {
@@ -55,6 +57,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const tabs = [
     { label: 'Summary', value: 'summary' },
     { label: 'State wise Summary', value: 'state_wise_summary' },
+    { label: 'Project Cost', value: 'project_cost' },
+    { label: 'Resource Cost', value: 'resource_cost' },
   ];
 
   return (
@@ -92,11 +96,19 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         onTabChange={handleTabChange}
         defaultValue={tabParam}
       />
-      <div className='border border-t-0 border-[#CBD6E2] p-3'>
+      <div
+        className={`border border-t-0 border-[#CBD6E2] ${
+          tabParam === 'summary' || tabParam === 'state_wise_summary'
+            ? 'p-3'
+            : ''
+        }`}
+      >
         {tabParam === 'summary' && <Summary projectDetails={projectDetails} />}
         {tabParam === 'state_wise_summary' && (
           <StateWiseSummary projectDetails={projectDetails} />
         )}
+        {tabParam === 'project_cost' && <FinancialProjectCost />}
+        {tabParam === 'resource_cost' && <FinancialResourceCost />}
       </div>
     </div>
   );
