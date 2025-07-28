@@ -1841,6 +1841,7 @@ private buildRawWhereClause(
       case 'format':
       case 'comments':
       case 'attached_to':  
+      case 'attach_to':
       case 'r_number':
       case 'uploaded_by':
         switch (operator.toLowerCase()) {
@@ -1883,7 +1884,7 @@ private buildRawWhereClause(
         break;
 
       case 'document_type_rid':
-      case 'document_category_rid':  
+      case 'document_category_rid':
       case 'fiscal_year':  
         switch (operator.toLowerCase()) {
           case 'equals': condition[field] = { [Op.eq]: value }; break;
