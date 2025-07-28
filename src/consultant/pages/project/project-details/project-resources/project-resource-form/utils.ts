@@ -9,7 +9,7 @@ export const projectResourcesPayloadData = (
 ): Partial<ProjectResourceNewPayload> => {
   const data: Partial<ProjectResourceNewPayload> = {
     account_rid: formData.account_rid,
-    project_rid: formData.project_rid,
+    project_fiscal_rid: formData.project_fiscal_rid,
     // resource_name: formData.resource_name || null,
     resource_code: formData.resource_code,
     // resource_type_rid: formData.resource_type_rid,
