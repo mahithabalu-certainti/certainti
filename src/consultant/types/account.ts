@@ -441,5 +441,6 @@ export type ExportType =
   | 'project'
   | 'attachments'
   | 'imports'
+  | 'financial'
   | 'resource_attachments'
   | 'projectTask';

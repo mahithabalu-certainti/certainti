@@ -184,7 +184,7 @@ interface ProjectResourceRoleSkillData {
 export interface ProjectResourceNewPayload {
   rid?: string;
   project_resource_rid?: string;
-  project_rid: string;
+  project_fiscal_rid: string;
   account_rid: string;
   resource_name?: string | null;
   resource_code: string;

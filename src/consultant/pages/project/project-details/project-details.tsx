@@ -48,6 +48,7 @@ import { exportProjectTaskData } from '../../../services/project/project-task-se
 // import ProjectTask from './project-task/project-task';
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
+import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -171,8 +172,14 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
-  const [projectTaskParams, setProjectTaskParams] =
+const [projectTaskParams, setProjectTaskParams] =
     useState<ProjectTaskListExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<AttachmentsListExportParams>({
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
@@ -247,14 +254,19 @@ export const ProjectDetails = () => {
 
   const checkExport = () => {
     const list = searchParams.get('list');
+    const tab = searchParams.get('tab');
+
     const page = searchParams.get('page');
     if (page === 'details') {
       return true;
     }
 
+
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
     } else if (list === 'projectsTask') {
+      return false;
+    } else if (list === 'financial' && tab === 'resource_cost') {
       return false;
     } else {
       return true;
@@ -265,17 +277,36 @@ export const ProjectDetails = () => {
   const projectEx = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';
   const handleExport = (exportType: ExportType) => {
     const list = searchParams.get('list');
+    const financialPayload = {
+      accountNumber: projectData?.account_number,
+      fiscalYear: projectData?.fiscal_year,
+      projectRid: projectID,
+      accountRid: accountID,
+    };
+    if (
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'financial'
+    ) {
+      return;
+    }
 
     if (list === 'attachments' && exportType === 'attachments') {
       const attachmentPayload = {
         accountRid: accountID,
         entityId: projectID,
         attachmentLevel: 'project',
-      };
+      }; 
 
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
+      });
+      return;
+    }
+    if (exportType === 'financial') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
       });
       return;
     }
@@ -343,7 +374,13 @@ export const ProjectDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <Financial projectDetails={projectData} />;
+        return (
+          <Financial
+            projectDetails={projectData}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+          />
+        );
       case 'projectDetails':
         return (
           <ProjectDetailsData
