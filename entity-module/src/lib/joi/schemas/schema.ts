@@ -1426,6 +1426,7 @@ const createProjectSchema = Joi.object({
 
 const updateProjectSchema = Joi.object({
   project_fiscal_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+  project_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   account_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
