@@ -199,7 +199,7 @@ const ProjectResourceForm: React.FC = () => {
     const projectResourceFormData = projectResourcesPayloadData(
       {
         ...formValues,
-        project_rid: project_Id ?? '',
+        project_fiscal_rid: project_Id ?? '',
         account_rid: account_Id ?? '',
       },
       updated_resource_rid,

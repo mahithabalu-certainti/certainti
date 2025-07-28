@@ -16,7 +16,6 @@ export const AttachmentListURL = ({
   accountRid,
   isGlobal,
 }: AttachmentsListURLParams) => {
-  console.log();
   const baseUrl = `/api/attachment/list${isGlobal ? `/summary` : ''}`;
   const searchParams = new URLSearchParams();
 
