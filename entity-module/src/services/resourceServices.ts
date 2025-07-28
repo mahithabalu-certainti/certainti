@@ -259,8 +259,8 @@ export class ResourceService {
         "resource_orgname": "Org Name",
         "resource_designation": "Designation",
         "resource_role": "Role",
-        "region_rid": "Region",
         "country_rid": "Country",
+        "region_rid": "Region",
         "total_project_hours": "Total Project Hours",
         "estimated_rd_hours": "Estimated R&D Hours",
         "status_rid": "Status",
@@ -287,32 +287,6 @@ export class ResourceService {
 
       return row;
     });
-
-      // let exportData = rawResult.map((resource: any) => {
-      //    const exportData: Record<string, string> = {};   
-      //   let resultMap = {
-      //     "Account Name": resource.account_name || "-",
-      //     "Resource Code":resource.resource_code || "-",
-      //     "Name":resource.resource_name || "-",
-      //     "Resource Type": resource?.resource_type_name || "-",
-      //     "Org Name": resource.resource_orgname || "-",
-      //     "Designation": resource.resource_designation || "-",
-      //     "Role": resource.resource_role || "-",
-      //     "Region": resource.region_name || "-",
-      //     "Country": resource.country_name || "-",
-      //     "Total Project Hours": resource.total_project_hours || "-",
-      //     "Estimated R&D Hours": resource.estimated_rd_hours || "-",
-      //     "Status": resource.status_name,
-      //     "Comments": resource.comments || "-",
-      //     "Resource ID": resource.r_number || "-"
-      //   };
-      //   for (const [field, value] of Object.entries(resultMap)) {
-      //   if (allowedFieldSet.has(field)) {
-      //     exportData[labelMap[field]] = value;
-      //   }
-      //   }
-      //   return exportData
-      // });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
