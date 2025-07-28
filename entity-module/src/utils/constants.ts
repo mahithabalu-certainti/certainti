@@ -559,6 +559,9 @@ export const rawQueries = {
   updateImport(schemaName : string, updatedData : any, rid : string) {
     return `UPDATE ${schemaName}.import SET fiscal_year = ${updatedData.fiscal_year} WHERE rid = '${rid}'`
   },
+  fetchChildAccountsByParentAccountRid(){
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid = :parentRid`
+  },
   async updateSetting(schemaName : string, data : any, orgDb : Sequelize, mainDb : Sequelize) {
     let tableName : string[];
     let whereParams : string = ``

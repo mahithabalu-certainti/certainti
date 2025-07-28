@@ -42,7 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
@@ -3899,6 +3899,21 @@ async fetchAccountsByIds(accountRids: string[]) {
     const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
     return exportableFields;
   }
+
+async fetchChildAccountRidByParentAccountId(mainSequelize: Sequelize, rid: string): Promise<any[]> {
+  try {
+    const childAccounts = await mainSequelize.query(
+      rawQueries.fetchChildAccountsByParentAccountRid(),
+      {
+        replacements: { parentRid: rid },
+        type: QueryTypes.SELECT
+      }
+    );
+    return childAccounts;
+  } catch (err) {
+    throw new Error("Error fetching child accounts: " + (err as Error).message);
+  }
+}
 }
 
 export default SchemaService;
