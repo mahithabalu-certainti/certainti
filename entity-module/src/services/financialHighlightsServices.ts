@@ -149,8 +149,8 @@ async listAccountLevelProjectCostFinancialHighlights(
     const [currencies] = await Promise.all([
       currencyRids.length
         ? mainSequelize.query(
-          `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
-          { replacements: { currencyRids }, type: 'SELECT' }
+          rawQueries.GET_CURRENCIES,
+          { replacements: { currencyRid:currencyRids }, type: 'SELECT' }
         )
         : []  
     ]);
@@ -303,12 +303,13 @@ async exportListAccountLevelProjectCostFinancialHighlights(
     });
 
     const currencyRids = allSummary.map(summary => summary.currency_rid).filter(rid => rid);
+    console.log("CurrencyRids :",currencyRids);
 
     const [currencies] = await Promise.all([
       currencyRids.length
         ? mainSequelize.query(
-          `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
-          { replacements: { currencyRids }, type: 'SELECT' }
+          rawQueries.GET_CURRENCIES,
+          { replacements: { currencyRid: currencyRids }, type: 'SELECT' }
         )
         : []  
     ]);

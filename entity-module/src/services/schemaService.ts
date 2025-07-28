@@ -42,7 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
@@ -3903,7 +3903,7 @@ async fetchAccountsByIds(accountRids: string[]) {
 async fetchChildAccountRidByParentAccountId(mainSequelize: Sequelize, rid: string): Promise<any[]> {
   try {
     const childAccounts = await mainSequelize.query(
-      `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid = :parentRid`,
+      rawQueries.fetchChildAccountsByParentAccountRid(),
       {
         replacements: { parentRid: rid },
         type: QueryTypes.SELECT
