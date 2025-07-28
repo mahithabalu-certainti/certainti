@@ -1,12 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
-import { FinancialResourceCostList } from '../../../../../../types';
+import {
+  FinancialProjectCostList,
+  CostListParms,
+} from '../../../../../../types';
+import { useResourceCostList } from '../../../../../../services/financial/financial-service';
+import { accountDetailsProps } from '../../../../../account-details/utils';
+import { useParams } from 'react-router-dom';
 import { getFinancialResourceCostColumns } from './columns';
-const FinancialResourceCost: React.FC = () => {
-  const getRowId = (row: FinancialResourceCostList) => row?.rid || '';
+
+interface FinancialProjectCostProps {
+  accountDetails?: accountDetailsProps;
+  activeKey?: string;
+  fiscalyear?: string;
+}
+
+const FinancialResourceCost: React.FC<FinancialProjectCostProps> = ({
+  accountDetails,
+  fiscalyear,
+}) => {
+  const { accountid } = useParams();
+  const [tableParams, setTableParams] = useState<CostListParms>({
+    sortBy: 'project_name',
+    sortOrder: 'ASC',
+    page: 1,
+    limit: 100,
+  });
+
+  const {
+    data: resourceCostData,
+    isLoading,
+    error,
+  } = useResourceCostList(
+    accountid ?? '',
+    accountDetails?.accountById?.r_number ?? '',
+    fiscalyear ?? '',
+    tableParams
+  );
+
+  const getRowId = (row: FinancialProjectCostList) => row?.rid || '';
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setTableParams((prev) => ({
+      ...prev,
+      sortBy,
+      sortOrder: apiOrder,
+    }));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: newPage + 1,
+    }));
+  };
+
+  const handleRowsPerPageChange = (newLimit: number) => {
+    setTableParams((prev) => ({
+      ...prev,
+      limit: newLimit,
+      page: 1,
+    }));
+  };
+
   return (
     <ListTable
-      data={[]}
+      data={resourceCostData?.costs || []}
       columns={getFinancialResourceCostColumns()}
       getRowId={getRowId}
       hoverHighlight={false}
@@ -21,7 +81,16 @@ const FinancialResourceCost: React.FC = () => {
       selectable={false}
       actionWidth={80}
       actionDisplayMode='dropdown'
+      loading={isLoading}
+      error={error ? 'Failed to load resource cost data' : undefined}
       rowsPerPageOptions={[25, 50, 100]}
+      sortBy={tableParams.sortBy}
+      sortOrder={tableParams.sortOrder}
+      rowsPerPage={tableParams.limit}
+      currentPage={(tableParams.page ?? 1) - 1}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+      onSort={handleSort}
     />
   );
 };

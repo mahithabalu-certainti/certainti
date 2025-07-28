@@ -9,6 +9,7 @@ export const getFinancialProjectCostColumns =
       sortId: 'project_code',
       label: 'Project Code',
       width: 130,
+      sticky: true,
       sortable: true,
       sx: {
         position: 'sticky',
@@ -26,6 +27,12 @@ export const getFinancialProjectCostColumns =
       label: 'Fiscal Year',
       width: 130,
       sortable: true,
+      render: (row: FinancialProjectCostList) => {
+        if (typeof row.fiscal_year === 'number') {
+          return `FY-${row.fiscal_year}`;
+        }
+        return '-';
+      },
     },
     {
       id: 'project_name',
@@ -36,9 +43,9 @@ export const getFinancialProjectCostColumns =
       sortable: true,
     },
     {
-      id: 'project_id',
-      editId: 'project_id',
-      sortId: 'project_id',
+      id: 'r_number',
+      editId: 'r_number',
+      sortId: 'r_number',
       label: 'Project ID',
       width: 130,
       sortable: true,
@@ -76,25 +83,25 @@ export const getFinancialProjectCostColumns =
       sortable: true,
     },
     {
-      id: 'rd',
-      editId: 'rd',
-      sortId: 'rd',
+      id: 'rd_percent_final',
+      editId: 'rd_percent_final',
+      sortId: 'rd_percent_final',
       label: 'RD %',
       width: 130,
       sortable: true,
     },
     {
-      id: 'project_qre',
-      editId: 'project_qre',
-      sortId: 'project_qre',
+      id: 'qre_final',
+      editId: 'qre_final',
+      sortId: 'qre_final',
       label: 'Project QRE',
       width: 130,
       sortable: true,
     },
     {
-      id: 'rd_credit',
-      editId: 'rd_credit',
-      sortId: 'rd_credit',
+      id: 'rd_credits_total',
+      editId: 'rd_credits_total',
+      sortId: 'rd_credits_total',
       label: 'RD Credit',
       width: 130,
       sortable: true,

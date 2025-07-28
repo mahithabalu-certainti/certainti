@@ -9,6 +9,7 @@ import { NewProjectData } from '../../../../types/project';
 import { getFiscalYears } from '../../../../../common-utils';
 import FinancialProjectCost from './tab/project-cost/project-cost';
 import FinancialResourceCost from './tab/resource-cost/resource-cost';
+import { accountDetailsProps } from '../../../account-details/utils';
 
 const FinancialTabs = [
   {
@@ -23,12 +24,14 @@ const FinancialTabs = [
     disable: true,
   },
 ];
-
 interface ProjectFinancialProps {
+  accountDetails?: accountDetailsProps;
+  activeKey?: string;
   projectDetails: NewProjectData | null;
 }
 
 const FinancialSummary: React.FC<ProjectFinancialProps> = ({
+  accountDetails,
   projectDetails,
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<
@@ -41,7 +44,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     searchParams.set('tab', value);
     setSearchParams(searchParams);
   };
-
   const tabParam = searchParams.get('tab') || 'summary';
   const headerButtons = [
     {
@@ -107,8 +109,18 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         {tabParam === 'state_wise_summary' && (
           <StateWiseSummary projectDetails={projectDetails} />
         )}
-        {tabParam === 'project_cost' && <FinancialProjectCost />}
-        {tabParam === 'resource_cost' && <FinancialResourceCost />}
+        {tabParam === 'project_cost' && (
+          <FinancialProjectCost
+            accountDetails={accountDetails}
+            fiscalyear={fiscalyear}
+          />
+        )}
+        {tabParam === 'resource_cost' && (
+          <FinancialResourceCost
+            accountDetails={accountDetails}
+            fiscalyear={fiscalyear}
+          />
+        )}
       </div>
     </div>
   );

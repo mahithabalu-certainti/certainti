@@ -341,7 +341,15 @@ export const AccountDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <FinancialSummary projectDetails={projectData} />;
+        return (
+          <FinancialSummary
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'FinancialSummary',
+            }}
+            projectDetails={projectData}
+          />
+        );
       case 'details':
         return (
           <Details

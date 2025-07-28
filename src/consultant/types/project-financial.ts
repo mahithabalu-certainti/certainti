@@ -110,3 +110,13 @@ export type FinancialResourceCostList = {
   project_qre?: string;
   rd_credit?: string;
 };
+
+export type SortOrder = 'ASC' | 'DESC';
+
+export interface CostListParms {
+  page: number;
+  limit: number;
+  sortBy?: string;
+  filters?: object;
+  sortOrder?: SortOrder;
+}
