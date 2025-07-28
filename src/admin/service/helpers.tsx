@@ -13,7 +13,7 @@ export const buildQueryString = (params: Record<string, unknown>): string => {
   return queryParams.toString();
 };
 
-export const generateFile = (base64Data: string) => {
+export const generateFile = (base64Data: string, fileName?: string) => {
   if (!base64Data) {
     console.error('No base64 data found in the response.');
     return;
@@ -32,7 +32,7 @@ export const generateFile = (base64Data: string) => {
   // Trigger download
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'profile_records.xlsx';
+  link.download = fileName ? `${fileName}.xlsx` : 'profile_records.xlsx';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

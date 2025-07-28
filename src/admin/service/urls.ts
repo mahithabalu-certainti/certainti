@@ -1,3 +1,4 @@
+import { ManageUserListParms } from '../types/manage-account';
 import { UserListParams } from '../types/manage-user';
 import { buildQueryString } from './helpers';
 
@@ -35,7 +36,55 @@ export const getProfileListUrl = (params: UserListParams = {}): string => {
 
   return `/api/user/profiles?${buildQueryString(queryParams)}`;
 };
+export const getManageUserListUrl = (
+  userListId: string,
+  params: ManageUserListParms = {}
+): string => {
+  const defaultParams: ManageUserListParms = {
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
+    ...params,
+  };
 
+  const queryParams = buildQueryString(
+    defaultParams as Record<string, unknown>
+  );
+
+  return `/api/user_group/account/${userListId}/users?${queryParams}`;
+};
+
+export const getManageGroupListUrl = (
+  userListId: string,
+  params: ManageUserListParms = {}
+): string => {
+  const defaultParams: ManageUserListParms = {
+    entity_type: 'ACCOUNT', // required param
+    ...params,
+  };
+
+  const queryParams = buildQueryString(
+    defaultParams as Record<string, unknown>
+  );
+  return `/api/user_group/account/${userListId}/groups?${queryParams}`;
+};
+export const getProjectListManageAccessUrl = (
+  accountId: string,
+  entityId: string,
+  params: ManageUserListParms = {}
+): string => {
+  const queryParams = buildQueryString({
+    account_rid: accountId,
+    entity_rid: entityId,
+    ...params,
+  });
+  return `/api/user_group/project/users?${queryParams}`;
+};
+export const geManageAccountAccessUrl = (): string => {
+  return `/api/user_group/assign-access-to-account`;
+};
+export const geManageProjectAccessUrl = (): string => {
+  return `/api/user_group/assign-access-to-project`;
+};
 export const getUserGroupListUrl = (params: UserListParams = {}): string => {
   const defaultParams: UserListParams = {
     page: 1,

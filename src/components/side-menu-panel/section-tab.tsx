@@ -25,7 +25,7 @@ interface TabPanelProps {
   contextKey: string;
 
   setCurrentPage: (page: number) => void;
-  appliedFilters: Record<string, string | number | boolean>;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
   setAppliedFilters: (
     filters: Record<string, string | number | boolean>
   ) => void;
@@ -40,6 +40,8 @@ interface TabPanelProps {
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
+
+  hideTabPanel?: boolean;
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
@@ -63,6 +65,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   toggleEnabled,
   setToggleEnabled,
   onFilterChange,
+
+  hideTabPanel = false,
 }) => {
   const location = useLocation();
   const [tabValue, setTabValue] = useState('');
@@ -112,6 +116,10 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
     { label: 'Log a call', onClick: () => console.log('Call') },
   ];
+
+  if (hideTabPanel) {
+    return null;
+  }
 
   return (
     <Box>

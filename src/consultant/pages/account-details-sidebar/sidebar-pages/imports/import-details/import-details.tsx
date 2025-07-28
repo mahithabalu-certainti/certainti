@@ -86,7 +86,7 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
           className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
           onClick={() =>
             handleExportFailureData(
-              'load-failure',
+              'loadFailure',
               data?.entity as ImportEntityType
             )
           }
@@ -135,7 +135,7 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
           className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
           onClick={() =>
             handleExportFailureData(
-              'staging-failure',
+              'stagingFailure',
               data?.entity as ImportEntityType
             )
           }

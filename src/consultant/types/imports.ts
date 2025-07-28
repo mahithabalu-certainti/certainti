@@ -71,7 +71,7 @@ export interface ImportDetailsResponse {
   };
 }
 
-export type FailureType = 'staging-failure' | 'load-failure';
+export type FailureType = 'stagingFailure' | 'loadFailure';
 
 export type ImportEntityType =
   | 'resource'

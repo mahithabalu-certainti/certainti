@@ -23,6 +23,7 @@ import {
   GroupByIdUsers,
   ProjectListByAccounts,
   UserGroupDetails,
+  UserGroupDetailsCommon,
 } from '../../../types';
 import { getAvailableProjectsColumns, getAvailableUserColumns } from '../table';
 import { AccountList, SelectOption, YesNo } from '../../../../consultant/types';
@@ -134,15 +135,7 @@ export const CreateUserGroup: React.FC = () => {
   // API Hooks
   const createUserGroup = useCreateUserGroup();
   const updateUserGroup = useUpdateUserGroup();
-  const availableUsers = useGetUsersByAccount(
-    {
-      ...userParams,
-      is_consultant_only_group: groupInformation.isConsultantOnly,
-      account_rid: selectedAccounts.join(','),
-      group_rid: groupId,
-    },
-    tabs === Tabs.USER
-  );
+  const availableUsers = useGetUsersByAccount();
   const availableProjects = useGetprojectByAccount(
     {
       ...projectParams,
@@ -198,7 +191,6 @@ export const CreateUserGroup: React.FC = () => {
     permissionMap?.['accounts']?.read &&
     !permissionMap?.['accounts']?.edit;
 
-
   // UseEffects
   useEffect(() => {
     // Get Global accounts list only in create
@@ -229,6 +221,13 @@ export const CreateUserGroup: React.FC = () => {
     });
     setSelectAccountCount({ parent: parentCount, child: childCount });
   }, [selectedAccounts, accounts]);
+  useEffect(() => {
+    // trigger when page change
+    if (tabs === Tabs.USER) {
+      callAvailableUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userParams.page, userParams.limit, tabs]);
   useEffect(() => {
     if (isEditView && userGroupData) {
       const {
@@ -285,125 +284,6 @@ export const CreateUserGroup: React.FC = () => {
   const handleCloseAccountModel = useCallback(() => {
     setAccountAnchorEl(null);
   }, []);
-  const validateGroupName = (value: string) => {
-    // Check for empty value
-    if (!value.trim()) {
-      return 'Field is required';
-    }
-
-    // Check length
-    if (value.length < 2 || value.length > 64) {
-      return 'The group name must contain a minimum of 2 and a maximum of 64 characters.';
-    }
-
-    // Check for starting/ending spaces or special characters
-    if (/^[\s\-']|[\s\-']$/.test(value)) {
-      return 'Group name cannot begin or end with a space or special character.';
-    }
-
-    // Check for consecutive special characters
-    if (/[-']{2,}/.test(value)) {
-      return 'Group name cannot contain consecutive special characters.';
-    }
-
-    // Check for allowed characters only
-    if (!/^[A-Za-z\s\-']+$/.test(value)) {
-      return "Group name can only contain letters, spaces, hyphens (-) and apostrophes (').";
-    }
-
-    return '';
-  };
-  const getUnCheckedData = (
-    selectedData: string[],
-    apiData?: GroupByIdAccount[] | GroupByIdUsers[]
-  ) => {
-    return (
-      apiData
-        ?.filter((acc) => acc.has_access && !selectedData.includes(acc.rid))
-        .map((acc) => ({
-          rid: acc.rid,
-          is_enabled: false,
-          is_modified: true,
-        })) || []
-    );
-  };
-  const getUnCheckedProjects = () => {
-    return userGroupData?.projects
-      ?.filter(
-        (proj) => proj.has_access && !addedProjects.includes(proj.project_rid)
-      )
-      .reduce<Record<string, boolean>>((proj, item) => {
-        proj[item.project_rid] = false;
-        return proj;
-      }, {});
-  };
-  const switchTabAndSubmit = () => {
-    if (tabs === Tabs.FORM) {
-      const groupName = validateGroupName(groupInformation.groupName);
-      const groupType = groupInformation.groupType.trim()
-        ? ''
-        : 'Field is required';
-      const newErrors: GroupInformationError = {
-        ...groupInformationError,
-        groupName,
-        groupType,
-        accounts: selectedAccounts.length === 0 ? 'Please select Accounts' : '',
-      };
-      setGroupInformationError(newErrors);
-      if (Object.values(newErrors).every((val) => val === '')) {
-        // If No errors
-        setTabs(Tabs.USER);
-      }
-    } else if (tabs === Tabs.USER) {
-      if (addedUsers.length === 0) {
-        errorToast('Please choose any one User');
-      } else {
-        setTabs(Tabs.PROJECT);
-      }
-    } else if (tabs === Tabs.PROJECT) {
-      const commonData = {
-        group_name: prefixGroupName + groupInformation.groupName,
-        is_consultant_only_group: groupInformation.isConsultantOnly,
-        accounts: selectedAccounts.map((id) => ({
-          rid: id,
-          is_enabled: true,
-          is_modified: true,
-        })),
-        users: addedUsers.map((id) => ({
-          rid: id,
-          is_enabled: true,
-          is_modified: true,
-        })),
-        projects: addedProjects.reduce<UserGroupDetails['projects']>(
-          (proj, key) => {
-            proj[key] = true;
-            return proj;
-          },
-          {}
-        ),
-      };
-      if (isEditView) {
-        const constructDataForUpdate = {
-          ...commonData,
-          group_rid: groupId as string,
-          accounts: commonData.accounts.concat(
-            getUnCheckedData(selectedAccounts, userGroupData?.accounts)
-          ),
-          users: commonData.users.concat(
-            getUnCheckedData(addedUsers, userGroupData?.users)
-          ),
-          projects: { ...commonData.projects, ...getUnCheckedProjects() },
-        };
-        updateUserGroup.mutate(constructDataForUpdate);
-      } else {
-        const constructDataForCreate = {
-          ...commonData,
-          group_type_rid: groupInformation.groupType,
-        };
-        createUserGroup.mutate(constructDataForCreate);
-      }
-    }
-  };
   const goBack = () => {
     if (currentIndex === 0) {
       window.history.back();
@@ -482,6 +362,132 @@ export const CreateUserGroup: React.FC = () => {
   };
   const getRowId = (row: ActiveUserForGroup) => row.rid;
   const getProjectRowId = (row: ProjectListByAccounts) => row.project_rid;
+  const callAvailableUsers = () => {
+    availableUsers.mutate({
+      is_consultant_only_group: groupInformation.isConsultantOnly,
+      account_rid: selectedAccounts,
+      limit: userParams.limit?.toString() as string,
+      page: userParams.page?.toString() as string,
+      ...(isEditView && { group_rid: groupId as string }),
+    });
+  };
+  const validateGroupName = (value: string) => {
+    // Check for empty value
+    if (!value.trim()) {
+      return 'Field is required';
+    }
+
+    // Check length
+    if (value.length < 2 || value.length > 64) {
+      return 'The group name must contain a minimum of 2 and a maximum of 64 characters.';
+    }
+
+    // Check for starting/ending spaces or special characters
+    if (/^[\s\-']|[\s\-']$/.test(value)) {
+      return 'Group name cannot begin or end with a space or special character.';
+    }
+
+    // Check for consecutive special characters
+    if (/[-']{2,}/.test(value)) {
+      return 'Group name cannot contain consecutive special characters.';
+    }
+
+    // Check for allowed characters only
+    if (!/^[A-Za-z0-9\s\-']+$/.test(value)) {
+      return "Group name can only contain letters, numbers, spaces, hyphens (-) and apostrophes (').";
+    }
+
+    return '';
+  };
+  const getUnCheckedProjects = () => {
+    return userGroupData?.projects
+      ?.filter(
+        (proj) => proj.has_access && !addedProjects.includes(proj.project_rid)
+      )
+      .reduce<Record<string, boolean>>((proj, item) => {
+        proj[item.project_rid] = false;
+        return proj;
+      }, {});
+  };
+  const getUnCheckedData = (
+    selectedData: string[],
+    apiData?: GroupByIdAccount[] | GroupByIdUsers[]
+  ): UserGroupDetailsCommon[] => {
+    return (
+      apiData?.map(({ rid, has_access }) => {
+        const isSelected = selectedData.includes(rid);
+        return {
+          rid,
+          is_enabled: isSelected,
+          is_modified: isSelected !== has_access,
+        };
+      }) || []
+    );
+  };
+  const switchTabAndSubmit = () => {
+    if (tabs === Tabs.FORM) {
+      const groupName = validateGroupName(groupInformation.groupName);
+      const groupType = groupInformation.groupType.trim()
+        ? ''
+        : 'Field is required';
+      const newErrors: GroupInformationError = {
+        ...groupInformationError,
+        groupName,
+        groupType,
+        accounts: selectedAccounts.length === 0 ? 'Please select Accounts' : '',
+      };
+      setGroupInformationError(newErrors);
+      if (Object.values(newErrors).every((val) => val === '')) {
+        // If No errors
+        setTabs(Tabs.USER);
+        callAvailableUsers();
+      }
+    } else if (tabs === Tabs.USER) {
+      if (addedUsers.length === 0) {
+        errorToast('Please choose any one User');
+      } else {
+        setTabs(Tabs.PROJECT);
+      }
+    } else if (tabs === Tabs.PROJECT) {
+      const commonData = {
+        group_name: prefixGroupName + groupInformation.groupName,
+        is_consultant_only_group: groupInformation.isConsultantOnly,
+        accounts: selectedAccounts.map((id) => ({
+          rid: id,
+          is_enabled: true,
+          is_modified: true,
+        })),
+        users: addedUsers.map((id) => ({
+          rid: id,
+          is_enabled: true,
+          is_modified: true,
+        })),
+        projects: addedProjects.reduce<UserGroupDetails['projects']>(
+          (proj, key) => {
+            proj[key] = true;
+            return proj;
+          },
+          {}
+        ),
+      };
+      if (isEditView) {
+        const constructDataForUpdate = {
+          ...commonData,
+          group_rid: groupId as string,
+          accounts: getUnCheckedData(selectedAccounts, userGroupData?.accounts),
+          users: getUnCheckedData(addedUsers, userGroupData?.users),
+          projects: { ...commonData.projects, ...getUnCheckedProjects() },
+        };
+        updateUserGroup.mutate(constructDataForUpdate);
+      } else {
+        const constructDataForCreate = {
+          ...commonData,
+          group_type_rid: groupInformation.groupType,
+        };
+        createUserGroup.mutate(constructDataForCreate);
+      }
+    }
+  };
 
   return (
     <>
@@ -544,7 +550,7 @@ export const CreateUserGroup: React.FC = () => {
         {tabs === Tabs.FORM && (
           <div className='w-full flex flex-col gap-2'>
             <div className='w-full flex flex-row gap-2'>
-              {isEditView && permissionMap?.['group_name']?.read && (
+              {(!isEditView || permissionMap?.['group_name']?.read) && (
                 <div className='w-1/2 flex flex-col gap-1'>
                   <label className='text-[13px] font-[600] text-[#2D3E4F]'>
                     Group Name <span className='text-red-500'> *</span>
@@ -570,46 +576,46 @@ export const CreateUserGroup: React.FC = () => {
                   )}
                 </div>
               )}
-              {isEditView &&
-                permissionMap?.['is_consultant_only_group']?.read && (
-                  <div className='w-1/2 flex flex-col gap-1'>
-                    <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-                      Is Consultant Only Group ?{' '}
-                      <span className='text-red-500'> *</span>
+              {(!isEditView ||
+                permissionMap?.['is_consultant_only_group']?.read) && (
+                <div className='w-1/2 flex flex-col gap-1'>
+                  <label className='text-[13px] font-[600] text-[#2D3E4F]'>
+                    Is Consultant Only Group ?{' '}
+                    <span className='text-red-500'> *</span>
+                  </label>
+                  <div className='flex gap-4'>
+                    <label className={`cursor-pointer flex items-center`}>
+                      <input
+                        type='radio'
+                        name='isConsultantOnly'
+                        onChange={updatedForm}
+                        value={YesNo.Yes}
+                        checked={groupInformation.isConsultantOnly}
+                        disabled={isEditView}
+                      />
+                      <span className='text-[13px] text-[#7D98B6] ml-2'>
+                        Yes
+                      </span>
                     </label>
-                    <div className='flex gap-4'>
-                      <label className={`cursor-pointer flex items-center`}>
-                        <input
-                          type='radio'
-                          name='isConsultantOnly'
-                          onChange={updatedForm}
-                          value={YesNo.Yes}
-                          checked={groupInformation.isConsultantOnly}
-                          disabled={isEditView}
-                        />
-                        <span className='text-[13px] text-[#7D98B6] ml-2'>
-                          Yes
-                        </span>
-                      </label>
-                      <label className={`cursor-pointer flex items-center`}>
-                        <input
-                          type='radio'
-                          name='isConsultantOnly'
-                          onChange={updatedForm}
-                          value={YesNo.No}
-                          checked={!groupInformation.isConsultantOnly}
-                          disabled={isEditView}
-                        />
-                        <span className='text-[13px] text-[#7D98B6] ml-2'>
-                          No
-                        </span>
-                      </label>
-                    </div>
+                    <label className={`cursor-pointer flex items-center`}>
+                      <input
+                        type='radio'
+                        name='isConsultantOnly'
+                        onChange={updatedForm}
+                        value={YesNo.No}
+                        checked={!groupInformation.isConsultantOnly}
+                        disabled={isEditView}
+                      />
+                      <span className='text-[13px] text-[#7D98B6] ml-2'>
+                        No
+                      </span>
+                    </label>
                   </div>
-                )}
+                </div>
+              )}
             </div>
             <div className='w-full flex flex-row gap-2'>
-              {isEditView && permissionMap?.['group_type_rid']?.read && (
+              {(!isEditView || permissionMap?.['group_type_rid']?.read) && (
                 <div className='w-1/2 flex flex-col gap-1'>
                   <label className='text-[13px] font-[600] text-[#2D3E4F]'>
                     Group Type <span className='text-red-500'> *</span>
@@ -713,7 +719,7 @@ export const CreateUserGroup: React.FC = () => {
                   )}
                 </div>
               )}
-              {isEditView && permissionMap?.['accounts']?.read && (
+              {(!isEditView || permissionMap?.['accounts']?.read) && (
                 <div className='w-1/2 flex flex-col gap-1'>
                   <label className='text-[13px] font-[600] text-[#2D3E4F]'>
                     Accounts <span className='text-red-500'> *</span>

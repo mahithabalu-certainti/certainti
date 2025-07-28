@@ -10,7 +10,6 @@ import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
 } from '../../../../../common-utils';
-import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
 import DetailsTable from '../../../../../components/details-section/details-table';
@@ -51,10 +50,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 }) => {
   const accountById = detailsInfo?.accountById;
   const accountDetails = detailsInfo?.accountDetails;
-  const dataResidency =
-    DATA_STORAGE_OPTIONS.find(
-      (option) => option.value === accountDetails?.data_storage
-    )?.label || '-';
+
   const { permission } = useSelector((state: RootState) => state.permission);
   const userViewEditFields = useMemo(
     () =>
@@ -206,56 +202,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       keyContactStatus: contact?.status_name,
     }));
 
-  const accountSettings: DetailItem[] = [
-    {
-      label: 'Fiscal Start',
-      value: accountDetails?.fiscal_start_date,
-      key: 'fiscal_start_date',
-    },
-
-    {
-      label: 'Fiscal End',
-      value: accountDetails?.fiscal_end_date,
-      key: 'fiscal_end_date',
-    },
-    { label: '', value: 'empty' },
-    {
-      label: 'Blended Rate - FTE',
-      value:
-        costDisplay(
-          accountDetails?.blended_rate_fte?.toString(),
-          accountById?.currency?.currency_symbol
-        ) || '-',
-      key: 'blended_rate_fte',
-    },
-    {
-      label: 'Blended Rate - SubCon',
-      value:
-        costDisplay(
-          accountDetails?.blended_rate_subcon?.toString(),
-          accountById?.currency?.currency_symbol
-        ) || '-',
-      key: 'blended_rate_subcon',
-    },
-    { label: '', value: 'empty' },
-    {
-      label: 'Auto Assessment',
-      value: accountDetails?.auto_access_rd ? 'Yes' : 'No',
-      key: 'auto_access_rd',
-    },
-    {
-      label: 'Auto Send Interaction',
-      value: accountDetails?.autosend_interaction ? 'Yes' : 'No',
-      key: 'autosend_interaction',
-    },
-    {
-      label: 'Max Interaction Follow up',
-      value: accountDetails?.max_ai_interactions,
-      key: 'max_ai_interactions',
-    },
-    { label: 'Data Residency', value: dataResidency, key: 'data_storage' },
-  ];
-
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: accountDetails?.account_rid, key: 'rid' },
     { label: 'Account ID', value: accountById?.r_number, key: 'r_number' },
@@ -284,10 +230,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
   const businessDetails = applyHidePermission(businessInfo, permissionMap);
   const locationDetails = applyHidePermission(locationInfo, permissionMap);
-  const accountSettingsDetails = applyHidePermission(
-    accountSettings,
-    permissionMap
-  );
   const descriptionDetails = applyHidePermission(description, permissionMap);
 
   return (
@@ -316,7 +258,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         />
       )}
 
-      <DetailsSection title='Account Settings' data={accountSettingsDetails} />
       <DetailsSection
         title='Comments'
         data={descriptionDetails}

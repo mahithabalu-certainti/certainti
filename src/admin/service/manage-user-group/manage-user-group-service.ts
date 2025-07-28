@@ -4,6 +4,7 @@ import { UserListParams } from '../../types/manage-user';
 import { getUserGroupListUrl } from '../urls';
 import {
   ActiveUserForGroupApiResponse,
+  FetchUsersByAccountBody,
   ProjectListByAccountsApiResponse,
   UserGroupApiResponse,
   UserGroupDetails,
@@ -44,15 +45,20 @@ export const useManageUserGroupList = (
   });
 };
 
-export const getUserGroupExportUrl = () => {
-  return `/api/user_group/export`;
+export const getUserGroupExportUrl = (params: UserListParams = {}) => {
+    const queryParams: Record<string, unknown> = {
+    sortBy: params.sortBy || 'createdAt',
+    sortOrder: params.sortOrder || 'DESC',
+    filters: params.filters,
+  };
+  return `/api/user_group/export?${buildQueryString(queryParams)}`;
 };
 
-export const exportUserGroupList = async () => {
-  const url = getUserGroupExportUrl();
+export const exportUserGroupList = async (params: UserListParams = {}) => {
+  const url = getUserGroupExportUrl(params);
   const response = await userServiceApi.get(url);
   const base64Data = response.data?.data;
-  generateFile(base64Data);
+  generateFile(base64Data, 'user_group_records');
   return response; // Return the response to track completion
 };
 
@@ -75,22 +81,24 @@ export const useGetUserGroupTypes = (queryParams: UserGroupParam) => {
   });
 };
 
-export const fetchUsersByAccount = async (queryParams: UserGroupParam) => {
-  const response = await userServiceApi.get<ActiveUserForGroupApiResponse>(
-    `/api/user_group/listUsers?${buildQueryString(queryParams)}`
-  );
-  return response.data;
+export const fetchUsersByAccount = async (
+  body: FetchUsersByAccountBody
+): Promise<ActiveUserForGroupApiResponse> => {
+  try {
+    const { data } = await userServiceApi.post<ActiveUserForGroupApiResponse>(
+      '/api/user_group/listUsers',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
 };
 
-export const useGetUsersByAccount = (
-  queryParams: UserGroupParam,
-  enabled: boolean
-) => {
-  return useQuery<ActiveUserForGroupApiResponse, Error>({
-    queryKey: ['getUsersByAccount', queryParams],
-    queryFn: () => fetchUsersByAccount(queryParams),
-    retry: 0,
-    enabled,
+export const useGetUsersByAccount = () => {
+  return useMutation<ActiveUserForGroupApiResponse, Error, FetchUsersByAccountBody>({
+    mutationFn: (body) => fetchUsersByAccount(body),
   });
 };
 

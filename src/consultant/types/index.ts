@@ -11,3 +11,5 @@ export * from './table';
 export * from './toast-message';
 export * from './profile';
 export * from './project-resources';
+export * from './project-financial';
+export * from './configuration';

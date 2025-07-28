@@ -75,6 +75,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
+  loadindRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -93,6 +94,7 @@ const ListTable = <T extends RowData>({
   // Expansion
   expandAllParent = false,
   expandAllChild = false,
+  showEmptyRow = true,
   actionColumnName,
   toggleData,
   disabledToggle,
@@ -961,19 +963,20 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  component === 'account'
+                  loadindRowCount ||
+                  (component === 'account'
                     ? 20
                     : rowsPerPage > 20
                       ? 20
-                      : rowsPerPage
+                      : rowsPerPage)
                 }
                 columnsCount={
-                  visibleColumns.length +
-                  (conditionMenuItems ? 1 : 0) +
-                  (actionDisplayMode === 'toggle' ? 1 : 0)
+                  visibleColumns.length + (conditionMenuItems ? 1 : 0)
                 }
                 selectable={selectable}
-                hasActions={actionMenuItems?.length > 0}
+                hasActions={
+                  actionMenuItems?.length > 0 || actionDisplayMode === 'toggle'
+                }
                 stickyColumnsCount={stickyColumnsCount}
               />
             )}
@@ -986,7 +989,8 @@ const ListTable = <T extends RowData>({
                     visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
-                    (conditionMenuItems ? 1 : 0)
+                    (conditionMenuItems ? 1 : 0) +
+                    (actionDisplayMode === 'toggle' ? 1 : 0)
                   }
                   align='center'
                 >
@@ -1003,7 +1007,8 @@ const ListTable = <T extends RowData>({
                     visibleColumns.length +
                     (selectable ? 1 : 0) +
                     (actionMenuItems?.length > 0 ? 1 : 0) +
-                    (conditionMenuItems ? 1 : 0)
+                    (conditionMenuItems ? 1 : 0) +
+                    (actionDisplayMode === 'toggle' ? 1 : 0)
                   }
                   align='center'
                 >
@@ -1117,7 +1122,7 @@ const ListTable = <T extends RowData>({
                             column.editable
                           : column.editable;
                         const isFirstDataColumn =
-                          column.id === visibleColumns[0].id;
+                          column.id === visibleColumns[0].id && expandable;
                         const isChildRows = isFirstDataColumn && rowLevel !== 0;
                         const isEditableCell =
                           conditionallyEdit &&
@@ -1441,12 +1446,16 @@ const ListTable = <T extends RowData>({
                             >
                               <Switch
                                 size='small'
-                                color='success'
+                                color={
+                                  row.isColorEnabled ? 'warning' : 'success'
+                                }
                                 onChange={(_e, checked) =>
                                   toggleClick && toggleClick(rowId, checked)
                                 }
                                 checked={toggleData?.includes(rowId)}
-                                disabled={disabledToggle}
+                                disabled={Boolean(
+                                  disabledToggle || row?.isDisabledToggle
+                                )}
                               />
                             </Tooltip>
                           </div>
@@ -1493,7 +1502,8 @@ const ListTable = <T extends RowData>({
                               visibleColumns.length +
                               (selectable ? 1 : 0) +
                               (actionMenuItems?.length > 0 ? 1 : 0) +
-                              (conditionMenuItems ? 1 : 0)
+                              (conditionMenuItems ? 1 : 0) +
+                              (actionDisplayMode === 'toggle' ? 1 : 0)
                             }
                           />
                         </TableRow>
@@ -1505,6 +1515,7 @@ const ListTable = <T extends RowData>({
             {!loading &&
               !error &&
               component !== 'account' &&
+              showEmptyRow &&
               flattenedData.length > 0 && (
                 <TableRow sx={{ height: '10px !important' }}>
                   <TableCell
@@ -1512,8 +1523,8 @@ const ListTable = <T extends RowData>({
                       visibleColumns.length +
                       (selectable ? 1 : 0) +
                       (actionMenuItems?.length > 0 ? 1 : 0) +
-                      (actionDisplayMode === 'toggle' ? 1 : 0) +
-                      (toggleData ? 1 : 0)
+                      (conditionMenuItems ? 1 : 0) +
+                      (actionDisplayMode === 'toggle' ? 1 : 0)
                     }
                     sx={{ height: '10px !important' }}
                   ></TableCell>

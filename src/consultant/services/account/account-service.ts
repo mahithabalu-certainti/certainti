@@ -62,7 +62,7 @@ export const fetchAccounts = async (
   );
   return {
     accounts: response.data.data.account.data,
-    count: response.data.data.account.total,
+    count: response.data.data.count,
   };
 };
 

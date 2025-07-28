@@ -217,6 +217,7 @@ export interface ListTableProps<T extends RowData> {
   conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];
   // State
   loading?: boolean;
+  loadindRowCount?: number;
   error?: string;
   // Pagination
   rowsPerPageOptions?: number[];
@@ -253,6 +254,7 @@ export interface ListTableProps<T extends RowData> {
   checkedToggleTooltip?: string;
   unCheckedToggleTooltip?: string;
   toggleClick?: (rowId: string, value: boolean) => void;
+  showEmptyRow?: boolean;
 }
 
 export interface EditingCell {

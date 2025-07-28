@@ -32,17 +32,17 @@ export const getUserGroupColumns = (
             'Group name must contain a minimum of 2 and a maximum of 64 characters.',
         },
         {
-          regex: /^[A-Za-z\s\-']+$/,
+          regex: /^[A-Za-z0-9\s\-']+$/,
           errorMessage:
-            "Group name can only contain letters, spaces, hyphens (-) and apostrophes (').",
+            "Group name can only contain letters, numbers, spaces, hyphens (-) and apostrophes (').",
         },
         {
-          regex: /^[A-Za-z](?:[A-Za-z\s\-']*[A-Za-z])?$/,
+          regex: /^[A-Za-z0-9](?:[A-Za-z0-9\s\-']*[A-Za-z0-9])?$/,
           errorMessage:
             'Group name cannot begin or end with a space or special character.',
         },
         {
-          regex: /^(?!.*(--|''))[A-Za-z\s\-']+$/,
+          regex: /^(?!.*(--|''))[A-Za-z0-9\s\-']+$/,
           errorMessage:
             'Group name cannot contain consecutive special characters.',
         },

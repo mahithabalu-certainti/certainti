@@ -138,7 +138,7 @@ export interface UserGroupParam {
   [key: string]: unknown;
 }
 
-interface UserGroupDetailsCommon {
+export interface UserGroupDetailsCommon {
   rid: string;
   is_enabled: boolean;
   is_modified?: boolean;
@@ -155,4 +155,12 @@ export interface UserGroupDetails {
 
 export interface UserGroupUpdateDetails extends Partial<UserGroupDetails> {
   group_rid: string;
+}
+
+export interface FetchUsersByAccountBody{
+  page: string,
+  limit: string,
+  is_consultant_only_group: boolean,
+  account_rid: string[],
+  group_rid?: string
 }
