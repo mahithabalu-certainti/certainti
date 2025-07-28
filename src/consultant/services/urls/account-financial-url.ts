@@ -1,4 +1,4 @@
-import { CostListParms } from '../../types';
+import { CostListParms } from '../../types/account-financial';
 
 export const getResourceCostListURL = (
   accountId: string,

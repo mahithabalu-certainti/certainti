@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
-import {
-  FinancialProjectCostList,
-  CostListParms,
-} from '../../../../../../types';
-import { useResourceCostList } from '../../../../../../services/financial/financial-service';
 import { accountDetailsProps } from '../../../../../account-details/utils';
 import { useParams } from 'react-router-dom';
 import { getFinancialResourceCostColumns } from './columns';
+import {
+  CostListParms,
+  FinancialProjectCostList,
+} from '../../../../../../types/account-financial';
+import { useResourceCostList } from '../../../../../../services/financial/account-financial-service';
 
 interface FinancialProjectCostProps {
   accountDetails?: accountDetailsProps;

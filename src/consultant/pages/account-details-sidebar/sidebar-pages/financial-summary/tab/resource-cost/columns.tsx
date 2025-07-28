@@ -1,5 +1,5 @@
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import { FinancialResourceCostList } from '../../../../../../types';
+import { FinancialResourceCostList } from '../../../../../../types/account-financial';
 
 export const getFinancialResourceCostColumns =
   (): ListTableColumn<FinancialResourceCostList>[] => [
