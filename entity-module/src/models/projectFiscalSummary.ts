@@ -266,7 +266,7 @@ export class ProjectFiscalSummary
   public comments?: string | null;
   public project_description?: string | null;
 
-  static initialize(sequelize: Sequelize, schema: string) {
+  static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectFiscalSummary.init(
       {
         rid: {
@@ -501,7 +501,7 @@ export class ProjectFiscalSummary
       },
       {
         sequelize,
-        schema : `${MAIN_SCHEMA_NAME}`,
+        schema: `${MAIN_SCHEMA_NAME}`,
         tableName: "project_fiscal_summary",
         timestamps: false,
         underscored: true,
