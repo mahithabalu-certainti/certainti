@@ -933,6 +933,8 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             af.fiscal_year = ${fiscal_year}
 			AND
 			afr.region_rid = '${region_rid}'
+        GROUP BY af.account_rid, af.total_projects_rd_credits_fte, af.total_projects_rd_credits_subcon, 
+                 pf.rd_credits_nonlabor_fed_level
     ),
     calculate_rd_credits_statewise AS (
         SELECT DISTINCT ON (af.account_rid)
@@ -951,33 +953,28 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         af.fiscal_year = ${fiscal_year}
         AND
 		af.region_rid = '${region_rid}'
+        GROUP BY af.account_rid, af.total_projects_rd_credits_fte, af.total_projects_rd_credits_subcon, 
+                 pf.rd_credits_nonlabor_fed_level
     ),
     calculate_total_rd_credits AS (
         SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
-            COALESCE(af.total_projects_rd_credits_fte, 0) + COALESCE(afr.total_projects_rd_credits_fte, 0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon, 0) + COALESCE(afr.total_projects_rd_credits_subcon, 0) AS rd_credits_subcon,
-            COALESCE(af.rd_credits_nonlabor_fed_level, 0) + COALESCE(afr.rd_credits_nonlabor_fed_level, 0) AS rd_credits_nonlabor
+            COALESCE(af.rd_credits_fte, 0) + COALESCE(afr.rd_credits_fte, 0) AS rd_credits_fte,
+            COALESCE(af.rd_credits_subcon, 0) + COALESCE(afr.rd_credits_subcon, 0) AS rd_credits_subcon,
+            COALESCE(af.rd_credits_nonlabor, 0) + COALESCE(afr.rd_credits_nonlabor, 0) AS rd_credits_nonlabor
         FROM
         ${schemaName}.account_details ad
-        LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
-        LEFT JOIN ${schemaName}.account_fiscal af ON af.account_rid = ad.account_rid
-        LEFT JOIN ${schemaName}.project_fiscal p ON p.account_rid = ad.account_rid AND p.region_rid = afr.region_rid AND p.fiscal_year = ${fiscal_year}
+        LEFT JOIN calculate_rd_credits_statewise af on af.account_rid = ad.account_rid
+        LEFT JOIN calculate_rd_credits_federal afr ON afr.account_rid = ad.account_rid
         WHERE 
         ad.account_rid = '${account_rid}'
-        AND
-        af.fiscal_year = ${fiscal_year}
-        AND
-        p.rid IS NOT NULL
-        AND
-		afr.region_rid = '${region_rid}'
         GROUP BY 
-        af.total_projects_rd_credits_fte,
-        af.total_projects_rd_credits_subcon,
-        afr.total_projects_rd_credits_fte,
-        afr.total_projects_rd_credits_subcon,
-        af.rd_credits_nonlabor_fed_level,
-        afr.rd_credits_nonlabor_fed_level,
+        af.rd_credits_fte,
+        af.rd_credits_subcon,
+        afr.rd_credits_fte,
+        afr.rd_credits_subcon,
+        af.rd_credits_nonlabor,
+        afr.rd_credits_nonlabor,
         ad.account_rid
     )
 
