@@ -17,7 +17,7 @@ import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/
 import { Attachment } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
-import { SelectOption } from '../../../../types';
+import { ExportType, SelectOption } from '../../../../types';
 import Uploads from '../../../../../components/Attachments/upload';
 import {
   getAttachmentsFilterFields,
@@ -52,9 +52,7 @@ const AttachmentTabs: ResourceTabs[] = [
   },
 ];
 interface AttachmentsProps {
-  setExportType?: (
-    type: 'resource' | 'cost' | 'skill' | 'project' | 'attachments'
-  ) => void;
+  setExportType?: (type: ExportType) => void;
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;

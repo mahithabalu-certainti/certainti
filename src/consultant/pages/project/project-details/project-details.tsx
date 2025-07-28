@@ -44,6 +44,7 @@ import { exportAttachmentsData } from '../../../services/attachments/attachments
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
+import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -168,6 +169,13 @@ export const ProjectDetails = () => {
       filters: {},
     });
 
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const navigate = useNavigate();
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -237,15 +245,22 @@ export const ProjectDetails = () => {
 
   const checkExport = () => {
     const list = searchParams.get('list');
+    const tab = searchParams.get('tab');
+
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
+    } else if (list === 'financial' && tab === 'resource_cost') {
+      return false;
     } else {
       return true;
     }
   };
 
   const handleExport = (exportType: ExportType) => {
-    if (searchParams.get('list') !== 'attachments') {
+    if (
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'financial'
+    ) {
       return;
     }
 
@@ -254,10 +269,23 @@ export const ProjectDetails = () => {
       entityId: projectID,
       attachmentLevel: 'project',
     };
+
+    const financialPayload = {
+      accountNumber: projectData?.account_number,
+      fiscalYear: projectData?.fiscal_year,
+      projectRid: projectID,
+      accountRid: accountID,
+    };
     if (exportType === 'attachments') {
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
+      });
+    }
+    if (exportType === 'financial') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
       });
     } else {
       return;
@@ -312,7 +340,13 @@ export const ProjectDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <Financial projectDetails={projectData} />;
+        return (
+          <Financial
+            projectDetails={projectData}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+          />
+        );
       case 'projectDetails':
         return (
           <ProjectDetailsData
