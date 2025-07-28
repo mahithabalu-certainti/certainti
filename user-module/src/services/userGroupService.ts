@@ -13,6 +13,7 @@ import { ProjectAccessView } from "../utils/types";
 import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
 import UserService from "./userService";
+import { getUserGroupUserCount } from "../utils/rawQueries";
 
 
 
@@ -1579,14 +1580,7 @@ private createUserCountCondition(operator: string, value: number): any {
           attributes: {
            include: [
             [
-              literal(`(
-        SELECT COUNT(*)
-        FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-        INNER JOIN "${MAIN_SCHEMA_NAME}".user AS u ON ugm.user_rid = u.rid
-        INNER JOIN "${MAIN_SCHEMA_NAME}".status AS s ON u.status_rid = s.rid
-        WHERE ugm.group_rid = "UserGroup".rid
-        AND s.status_name = 'Active'
-      )`),
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
               "user_count",
             ],
               ]
@@ -1683,24 +1677,9 @@ private createUserCountCondition(operator: string, value: number): any {
           attributes: {
            include: [
             [
-              literal(`(
-        SELECT COUNT(*)
-        FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-        INNER JOIN "${MAIN_SCHEMA_NAME}".user AS u ON ugm.user_rid = u.rid
-        INNER JOIN "${MAIN_SCHEMA_NAME}".status AS s ON u.status_rid = s.rid
-        WHERE ugm.group_rid = "UserGroup".rid
-        AND s.status_name = 'Active'
-      )`),
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
               "user_count",
             ],
-              //   [
-              //   literal(`(
-              //     SELECT account_name
-              //     FROM "${MAIN_SCHEMA_NAME}".account AS acc
-              //     WHERE acc.rid = "UserGroup".account_rid
-              //   )`),
-              //   'account_name'
-              //  ],
               ]
             },
           include: [
