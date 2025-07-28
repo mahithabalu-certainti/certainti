@@ -13,6 +13,7 @@ import { ProjectAccessView } from "../utils/types";
 import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
 import UserService from "./userService";
+import { getUserGroupUserCount } from "../utils/rawQueries";
 
 
 
@@ -1601,15 +1602,10 @@ private createUserCountCondition(operator: string, value: number): any {
           offset,
           attributes: {
            include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ]
+            [
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
+              "user_count",
+            ],
               ]
             },
           include: [
@@ -1703,23 +1699,10 @@ private createUserCountCondition(operator: string, value: number): any {
           order: orderArray,
           attributes: {
            include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ],
-              //   [
-              //   literal(`(
-              //     SELECT account_name
-              //     FROM "${MAIN_SCHEMA_NAME}".account AS acc
-              //     WHERE acc.rid = "UserGroup".account_rid
-              //   )`),
-              //   'account_name'
-              //  ],
+            [
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
+              "user_count",
+            ],
               ]
             },
           include: [
