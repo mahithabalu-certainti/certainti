@@ -148,7 +148,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: resourceData?.rid, key: 'rid' },
     {
-      label: 'Resource Number',
+      label: 'Resource ID',
       value: resourceData?.r_number,
       key: 'r_number',
     },

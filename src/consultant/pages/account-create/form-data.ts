@@ -340,12 +340,12 @@ export const AccFormData = (
             placeholder: 'Choose Status',
             hide:
               isEditView &&
-              !permissionMap?.['status']?.read &&
-              !permissionMap?.['status']?.edit,
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
             disabled:
               isEditView &&
-              permissionMap?.['status']?.read &&
-              !permissionMap?.['status']?.edit,
+              permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
           }),
           createTextField('organisation_name', 'Org Name', {
             required: true,
@@ -381,12 +381,12 @@ export const AccFormData = (
             placeholder: 'Browse Image',
             hide:
               isEditView &&
-              !permissionMap?.['logo']?.read &&
-              !permissionMap?.['logo']?.edit,
+              !permissionMap?.['logo_url']?.read &&
+              !permissionMap?.['logo_url']?.edit,
             disabled:
               isEditView &&
-              permissionMap?.['logo']?.read &&
-              !permissionMap?.['logo']?.edit,
+              permissionMap?.['logo_url']?.read &&
+              !permissionMap?.['logo_url']?.edit,
           }),
         ],
       },
