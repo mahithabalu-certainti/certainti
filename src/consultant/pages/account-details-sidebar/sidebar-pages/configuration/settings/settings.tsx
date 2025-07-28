@@ -8,7 +8,7 @@ import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import { useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { useUpdateSettings } from '../../../../../services/settings';
+import { useAccountUpdateSettings } from '../../../../../services/settings';
 import { useFetchAccountFields } from '../../../../../services/account';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
@@ -35,7 +35,7 @@ interface FormValues extends Record<string, FormValueType> {
 
 const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
   const { successToast } = useToast();
-  const updateSettings = useUpdateSettings();
+  const updateSettings = useAccountUpdateSettings();
 
   const { accountid } = useParams();
 
