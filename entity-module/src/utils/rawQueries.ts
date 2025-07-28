@@ -1347,7 +1347,6 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         COALESCE(pf.total_fte_prj, 0) AS total_fte, 
         COALESCE(pf.total_subcon_prj, 0) AS total_subcon,
         COALESCE(pf.total_nonlabor_prj, 0) AS total_nonlabor,
-        p.project_name,
         a.account_rid,
         pf.claim_status
         FROM
@@ -1361,7 +1360,12 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         AND
 		pf.rid = '${project_fiscal_rid}'
 		GROUP BY
-		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj, p.project_name, pf.claim_status
+		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj,pf.claim_status
+    ),
+    fetch_project_name AS (
+        SELECT project_name, account_rid FROM ${schemaName}.project_fiscal
+        WHERE
+        rid = '${project_fiscal_rid}'
     ),
     calculate_hours_fte AS (
         SELECT DISTINCT ON (ad.account_rid)
@@ -1575,7 +1579,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
         'nonlabor', rm.total_nonlabor,
-        'project_name', rm.project_name,
+        'project_name', fpn.project_name,
         'claim_status', rm.claim_status
         ) AS resource_metrics,
 
@@ -1671,6 +1675,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         LEFT JOIN calculate_federal rdff ON rdf.account_rid = ad.account_rid
         LEFT JOIN calculate_statewise rdss ON rds.account_rid = ad.account_rid
         LEFT JOIN calculate_total trdd ON trd.account_rid = ad.account_rid
+        LEFT JOIN fetch_project_name fpn ON fpn.account_rid = ad.account_rid
         WHERE
         ad.account_rid = '${account_rid}'
     `
