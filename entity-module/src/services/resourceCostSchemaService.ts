@@ -1008,23 +1008,36 @@ async exportresourceCostDetailsForFinancialHighlights(
         prf.country_name = null;
       }
     });
+    let labelMap: Record<string, string>;
 
-    // Label mapping for export headers
-    const labelMap: Record<string, string> = {
-      // "project_code": "Project Ref Id",
-      // "r_number": "Project Number",
-      // "fiscal_year":"Fiscal Year",
-      // "project_name": "Project Name", 
-      "resource_code": "Resource Code",
-      "resource_name": "Resource Name",
-      "resource_type_name": "Resource Type",
-      "country_code": "Country",
-      "state_name":"Region",
-      "total_cost_pro_res": "Cost",
-      "rd_percent_final": "RD %",
-      "qre_final": "Project QRE",
-      "rd_credits_total": "RD Credits",
-    };
+    if (!project_rid) {
+      labelMap = {
+        resource_code: "Resource Code",
+        resource_name: "Resource Name",
+        resource_type_name: "Resource Type",
+        country_code: "Country",
+        state_name: "Region",
+        total_cost_pro_res: "Cost",
+        rd_percent_final: "RD %",
+        qre_final: "Project QRE",
+        rd_credits_total: "RD Credits",
+      };
+    } else {
+      labelMap = {
+        project_code: "Project Ref Id",
+        r_number: "Project Number",
+        fiscal_year: "Fiscal Year",
+        project_name: "Project Name",
+        resource_code: "Resource Code",
+        resource_name: "Resource Name",
+        resource_type_name: "Resource Type",
+        country_code: "Country",
+        total_cost_pro_res: "Cost",
+        rd_percent_final: "RD %",
+        qre_final: "Project QRE",
+        rd_credits_total: "RD Credits",
+      };
+    }
 
     const exportData = projectResourceFiscal.map((row: any) => {
       const mappedRow: Record<string, any> = {};
