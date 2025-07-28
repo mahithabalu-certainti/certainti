@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useUpdateSettings } from '../../../../../services/settings';
+import { useProjectUpdateSettings } from '../../../../../services/settings';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 import { useProjectDetail } from '../../../../../services/project';
 import { Box } from '@mui/material';
@@ -32,7 +32,7 @@ interface FormValues extends Record<string, FormValueType> {
 
 const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
   const { successToast } = useToast();
-  const updateSettings = useUpdateSettings();
+  const updateSettings = useProjectUpdateSettings();
   const [searchParams] = useSearchParams();
   const { projectid } = useParams();
 
