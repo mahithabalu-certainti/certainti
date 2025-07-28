@@ -14,11 +14,15 @@ import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import FinancialProjectCost from './tab/project-cost/project-cost';
 import FinancialResourceCost from './tab/resource-cost/resource-cost';
 import { accountDetailsProps } from '../../../account-details/utils';
-import { getAccountFinancialResCostFields } from './helpers';
+import {
+  getAccountFinancialProjectCostFields,
+  getAccountFinancialResCostFields,
+} from './helpers';
 import { useGetResourceType } from '../../../../services/resource-list';
 import { clearFilters } from '../../components/filter/utils';
 import {
   ExportType,
+  ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
 } from '../../../../types';
 import { RootState } from '../../../../../store/store';
@@ -46,6 +50,9 @@ interface ProjectFinancialProps {
   setResCostExportParams: (
     params: ProjectFinancialResourceExportParams
   ) => void;
+  setFinancialProjectCostParams: (
+    params: ProjectFinancialProjectExportParams
+  ) => void;
   setExportType: (type: ExportType) => void;
 }
 
@@ -53,6 +60,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   accountDetails,
   projectDetails,
   setResCostExportParams,
+  setFinancialProjectCostParams,
   setExportType,
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<
@@ -71,13 +79,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     modules,
     AllModules.FINANCIAL_HIGHLIGHTS
   );
-
-  // const handleResetTabChange = () => {
-  //   setCount(0);
-  //   setAppliedFilters({});
-  //   clearFilters(`account-financial-${tabParam}`);
-  // };
-
   const fiscalYearOptions = getFiscalYears(20);
   const countriesList = useGetAllCountries();
   const resourceTypeOptions = useGetResourceType();
@@ -137,13 +138,10 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
 
   const filterFields =
     tabParam === 'resource_cost'
-      ? getAccountFinancialResCostFields(
-          // fiscalYearOptions,
-          memoizedCountry,
-          memoizedResourceType
-        )
-      : [];
-
+      ? getAccountFinancialResCostFields(memoizedCountry, memoizedResourceType)
+      : tabParam === 'project_cost'
+        ? getAccountFinancialProjectCostFields()
+        : [];
   if (!financialEnable) return <AccessRestricted />;
 
   return (
@@ -205,7 +203,11 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           <FinancialProjectCost
             fiscalyear={fiscalyear}
             reFetchData={reFetchData}
-            // handleReset={handleResetTabChange}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            setExportType={setExportType}
           />
         )}
         {tabParam === 'resource_cost' && (

@@ -104,3 +104,79 @@ export const getAccountFinancialResCostFields = (
     operatorOption: numberOptions,
   },
 ];
+
+export const getAccountFinancialProjectCostFields =
+  () //   fiscalYearOptions: { label: string; value: string }[],
+  // countryOptions: { option: string; value: string }[],
+  // resourceTypeOptions: { option: string; value: string }[]
+  : FieldConfig[] => [
+    {
+      name: 'Project Code',
+      value: 'project_code',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    //   {
+    //     name: 'Fiscal Year',
+    //     value: 'fiscal_year',
+    //     type: 'enum',
+    //     options: fiscalYearOptions.map((y) => ({
+    //       option: y.label,
+    //       value: y.value,
+    //     })),
+    //     operatorOption: requiredForEnum,
+    //   },
+    {
+      name: 'Project Name',
+      value: 'project_name',
+      type: 'text',
+    },
+    {
+      name: 'Project ID',
+      value: 'r_number',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    {
+      name: 'FTE Cost',
+      value: 'total_cost_fte_prj',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+    {
+      name: 'Sub Con Cost',
+      value: 'total_cost_subcon_prj',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+    {
+      name: 'Non Labor Cost',
+      value: 'total_cost_nonlabor_prj',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+    {
+      name: 'Project Cost',
+      value: 'total_cost_prj',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+    {
+      name: 'RD %',
+      value: 'rd_percent_final',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+    {
+      name: 'Project QRE',
+      value: 'qre_final',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+    {
+      name: 'RD Credit',
+      value: 'rd_credits_total',
+      type: 'number',
+      operatorOption: numberOptions,
+    },
+  ];

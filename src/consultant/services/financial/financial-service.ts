@@ -1,5 +1,6 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
+  ProjectFinancialProjectExportParams,
   ProjectFinancialResourceCostList,
   ProjectFinancialResourceCostResponse,
   ProjectFinancialResourceExportParams,
@@ -13,6 +14,7 @@ import {
   ProjectFinancialResourceCostExportURL,
   ProjectFinancialResourceCostURL,
 } from '../urls';
+import { ProjectFinancialProjectCostExportURL } from '../urls/account-financial-url';
 
 const FinancialSummaryURL = () => {
   return `/api/financialHighlight/project`;
@@ -114,6 +116,41 @@ export const exportFinancialResourceCost = async (
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'financial_resource_cost_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
+export const exportFinancialProjectCost = async (
+  params: ProjectFinancialProjectExportParams
+) => {
+  try {
+    const response = await resourceServiceApi.get(
+      ProjectFinancialProjectCostExportURL(params)
+    );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'financial_project_cost_records.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

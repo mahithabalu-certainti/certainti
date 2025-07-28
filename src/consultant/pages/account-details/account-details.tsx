@@ -56,6 +56,7 @@ import {
   AccountFieldsApiResponse,
   ExportType,
   MenuItem,
+  ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
@@ -64,7 +65,10 @@ import { exportAttachmentsData } from '../../services/attachments/attachments-se
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
 import { ImportsListURLParams } from '../../types/imports';
-import { exportFinancialResourceCost } from '../../services/financial/financial-service';
+import {
+  exportFinancialProjectCost,
+  exportFinancialResourceCost,
+} from '../../services/financial/financial-service';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -72,7 +76,7 @@ export const AccountDetails = () => {
   const navigate = useNavigate();
 
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
-  const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+  const [projectData] = useState<NewProjectData | null>(null);
 
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
@@ -169,9 +173,17 @@ export const AccountDetails = () => {
       filters: {},
     });
 
+  const [financialProjectCostParams, setFinancialProjectCostParams] =
+    useState<ProjectFinancialProjectExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
+    console.log('handle export called...');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
@@ -215,6 +227,11 @@ export const AccountDetails = () => {
       accountRid: accountid,
     };
 
+    const financialProjectPayload = {
+      fiscalYear: projectData?.fiscal_year,
+      accountRid: accountid,
+    };
+
     if (exportType === 'project') {
       exportProjectData(exportType, {
         ...projectParams,
@@ -235,6 +252,11 @@ export const AccountDetails = () => {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
+      });
+    } else if (exportType === 'financial_project_cost') {
+      exportFinancialProjectCost({
+        ...financialProjectCostParams,
+        ...financialProjectPayload,
       });
     } else {
       exportData(exportType, exportPayload);
@@ -373,6 +395,7 @@ export const AccountDetails = () => {
             projectDetails={projectData}
             setExportType={setExportType}
             setResCostExportParams={setFinancialResCostParams}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
           />
         );
       case 'details':

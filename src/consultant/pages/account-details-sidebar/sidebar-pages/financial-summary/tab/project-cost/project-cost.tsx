@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
 
 import { getFinancialProjectCostColumns } from './columns';
@@ -9,25 +9,44 @@ import {
   FinancialProjectCostList,
 } from '../../../../../../types/account-financial';
 import { useProjectCostList } from '../../../../../../services/financial/account-financial-service';
+import {
+  ExportType,
+  ProjectFinancialProjectExportParams,
+} from '../../../../../../types';
 
 interface FinancialProjectCostProps {
   accountDetails?: accountDetailsProps;
   reFetchData?: number;
   activeKey?: string;
   fiscalyear?: string;
-  handleReset?: () => void;
+  currentPage: number;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
+  setCount: (value: number) => void;
+  setFinancialProjectCostParams: (
+    params: ProjectFinancialProjectExportParams
+  ) => void;
+  setExportType?: (type: ExportType) => void;
 }
 
 const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   fiscalyear,
   reFetchData,
+  currentPage,
+  appliedFilters,
+  setCount,
+  setFinancialProjectCostParams,
+  setExportType,
 }) => {
   const { accountid } = useParams();
+  const [projectCostList, setProjectCostList] = useState<
+    FinancialProjectCostList[]
+  >([]);
   const [tableParams, setTableParams] = useState<CostListParms>({
-    sortBy: 'project_name',
+    sortBy: 'project_code',
     sortOrder: 'ASC',
-    page: 1,
+    page: currentPage + 1,
     limit: 100,
+    filters: appliedFilters,
   });
 
   const {
@@ -42,6 +61,34 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   );
 
   const getRowId = (row: FinancialProjectCostList) => row?.rid || '';
+
+  useEffect(() => {
+    if (projectCostData) {
+      setProjectCostList(projectCostData?.costs || []);
+      setCount(projectCostData.count || 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectCostData]);
+
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: currentPage + 1,
+      filters: appliedFilters,
+    }));
+  }, [currentPage, appliedFilters]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('financial_project_cost');
+    }
+    setFinancialProjectCostParams({
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      filters: appliedFilters,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableParams]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -69,7 +116,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
 
   return (
     <ListTable
-      data={projectCostData?.costs || []}
+      data={projectCostList || []}
       columns={getFinancialProjectCostColumns()}
       getRowId={getRowId}
       hoverHighlight={false}
