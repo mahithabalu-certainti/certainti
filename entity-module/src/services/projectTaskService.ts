@@ -964,8 +964,6 @@ async getProjectTaskById(
       resource_type_rid: taskWithUserDetails.dataValues.resource?.resource_type_rid,
       resource_type_name: (resourceType as any)?.resource_type_name || null,
       resource_role: taskWithUserDetails.dataValues.resource?.resource_role,
-      status_rid: taskWithUserDetails.dataValues.status_rid,
-      status_name: (status as any)?.status_name || null,
       country_rid: taskWithUserDetails.dataValues.country_rid,
       country_name: (country as any)?.country_name || null,
       region_rid: taskWithUserDetails.dataValues.region_rid,
