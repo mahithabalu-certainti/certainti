@@ -83,10 +83,7 @@ export const useProjectFinancialResourceCost = (
     retry: 0,
     gcTime: 0,
     enabled:
-      !!params.accountNumber &&
-      !!params.accountRid &&
-      !!params.projectRid &&
-      !!params.fiscalYear,
+      !!params.accountNumber && !!params.accountRid && !!params.fiscalYear,
   });
 };
 

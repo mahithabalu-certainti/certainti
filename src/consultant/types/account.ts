@@ -442,4 +442,6 @@ export type ExportType =
   | 'attachments'
   | 'imports'
   | 'financial'
+  | 'financial_resource_cost'
+  | 'financial_project_cost'
   | 'resource_attachments';

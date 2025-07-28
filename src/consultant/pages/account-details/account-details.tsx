@@ -56,6 +56,7 @@ import {
   AccountFieldsApiResponse,
   ExportType,
   MenuItem,
+  ProjectFinancialResourceExportParams,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
 import { NewProjectData, ProjectListParams } from '../../types/project';
@@ -63,6 +64,7 @@ import { exportAttachmentsData } from '../../services/attachments/attachments-se
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
 import { ImportsListURLParams } from '../../types/imports';
+import { exportFinancialResourceCost } from '../../services/financial/financial-service';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -160,6 +162,13 @@ export const AccountDetails = () => {
     account_rid: accountid || '',
   });
 
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
@@ -167,7 +176,8 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'imports'
+      searchParams.get('list') !== 'imports' &&
+      searchParams.get('list') !== 'financial'
     ) {
       return;
     }
@@ -199,6 +209,12 @@ export const AccountDetails = () => {
       }),
     };
 
+    const financialPayload = {
+      accountNumber: accountDetailsForEdit?.accountById?.r_number,
+      fiscalYear: projectData?.fiscal_year,
+      accountRid: accountid,
+    };
+
     if (exportType === 'project') {
       exportProjectData(exportType, {
         ...projectParams,
@@ -215,6 +231,11 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'financial_resource_cost') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
+      });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -297,6 +318,11 @@ export const AccountDetails = () => {
       return !isAttachmentViewEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
+    } else if (
+      list === 'financial' &&
+      (tab === 'resource_cost' || tab === 'project_cost')
+    ) {
+      return false;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -343,11 +369,10 @@ export const AccountDetails = () => {
       case 'financial':
         return (
           <FinancialSummary
-            accountDetails={{
-              ...(data?.data as AccountDetailsResponse),
-              activeKey: 'FinancialSummary',
-            }}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
             projectDetails={projectData}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
           />
         );
       case 'details':

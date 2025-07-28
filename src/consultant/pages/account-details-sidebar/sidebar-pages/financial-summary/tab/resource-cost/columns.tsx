@@ -1,8 +1,8 @@
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import { FinancialResourceCostList } from '../../../../../../types/account-financial';
+import { ProjectFinancialResourceCostList } from '../../../../../../types';
 
 export const getFinancialResourceCostColumns =
-  (): ListTableColumn<FinancialResourceCostList>[] => [
+  (): ListTableColumn<ProjectFinancialResourceCostList>[] => [
     {
       id: 'project_code',
       editId: 'project_code',
@@ -26,13 +26,9 @@ export const getFinancialResourceCostColumns =
       sortId: 'fiscal_year',
       label: 'Fiscal Year',
       width: 130,
-      sortable: true,
-      render: (row: FinancialResourceCostList) => {
-        if (typeof row.fiscal_year === 'number') {
-          return `FY-${row.fiscal_year}`;
-        }
-        return '-';
-      },
+      sortable: false,
+      render: (row: ProjectFinancialResourceCostList) =>
+        row.fiscal_year ? `FY-${row.fiscal_year}` : '-',
     },
     {
       id: 'project_name',

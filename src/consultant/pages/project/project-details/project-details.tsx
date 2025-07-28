@@ -27,7 +27,11 @@ import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { FiscalYearType, NewProjectData } from '../../../types/project';
-import { ExportType, MenuItem } from '../../../types';
+import {
+  ExportType,
+  MenuItem,
+  ProjectFinancialResourceExportParams,
+} from '../../../types';
 import {
   AllMenus,
   AllModules,
@@ -170,7 +174,7 @@ export const ProjectDetails = () => {
     });
 
   const [financialResCostParams, setFinancialResCostParams] =
-    useState<AttachmentsListExportParams>({
+    useState<ProjectFinancialResourceExportParams>({
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
@@ -281,8 +285,7 @@ export const ProjectDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
-    }
-    if (exportType === 'financial') {
+    } else if (exportType === 'financial') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,

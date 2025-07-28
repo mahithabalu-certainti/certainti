@@ -14,23 +14,6 @@ export type FinancialProjectCostList = {
   rd_credit?: string;
 };
 
-export type FinancialResourceCostList = {
-  id?: string;
-  rid?: string;
-  project_code?: string;
-  fiscal_year?: string;
-  project_name?: string;
-  project_id?: string;
-  resource_code?: string;
-  resource_name?: string;
-  resource_type?: string;
-  country?: string;
-  cost?: number;
-  rd?: number;
-  project_qre?: string;
-  rd_credit?: string;
-};
-
 export type SortOrder = 'ASC' | 'DESC';
 
 export interface CostListParms {
