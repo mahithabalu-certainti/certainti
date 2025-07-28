@@ -19,6 +19,7 @@ interface SettingsPayload {
 interface UpdateSettingsResponse {
   statusMessage: string;
 }
+
 export const useProjectUpdateSettings = () => {
   return useApiMutationSericve<UpdateSettingsResponse, SettingsPayload>(
     ProjectSettingsUpdateURL,
