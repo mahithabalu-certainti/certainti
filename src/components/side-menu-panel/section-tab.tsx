@@ -275,6 +275,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               sx={{
                 height: '32px',
                 fontSize: '13px',
+                marginLeft: '8px',
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                   border: '2px solid #60A5FA',
                 },

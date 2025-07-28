@@ -480,6 +480,9 @@ export type ExportType =
   | 'project'
   | 'attachments'
   | 'imports'
+  | 'financial'
+  | 'financial_resource_cost'
+  | 'financial_project_cost'
   | 'resource_attachments';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';

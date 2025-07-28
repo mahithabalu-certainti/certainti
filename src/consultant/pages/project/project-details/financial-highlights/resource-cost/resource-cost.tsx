@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { accountDetailsProps } from '../../../../../account-details/utils';
+import { ListTable } from '../../../../../../components/table';
+import { getFinancialResourceCostColumns } from './columns';
+import { NewProjectData } from '../../../../../types/project';
 import {
   ExportType,
   ProjectFinancialResourceCostList,
   ProjectFinancialResourceExportParams,
   ProjectFinancialResourceListParams,
-} from '../../../../../../types';
-import { useProjectFinancialResourceCost } from '../../../../../../services/financial/financial-service';
-import { ListTable } from '../../../../../../../components/table';
-import { getFinancialResourceCostColumns } from './columns';
+} from '../../../../../types';
+import { useProjectFinancialResourceCost } from '../../../../../services/financial/financial-service';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 interface FinancialResourceCostProps {
+  projectDetails: NewProjectData | null;
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
@@ -20,31 +21,28 @@ interface FinancialResourceCostProps {
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType?: (type: ExportType) => void;
-
-  accountDetails?: accountDetailsProps;
-  activeKey?: string;
-  fiscalyear?: string;
 }
 
 const ResourceCost: React.FC<FinancialResourceCostProps> = ({
-  accountDetails,
+  projectDetails,
   refreshTrigger,
   currentPage,
   appliedFilters,
   setCount,
   setResCostExportParams,
   setExportType,
-  fiscalyear,
 }) => {
-  const { accountid } = useParams();
-  const accountNumber = accountDetails?.accountById?.r_number;
+  const { projectid: projectId } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
+  const fiscalYear = projectDetails?.fiscal_year;
 
   const [resourceCostList, setResourceCostList] = useState<
     ProjectFinancialResourceCostList[]
   >([]);
   const [tableParams, setTableParams] =
     useState<ProjectFinancialResourceListParams>({
-      sortBy: 'project_code',
+      sortBy: 'resource_code',
       sortOrder: 'ASC',
       page: currentPage + 1,
       limit: 100,
@@ -58,9 +56,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: tableParams.filters,
-      accountRid: accountid,
-      accountNumber: accountDetails?.accountById?.r_number,
-      fiscalYear: Number(fiscalyear) || 0,
+      projectRid: projectId,
+      accountRid: accountId,
+      fiscalYear: fiscalYear,
+      accountNumber: projectDetails?.account_number,
     },
     refreshTrigger
   );
@@ -84,7 +83,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
 
   useEffect(() => {
     if (setExportType) {
-      setExportType('financial_resource_cost');
+      setExportType('financial');
     }
     setResCostExportParams({
       sortBy: tableParams.sortBy,
@@ -135,7 +134,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       stickyColumnsCount={1}
       selectable={false}
       actionWidth={80}
-      loading={isLoading || !accountNumber || !fiscalyear}
+      loading={isLoading || !fiscalYear}
       error={isError ? 'Failed to load data' : undefined}
       rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}

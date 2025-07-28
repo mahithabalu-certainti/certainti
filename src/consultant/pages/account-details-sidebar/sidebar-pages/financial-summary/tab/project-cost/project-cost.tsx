@@ -1,14 +1,122 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
-import { FinancialProjectCostList } from '../../../../../../types';
-import { getFinancialProjectCostColumns } from './columns';
 
-const FinancialProjectCost: React.FC = () => {
+import { getFinancialProjectCostColumns } from './columns';
+import { accountDetailsProps } from '../../../../../account-details/utils';
+import { useParams } from 'react-router-dom';
+import {
+  CostListParms,
+  FinancialProjectCostList,
+} from '../../../../../../types/account-financial';
+import { useProjectCostList } from '../../../../../../services/financial/account-financial-service';
+import {
+  ExportType,
+  ProjectFinancialProjectExportParams,
+} from '../../../../../../types';
+
+interface FinancialProjectCostProps {
+  accountDetails?: accountDetailsProps;
+  reFetchData?: number;
+  activeKey?: string;
+  fiscalyear?: string;
+  currentPage: number;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
+  setCount: (value: number) => void;
+  setFinancialProjectCostParams: (
+    params: ProjectFinancialProjectExportParams
+  ) => void;
+  setExportType?: (type: ExportType) => void;
+}
+
+const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
+  fiscalyear,
+  reFetchData,
+  currentPage,
+  appliedFilters,
+  setCount,
+  setFinancialProjectCostParams,
+  setExportType,
+}) => {
+  const { accountid } = useParams();
+  const [projectCostList, setProjectCostList] = useState<
+    FinancialProjectCostList[]
+  >([]);
+  const [tableParams, setTableParams] = useState<CostListParms>({
+    sortBy: 'project_code',
+    sortOrder: 'ASC',
+    page: currentPage + 1,
+    limit: 100,
+    filters: appliedFilters,
+  });
+
+  const {
+    data: projectCostData,
+    isLoading,
+    error,
+  } = useProjectCostList(
+    accountid ?? '',
+    fiscalyear ?? '',
+    tableParams,
+    reFetchData
+  );
+
   const getRowId = (row: FinancialProjectCostList) => row?.rid || '';
+
+  useEffect(() => {
+    if (projectCostData) {
+      setProjectCostList(projectCostData?.costs || []);
+      setCount(projectCostData.count || 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectCostData]);
+
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: currentPage + 1,
+      filters: appliedFilters,
+    }));
+  }, [currentPage, appliedFilters]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('financial_project_cost');
+    }
+    setFinancialProjectCostParams({
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      filters: appliedFilters,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableParams]);
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setTableParams((prev) => ({
+      ...prev,
+      sortBy,
+      sortOrder: apiOrder,
+    }));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: newPage + 1,
+    }));
+  };
+
+  const handleRowsPerPageChange = (newLimit: number) => {
+    setTableParams((prev) => ({
+      ...prev,
+      limit: newLimit,
+      page: 1,
+    }));
+  };
 
   return (
     <ListTable
-      data={[]}
+      data={projectCostList || []}
       columns={getFinancialProjectCostColumns()}
       getRowId={getRowId}
       hoverHighlight={false}
@@ -23,7 +131,17 @@ const FinancialProjectCost: React.FC = () => {
       selectable={false}
       actionWidth={80}
       actionDisplayMode='dropdown'
+      loading={isLoading}
+      error={error ? 'Failed to load resource cost data' : undefined}
+      totalItems={projectCostData?.count ?? 0}
       rowsPerPageOptions={[25, 50, 100]}
+      sortBy={tableParams.sortBy}
+      sortOrder={tableParams.sortOrder}
+      rowsPerPage={tableParams.limit}
+      currentPage={(tableParams.page ?? 1) - 1}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+      onSort={handleSort}
     />
   );
 };

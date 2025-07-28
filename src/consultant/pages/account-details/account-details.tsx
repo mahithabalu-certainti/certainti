@@ -56,13 +56,19 @@ import {
   AccountFieldsApiResponse,
   ExportType,
   MenuItem,
+  ProjectFinancialProjectExportParams,
+  ProjectFinancialResourceExportParams,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
-import { ProjectListParams } from '../../types/project';
+import { NewProjectData, ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
 import { ImportsListURLParams } from '../../types/imports';
+import {
+  exportFinancialProjectCost,
+  exportFinancialResourceCost,
+} from '../../services/financial/financial-service';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -70,6 +76,7 @@ export const AccountDetails = () => {
   const navigate = useNavigate();
 
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [projectData] = useState<NewProjectData | null>(null);
 
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
@@ -159,14 +166,30 @@ export const AccountDetails = () => {
     account_rid: accountid || '',
   });
 
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [financialProjectCostParams, setFinancialProjectCostParams] =
+    useState<ProjectFinancialProjectExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
+    console.log('handle export called...');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'imports'
+      searchParams.get('list') !== 'imports' &&
+      searchParams.get('list') !== 'financial'
     ) {
       return;
     }
@@ -198,6 +221,17 @@ export const AccountDetails = () => {
       }),
     };
 
+    const financialPayload = {
+      accountNumber: accountDetailsForEdit?.accountById?.r_number,
+      fiscalYear: projectData?.fiscal_year,
+      accountRid: accountid,
+    };
+
+    const financialProjectPayload = {
+      fiscalYear: projectData?.fiscal_year,
+      accountRid: accountid,
+    };
+
     if (exportType === 'project') {
       exportProjectData(exportType, {
         ...projectParams,
@@ -214,6 +248,16 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'financial_resource_cost') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
+      });
+    } else if (exportType === 'financial_project_cost') {
+      exportFinancialProjectCost({
+        ...financialProjectCostParams,
+        ...financialProjectPayload,
+      });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -296,6 +340,11 @@ export const AccountDetails = () => {
       return !isAttachmentViewEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
+    } else if (
+      list === 'financial' &&
+      (tab === 'resource_cost' || tab === 'project_cost')
+    ) {
+      return false;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -340,7 +389,16 @@ export const AccountDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <FinancialSummary countryId={data?.data.accountById.country_rid} stateId={data?.data.accountById.region_rid} />;
+        return (
+          <FinancialSummary
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            countryId={data?.data.accountById.country_rid}
+            stateId={data?.data.accountById.region_rid}
+          />
+        );
       case 'details':
         return (
           <Details

@@ -1,8 +1,8 @@
 import { ListTableColumn } from '../../../../../../../components/table/types';
-import { FinancialResourceCostList } from '../../../../../../types';
+import { ProjectFinancialResourceCostList } from '../../../../../../types';
 
 export const getFinancialResourceCostColumns =
-  (): ListTableColumn<FinancialResourceCostList>[] => [
+  (): ListTableColumn<ProjectFinancialResourceCostList>[] => [
     {
       id: 'project_code',
       editId: 'project_code',
@@ -10,6 +10,7 @@ export const getFinancialResourceCostColumns =
       label: 'Project Code',
       width: 130,
       sortable: true,
+      sticky: true,
       sx: {
         position: 'sticky',
         left: 0,
@@ -25,7 +26,9 @@ export const getFinancialResourceCostColumns =
       sortId: 'fiscal_year',
       label: 'Fiscal Year',
       width: 130,
-      sortable: true,
+      sortable: false,
+      render: (row: ProjectFinancialResourceCostList) =>
+        row.fiscal_year ? `FY-${row.fiscal_year}` : '-',
     },
     {
       id: 'project_name',
@@ -36,9 +39,9 @@ export const getFinancialResourceCostColumns =
       sortable: true,
     },
     {
-      id: 'project_id',
-      editId: 'project_id',
-      sortId: 'project_id',
+      id: 'r_number',
+      editId: 'r_number',
+      sortId: 'r_number',
       label: 'Project ID',
       width: 130,
       sortable: true,
@@ -60,49 +63,49 @@ export const getFinancialResourceCostColumns =
       sortable: true,
     },
     {
-      id: 'resource_type',
-      editId: 'resource_type',
-      sortId: 'resource_type',
+      id: 'resource_type_name',
+      editId: 'resource_type_name',
+      sortId: 'resource_type_name',
       label: 'Resource Type',
       width: 130,
       sortable: true,
     },
     {
-      id: 'country',
-      editId: 'country',
-      sortId: 'country',
+      id: 'country_name',
+      editId: 'country_name',
+      sortId: 'country_name',
       label: 'Country',
       width: 130,
       sortable: true,
     },
     {
-      id: 'cost',
-      editId: 'cost',
-      sortId: 'cost',
+      id: 'total_cost_pro_res',
+      editId: 'total_cost_pro_res',
+      sortId: 'total_cost_pro_res',
       label: 'Cost',
       width: 130,
       sortable: true,
     },
     {
-      id: 'rd',
-      editId: 'rd',
-      sortId: 'rd',
+      id: 'rd_percent_final',
+      editId: 'rd_percent_final',
+      sortId: 'rd_percent_final',
       label: 'RD %',
       width: 130,
       sortable: true,
     },
     {
-      id: 'project_qre',
-      editId: 'project_qre',
-      sortId: 'project_qre',
+      id: 'qre_final',
+      editId: 'qre_final',
+      sortId: 'qre_final',
       label: 'Project QRE',
       width: 130,
       sortable: true,
     },
     {
-      id: 'rd_credit',
-      editId: 'rd_credit',
-      sortId: 'rd_credit',
+      id: 'rd_credits_total',
+      editId: 'rd_credits_total',
+      sortId: 'rd_credits_total',
       label: 'RD Credit',
       width: 130,
       sortable: true,
