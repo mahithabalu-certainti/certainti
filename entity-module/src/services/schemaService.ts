@@ -3899,6 +3899,21 @@ async fetchAccountsByIds(accountRids: string[]) {
     const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
     return exportableFields;
   }
+
+async fetchChildAccountRidByParentAccountId(mainSequelize: Sequelize, rid: string): Promise<any[]> {
+  try {
+    const childAccounts = await mainSequelize.query(
+      `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid = :parentRid`,
+      {
+        replacements: { parentRid: rid },
+        type: QueryTypes.SELECT
+      }
+    );
+    return childAccounts;
+  } catch (err) {
+    throw new Error("Error fetching child accounts: " + (err as Error).message);
+  }
+}
 }
 
 export default SchemaService;

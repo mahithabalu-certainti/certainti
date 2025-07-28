@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import Configurations from "../config/config";
 import { HttpStatus } from "../utils/constants";
-import { handleErrorResponse, handleSuccessResponse } from "../utils/helpers";
+import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateRequest } from "../utils/helpers";
 import {v4 as uuid} from 'uuid'
+import { exportListAccountLevelProjectCostsSchema, listAccountLevelProjectCostsSchema } from "../lib/joi/schemas/schema";
 
 const services = Configurations.getInstance().getServices()
 const financialService = services.financialHighlightServies;
@@ -221,7 +222,137 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
     }
 }
 
+async function financialHighlightsProjectCostAccountLevel(req: Request, res: Response): Promise<void> {
+  const methodName = "All financialHighlightsProjectCostAccountLevel List";
+  try {
+    const value = await validateRequest(req, listAccountLevelProjectCostsSchema, res, "GET");
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+
+    const projectCosts = await financialService.listAccountLevelProjectCostFinancialHighlights(
+        value.accountRid,
+        parsedFilters,
+        value.search,
+        value.fiscalYear,
+        value.page,
+        value.limit,
+        value.sortBy,
+        value.sortOrder
+    );
+
+    if (projectCosts.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectCosts.data);
+      return;
+    } else {
+      errorLog(methodName, projectCosts.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectCosts.errorMessage
+      );
+      return;
+    }
+  } catch (error:any) {
+     handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
+  }
+}
+
+async function exportFinancialHighlightsProjectCostAccountLevel(req: Request, res: Response): Promise<void> {
+  const methodName = "All financialHighlightsProjectCostAccountLevel List";
+  try {
+    const value = await validateRequest(req, exportListAccountLevelProjectCostsSchema, res, "GET");
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+
+    const projectCosts = await financialService.exportListAccountLevelProjectCostFinancialHighlights(
+        value.accountRid,
+        parsedFilters,
+        value.search,
+        value.fiscalYear,
+        value.sortBy,
+        value.sortOrder
+    );
+
+    if (projectCosts.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(projectCosts?.data?.summaries, "Export All Project Costs"));
+      return;
+    } else {
+      errorLog(methodName, projectCosts.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectCosts.errorMessage
+      );
+      return;
+    }
+  } catch (error:any) {
+     handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
+  }
+}
+
 export default {
     listFinancialHighlightsAccounts,
-    listFinancialHighlightsProjects
+    listFinancialHighlightsProjects,
+    financialHighlightsProjectCostAccountLevel,
+    exportFinancialHighlightsProjectCostAccountLevel
 }
