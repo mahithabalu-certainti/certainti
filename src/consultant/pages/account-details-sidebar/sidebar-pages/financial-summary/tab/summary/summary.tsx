@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useProjectFinancialSummary } from '../../../../../../services/financial/financial-service';
+import { useParams } from 'react-router-dom';
 import {
+  FinancialSummaryFlag,
   SelectOption,
   SummaryClaimJurisdiction,
   SummaryDetailedMetric,
@@ -13,17 +13,19 @@ import {
   getDetailedMetricColumns,
   getResourceMetricColumns,
 } from './columns';
-import { NewProjectData } from '../../../../../../types/project';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import TextButton from '../../../../../../../components/button/text-button';
+import { useGetFinancialSummary } from '../../../../../../services/financial';
 
-interface FinancialSummaryProps {
-  projectDetails: NewProjectData | null;
+interface Summary {
+  fiscalYear: string;
 }
 
-export const Summary: React.FC<FinancialSummaryProps> = ({
-  projectDetails,
-}) => {
+export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
+  // hooks
+  const { accountid } = useParams();
+
+  // UseStates
   const [resourceMetric, setResourceMetric] = useState<SummaryResourceMetric[]>(
     []
   );
@@ -33,11 +35,13 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
   const [claimJurisdiction, setClaimJurisdiction] = useState<
     SummaryClaimJurisdiction[]
   >([]);
-  const [projectType, setProjectType] = useState('all');
-  const { projectid: projectId } = useParams();
-  const [searchParams] = useSearchParams();
-  const accountId = searchParams.get('accountID') || '';
-  const fiscalYear = projectDetails?.fiscal_year || 2025;
+  const [type, setType] = useState('all');
+  const [flag, setFlag] = useState<FinancialSummaryFlag>('all');
+
+  // API Hooks
+  const { mutate, isPending, isError, data } = useGetFinancialSummary();
+
+  // Variables
   const projectTypes: SelectOption[] = [
     {
       label: 'All',
@@ -45,26 +49,35 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
     },
     {
       label: 'Research and Development Projects',
-      value: 'research',
+      value: 'rd_qualified',
     },
   ];
+  const allData = data?.data;
 
-  const { data, isLoading, isError } = useProjectFinancialSummary({
-    account_rid: accountId,
-    project_fiscal_rid: projectId || '',
-    fiscal_year: fiscalYear,
-  });
-
+  // UseEffects
   useEffect(() => {
-    if (data) {
-      setResourceMetric(data.resource_metrics);
-      setDetailedMetric(data.detailed_metrics);
-      setClaimJurisdiction(data.claim_jurisdiction);
+    if (accountid && fiscalYear) {
+      mutate({
+        account_rid: accountid,
+        fiscal_year: Number(fiscalYear),
+        flag,
+        summaryType: 'summary',
+        region_rid: '',
+      });
     }
-  }, [data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountid, fiscalYear, flag]);
+  useEffect(() => {
+    if (allData) {
+      setResourceMetric(allData.resource_metrics);
+      setDetailedMetric(allData.detailed_metrics);
+      setClaimJurisdiction(allData.claim_jurisdiction);
+    }
+  }, [allData]);
 
-  const updatedForm = (e: SelectChangeEvent<string>) => {
-    setProjectType(e.target.value);
+  // Functions
+  const updateType = (e: SelectChangeEvent<string>) => {
+    setType(e.target.value);
   };
   const getResourceMetricRowId = (row: SummaryResourceMetric) => row.rid;
   const getDetailedMetricRowId = (row: SummaryDetailedMetric) => row.rid;
@@ -121,8 +134,8 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
                 borderRadius: '2px',
               },
             }}
-            value={projectType}
-            onChange={updatedForm}
+            value={type}
+            onChange={updateType}
           >
             {projectTypes.map((it, i) => {
               return (
@@ -145,12 +158,13 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
             key='section-header-btn'
             label='Go'
             sx={{ padding: '15px 4px' }}
+            onClick={() => setFlag(type as FinancialSummaryFlag)}
           />
         </div>
 
         <div className='h-[46px] max-h-[46px] flex items-center justify-between border border-[#CBD6E2] px-3 text-[14px] font-bold bg-[#FCFCFC]'>
           <span className='text-[#2D3E4F] '>
-            RD Eligible No of Projects: 91
+            RD Eligible No of Projects: {allData?.rd_eligible_projects || 0}
           </span>
           <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
         </div>
@@ -169,7 +183,7 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
           stickyColumnsCount={1}
           selectable={false}
           actionWidth={80}
-          loading={isLoading || !fiscalYear}
+          loading={isPending || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
           loadindRowCount={1}
@@ -191,7 +205,7 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
         stickyColumnsCount={1}
         selectable={false}
         actionWidth={80}
-        loading={isLoading || !fiscalYear}
+        loading={isPending || !fiscalYear}
         error={isError ? 'Failed to load data' : undefined}
         showEmptyRow={false}
         loadindRowCount={5}
@@ -212,7 +226,7 @@ export const Summary: React.FC<FinancialSummaryProps> = ({
         stickyColumnsCount={1}
         selectable={false}
         actionWidth={80}
-        loading={isLoading || !fiscalYear}
+        loading={isPending || !fiscalYear}
         error={isError ? 'Failed to load data' : undefined}
         showEmptyRow={false}
         loadindRowCount={3}

@@ -58,7 +58,7 @@ import {
   MenuItem,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
-import { NewProjectData, ProjectListParams } from '../../types/project';
+import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
@@ -70,7 +70,6 @@ export const AccountDetails = () => {
   const navigate = useNavigate();
 
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
-  const [projectData, setProjectData] = useState<NewProjectData | null>(null);
 
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
@@ -341,7 +340,7 @@ export const AccountDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <FinancialSummary projectDetails={projectData} />;
+        return <FinancialSummary countryId={data?.data.accountById.country_rid} stateId={data?.data.accountById.region_rid} />;
       case 'details':
         return (
           <Details

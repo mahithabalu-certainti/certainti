@@ -5,7 +5,6 @@ import { useState } from 'react';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { FinancialIcon } from '../../../../../assets';
 import { StateWiseSummary, Summary } from './tab';
-import { NewProjectData } from '../../../../types/project';
 import { getFiscalYears } from '../../../../../common-utils';
 import FinancialProjectCost from './tab/project-cost/project-cost';
 import FinancialResourceCost from './tab/resource-cost/resource-cost';
@@ -24,18 +23,18 @@ const FinancialTabs = [
   },
 ];
 
-interface ProjectFinancialProps {
-  projectDetails: NewProjectData | null;
+interface FinancialSummaryProps {
+  countryId?: string | null;
+  stateId?: string | null
 }
 
-const FinancialSummary: React.FC<ProjectFinancialProps> = ({
-  projectDetails,
-}) => {
+const FinancialSummary: React.FC<FinancialSummaryProps> = ({ countryId, stateId }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
   const [fiscalyear, setFiscalyear] = useState('2025');
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
@@ -52,6 +51,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         width: '96px',
         minWidth: '96px',
       },
+      hide: ['summary', 'state_wise_summary'].includes(tabParam),
     },
   ];
   const tabs = [
@@ -103,9 +103,9 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             : ''
         }`}
       >
-        {tabParam === 'summary' && <Summary projectDetails={projectDetails} />}
+        {tabParam === 'summary' && <Summary fiscalYear={fiscalyear} />}
         {tabParam === 'state_wise_summary' && (
-          <StateWiseSummary projectDetails={projectDetails} />
+          <StateWiseSummary fiscalYear={fiscalyear} countryId={countryId} stateId={stateId} />
         )}
         {tabParam === 'project_cost' && <FinancialProjectCost />}
         {tabParam === 'resource_cost' && <FinancialResourceCost />}
