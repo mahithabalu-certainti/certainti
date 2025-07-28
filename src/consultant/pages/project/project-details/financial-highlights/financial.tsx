@@ -4,6 +4,7 @@ import { AllPermissions } from '../../../../../common-service';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { FinancialIcon } from '../../../../../assets';
 import SummayListTable from './summary/summay-list';
+import ResourceCost from './resource-cost/resource-cost';
 import { NewProjectData } from '../../../../types/project';
 import { useSearchParams } from 'react-router-dom';
 
@@ -74,12 +75,16 @@ const Financial: React.FC<ProjectFinancialProps> = ({ projectDetails }) => {
         defaultValue={tabParam}
       />
 
-      <div className='border border-t-0 border-[#CBD6E2] p-3'>
+      <div
+        className={`border border-t-0 border-[#CBD6E2] ${
+          tabParam !== 'resource_cost' ? 'p-3' : ''
+        }`}
+      >
         {tabParam === 'summary' && (
           <SummayListTable projectDetails={projectDetails} />
         )}
         {tabParam === 'resource_cost' && (
-          <div>Resource Cost content goes here</div>
+          <ResourceCost projectDetails={projectDetails} />
         )}
       </div>
     </div>

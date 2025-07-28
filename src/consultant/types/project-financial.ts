@@ -77,3 +77,37 @@ export type ProjectFinancialSummaryResponse = {
   statusMessage: string;
   data: ProjectFinancialSummary;
 };
+
+export type FinancialResourceCost = {
+  rid: string;
+  project_code: string;
+  project_name: string;
+  project_id: string;
+  resource_code: string;
+  resource_name: string;
+  resource_type: string;
+  country: string;
+  region: string;
+  cost: number;
+  rd: number;
+  project_qre: string;
+  rd_credit: number;
+};
+
+export interface ResourceCostFinancialHighlightListParams {
+  page: number;
+  limit: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface ResourceCostFinancialHighlight {
+  data: any;
+}
+
+export interface ResourceCostFinancialHighlightResponse {
+  data: ResourceCostFinancialHighlight;
+  message: string;
+  status: number;
+}
