@@ -1,1 +1,2 @@
-export const SettingsUpdateURL = `/api/settings/update`;
+export const AccountSettingsUpdateURL = `/api/settings/account`;
+export const ProjectSettingsUpdateURL = `/api/settings/project`;

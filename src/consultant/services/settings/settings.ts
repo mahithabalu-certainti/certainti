@@ -1,5 +1,8 @@
 import { useApiMutationSericve } from '../../../api/mutation';
-import { SettingsUpdateURL } from '../urls/settings-url';
+import {
+  AccountSettingsUpdateURL,
+  ProjectSettingsUpdateURL,
+} from '../urls/settings-url';
 
 interface SettingsPayload {
   account_rid: string;
@@ -16,9 +19,16 @@ interface SettingsPayload {
 interface UpdateSettingsResponse {
   statusMessage: string;
 }
-export const useUpdateSettings = () => {
+export const useProjectUpdateSettings = () => {
   return useApiMutationSericve<UpdateSettingsResponse, SettingsPayload>(
-    SettingsUpdateURL,
+    ProjectSettingsUpdateURL,
+    'put'
+  );
+};
+
+export const useAccountUpdateSettings = () => {
+  return useApiMutationSericve<UpdateSettingsResponse, SettingsPayload>(
+    AccountSettingsUpdateURL,
     'put'
   );
 };

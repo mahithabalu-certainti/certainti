@@ -5,19 +5,21 @@ import {
   CostListParms,
 } from '../../../../../../types';
 import { getFinancialProjectCostColumns } from './columns';
-import { useResourceCostList } from '../../../../../../services/financial/financial-service';
+import { useProjectCostList } from '../../../../../../services/financial/financial-service';
 import { accountDetailsProps } from '../../../../../account-details/utils';
 import { useParams } from 'react-router-dom';
 
 interface FinancialProjectCostProps {
   accountDetails?: accountDetailsProps;
+  reFetchData?: number;
   activeKey?: string;
   fiscalyear?: string;
+  handleReset?: () => void;
 }
 
 const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
-  accountDetails,
   fiscalyear,
+  reFetchData,
 }) => {
   const { accountid } = useParams();
   const [tableParams, setTableParams] = useState<CostListParms>({
@@ -27,11 +29,15 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
     limit: 100,
   });
 
-  const { data: projectCostData } = useResourceCostList(
+  const {
+    data: projectCostData,
+    isLoading,
+    error,
+  } = useProjectCostList(
     accountid ?? '',
-    accountDetails?.accountById?.r_number ?? '',
     fiscalyear ?? '',
-    tableParams
+    tableParams,
+    reFetchData
   );
 
   const getRowId = (row: FinancialProjectCostList) => row?.rid || '';
@@ -77,6 +83,9 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       selectable={false}
       actionWidth={80}
       actionDisplayMode='dropdown'
+      loading={isLoading}
+      error={error ? 'Failed to load resource cost data' : undefined}
+      totalItems={projectCostData?.count ?? 0}
       rowsPerPageOptions={[25, 50, 100]}
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}

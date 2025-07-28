@@ -10,6 +10,7 @@ import { getFiscalYears } from '../../../../../common-utils';
 import FinancialProjectCost from './tab/project-cost/project-cost';
 import FinancialResourceCost from './tab/resource-cost/resource-cost';
 import { accountDetailsProps } from '../../../account-details/utils';
+// import { clearFilters } from '../../components/filter/utils';
 
 const FinancialTabs = [
   {
@@ -39,6 +40,18 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   >({});
   const [fiscalyear, setFiscalyear] = useState('2025');
   const [searchParams, setSearchParams] = useSearchParams();
+  const [reFetchData, setReFetchData] = useState<number>(Date.now());
+  // const [count, setCount] = useState<number>(0);
+
+  // const handleResetTabChange = () => {
+  //   setCount(0);
+  //   setAppliedFilters({});
+  //   clearFilters(`account-financial-${tabParam}`);
+  // };
+
+  const onRefreshClick = () => {
+    setReFetchData(Date.now());
+  };
 
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
@@ -69,8 +82,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
       <SectionTabPanel
         tabs={FinancialTabs}
         filterMenu={[]}
-        filterVisibility={false}
-        showFilter={false}
         contextKey='project-financial-resource-cost'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
@@ -78,10 +89,17 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         handleFilter={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={false}
         allYears={getFiscalYears(20)}
         fiscalYearValue={fiscalyear}
         updatedYear={(e) => setFiscalyear(e.target.value)}
+        showRefresh={
+          tabParam === 'project_cost' || tabParam === 'resource_cost'
+        }
+        onRefreshClick={onRefreshClick}
+        filterVisibility={
+          tabParam === 'project_cost' || tabParam === 'resource_cost'
+        }
+        showFilter={tabParam === 'project_cost' || tabParam === 'resource_cost'}
       />
       <SectionHeader
         title='Financial Summary'
@@ -92,6 +110,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           />
         }
         buttons={headerButtons}
+        // count={count}
       />
       <SectionHeaderTab
         tabs={tabs}
@@ -111,8 +130,9 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         )}
         {tabParam === 'project_cost' && (
           <FinancialProjectCost
-            accountDetails={accountDetails}
             fiscalyear={fiscalyear}
+            reFetchData={reFetchData}
+            // handleReset={handleResetTabChange}
           />
         )}
         {tabParam === 'resource_cost' && (
