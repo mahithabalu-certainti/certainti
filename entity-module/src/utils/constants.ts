@@ -691,4 +691,5 @@ export const DEFAULT_PROJECT_DETAILS = {
 
 export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
   statewise : "state",
+  summary : "summary"
 }

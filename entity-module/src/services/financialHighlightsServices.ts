@@ -43,19 +43,18 @@ export default class FinancialHighlightsService {
         let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
         let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
 
-        if(data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
-            if(data.summaryType == SUMMARY_HIGHLIGHTS_TYPE_FLAG.statewise) {
-                result = await orgDb.query(summaryHighlightsQueryRegion(data.account_rid, data.fiscal_year, schemaName, data.region_rid))
-            } else {
+        if(data.summaryType == SUMMARY_HIGHLIGHTS_TYPE_FLAG.summary) {
+            if(data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
                 result = await orgDb.query(summaryHighlightsQuery(data.account_rid, data.fiscal_year, schemaName))
-            }
-        } else {
-            if(data.summaryType == SUMMARY_HIGHLIGHTS_TYPE_FLAG.statewise) {
-                result = await orgDb.query(fetchIsRdQualifiedProjectQueryRegion(data.account_rid,  schemaName, data.fiscal_year, data.region_rid))
             } else {
                 result = await orgDb.query(fetchIsRdQualifiedProjectQuery(data.account_rid, schemaName, data.fiscal_year))
             }
-            
+        } else {
+            if(data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+                result = await orgDb.query(summaryHighlightsQueryRegion(data.account_rid, data.fiscal_year, schemaName, data.region_rid))
+            } else {
+                result = await orgDb.query(fetchIsRdQualifiedProjectQueryRegion(data.account_rid,  schemaName, data.fiscal_year, data.region_rid))
+            }
         }
         if(result[0].length > 0) {
             return {
