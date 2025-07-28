@@ -66,7 +66,6 @@ export const ProjectTask = ({
     React.SetStateAction<ProjectTaskListExportParams>
   >;
 }) => {
-  console.log('projectID', projectID, accountID);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
     projectsTabs,
@@ -101,8 +100,8 @@ export const ProjectTask = ({
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
-  const accountRID = 'D001-1b18d36d-5c6f-45d6-8bd3-bd1b12d7bffc';
-  const projectRID = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';
+  // const accountRID = 'D001-1b18d36d-5c6f-45d6-8bd3-bd1b12d7bffc';
+  // const projectRID = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';  
   const { data, isLoading, error } = useProjectTask(
     {
       page: currentPage + 1,
@@ -111,8 +110,8 @@ export const ProjectTask = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountRid: accountRID,
-      projectRid: projectRID,
+      accountRid: accountID,
+      projectRid: projectID,
     },
     undefined,
     refreshProjectsTrigger
@@ -125,7 +124,7 @@ export const ProjectTask = ({
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useProjectTaskDetail(taskId || '', accountRID || '');
+  } = useProjectTaskDetail(taskId || '', accountID || '');
 
   const totalItems = data?.count || 0;
 
@@ -215,9 +214,15 @@ export const ProjectTask = ({
   }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
 
   const handleCreateProjectResource = () => {
-    navigate({
-      pathname: `${PROJECT_TASK}/create`,
+    const account_Id = accountID ?? ''; // fallback to empty string
+    const project_Id = projectID ?? '';
+    const queryParams = new URLSearchParams({
+      account_Id,
+      project_Id,
+      // PFY: JSON.stringify(PFY),
+      source: 'createProjectTask',
     });
+    navigate(`${PROJECT_TASK}/create?${queryParams.toString()}`);
   };
 
   const handleEditProjectResource = (row: any) => {

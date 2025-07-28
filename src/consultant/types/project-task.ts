@@ -166,3 +166,52 @@ export interface ProjectResourceDetailsApiResponse {
   statusMessage: string;
   data: ProjectResourceData;
 }
+
+
+
+//create task api payload
+export interface ProjectTaskInput {
+  account_rid: string;
+  project_fiscal_rid: string;
+  resource_code: string;
+  country_rid: string | null;
+  region_rid: string | null;
+  currency_rid: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  total_hours_pro_task: string | null;
+  total_cost_pro_task: string | null;
+  comments: string | null;
+};
+//create task api response,
+export interface createProjectTaskApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    projectTask: createProjectTaskResponseType;
+  };
+}
+
+export interface createProjectTaskResponseType {
+  rid: string;
+  eid: string | null;
+  created_by: string;
+  created_datetime: string;
+  account_rid: string;
+  project_rid: string;
+  resource_rid: string;
+  project_resource_code: string;
+  fiscal_year: number;
+  start_date: string;
+  end_date: string;
+  total_hours_pro_task: string;
+  total_cost_pro_task: string;
+  country_rid: string;
+  region_rid: string;
+  currency_rid: string;
+  comments: string;
+  r_number: string;
+  modified_by: string | null;
+  modified_datetime: string | null;
+}

@@ -1,12 +1,28 @@
-import { SelectOption } from '../../../../../types';
+import { ProjectTaskInput } from '../../../../../types/project-task';
 
-export const PROJECT_TASK_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full-Time', value: 'Full-Time' },
-  { label: 'Sub Con', value: 'Sub Con' },
-  { label: 'Non-Labor', value: 'Non-Labor' },
-];
+export const projectTaskPayloadData = (
+  formData: Partial<ProjectTaskInput>,
+  // isEdit: boolean,
+): Partial<ProjectTaskInput> => {
+  const data: Partial<ProjectTaskInput> = {
+    account_rid: formData.account_rid,
+    project_fiscal_rid: formData.project_fiscal_rid,
+    resource_code: formData.resource_code,
+    country_rid: formData.country_rid || null,
+    region_rid: formData.region_rid || null,
+    currency_rid: formData.currency_rid || null,
+    start_date: formData.start_date || null,
+    end_date: formData.end_date || null,
+    total_hours_pro_task: formData.total_hours_pro_task || null,
+    total_cost_pro_task: formData.total_cost_pro_task || null,
+    comments: formData.comments || null,
+  };
 
-export const PROJECT_TASK_STATUS_OPTIONS: SelectOption[] = [
-  { label: 'Active', value: 'Active' },
-  { label: 'Inactive', value: 'Inactive' },
-];
+  // if (isEdit && updated_resource_rid) {
+  // data.project_resource_rid = updated_resource_rid;
+  // if (formData.total_hours_pro_res !== undefined) {
+  //   data.total_hours_pro_res = String(formData.total_hours_pro_res) || null;
+  // }
+  // }
+  return data;
+};

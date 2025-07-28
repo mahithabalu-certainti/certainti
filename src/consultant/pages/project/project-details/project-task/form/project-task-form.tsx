@@ -1,14 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect, useMemo,
+  // useState
+} from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
-import { OnChange, useGetAllCountries } from '../../../../../../common-service';
 import {
-  useFetchCurrency,
-  useFetchState,
-} from '../../../../../services/account';
-import { SelectOption } from '../../../../../types';
+  OnChange,
+  // useGetAllCountries 
+} from '../../../../../../common-service';
+// import {
+// useFetchCurrency,
+// useFetchState,
+// } from '../../../../../services/account';
+import {
+  // SelectOption, 
+  SelectResourceOption
+} from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
 import { ProjectTaskFormData } from './form-data';
@@ -17,13 +26,20 @@ import {
   useProjectTaskDetail,
   useUpdateProjectTask,
 } from '../../../../../services/project/project-task-service';
+import { projectTaskPayloadData } from './utils';
+import { ProjectTaskInput } from '../../../../../types/project-task';
+import { useGetProjectResourceCode } from '../../../../../services/project-resources/project-resources-form-service';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
-  const [currentCountry, setCurrentCountry] = useState('');
+
+  // const [currentCountry, setCurrentCountry] = useState('');
   const { successToast } = useToast();
   const location = useLocation();
   const { resourceId } = useParams();
+  const queryParams = new URLSearchParams(location.search);
+  const account_Id = queryParams.get('account_Id');
+  const project_Id = queryParams.get('project_Id');
 
   const getProjectTask = useProjectTaskDetail(resourceId as string);
   const projectResource = getProjectTask.data?.data;
@@ -34,15 +50,16 @@ const ProjectTaskForm: React.FC = () => {
     [projectResource]
   );
 
-  const allCountries = useGetAllCountries();
-  const currency = useFetchCurrency();
-  const state = useFetchState(currentCountry);
+  // const allCountries = useGetAllCountries();
+  // const currency = useFetchCurrency();
+  // const state = useFetchState(currentCountry);
   // const city = useFetchCity(currentCountry.state);
   const createProjectTask = useCreateProjectTask();
   const updateProjectTask = useUpdateProjectTask();
-
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    account_Id as string
+  );
   const commonSuccess =
     createProjectTask.isSuccess || updateProjectTask.isSuccess;
   useEffect(() => {
@@ -56,32 +73,42 @@ const ProjectTaskForm: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
-  const memoizedCountry: SelectOption[] = useMemo(
+  const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
-      allCountries.data?.data.country.map((country) => ({
-        label: country.country_name,
-        value: country.rid,
+      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+        label: item.resource_code,
+        value: item.resource_code,
+        resource_type_rid: item.resource_type_rid,
+        resource_type_name: item.resource_type_name,
       })) || [],
-    [allCountries.data?.data.country]
+    [projectResourceCodeOptions?.data?.resourceCodes]
   );
+  // const memoizedCountry: SelectOption[] = useMemo(
+  //   () =>
+  //     allCountries.data?.data.country.map((country) => ({
+  //       label: country.country_name,
+  //       value: country.rid,
+  //     })) || [],
+  //   [allCountries.data?.data.country]
+  // );
 
-  const memoizedCurrency: SelectOption[] = useMemo(
-    () =>
-      currency.data?.data.currency.map((account) => ({
-        label: account.currency_name,
-        value: account.rid,
-      })) || [],
-    [currency.data?.data.currency]
-  );
+  // const memoizedCurrency: SelectOption[] = useMemo(
+  //   () =>
+  //     currency.data?.data.currency.map((account) => ({
+  //       label: account.currency_name,
+  //       value: account.rid,
+  //     })) || [],
+  //   [currency.data?.data.currency]
+  // );
 
-  const memoizedState: SelectOption[] = useMemo(
-    () =>
-      state.data?.data.states.map((state) => ({
-        label: state.state_name,
-        value: state.rid,
-      })) || [],
-    [state.data?.data.states]
-  );
+  // const memoizedState: SelectOption[] = useMemo(
+  //   () =>
+  //     state.data?.data.states.map((state) => ({
+  //       label: state.state_name,
+  //       value: state.rid,
+  //     })) || [],
+  //   [state.data?.data.states]
+  // );
 
   //   const memoizeCity: SelectOption[] = useMemo(
   //     () =>
@@ -92,12 +119,16 @@ const ProjectTaskForm: React.FC = () => {
   //     [city.data?.data.cities]
   //   );
 
-  const submitData = (formValues: any) => {
-    const projectTaskData = {
-      ...formValues,
-      rid: resourceId,
-    };
-    // const projectTaskData = transformFormData(formValues, isEditView);
+  const submitData = (formValues: Partial<ProjectTaskInput>) => {
+    const projectTaskData = projectTaskPayloadData(
+      {
+        ...formValues,
+        account_rid: account_Id || undefined,
+        project_fiscal_rid: project_Id || undefined,
+      },
+      // isEditView
+    );
+
     if (isEditView) {
       updateProjectTask.mutate(projectTaskData);
     } else {
@@ -114,9 +145,10 @@ const ProjectTaskForm: React.FC = () => {
   };
 
   const onChangeField = (data: OnChange) => {
-    if (data.fieldName === 'country_rid') {
-      setCurrentCountry(data.fieldValue as string);
-    }
+    console.log("data", data)
+    // if (data.fieldName === 'country_rid') {
+    //   setCurrentCountry(data.fieldValue as string);
+    // }
   };
 
   return (
@@ -152,28 +184,29 @@ const ProjectTaskForm: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3'>
-          <TextButton label='Cancel' color='inherit' onClick={goBack} />
           <TextButton
             label='Save'
-            loading={createProjectTask.isPending || createProjectTask.isPending}
+            loading={createProjectTask.isPending || updateProjectTask.isPending}
             onClick={handleExternalSubmit}
           />
+          <TextButton label='Cancel' color='inherit' onClick={goBack} />
         </div>
       </div>
       <div className='pb-4'>
         <FormBuilder
           data={ProjectTaskFormData(
-            memoizedCountry,
-            memoizedState,
+            memoizedProjectResourceCode,
+            // memoizedCountry,
+            // memoizedState,
             // memoizeCity,
-            memoizedCurrency,
-            state.isLoading
+            // memoizedCurrency,
+            // state.isLoading
             // city.isLoading,
             // currency.isLoading,
             // disableFields,
             // isEditView
           )}
-          loading={allCountries.isLoading || currency.isLoading}
+          // loading={allCountries.isLoading || state.isLoading}
           values={
             isEditView && projectTaskData ? { ...projectTaskData } : undefined
           }

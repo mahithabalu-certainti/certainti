@@ -13,8 +13,9 @@ import {
   ProjectResourcesListParams,
   ProjectResourceStatus,
   ProjectResourceDetailsApiResponse,
-  ProjectResourcePayload,
   ProjectTaskListExportParams,
+  ProjectTaskInput,
+  createProjectTaskApiResponse,
   //   ProjectTaskDetailsType,
 } from '../../types/project-task';
 import { DetailURL, getProjectTaskExportURL, ProjectTaskURL } from '../urls/project-task-url';
@@ -170,21 +171,20 @@ export const useProjectTaskDetail = (taskId: string, accountRid?: string) => {
 
 export const useCreateProjectTask = (
   options?: UseMutationOptions<
-    Partial<ProjectResourceDetailsApiResponse>,
+    Partial<createProjectTaskApiResponse>,
     Error,
-    Partial<ProjectResourcePayload>
+    Partial<ProjectTaskInput>
   >
 ): UseMutationResult<
-  Partial<ProjectResourceDetailsApiResponse>,
+  Partial<createProjectTaskApiResponse>,
   Error,
-  Partial<ProjectResourcePayload>
+  Partial<ProjectTaskInput>
 > => {
   return useMutation({
-    mutationKey: ['create-resource-skill'],
+    mutationKey: ['create-project-task'],
     mutationFn: async (payload) => {
-      const res = await api.post(
-        '/api/project_resource/create',
-        // `${baseUrl}` + '/api/project_resource/create',
+      const res = await resourceServiceApi.post(
+        '/api/project_tasks/new',
         payload
       );
       return res.data;
@@ -195,14 +195,14 @@ export const useCreateProjectTask = (
 
 export const useUpdateProjectTask = (
   options?: UseMutationOptions<
-    Partial<ProjectResourceDetailsApiResponse>,
+    Partial<createProjectTaskApiResponse>,
     Error,
-    Partial<ProjectResourcePayload>
+    Partial<ProjectTaskInput>
   >
 ): UseMutationResult<
-  Partial<ProjectResourceDetailsApiResponse>,
+  Partial<createProjectTaskApiResponse>,
   Error,
-  Partial<ProjectResourcePayload>
+  Partial<ProjectTaskInput>
 > => {
   return useMutation({
     mutationKey: ['update-resource-skill'],

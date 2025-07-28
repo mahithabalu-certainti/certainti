@@ -210,6 +210,43 @@ export const createSelectField = (
   dependantLabel: others.dependantLabel,
 });
 
+export const createAutoCompleteField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'autocomplete',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+});
+
 export const createButton = (
   name: string,
   label: string,
@@ -560,13 +597,12 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${
-    errorData?.statusMessage
-      ? typeof errorData.statusMessage === 'object'
-        ? Object.values(errorData.statusMessage).join(', ')
-        : errorData.statusMessage || ''
-      : errorData?.message || data.message
-  }</p>`;
+  return `<p>${errorData?.statusMessage
+    ? typeof errorData.statusMessage === 'object'
+      ? Object.values(errorData.statusMessage).join(', ')
+      : errorData.statusMessage || ''
+    : errorData?.message || data.message
+    }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {

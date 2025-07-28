@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../../types';
 import {
+  createAutoCompleteField,
   createDateField,
-  createSelectField,
+  // createSelectField,
   createTextAreaField,
   createTextField,
   PROJECT_TASK_REGEX,
 } from '../../../../../../common-utils';
-// import {
-//   PROJECT_TASK_STATUS_OPTIONS,
-//   PROJECT_TASK_TYPE_OPTIONS,
-// } from './utils';
 
 // 1. Extract date constants
 const DATE_CONFIG = {
@@ -43,58 +40,39 @@ const { currentDate, previousDate } = getDateConstraints(
 );
 
 export const ProjectTaskFormData = (
-  country: SelectOption[],
-  states: SelectOption[],
+  memoizedProjectResourceCode: SelectOption[],
+  // country: SelectOption[],
+  // states: SelectOption[],
   // city: SelectOption[],
-  currency: SelectOption[],
-  stateLoading?: boolean,
+  // currency: SelectOption[],
+  // stateLoading?: boolean,
   // cityLoading?: boolean,
   // currencyLoading?: boolean,
-  disableFields?: boolean
+  // disableFields?: boolean
   // isEditView?: boolean
 ): FormType[] => {
+  console.log("memoizedProjectResourceCode", memoizedProjectResourceCode)
   return useMemo(
     () => [
       {
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          // createTextField('project_task_id', 'Project Task ID', {
-          //   required: false,
-          //   regex: PROJECT_TASK_REGEX.RESOURCE_CODE,
-          //   regexErrorMessage:
-          //     'Please enter 3-50 characters. Special characters are not allowed.',
-          //   placeholder: 'Enter Project Task ID',
-          //   disabled: disableFields,
-          // }),
           // createTextField('resource_code', 'Resource Code', {
           //   required: false,
-          //   regex: PROJECT_TASK_REGEX.FULL_NAME,
+          //   regex: PROJECT_TASK_REGEX.ORG_NAME,
           //   regexErrorMessage:
-          //     'Please enter 3-100 characters, including at least one letter. Special characters and numbers are not allowed.',
+          //     'Please enter 3-50 characters. Special characters are not allowed.',
           //   placeholder: 'Enter Resource Code',
           //   disabled: disableFields,
           // }),
-          // createSelectField('resource_type', 'Resource Type', {
-          //   options: PROJECT_TASK_TYPE_OPTIONS,
-          //   placeholder: '-Select-',
-          //   required: true,
-          // }),
-          createTextField('project_resource_code', 'Project Resource Code', {
-            required: false,
-            regex: PROJECT_TASK_REGEX.ORG_NAME,
-            regexErrorMessage:
-              'Please enter 3-50 characters. Special characters are not allowed.',
-            placeholder: 'Enter Project Resource Code',
-            disabled: disableFields,
+          createAutoCompleteField('resource_code', 'Resource Code', {
+            options: memoizedProjectResourceCode,
+            // options: [{ label: 'one', value: 'one' }, { label: 'two', value: 'two' }, { label: 'three', value: 'three' },],
+            required: true,
+            onChange: true,
+            placeholder: 'Enter Resource Code',
           }),
-          // createTextField('designation', 'Designation', {
-          //   required: false,
-          //   regex: PROJECT_TASK_REGEX.DESIGNATION,
-          //   regexErrorMessage:
-          //     'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-          //   placeholder: 'Enter Resource Role',
-          // }),
           // createTextField('resource_role', 'Resource Role', {
           //   required: false,
           //   regex: PROJECT_TASK_REGEX.ROLE,
@@ -102,12 +80,12 @@ export const ProjectTaskFormData = (
           //     'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
           //   placeholder: 'Enter Resource Role',
           // }),
-          createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
-            placeholder: '-Select-',
-            required: true,
-            onChange: true,
-          }),
+          // createSelectField('fiscal_year', 'Fiscal Year', {
+          //   options: fiscalYears,
+          //   placeholder: '-Select-',
+          //   required: true,
+          //   onChange: true,
+          // }),
           // createSelectField('resource_status', 'Resource Status', {
           //   options: PROJECT_TASK_STATUS_OPTIONS,
           //   placeholder: '-Select-',
@@ -115,41 +93,41 @@ export const ProjectTaskFormData = (
           // }),
         ],
       },
-      {
-        sectionName: 'Location and Currency Information',
-        fillType: 'half',
-        fields: [
-          createSelectField('country_rid', 'Country', {
-            options: country,
-            placeholder: 'Choose Country',
-            required: false,
-            onChange: true,
-            resetDependsFields: ['region'],
-          }),
-          createSelectField('region', 'Region', {
-            options: states,
-            placeholder: 'Choose Region',
-            required: false,
-            isLoading: stateLoading,
-          }),
-          createSelectField('currency_rid', 'Currency', {
-            options: currency,
-            required: false,
-            placeholder: 'Choose Currency',
-          }),
-        ],
-      },
+      // {
+      //   sectionName: 'Location and Currency Information',
+      //   fillType: 'half',
+      //   fields: [
+      //     createSelectField('country_rid', 'Country', {
+      //       options: country,
+      //       placeholder: 'Choose Country',
+      //       required: false,
+      //       onChange: true,
+      //       resetDependsFields: ['region'],
+      //     }),
+      //     createSelectField('region_rid', 'Region', {
+      //       options: states,
+      //       placeholder: 'Choose Region',
+      //       required: false,
+      //       isLoading: stateLoading,
+      //     }),
+      //     createSelectField('currency_rid', 'Currency', {
+      //       options: currency,
+      //       required: false,
+      //       placeholder: 'Choose Currency',
+      //     }),
+      //   ],
+      // },
       {
         sectionName: 'Project Details',
         fillType: 'half',
         fields: [
-          createDateField('resource_startdate', 'Effective From', {
+          createDateField('start_date', 'Effective From', {
             required: false,
             minDate: new Date('1950-01-01'),
             maxDate: previousDate,
             disableFutureDates: true,
           }),
-          createDateField('resource_enddate', 'End Date', {
+          createDateField('end_date', 'End Date', {
             required: false,
             maxDate: currentDate,
             greaterThan: {
@@ -157,14 +135,14 @@ export const ProjectTaskFormData = (
               message: 'End Date must be after Start Date',
             },
           }),
-          createTextField('cost', 'Cost', {
+          createTextField('total_cost_pro_task', 'Cost', {
             required: false,
             regex: PROJECT_TASK_REGEX.COST_REGEX,
             regexErrorMessage:
               'Cost must be a 18-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
           }),
-          createTextField('effort', 'Effort', {
+          createTextField('total_hours_pro_task', 'Effort', {
             required: false,
             regex: PROJECT_TASK_REGEX.EFFORT,
             regexErrorMessage: 'Effort must be a positive number',
@@ -185,15 +163,6 @@ export const ProjectTaskFormData = (
         ],
       },
     ],
-    [
-      disableFields,
-      country,
-      states,
-      stateLoading,
-      //   city,
-      //   cityLoading,
-      currency,
-      // currencyLoading,
-    ]
+    [memoizedProjectResourceCode]
   );
 };

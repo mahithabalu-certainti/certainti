@@ -154,21 +154,21 @@ export const getProjectTaskColumns = (
       render: (row: ProjectTaskListType) =>
         row.total_hours_pro_task ? valueDisplay(row.total_hours_pro_task) : '-',
     },
-    {
-      id: 'task_type',
-      label: 'Task Type',
-      sortable: true,
-      sortId: 'task_type',
-      width: 200,
-    },
+    // {
+    //   id: 'task_type',
+    //   label: 'Task Type',
+    //   sortable: true,
+    //   sortId: 'task_type',
+    //   width: 200,
+    // },
 
-    {
-      id: 'description',
-      label: 'Task Description',
-      sortable: true,
-      sortId: 'description',
-      width: 200,
-    },
+    // {
+    //   id: 'description',
+    //   label: 'Task Description',
+    //   sortable: true,
+    //   sortId: 'description',
+    //   width: 200,
+    // },
 
     {
       id: 'comments',
