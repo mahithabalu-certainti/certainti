@@ -221,11 +221,11 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     // { label: 'Resource Org Name', value: projectTaskData.resource_orgname }, 
     { label: 'Resource Role', value: projectTaskData.resource_role },
   ];
-  const locationInfo: DetailItem[] = [
-    { label: 'Country', value: projectTaskData.country_name },
-    { label: 'Region', value: projectTaskData.region_name },
-    { label: 'Currency', value: projectTaskData.currency_name },
-  ];
+  // const locationInfo: DetailItem[] = [
+  //   { label: 'Country', value: projectTaskData.country_name },
+  //   { label: 'Region', value: projectTaskData.region_name },
+  //   { label: 'Currency', value: projectTaskData.currency_name },
+  // ];
 
   const projectDetails: DetailItem[] = [
     {
@@ -241,7 +241,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   ];
 
   const auditInfo: DetailItem[] = [
-    { label: 'Record ID', value: projectTaskData.r_number },
+    { label: 'Record ID', value: projectTaskData.rid },
     { label: 'Project Task ID', value: projectTaskData.r_number },
     { label: 'Created On', value: getDateTimeFormat(projectTaskData.created_datetime ?? undefined) },
     { label: 'Created By', value: projectTaskData.created_by },
@@ -260,10 +260,10 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
         data={basicInfo as DetailItem[]}
         customStyle='pt-0 mt-0'
       />
-      <DetailsSection
+      {/* <DetailsSection
         title='Location and Currency Information'
         data={locationInfo as DetailItem[]}
-      />
+      /> */}
       <DetailsSection
         title='Project Details'
         data={projectDetails as DetailItem[]}

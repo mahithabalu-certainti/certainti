@@ -166,13 +166,19 @@ export interface ProjectResourceDetailsApiResponse {
   statusMessage: string;
   data: ProjectResourceData;
 }
-
-
+//Detail task api response
+export interface ProjectTaskDetailsApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: ProjectTaskDetailsType;
+}
 
 //create task api payload
 export interface ProjectTaskInput {
   account_rid: string;
   project_fiscal_rid: string;
+  project_task_rid: string | null;
   resource_code: string;
   country_rid: string | null;
   region_rid: string | null;

@@ -10,6 +10,7 @@ import {
 } from '../../../../services/project/project-task-service';
 import {
   PROJECT_TASK,
+  PROJECT_TASK_EDIT,
   // PROJECT_TASK_CREATE,
   // PROJECT_TASK_EDIT,
 } from '../../../../../routes';
@@ -157,7 +158,7 @@ export const ProjectTask = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      onClick: (row: any) => handleEditProjectResource(row),
+      onClick: (row: ProjectTaskListType) => handleEditProjectResource(row),
     },
   ];
 
@@ -165,7 +166,7 @@ export const ProjectTask = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      onClick: (row: any) => handleEditProjectResource(row),
+      onClick: (row: ProjectTaskListType) => handleEditProjectResource(row),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
   ];
@@ -225,13 +226,21 @@ export const ProjectTask = ({
     navigate(`${PROJECT_TASK}/create?${queryParams.toString()}`);
   };
 
-  const handleEditProjectResource = (row: any) => {
-    navigate({
-      pathname: `${PROJECT_TASK}/edit/${row?.rid}`,
+  const handleEditProjectResource = (row: ProjectTaskListType) => {  
+     const path = row?.rid
+      ? PROJECT_TASK_EDIT.replace(':taskId', row.rid)
+      : PROJECT_TASK_EDIT;
+    // const PFY = projectFiscalYear;
+    const queryParams = new URLSearchParams({
+      account_Id: row?.account_rid || '',
+      project_Id: row?.project_rid || '',
+      // PFY: PFY ? JSON.stringify(PFY) : '',
+      source: 'editProjectTask',
     });
+    navigate(`${path}?${queryParams.toString()}`);
   };
-  const getRowId = (row: any) => row.project_rid;
-  const handleProjectTaskClick = (row: any) => {
+  const getRowId = (row: ProjectTaskListType) => row.project_rid;
+  const handleProjectTaskClick = (row: ProjectTaskListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_task_id', row?.rid ?? '');
     // searchParams.set('pro_acc_id', row?.account_rid ?? '');
@@ -264,6 +273,7 @@ export const ProjectTask = ({
         sortFilterCount={0}
         setSortFilterCount={setSortFilterCount}
         keyProjectTask={'ProjectTask'}
+        projectResourceAccountID={accountID}
       />
       <>
         <ProjectTaskTableHeader
@@ -275,7 +285,7 @@ export const ProjectTask = ({
           count={totalItems}
           showBackArrow={resourceData ? true : false}
           headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
-          projectResourceNumber={resourceData?.projectResourceDetails?.resource_code}
+          projectResourceNumber={resourceData?.r_number}
           onBackClick={handleBackClick}
         />
         <div className='border border-[#CBD6E2]'>

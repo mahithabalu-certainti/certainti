@@ -51,7 +51,6 @@ export const ProjectTaskFormData = (
   // disableFields?: boolean
   // isEditView?: boolean
 ): FormType[] => {
-  console.log("memoizedProjectResourceCode", memoizedProjectResourceCode)
   return useMemo(
     () => [
       {

@@ -12,10 +12,10 @@ import {
   ProjectTaskListType,
   ProjectResourcesListParams,
   ProjectResourceStatus,
-  ProjectResourceDetailsApiResponse,
   ProjectTaskListExportParams,
   ProjectTaskInput,
   createProjectTaskApiResponse,
+  ProjectTaskDetailsApiResponse,
   //   ProjectTaskDetailsType,
 } from '../../types/project-task';
 import { DetailURL, getProjectTaskExportURL, ProjectTaskURL } from '../urls/project-task-url';
@@ -150,15 +150,15 @@ export const fetchProjectTask = async (
 export const fetchDetails = async (
   taskId: string,
   accountRid?: string
-): Promise<ProjectResourceDetailsApiResponse> => {
-  const response = await api.get<ProjectResourceDetailsApiResponse>(
+): Promise<ProjectTaskDetailsApiResponse> => {
+  const response = await api.get<ProjectTaskDetailsApiResponse>(
     DetailURL(taskId, accountRid ?? '')
   );
   return response.data;
 };
 
 export const useProjectTaskDetail = (taskId: string, accountRid?: string) => {
-  return useQuery<ProjectResourceDetailsApiResponse, Error>({
+  return useQuery<ProjectTaskDetailsApiResponse, Error>({
     queryKey: ['project-resource-detail', taskId, accountRid],
     queryFn: async () => {
       return fetchDetails(taskId, accountRid);
@@ -205,11 +205,10 @@ export const useUpdateProjectTask = (
   Partial<ProjectTaskInput>
 > => {
   return useMutation({
-    mutationKey: ['update-resource-skill'],
+    mutationKey: ['update-project-task'],
     mutationFn: async (payload) => {
-      const res = await api.put(
-        '/api/project_resource/update',
-        // `${baseUrl}` + '/api/project_resource/update',
+      const res = await resourceServiceApi.put(
+        '/api/project_tasks/update',
         payload
       );
       return res.data;

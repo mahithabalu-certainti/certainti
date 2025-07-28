@@ -2,7 +2,8 @@ import { ProjectTaskInput } from '../../../../../types/project-task';
 
 export const projectTaskPayloadData = (
   formData: Partial<ProjectTaskInput>,
-  // isEdit: boolean,
+  project_task_rid: string,
+  isEdit: boolean,
 ): Partial<ProjectTaskInput> => {
   const data: Partial<ProjectTaskInput> = {
     account_rid: formData.account_rid,
@@ -18,11 +19,11 @@ export const projectTaskPayloadData = (
     comments: formData.comments || null,
   };
 
-  // if (isEdit && updated_resource_rid) {
-  // data.project_resource_rid = updated_resource_rid;
+  if (isEdit && project_task_rid) {
+  data.project_task_rid = project_task_rid;
   // if (formData.total_hours_pro_res !== undefined) {
   //   data.total_hours_pro_res = String(formData.total_hours_pro_res) || null;
   // }
-  // }
+  }
   return data;
 };

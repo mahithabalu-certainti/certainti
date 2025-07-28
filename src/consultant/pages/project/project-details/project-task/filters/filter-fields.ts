@@ -12,9 +12,9 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 
 export const projectTaskFilterFields = (
     memoizedProjectResourceCode: { option: string; value: string }[],
-    memoizedCountry: { option: string; value: string }[],
+    // memoizedCountry: { option: string; value: string }[],
+    // region: { option: string; value: string }[],
     resourceTypeOptions: { option: string; value: string }[],
-    region: { option: string; value: string }[],
     // resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
         {
@@ -76,22 +76,22 @@ export const projectTaskFilterFields = (
             //     !resourcepermissionMap?.['total_cost_pro_res']?.edit,
         },
 
-        {
-            name: 'Task Type',
-            value: 'task_type',
-            type: 'text',
+        // {
+        //     name: 'Task Type',
+        //     value: 'task_type',
+        //     type: 'text',
             // hide:
             //     !resourcepermissionMap?.['qre_final']?.read &&
             //     !resourcepermissionMap?.['qre_final']?.edit,
-        },
-        {
-            name: 'Task Description',
-            value: 'description',
-            type: 'text',
+        // },
+        // {
+        //     name: 'Task Description',
+        //     value: 'description',
+        //     type: 'text',
             // hide:
             //     !resourcepermissionMap?.['qre_final']?.read &&
             //     !resourcepermissionMap?.['qre_final']?.edit,
-        },
+        // },
         {
             name: 'Comments',
             value: 'comments',
@@ -100,27 +100,27 @@ export const projectTaskFilterFields = (
             //     !resourcepermissionMap?.['description']?.read &&
             //     !resourcepermissionMap?.['description']?.edit,
         },
-        {
-            name: 'Resource Country',
-            value: 'country_rid',
-            type: 'enum',
-            options: memoizedCountry,
-            filterOptions: requiredFieldFilterOptionsForEnum,
+        // {
+        //     name: 'Resource Country',
+        //     value: 'country_rid',
+        //     type: 'enum',
+        //     options: memoizedCountry,
+        //     filterOptions: requiredFieldFilterOptionsForEnum,
             // hide:
             //     !resourcepermissionMap?.['country_rid']?.read &&
             //     !resourcepermissionMap?.['country_rid']?.edit,
-        },
-        {
-            name: 'Resource Region',
-            value: 'region_rid',
-            type: 'enum',
-            options: region,
-            dependsOn: 'country_rid',
-            filterOptions: requiredFieldFilterOptionsForEnum,
+        // },
+        // {
+            // name: 'Resource Region',
+            // value: 'region_rid',
+            // type: 'enum',
+            // options: region,
+            // dependsOn: 'country_rid',
+            // filterOptions: requiredFieldFilterOptionsForEnum,
             // hide:
             //     !resourcepermissionMap?.['region_rid']?.read &&
             //     !resourcepermissionMap?.['region_rid']?.edit,
-        },
+        // },
         {
             name: 'Resource ID',
             value: 'r_number',

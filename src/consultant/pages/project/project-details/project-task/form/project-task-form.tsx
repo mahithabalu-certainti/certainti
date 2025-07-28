@@ -7,6 +7,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
+  Layout,
   OnChange,
   // useGetAllCountries 
 } from '../../../../../../common-service';
@@ -36,18 +37,17 @@ const ProjectTaskForm: React.FC = () => {
   // const [currentCountry, setCurrentCountry] = useState('');
   const { successToast } = useToast();
   const location = useLocation();
-  const { resourceId } = useParams();
+  const { taskId } = useParams();
   const queryParams = new URLSearchParams(location.search);
   const account_Id = queryParams.get('account_Id');
   const project_Id = queryParams.get('project_Id');
-
-  const getProjectTask = useProjectTaskDetail(resourceId as string);
-  const projectResource = getProjectTask.data?.data;
-  const projectTaskData = useMemo(
+  const getProjectTask = useProjectTaskDetail(taskId as string, account_Id as string);
+  const projectTask = getProjectTask.data;
+  const projectTaskDetailsData = useMemo(
     () => ({
-      ...projectResource?.projectResourceDetails,
+      ...projectTask?.data,
     }),
-    [projectResource]
+    [projectTask]
   );
 
   // const allCountries = useGetAllCountries();
@@ -120,13 +120,15 @@ const ProjectTaskForm: React.FC = () => {
   //   );
 
   const submitData = (formValues: Partial<ProjectTaskInput>) => {
+    const project_task_rid = isEditView ? (taskId as string) : '';
     const projectTaskData = projectTaskPayloadData(
       {
         ...formValues,
         account_rid: account_Id || undefined,
         project_fiscal_rid: project_Id || undefined,
       },
-      // isEditView
+      project_task_rid,
+      isEditView
     );
 
     if (isEditView) {
@@ -169,7 +171,7 @@ const ProjectTaskForm: React.FC = () => {
 
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project {'>'} {projectTaskData?.project_name}
+              Project {'>'} {projectTaskDetailsData?.resource_code}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
@@ -208,11 +210,14 @@ const ProjectTaskForm: React.FC = () => {
           )}
           // loading={allCountries.isLoading || state.isLoading}
           values={
-            isEditView && projectTaskData ? { ...projectTaskData } : undefined
+            isEditView && projectTaskDetailsData ? { ...projectTaskDetailsData } : undefined
           }
           outData={submitData}
           formRef={formRef}
+          layout={Layout.TYPE_1}
           onChange={onChangeField}
+          keyStart='start_date'
+          keyEnd='end_date'
         />
       </div>
     </>

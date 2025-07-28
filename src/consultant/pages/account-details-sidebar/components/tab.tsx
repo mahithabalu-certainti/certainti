@@ -126,7 +126,7 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceTypeOptions = useGetResourceType();
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
-  const projectTypeOptions = useGetProjectType();
+  const projectTypeOptions = useGetProjectType();  //memoizedProjectResourceTaskCode
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     projectResourceAccountID as string
   );
@@ -426,8 +426,8 @@ const TabPanel: React.FC<TabProps> = ({
     if (value === 'project-task')
       return projectTaskFilterFields(
         memoizedProjectResourceCode,
-        memoizedCountry,
-        regionData,
+        // memoizedCountry,
+        // regionData,
         memoizedResourceType,
         // permissionProjectResourcesMap
       );
