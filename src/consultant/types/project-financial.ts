@@ -77,37 +77,57 @@ export type ProjectFinancialSummaryResponse = {
   statusMessage: string;
   data: ProjectFinancialSummary;
 };
-
-export type FinancialResourceCost = {
-  rid: string;
-  project_code: string;
-  project_name: string;
-  project_id: string;
-  resource_code: string;
-  resource_name: string;
-  resource_type: string;
-  country: string;
-  region: string;
-  cost: number;
-  rd: number;
-  project_qre: string;
-  rd_credit: number;
-};
-
-export interface ResourceCostFinancialHighlightListParams {
+export interface ProjectFinancialResourceListParams {
   page: number;
   limit: number;
   search?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  accountNumber?: string;
+  fiscalYear?: number;
+  projectRid?: string;
+  accountRid?: string;
 }
 
-export interface ResourceCostFinancialHighlight {
-  data: any;
+export interface ProjectFinancialResourceExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  accountNumber?: string;
+  fiscalYear?: number;
+  projectRid?: string;
+  accountRid?: string;
 }
 
-export interface ResourceCostFinancialHighlightResponse {
-  data: ResourceCostFinancialHighlight;
-  message: string;
-  status: number;
+export type ProjectFinancialResourceCostList = {
+  total_cost_pro_res: string | null;
+  rd_percent_final: number | null;
+  qre_final: number | null;
+  rd_credits_total: number | null;
+  resource_rid: string;
+  project_fiscal_rid: string;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid: string | null;
+  project_code: string;
+  r_number: string;
+  project_name: string | null;
+  resource_code: string;
+  resource_name: string | null;
+  resource_type_rid: string;
+  resource_type_name: string;
+  country_code: string | null;
+  region_name: string | null;
+  country_name: string | null;
+};
+
+export interface ProjectFinancialResourceCostResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    projectResourceFiscal: ProjectFinancialResourceCostList[];
+    count: number;
+  };
 }

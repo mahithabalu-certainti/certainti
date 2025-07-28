@@ -32,8 +32,9 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     sortBy: 'group_name',
     sortOrder: 'ASC',
     entity_type: 'ACCOUNT',
-    page: 1,
+    page: filterParams.page + 1,
     limit: 100,
+    filters: filterParams.filters,
   });
   const [assignGroupList, setAssignGroupList] = useState<
     ConfigAssignGroupsList[]
@@ -81,14 +82,12 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   }, [data]);
 
   useEffect(() => {
-    if (filterParams.filters && Object.keys(filterParams.filters).length) {
-      setTableParams((prev) => ({
-        ...prev,
-        page: filterParams.page + 1,
-        filters: filterParams.filters,
-      }));
-    }
-  }, [filterParams]);
+    setTableParams((prev) => ({
+      ...prev,
+      page: 1,
+      filters: filterParams.filters,
+    }));
+  }, [filterParams.filters]);
 
   useEffect(() => {
     if (data?.groups?.length) {
