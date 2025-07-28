@@ -1578,15 +1578,17 @@ private createUserCountCondition(operator: string, value: number): any {
           offset,
           attributes: {
            include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ]
+            [
+              literal(`(
+        SELECT COUNT(*)
+        FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+        INNER JOIN "${MAIN_SCHEMA_NAME}".user AS u ON ugm.user_rid = u.rid
+        INNER JOIN "${MAIN_SCHEMA_NAME}".status AS s ON u.status_rid = s.rid
+        WHERE ugm.group_rid = "UserGroup".rid
+        AND s.status_name = 'Active'
+      )`),
+              "user_count",
+            ],
               ]
             },
           include: [
@@ -1680,15 +1682,17 @@ private createUserCountCondition(operator: string, value: number): any {
           order: orderArray,
           attributes: {
            include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ],
+            [
+              literal(`(
+        SELECT COUNT(*)
+        FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+        INNER JOIN "${MAIN_SCHEMA_NAME}".user AS u ON ugm.user_rid = u.rid
+        INNER JOIN "${MAIN_SCHEMA_NAME}".status AS s ON u.status_rid = s.rid
+        WHERE ugm.group_rid = "UserGroup".rid
+        AND s.status_name = 'Active'
+      )`),
+              "user_count",
+            ],
               //   [
               //   literal(`(
               //     SELECT account_name
