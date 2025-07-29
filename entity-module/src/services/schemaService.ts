@@ -1891,7 +1891,6 @@ class SchemaService {
       ...(accountMeta.length > 0 ? [accountMeta] : []),
       ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
     ];
-    
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
         type: "SELECT",
