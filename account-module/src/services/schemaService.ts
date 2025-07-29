@@ -2,7 +2,7 @@ import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
-import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX, rawQueries } from "../utils/constant";
 import { getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
@@ -675,7 +675,7 @@ class SchemaService {
         fiscal_year integer NOT NULL,
         project_name varchar(200) NULL,
         program_name varchar(255) NULL,
-        project_type_rid varchar(50) NOT NULL,
+        project_type_rid varchar(50),
         project_classification_rid varchar(50) NULL,
         project_classification_other varchar(255) NULL,
         project_client_group varchar(255) NULL,
@@ -1215,7 +1215,7 @@ class SchemaService {
         modified_datetime timestamptz NULL,
         account_rid varchar(50) NOT NULL,
         resource_rid varchar(50) NOT NULL,
-        resource_type_rid varchar(50) NOT NULL,
+        resource_type_rid varchar(50),
         resource_code varchar(50) NOT NULL,
         fiscal_year integer NULL,
         country_rid varchar(50) NULL,
@@ -1607,7 +1607,6 @@ class SchemaService {
         modified_by varchar(255) NULL,
         created_datetime timestamptz NOT NULL,
         modified_datetime timestamptz NULL,
-        project_resource_rid varchar(50) NOT NULL,
         account_rid varchar(50) NOT NULL,
         project_rid varchar(50) NOT NULL,
         project_fiscal_rid VARCHAR(50) NOT NULL,
@@ -2724,13 +2723,7 @@ async createUserGroup(
   try {
     const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
 
-    const groupTypeResult = await sequelize.query<{ rid: string }>(
-      `
-      SELECT rid
-      FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
-      WHERE type = :group_type_name
-      LIMIT 1
-      `,
+    const groupTypeResult = await sequelize.query<{ rid: string }>(rawQueries.SQL_GET_GROUP_TYPE,
       {
         replacements: { group_type_name: groupTypeName },
         type: QueryTypes.SELECT,
@@ -2912,7 +2905,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
 
   try {
     // 1. Direct access with account info
-    const directAccess = await mainDbSequelize.query<{ 
+    const directAccess = await mainDbSequelize.query<{
       entity_rid: string;
       parent_account_rid: string | null;
       is_child: boolean;
@@ -2934,8 +2927,27 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
       }
     );
 
-    // 2. Group access with account info
-    const groupAccess = await mainDbSequelize.query<{ 
+    // 2. Direct EXCLUDE access — normalize and store in a Set
+    const directExclude = await mainDbSequelize.query<{ entity_rid: string }>(
+      `
+      SELECT ugea.entity_rid
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'EXCLUDE'
+      `,
+      {
+        replacements: { userRid },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const excludedEntityRids = new Set(
+      directExclude.map(e => e.entity_rid?.trim().toLowerCase())
+    );
+
+    // 3. Group INCLUDE access
+    const groupAccess = await mainDbSequelize.query<{
       entity_rid: string;
       parent_account_rid: string | null;
       is_child: boolean;
@@ -2970,8 +2982,9 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
     }>();
 
     allAccess.forEach(access => {
-      if (!uniqueAccess.has(access.entity_rid)) {
-        uniqueAccess.set(access.entity_rid, {
+      const normalizedEntityId = access.entity_rid?.trim().toLowerCase();
+      if (!excludedEntityRids.has(normalizedEntityId) && !uniqueAccess.has(normalizedEntityId)) {
+        uniqueAccess.set(normalizedEntityId, {
           id: access.entity_rid,
           isChild: access.is_child,
           parentId: access.parent_account_rid
@@ -3070,56 +3083,34 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
   const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
   return exportableFields;
 }
-// async  getAccessibleAccountIds(userRid: string): Promise<string[]> {
-//   const mainDbSequelize = await initSequelize();
-
-//   try {
-//     // 1. Direct access
-//     const directAccess = await mainDbSequelize.query<{ entity_rid: string }>(
-//       `
-//       SELECT entity_rid FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access
-//       WHERE user_rid = :userRid 
-//         AND entity_type = 'ACCOUNT'
-//         AND access_type = 'INCLUDE'
-//       `,
-//       {
-//         replacements: { userRid },
-//         type: QueryTypes.SELECT
-//       }
-//     );
-
-//     // 2. Group access
-//     const groupAccess = await mainDbSequelize.query<{ entity_rid: string }>(
-//       `
-//       WITH user_groups AS (
-//         SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
-//         WHERE user_rid = :userRid
-//       )
-//       SELECT DISTINCT gea.entity_rid
-//       FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
-//       JOIN user_groups ug ON gea.group_rid = ug.group_rid
-//       WHERE gea.entity_type = 'ACCOUNT'
-//         AND gea.access_type = 'INCLUDE'
-//       `,
-//       {
-//         replacements: { userRid },
-//         type: QueryTypes.SELECT
-//       }
-//     );
-
-//     // 3. Combine and deduplicate
-//     const allEntityRids = [
-//       ...directAccess.map(a => a.entity_rid),
-//       ...groupAccess.map(a => a.entity_rid)
-//     ];
-
-//     return Array.from(new Set(allEntityRids)); // Dedupe
-//   } catch (err) {
-//     console.error("Error in getAccessibleAccountIds:", err);
-//     return [];
-//   }
-// }
-
+ async  updateGroupNameForAccount(
+  accountRid: string,
+   userId: string,
+   is_parent:boolean,
+  accountName: string
+): Promise<void> {
+  const sequelize: Sequelize = await initSequelize(); 
+  const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
+  const result = await sequelize.query<{ rid: string; group_name: string }>(rawQueries.SQL_GET_EX_GROUP_DATA,
+  {
+    replacements: {
+      account_rid: accountRid,
+      group_type_name: groupTypeName
+    },
+    type: QueryTypes.SELECT,
+  }
+  );
+  const groupRid = result?.[0]?.rid;
+  await sequelize.query(
+   rawQueries.UPDATE_GROUP_NAME,
+    {
+      replacements: {
+        group_name: 'G-'+accountName,
+        group_rid: groupRid
+      }
+    }
+  );
+}
 }
 export default SchemaService;
 

@@ -20,13 +20,13 @@ export const projectTaskResolver: IResolvers = {
           return {
             statusCode: HttpStatus.SUCCESS,
             statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-            statusMessage: result.message,
+            statusMessage: result.statusMessage,
             data: result.data,
           };
         } else {
           return {
-            statusCode: HttpStatus.NOT_FOUND,
-            statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
+            statusCode: HttpStatus.FAILED,
+            statusCodeValue: HttpStatus.FAILED_MESSAGE,
             statusMessage: result.statusMessage,
             data: result.data,
           };

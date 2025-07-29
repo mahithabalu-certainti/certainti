@@ -3,9 +3,12 @@ import { initMainDbSequelize } from "../config/mainDataSource"
 import { initOrgSequelize } from "../config/orgDataSource"
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
 import { setInlineForProjectTask } from "../utils/helpers"
+import { ProjectTaskSchemaService } from "../services/projectTask/schemaService";
+
 
 const services = Configurations.getInstance().getServices();
 const projectTaskService = services.projectTaskServices;
+const projectTaskSchemaService = new ProjectTaskSchemaService();
 
 export default class ProjectTaskGraphqlServies {
     async updateInlineGraphqlDetails(data : any) {
@@ -31,6 +34,20 @@ export default class ProjectTaskGraphqlServies {
             } 
             }
             else {
+                if(data.resource_code){
+                    // Fetch resource rid from resources table using resource code
+                    const resourceQuery = await orgSequelize.query(rawQueries.findResourceByCode(schemaName, data.resource_code));
+                    if(resourceQuery[0].length > 0) {
+                        data.resource_rid = (resourceQuery[0][0] as { rid: string }).rid;
+                    } else {
+                        return {
+                            statusCode: HttpStatus.NOT_FOUND,
+                            statusMessage: STATUS_MESSAGE.resourceNotFound,
+                            data: null
+                        }
+                    }
+                }
+
                 let getSetData = setInlineForProjectTask(checkForExistingData[0][0], data)
                 if(getSetData.statusMessage != null) {
                     return {
@@ -43,6 +60,23 @@ export default class ProjectTaskGraphqlServies {
                     
                     if(updatedProjectTask) {
                         let fetchLatestUpdatedData = await projectTaskService.getProjectTaskById(data.account_rid, data.rid);
+                        
+                        await projectTaskSchemaService.addProjectTaskTimelineForInlineEdit(
+                        checkAccountExists[0][0].r_number,
+                        "update",
+                        data.account_rid,
+                        data.rid,
+                        data.userId,
+                        );
+
+                        await projectTaskSchemaService.addProjctTaskHistoryForInline(
+                        checkAccountExists[0][0].r_number,
+                        data,
+                        checkForExistingData[0][0],
+                        data.rid,
+                        data.userId
+                        )
+
                         let latestData : any = fetchLatestUpdatedData.data
                         let finalStructuredData = {
                             rid: latestData.rid,
