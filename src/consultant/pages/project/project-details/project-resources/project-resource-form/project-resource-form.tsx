@@ -38,6 +38,7 @@ import { projectResourcesPayloadData } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { FiscalYearType } from '../../../../../types/project';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 
 const ProjectResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -66,9 +67,22 @@ const ProjectResourceForm: React.FC = () => {
   const projectResourceData = useMemo(
     () => ({
       ...projectResource?.projectResource,
+      updated_on: projectResource?.projectResource?.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(
+            projectResource?.projectResource?.modified_datetime
+          )
+        : '-',
+      created_on: projectResource?.projectResource?.created_datetime
+        ? formatDateToYYYYMMDDWithTime(
+            projectResource?.projectResource?.created_datetime
+          )
+        : null,
+      created_by: projectResource?.projectResource?.created_name || null,
+      modified_name: projectResource?.projectResource?.modified_name || '-',
     }),
     [projectResource]
   );
+
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const projectViewEditFields = useMemo(
@@ -233,7 +247,7 @@ const ProjectResourceForm: React.FC = () => {
 
       setIsResourceType(
         selectedResource?.resource_type_name?.toLowerCase() ===
-        ResourceType.full_time
+          ResourceType.full_time
       );
     }
     if (data.fieldName === 'assigned_skill_role_type_rid') {
@@ -259,7 +273,7 @@ const ProjectResourceForm: React.FC = () => {
 
     setIsResourceType(
       selectedProjectResourceType?.resource_type_name?.toLowerCase() ===
-      ResourceType.full_time
+        ResourceType.full_time
     );
   }, [
     memoizedProjectResourceCode,

@@ -85,10 +85,10 @@ export const ProjectResourceFormData = (
     ? Number(projectPFY.year) === currentYear
       ? previousDate
       : (() => {
-        const date = new Date(projectPFY.endDate);
-        date.setDate(date.getDate() - 1);
-        return date;
-      })()
+          const date = new Date(projectPFY.endDate);
+          date.setDate(date.getDate() - 1);
+          return date;
+        })()
     : undefined;
 
   return useMemo(
@@ -318,7 +318,7 @@ export const ProjectResourceFormData = (
         sectionName: 'Project Details',
         fillType: 'half',
         fields: [
-          createDateField('start_date', 'Effective From', {
+          createDateField('start_date', 'Resource Start Date', {
             required: false,
             minDate: startDateMin,
             maxDate: startDateMax,
@@ -463,6 +463,69 @@ export const ProjectResourceFormData = (
               isEditView &&
               !permissionMap?.['description']?.read &&
               !permissionMap?.['description']?.edit,
+          }),
+        ],
+      },
+      {
+        sectionName: 'Audit Information',
+        fillType: 'half',
+        hide: !isEditView,
+        fields: [
+          createTextField('rid', 'Record ID', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['project_rid']?.read &&
+              !permissionMap?.['project_rid']?.edit,
+          }),
+          createTextField('created_on', 'Created On', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_datetime']?.read &&
+              !permissionMap?.['created_datetime']?.edit,
+          }),
+          createTextField('created_name', 'Created By', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_name']?.read &&
+              !permissionMap?.['created_name']?.edit,
+          }),
+          createTextField('r_number', 'Project Resource ID', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['r_number']?.read &&
+              !permissionMap?.['r_number']?.edit,
+          }),
+          createTextField('updated_on', 'Updated On', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_datetime']?.read &&
+              !permissionMap?.['modified_datetime']?.edit,
+          }),
+          createTextField('modified_name', 'Updated By', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_name']?.read &&
+              !permissionMap?.['modified_name']?.edit,
+          }),
+          createTextField('project_resource_code', 'Project Resource Code', {
+            required: false,
+            disabled: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['project_resource_code']?.read &&
+              !permissionMap?.['project_resource_code']?.edit,
           }),
         ],
       },
