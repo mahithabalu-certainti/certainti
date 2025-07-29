@@ -14,8 +14,13 @@ import {
   ProjectResourceDetailsApiResponse,
   ProjectResourceNewPayload,
 } from '../../types/project-resources';
-import { DetailURL, ProjectResourcesURL } from '../urls/project-resources-url';
+import {
+  DetailURL,
+  ProjectResourceExportURL,
+  ProjectResourcesURL,
+} from '../urls/project-resources-url';
 import { baseUrl } from '../urls/resource-cost-skill-urls';
+import { ProjectResourceExportParams } from '../../types';
 
 export const useProjectResources = (
   params: ProjectResourcesListParams,
@@ -133,4 +138,38 @@ export const useUpdateProjectResource = (
     },
     ...options,
   });
+};
+export const exportProjectResoure = async (
+  params: ProjectResourceExportParams
+) => {
+  try {
+    const response = await resourceServiceApi.get(
+      ProjectResourceExportURL(params)
+    );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'project_resource.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };

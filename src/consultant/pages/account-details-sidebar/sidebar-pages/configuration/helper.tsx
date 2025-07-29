@@ -18,7 +18,7 @@ const numberOptions: { option: string; value: string }[] = [
 
 export const getAssignUserFilterFields = (): FieldConfig[] => [
   {
-    name: 'User Full Name',
+    name: 'Username',
     value: 'first_name',
     type: 'text',
     operatorOption: textOptions,

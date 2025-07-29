@@ -99,6 +99,14 @@ export interface ProjectFinancialResourceExportParams {
   projectRid?: string;
   accountRid?: string;
 }
+export interface ProjectResourceExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  accountNumber?: string;
+  projectRid?: string;
+  accountRid?: string;
+}
 
 export type ProjectFinancialResourceCostList = {
   total_cost_pro_res: string | null;
