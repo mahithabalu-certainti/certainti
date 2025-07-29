@@ -23,7 +23,63 @@ export const constants = {
   SQL_GET_USER_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."user_permission_access" WHERE user_id = :userId AND module_permission_id = :permissionId LIMIT 1`,
   SQL_INSERT_API_DENIAL: `INSERT INTO ${MAIN_SCHEMA_NAME}."user_api_access_denials" (rid, user_id, permission_id, permission_name, api_endpoint, created_datetime, updated_datetime) VALUES (:rid, :userId, :permissionId, :permissionName, :apiEndpoint, NOW(), NOW())`,
   SQL_GET_ACCOUNT: `SELECT rid,parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}."account" WHERE {whereClause}  LIMIT 1`,
-  SQL_GET_PROJECTS : `
+   SQL_GET_USER_PROJECTS : `
+  SELECT
+    ps.project_rid,
+    ps.project_name,
+    ps.project_code,
+    ps.account_rid,
+    
+    -- Access resolution (EXCLUDE takes precedence)
+    CASE
+      WHEN EXISTS (
+        SELECT 1
+        FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ex
+        WHERE ex.entity_rid = ps.project_rid
+          AND ex.entity_type = 'PROJECT'
+          AND ex.access_type = 'EXCLUDE'
+          AND (
+            ex.user_rid = :entity_rid
+            OR ex.group_rid IN (
+              SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+              WHERE user_rid = :entity_rid
+            )
+          )
+      ) THEN false
+      WHEN EXISTS (
+        SELECT 1
+        FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access inc
+        WHERE inc.entity_rid = ps.project_rid
+          AND inc.entity_type = 'PROJECT'
+          AND inc.access_type = 'INCLUDE'
+          AND (
+            inc.user_rid = :entity_rid
+            OR inc.group_rid IN (
+              SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+              WHERE user_rid = :entity_rid
+            )
+          )
+      ) THEN true
+      ELSE false
+    END AS has_access,
+    
+    -- Group-based access flag (true only if access is exclusively through groups)
+    EXISTS (
+      SELECT 1
+      FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
+        ON uga.group_rid = ugm.group_rid
+        AND uga.entity_rid = ps.project_rid
+        AND uga.entity_type = 'PROJECT'
+      WHERE ugm.user_rid = :entity_rid
+    )  AS is_grouped
+    
+  FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+  WHERE {whereClauses}
+  {orderByClause}
+  LIMIT :limit OFFSET :offset
+`,
+ SQL_GET_PROJECTS : `
       SELECT 
         ps.project_rid,
         ps.project_name,

@@ -13,6 +13,7 @@ import { ProjectAccessView } from "../utils/types";
 import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
 import UserService from "./userService";
+import { getUserGroupUserCount } from "../utils/rawQueries";
 
 
 
@@ -492,7 +493,8 @@ async getActiveUsersForGrouping(
   page: number = 1,
   limit: number = 10,
   sortBy: string = "first_name", 
-  sortOrder: string = "ASC"
+  sortOrder: string = "ASC",
+  filters: Record<string, any> = {}
 ): Promise<{
   statusCode: number;
   message: string;
@@ -500,7 +502,7 @@ async getActiveUsersForGrouping(
   data?: { users: any,count:number };
 }> {
   try {
-    const whereClause: any = {};
+    let basewhereClause: any = {};
     let orgIdsToFilter: string[] = [];
     const offset = (page - 1) * limit;
     const order: any[] = [];
@@ -511,7 +513,7 @@ async getActiveUsersForGrouping(
 
     // Step 1: If consultant-only group, filter directly
     if (is_consultant_only_group) {
-      whereClause.is_consultant_firm = true;
+      basewhereClause.is_consultant_firm = true;
     } else if (account_rid) {
       const accountRidArray: string[] = Array.isArray(account_rid)
         ? account_rid
@@ -530,14 +532,20 @@ async getActiveUsersForGrouping(
       orgIdsToFilter = accountRidArray;
 
       // Filter users belonging to these orgs or consultants
-      whereClause[Op.or] = [
+      basewhereClause[Op.or] = [
         { org_id: { [Op.in]: orgIdsToFilter } },
       ];
+    }
+    if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+      const { whereClause } = this.buildWhereClause(filters);
+      if (whereClause && Object.keys(whereClause).length > 0) {
+        Object.assign(basewhereClause, whereClause);
+      }
     }
 
     // Step 2: Get ACTIVE users
     const allUsers = await User.findAll({
-      where: whereClause,
+      where: basewhereClause,
       attributes: [
       "rid", 
       "email", 
@@ -643,7 +651,8 @@ async getActiveUsersForUpdate(
   page: number = 1,
   limit: number = 10,
   sortBy: string = "first_name", 
-  sortOrder: string = "ASC"
+  sortOrder: string = "ASC",
+  filters: Record<string, any> = {}
 ): Promise<{
   statusCode: number;
   message: string;
@@ -651,11 +660,11 @@ async getActiveUsersForUpdate(
   data?: { users: any,count:number };
 }> {
   try {
-    const whereClause: any = {};
+    const basewhereClause: any = {};
     let orgIdsToFilter: string[] = [];
 
     if (is_consultant_only_group) {
-      whereClause.is_consultant_firm = true;
+      basewhereClause.is_consultant_firm = true;
     } else if (account_rid) {
       const accountRidArray: string[] = Array.isArray(account_rid)
         ? account_rid
@@ -672,7 +681,13 @@ async getActiveUsersForUpdate(
       }
 
       orgIdsToFilter = accountRidArray;
-      whereClause.org_id = { [Op.in]: orgIdsToFilter };
+      basewhereClause.org_id = { [Op.in]: orgIdsToFilter };
+    }
+     if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+      const { whereClause } = this.buildWhereClause(filters);
+      if (whereClause && Object.keys(whereClause).length > 0) {
+        Object.assign(basewhereClause, whereClause);
+      }
     }
     // Step 2: Prepare sorting
     const allowedSortFields = ["first_name", "email"]; // Add more fields as needed
@@ -683,7 +698,7 @@ async getActiveUsersForUpdate(
 
     // Step 3: Paginated query of all active users
     const { rows: allActiveUsers, count: totalCount } = await User.findAndCountAll({
-      where: whereClause,
+      where: basewhereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", 
         "is_consultant_firm",
       [
@@ -1213,6 +1228,7 @@ async getAccountGroups(
       const filterProcessors: Record<string, Function> = {
         'group_name': (value: any) => this.processTextFilter('group_name', value, whereClause),
         'first_name': (value: any) => this.processTextFilter('first_name', value, whereClause),
+        'email': (value: any) => this.processTextFilter('email', value, whereClause),
         'group_type': (value: any) => this.processTextFilter('group_type_rid', value, whereClause),
         'is_consultant_only_group': (value: any) => this.processBooleanFilter('is_consultant_only_group', value, whereClause),
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
@@ -1303,8 +1319,16 @@ private processUserCountFilter(value: any, whereClause: Record<string, any>): vo
     if ('greater_than' in value) {
       conditions.push(this.createUserCountCondition('>', value.greater_than));
     }
-    if ('lesser_than' in value) {
-      conditions.push(this.createUserCountCondition('<', value.lesser_than));
+    if ('less_than' in value) {
+      conditions.push(this.createUserCountCondition('<', value.less_than));
+    }
+    if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+      conditions.push({
+        [Op.and]: [
+          this.createUserCountCondition('>=', value.between[0]),
+          this.createUserCountCondition('<=', value.between[1]),
+        ]
+      });
     }
     if ('is_empty' in value) {
       conditions.push(
@@ -1578,15 +1602,10 @@ private createUserCountCondition(operator: string, value: number): any {
           offset,
           attributes: {
            include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ]
+            [
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
+              "user_count",
+            ],
               ]
             },
           include: [
@@ -1680,23 +1699,10 @@ private createUserCountCondition(operator: string, value: number): any {
           order: orderArray,
           attributes: {
            include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ],
-              //   [
-              //   literal(`(
-              //     SELECT account_name
-              //     FROM "${MAIN_SCHEMA_NAME}".account AS acc
-              //     WHERE acc.rid = "UserGroup".account_rid
-              //   )`),
-              //   'account_name'
-              //  ],
+            [
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
+              "user_count",
+            ],
               ]
             },
           include: [
@@ -2934,8 +2940,11 @@ async  getProjectsWithUserAccessFlag(
     orderByClause = `ORDER BY ps.${sortField} ${sortDirection.toUpperCase()}`;
   }
 
+  const queryTemplate = access_type === 'USER' 
+    ? constants.SQL_GET_USER_PROJECTS 
+    : constants.SQL_GET_PROJECTS;
   // Main query with both access_type and has_access fields
-  const query =constants.SQL_GET_PROJECTS
+  const query =queryTemplate
     .replace('{whereClauses}', baseWhereClauses.join(' AND '))
     .replace('{orderByClause}', orderByClause)
     .replace('{joinCondition}',joinCondition)

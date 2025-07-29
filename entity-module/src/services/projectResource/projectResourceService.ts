@@ -39,7 +39,7 @@ export class ProjectResourceService {
     const dbInit = await this.projectResourceSchema.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      const { account_rid, project_rid, resource_code, start_date, end_date } =
+      const { account_rid, project_fiscal_rid, resource_code, start_date, end_date } =
         projectResourceData;
       const { accountNumber } =
         await this.projectResourceSchema.fetchValidAccountNumberById(
@@ -65,24 +65,25 @@ export class ProjectResourceService {
         };
       }
 
-      const projectData = await this.projectResourceSchema.validateProjectById(
+      const projectFiscalData = await this.projectResourceSchema.validateProjectFiscalById(
         accountNumber,
-        project_rid
+        project_fiscal_rid
       );
+
 
       await this.projectResourceSchema.createProjectResourcesTable(
         accountNumber
       );
 
-      if (projectData) {
+      if (projectFiscalData) {
         const existsInProjectResource =
           await this.projectResourceSchema.existsInProjectResourceTable(
             accountNumber,
             account_rid,
-            projectData,
+            projectFiscalData,
             resourceData,
-            projectData.fiscal_year,
-            projectData.project_code,
+            projectFiscalData.fiscal_year,
+            projectFiscalData.project_code,
             resource_code,
             start_date,
             end_date
@@ -112,7 +113,7 @@ export class ProjectResourceService {
               accountNumber,
               account_rid,
               resource_code,
-              projectData.fiscal_year,
+              projectFiscalData.fiscal_year,
               transaction
             );
 
@@ -122,7 +123,7 @@ export class ProjectResourceService {
               account_rid,
               userId,
               projectResourceData,
-              projectData.fiscal_year,
+              projectFiscalData.fiscal_year,
               transaction
             );
           }
@@ -143,7 +144,7 @@ export class ProjectResourceService {
                 account_rid,
                 userId,
                 projectResourceData,
-                projectData.fiscal_year,
+                projectFiscalData.fiscal_year,
                 transaction
               );
             }
@@ -195,8 +196,8 @@ export class ProjectResourceService {
               await this.projectResourceSchema.existsInProjectFiscalRegionTable(
                 accountNumber,
                 account_rid,
-                projectResourceData.project_rid,
-                projectData.fiscal_year,
+                projectResourceData.project_fiscal_rid,
+                projectFiscalData.fiscal_year,
                 projectResourceData.region_rid,
                 transaction
               );
@@ -204,10 +205,10 @@ export class ProjectResourceService {
             if (!existsInProjectFiscalRegion) {
               await this.projectResourceSchema.insertProjectFiscalRegionTable(
                 accountNumber,
-                projectData.project_code,
+                projectFiscalData.project_code,
                 projectResourceData,
                 resourceData,
-                projectData.fiscal_year,
+                projectFiscalData.fiscal_year,
                 userId,
                 transaction
               );
@@ -235,7 +236,7 @@ export class ProjectResourceService {
               await this.projectResourceSchema.existsInAccountFiscalRegionTable(
                 accountNumber,
                 account_rid,
-                projectData.fiscal_year,
+                projectFiscalData.fiscal_year,
                 projectResourceData.region_rid,
                 transaction
               );
@@ -244,7 +245,7 @@ export class ProjectResourceService {
                 accountNumber,
                 projectResourceData,
                 resourceData,
-                projectData.fiscal_year,
+                projectFiscalData.fiscal_year,
                 projectResourceData.region_rid,
                 userId,
                 transaction
@@ -256,9 +257,10 @@ export class ProjectResourceService {
           const projectResource =
             await this.projectResourceSchema.insertIntoProjectResourceTable(
               accountNumber,
-              projectData.project_code,
+              projectFiscalData.project_code,
               projectResourceData,
-              projectData.fiscal_year,
+              projectFiscalData.project_rid,
+              projectFiscalData.fiscal_year,
               userId,
               transaction
             );
@@ -267,8 +269,8 @@ export class ProjectResourceService {
             await this.projectResourceSchema.existsInProjectResourceFiscalTable(
               accountNumber,
               account_rid,
-              projectData.fiscal_year,
-              projectResourceData.project_rid,
+              projectFiscalData.fiscal_year,
+              projectResourceData.project_fiscal_rid,
               resourceData.rid || "",
               projectResourceData.country_rid,
               transaction
@@ -277,7 +279,7 @@ export class ProjectResourceService {
             await this.projectResourceSchema.insertIntoProjectResourceFiscalTable(
               accountNumber,
               projectResourceData,
-              projectData,
+              projectFiscalData,
               userId,
               projectResource,
               transaction
@@ -286,8 +288,9 @@ export class ProjectResourceService {
             await this.projectResourceSchema.updateProjectResourceFiscalTable(
               accountNumber,
               projectResourceData,
-              projectData.fiscal_year,
-              projectData.rid,
+              projectFiscalData,
+              projectFiscalData.fiscal_year,
+              projectFiscalData.rid,
               resourceData.rid || "",
               userId,
               transaction
@@ -299,8 +302,8 @@ export class ProjectResourceService {
               await this.projectResourceSchema.existsInProjectResourceFiscalRegionTable(
                 accountNumber,
                 account_rid,
-                projectData.fiscal_year,
-                projectData.rid,
+                projectFiscalData.fiscal_year,
+                projectFiscalData.rid,
                 resourceData.rid || "",
                 projectResourceData.country_rid || null,
                 projectResourceData.region_rid,
@@ -311,8 +314,9 @@ export class ProjectResourceService {
               await this.projectResourceSchema.insertIntoProjectResourceFiscalRegionTable(
                 accountNumber,
                 projectResourceData,
-                projectData.project_code,
-                projectData.fiscal_year,
+                projectFiscalData.project_rid,
+                projectFiscalData.project_code,
+                projectFiscalData.fiscal_year,
                 userId,
                 projectResource,
                 transaction
@@ -321,8 +325,9 @@ export class ProjectResourceService {
               await this.projectResourceSchema.updateProjectResourceFiscalRegionTable(
                 accountNumber,
                 projectResourceData,
-                projectData.fiscal_year,
-                projectData.rid,
+                projectFiscalData,
+                projectFiscalData.fiscal_year,
+                projectFiscalData.rid,
                 resourceData.rid || "",
                 userId,
                 transaction
@@ -344,40 +349,40 @@ export class ProjectResourceService {
           await this.projectResourceSchema.aggregatesProjectFiscal(
             accountNumber,
             account_rid,
-            projectResourceData.project_rid,
-            projectData.fiscal_year,
+            projectResourceData.project_fiscal_rid,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
           await this.projectResourceSchema.aggregatesProjectFiscalRegion(
             accountNumber,
             account_rid,
-            projectData.project_code,
-            projectData.rid,
-            projectData.fiscal_year,
+            projectFiscalData.project_code,
+            projectFiscalData.rid,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
           await this.projectResourceSchema.aggregatesProjectFiscalSummary(
             accountNumber,
             account_rid,
-            projectData.rid,
-            projectData.project_code,
-            projectData.fiscal_year,
+            projectFiscalData.rid,
+            projectFiscalData.project_code,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
           await this.projectResourceSchema.aggregatesProject(
             accountNumber,
             account_rid,
-            projectData.project_code,
+            projectFiscalData.project_code,
             transaction
           );
 
           await this.projectResourceSchema.aggregatesProjectSummary(
             accountNumber,
             account_rid,
-            projectData.project_code,
+            projectFiscalData.project_code,
             transaction
           );
 
@@ -386,7 +391,7 @@ export class ProjectResourceService {
             account_rid,
             projectResourceData.resource_code,
             resourceData,
-            projectData.fiscal_year,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
@@ -395,21 +400,21 @@ export class ProjectResourceService {
             account_rid,
             projectResourceData.resource_code,
             resourceData,
-            projectData.fiscal_year,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
           await this.projectResourceSchema.aggregatesAccountFiscal(
             accountNumber,
             account_rid,
-            projectData.fiscal_year,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
           await this.projectResourceSchema.aggregatesAccountFiscalRegion(
             accountNumber,
             account_rid,
-            projectData.fiscal_year,
+            projectFiscalData.fiscal_year,
             transaction
           );
 
@@ -456,7 +461,7 @@ export class ProjectResourceService {
     const dbInit = await this.projectResourceSchema.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      const { account_rid, project_rid } = projectResourceData;
+      const { account_rid, project_fiscal_rid } = projectResourceData;
 
       const { accountNumber: validAccountNumber } =
         await this.projectResourceSchema.fetchValidAccountNumberById(
@@ -467,9 +472,9 @@ export class ProjectResourceService {
         throw new Error("Invalid account ID");
       }
 
-      const projectData = await this.projectResourceSchema.validateProjectById(
+      const projectData = await this.projectResourceSchema.validateProjectFiscalById(
         validAccountNumber,
-        project_rid
+        project_fiscal_rid
       );
 
       const resourceData =
@@ -851,7 +856,7 @@ export class ProjectResourceService {
     try {
       const {
         account_rid,
-        project_rid,
+        project_fiscal_rid,
         project_resource_rid,
         total_cost_pro_res,
         total_hours_pro_res,
@@ -867,9 +872,9 @@ export class ProjectResourceService {
         throw new Error("Invalid account ID");
       }
 
-      const projectData = await this.projectResourceSchema.validateProjectById(
+      const projectData = await this.projectResourceSchema.validateProjectFiscalById(
         validAccountNumber,
-        project_rid
+        project_fiscal_rid
       );
 
       let resourceData = null;
@@ -1136,6 +1141,7 @@ export class ProjectResourceService {
     await this.projectResourceSchema.updateProjectResourceFiscalOnUpdateTable(
       accountNumber,
       projectResourceData,
+      projectData.project_rid,
       projectData.fiscal_year,
       userId,
       resourceData,
@@ -1146,6 +1152,7 @@ export class ProjectResourceService {
     await this.projectResourceSchema.updateProjectResourceFiscalRegionTableOnUpdate(
       accountNumber,
       projectResourceData,
+      projectData.project_rid,
       projectData.fiscal_year,
       projectData.project_code,
       resourceData,
@@ -1222,6 +1229,7 @@ export class ProjectResourceService {
     await this.projectResourceSchema.insertProjectFiscalRegionTableOnUpdate(
       accountNumber,
       projectData.project_code,
+      projectData.project_rid,
       projectResourceData,
       resourceData,
       projectData.fiscal_year,
@@ -1232,7 +1240,7 @@ export class ProjectResourceService {
     await this.projectResourceSchema.cleanupOrphanedProjectFiscalRegions(
       accountNumber,
       projectResourceData.account_rid,
-      projectResourceData.project_rid,
+      projectResourceData.project_fiscal_rid,
       projectData.project_code,
       projectData.fiscal_year,
       transaction
@@ -1321,7 +1329,7 @@ export class ProjectResourceService {
     await this.projectResourceSchema.aggregatesProjectFiscal(
       accountNumber,
       account_rid,
-      projectResourceData.project_rid,
+      projectResourceData.project_fiscal_rid,
       fiscal_year,
       transaction
     );

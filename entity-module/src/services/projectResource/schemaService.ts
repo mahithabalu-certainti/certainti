@@ -275,7 +275,7 @@ export class ProjectResourceSchemaService {
     return resourceData;
   }
 
-  async validateProjectById(accountNumber: string, projectId: string) {
+  async validateProjectFiscalById(accountNumber: string, projectId: string) {
     const { ProjectFiscal } = await this.getModels(accountNumber);
     const projectData = await ProjectFiscal.findOne({
       where: {
@@ -305,7 +305,7 @@ export class ProjectResourceSchemaService {
         start_date: startDateTocheck ? startDateTocheck?.toDate() : null,
         end_date: endDateToCheck ? endDateToCheck?.toDate() : null,
         rid: { [Op.ne]: projectResourceData.project_resource_rid },
-        project_rid: projectResourceData.project_rid,
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
         resource_rid: resourceData.rid
         // [Op.and]: [
         //   Sequelize.where(
@@ -455,7 +455,7 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         fiscal_year: fiscalYear,
         region_rid: regionId,
-        project_rid: projectId
+        project_fiscal_rid: projectId
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
@@ -525,7 +525,7 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         fiscal_year: fiscalYear,
         country_rid: countryId,
-        project_rid: projectId,
+        project_fiscal_rid: projectId,
         resource_rid: resourceId,
         // [Op.and]: [
         //   Sequelize.where(
@@ -561,7 +561,7 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         fiscal_year: fiscalYear,
         region_rid: regionId,
-        project_rid: projectId,
+        project_fiscal_rid: projectId,
         resource_rid: resourceId
         // [Op.and]: [
         //   Sequelize.where(
@@ -1052,7 +1052,7 @@ export class ProjectResourceSchemaService {
 
     const baseData: any = ProjectResourceMapper.mapToProjectFiscal(
       projectData,
-      projectData?.rid,
+      projectData.rid,
       fiscalYear,
       userId
     );
@@ -1178,7 +1178,7 @@ export class ProjectResourceSchemaService {
 
     const baseData: any = ProjectResourceMapper.mapToProjectFiscal(
       projectData,
-      projectData?.rid,
+      projectData.rid,
       fiscalYear,
       userId
     );
@@ -1303,7 +1303,7 @@ export class ProjectResourceSchemaService {
 
     const baseData: any = ProjectResourceMapper.mapToProjectFiscal(
       projectData,
-      projectData?.rid,
+      projectData?.project_rid,
       fiscalYear,
       userId
     );
@@ -1376,6 +1376,7 @@ export class ProjectResourceSchemaService {
   async insertProjectFiscalRegionTableOnUpdate(
     accountNumber: string,
     projectCode: string,
+    projectId: string,
     projectResourceData: ICreateProjectResource | IUpdateProjectResource,
     resourceData: any,
     fiscalYear: number,
@@ -1406,7 +1407,7 @@ export class ProjectResourceSchemaService {
         where: {
           account_rid: projectResourceData.account_rid,
           fiscal_year: fiscalYear,
-          project_rid: projectCode
+          project_fiscal_rid: projectResourceData.project_fiscal_rid
         },
         transaction,
       });
@@ -1429,7 +1430,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: projectResourceData.account_rid,
         fiscal_year: fiscalYear,
-        project_rid: projectResourceData.project_rid,
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
@@ -1443,7 +1444,7 @@ export class ProjectResourceSchemaService {
   
     const baseData: any = ProjectResourceMapper.mapToProjectFiscal(
       projectData,
-      projectData?.rid,
+      projectData?.project_rid,
       fiscalYear,
       userId
     );
@@ -1589,7 +1590,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         fiscal_year: fiscalYear,
-        project_rid: projectRid,
+        project_fiscal_rid: projectRid,
       },
       raw: true,
       transaction,
@@ -1663,6 +1664,7 @@ export class ProjectResourceSchemaService {
 
     const baseData = ProjectResourceMapper.mapToProjectResource(
       projectResource,
+      projectData.project_rid,
       startDate,
       endDate,
       userId,
@@ -1678,6 +1680,7 @@ export class ProjectResourceSchemaService {
     accountNumber: string,
     projectCode: string,
     projectResourceData: ICreateProjectResource,
+    projectId: string,
     fiscalYear: number,
     userId: string,
     transaction: Transaction
@@ -1719,7 +1722,8 @@ export class ProjectResourceSchemaService {
       {
         project_resource_code: projectResourceCode,
         account_rid: projectResourceData.account_rid,
-        project_rid: projectResourceData.project_rid,
+        project_rid: projectId,
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
         resource_rid: resource?.rid || "",
         assigned_skill_role_type_rid: updatedAssignedRoleId,
         start_date: startDate ? startDate.toDate() : null,
@@ -1860,7 +1864,8 @@ export class ProjectResourceSchemaService {
     await ProjectResourceFiscal.create(
       {
         account_rid: projectResourceData.account_rid,
-        project_rid: projectResourceData.project_rid,
+        project_rid: projectData.project_rid,
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
         project_resource_rid: createdProjectResource.rid,
         resource_rid: resource.rid || "",
         fiscal_year: projectData.fiscal_year,
@@ -1883,6 +1888,7 @@ export class ProjectResourceSchemaService {
   async insertIntoProjectResourceFiscalRegionTable(
     accountNumber: string,
     projectResourceData: ICreateProjectResource,
+    projectId: string,
     project_code: string,
     fiscalYear: number,
     userId: string,
@@ -1913,6 +1919,7 @@ export class ProjectResourceSchemaService {
 
     const basedata = ProjectResourceMapper.mapToProjectResourceFiscalRegion(
       projectResourceData,
+      projectId,
       fiscalYear,
       userId,
       resource.rid ?? ""
@@ -1926,6 +1933,7 @@ export class ProjectResourceSchemaService {
   async updateProjectResourceFiscalTable(
     accountNumber: string,
     projectResourceData: any,
+    projectData: any,
     fiscalYear: number,
     projectId: string,
     resourceId: string,
@@ -1938,7 +1946,8 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: projectResourceData.account_rid,
         fiscal_year: fiscalYear,
-        project_rid: projectId,
+        project_rid: projectData.project_rid,
+        project_fiscal_rid: projectId,
         resource_rid: resourceId
         // [Op.and]: [
         //   Sequelize.where(
@@ -1968,6 +1977,7 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "fiscal_year",
         "project_rid",
+        "project_fiscal_rid",
         "resource_rid",
         [
           Sequelize.fn("SUM", Sequelize.col("total_hours_pro_res")),
@@ -1978,11 +1988,12 @@ export class ProjectResourceSchemaService {
           "total_cost",
         ],
       ],
-      group: ["account_rid", "fiscal_year", "project_rid", "resource_rid"],
+      group: ["account_rid", "fiscal_year", "project_rid", "project_fiscal_rid", "resource_rid"],
       where: {
         account_rid: projectResourceData.account_rid,
         fiscal_year: fiscalYear,
-        project_rid: projectId,
+        project_rid: projectData.project_rid,
+        project_fiscal_rid: projectId,
         resource_rid: resourceId,
         // [Op.and]: [
         //   Sequelize.where(
@@ -2017,6 +2028,7 @@ export class ProjectResourceSchemaService {
   async updateProjectResourceFiscalOnUpdateTable(
     accountNumber: string,
     projectResourceData: any,
+    projectId: string,
     fiscalYear: number,
     userId: string,
     resourceData: any,
@@ -2029,21 +2041,23 @@ export class ProjectResourceSchemaService {
 
     const oldGroupKey = {
       project_rid: existingProjectResource.project_rid,
+      project_fiscal_rid: existingProjectResource.project_fiscal_rid,
       resource_rid: existingProjectResource.resource_rid,
       country_rid: existingProjectResource.country_rid,
       fiscal_year: existingProjectResource.fiscal_year,
     };
 
     const newGroupKey = {
-      project_rid: projectResourceData.project_rid,
+      project_rid: projectId,
+      project_fiscal_rid: projectResourceData.project_fiscal_rid,
       resource_rid: resourceData.rid,
       country_rid: projectResourceData.country_rid,
       fiscal_year: fiscalYear,
     };
 
     const isGroupChanged =
-      oldGroupKey.project_rid.toLowerCase() !==
-        newGroupKey.project_rid.toLowerCase() ||
+      oldGroupKey.project_fiscal_rid.toLowerCase() !==
+        newGroupKey.project_fiscal_rid.toLowerCase() ||
       oldGroupKey.resource_rid.toLowerCase() !==
         newGroupKey.resource_rid.toLowerCase() ||
       oldGroupKey.fiscal_year !== newGroupKey.fiscal_year ||
@@ -2055,7 +2069,7 @@ export class ProjectResourceSchemaService {
         account_rid: projectResourceData.account_rid,
         fiscal_year: groupKey.fiscal_year,
         resource_rid: groupKey.resource_rid,
-        project_rid: groupKey.project_rid,
+        project_fiscal_rid: groupKey.project_fiscal_rid,
       };
     
       if (groupKey.country_rid === null || groupKey.country_rid === undefined) {
@@ -2074,6 +2088,7 @@ export class ProjectResourceSchemaService {
           "account_rid",
           "fiscal_year",
           "project_rid",
+          "project_fiscal_rid",
           "resource_rid",
           "country_rid",
           [
@@ -2085,7 +2100,7 @@ export class ProjectResourceSchemaService {
             "total_cost",
           ],
         ],
-        group: ["account_rid", "fiscal_year", "project_rid", "resource_rid", "country_rid"],
+        group: ["account_rid", "fiscal_year", "project_rid", "project_fiscal_rid", "resource_rid", "country_rid"],
         where: {
           ...buildGroupWhere(oldGroupKey),
           rid: { [Op.ne]: projectResourceData.project_resource_rid }, // exclude updated record
@@ -2126,6 +2141,7 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "fiscal_year",
         "project_rid",
+        "project_fiscal_rid",
         "resource_rid",
         "country_rid",
         [
@@ -2137,7 +2153,7 @@ export class ProjectResourceSchemaService {
           "total_cost",
         ],
       ],
-      group: ["account_rid", "fiscal_year", "project_rid", "resource_rid", "country_rid"],
+      group: ["account_rid", "fiscal_year", "project_rid", "project_fiscal_rid", "resource_rid", "country_rid"],
       where: buildGroupWhere(newGroupKey),
       raw: true,
       transaction,
@@ -2185,7 +2201,8 @@ export class ProjectResourceSchemaService {
       await ProjectResourceFiscal.create(
         {
           account_rid: projectResourceData.account_rid,
-          project_rid: projectResourceData.project_rid,
+          project_rid: projectId,
+          project_fiscal_rid: projectResourceData.project_fiscal_rid,
           fiscal_year: fiscalYear,
           resource_rid: resource?.rid || "",
           project_resource_rid: projectResourceData.project_resource_rid,
@@ -2209,6 +2226,7 @@ export class ProjectResourceSchemaService {
   async updateProjectResourceFiscalRegionTable(
     accountNumber: string,
     projectResourceData: ICreateProjectResource | IUpdateProjectResource,
+    projectData: any,
     fiscalYear: number,
     projectId: string,
     resourceId: string,
@@ -2224,7 +2242,7 @@ export class ProjectResourceSchemaService {
         fiscal_year: fiscalYear,
         country_rid: projectResourceData.country_rid,
         region_rid: projectResourceData.region_rid,
-        project_rid: projectId,
+        project_fiscal_rid: projectId,
         resource_rid: resourceId
         // [Op.and]: [
         //   Sequelize.where(
@@ -2257,6 +2275,7 @@ export class ProjectResourceSchemaService {
 
       const newData = ProjectResourceMapper.mapToProjectResourceFiscalRegion(
         projectResourceData,
+        projectData.project_rid,
         fiscalYear,
         userId,
         resource?.rid || ""
@@ -2280,6 +2299,7 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "fiscal_year",
         "project_rid",
+        "project_fiscal_rid",
         "resource_rid",
         "country_rid",
         "region_rid",
@@ -2296,6 +2316,7 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "fiscal_year",
         "project_rid",
+        "project_fiscal_rid",
         "resource_rid",
         "country_rid",
         "region_rid",
@@ -2305,7 +2326,8 @@ export class ProjectResourceSchemaService {
         fiscal_year: fiscalYear,
         country_rid: projectResourceData.country_rid,
         region_rid: projectResourceData.region_rid,
-        project_rid: projectId,
+        project_rid: projectData.project_rid,
+        project_fiscal_rid: projectId,
         resource_rid: resourceId
         // [Op.and]: [
         //   Sequelize.where(
@@ -2342,6 +2364,7 @@ export class ProjectResourceSchemaService {
   async updateProjectResourceFiscalRegionTableOnUpdate(
     accountNumber: string,
     projectResourceData: IUpdateProjectResource,
+    projectId: string,
     fiscalYear: number,
     projectCode: string,
     resourceData: any,
@@ -2354,6 +2377,7 @@ export class ProjectResourceSchemaService {
 
     const oldGroupKey = {
       project_rid: existingProjectResource.project_rid,
+      project_fiscal_rid: existingProjectResource.project_fiscal_rid,
       resource_rid: existingProjectResource.resource_rid,
       fiscal_year: existingProjectResource.fiscal_year,
       country_rid: existingProjectResource.country_rid,
@@ -2361,7 +2385,8 @@ export class ProjectResourceSchemaService {
     };
 
     const newGroupKey = {
-      project_rid: projectResourceData.project_rid,
+      project_rid: projectId,
+      project_fiscal_rid: projectResourceData.project_fiscal_rid,
       resource_rid: resourceData.rid,
       fiscal_year: fiscalYear,
       country_rid: projectResourceData.country_rid,
@@ -2369,8 +2394,8 @@ export class ProjectResourceSchemaService {
     };
 
     const isGroupChanged =
-      oldGroupKey.project_rid?.toLowerCase() !==
-        newGroupKey.project_rid?.toLowerCase() ||
+      oldGroupKey.project_fiscal_rid?.toLowerCase() !==
+        newGroupKey.project_fiscal_rid?.toLowerCase() ||
       oldGroupKey.resource_rid?.toLowerCase() !==
         newGroupKey.resource_rid?.toLowerCase() ||
       oldGroupKey.fiscal_year !== newGroupKey.fiscal_year ||
@@ -2382,7 +2407,7 @@ export class ProjectResourceSchemaService {
       fiscal_year: groupKey.fiscal_year,
       country_rid: groupKey.country_rid,
       region_rid: groupKey.region_rid,
-      project_rid: groupKey.project_rid,
+      project_fiscal_rid: groupKey.project_fiscal_rid,
       resource_rid: groupKey.resource_rid
       // [Op.and]: [
       //   Sequelize.where(
@@ -2403,6 +2428,7 @@ export class ProjectResourceSchemaService {
           "account_rid",
           "fiscal_year",
           "project_rid",
+          "project_fiscal_rid",
           "resource_rid",
           "country_rid",
           "region_rid",
@@ -2419,6 +2445,7 @@ export class ProjectResourceSchemaService {
           "account_rid",
           "fiscal_year",
           "project_rid",
+          "project_fiscal_rid",
           "resource_rid",
           "country_rid",
           "region_rid",
@@ -2461,6 +2488,7 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "fiscal_year",
         "project_rid",
+        "project_fiscal_rid",
         "resource_rid",
         "country_rid",
         "region_rid",
@@ -2477,6 +2505,7 @@ export class ProjectResourceSchemaService {
         "account_rid",
         "fiscal_year",
         "project_rid",
+        "project_fiscal_rid",
         "resource_rid",
         "country_rid",
         "region_rid",
@@ -2529,6 +2558,7 @@ export class ProjectResourceSchemaService {
 
         const newData = ProjectResourceMapper.mapToProjectResourceFiscalRegion(
           projectResourceData,
+          projectId,
           fiscalYear,
           userId,
           resource?.rid || ""
@@ -3053,6 +3083,7 @@ export class ProjectResourceSchemaService {
       attributes: [
         "account_rid",
         "project_rid",
+        "project_fiscal_rid",
         "fiscal_year",
         [
           Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
@@ -3067,7 +3098,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         fiscal_year: fiscalYear,
-        project_rid: projectId
+        project_fiscal_rid: projectId
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
@@ -3078,6 +3109,7 @@ export class ProjectResourceSchemaService {
       group: [
         "account_rid",
         "project_rid",
+        "project_fiscal_rid",
         "fiscal_year",
       ],
       raw: true,
@@ -3222,6 +3254,7 @@ export class ProjectResourceSchemaService {
       attributes: [
         "account_rid",
         "project_rid",
+        "project_fiscal_rid",
         "fiscal_year",
         [
           Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
@@ -3236,7 +3269,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         fiscal_year: fiscalYear,
-        project_rid: projectId
+        project_fiscal_rid: projectId
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
@@ -3247,6 +3280,7 @@ export class ProjectResourceSchemaService {
       group: [
         "account_rid",
         "project_rid",
+        "project_fiscal_rid",
         "fiscal_year",
       ],
       raw: true,
@@ -3418,7 +3452,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         fiscal_year: fiscalYear,
-        project_rid: projectId
+        project_fiscal_rid: projectId
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
@@ -4298,7 +4332,7 @@ export class ProjectResourceSchemaService {
     const {
       project_resource_rid,
       account_rid,
-      project_rid,
+      project_fiscal_rid,
       ...fieldsToUpdate
     } = projectResourceData;
 
@@ -4598,7 +4632,7 @@ export class ProjectResourceSchemaService {
 
     const whereFilters: any = {
       account_rid: accountId,
-      project_rid: projectId,
+      project_fiscal_rid: projectId,
       ...filters,
     };
 
@@ -4666,7 +4700,7 @@ export class ProjectResourceSchemaService {
 
     const whereFilters: any = {
       account_rid: accountId,
-      project_rid: projectId,
+      project_fiscal_rid: projectId,
       ...filters,
     };
 

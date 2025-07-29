@@ -19,7 +19,7 @@ routes.get("/profile/:profileId/permissions",checkUserStatusMiddleware("profile_
 routes.put("/profile/permissions", checkUserStatusMiddleware("profile_create"), controller.userManagementController.updateProfilePermissions);
 routes.put("/profile/permissions/edit", checkUserStatusMiddleware("profile_view_edit"), controller.userManagementController.editProfilePermissions);
 routes.get("/:profileId/profile/export", checkUserStatusMiddleware("profile_export"), controller.userManagementController.exportUserProfiles);
-routes.get("/:userId/permission/extended",checkUserStatusMiddleware("user_view_permission"), controller.userManagementController.getUserExtendedPermissions);
-routes.put("/permission/extended/edit",checkUserStatusMiddleware("user_assign_permission"), controller.userManagementController.updateUserExtendedPermissions);
+routes.get("/:userId/permission/extended",checkUserStatusMiddleware("profile_view_edit"), controller.userManagementController.getUserExtendedPermissions);
+routes.put("/permission/extended/edit",checkUserStatusMiddleware("profile_view_edit"), controller.userManagementController.updateUserExtendedPermissions);
 export default routes;
 

@@ -743,4 +743,34 @@ export interface IFinancialHighlights {
     statusMessage : string,
     data : any
   }>
+
+  listAccountLevelProjectCostFinancialHighlights(
+  accountRid: string,
+  filters: Record<string, any>,
+  search: string,
+  fiscalYear:number,
+  page: number,
+  limit: number,
+  sortBy: string,
+  sortOrder: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { summaries: any[]; totalCount: number }
+}>
+
+exportListAccountLevelProjectCostFinancialHighlights(
+  accountRid: string,
+  filters: Record<string, any>,
+  search: string,
+  fiscalYear:number,
+  sortBy: string,
+  sortOrder: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { summaries: any[]; totalCount: number }
+}>
 }

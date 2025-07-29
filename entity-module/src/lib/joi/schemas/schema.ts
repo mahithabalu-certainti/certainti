@@ -1426,6 +1426,7 @@ const createProjectSchema = Joi.object({
 
 const updateProjectSchema = Joi.object({
   project_fiscal_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+  project_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   account_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
@@ -2009,7 +2010,7 @@ const getDocumentTypeAndCategorySchema = Joi.object({
 })
 
 const createProjectResourceSchema = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),
   assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
@@ -2099,7 +2100,7 @@ const createProjectResourceSchema = Joi.object({
 });
 
 const updateProjectResourceSchema = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),
@@ -2434,7 +2435,7 @@ const updateProjectTaskSchema = Joi.object({
 });
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  projectRid: Joi.string().pattern(uuidRegex).max(255).optional(),
   page: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("1"),
@@ -2445,7 +2446,7 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
   filters: Joi.string().default("{}").optional(),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  account_rid: Joi.string().max(255).required(),
+  accountRid: Joi.string().max(255).required(),
   accountNumber: Joi.string().max(255).required(),
   fiscalYear: Joi.number()
     .integer()
@@ -2462,12 +2463,12 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
 });
 
 const exportResourceCostSchemaForFinancialHighlights = Joi.object({
-  project_rid: Joi.string().pattern(uuidRegex).max(255).optional(),
+  projectRid: Joi.string().pattern(uuidRegex).max(255).optional(),
   search: Joi.string().max(255).optional().allow("").allow(null),
   filters: Joi.string().default("{}").optional(),
   sortBy: Joi.string().default("created_datetime").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
-  account_rid: Joi.string().max(255).required(),
+  accountRid: Joi.string().max(255).required(),
   accountNumber: Joi.string().max(255).required(),
   fiscalYear: Joi.number()
     .integer()
@@ -2481,6 +2482,68 @@ const exportResourceCostSchemaForFinancialHighlights = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
+});
+
+const listAccountLevelProjectCostsSchema = Joi.object({
+    accountRid: Joi.string().max(255).required(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    search: Joi.string().max(255).optional().allow("").allow(null),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        })
+});
+
+const exportListAccountLevelProjectCostsSchema = Joi.object({
+    accountRid: Joi.string().max(255).required(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    search: Joi.string().max(255).optional().allow("").allow(null),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 });
 
 export {
@@ -2516,5 +2579,7 @@ export {
   createProjectTaskSchema,
   updateProjectTaskSchema,
   listResourceCostSchemaForFinancialHighlights,
-  exportResourceCostSchemaForFinancialHighlights
+  exportResourceCostSchemaForFinancialHighlights,
+  listAccountLevelProjectCostsSchema,
+  exportListAccountLevelProjectCostsSchema
 };

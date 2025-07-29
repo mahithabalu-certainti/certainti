@@ -559,6 +559,9 @@ export const rawQueries = {
   updateImport(schemaName : string, updatedData : any, rid : string) {
     return `UPDATE ${schemaName}.import SET fiscal_year = ${updatedData.fiscal_year} WHERE rid = '${rid}'`
   },
+  fetchChildAccountsByParentAccountRid(){
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid = :parentRid`
+  },
   async updateSetting(schemaName : string, data : any, orgDb : Sequelize, mainDb : Sequelize) {
     let tableName : string[];
     let whereParams : string = ``
@@ -583,8 +586,8 @@ export const rawQueries = {
       `
       fiscal_start_date = '${data.fiscal_start_date}',
       fiscal_end_date = '${data.fiscal_end_date}',
-      blended_rate_fte = ${data.blended_rate_fte == null ? null : parseFloat(data.blended_rate_fte)},
-      blended_rate_subcon = ${data.blended_rate_subcon == null ? null : parseFloat(data.blended_rate_subcon) },
+      blended_rate_fte = ${data.blended_rate_fte == '' ? null : parseFloat(data.blended_rate_fte)},
+      blended_rate_subcon = ${data.blended_rate_subcon == '' ? null : parseFloat(data.blended_rate_subcon) },
       autosend_interaction = ${data.autosend_interaction},
       max_ai_interactions = ${data.max_ai_interactions},
       auto_access_rd = ${data.auto_access_rd},
@@ -688,4 +691,5 @@ export const DEFAULT_PROJECT_DETAILS = {
 
 export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
   statewise : "state",
+  summary : "summary"
 }

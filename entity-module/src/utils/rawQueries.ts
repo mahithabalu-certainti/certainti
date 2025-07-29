@@ -414,51 +414,61 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         SELECT DISTINCT ON (af.account_rid)
             af.account_rid,
             COALESCE(af.total_projects_rd_credits_fte,0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon
+            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            COALESCE(af.total_projects_rd_credits,0) AS rd_credits_total
         FROM
         ${schemaName}.account_fiscal af
         LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = af.account_rid
+        LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
             ad.account_rid = '${account_rid}'
             AND
             af.fiscal_year = ${fiscal_year}
+        group by
+        af.account_rid, af.total_projects_rd_credits_fte,af.total_projects_rd_credits_subcon, pf.rd_credits_nonlabor_fed_level,
+        af.total_projects_rd_credits
     ),
     calculate_rd_credits_statewise AS (
         SELECT DISTINCT ON (af.account_rid)
             af.account_rid,
             COALESCE(af.total_projects_rd_credits_fte,0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon
+            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            COALESCE(af.total_projects_rd_credits,0) AS rd_credits_total
         FROM
         ${schemaName}.account_fiscal_region af
         LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = af.account_rid
         LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid AND p.region_rid = af.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
         ad.account_rid = '${account_rid}'
         AND
         af.fiscal_year = ${fiscal_year}
+        GROUP BY
+        af.account_rid, af.total_projects_rd_credits_fte,af.total_projects_rd_credits_subcon, pf.rd_credits_nonlabor_fed_level,
+        af.total_projects_rd_credits
     ),
     calculate_total_rd_credits AS (
         SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
-            COALESCE(af.total_projects_rd_credits_fte, 0) + COALESCE(afr.total_projects_rd_credits_fte, 0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon, 0) + COALESCE(afr.total_projects_rd_credits_subcon, 0) AS rd_credits_subcon
+            COALESCE(af.rd_credits_fte, 0) + COALESCE(afr.rd_credits_fte, 0) AS rd_credits_fte,
+            COALESCE(af.rd_credits_subcon, 0) + COALESCE(afr.rd_credits_subcon, 0) AS rd_credits_subcon,
+            COALESCE(af.rd_credits_nonlabor, 0) + COALESCE(afr.rd_credits_nonlabor, 0) AS rd_credits_nonlabor,
+            COALESCE(af.rd_credits_total, 0) + COALESCE(afr.rd_credits_total, 0) AS rd_credits_total
         FROM
         ${schemaName}.account_details ad
-        LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
-        LEFT JOIN ${schemaName}.account_fiscal af ON af.account_rid = ad.account_rid
-        LEFT JOIN ${schemaName}.project_fiscal p ON p.account_rid = ad.account_rid AND p.region_rid = afr.region_rid AND p.fiscal_year = ${fiscal_year}
+        LEFT JOIN calculate_rd_credits_statewise afr ON afr.account_rid = ad.account_rid
+        LEFT JOIN calculate_rd_credits_federal af ON af.account_rid = ad.account_rid
         WHERE 
         ad.account_rid = '${account_rid}'
-        AND
-        af.fiscal_year = ${fiscal_year}
-        AND
-        p.rid is not null
         GROUP BY 
-        af.total_projects_rd_credits_fte,
-        af.total_projects_rd_credits_subcon,
-        afr.total_projects_rd_credits_fte,
-        afr.total_projects_rd_credits_subcon,
-        ad.account_rid
+        ad.account_rid,
+        af.rd_credits_fte, af.rd_credits_subcon, af.rd_credits_nonlabor,
+        afr.rd_credits_fte, afr.rd_credits_subcon, afr.rd_credits_nonlabor,
+        af.rd_credits_total, afr.rd_credits_total
+
     )
 
     SELECT 
@@ -507,19 +517,25 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         jsonb_build_object(
         'name', 'Federal',
         'rd_credits_fte', rdf.rd_credits_fte,
-        'rd_credits_subcon', rdf.rd_credits_subcon
+        'rd_credits_subcon', rdf.rd_credits_subcon,
+        'rd_credits_nonlabor', rdf.rd_credits_nonlabor,
+        'rd_credits_total', rdf.rd_credits_total
         ) AS federal,
 
         jsonb_build_object(
         'name' ,'Statewise',
         'rd_credits_fte', rds.rd_credits_fte,
-        'rd_credits_subcon', rds.rd_credits_subcon
+        'rd_credits_subcon', rds.rd_credits_subcon,
+        'rd_credits_nonlabor', rds.rd_credits_nonlabor,
+        'rd_credits_total', rds.rd_credits_total
         ) AS state_wise,
 
         jsonb_build_object(
         'name','Grand Total',
         'rd_credits_fte', trd.rd_credits_fte,
-        'rd_credits_subcon', trd.rd_credits_subcon
+        'rd_credits_subcon', trd.rd_credits_subcon,
+        'rd_credits_nonlabor', trd.rd_credits_nonlabor,
+        'rd_credits_total', trd.rd_credits_total
         ) AS grand_total
         
         FROM
@@ -673,7 +689,9 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
             SUM(COALESCE(pf.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
-            SUM(COALESCE(pf.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon
+            SUM(COALESCE(pf.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            SUM(COALESCE(pf.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_details ad
             LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
@@ -691,7 +709,9 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
     SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
             SUM(COALESCE(afr.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
-            SUM(COALESCE(afr.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon
+            SUM(COALESCE(afr.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(afr.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            SUM(COALESCE(afr.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_details ad
 			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
@@ -709,7 +729,9 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
     calculate_rd_credits_total AS (
             SELECT DISTINCT ON (ad.account_rid) ad.account_rid, 
             COALESCE(cf.rd_credits_fte,0) + COALESCE(cr.rd_credits_fte,0) AS rd_credits_fte,
-            COALESCE(cf.rd_credits_subcon,0) + COALESCE(cr.rd_credits_subcon,0) AS rd_credits_subcon
+            COALESCE(cf.rd_credits_subcon,0) + COALESCE(cr.rd_credits_subcon,0) AS rd_credits_subcon,
+            COALESCE(cf.rd_credits_nonlabor,0) + COALESCE(cr.rd_credits_nonlabor,0) AS rd_credits_nonlabor,
+            COALESCE(cf.rd_credits_total,0) + COALESCE(cr.rd_credits_total,0) AS rd_credits_total
         FROM 
             ${schemaName}.account_details ad
             LEFT JOIN calculate_rd_credits_statewise cf ON cf.account_rid = ad.account_rid
@@ -764,19 +786,25 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         jsonb_build_object(
         'name', 'Federal',
         'rd_credits_fte', rdf.rd_credits_fte,
-        'rd_credits_subcon', rdf.rd_credits_subcon
+        'rd_credits_subcon', rdf.rd_credits_subcon,
+        'rd_credits_nonlabor', rdf.rd_credits_nonlabor,
+        'rd_credits_total', rdf.rd_credits_total
         ) AS federal,
 
         jsonb_build_object(
         'name' ,'Statewise',
         'rd_credits_fte', rds.rd_credits_fte,
-        'rd_credits_subcon', rds.rd_credits_subcon
+        'rd_credits_subcon', rds.rd_credits_subcon,
+        'rd_credits_nonlabor', rds.rd_credits_nonlabor,
+        'rd_credits_total', rds.rd_credits_total
         ) AS state_wise,
 
         jsonb_build_object(
         'name','Grand Total',
         'rd_credits_fte', trd.rd_credits_fte,
-        'rd_credits_subcon', trd.rd_credits_subcon
+        'rd_credits_subcon', trd.rd_credits_subcon,
+        'rd_credits_nonlabor', trd.rd_credits_nonlabor,
+        'rd_credits_total', trd.rd_credits_total
         ) AS grand_total
         
         FROM
@@ -907,7 +935,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         SELECT DISTINCT ON (af.account_rid)
             af.account_rid,
             COALESCE(af.total_projects_rd_credits_fte,0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon
+            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            COALESCE(af.total_projects_rd_credits, 0) AS rd_credits_total
         FROM
         ${schemaName}.account_fiscal af
         LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = af.account_rid
@@ -919,47 +949,53 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             af.fiscal_year = ${fiscal_year}
 			AND
 			afr.region_rid = '${region_rid}'
+        GROUP BY af.account_rid, af.total_projects_rd_credits_fte, af.total_projects_rd_credits_subcon, 
+                 pf.rd_credits_nonlabor_fed_level, af.total_projects_rd_credits
     ),
     calculate_rd_credits_statewise AS (
         SELECT DISTINCT ON (af.account_rid)
             af.account_rid,
             COALESCE(af.total_projects_rd_credits_fte,0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon
+            COALESCE(af.total_projects_rd_credits_subcon,0) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            COALESCE(af.total_projects_rd_credits,0) AS rd_credits_total
         FROM
         ${schemaName}.account_fiscal_region af
         LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = af.account_rid
         LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid AND p.region_rid = af.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
         ad.account_rid = '${account_rid}'
         AND
         af.fiscal_year = ${fiscal_year}
         AND
 		af.region_rid = '${region_rid}'
+        GROUP BY af.account_rid, af.total_projects_rd_credits_fte, af.total_projects_rd_credits_subcon, 
+                 pf.rd_credits_nonlabor_fed_level, af.total_projects_rd_credits
     ),
     calculate_total_rd_credits AS (
         SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
-            COALESCE(af.total_projects_rd_credits_fte, 0) + COALESCE(afr.total_projects_rd_credits_fte, 0) AS rd_credits_fte,
-            COALESCE(af.total_projects_rd_credits_subcon, 0) + COALESCE(afr.total_projects_rd_credits_subcon, 0) AS rd_credits_subcon
+            COALESCE(af.rd_credits_fte, 0) + COALESCE(afr.rd_credits_fte, 0) AS rd_credits_fte,
+            COALESCE(af.rd_credits_subcon, 0) + COALESCE(afr.rd_credits_subcon, 0) AS rd_credits_subcon,
+            COALESCE(af.rd_credits_nonlabor, 0) + COALESCE(afr.rd_credits_nonlabor, 0) AS rd_credits_nonlabor,
+            COALESCE(af.rd_credits_total, 0) + COALESCE(afr.rd_credits_total, 0) AS rd_credits_total
         FROM
         ${schemaName}.account_details ad
-        LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
-        LEFT JOIN ${schemaName}.account_fiscal af ON af.account_rid = ad.account_rid
-        LEFT JOIN ${schemaName}.project_fiscal p ON p.account_rid = ad.account_rid AND p.region_rid = afr.region_rid AND p.fiscal_year = ${fiscal_year}
+        LEFT JOIN calculate_rd_credits_statewise af on af.account_rid = ad.account_rid
+        LEFT JOIN calculate_rd_credits_federal afr ON afr.account_rid = ad.account_rid
         WHERE 
         ad.account_rid = '${account_rid}'
-        AND
-        af.fiscal_year = ${fiscal_year}
-        AND
-        p.rid IS NOT NULL
-        AND
-		afr.region_rid = '${region_rid}'
         GROUP BY 
-        af.total_projects_rd_credits_fte,
-        af.total_projects_rd_credits_subcon,
-        afr.total_projects_rd_credits_fte,
-        afr.total_projects_rd_credits_subcon,
-        ad.account_rid
+        af.rd_credits_fte,
+        af.rd_credits_subcon,
+        afr.rd_credits_fte,
+        afr.rd_credits_subcon,
+        af.rd_credits_nonlabor,
+        afr.rd_credits_nonlabor,
+        ad.account_rid,
+        af.rd_credits_total,
+        afr.rd_credits_total
     )
 
     SELECT 
@@ -1007,19 +1043,25 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         jsonb_build_object(
         'name', 'Federal',
         'rd_credits_fte', rdf.rd_credits_fte,
-        'rd_credits_subcon', rdf.rd_credits_subcon
+        'rd_credits_subcon', rdf.rd_credits_subcon,
+        'rd_credits_nonlabor', rdf.rd_credits_nonlabor,
+        'rd_credits_total', rdf.rd_credits_total
         ) AS federal,
 
         jsonb_build_object(
         'name' ,'Statewise',
         'rd_credits_fte', rds.rd_credits_fte,
-        'rd_credits_subcon', rds.rd_credits_subcon
+        'rd_credits_subcon', rds.rd_credits_subcon,
+        'rd_credits_nonlabor', rds.rd_credits_nonlabor,
+        'rd_credits_total', rds.rd_credits_total
         ) AS state_wise,
 
         jsonb_build_object(
         'name','Grand Total',
         'rd_credits_fte', trd.rd_credits_fte,
-        'rd_credits_subcon', trd.rd_credits_subcon
+        'rd_credits_subcon', trd.rd_credits_subcon,
+        'rd_credits_nonlabor', trd.rd_credits_nonlabor,
+        'rd_credits_total', trd.rd_credits_total
         ) AS grand_total
         
         FROM
@@ -1186,7 +1228,9 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
             SUM(COALESCE(pf.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
-            SUM(COALESCE(pf.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon
+            SUM(COALESCE(pf.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            SUM(COALESCE(pf.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_details ad
             LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
@@ -1206,7 +1250,9 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
     SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
             SUM(COALESCE(afr.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
-            SUM(COALESCE(afr.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon
+            SUM(COALESCE(afr.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(afr.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            SUM(COALESCE(afr.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_details ad
 			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
@@ -1226,7 +1272,9 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
     calculate_rd_credits_total AS (
             SELECT DISTINCT ON (ad.account_rid) ad.account_rid, 
             COALESCE(cf.rd_credits_fte,0) + COALESCE(cr.rd_credits_fte,0) AS rd_credits_fte,
-            COALESCE(cf.rd_credits_subcon,0) + COALESCE(cr.rd_credits_subcon,0) AS rd_credits_subcon
+            COALESCE(cf.rd_credits_subcon,0) + COALESCE(cr.rd_credits_subcon,0) AS rd_credits_subcon,
+            COALESCE(cf.rd_credits_nonlabor,0) + COALESCE(cr.rd_credits_nonlabor,0) AS rd_credits_nonlabor,
+            COALESCE(cf.rd_credits_total,0) + COALESCE(cr.rd_credits_total,0) AS rd_credits_total
         FROM 
             ${schemaName}.account_details ad
             LEFT JOIN calculate_rd_credits_statewise cf ON cf.account_rid = ad.account_rid
@@ -1280,19 +1328,25 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         jsonb_build_object(
         'name', 'Federal',
         'rd_credits_fte', rdf.rd_credits_fte,
-        'rd_credits_subcon', rdf.rd_credits_subcon
+        'rd_credits_subcon', rdf.rd_credits_subcon,
+        'rd_credits_nonlabor', rdf.rd_credits_nonlabor,
+        'rd_credits_total', rdf.rd_credits_total
         ) AS federal,
 
         jsonb_build_object(
         'name' ,'Statewise',
         'rd_credits_fte', rds.rd_credits_fte,
-        'rd_credits_subcon', rds.rd_credits_subcon
+        'rd_credits_subcon', rds.rd_credits_subcon,
+        'rd_credits_nonlabor', rds.rd_credits_nonlabor,
+        'rd_credits_total', rds.rd_credits_total
         ) AS state_wise,
 
         jsonb_build_object(
         'name','Grand Total',
         'rd_credits_fte', trd.rd_credits_fte,
-        'rd_credits_subcon', trd.rd_credits_subcon
+        'rd_credits_subcon', trd.rd_credits_subcon,
+        'rd_credits_nonlabor', trd.rd_credits_nonlabor,
+        'rd_credits_total', trd.rd_credits_total
         ) AS grand_total
         
         FROM
@@ -1322,7 +1376,6 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         COALESCE(pf.total_fte_prj, 0) AS total_fte, 
         COALESCE(pf.total_subcon_prj, 0) AS total_subcon,
         COALESCE(pf.total_nonlabor_prj, 0) AS total_nonlabor,
-        p.project_name,
         a.account_rid,
         pf.claim_status
         FROM
@@ -1336,7 +1389,12 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         AND
 		pf.rid = '${project_fiscal_rid}'
 		GROUP BY
-		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj, p.project_name, pf.claim_status
+		a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj,pf.claim_status
+    ),
+    fetch_project_name AS (
+        SELECT project_name, account_rid FROM ${schemaName}.project_fiscal
+        WHERE
+        rid = '${project_fiscal_rid}'
     ),
     calculate_hours_fte AS (
         SELECT DISTINCT ON (ad.account_rid)
@@ -1472,6 +1530,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
             GROUP BY
             ad.account_rid, pf.qre_fte, pf.qre_subcon, pf.qre_nonlabor, pf.qre_final
     ),
+
     calculate_rd_credits_total AS (
             SELECT DISTINCT ON (ad.account_rid) ad.account_rid, 
             COALESCE(pf.rd_percent_potential_ai,0) AS rd_percent_potential,
@@ -1489,6 +1548,58 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
 		    pf.rid = '${project_fiscal_rid}'
             GROUP BY
             ad.account_rid,pf.rd_percent_potential_ai,pf.rd_percent_adjustment,pf.rd_percent_final
+        ),
+    
+        calculate_federal AS (
+        SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            SUM(COALESCE(pf.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
+            SUM(COALESCE(pf.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor
+        FROM
+            ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid
+    ),
+    calculate_statewise AS (
+    SELECT DISTINCT ON (ad.account_rid)
+            ad.account_rid,
+            SUM(COALESCE(afr.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
+            SUM(COALESCE(afr.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(afr.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor
+        FROM
+            ${schemaName}.account_details ad
+			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal_region afr ON afr.project_rid = p.rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid
+            WHERE 
+            ad.account_rid = '${account_rid}'
+            AND
+            pf.fiscal_year = ${fiscal_year}
+            AND
+		    pf.rid = '${project_fiscal_rid}'
+            GROUP BY
+            ad.account_rid
+    ),
+    calculate_total AS (
+            SELECT DISTINCT ON (ad.account_rid) ad.account_rid, 
+            COALESCE(cf.rd_credits_fte,0) + COALESCE(cr.rd_credits_fte,0) AS rd_credits_fte,
+            COALESCE(cf.rd_credits_subcon,0) + COALESCE(cr.rd_credits_subcon,0) AS rd_credits_subcon,
+            COALESCE(cf.rd_credits_nonlabor,0) + COALESCE(cr.rd_credits_nonlabor,0) AS rd_credits_nonlabor
+        FROM 
+            ${schemaName}.account_details ad
+            LEFT JOIN calculate_statewise cf ON cf.account_rid = ad.account_rid
+            LEFT JOIN calculate_federal cr ON cr.account_rid = ad.account_rid
+        WHERE 
+            ad.account_rid = '${account_rid}'
         )
     
     SELECT 
@@ -1497,7 +1608,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
         'nonlabor', rm.total_nonlabor,
-        'project_name', rm.project_name,
+        'project_name', fpn.project_name,
         'claim_status', rm.claim_status
         ) AS resource_metrics,
 
@@ -1556,7 +1667,28 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         'rd_percent_potential', trd.rd_percent_potential,
         'rd_percent_adjustment', trd.rd_percent_adjustment,
         'rd_percent_final', trd.rd_percent_final
-        ) AS rd_percent
+        ) AS rd_percent,
+
+        jsonb_build_object(
+        'name', 'Federal',
+        'rd_credits_fte', rdff.rd_credits_fte,
+        'rd_credits_subcon', rdff.rd_credits_subcon,
+        'rd_credits_nonlabor', rdff.rd_credits_nonlabor
+        ) AS federal,
+
+        jsonb_build_object(
+        'name' ,'Statewise',
+        'rd_credits_fte', rdss.rd_credits_fte,
+        'rd_credits_subcon', rdss.rd_credits_subcon,
+        'rd_credits_nonlabor', rdss.rd_credits_nonlabor
+        ) AS state_wise,
+
+        jsonb_build_object(
+        'name','Grand Total',
+        'rd_credits_fte', trdd.rd_credits_fte,
+        'rd_credits_subcon', trdd.rd_credits_subcon,
+        'rd_credits_nonlabor', trdd.rd_credits_nonlabor
+        ) AS grand_total
         
         FROM
         ${schemaName}.account_details ad
@@ -1569,6 +1701,10 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         LEFT JOIN calculate_rd_credits_federal rdf ON rdf.account_rid = ad.account_rid
         LEFT JOIN calculate_rd_credits_statewise rds ON rds.account_rid = ad.account_rid
         LEFT JOIN calculate_rd_credits_total trd ON trd.account_rid = ad.account_rid
+        LEFT JOIN calculate_federal rdff ON rdf.account_rid = ad.account_rid
+        LEFT JOIN calculate_statewise rdss ON rds.account_rid = ad.account_rid
+        LEFT JOIN calculate_total trdd ON trd.account_rid = ad.account_rid
+        LEFT JOIN fetch_project_name fpn ON fpn.account_rid = ad.account_rid
         WHERE
         ad.account_rid = '${account_rid}'
     `

@@ -1176,6 +1176,7 @@ export class ProjectTaskSchemaService {
             fiscal_year: fiscalYear,
             project_code: projectData.project_code,
             project_rid: projectData.project_rid,
+            project_fiscal_rid: projectData.rid,
             project_type_rid: projectData.project_type_rid,
             region_rid,
             total_cost_from_tasks: total_cost || null,
@@ -1199,7 +1200,6 @@ export class ProjectTaskSchemaService {
               projectData.project_classification_other || null,
             project_client_group: projectData.project_client_group || null,
             project_description: projectData.project_description || null,
-            project_fiscal_rid: "",
             status_rid: projectData.status_rid || "",
           },
           { transaction }

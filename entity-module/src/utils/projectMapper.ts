@@ -483,7 +483,7 @@ export class ProjectMapper {
 
       auto_send_ai_interaction: data.auto_send_ai_interaction,
       auto_access_rd: data.auto_access_rd ?? false,
-      max_ai_interaction: data.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
 
       blended_rate_fte: data.blended_rate_fte || null,
       blended_rate_subcon: data.blended_rate_subcon || null,
@@ -538,7 +538,7 @@ export class ProjectMapper {
 
       auto_send_ai_interaction: projectData.auto_send_ai_interaction,
       auto_access_rd: projectData.auto_access_rd ?? false,
-      max_ai_interaction: projectData.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
 
       blended_rate_fte: projectData.blended_rate_fte || null,
       blended_rate_subcon: projectData.blended_rate_subcon || null,
@@ -554,6 +554,7 @@ export class ProjectMapper {
 export class ProjectResourceMapper {
   static mapToProjectResource(
     projectResource: ICreateProjectResource,
+    projectId: string,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     userId: string,
@@ -565,7 +566,8 @@ export class ProjectResourceMapper {
       created_datetime: new Date(),
 
       account_rid: projectResource.account_rid,
-      project_rid: projectResource.project_rid,
+      project_rid: projectId,
+      project_fiscal_rid: projectResource.project_fiscal_rid,
       resource_rid: projectResource.resource_id,
       project_code: projectResource.project_code,
       project_resource_code: projectResourceCode,
@@ -614,6 +616,7 @@ export class ProjectResourceMapper {
 
   static mapToProjectResourceFiscalRegion(
     projectResource: ICreateProjectResource | IUpdateProjectResource,
+    projectId: string,
     fiscalYear: number,
     userId: string,
     resourceId: string
@@ -623,7 +626,8 @@ export class ProjectResourceMapper {
       created_datetime: new Date(),
 
       account_rid: projectResource.account_rid,
-      project_rid: projectResource.project_rid,
+      project_rid: projectId,
+      project_fiscal_rid: projectResource.project_fiscal_rid,
       resource_rid: resourceId,
       fiscal_year: fiscalYear,
 
@@ -661,7 +665,6 @@ export class ProjectResourceMapper {
   ) {
     return {
       project_rid: projectId,
-
       created_datetime: new Date(),
       created_by: userId,
       modified_by: null,
@@ -677,7 +680,7 @@ export class ProjectResourceMapper {
       country_rid: data.country_rid || null,
       currency_rid: data.currency_rid || null,
 
-      max_ai_interaction: data.max_ai_interaction,
+      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
       auto_access_rd: data.auto_access_rd ?? false,
 
@@ -838,6 +841,7 @@ export class ProjectResourceMapper {
     return {
       project_resource_rid: updateProjectResource.rid,
       project_rid: updateProjectResource.project_rid,
+      project_fiscal_rid: updateProjectResource.project_fiscal_rid,
       account_rid: updateProjectResource.account_rid,
       resource_id: updateProjectResource.resource_rid,
       resource_code: resourceData.resource_code,

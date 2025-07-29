@@ -376,7 +376,7 @@ async getAttachments(
       allAttachments.push(...projectResourceAttachments);
 
       const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
-      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_rid]);
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_fiscal_rid]);
       const projectTaskIds = projectTasks.map(t => t.rid);
       if (projectTaskIds.length > 0) {
         const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
@@ -706,7 +706,7 @@ async exportAttachments(
         const resourceCostAttachments = await fetchAttachments(model, 'resource_cost', allResourceCostIds);
         resourceCostSkillAttachments.push(...resourceCostAttachments);
       }
-
+    
       // 🔹 Fetch all resource_skills in one call
       const resourceSkills = await this.resourceSkillService.getResourceSkillsByResourceIds(schemaNumber, resourceIds);
       const allResourceSkillIds = resourceSkills.map(rs => rs.rid);
@@ -783,7 +783,7 @@ async exportAttachments(
       const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
       allAttachments.push(...projectResourceAttachments);
       const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
-      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_rid]);
+      const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_fiscal_rid]);
       const projectTaskIds = projectTasks.map(t => t.rid);
       if (projectTaskIds.length > 0) {
         const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
@@ -1841,6 +1841,7 @@ private buildRawWhereClause(
       case 'format':
       case 'comments':
       case 'attached_to':  
+      case 'attach_to':
       case 'r_number':
       case 'uploaded_by':
         switch (operator.toLowerCase()) {
@@ -1883,7 +1884,7 @@ private buildRawWhereClause(
         break;
 
       case 'document_type_rid':
-      case 'document_category_rid':  
+      case 'document_category_rid':
       case 'fiscal_year':  
         switch (operator.toLowerCase()) {
           case 'equals': condition[field] = { [Op.eq]: value }; break;
