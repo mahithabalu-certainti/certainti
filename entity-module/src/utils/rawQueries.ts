@@ -5,6 +5,7 @@ type filterType = {
         }
 }
 
+
 export const listAllImportedDatasQuery = (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : filterType, schemaName : string, disablePagination : boolean, fiscal_year : number) => {
     let offset = (page - 1 ) * limit;
     let pagination = disablePagination ? `` : `LIMIT ${limit} OFFSET ${offset}`;
@@ -482,6 +483,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
 
         jsonb_build_object(
         'metric_name', 'FTE Hours',
+        'permission', 'fte_hours',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -489,6 +491,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
 
         jsonb_build_object(
         'metric_name', 'FTE Cost',
+        'permission', 'fte_cost',
         'project_level', ccf.project_level,
         'project_resource_level', ccf.project_resource_level,
         'project_task_level', ccf.project_task_level
@@ -496,6 +499,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
 
         jsonb_build_object(
         'metric_name', 'Sub Con Hours',
+        'permission', 'sub_con_hours',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -503,6 +507,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
 
         jsonb_build_object(
         'metric_name', 'Sub Con Cost',
+        'permission', 'sub_con_cost',
         'project_level', scc.project_level,
         'project_resource_level', scc.project_resource_level,
         'project_task_level', scc.project_task_level
@@ -510,6 +515,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
 
         jsonb_build_object(
         'metric_name', 'Non Labor Cost',
+        'permission', 'non_labor_cost',
         'project_level', ccn.project_level,
         'project_resource_level', ccn.project_resource_level
         ) AS nonlabor_cost,
@@ -751,6 +757,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 
         jsonb_build_object(
         'metric_name', 'FTE Hours',
+        'permission', 'fte_hours',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -758,6 +765,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 
         jsonb_build_object(
         'metric_name', 'FTE Cost',
+        'permission', 'fte_cost',
         'project_level', ccf.project_level,
         'project_resource_level', ccf.project_resource_level,
         'project_task_level', ccf.project_task_level
@@ -765,6 +773,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 
         jsonb_build_object(
         'metric_name', 'Sub Con Hours',
+        'permission', 'sub_con_hours',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -772,6 +781,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 
         jsonb_build_object(
         'metric_name', 'Sub Con Cost',
+        'permission','sub_con_cost',
         'project_level', scc.project_level,
         'project_resource_level', scc.project_resource_level,
         'project_task_level', scc.project_task_level
@@ -779,6 +789,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 
         jsonb_build_object(
         'metric_name', 'Non Labor Cost',
+        'permission','non_labor_cost',
         'project_level', ccn.project_level,
         'project_resource_level', ccn.project_resource_level
         ) AS nonlabor_cost,
@@ -1008,6 +1019,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
 
         jsonb_build_object(
         'metric_name', 'FTE Hours',
+        'permission', 'fte_hours',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -1015,6 +1027,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
 
         jsonb_build_object(
         'metric_name', 'FTE Cost',
+        'permission', 'fte_cost',
         'project_level', ccf.project_level,
         'project_resource_level', ccf.project_resource_level,
         'project_task_level', ccf.project_task_level
@@ -1022,6 +1035,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
 
         jsonb_build_object(
         'metric_name', 'Sub Con Hours',
+        'permission', 'sub_con_hours',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -1029,6 +1043,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
 
         jsonb_build_object(
         'metric_name', 'Sub Con Cost',
+        'permission', 'sub_con_cost',
         'project_level', scc.project_level,
         'project_resource_level', scc.project_resource_level,
         'project_task_level', scc.project_task_level
@@ -1036,6 +1051,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
 
         jsonb_build_object(
         'metric_name', 'Non Labor Cost',
+        'permission', 'non_labor_cost',
         'project_level', ccn.project_level,
         'project_resource_level', ccn.project_resource_level
         ) AS nonlabor_cost,
@@ -1293,6 +1309,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
 
         jsonb_build_object(
         'metric_name', 'FTE Hours',
+        'permission', 'fte_hours',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -1300,6 +1317,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
 
         jsonb_build_object(
         'metric_name', 'FTE Cost',
+        'permission', 'fte_cost',
         'project_level', ccf.project_level,
         'project_resource_level', ccf.project_resource_level,
         'project_task_level', ccf.project_task_level
@@ -1307,6 +1325,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
 
         jsonb_build_object(
         'metric_name', 'Sub Con Hours',
+        'permission', 'sub_con_hours',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -1314,6 +1333,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
 
         jsonb_build_object(
         'metric_name', 'Sub Con Cost',
+        'permission', 'sub_con_cost',
         'project_level', scc.project_level,
         'project_resource_level', scc.project_resource_level,
         'project_task_level', scc.project_task_level
@@ -1321,6 +1341,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
 
         jsonb_build_object(
         'metric_name', 'Non Labor Cost',
+        'permission', 'non_labor_cost',
         'project_level', ccn.project_level,
         'project_resource_level', ccn.project_resource_level
         ) AS nonlabor_cost,
@@ -1614,6 +1635,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
 
         jsonb_build_object(
         'metric_name', 'FTE Hours',
+        'permission', 'fte_hours',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -1621,6 +1643,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
 
         jsonb_build_object(
         'metric_name', 'FTE Cost',
+        'permission', 'fte_cost',
         'project_level', ccf.project_level,
         'project_resource_level', ccf.project_resource_level,
         'project_task_level', ccf.project_task_level
@@ -1628,6 +1651,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
 
         jsonb_build_object(
         'metric_name', 'Sub Con Hours',
+        'permission', 'sub_con_hours',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -1635,6 +1659,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
 
         jsonb_build_object(
         'metric_name', 'Sub Con Cost',
+        'permission', 'sub_con_cost',
         'project_level', scc.project_level,
         'project_resource_level', scc.project_resource_level,
         'project_task_level', scc.project_task_level
@@ -1642,6 +1667,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
 
         jsonb_build_object(
         'metric_name', 'Non Labor Cost',
+        'permission', 'non_labor_cost',
         'project_level', ccn.project_level,
         'project_resource_level', ccn.project_resource_level
         ) AS nonlabor_cost,
