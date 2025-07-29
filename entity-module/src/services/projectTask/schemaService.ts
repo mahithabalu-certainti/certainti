@@ -326,6 +326,34 @@ export class ProjectTaskSchemaService {
     }
   }
 
+  async addProjectTaskTimelineForInlineEdit(
+    accountNumber: string,
+    eventName: string,
+    accountRid: string,
+    projectTaskId: string,
+    userId: string
+  ) {
+    try {
+      const { ProjectTaskTimeline } = await this.getModels(accountNumber);
+
+      await ProjectTaskTimeline.create(
+        {
+          account_rid: accountRid,
+          event_name: eventName,
+          event_status: "success",
+          event_type: "ui handler",
+          entity_rid: projectTaskId,
+          created_by: userId,
+          event_datetime: new Date(),
+          created_datetime: new Date(),
+        },
+      );
+    } catch (err) {
+      console.log("Error addinng timelne", err);
+      throw new Error("Error creating project resource timline");
+    }
+  }
+
   async addProjctTaskHistory(
     accountNumber: string,
     newProjectTaskData: ICreateProjectTask,
@@ -396,6 +424,75 @@ export class ProjectTaskSchemaService {
     await ProjectTaskHistory.bulkCreate(historyChanges, {
       transaction
     });
+  }
+
+  async addProjctTaskHistoryForInline(
+    accountNumber: string,
+    newProjectTaskData: any,
+    existingProjectTaskData: any,
+    projectTaskId: string,
+    userId: string
+  ){
+    const { ProjectTaskHistory } = await this.getModels(accountNumber);
+
+    const excludedFields = [
+      "modified_by",
+      "account_rid",
+      "project_rid",
+      "project_fiscal_rid",
+      "project_task_rid",
+      "resource_code",
+      "modified_datetime",
+    ];
+
+    const cleanedNewData = Object.fromEntries(
+      Object.entries(newProjectTaskData).filter(
+        ([key]) => !excludedFields.includes(key)
+      )
+    );
+
+    const historyChanges = Object.entries(cleanedNewData)
+      .filter(([key, newValue]) => {
+        const oldValue = existingProjectTaskData[key];
+
+        if (newValue == null && oldValue == null) return false;
+
+        // Handle numeric comparison with fixed precision
+        if (!isNaN(Number(newValue)) && !isNaN(Number(oldValue))) {
+          const roundedNew = Number(parseFloat(String(newValue)).toFixed(2));
+          const roundedOld = Number(parseFloat(oldValue).toFixed(2));
+          return roundedNew !== roundedOld;
+        }
+
+        // Fallback to string comparison
+        return String(newValue ?? "") !== String(oldValue ?? "");
+      })
+      .map(([key, newValue]) => ({
+        project_task_rid: projectTaskId,
+        attribute_name: key,
+        old_value:
+          existingProjectTaskData[key] !== null &&
+          existingProjectTaskData[key] !== undefined
+            ? String(existingProjectTaskData[key])
+            : "",
+        new_value:
+          newValue !== null && newValue !== undefined ? String(newValue) : "",
+        modified_by: userId,
+        r_number: "",
+        created_by: userId,
+      }));
+
+    if (historyChanges.length === 0) return;
+
+    const latest = await ProjectTaskHistory.findAll();
+
+    historyChanges.forEach((change, i) => {
+      change.r_number = `PTAH${(latest.length + i + 1)
+        .toString()
+        .padStart(4, "0")}`;
+    });
+
+    await ProjectTaskHistory.bulkCreate(historyChanges);
   }
 
   async startAggregation(
