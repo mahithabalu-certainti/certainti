@@ -1030,6 +1030,7 @@ const ListTable = <T extends RowData>({
                   const nextRow = flattenedData[i + 1];
                   return !nextRow || nextRow._level < rowLevel;
                 };
+                const hideRow = row.hide ?? false;
 
                 return (
                   <React.Fragment key={`${rowId}-${i}`}>
@@ -1039,6 +1040,7 @@ const ListTable = <T extends RowData>({
                       selected={selectedRows.has(rowId)}
                       className={`${hoverHighlight ? 'group' : ''}`}
                       sx={{
+                        display: hideRow ? 'none' : '',
                         '&:hover td': {
                           backgroundColor: '#f5f7fa',
                         },

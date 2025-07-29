@@ -8,55 +8,61 @@ import {
   SummaryResourceMetric,
 } from '../../../../../types';
 
-export const getResourceMetricColumns =
-  (): ListTableColumn<SummaryResourceMetric>[] => [
-    {
-      id: 'metric',
-      label: 'Metrics',
-      sortable: false,
-      sortId: 'metric',
-      width: '16%',
-      sticky: true,
-      sx: {
-        position: 'sticky',
-        left: 0,
-        background: '#fff',
-        zIndex: 10,
-        borderRight: '1px solid #CBD6E2 !important',
-        borderBottom: '1px solid #CBD6E2 !important',
-      },
+export const getResourceMetricColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<SummaryResourceMetric>[] => [
+  {
+    id: 'metric',
+    label: 'Metrics',
+    sortable: false,
+    sortId: 'metric',
+    width: '16%',
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
     },
-    {
-      id: 'fte',
-      label: 'FTE',
-      sortable: false,
-      sortId: 'fte',
-      width: '28%',
-      sx: {
-        textAlign: 'right',
-      },
+    hide: !permissionMap?.['metric']?.edit && !permissionMap?.['metric']?.read,
+  },
+  {
+    id: 'fte',
+    label: 'FTE',
+    sortable: false,
+    sortId: 'fte',
+    width: '28%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'subcon',
-      label: 'Sub Con',
-      sortable: false,
-      sortId: 'subcon',
-      width: '28%',
-      sx: {
-        textAlign: 'right',
-      },
+    hide: !permissionMap?.['fte']?.edit && !permissionMap?.['fte']?.read,
+  },
+  {
+    id: 'subcon',
+    label: 'Sub Con',
+    sortable: false,
+    sortId: 'subcon',
+    width: '28%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'nonlabor',
-      label: 'Non Labor',
-      sortable: false,
-      sortId: 'nonlabor',
-      width: '28%',
-      sx: {
-        textAlign: 'right',
-      },
+    hide: !permissionMap?.['subcon']?.edit && !permissionMap?.['subcon']?.read,
+  },
+  {
+    id: 'nonlabor',
+    label: 'Non Labor',
+    sortable: false,
+    sortId: 'nonlabor',
+    width: '28%',
+    sx: {
+      textAlign: 'right',
     },
-  ];
+    hide:
+      !permissionMap?.['nonlabor']?.edit && !permissionMap?.['nonlabor']?.read,
+  },
+];
 
 export const getDetailedMetricColumns =
   (): ListTableColumn<SummaryDetailedMetric>[] => [
@@ -108,7 +114,9 @@ export const getDetailedMetricColumns =
     },
   ];
 
-export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
+export const getRdPercentColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<SummaryRdPercent>[] => [
   {
     id: 'rd_percent_potential',
     label: 'QRE Percent Potential',
@@ -125,6 +133,9 @@ export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
       borderBottom: '1px solid #CBD6E2 !important',
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_percent_potential']?.edit &&
+      !permissionMap?.['rd_percent_potential']?.read,
   },
   {
     id: 'rd_percent_adjustment',
@@ -135,6 +146,9 @@ export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_percent_adjustment']?.edit &&
+      !permissionMap?.['rd_percent_adjustment']?.read,
   },
   {
     id: 'rd_percent_final',
@@ -145,10 +159,15 @@ export const getRdPercentColumns = (): ListTableColumn<SummaryRdPercent>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_percent_final']?.edit &&
+      !permissionMap?.['rd_percent_final']?.read,
   },
 ];
 
-export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
+export const getQREColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<SummaryQRE>[] => [
   {
     id: 'qre_fte',
     label: 'QRE FTE',
@@ -165,6 +184,8 @@ export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
       borderBottom: '1px solid #CBD6E2 !important',
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qre_fte']?.edit && !permissionMap?.['qre_fte']?.read,
   },
   {
     id: 'qre_subcon',
@@ -175,6 +196,9 @@ export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qre_subcon']?.edit &&
+      !permissionMap?.['qre_subcon']?.read,
   },
   {
     id: 'qre_nonlabor',
@@ -185,6 +209,9 @@ export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qre_nonlabor']?.edit &&
+      !permissionMap?.['qre_nonlabor']?.read,
   },
   {
     id: 'qre_final',
@@ -195,10 +222,15 @@ export const getQREColumns = (): ListTableColumn<SummaryQRE>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qre_final']?.edit &&
+      !permissionMap?.['qre_final']?.read,
   },
 ];
 
-export const getRdCreditsColumns = (): ListTableColumn<SummaryRdCredits>[] => [
+export const getRdCreditsColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<SummaryRdCredits>[] => [
   {
     id: 'rd_credits_fte',
     label: 'RD Credits FTE',
@@ -215,6 +247,9 @@ export const getRdCreditsColumns = (): ListTableColumn<SummaryRdCredits>[] => [
       borderBottom: '1px solid #CBD6E2 !important',
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_credits_fte']?.edit &&
+      !permissionMap?.['rd_credits_fte']?.read,
   },
   {
     id: 'rd_credits_subcon',
@@ -225,6 +260,9 @@ export const getRdCreditsColumns = (): ListTableColumn<SummaryRdCredits>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_credits_subcon']?.edit &&
+      !permissionMap?.['rd_credits_subcon']?.read,
   },
   {
     id: 'rd_credits_nonlabor',
@@ -235,6 +273,9 @@ export const getRdCreditsColumns = (): ListTableColumn<SummaryRdCredits>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_credits_nonlabor']?.edit &&
+      !permissionMap?.['rd_credits_nonlabor']?.read,
   },
   {
     id: 'rd_credits_total',
@@ -245,55 +286,69 @@ export const getRdCreditsColumns = (): ListTableColumn<SummaryRdCredits>[] => [
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['rd_credits_total']?.edit &&
+      !permissionMap?.['rd_credits_total']?.read,
   },
 ];
 
-export const getClaimJurisdictionColumns =
-  (): ListTableColumn<SummaryClaimJurisdiction>[] => [
-    {
-      id: 'name',
-      label: 'Claim Jurisdiction',
-      sortable: false,
-      sortId: 'name',
-      width: '25%',
-      sticky: true,
-      sx: {
-        position: 'sticky',
-        left: 0,
-        background: '#fff',
-        zIndex: 10,
-        borderRight: '1px solid #CBD6E2 !important',
-        borderBottom: '1px solid #CBD6E2 !important',
-      },
+export const getClaimJurisdictionColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<SummaryClaimJurisdiction>[] => [
+  {
+    id: 'name',
+    label: 'Claim Jurisdiction',
+    sortable: false,
+    sortId: 'name',
+    width: '25%',
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
     },
-    {
-      id: 'rd_credits_fte',
-      label: 'RD Credits - FTE',
-      sortable: false,
-      sortId: 'rd_credits_fte',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
+    hide: !permissionMap?.['name']?.edit && !permissionMap?.['name']?.read,
+  },
+  {
+    id: 'claim_rd_credits_fte',
+    label: 'RD Credits - FTE',
+    sortable: false,
+    sortId: 'claim_rd_credits_fte',
+    width: '25%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'rd_credits_subcon',
-      label: 'RD Credits - SubCon',
-      sortable: false,
-      sortId: 'rd_credits_subcon',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
+    hide:
+      !permissionMap?.['claim_rd_credits_fte']?.edit &&
+      !permissionMap?.['claim_rd_credits_fte']?.read,
+  },
+  {
+    id: 'claim_rd_credits_subcon',
+    label: 'RD Credits - SubCon',
+    sortable: false,
+    sortId: 'claim_rd_credits_subcon',
+    width: '25%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'rd_credits_nonlabor',
-      label: 'RD Credits - NonLabor',
-      sortable: false,
-      sortId: 'rd_credits_nonlabor',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
+    hide:
+      !permissionMap?.['claim_rd_credits_subcon']?.edit &&
+      !permissionMap?.['claim_rd_credits_subcon']?.read,
+  },
+  {
+    id: 'claim_rd_credits_nonlabor',
+    label: 'RD Credits - NonLabor',
+    sortable: false,
+    sortId: 'claim_rd_credits_nonlabor',
+    width: '25%',
+    sx: {
+      textAlign: 'right',
     },
-  ];
+    hide:
+      !permissionMap?.['claim_rd_credits_nonlabor']?.edit &&
+      !permissionMap?.['claim_rd_credits_nonlabor']?.read,
+  },
+];

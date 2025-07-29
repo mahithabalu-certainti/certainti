@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import {
   generatePath,
   useLocation,
@@ -28,7 +28,11 @@ import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { FiscalYearType, NewProjectData } from '../../../types/project';
-import { ExportType, MenuItem } from '../../../types';
+import {
+  ExportType,
+  MenuItem,
+  ProjectFinancialResourceExportParams,
+} from '../../../types';
 import {
   AllMenus,
   AllModules,
@@ -48,109 +52,6 @@ import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 import { ACCOUNT_DETAILS } from '../../../../routes';
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
-
-const sideMenuItems: MenuItem[] = [
-  {
-    name: 'Project Details',
-    key: 'projectDetails',
-    id: AllModules.PROJECTS,
-    disabled: false,
-    icon: DetailsIcon,
-  },
-  {
-    name: 'Project Resources',
-    key: 'projectResources',
-    id: AllModules.PROJECT_RESOURCES,
-    disabled: false,
-    icon: ResourcesIcon,
-  },
-  {
-    name: 'Projects Task',
-    key: 'projectsTask',
-    id: AllModules.PROJECT_TASK,
-    disabled: false,
-    icon: ProjectsSideIcon,
-  },
-  {
-    name: 'Financial Highlights',
-    key: 'financial',
-    id: AllModules.FINANCIAL_HIGHLIGHTS,
-    disabled: false,
-    icon: FinancialIcon,
-  },
-  {
-    name: 'Interactions',
-    key: 'interactions',
-    id: AllModules.PROJECT_INTERACTIONS,
-    disabled: false,
-    icon: InteractionsIcon,
-  },
-  {
-    name: 'Technical Summary',
-    key: 'technicalSummary',
-    id: AllModules.PROJECT_TECHNICAL_SUMMARY,
-    disabled: false,
-    icon: TechSummaryIcon,
-  },
-  {
-    name: 'Cases',
-    key: 'cases',
-    id: AllMenus.CASES,
-    disabled: false,
-    icon: CasesIcon,
-  },
-  {
-    name: 'Activities',
-    key: 'activities',
-    id: AllModules.ACTIVITIES,
-    disabled: false,
-    icon: ActivitiesIcon,
-  },
-  {
-    name: 'Notes',
-    key: 'notes',
-    id: AllMenus.NOTES,
-    disabled: false,
-    icon: NotesSideIcon,
-  },
-  {
-    name: 'Attachments',
-    key: 'attachments',
-    id: AllMenus.ATTACHMENTS,
-    disabled: false,
-    icon: AttachmentsSideIcon,
-  },
-  {
-    name: 'Checklists',
-    key: 'checklists',
-    id: AllMenus.CHECKLISTS,
-    disabled: false,
-    icon: ChecklistIcon,
-  },
-  {
-    name: 'Configuration',
-    key: 'configuration',
-    id: AllMenus.CONFIGURATION,
-    disabled: false,
-    icon: ConfigIcon,
-    subMenu: [
-      {
-        name: 'Users',
-        key: 'users',
-        id: AllMenus.MANAGE_ACCOUNT_ACCESS,
-        disabled: false,
-        icon: ResourcesIcon,
-      },
-      {
-        name: 'Settings',
-        key: 'settings',
-        id: AllMenus.PROJECT_SETTINGS,
-        disabled: false,
-        icon: SettingIcon,
-      },
-    ],
-  },
-];
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
@@ -173,7 +74,7 @@ export const ProjectDetails = () => {
     });
 
   const [financialResCostParams, setFinancialResCostParams] =
-    useState<AttachmentsListExportParams>({
+    useState<ProjectFinancialResourceExportParams>({
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
@@ -187,7 +88,7 @@ export const ProjectDetails = () => {
 
   const navigate = useNavigate();
   // Permission Mangement
-  const { modules, permission } = useSelector(
+  const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
 
@@ -251,10 +152,19 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
+  const isFinancialHighlightsEnable = checkPermission(
+    menus,
+    AllMenus.FINANCIAL_HIGHLIGHTS
+  );
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
   const isResourceExportViewEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_RESOURCES_EXPORT
   );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -262,7 +172,7 @@ export const ProjectDetails = () => {
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
-      return false;
+      return !isFinancialResourceCostExportEnable;
     } else if (list === 'projectResources') {
       return !isResourceExportViewEnable;
     } else {
@@ -300,8 +210,7 @@ export const ProjectDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
-    }
-    if (exportType === 'financial') {
+    } else if (exportType === 'financial') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
@@ -436,6 +345,114 @@ export const ProjectDetails = () => {
     });
     navigate(path, { replace: true });
   };
+
+  const sideMenuItems = useMemo<MenuItem[]>(() => {
+    const allMenus = [
+      {
+        name: 'Project Details',
+        key: 'projectDetails',
+        id: AllModules.PROJECTS,
+        disabled: false,
+        icon: DetailsIcon,
+      },
+      {
+        name: 'Project Resources',
+        key: 'projectResources',
+        id: AllModules.PROJECT_RESOURCES,
+        disabled: false,
+        icon: ResourcesIcon,
+      },
+      {
+        name: 'Projects Task',
+        key: 'projectsTask',
+        id: AllModules.PROJECT_TASK,
+        disabled: false,
+        icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
+      },
+      {
+        name: 'Technical Summary',
+        key: 'technicalSummary',
+        id: AllModules.PROJECT_TECHNICAL_SUMMARY,
+        disabled: false,
+        icon: TechSummaryIcon,
+      },
+      {
+        name: 'Cases',
+        key: 'cases',
+        id: AllMenus.CASES,
+        disabled: false,
+        icon: CasesIcon,
+      },
+      {
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: ActivitiesIcon,
+      },
+      {
+        name: 'Notes',
+        key: 'notes',
+        id: AllMenus.NOTES,
+        disabled: false,
+        icon: NotesSideIcon,
+      },
+      {
+        name: 'Attachments',
+        key: 'attachments',
+        id: AllMenus.ATTACHMENTS,
+        disabled: false,
+        icon: AttachmentsSideIcon,
+      },
+      {
+        name: 'Checklists',
+        key: 'checklists',
+        id: AllMenus.CHECKLISTS,
+        disabled: false,
+        icon: ChecklistIcon,
+      },
+      {
+        name: 'Configuration',
+        key: 'configuration',
+        id: AllMenus.CONFIGURATION,
+        disabled: false,
+        icon: ConfigIcon,
+        subMenu: [
+          {
+            name: 'Users',
+            key: 'users',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            icon: ResourcesIcon,
+          },
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.PROJECT_SETTINGS,
+            disabled: false,
+            icon: SettingIcon,
+          },
+        ],
+      },
+    ];
+    return isFinancialHighlightsEnable
+      ? allMenus
+      : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
+  }, [isFinancialHighlightsEnable]);
 
   if (!projectIsEnable) return <AccessRestricted />;
   return (

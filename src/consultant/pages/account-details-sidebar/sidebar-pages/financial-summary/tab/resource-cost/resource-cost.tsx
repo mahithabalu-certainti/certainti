@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ListTable } from '../../../../../../components/table';
-import { getFinancialResourceCostColumns } from './columns';
-import { NewProjectData } from '../../../../../types/project';
+import { useParams } from 'react-router-dom';
+import { accountDetailsProps } from '../../../../../account-details/utils';
 import {
   ExportType,
   ProjectFinancialResourceCostList,
   ProjectFinancialResourceExportParams,
   ProjectFinancialResourceListParams,
-} from '../../../../../types';
-import { useProjectFinancialResourceCost } from '../../../../../services/financial/financial-service';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { RootState } from '../../../../../../store/store';
+} from '../../../../../../types';
+import { useProjectFinancialResourceCost } from '../../../../../../services/financial/financial-service';
+import { ListTable } from '../../../../../../../components/table';
+import { getFinancialResourceCostColumns } from './columns';
 import { useSelector } from 'react-redux';
-import { AllPermissions } from '../../../../../../common-service';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface FinancialResourceCostProps {
-  projectDetails: NewProjectData | null;
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
@@ -24,28 +23,31 @@ interface FinancialResourceCostProps {
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType?: (type: ExportType) => void;
+
+  accountDetails?: accountDetailsProps;
+  activeKey?: string;
+  fiscalyear?: string;
 }
 
 const ResourceCost: React.FC<FinancialResourceCostProps> = ({
-  projectDetails,
+  accountDetails,
   refreshTrigger,
   currentPage,
   appliedFilters,
   setCount,
   setResCostExportParams,
   setExportType,
+  fiscalyear,
 }) => {
-  const { projectid: projectId } = useParams();
-  const [searchParams] = useSearchParams();
-  const accountId = searchParams.get('accountID') || '';
-  const fiscalYear = projectDetails?.fiscal_year;
+  const { accountid } = useParams();
+  const accountNumber = accountDetails?.accountById?.r_number;
 
   const [resourceCostList, setResourceCostList] = useState<
     ProjectFinancialResourceCostList[]
   >([]);
   const [tableParams, setTableParams] =
     useState<ProjectFinancialResourceListParams>({
-      sortBy: 'resource_code',
+      sortBy: 'project_code',
       sortOrder: 'ASC',
       page: currentPage + 1,
       limit: 100,
@@ -60,10 +62,9 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: tableParams.filters,
-      projectRid: projectId,
-      accountRid: accountId,
-      fiscalYear: fiscalYear,
-      accountNumber: projectDetails?.account_number,
+      accountRid: accountid,
+      accountNumber: accountDetails?.accountById?.r_number,
+      fiscalYear: Number(fiscalyear) || 0,
     },
     refreshTrigger
   );
@@ -87,33 +88,34 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
 
   useEffect(() => {
     if (setExportType) {
-      setExportType('financial');
+      setExportType('financial_resource_cost');
     }
     setResCostExportParams({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
+      fiscalYear: Number(fiscalyear),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams]);
+  }, [tableParams, fiscalyear, appliedFilters]);
 
   // Permissions
-  const financialResourceCostViewEditFields = useMemo(
+  const financialResourceCostViewFields = useMemo(
     () =>
       permission?.find(
         (item) =>
-          item.name === AllPermissions.PROJECT_FINANCIAL_RESOURCE_COST_VIEW
+          item.name === AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW
       )?.fields ?? [],
     [permission]
   );
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    financialResourceCostViewEditFields.forEach((item) => {
+    financialResourceCostViewFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [financialResourceCostViewEditFields]);
+  }, [financialResourceCostViewFields]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -140,6 +142,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   };
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
+
   const financialResourceCostColumns =
     getFinancialResourceCostColumns(permissionMap);
 
@@ -158,7 +161,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       stickyColumnsCount={1}
       selectable={false}
       actionWidth={80}
-      loading={isLoading || !fiscalYear}
+      loading={isLoading || !accountNumber || !fiscalyear}
       error={isError ? 'Failed to load data' : undefined}
       rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}

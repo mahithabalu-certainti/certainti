@@ -14,7 +14,7 @@ export const ProjectFinancialResourceCostURL = ({
   projectRid,
   accountRid,
 }: ProjectFinancialResourceListParams) => {
-  const baseUrl = `/api/resource_cost/financialHighlights/list`;
+  const baseUrl = `/api/resource_cost/financialHighlights/list/${projectRid ? 'project' : 'account'}`;
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());
@@ -50,7 +50,7 @@ export const ProjectFinancialResourceCostExportURL = ({
   projectRid,
   accountRid,
 }: ProjectFinancialResourceExportParams): string => {
-  const baseUrl = `/api/resource_cost/financialHighlights/export`;
+  const baseUrl = `/api/resource_cost/financialHighlights/export/${projectRid ? 'project' : 'account'}`;
   const searchParams = new URLSearchParams();
 
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);

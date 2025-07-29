@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
-  AllModules,
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
@@ -63,18 +62,32 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') || 'summary';
-  const { modules } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const tabs = [
-    { label: 'Summary', value: 'summary' },
-    { label: 'Resource Cost', value: 'resource_cost' },
-  ];
-
-  const financialEnable = checkPermission(
-    modules,
-    AllModules.FINANCIAL_HIGHLIGHTS
+  const isResourceCostViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_FINANCIAL_RESOURCE_COST_VIEW
   );
+
+  const isSummaryViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_FINANCIAL_SUMMARY_VIEW
+  );
+
+  const initialTab = useMemo(() => {
+    if (isSummaryViewEnable) return 'summary';
+    if (isResourceCostViewEnable) return 'resource_cost';
+    return 'summary';
+  }, [isSummaryViewEnable, isResourceCostViewEnable]);
+
+  useEffect(() => {
+    if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
+      handleTabChange(initialTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, searchParams]);
+
+  const tabParam = searchParams.get('tab') || initialTab;
 
   const countriesList = useGetAllCountries();
   const region = useFetchState(currentCountry);
@@ -133,7 +146,17 @@ const Financial: React.FC<ProjectFinancialProps> = ({
     memoizedResourceType
   );
 
-  if (!financialEnable) return <AccessRestricted />;
+  const tabs = [
+    { label: 'Summary', value: 'summary', hide: !isSummaryViewEnable },
+    {
+      label: 'Resource Cost',
+      value: 'resource_cost',
+      hide: !isResourceCostViewEnable,
+    },
+  ];
+
+  if (!isSummaryViewEnable && !isResourceCostViewEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
@@ -175,10 +198,10 @@ const Financial: React.FC<ProjectFinancialProps> = ({
           tabParam !== 'resource_cost' ? 'p-3' : ''
         }`}
       >
-        {tabParam === 'summary' && (
+        {tabParam === 'summary' && isSummaryViewEnable && (
           <SummayListTable projectDetails={projectDetails} />
         )}
-        {tabParam === 'resource_cost' && (
+        {tabParam === 'resource_cost' && isResourceCostViewEnable && (
           <ResourceCost
             projectDetails={projectDetails}
             refreshTrigger={refreshResourceCost}

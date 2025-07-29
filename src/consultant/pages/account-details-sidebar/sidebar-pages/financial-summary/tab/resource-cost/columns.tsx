@@ -1,15 +1,15 @@
-import { ListTableColumn } from '../../../../../../components/table/types';
-import { ProjectFinancialResourceCostList } from '../../../../../types';
+import { ListTableColumn } from '../../../../../../../components/table/types';
+import { ProjectFinancialResourceCostList } from '../../../../../../types';
 
 export const getFinancialResourceCostColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ProjectFinancialResourceCostList>[] => [
   {
-    id: 'resource_code',
-    label: 'Resource Code',
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    width: 130,
     sortable: true,
-    sortId: 'resource_code',
-    width: 140,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -20,55 +20,86 @@ export const getFinancialResourceCostColumns = (
       borderBottom: '1px solid #CBD6E2 !important',
     },
     hide:
+      !permissionMap?.['project_code']?.edit &&
+      !permissionMap?.['project_code']?.read,
+  },
+  {
+    id: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal Year',
+    width: 130,
+    sortable: false,
+    render: (row: ProjectFinancialResourceCostList) =>
+      row.fiscal_year ? `FY-${row.fiscal_year}` : '-',
+    hide:
+      !permissionMap?.['fiscal_year']?.edit &&
+      !permissionMap?.['fiscal_year']?.read,
+  },
+  {
+    id: 'project_name',
+    sortId: 'project_name',
+    label: 'Project Name',
+    width: 130,
+    sortable: true,
+    hide:
+      !permissionMap?.['project_name']?.edit &&
+      !permissionMap?.['project_name']?.read,
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Project ID',
+    width: 130,
+    sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'resource_code',
+    sortId: 'resource_code',
+    label: 'Resource Code',
+    width: 130,
+    sortable: true,
+    hide:
       !permissionMap?.['resource_code']?.edit &&
       !permissionMap?.['resource_code']?.read,
   },
   {
     id: 'resource_name',
-    label: 'Resource name',
-    sortable: true,
     sortId: 'resource_name',
+    label: 'Resource Name',
     width: 160,
+    sortable: true,
     hide:
       !permissionMap?.['resource_name']?.edit &&
       !permissionMap?.['resource_name']?.read,
   },
   {
     id: 'resource_type_name',
-    label: 'Resource Type',
-    sortable: true,
     sortId: 'resource_type_name',
-    width: 140,
+    label: 'Resource Type',
+    width: 130,
+    sortable: true,
     hide:
-      !permissionMap?.['resource_type_rid']?.edit &&
-      !permissionMap?.['resource_type_rid']?.read,
+      !permissionMap?.['resource_type_name']?.edit &&
+      !permissionMap?.['resource_type_name']?.read,
   },
   {
     id: 'country_name',
-    label: 'Country',
-    sortable: true,
     sortId: 'country_name',
-    width: 160,
-    hide:
-      !permissionMap?.['country_rid']?.edit &&
-      !permissionMap?.['country_rid']?.read,
-  },
-  {
-    id: 'region_name',
-    label: 'Region',
+    label: 'Country',
+    width: 130,
     sortable: true,
-    sortId: 'region_name',
-    width: 160,
     hide:
-      !permissionMap?.['region_rid']?.edit &&
-      !permissionMap?.['region_rid']?.read,
+      !permissionMap?.['country_name']?.edit &&
+      !permissionMap?.['country_name']?.read,
   },
   {
     id: 'total_cost_pro_res',
-    label: 'Cost',
-    sortable: true,
     sortId: 'total_cost_pro_res',
-    width: 140,
+    label: 'Cost',
+    width: 130,
+    sortable: true,
     sx: {
       textAlign: 'right',
     },
@@ -78,10 +109,10 @@ export const getFinancialResourceCostColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'RD %',
-    sortable: true,
     sortId: 'rd_percent_final',
-    width: 140,
+    label: 'RD %',
+    width: 130,
+    sortable: true,
     sx: {
       textAlign: 'right',
     },
@@ -91,10 +122,10 @@ export const getFinancialResourceCostColumns = (
   },
   {
     id: 'qre_final',
-    label: 'Project QRE',
-    sortable: true,
     sortId: 'qre_final',
-    width: 140,
+    label: 'Project QRE',
+    width: 130,
+    sortable: true,
     sx: {
       textAlign: 'right',
     },
@@ -104,10 +135,10 @@ export const getFinancialResourceCostColumns = (
   },
   {
     id: 'rd_credits_total',
-    label: 'RD Credit',
-    sortable: true,
     sortId: 'rd_credits_total',
-    width: 140,
+    label: 'RD Credit',
+    width: 130,
+    sortable: true,
     sx: {
       textAlign: 'right',
     },
