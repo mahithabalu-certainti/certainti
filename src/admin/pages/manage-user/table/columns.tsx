@@ -76,9 +76,7 @@ export const getUserColumns = (
     label: 'Email',
     width: 200,
     sortable: true,
-    hide:
-      !permissionMap?.['first_name']?.read &&
-      !permissionMap?.['first_name']?.edit,
+    hide: !permissionMap?.['email']?.read && !permissionMap?.['email']?.edit,
   },
   {
     id: 'profile',
