@@ -67,22 +67,23 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
 
   // Permissions
   const { permission } = useSelector((state: RootState) => state.permission);
-  console.log('permission', permission);
-  const costViewEditFields = useMemo(
+
+  const financialProjectCostViewFields = useMemo(
     () =>
       permission?.find(
-        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+        (item) =>
+          item.name === AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_VIEW
       )?.fields ?? [],
     [permission]
   );
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    costViewEditFields.forEach((item) => {
+    financialProjectCostViewFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [costViewEditFields]);
+  }, [financialProjectCostViewFields]);
 
   useEffect(() => {
     if (projectCostData) {
@@ -137,10 +138,13 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
     }));
   };
 
+  const financialProjectCostColumns =
+    getFinancialProjectCostColumns(permissionMap);
+
   return (
     <ListTable
       data={projectCostList || []}
-      columns={getFinancialProjectCostColumns(permissionMap)}
+      columns={financialProjectCostColumns}
       getRowId={getRowId}
       hoverHighlight={false}
       tableStyle={{

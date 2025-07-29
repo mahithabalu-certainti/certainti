@@ -123,6 +123,16 @@ export const AccountDetails = () => {
     AllPermissions.IMPORTS_EXPORT
   );
 
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+
+  const isFinancialProjectCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -338,11 +348,10 @@ export const AccountDetails = () => {
       return !isAttachmentViewEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
-    } else if (
-      list === 'financial' &&
-      (tab === 'resource_cost' || tab === 'project_cost')
-    ) {
-      return false;
+    } else if (list === 'financial' && tab === 'resource_cost') {
+      return !isFinancialResourceCostExportEnable;
+    } else if (list === 'financial' && tab === 'project_cost') {
+      return !isFinancialProjectCostExportEnable;
     } else {
       // return !isAccountExportEnable;
       return true;

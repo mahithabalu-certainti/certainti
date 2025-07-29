@@ -1,11 +1,10 @@
 import { useSearchParams } from 'react-router-dom';
 import {
-  AllModules,
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { FinancialIcon } from '../../../../../assets';
 import { StateWiseSummary, Summary } from './tab';
@@ -74,14 +73,12 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [count, setCount] = useState<number>(0);
 
-  const { permission, modules } = useSelector(
-    (state: RootState) => state.permission
-  );
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const financialEnable = checkPermission(
-    modules,
-    AllModules.FINANCIAL_HIGHLIGHTS
-  );
+  // const financialEnable = checkPermission(
+  //   modules,
+  //   AllModules.FINANCIAL_HIGHLIGHTS
+  // );
 
   const isProjectCostViewEnable = checkPermission(
     permission,
@@ -102,6 +99,28 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     permission,
     AllPermissions.ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW
   );
+
+  const initialTab = useMemo(() => {
+    if (isSummaryViewEnable) return 'summary';
+    if (isStatewiseSummaryViewEnable) return 'state_wise_summary';
+    if (isProjectCostViewEnable) return 'project_cost';
+    if (isResourceCostViewEnable) return 'resource_cost';
+    return 'summary';
+  }, [
+    isSummaryViewEnable,
+    isStatewiseSummaryViewEnable,
+    isProjectCostViewEnable,
+    isResourceCostViewEnable,
+  ]);
+
+  useEffect(() => {
+    if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
+      handleTabChange(initialTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, searchParams]);
+
+  const tabParam = searchParams.get('tab') || initialTab;
 
   const fiscalYearOptions = getFiscalYears(20);
   const countriesList = useGetAllCountries();
@@ -141,7 +160,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     setShowFilter(!showFilter);
   };
 
-  const tabParam = searchParams.get('tab') || 'summary';
   const headerButtons = [
     {
       label: 'Download',
@@ -181,11 +199,10 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         : [];
 
   if (
-    !financialEnable ||
-    (!isSummaryViewEnable &&
-      !isStatewiseSummaryViewEnable &&
-      !isProjectCostViewEnable &&
-      !isResourceCostViewEnable)
+    !isSummaryViewEnable &&
+    !isStatewiseSummaryViewEnable &&
+    !isProjectCostViewEnable &&
+    !isResourceCostViewEnable
   )
     return <AccessRestricted />;
 
