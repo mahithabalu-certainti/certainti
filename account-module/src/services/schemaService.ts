@@ -2,7 +2,7 @@ import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
-import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX, rawQueries } from "../utils/constant";
 import { getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
@@ -2701,13 +2701,7 @@ async createUserGroup(
   try {
     const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
 
-    const groupTypeResult = await sequelize.query<{ rid: string }>(
-      `
-      SELECT rid
-      FROM "${MAIN_SCHEMA_NAME}"."user_group_type"
-      WHERE type = :group_type_name
-      LIMIT 1
-      `,
+    const groupTypeResult = await sequelize.query<{ rid: string }>(rawQueries.SQL_GET_GROUP_TYPE,
       {
         replacements: { group_type_name: groupTypeName },
         type: QueryTypes.SELECT,
@@ -3067,56 +3061,34 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
   const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
   return exportableFields;
 }
-// async  getAccessibleAccountIds(userRid: string): Promise<string[]> {
-//   const mainDbSequelize = await initSequelize();
-
-//   try {
-//     // 1. Direct access
-//     const directAccess = await mainDbSequelize.query<{ entity_rid: string }>(
-//       `
-//       SELECT entity_rid FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access
-//       WHERE user_rid = :userRid 
-//         AND entity_type = 'ACCOUNT'
-//         AND access_type = 'INCLUDE'
-//       `,
-//       {
-//         replacements: { userRid },
-//         type: QueryTypes.SELECT
-//       }
-//     );
-
-//     // 2. Group access
-//     const groupAccess = await mainDbSequelize.query<{ entity_rid: string }>(
-//       `
-//       WITH user_groups AS (
-//         SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
-//         WHERE user_rid = :userRid
-//       )
-//       SELECT DISTINCT gea.entity_rid
-//       FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
-//       JOIN user_groups ug ON gea.group_rid = ug.group_rid
-//       WHERE gea.entity_type = 'ACCOUNT'
-//         AND gea.access_type = 'INCLUDE'
-//       `,
-//       {
-//         replacements: { userRid },
-//         type: QueryTypes.SELECT
-//       }
-//     );
-
-//     // 3. Combine and deduplicate
-//     const allEntityRids = [
-//       ...directAccess.map(a => a.entity_rid),
-//       ...groupAccess.map(a => a.entity_rid)
-//     ];
-
-//     return Array.from(new Set(allEntityRids)); // Dedupe
-//   } catch (err) {
-//     console.error("Error in getAccessibleAccountIds:", err);
-//     return [];
-//   }
-// }
-
+ async  updateGroupNameForAccount(
+  accountRid: string,
+   userId: string,
+   is_parent:boolean,
+  accountName: string
+): Promise<void> {
+  const sequelize: Sequelize = await initSequelize(); 
+  const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
+  const result = await sequelize.query<{ rid: string; group_name: string }>(rawQueries.SQL_GET_EX_GROUP_DATA,
+  {
+    replacements: {
+      account_rid: accountRid,
+      group_type_name: groupTypeName
+    },
+    type: QueryTypes.SELECT,
+  }
+  );
+  const groupRid = result?.[0]?.rid;
+  await sequelize.query(
+   rawQueries.UPDATE_GROUP_NAME,
+    {
+      replacements: {
+        group_name: 'G-'+accountName,
+        group_rid: groupRid
+      }
+    }
+  );
+}
 }
 export default SchemaService;
 

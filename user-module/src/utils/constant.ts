@@ -23,7 +23,7 @@ export const constants = {
   SQL_GET_USER_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."user_permission_access" WHERE user_id = :userId AND module_permission_id = :permissionId LIMIT 1`,
   SQL_INSERT_API_DENIAL: `INSERT INTO ${MAIN_SCHEMA_NAME}."user_api_access_denials" (rid, user_id, permission_id, permission_name, api_endpoint, created_datetime, updated_datetime) VALUES (:rid, :userId, :permissionId, :permissionName, :apiEndpoint, NOW(), NOW())`,
   SQL_GET_ACCOUNT: `SELECT rid,parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}."account" WHERE {whereClause}  LIMIT 1`,
-   SQL_GET_USER_PROJECTS : `
+  SQL_GET_USER_PROJECTS : `
   SELECT
     ps.project_rid,
     ps.project_name,
@@ -79,7 +79,7 @@ export const constants = {
   {orderByClause}
   LIMIT :limit OFFSET :offset
 `,
- SQL_GET_PROJECTS : `
+  SQL_GET_PROJECTS : `
       SELECT 
         ps.project_rid,
         ps.project_name,
@@ -125,7 +125,7 @@ export const constants = {
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(*) as total_count
       FROM ${MAIN_SCHEMA_NAME}.project_summary ps
       WHERE {whereClauses}`,
-SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
+  SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
     {extraJoin}
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
@@ -133,6 +133,31 @@ SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
       AND uga.entity_type = 'PROJECT'
      AND {joinCondition}
     WHERE {whereClauses}`,
+  SQL_GET_DEFAULT_ACCOUNT:`SELECT rid, account_name, true as has_access FROM ${MAIN_SCHEMA_NAME}.account`,
+  SQL_GET_SELECTED_ACCOUNT_ACCESS:  `SELECT a.rid, a.account_name,
+            CASE WHEN uga.account_rid IS NOT NULL THEN true ELSE false END as has_access
+     FROM ${MAIN_SCHEMA_NAME}.account a
+     JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+     ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
+  SQL_GET_DEFAULT_PROJECT_ACCESS:`SELECT rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_summary`,
+  SQL_GET_SELECTED_PROJECT_ACCESS: `SELECT 
+      ps.project_rid,
+      ps.project_name,
+      ps.project_code,
+      ps.account_rid,
+      acc.account_name,
+      CASE 
+        WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
+        ELSE false
+      END as has_access,
+      uga.access_type
+    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+     LEFT JOIN trd365.account acc
+      ON acc.rid = ps.account_rid
+    INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
+      ON uga.entity_rid = ps.project_rid 
+      AND uga.entity_type = 'PROJECT'
+      AND uga.group_rid = :group_rid`,
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 } as const;

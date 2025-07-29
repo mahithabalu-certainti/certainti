@@ -1218,7 +1218,6 @@ async getAccountGroups(
   */
   private buildWhereClause(filters: Record<string, any>): {
     whereClause: Record<string, any>;
-    includeClause: Array<any>;
   } {
     let whereClause: Record<string, any> = {};
     let includeClause: Array<any> = [];
@@ -1246,7 +1245,7 @@ async getAccountGroups(
         }
       });
     }
-    return { whereClause, includeClause };
+    return { whereClause };
   }
 
     /**
@@ -1259,6 +1258,7 @@ async getAccountGroups(
   private getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "group_name",
+      "user_count",
       "account_name",
       "created_datetime",
       "created_by",
@@ -1554,6 +1554,7 @@ private createUserCountCondition(operator: string, value: number): any {
     page: number,
     limit: number,
     filters: Record<string, string>,
+    userRid: string,
     sortBy: string,
     sortOrder: string
   ): Promise<{
@@ -1563,70 +1564,108 @@ private createUserCountCondition(operator: string, value: number): any {
     data?: { usergroup: any; count: number };
   }>{
     try {
-      let count: number = 0;
       const offset = (page - 1) * limit;
-      const { whereClause, includeClause } = this.buildWhereClause(filters);
+      const { whereClause } = this.buildWhereClause(filters);
       const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
-
-      // Prepare order array based on sort field
-      let orderArray;
-
-      if (finalSortBy === 'created_by') {
-        orderArray = [
-          [{ model: User, as: 'user' }, 'first_name', finalSortOrder]
-        ] as any;
-      } 
-      else if (finalSortBy === 'account_name') {
-         orderArray = [[Sequelize.literal('account_name'), finalSortOrder]];
+      const user = await User.findOne({
+        where: { rid: userRid },
+        attributes: ['is_consultant_firm', 'org_id'],
+        raw: true,
+      });
+      if (!user) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: 'User not found',
+        };
       }
-      else {
-        orderArray = [[finalSortBy, finalSortOrder]];
-      }
-      count = await UserGroup.count({
-            where: whereClause,
-            include: [
-              {
-                model: User,
-                as: "user",
-                attributes: [], 
-              }
-            ],
-        distinct: true // important if joins are present
-        });
-      const userGroup = await UserGroup.findAll(
-        {
-          where: whereClause,
-          order: orderArray,
-          limit,
-          offset,
-          attributes: {
-           include: [
-                [
-                  // Subquery to count users per group
-                  literal(`(
-                    SELECT COUNT(*)
-                    FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-                    WHERE ugm.group_rid = "UserGroup".rid
-                  )`),
-                  'user_count'
-                ]
-              ]
-            },
-          include: [
-          {
-            model: User,
-             as: "user",
-            attributes: ['first_name','last_name'],
+      let groupRidSet = new Set<string>();
+      if (!user.is_consultant_firm) {
+      // Direct access via user_group_mapping
+      const userGroupMappings = await UserGroupMapping.findAll({
+        where: { user_rid: userRid },
+        attributes: ['group_rid'],
+        raw: true,
+      });
+      userGroupMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
+
+      // Access via user_group_account_mapping by org_id
+      const groupAccountMappings = await UserGroupAccountMapping.findAll({
+        where: { account_rid: user.org_id },
+        attributes: ['group_rid'],
+        raw: true,
+      });
+      groupAccountMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
+
+      if (groupRidSet.size === 0) {
+        return {
+          statusCode: constants.SUCCESS,
+          message: constants.SUCCESS_MESSAGE,
+          data: {
+            usergroup: [],
+            count: 0,
           },
-        {
-            model: UserGroupType,
-             as: "usergrouptype",
-            attributes: ['group_type_name','type'],
-          }],
-        }
-      );
+        };
+      }
+    }
 
-      // Transform the results to replace user IDs with usernames
+    const basewhereClause: any = {};
+    if (!user.is_consultant_firm) {
+      basewhereClause.rid = Array.from(groupRidSet); // merged rid list
+    }
+
+    let orderArray;
+    if (finalSortBy === 'created_by') {
+      orderArray = [[{ model: User, as: 'user' }, 'first_name', finalSortOrder]] as any;
+    } else if (finalSortBy === 'account_name') {
+      orderArray = [[Sequelize.literal('account_name'), finalSortOrder]];
+    } else {
+      orderArray = [[finalSortBy, finalSortOrder]];
+    }
+    const includeClause = [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['first_name', 'last_name'],
+      },
+      {
+        model: UserGroupType,
+        as: 'usergrouptype',
+        attributes: ['group_type_name', 'type'],
+      },
+    ];
+
+    const count = await UserGroup.count({
+      where: {
+        ...whereClause,
+        ...basewhereClause,
+      },
+      include: includeClause,
+      distinct: true,
+    });
+
+    const userGroup = await UserGroup.findAll({
+      where: {
+        ...whereClause,
+        ...basewhereClause,
+      },
+      order: orderArray,
+      limit,
+      offset,
+      attributes: {
+        include: [
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+              WHERE ugm.group_rid = "UserGroup".rid
+            )`),
+            'user_count',
+          ],
+        ],
+      },
+      include: includeClause,
+    });
+
       const transformedData = userGroup.map(userGrp => {
       const result = userGrp.get({ plain: true });
       return {
@@ -1642,7 +1681,7 @@ private createUserCountCondition(operator: string, value: number): any {
         message: constants.SUCCESS_MESSAGE,
         data: {
           usergroup:transformedData,
-          count:count
+          count
         },
       };
     } catch (err: any) {
@@ -1671,7 +1710,7 @@ private createUserCountCondition(operator: string, value: number): any {
     data?: { usergroup: any; };
   }>{
     try {
-      const { whereClause, includeClause } = this.buildWhereClause(filters);
+      const { whereClause } = this.buildWhereClause(filters);
       const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
 
       // Prepare order array based on sort field
@@ -1960,10 +1999,10 @@ private async getFormattedAccountsForGroup(groupType: string, groupRid: string):
   const sequelize = await initSequelize();
 
   if (groupType === "DEFAULT") {
-    return await sequelize.query(
-      `SELECT rid, account_name, true as has_access FROM ${MAIN_SCHEMA_NAME}.account`,
-      { type: QueryTypes.SELECT }
-    );
+    return await sequelize.query(constants.SQL_GET_DEFAULT_ACCOUNT,
+    {
+      type: constants.SELECT,
+    });
   }
 
   if (groupType === "AUTO_ASSIGNED") {
@@ -1982,11 +2021,7 @@ private async getFormattedAccountsForGroup(groupType: string, groupRid: string):
 
   // Else: Custom group with dynamic access
   return await sequelize.query(
-    `SELECT a.rid, a.account_name,
-            CASE WHEN uga.account_rid IS NOT NULL THEN true ELSE false END as has_access
-     FROM ${MAIN_SCHEMA_NAME}.account a
-     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
-     ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
+   constants.SQL_GET_SELECTED_ACCOUNT_ACCESS,
     {
       replacements: { group_rid: groupRid },
       type: QueryTypes.SELECT
@@ -1998,10 +2033,10 @@ private async getFormattedProjectsForGroup(groupType: string, groupRid: string):
   const sequelize = await initSequelize();
 
   if (groupType === "DEFAULT") {
-    return await sequelize.query(
-      `SELECT rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_summary`,
-      { type: QueryTypes.SELECT }
-    );
+      return await sequelize.query(constants.SQL_GET_DEFAULT_PROJECT_ACCESS,
+    {
+      type: constants.SELECT,
+    });
   }
 
   if (groupType === "AUTO_ASSIGNED") {
@@ -2020,24 +2055,7 @@ private async getFormattedProjectsForGroup(groupType: string, groupRid: string):
 
   // Else: Custom group with dynamic access
   return await sequelize.query(
-    `SELECT 
-      ps.project_rid,
-      ps.project_name,
-      ps.project_code,
-      ps.account_rid,
-      acc.account_name,
-      CASE 
-        WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
-        ELSE false
-      END as has_access,
-      uga.access_type
-    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
-     LEFT JOIN trd365.account acc
-      ON acc.rid = ps.account_rid
-    INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
-      ON uga.entity_rid = ps.project_rid 
-      AND uga.entity_type = 'PROJECT'
-      AND uga.group_rid = :group_rid`,
+   constants.SQL_GET_SELECTED_PROJECT_ACCESS,
     {
       replacements: { group_rid: groupRid },
       type: QueryTypes.SELECT

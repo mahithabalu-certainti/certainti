@@ -1122,6 +1122,11 @@ async insertClientTemplateDetails(
         }
       });
 
+      const existingAcc = await repository.findOne({
+        where: {
+          rid: { [Op.eq]: account_rid } // Exclude current account
+        }
+      });
 
 
       if (existingAccount) {
@@ -1247,6 +1252,19 @@ async insertClientTemplateDetails(
           default_r_number || '',
         );
       }
+     
+      if(existingAcc)
+      {
+         const existingAccName = existingAcc?.account_name
+         const updatedAccount = affectedRows[0];
+        if (updatedAccount.account_name !== existingAccName) {
+        if(existingAccName)
+        { 
+           await this.schemaService.updateGroupNameForAccount(affectedRows[0].rid,userId,affectedRows[0].is_parent,account_name);
+        }
+      }  
+      }
+     
 
       return {
         statusCode: HttpStatus.SUCCESS,

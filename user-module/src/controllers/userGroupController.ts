@@ -500,11 +500,12 @@ async function listUserGroup(req: Request, res: Response): Promise<void> {
 
     const page: number = parseInt(validatedData.page, 10) || 1;
     const limit: number = parseInt(validatedData.limit, 10) || 10;
-    
+    const userId = req.headers["x-user-id"] as string || "";
     const result = await services.userGroupService.listUserGroup(
       page,
       limit,
       parsedFilters,
+      userId,
       validatedData.sortBy,
       validatedData.sortOrder,
     );
