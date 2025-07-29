@@ -27,8 +27,8 @@ export const projectTaskSchema = gql`
       region_name: String,
       currency_rid: String,
       resource_orgname: String,
-      total_hours_pro_task: Float,
-      total_cost_pro_task: Float,
+      total_hours_pro_task: String,
+      total_cost_pro_task: String,
       description: String,
       comments: String,
       created_datetime: String,
@@ -48,10 +48,11 @@ export const projectTaskSchema = gql`
     rid: String!
     account_rid: String!
     fiscal_year: Int
-    total_hours_pro_task: Float
-    total_cost_pro_task: Float
+    total_hours_pro_task: String
+    total_cost_pro_task: String
     region_rid: String
     country_rid: String
+    resource_code: String
     comments: String
   }
 

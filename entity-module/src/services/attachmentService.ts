@@ -962,6 +962,26 @@ async exportAttachments(
       });
     }
      
+     const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
+    const labelMap: Record<string, string>  = {
+      "Document Name": "Document Name",
+      "Format": "Format",
+      "Size": "Size",
+      "Fiscal Year": "Fiscal Year",
+      "Document Category": "Document Category",
+      "Document Type": "Document Type",
+      "Related Entity": "Related Entity",
+      "Related To ID": "Related To ID",
+      "Attached By": "Attached By",
+      "Attached On": "Attached On",
+      "Attachment ID": "Attachment ID",
+    };
     // Apply uploaded_by filter if present
     if (uploadedByFilter) {
         let filteredAttachments = attachments.filter(attachment => {
@@ -982,39 +1002,17 @@ async exportAttachments(
         size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
       }));
 
-      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"accounts_view_edit");
-        const allowedFieldSet = new Set<string>();
-        for (const field of allowedFieldsForExport) {
-          if (field.read) {
-            allowedFieldSet.add(field.field_desc);
-          }
+      filteredAttachments = filteredAttachments.map((at) => {
+      const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+      const filtered: Record<string, any> = {};
+      for (const [fieldKey, value] of Object.entries(rawMapped)) {
+        const label = labelMap[fieldKey]; // field_desc
+        if (allowedFieldSet.has(label)) {
+          filtered[label] = value; // export with label name
         }
-      const labelMap: Record<string, string>  = {
-          "Document Name": "Document Name",
-          "Format": "Format",
-          "Size": "Size",
-          "Fiscal Year": "Fiscal Year",
-          "Document Category": "Document Category",
-          "Document Type": "Document Type",
-          "Related Entity": "Related Entity",
-          "Related To ID": "Related To ID",
-          "Attached By": "Attached By",
-          "Attached On": "Attached On",
-          "Attachment ID": "Attachment ID",
-        };
-
-      // Add names to attachments and format for export
-    filteredAttachments = filteredAttachments.map((at) => {
-    const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
-    const filtered: Record<string, any> = {};
-    for (const [fieldKey, value] of Object.entries(rawMapped)) {
-      const label = labelMap[fieldKey]; // field_desc
-      if (allowedFieldSet.has(label)) {
-        filtered[label] = value; // export with label name
       }
-    }
-    return filtered;
-});
+      return filtered;
+    });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1024,8 +1022,17 @@ async exportAttachments(
       };
     }
 
-    // Add names to attachments and format for export
-    attachments = attachments.map(attachment => this.mapAttachmentToCommonFormat(attachment));
+    attachments = attachments.map((at) => {
+    const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+    const filtered: Record<string, any> = {};
+    for (const [fieldKey, value] of Object.entries(rawMapped)) {
+      const label = labelMap[fieldKey]; // field_desc
+      if (allowedFieldSet.has(label)) {
+        filtered[label] = value; // export with label name
+      }
+    }
+    return filtered;
+  });
 
     return {
       statusCode: HttpStatus.SUCCESS,

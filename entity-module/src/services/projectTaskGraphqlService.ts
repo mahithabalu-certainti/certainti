@@ -31,6 +31,20 @@ export default class ProjectTaskGraphqlServies {
             } 
             }
             else {
+                if(data.resource_code){
+                    // Fetch resource rid from resources table using resource code
+                    const resourceQuery = await orgSequelize.query(rawQueries.findResourceByCode(schemaName, data.resource_code));
+                    if(resourceQuery[0].length > 0) {
+                        data.resource_rid = (resourceQuery[0][0] as { rid: string }).rid;
+                    } else {
+                        return {
+                            statusCode: HttpStatus.NOT_FOUND,
+                            statusMessage: STATUS_MESSAGE.resourceNotFound,
+                            data: null
+                        }
+                    }
+                }
+                
                 let getSetData = setInlineForProjectTask(checkForExistingData[0][0], data)
                 if(getSetData.statusMessage != null) {
                     return {
