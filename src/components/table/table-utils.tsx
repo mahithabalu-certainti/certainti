@@ -151,6 +151,13 @@ export const renderFields = <T extends RowData>({
     },
   };
 
+  const getTextAreaPosition = (rowId: string, colId: string) => {
+    const cell = document.querySelector(`[data-editing='${rowId}-${colId}']`);
+    const rect = cell?.getBoundingClientRect?.();
+    const spaceBelow = rect ? window.innerHeight - rect.bottom : 999;
+    return spaceBelow < 150 ? { bottom: 0 } : { top: 0 };
+  };
+
   // Get options for select fields
   const columnOptions = column.field?.options || [];
   const loading = column.field?.loading || false;
@@ -243,7 +250,14 @@ export const renderFields = <T extends RowData>({
 
     case 'textarea':
       return (
-        <div className='absolute top-0 w-full bg-[#fff]' style={{ zIndex: 1 }}>
+        <div
+          className='absolute w-full bg-[#fff]'
+          style={{
+            zIndex: 1,
+            ...(typeof window !== 'undefined' &&
+              getTextAreaPosition(editingCell.rowId, editingCell.columnId)),
+          }}
+        >
           <TextField
             {...commonProps}
             multiline

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useState } from 'react';
 import {
+  generatePath,
   useLocation,
   useNavigate,
   useParams,
@@ -45,6 +46,7 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
+import { ACCOUNT_DETAILS } from '../../../../routes';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -405,7 +407,10 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    const path = generatePath(ACCOUNT_DETAILS, {
+      accountid: accountID,
+    });
+    navigate(path, { replace: true });
   };
 
   if (!projectIsEnable) return <AccessRestricted />;
