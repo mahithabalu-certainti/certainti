@@ -1064,7 +1064,8 @@ if (includeDependencies) {
           desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
           edit: faWithField.edit,
-          is_read_only: includeDependencies ? faWithField.permission_field.is_read_only : undefined
+          is_read_only: includeDependencies ? faWithField.permission_field.is_read_only : undefined,
+          is_edit_only: includeDependencies ? faWithField.permission_field.is_edit_only : undefined
         });
       }
     });

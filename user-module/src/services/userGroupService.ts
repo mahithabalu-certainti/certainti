@@ -44,12 +44,12 @@ async  getAutoAssignedGroupRidForAccount(accountRid: string): Promise<string> {
       replacements: { account_rid: accountRid },
       type: constants.SELECT,
   }
-  ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
+  ) as Array<{ rid: string; is_parent: boolean; parent_account_rid: string }>;
   const accountData = result?.[0];
   if (!accountData) {
     throw new Error(`Account not found: ${accountRid}`);
   }
-  const groupType = accountData.is_parent === 'true' ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
+  const groupType = accountData.is_parent === true ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
   const group = await UserGroup.findOne({
     include: [
       {
@@ -1594,8 +1594,8 @@ private createUserCountCondition(operator: string, value: number): any {
       //  where: { account_rid: user.org_id },
        // attributes: ['group_rid'],
        // raw: true,
-    //  });
-   //   groupAccountMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
+      //  });
+     //   groupAccountMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
 
       if (groupRidSet.size === 0) {
         return {
