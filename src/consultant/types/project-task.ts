@@ -74,6 +74,7 @@ export interface ProjectTaskDetailsType {
   account_rid: string;
   account_name: string;
   project_rid: string;
+  project_fiscal_rid: string;
   project_name: string | null;
   project_code: string;
   resource_rid: string;

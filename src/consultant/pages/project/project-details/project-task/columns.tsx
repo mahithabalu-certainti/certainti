@@ -1,20 +1,14 @@
 import {
   costDisplay,
   getDateFormat,
+  PROJECT_RESOURCE_REGEX,
   // formatDateToYYYYMMDDWithTime,
   valueDisplay,
 } from '../../../../../common-utils';
+import { ListTableColumn } from '../../../../../components/table/types';
+import { SelectOption } from '../../../../types';
 import { ProjectTaskListType } from '../../../../types/project-task';
-interface TableColumn<T> {
-  id: string;
-  sortId: string;
-  label: string;
-  sortable?: boolean;
-  width: string | number;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-}
+
 export const formatDateToYMD = (dateString: string): string => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return ''; // Handle invalid dates
@@ -24,27 +18,15 @@ export const formatDateToYMD = (dateString: string): string => {
   return `${year}-${month}-${day}`;
 };
 export const getProjectTaskColumns = (
-  onClick: (row: ProjectTaskListType) => void // onClick: (row: Project) => void
-): TableColumn<ProjectTaskListType>[] => [
-    // {
-    //   id: 'project_task_id',
-    //   label: 'Project Task ID',
-    //   sortable: true,
-    //   sortId: 'project_task_id',
-    //   width: 180,
-    //   render: (row: ProjectTaskListType) => (
-    //     <span
-    //       className='cursor-pointer hover:!text-blue-600 hover:underline'
-    //       onClick={() => onClick(row)}
-    //     >
-    //       {row.project_task_id}
-    //     </span>
-    //   ),
-    // },
+  onClick: (row: ProjectTaskListType) => void, // onClick: (row: Project) => void
+  memoizedProjectResourceCode: SelectOption[],
+  permissionMapTaskTableColumn: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<ProjectTaskListType>[] => [
     {
       id: 'resource_code',
       label: 'Resource Code',
       sortable: true,
+      editId: 'resource_code',
       sortId: 'resource_code',
       width: 160,
       sticky: true,
@@ -55,6 +37,17 @@ export const getProjectTaskColumns = (
         zIndex: 10,
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
+      },
+      editable:
+        permissionMapTaskTableColumn?.['resource_code']?.read &&
+        permissionMapTaskTableColumn?.['resource_code']?.edit,
+      hide:
+        !permissionMapTaskTableColumn?.['resource_code']?.read &&
+        !permissionMapTaskTableColumn?.['resource_code']?.edit,
+      field: {
+        type: 'select',
+        options: memoizedProjectResourceCode,
+        required: true,
       },
       render: (row: ProjectTaskListType) => (
         <span
@@ -71,6 +64,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'resource_name',
       width: 160,
+      hide:
+        !permissionMapTaskTableColumn?.['resource_name']?.read &&
+        !permissionMapTaskTableColumn?.['resource_name']?.edit,
     },
     {
       id: 'resource_type_name',
@@ -78,6 +74,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'resource_type_name',
       width: 160,
+      hide:
+        !permissionMapTaskTableColumn?.['resource_type_name']?.read &&
+        !permissionMapTaskTableColumn?.['resource_type_name']?.edit,
     },
     {
       id: 'resource_role',
@@ -85,6 +84,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'resource_role',
       width: 160,
+      hide:
+        !permissionMapTaskTableColumn?.['resource_role']?.read &&
+        !permissionMapTaskTableColumn?.['resource_role']?.edit,
     },
     {
       id: 'start_date',
@@ -92,50 +94,39 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'start_date',
       width: 160,
+      hide:
+        !permissionMapTaskTableColumn?.['start_date']?.read &&
+        !permissionMapTaskTableColumn?.['start_date']?.edit,
       render: (row: ProjectTaskListType) =>
         row.start_date ? getDateFormat(row.start_date) : '-',
     },
-    // {
-    //   id: 'fiscal_year',
-    //   label: 'Fiscal Year',
-    //   sortable: true,
-    //   sortId: 'fiscal_year',
-    //   width: 130,
-    //   sx: {
-    //     textAlign: 'left',
-    //   },
-    //   render: (row: ProjectTaskListType) => {
-    //     const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-    //     return displayYear;
-    //   },
-    // },
 
-    // {
-    //   id: 'start_date',
-    //   label: 'Start Date',
-    //   sortable: true,
-    //   sortId: 'start_date',
-    //   width: 190,
-    //   render: (row: ProjectTaskListType) =>
-    //     row.start_date ? formatDateToYYYYMMDDWithTime(row.start_date) : '-',
-    // },
-    // {
-    //   id: 'end_date',
-    //   label: 'End Date',
-    //   sortable: true,
-    //   sortId: 'end_date',
-    //   width: 190,
-    //   render: (row: ProjectTaskListType) =>
-    //     row.end_date ? formatDateToYYYYMMDDWithTime(row.end_date) : '-',
-    // },
     {
       id: 'total_cost_pro_task',
       label: 'Cost',
       sortable: true,
+      editId: 'total_cost_pro_task',
       sortId: 'total_cost_pro_task',
       width: 130,
       sx: {
         textAlign: 'right',
+      },
+      editable:
+        permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
+        permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
+      hide:
+        !permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
+        !permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
+      field: {
+        type: 'text',
+        required: false,
+        placeholder: 'Enter Cost',
+        validation: [
+          {
+            regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
+            errorMessage: 'Cost must be a 18-digit number with up to 2 decimals',
+          },
+        ],
       },
       render: (row: ProjectTaskListType) =>
         row.total_cost_pro_task
@@ -146,56 +137,65 @@ export const getProjectTaskColumns = (
       id: 'total_hours_pro_task',
       label: 'Effort',
       sortable: true,
+      editId: 'total_hours_pro_task',
       sortId: 'total_hours_pro_task',
       width: 170,
       sx: {
         textAlign: 'right',
       },
+      editable:
+        permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
+        permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
+      hide:
+        !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
+        !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
+      field: {
+        type: 'text',
+        required: false,
+        placeholder: 'Enter an effort',
+        validation: [
+          {
+            regex: PROJECT_RESOURCE_REGEX.EFFORT,
+            errorMessage: 'Effort must be a positive number',
+          },
+        ],
+      },
       render: (row: ProjectTaskListType) =>
         row.total_hours_pro_task ? valueDisplay(row.total_hours_pro_task) : '-',
     },
-    // {
-    //   id: 'task_type',
-    //   label: 'Task Type',
-    //   sortable: true,
-    //   sortId: 'task_type',
-    //   width: 200,
-    // },
-
-    // {
-    //   id: 'description',
-    //   label: 'Task Description',
-    //   sortable: true,
-    //   sortId: 'description',
-    //   width: 200,
-    // },
-
     {
       id: 'comments',
       label: 'Comments',
+      editId: 'comments',
       sortable: true,
       sortId: 'comments',
       width: 200,
+      editable:
+        permissionMapTaskTableColumn?.['comments']?.read &&
+        permissionMapTaskTableColumn?.['comments']?.edit,
+      hide:
+        !permissionMapTaskTableColumn?.['comments']?.read &&
+        !permissionMapTaskTableColumn?.['comments']?.edit,
+      field: {
+        type: 'text',
+        required: false,
+        placeholder: 'Enter Comments',
+        validation: [
+          {
+            regex: PROJECT_RESOURCE_REGEX.DESCRIPTION,
+            errorMessage: 'Maximum 2000 characters allowed',
+          },
+        ],
+      },
     },
-    // {
-    //   id: 'country',
-    //   label: 'Country',
-    //   sortable: true,
-    //   sortId: 'country',
-    //   width: 170,
-    // },
-    // {
-    //   id: 'region',
-    //   label: 'Region',
-    //   sortable: true,
-    //   sortId: 'region',
-    //   width: 160,
-    // },
     {
       id: 'r_number',
       label: 'Task ID',
       sortable: true,
       sortId: 'r_number',
       width: 140,
+      hide:
+        !permissionMapTaskTableColumn?.['r_number']?.read &&
+        !permissionMapTaskTableColumn?.['r_number']?.edit,
     },
   ];

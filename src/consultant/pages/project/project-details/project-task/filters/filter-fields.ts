@@ -15,7 +15,7 @@ export const projectTaskFilterFields = (
     // memoizedCountry: { option: string; value: string }[],
     // region: { option: string; value: string }[],
     resourceTypeOptions: { option: string; value: string }[],
-    // resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
+    permissionMapTaskTableColumn?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
         {
             name: 'Resource Code',
@@ -24,17 +24,17 @@ export const projectTaskFilterFields = (
             required: true,
             options: memoizedProjectResourceCode,
             filterOptions: requiredFieldFilterOptionsForEnum,
-            // hide:
-            //     !resourcepermissionMap?.['resource_code']?.read &&
-            //     !resourcepermissionMap?.['resource_code']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['resource_code']?.read &&
+                !permissionMapTaskTableColumn?.['resource_code']?.edit,
         },
         {
             name: 'Resource Name',
             value: 'resource_name',
             type: 'text',
-            //   hide:
-            //     !resourcepermissionMap?.['resource_name']?.read &&
-            //     !resourcepermissionMap?.['resource_name']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['resource_name']?.read &&
+                !permissionMapTaskTableColumn?.['resource_name']?.edit,
         },
 
         {
@@ -44,18 +44,18 @@ export const projectTaskFilterFields = (
             required: true,
             options: resourceTypeOptions,
             filterOptions: requiredFieldFilterOptionsForEnum,
-            //   hide:
-            //     !resourcepermissionMap?.['resource_role']?.read &&
-            //     !resourcepermissionMap?.['resource_role']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['resource_type_name']?.read &&
+                !permissionMapTaskTableColumn?.['resource_type_name']?.edit,
         },
 
         {
             name: 'Resource Role',
             value: 'resource_role',
             type: 'text',
-            //   hide:
-            //     !resourcepermissionMap?.['resource_role']?.read &&
-            //     !resourcepermissionMap?.['resource_role']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['resource_role']?.read &&
+                !permissionMapTaskTableColumn?.['resource_role']?.edit,
         },
 
 
@@ -63,73 +63,36 @@ export const projectTaskFilterFields = (
             name: 'Cost',
             value: 'total_cost_pro_res',
             type: 'text',
-            // hide:
-            //     !resourcepermissionMap?.['total_cost_pro_res']?.read &&
-            //     !resourcepermissionMap?.['total_cost_pro_res']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
+                !permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
         },
         {
             name: 'Effort Hours',
             value: 'total_hours_pro_res',
             type: 'text',
-            // hide:
-            //     !resourcepermissionMap?.['total_cost_pro_res']?.read &&
-            //     !resourcepermissionMap?.['total_cost_pro_res']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
+                !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
         },
-
-        // {
-        //     name: 'Task Type',
-        //     value: 'task_type',
-        //     type: 'text',
-            // hide:
-            //     !resourcepermissionMap?.['qre_final']?.read &&
-            //     !resourcepermissionMap?.['qre_final']?.edit,
-        // },
-        // {
-        //     name: 'Task Description',
-        //     value: 'description',
-        //     type: 'text',
-            // hide:
-            //     !resourcepermissionMap?.['qre_final']?.read &&
-            //     !resourcepermissionMap?.['qre_final']?.edit,
-        // },
         {
             name: 'Comments',
             value: 'comments',
             type: 'text',
-            // hide:
-            //     !resourcepermissionMap?.['description']?.read &&
-            //     !resourcepermissionMap?.['description']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['comments']?.read &&
+                !permissionMapTaskTableColumn?.['comments']?.edit,
         },
-        // {
-        //     name: 'Resource Country',
-        //     value: 'country_rid',
-        //     type: 'enum',
-        //     options: memoizedCountry,
-        //     filterOptions: requiredFieldFilterOptionsForEnum,
-            // hide:
-            //     !resourcepermissionMap?.['country_rid']?.read &&
-            //     !resourcepermissionMap?.['country_rid']?.edit,
-        // },
-        // {
-            // name: 'Resource Region',
-            // value: 'region_rid',
-            // type: 'enum',
-            // options: region,
-            // dependsOn: 'country_rid',
-            // filterOptions: requiredFieldFilterOptionsForEnum,
-            // hide:
-            //     !resourcepermissionMap?.['region_rid']?.read &&
-            //     !resourcepermissionMap?.['region_rid']?.edit,
-        // },
+
         {
             name: 'Resource ID',
             value: 'r_number',
             type: 'text',
             required: true,
             filterOptions: requiredFieldFilterOptionsForText,
-            // hide:
-            //   !resourcepermissionMap?.['r_number']?.read &&
-            //   !resourcepermissionMap?.['r_number']?.edit,
+            hide:
+                !permissionMapTaskTableColumn?.['r_number']?.read &&
+                !permissionMapTaskTableColumn?.['r_number']?.edit,
         },
         {
             name: 'Sort Options',

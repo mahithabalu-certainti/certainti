@@ -49,28 +49,30 @@ export const ProjectTaskFormData = (
   // cityLoading?: boolean,
   // currencyLoading?: boolean,
   // disableFields?: boolean
-  // isEditView?: boolean
+  isEditView?: boolean,
+  permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>,
 ): FormType[] => {
+  console.log("permissionMapTaskForm", permissionMapTaskForm)
   return useMemo(
     () => [
       {
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          // createTextField('resource_code', 'Resource Code', {
-          //   required: false,
-          //   regex: PROJECT_TASK_REGEX.ORG_NAME,
-          //   regexErrorMessage:
-          //     'Please enter 3-50 characters. Special characters are not allowed.',
-          //   placeholder: 'Enter Resource Code',
-          //   disabled: disableFields,
-          // }),
           createAutoCompleteField('resource_code', 'Resource Code', {
             options: memoizedProjectResourceCode,
             // options: [{ label: 'one', value: 'one' }, { label: 'two', value: 'two' }, { label: 'three', value: 'three' },],
             required: true,
             onChange: true,
             placeholder: 'Enter Resource Code',
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['resource_code']?.read &&
+              !permissionMapTaskForm?.['resource_code']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['resource_code']?.read &&
+              !permissionMapTaskForm?.['resource_code']?.edit,
           }),
           // createTextField('resource_role', 'Resource Role', {
           //   required: false,
@@ -125,6 +127,14 @@ export const ProjectTaskFormData = (
             minDate: new Date('1950-01-01'),
             maxDate: previousDate,
             disableFutureDates: true,
+            // disabled:
+            //   isEditView &&
+            //   permissionMapTaskForm?.['start_date']?.read &&
+            //   !permissionMapTaskForm?.['start_date']?.edit,
+            // hide:
+            //   isEditView &&
+            //   !permissionMapTaskForm?.['start_date']?.read &&
+            //   !permissionMapTaskForm?.['start_date']?.edit,
           }),
           createDateField('end_date', 'End Date', {
             required: false,
@@ -133,6 +143,14 @@ export const ProjectTaskFormData = (
               field: 'resource_startdate',
               message: 'End Date must be after Start Date',
             },
+            // disabled:
+            //   isEditView &&
+            //   permissionMapTaskForm?.['end_date']?.read &&
+            //   !permissionMapTaskForm?.['end_date']?.edit,
+            // hide:
+            //   isEditView &&
+            //   !permissionMapTaskForm?.['end_date']?.read &&
+            //   !permissionMapTaskForm?.['end_date']?.edit,
           }),
           createTextField('total_cost_pro_task', 'Cost', {
             required: false,
@@ -140,12 +158,28 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Cost must be a 18-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['total_cost_pro_task']?.read &&
+              !permissionMapTaskForm?.['total_cost_pro_task']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['total_cost_pro_task']?.read &&
+              !permissionMapTaskForm?.['total_cost_pro_task']?.edit,
           }),
           createTextField('total_hours_pro_task', 'Effort', {
             required: false,
             regex: PROJECT_TASK_REGEX.EFFORT,
             regexErrorMessage: 'Effort must be a positive number',
             placeholder: 'Enter an effort',
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['total_hours_pro_task']?.read &&
+              !permissionMapTaskForm?.['total_hours_pro_task']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['total_hours_pro_task']?.read &&
+              !permissionMapTaskForm?.['total_hours_pro_task']?.edit,
           }),
         ],
       },
@@ -158,10 +192,18 @@ export const ProjectTaskFormData = (
             placeholder: 'Enter Comments',
             regexErrorMessage: 'Maximum 2000 characters allowed',
             regex: PROJECT_TASK_REGEX.DESCRIPTION,
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['comments']?.read &&
+              !permissionMapTaskForm?.['comments']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['comments']?.read &&
+              !permissionMapTaskForm?.['comments']?.edit,
           }),
         ],
       },
     ],
-    [memoizedProjectResourceCode]
+    [isEditView, memoizedProjectResourceCode, permissionMapTaskForm]
   );
 };

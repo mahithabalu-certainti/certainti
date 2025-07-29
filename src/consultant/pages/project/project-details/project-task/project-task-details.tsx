@@ -1,7 +1,7 @@
 import { CircularProgress, Typography } from '@mui/material';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import { TruncateWithTooltip } from '../../../../../components/truncate-with-tooltip';
-import { getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
+import { applyHidePermission, getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
 
 interface ErrorProps {
   message?: string;
@@ -10,6 +10,7 @@ interface ResourceDetailsProps {
   projectTaskData?: ProjectTaskDetailsType;
   isDetailsLoading?: boolean;
   detailsError?: ErrorProps | null | undefined;
+  permissionMapTaskTableColumn?: Record<string, { read: boolean; edit: boolean }>,
 }
 
 interface DetailItem {
@@ -171,7 +172,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   projectTaskData,
   isDetailsLoading,
   detailsError,
-  // accountId,
+  permissionMapTaskTableColumn,
 }) => {
   // const projectTaskData = resourceDetails?.data?.projectResourceDetails;
 
@@ -252,13 +253,17 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   const description: DetailItem[] = [
     { label: 'Comments', value: projectTaskData.comments },
   ];
-
+  const IdentityDetails = applyHidePermission(basicInfo, permissionMapTaskTableColumn || {});
+  const descriptionDetails = applyHidePermission(description, permissionMapTaskTableColumn || {});
+  const projectTaskDetails = applyHidePermission(projectDetails, permissionMapTaskTableColumn || {});
+  const auditInfoDetails = applyHidePermission(auditInfo, permissionMapTaskTableColumn || {});
   return (
     <div>
       <DetailsSection
         title='Basic Information'
-        data={basicInfo as DetailItem[]}
+        data={IdentityDetails as DetailItem[]}
         customStyle='pt-0 mt-0'
+        isAudit={true}
       />
       {/* <DetailsSection
         title='Location and Currency Information'
@@ -266,13 +271,13 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
       /> */}
       <DetailsSection
         title='Project Details'
-        data={projectDetails as DetailItem[]}
+        data={projectTaskDetails as DetailItem[]}
         isAudit={true}
       />
-      <DetailsSection title='Comments' data={description as DetailItem[]} />
+      <DetailsSection title='Comments' data={descriptionDetails as DetailItem[]} />
       <DetailsSection
         title='Audit Information'
-        data={auditInfo as DetailItem[]}
+        data={auditInfoDetails as DetailItem[]}
         isAudit={true}
       />
     </div>

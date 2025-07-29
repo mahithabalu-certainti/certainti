@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
@@ -18,13 +18,21 @@ import {
 import { getProjectTaskColumns } from '../project-task/columns';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 // import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
-import { AllMenus, AllPermissions } from '../../../../../common-service';
+import { AllMenus, AllModules, AllPermissions } from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
 import { ProjectTaskDetailsType, ProjectTaskListExportParams, ProjectTaskListType } from '../../../../types/project-task';
 import { RootState } from '../../../../../store/store';
 import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
-import { ExportType } from '../../../../types';
+import { ExportType, SelectOption } from '../../../../types';
+import { CellEditData, FieldChangeValue } from '../../../../../components/table/types';
+import { useToast } from '../../../../../hooks';
+import { useMutation } from '@apollo/client';
+import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
+import { taskClient } from '../../../../../api/graphql/clients/client';
+import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -67,6 +75,7 @@ export const ProjectTask = ({
     React.SetStateAction<ProjectTaskListExportParams>
   >;
 }) => {
+  const { errorToast, successToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
     projectsTabs,
@@ -101,8 +110,34 @@ export const ProjectTask = ({
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
-  // const accountRID = 'D001-1b18d36d-5c6f-45d6-8bd3-bd1b12d7bffc';
-  // const projectRID = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';  
+  const [projectTaskList, setProjectTaskList] = useState<
+    ProjectTaskListType[]
+  >([]);
+  const [updateProjectTaskMutation] = useMutation(UPDATE_PROJECT_TASK, {
+    client: taskClient,
+  });
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const projectTaskIsEnable = checkPermission(
+    modules,
+    AllModules.PROJECT_TASK
+  );
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_TASK_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapTaskTableColumn = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const { data, isLoading, error } = useProjectTask(
     {
       page: currentPage + 1,
@@ -128,6 +163,11 @@ export const ProjectTask = ({
   } = useProjectTaskDetail(taskId || '', accountID || '');
 
   const totalItems = data?.count || 0;
+  useEffect(() => {
+    if (data) {
+      setProjectTaskList(data?.projectTask || []);
+    }
+  }, [data]);
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'resource_code';
@@ -154,7 +194,17 @@ export const ProjectTask = ({
   }, [searchParams]);
 
   const resourceData = resourceDetails?.data;
-
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    accountID as string
+  );
+  const memoizedProjectResourceCode: SelectOption[] = useMemo(
+    () =>
+      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
+        label: item.resource_code,
+        value: item.resource_code,
+      })) || [],
+    [projectResourceCodeOptions?.data?.resourceCodes]
+  );
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -226,8 +276,8 @@ export const ProjectTask = ({
     navigate(`${PROJECT_TASK}/create?${queryParams.toString()}`);
   };
 
-  const handleEditProjectResource = (row: ProjectTaskListType) => {  
-     const path = row?.rid
+  const handleEditProjectResource = (row: ProjectTaskListType) => {
+    const path = row?.rid
       ? PROJECT_TASK_EDIT.replace(':taskId', row.rid)
       : PROJECT_TASK_EDIT;
     // const PFY = projectFiscalYear;
@@ -239,7 +289,7 @@ export const ProjectTask = ({
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
-  const getRowId = (row: ProjectTaskListType) => row.project_rid;
+  const getRowId = (row: ProjectTaskListType) => row.rid;
   const handleProjectTaskClick = (row: ProjectTaskListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_task_id', row?.rid ?? '');
@@ -250,12 +300,71 @@ export const ProjectTask = ({
     setShowFilter(false);
     setFilterVisibility(false);
   };
-
-  const projectTaskColumns = getProjectTaskColumns(handleProjectTaskClick);
+  const projectTaskColumns = getProjectTaskColumns(
+    handleProjectTaskClick,
+    memoizedProjectResourceCode,
+    permissionMapTaskTableColumn,
+  );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
   };
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousProject = [...projectTaskList];
 
+    const selectedProject = projectTaskList.find(
+      (pro) => pro.rid === rowId
+    );
+    // let hasResourceTye = false;
+    // let hasCountry = false;
+    // let hasRegion = false;
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        // if (item.columnId === 'resource_type_name') hasResourceTye = true;
+        // if (item.columnId === 'country_name') hasCountry = true;
+        // if (item.columnId === 'region_name') hasRegion = true;
+        return acc;
+      },
+      {
+        rid: rowId,
+        account_rid: selectedProject?.account_rid,
+        fiscal_year: selectedProject?.fiscal_year,
+      }
+    );
+
+    // if (hasCountry && !hasRegion) {
+    //   updateData['region_rid'] = '';
+    // }
+
+    try {
+      const res = await updateProjectTaskMutation({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateProjectTask;
+
+      if (result?.statusCode === 200 && result.data) {
+        const updatedParentData = result.data;
+
+        const newProjects = projectTaskList.map((project) => {
+          if (project.rid === updatedParentData.rid) {
+            return updatedParentData;
+          }
+          return project;
+        });
+        successToast(result?.statusMessage);
+        setProjectTaskList(newProjects);
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setProjectTaskList(previousProject);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setProjectTaskList(previousProject);
+    }
+  };
+  if (!projectTaskIsEnable) return <AccessRestricted />;
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
       <TabPanel
@@ -274,6 +383,7 @@ export const ProjectTask = ({
         setSortFilterCount={setSortFilterCount}
         keyProjectTask={'ProjectTask'}
         projectResourceAccountID={accountID}
+        permissionMapTaskTableColumn={permissionMapTaskTableColumn}
       />
       <>
         <ProjectTaskTableHeader
@@ -296,10 +406,11 @@ export const ProjectTask = ({
               }
               isDetailsLoading={isDetailsLoading}
               detailsError={detailsError}
+              permissionMapTaskTableColumn={permissionMapTaskTableColumn}
             />
           ) : (
             <ListTable
-              data={data?.projectTask as ProjectTaskListType[]}
+              data={projectTaskList}
               columns={projectTaskColumns}
               actionMenuItems={actionMenuItems}
               getRowId={getRowId}
@@ -329,6 +440,8 @@ export const ProjectTask = ({
                 console.log('Selected:', selectedIds)
               }
               component='project task'
+              onCellEdit={handleCellEdit}
+            // onFieldChange={handleFieldChange}
             />
           )}
         </div>

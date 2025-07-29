@@ -7,6 +7,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
+  AllPermissions,
   Layout,
   OnChange,
   // useGetAllCountries 
@@ -30,6 +31,8 @@ import {
 import { projectTaskPayloadData } from './utils';
 import { ProjectTaskInput } from '../../../../../types/project-task';
 import { useGetProjectResourceCode } from '../../../../../services/project-resources/project-resources-form-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -72,6 +75,22 @@ const ProjectTaskForm: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_TASK_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapTaskForm = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? true, edit: item.edit ?? true };
+    });
+    return map;
+  }, [projectViewEditFields]);
 
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
@@ -125,7 +144,7 @@ const ProjectTaskForm: React.FC = () => {
       {
         ...formValues,
         account_rid: account_Id || undefined,
-        project_fiscal_rid: project_Id || undefined,
+        project_fiscal_rid: isEditView ? projectTaskDetailsData?.project_fiscal_rid : project_Id || undefined,
       },
       project_task_rid,
       isEditView
@@ -206,7 +225,8 @@ const ProjectTaskForm: React.FC = () => {
             // city.isLoading,
             // currency.isLoading,
             // disableFields,
-            // isEditView
+            isEditView,
+            permissionMapTaskForm
           )}
           // loading={allCountries.isLoading || state.isLoading}
           values={

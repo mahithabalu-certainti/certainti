@@ -66,6 +66,7 @@ interface TabProps {
   projectResourceAccountID?: string;
   fieldOptions?: FieldOptionType;
   handleFilterChange?: (fieldName: string, value: FilterValue) => void;
+  permissionMapTaskTableColumn?: Record<string, { read: boolean; edit: boolean }>;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -87,6 +88,7 @@ const TabPanel: React.FC<TabProps> = ({
   projectResourceAccountID,
   fieldOptions,
   handleFilterChange,
+  permissionMapTaskTableColumn,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -429,7 +431,7 @@ const TabPanel: React.FC<TabProps> = ({
         // memoizedCountry,
         // regionData,
         memoizedResourceType,
-        // permissionProjectResourcesMap
+        permissionMapTaskTableColumn,
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
@@ -445,28 +447,7 @@ const TabPanel: React.FC<TabProps> = ({
         memoizedSkillLevels,
         resourceSkillpermissionMap
       );
-  }, [
-    value,
-    memoizedCountry,
-    regionData,
-    memoizedStatus,
-    memoizedResourceType,
-    resourcepermissionMap,
-    memoizedClassification,
-    memoizedProjectTypes,
-    projectPermissionMap,
-    memoizedProjectResourceCode,
-    permissionProjectResourcesMap,
-    fieldOptions,
-    attachmentPermissionMap,
-    memoizedCurrency,
-    memoizedResourceStatus,
-    resourceCostpermissionMap,
-    memoizedSkillType,
-    skillSubTypeData,
-    memoizedSkillLevels,
-    resourceSkillpermissionMap,
-  ]);
+  }, [value, memoizedCountry, regionData, memoizedStatus, memoizedResourceType, resourcepermissionMap, memoizedClassification, memoizedProjectTypes, projectPermissionMap, memoizedProjectResourceCode, permissionProjectResourcesMap, permissionMapTaskTableColumn, fieldOptions, attachmentPermissionMap, memoizedCurrency, memoizedResourceStatus, resourceCostpermissionMap, memoizedSkillType, skillSubTypeData, memoizedSkillLevels, resourceSkillpermissionMap]);
 
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
