@@ -203,6 +203,12 @@ export enum AllPermissions {
   PROJECT_FINANCIAL_TIMELINE = 'project_financial_timeline',
   ACCOUNT_FINANCIAL_OVERVIEW = 'account_financial_overview',
   ACCOUNT_FINANCIAL_TIMELINE = 'account_financial_timeline',
+  PROJECT_FINANCIAL_SUMMARY_VIEW = 'project_summary_view',
+  PROJECT_FINANCIAL_RESOURCE_COST_VIEW = 'project_resource_cost_view',
+  ACCOUNT_FINANCIAL_SUMMARY_VIEW = 'account_summary_view',
+  ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW = 'account_statewise_summary_view',
+  ACCOUNT_FINANCIAL_PROJECT_COST_VIEW = 'account_project_cost_view',
+  ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
 }
 
 export interface Country {

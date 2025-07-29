@@ -273,11 +273,13 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 },
               }}
               sx={{
-                height: '32px',
+                height: '26px',
                 fontSize: '13px',
                 marginLeft: '8px',
+                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  border: '2px solid #60A5FA',
+                  border: '1px solid #CBD6E2',
                 },
                 '& .MuiOutlinedInput-root': {
                   '&.Mui-focused': {
@@ -286,15 +288,21 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 },
                 '.MuiSelect-select': {
                   padding: '6px 6px',
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: 600,
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
                 },
                 '& svg': {
-                  color: '#7D98B6',
+                  color: '#425A76',
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderRadius: '2px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: '1px solid #CBD6E2',
                 },
               }}
               value={fiscalYearValue}
@@ -307,7 +315,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                     sx={{
                       color: '#425A76',
                       fontSize: '13px',
-                      fontWeight: '500',
+                      fontWeight: 500,
                     }}
                     value={it.value}
                     title={it.label}

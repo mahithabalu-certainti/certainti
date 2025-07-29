@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
 
 export interface TabItem {
   label: string;
   value: string;
+  hide?: boolean;
+  disabled?: boolean;
 }
 
 export interface SectionHeaderTabProps {
@@ -17,19 +19,34 @@ const SectionHeaderTab: React.FC<SectionHeaderTabProps> = ({
   onTabChange,
   defaultValue,
 }) => {
-  const [activeTab, setActiveTab] = useState<string>(
-    defaultValue ?? tabs[0]?.value ?? ''
-  );
+  const visibleTabs = tabs.filter((tab) => !tab.hide);
+
+  const getInitialTab = () => {
+    if (defaultValue) {
+      const defaultTab = tabs.find((tab) => tab.value === defaultValue);
+      if (defaultTab && !defaultTab.hide) return defaultValue;
+    }
+    return visibleTabs[0]?.value ?? '';
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(getInitialTab());
+
+  useEffect(() => {
+    if (!visibleTabs.some((tab) => tab.value === activeTab)) {
+      setActiveTab(getInitialTab());
+    }
+    // eslint-disable-next-line
+  }, [JSON.stringify(visibleTabs), defaultValue]);
 
   const handleChange = (_event: React.SyntheticEvent, newIndex: number) => {
-    const newValue = tabs[newIndex]?.value;
+    const newValue = visibleTabs[newIndex]?.value;
     if (!newValue) return;
 
     setActiveTab(newValue);
     onTabChange?.(newValue);
   };
 
-  const activeIndex = tabs.findIndex((tab) => tab.value === activeTab);
+  const activeIndex = visibleTabs.findIndex((tab) => tab.value === activeTab);
 
   return (
     <div className='flex flex-col gap-0 border border-[#CBD6E2] pl-3'>
@@ -59,8 +76,8 @@ const SectionHeaderTab: React.FC<SectionHeaderTabProps> = ({
             },
           }}
         >
-          {tabs.map((tab) => (
-            <Tab key={tab.value} label={tab.label} />
+          {visibleTabs.map((tab) => (
+            <Tab key={tab.value} label={tab.label} disabled={tab.disabled} />
           ))}
         </Tabs>
       </Box>

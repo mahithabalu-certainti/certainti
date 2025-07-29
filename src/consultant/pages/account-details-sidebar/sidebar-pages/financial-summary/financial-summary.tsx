@@ -44,7 +44,7 @@ const FinancialTabs = [
 ];
 interface ProjectFinancialProps {
   countryId?: string | null;
-  stateId?: string | null
+  stateId?: string | null;
   accountDetails?: accountDetailsProps;
   activeKey?: string;
   setResCostExportParams: (
@@ -62,7 +62,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   setFinancialProjectCostParams,
   setExportType,
   countryId,
-  stateId
+  stateId,
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -74,12 +74,35 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [count, setCount] = useState<number>(0);
 
-  const { modules } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   const financialEnable = checkPermission(
     modules,
     AllModules.FINANCIAL_HIGHLIGHTS
   );
+
+  const isProjectCostViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_VIEW
+  );
+
+  const isResourceCostViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW
+  );
+
+  const isSummaryViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_SUMMARY_VIEW
+  );
+
+  const isStatewiseSummaryViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW
+  );
+
   const fiscalYearOptions = getFiscalYears(20);
   const countriesList = useGetAllCountries();
   const resourceTypeOptions = useGetResourceType();
@@ -132,10 +155,22 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     },
   ];
   const tabs = [
-    { label: 'Summary', value: 'summary' },
-    { label: 'State wise Summary', value: 'state_wise_summary' },
-    { label: 'Project Cost', value: 'project_cost' },
-    { label: 'Resource Cost', value: 'resource_cost' },
+    { label: 'Summary', value: 'summary', hide: !isSummaryViewEnable },
+    {
+      label: 'State wise Summary',
+      value: 'state_wise_summary',
+      hide: !isStatewiseSummaryViewEnable,
+    },
+    {
+      label: 'Project Cost',
+      value: 'project_cost',
+      hide: !isProjectCostViewEnable,
+    },
+    {
+      label: 'Resource Cost',
+      value: 'resource_cost',
+      hide: !isResourceCostViewEnable,
+    },
   ];
 
   const filterFields =
@@ -144,7 +179,15 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
       : tabParam === 'project_cost'
         ? getAccountFinancialProjectCostFields()
         : [];
-  if (!financialEnable) return <AccessRestricted />;
+
+  if (
+    !financialEnable ||
+    (!isSummaryViewEnable &&
+      !isStatewiseSummaryViewEnable &&
+      !isProjectCostViewEnable &&
+      !isResourceCostViewEnable)
+  )
+    return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
@@ -197,11 +240,17 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             : ''
         }`}
       >
-        {tabParam === 'summary' && <Summary fiscalYear={fiscalyear} />}
-        {tabParam === 'state_wise_summary' && (
-          <StateWiseSummary fiscalYear={fiscalyear} countryId={countryId} stateId={stateId} />
+        {tabParam === 'summary' && isSummaryViewEnable && (
+          <Summary fiscalYear={fiscalyear} />
         )}
-        {tabParam === 'project_cost' && (
+        {tabParam === 'state_wise_summary' && isStatewiseSummaryViewEnable && (
+          <StateWiseSummary
+            fiscalYear={fiscalyear}
+            countryId={countryId}
+            stateId={stateId}
+          />
+        )}
+        {tabParam === 'project_cost' && isProjectCostViewEnable && (
           <FinancialProjectCost
             fiscalyear={fiscalyear}
             reFetchData={reFetchData}
@@ -212,7 +261,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             setExportType={setExportType}
           />
         )}
-        {tabParam === 'resource_cost' && (
+        {tabParam === 'resource_cost' && isResourceCostViewEnable && (
           <FinancialResourceCost
             accountDetails={accountDetails}
             fiscalyear={fiscalyear}
