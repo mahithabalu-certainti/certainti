@@ -84,7 +84,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
                         break
                     } 
                     else {
-                        filterValues = `LOWER(${alias}.${keyColumns}) = '${values.toLowerCase()}'`
+                        filterValues = `LOWER(${alias}.${keyColumns}) = '${values.toLowerCase().replace(/'/g, "''")}'`
                         filterArray.push(filterValues)
                         break
                     } 
@@ -103,7 +103,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
                         break
                     } 
                     else {
-                        filterValues = `LOWER(${alias}.${keyColumns}) != '${values.toLowerCase()}'`
+                        filterValues = `LOWER(${alias}.${keyColumns}) != '${values.toLowerCase().replace(/'/g, "''")}'`
                         filterArray.push(filterValues)
                         break
                     } 
