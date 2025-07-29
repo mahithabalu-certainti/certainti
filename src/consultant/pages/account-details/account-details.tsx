@@ -390,10 +390,11 @@ export const AccountDetails = () => {
         return (
           <FinancialSummary
             accountDetails={{ ...data?.data } as accountDetailsProps}
-            projectDetails={projectData}
             setExportType={setExportType}
             setResCostExportParams={setFinancialResCostParams}
             setFinancialProjectCostParams={setFinancialProjectCostParams}
+            countryId={data?.data.accountById.country_rid}
+            stateId={data?.data.accountById.region_rid}
           />
         );
       case 'details':

@@ -1,6 +1,5 @@
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import {
-  SummaryClaimJurisdiction,
   SummaryDetailedMetric,
   SummaryRdCredits,
   SummaryResourceMetric,
@@ -99,56 +98,6 @@ export const getDetailedMetricColumns =
       label: 'Project Task Level',
       sortable: false,
       sortId: 'project_task_level',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
-    },
-  ];
-
-export const getClaimJurisdictionColumns =
-  (): ListTableColumn<SummaryClaimJurisdiction>[] => [
-    {
-      id: 'name',
-      label: 'Claim Jurisdiction',
-      sortable: false,
-      sortId: 'name',
-      width: '25%',
-      sticky: true,
-      sx: {
-        position: 'sticky',
-        left: 0,
-        background: '#fff',
-        zIndex: 10,
-        borderRight: '1px solid #CBD6E2 !important',
-        borderBottom: '1px solid #CBD6E2 !important',
-      },
-    },
-    {
-      id: 'rd_credits_fte',
-      label: 'RD Credits - FTE',
-      sortable: false,
-      sortId: 'rd_credits_fte',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
-    },
-    {
-      id: 'rd_credits_subcon',
-      label: 'RD Credits - SubCon',
-      sortable: false,
-      sortId: 'rd_credits_subcon',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
-    },
-    {
-      id: 'rd_credits_nonlabor',
-      label: 'RD Credits - NonLabor',
-      sortable: false,
-      sortId: 'rd_credits_nonlabor',
       width: '25%',
       sx: {
         textAlign: 'right',

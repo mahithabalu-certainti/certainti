@@ -9,7 +9,6 @@ import { useMemo, useState } from 'react';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { FinancialIcon } from '../../../../../assets';
 import { StateWiseSummary, Summary } from './tab';
-import { NewProjectData } from '../../../../types/project';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import FinancialProjectCost from './tab/project-cost/project-cost';
 import FinancialResourceCost from './tab/resource-cost/resource-cost';
@@ -44,9 +43,10 @@ const FinancialTabs = [
   },
 ];
 interface ProjectFinancialProps {
+  countryId?: string | null;
+  stateId?: string | null
   accountDetails?: accountDetailsProps;
   activeKey?: string;
-  projectDetails: NewProjectData | null;
   setResCostExportParams: (
     params: ProjectFinancialResourceExportParams
   ) => void;
@@ -58,10 +58,11 @@ interface ProjectFinancialProps {
 
 const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   accountDetails,
-  projectDetails,
   setResCostExportParams,
   setFinancialProjectCostParams,
   setExportType,
+  countryId,
+  stateId
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -127,6 +128,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         width: '96px',
         minWidth: '96px',
       },
+      hide: ['summary', 'state_wise_summary'].includes(tabParam),
     },
   ];
   const tabs = [
@@ -195,9 +197,9 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             : ''
         }`}
       >
-        {tabParam === 'summary' && <Summary projectDetails={projectDetails} />}
+        {tabParam === 'summary' && <Summary fiscalYear={fiscalyear} />}
         {tabParam === 'state_wise_summary' && (
-          <StateWiseSummary projectDetails={projectDetails} />
+          <StateWiseSummary fiscalYear={fiscalyear} countryId={countryId} stateId={stateId} />
         )}
         {tabParam === 'project_cost' && (
           <FinancialProjectCost

@@ -1,5 +1,7 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
+  FinancialSummaryApiResponse,
+  FinancialSummaryBody,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceCostList,
   ProjectFinancialResourceCostResponse,
@@ -44,6 +46,27 @@ export const useProjectFinancialSummary = (
       !!params.account_rid &&
       !!params.project_fiscal_rid &&
       !!params.fiscal_year,
+  });
+};
+
+export const getFinancialSummary = async (
+  body: FinancialSummaryBody
+): Promise<FinancialSummaryApiResponse> => {
+  try {
+    const { data } = await resourceServiceApi.post<FinancialSummaryApiResponse>(
+      '/api/financialHighlight/list',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching highlights details:', error);
+    throw error;
+  }
+};
+
+export const useGetFinancialSummary = () => {
+  return useMutation<FinancialSummaryApiResponse, Error, FinancialSummaryBody>({
+    mutationFn: (body) => getFinancialSummary(body),
   });
 };
 
