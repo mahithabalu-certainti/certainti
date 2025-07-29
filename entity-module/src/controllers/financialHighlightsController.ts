@@ -4,6 +4,7 @@ import { HttpStatus } from "../utils/constants";
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateRequest } from "../utils/helpers";
 import {v4 as uuid} from 'uuid'
 import { exportListAccountLevelProjectCostsSchema, listAccountLevelProjectCostsSchema } from "../lib/joi/schemas/schema";
+import { permission } from "process";
 
 const services = Configurations.getInstance().getServices()
 const financialService = services.financialHighlightServies;
@@ -27,6 +28,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_hours.metric_name,
+                permission : result.data.fte_hours.permission,
                 project_level : result.data.fte_hours.project_level,
                 project_resource_level : result.data.fte_hours.project_resource_level,
                 project_task_level : result.data.fte_hours.project_task_level
@@ -34,6 +36,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_cost.metric_name,
+                permission : result.data.fte_cost.permission,
                 project_level : result.data.fte_cost.project_level,
                 project_resource_level : result.data.fte_cost.project_resource_level,
                 project_task_level : result.data.fte_cost.project_task_level
@@ -41,6 +44,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_hours.metric_name,
+                permission : result.data.subcon_hours.permission,
                 project_level : result.data.subcon_hours.project_level,
                 project_resource_level : result.data.subcon_hours.project_resource_level,
                 project_task_level : result.data.subcon_hours.project_task_level
@@ -48,6 +52,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_cost.metric_name,
+                permission : result.data.subcon_cost.permission,
                 project_level : result.data.subcon_cost.project_level,
                 project_resource_level : result.data.subcon_cost.project_resource_level,
                 project_task_level : result.data.subcon_cost.project_task_level
@@ -55,6 +60,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.nonlabor_cost.metric_name,
+                permission : result.data.nonlabor_cost.permission,
                 project_level : result.data.nonlabor_cost.project_level,
                 project_resource_level : result.data.nonlabor_cost.project_resource_level
             })
@@ -124,6 +130,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_hours.metric_name,
+                permission : result.data.fte_hours.permission,
                 project_level : result.data.fte_hours.project_level,
                 project_resource_level : result.data.fte_hours.project_resource_level,
                 project_task_level : result.data.fte_hours.project_task_level
@@ -131,6 +138,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_cost.metric_name,
+                permission : result.data.fte_cost.permission,
                 project_level : result.data.fte_cost.project_level,
                 project_resource_level : result.data.fte_cost.project_resource_level,
                 project_task_level : result.data.fte_cost.project_task_level
@@ -138,6 +146,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_hours.metric_name,
+                permission : result.data.subcon_hours.permission,
                 project_level : result.data.subcon_hours.project_level,
                 project_resource_level : result.data.subcon_hours.project_resource_level,
                 project_task_level : result.data.subcon_hours.project_task_level
@@ -145,6 +154,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_cost.metric_name,
+                permission : result.data.subcon_cost.permission,
                 project_level : result.data.subcon_cost.project_level,
                 project_resource_level : result.data.subcon_cost.project_resource_level,
                 project_task_level : result.data.subcon_cost.project_task_level
@@ -152,6 +162,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.nonlabor_cost.metric_name,
+                permission : result.data.nonlabor_cost.permission,
                 project_level : result.data.nonlabor_cost.project_level,
                 project_resource_level : result.data.nonlabor_cost.project_resource_level
             })
