@@ -17,6 +17,9 @@ import {
 import { MenuItem, Select, Skeleton } from '@mui/material';
 import TextButton from '../../../../../../../components/button/text-button';
 import { useFetchState } from '../../../../../../services/account';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface FinancialSummaryProps {
   fiscalYear: string;
@@ -31,6 +34,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 }) => {
   // hooks
   const { accountid } = useParams();
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   // UseStates
   const [resourceMetric, setResourceMetric] = useState<SummaryResourceMetric[]>(
@@ -71,6 +75,22 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     [states.data?.data.states]
   );
   const allData = data?.data;
+  const summaryViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) =>
+          item.name === AllPermissions.ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    summaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [summaryViewEditFields]);
+  console.log('permissionMap', permissionMap);
 
   // UseEffects
   useEffect(() => {
@@ -88,10 +108,18 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
-      setDetailedMetric(allData.detailed_metrics);
-      setRdCredits(allData.claim_jurisdiction)
+      setRdCredits(allData.claim_jurisdiction);
+      const updatedDetailedMetrics = allData.detailed_metrics.map((item) => {
+        const permission = permissionMap?.[item.permission];
+        const hide = permission ? !permission.edit && !permission.read : false;
+        return {
+          ...item,
+          hide,
+        };
+      });
+      setDetailedMetric(updatedDetailedMetrics);
     }
-  }, [allData]);
+  }, [allData, permissionMap]);
 
   // Functions
   const getResourceMetricRowId = (row: SummaryResourceMetric) => row.rid;
@@ -249,12 +277,15 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         </div>
 
         <div className='h-[46px] max-h-[46px] flex items-center justify-between border border-[#CBD6E2] px-3 text-[14px] font-bold bg-[#FCFCFC]'>
-          <span className='text-[#2D3E4F] '>Claimed No of Projects: {allData?.rd_eligible_projects || 0}</span>
+          <span className='text-[#2D3E4F] '>
+            {permissionMap?.['rd_eligible_projects']?.read &&
+              `Claimed No of Projects: ${allData?.rd_eligible_projects || 0}`}
+          </span>
           <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
         </div>
         <ListTable
           data={resourceMetric}
-          columns={getResourceMetricColumns()}
+          columns={getResourceMetricColumns(permissionMap)}
           getRowId={getResourceMetricRowId}
           hoverHighlight={false}
           tableStyle={{
@@ -303,7 +334,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         </div>
         <ListTable
           data={rdCredits}
-          columns={getRdCreditsColumns()}
+          columns={getRdCreditsColumns(permissionMap)}
           getRowId={getRdCreditsRowId}
           hoverHighlight={false}
           tableStyle={{
