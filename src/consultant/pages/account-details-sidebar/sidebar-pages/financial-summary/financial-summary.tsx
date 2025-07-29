@@ -1,6 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
 import {
-  AllModules,
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
@@ -74,14 +73,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [count, setCount] = useState<number>(0);
 
-  const { permission, modules } = useSelector(
-    (state: RootState) => state.permission
-  );
-
-  const financialEnable = checkPermission(
-    modules,
-    AllModules.FINANCIAL_HIGHLIGHTS
-  );
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const isProjectCostViewEnable = checkPermission(
     permission,
@@ -181,11 +173,10 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         : [];
 
   if (
-    !financialEnable ||
-    (!isSummaryViewEnable &&
-      !isStatewiseSummaryViewEnable &&
-      !isProjectCostViewEnable &&
-      !isResourceCostViewEnable)
+    !isSummaryViewEnable &&
+    !isStatewiseSummaryViewEnable &&
+    !isProjectCostViewEnable &&
+    !isResourceCostViewEnable
   )
     return <AccessRestricted />;
 

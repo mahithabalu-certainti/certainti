@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
 import { useParams } from 'react-router-dom';
 import {
+  ClaimJurisdiction,
   FinancialSummaryFlag,
   SelectOption,
-  SummaryClaimJurisdiction,
   SummaryDetailedMetric,
   SummaryResourceMetric,
 } from '../../../../../../types';
@@ -16,6 +16,9 @@ import {
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import TextButton from '../../../../../../../components/button/text-button';
 import { useGetFinancialSummary } from '../../../../../../services/financial';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface Summary {
   fiscalYear: string;
@@ -24,6 +27,7 @@ interface Summary {
 export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
   // hooks
   const { accountid } = useParams();
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   // UseStates
   const [resourceMetric, setResourceMetric] = useState<SummaryResourceMetric[]>(
@@ -33,7 +37,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
     []
   );
   const [claimJurisdiction, setClaimJurisdiction] = useState<
-    SummaryClaimJurisdiction[]
+    ClaimJurisdiction[]
   >([]);
   const [type, setType] = useState('all');
   const [flag, setFlag] = useState<FinancialSummaryFlag>('all');
@@ -53,6 +57,20 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
     },
   ];
   const allData = data?.data;
+  const summaryViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_FINANCIAL_SUMMARY_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    summaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [summaryViewEditFields]);
 
   // UseEffects
   useEffect(() => {
@@ -70,10 +88,18 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
-      setDetailedMetric(allData.detailed_metrics);
       setClaimJurisdiction(allData.claim_jurisdiction);
+      const updatedDetailedMetrics = allData.detailed_metrics.map((item) => {
+        const permission = permissionMap?.[item.permission];
+        const hide = permission ? !permission.edit && !permission.read : false;
+        return {
+          ...item,
+          hide,
+        };
+      });
+      setDetailedMetric(updatedDetailedMetrics);
     }
-  }, [allData]);
+  }, [allData, permissionMap]);
 
   // Functions
   const updateType = (e: SelectChangeEvent<string>) => {
@@ -81,7 +107,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
   };
   const getResourceMetricRowId = (row: SummaryResourceMetric) => row.rid;
   const getDetailedMetricRowId = (row: SummaryDetailedMetric) => row.rid;
-  const getClaimJurisdictionRowId = (row: SummaryClaimJurisdiction) => row.rid;
+  const getClaimJurisdictionRowId = (row: ClaimJurisdiction) => row.rid;
 
   return (
     <div className='flex flex-col gap-4'>
@@ -164,13 +190,14 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
 
         <div className='h-[46px] max-h-[46px] flex items-center justify-between border border-[#CBD6E2] px-3 text-[14px] font-bold bg-[#FCFCFC]'>
           <span className='text-[#2D3E4F] '>
-            RD Eligible No of Projects: {allData?.rd_eligible_projects || 0}
+            {permissionMap?.['rd_eligible_projects']?.read &&
+              `RD Eligible No of Projects: ${allData?.rd_eligible_projects || 0}`}
           </span>
           <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
         </div>
         <ListTable
           data={resourceMetric}
-          columns={getResourceMetricColumns()}
+          columns={getResourceMetricColumns(permissionMap)}
           getRowId={getResourceMetricRowId}
           hoverHighlight={false}
           tableStyle={{
@@ -212,7 +239,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
       />
       <ListTable
         data={claimJurisdiction}
-        columns={getClaimJurisdictionColumns()}
+        columns={getClaimJurisdictionColumns(permissionMap)}
         getRowId={getClaimJurisdictionRowId}
         hoverHighlight={false}
         tableStyle={{

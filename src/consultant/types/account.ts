@@ -69,15 +69,17 @@ interface DetailedMetric {
   project_level: number;
   project_resource_level: number;
   project_task_level?: number; // Optional as one item lacks it
+  permission: string
 }
 
-export interface ClaimJurisdiction {
+export type ClaimJurisdiction = {
   rid: string;
   name: string;
   rd_credits_fte: number;
   rd_credits_subcon: number;
   rd_credits_nonlabor: number;
-  rd_credits_total: number
+  rd_credits_total: number;
+  permission: string
 }
 
 export interface FinancialSummaryDetails {
@@ -87,6 +89,7 @@ export interface FinancialSummaryDetails {
   resource_metrics: ResourceMetric[];
   detailed_metrics: DetailedMetric[];
   claim_jurisdiction: ClaimJurisdiction[];
+  permission: string;
 }
 
 export interface States {

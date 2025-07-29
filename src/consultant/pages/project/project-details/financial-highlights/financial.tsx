@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
-  AllModules,
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
@@ -64,14 +63,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') || 'summary';
-  const { permission, modules } = useSelector(
-    (state: RootState) => state.permission
-  );
-
-  const financialEnable = checkPermission(
-    modules,
-    AllModules.FINANCIAL_HIGHLIGHTS
-  );
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const isResourceCostViewEnable = checkPermission(
     permission,
@@ -149,7 +141,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
     },
   ];
 
-  if (!financialEnable || (!isSummaryViewEnable && !isResourceCostViewEnable))
+  if (!isSummaryViewEnable && !isResourceCostViewEnable)
     return <AccessRestricted />;
 
   return (

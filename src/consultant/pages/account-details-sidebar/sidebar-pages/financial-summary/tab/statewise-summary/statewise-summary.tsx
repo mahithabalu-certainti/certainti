@@ -48,7 +48,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   });
 
   // API Hooks
-  const { mutate, isPending, isError, data } = useGetFinancialSummary();
+  const { mutate, isPending, isError, data } = useGetFinancialSummary(true);
   const states = useFetchState(countryId as string);
 
   // Variables

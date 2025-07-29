@@ -60,7 +60,7 @@ import {
   ProjectFinancialResourceExportParams,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
-import { NewProjectData, ProjectListParams } from '../../types/project';
+import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
@@ -76,12 +76,10 @@ export const AccountDetails = () => {
   const navigate = useNavigate();
 
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
-  const [projectData] = useState<NewProjectData | null>(null);
-
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
-  const { modules, permission } = useSelector(
+  const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
 
@@ -96,6 +94,11 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
   );
+  const isFinancialHighlightsEnable = checkPermission(
+    menus,
+    AllMenus.FINANCIAL_HIGHLIGHTS
+  );
+
   // const isAccountDetailsDownloadEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
@@ -471,8 +474,8 @@ export const AccountDetails = () => {
 
   const disable = data?.data?.accountById?.is_parent;
 
-  const sideMenuItems = useMemo<MenuItem[]>(
-    () => [
+  const sideMenuItems = useMemo<MenuItem[]>(() => {
+    const allMenus = [
       {
         name: 'Details',
         key: 'details',
@@ -497,7 +500,7 @@ export const AccountDetails = () => {
       {
         name: 'Financial Highlights',
         key: 'financial',
-        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
       },
@@ -573,9 +576,11 @@ export const AccountDetails = () => {
           },
         ],
       },
-    ],
-    [disable]
-  ); // Only recalculate when 'disable' changes
+    ];
+    return isFinancialHighlightsEnable
+      ? allMenus
+      : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
+  }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
     window.history.back();

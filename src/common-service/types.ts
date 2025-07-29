@@ -123,6 +123,7 @@ export enum AllMenus {
   ACCOUNT_SETTINGS = 'manage_account_settings',
   PROJECT_SETTINGS = 'manage_project_settings',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
+  FINANCIAL_HIGHLIGHTS = 'financial_highlights',
 }
 
 export enum AllModules {

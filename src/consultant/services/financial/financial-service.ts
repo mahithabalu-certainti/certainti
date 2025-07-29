@@ -50,11 +50,12 @@ export const useProjectFinancialSummary = (
 };
 
 export const getFinancialSummary = async (
-  body: FinancialSummaryBody
+  body: FinancialSummaryBody,
+  isStateWise?: boolean
 ): Promise<FinancialSummaryApiResponse> => {
   try {
     const { data } = await resourceServiceApi.post<FinancialSummaryApiResponse>(
-      '/api/financialHighlight/list',
+      `/api/financialHighlight/${isStateWise ? 'state' : 'list'}`,
       body
     );
     return data;
@@ -64,9 +65,9 @@ export const getFinancialSummary = async (
   }
 };
 
-export const useGetFinancialSummary = () => {
+export const useGetFinancialSummary = (isStateWise?: boolean) => {
   return useMutation<FinancialSummaryApiResponse, Error, FinancialSummaryBody>({
-    mutationFn: (body) => getFinancialSummary(body),
+    mutationFn: (body) => getFinancialSummary(body, isStateWise),
   });
 };
 
