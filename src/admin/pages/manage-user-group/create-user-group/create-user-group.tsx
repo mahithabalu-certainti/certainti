@@ -6,7 +6,11 @@ import React, {
   useState,
 } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowDownIcon, ManageUserIcon } from '../../../../assets/icons';
+import {
+  ArrowDownDisabledIcon,
+  ArrowDownIcon,
+  ManageUserIcon,
+} from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import {
   Checkbox,
@@ -730,12 +734,16 @@ export const CreateUserGroup: React.FC = () => {
                     <button
                       aria-describedby={accountId}
                       onClick={handleAccountsModal}
-                      className={`border border-[#ccc] rounded text-left px-[10px] py-[7px] text-xs ${groupInformationError.accounts ? 'border-red-500' : ''} ${groupTypeNotCustom || isAccountDisabled ? 'bg-[#f3f4f6] text-[#00000061]' : 'cursor-pointer'}`}
+                      className={`border border-[#ccc] rounded text-left px-[10px] py-[7px] text-xs w-full flex justify-between items-center ${groupInformationError.accounts ? 'border-red-500' : ''} ${groupTypeNotCustom || isAccountDisabled ? 'bg-[#f3f4f6] text-[#00000061]' : 'cursor-pointer'}`}
                       type='button'
                       disabled={groupTypeNotCustom || isAccountDisabled}
                     >
-                      {selectAccountCount.parent} Accounts{' '}
-                      {selectAccountCount.child} Childs
+                      <span>
+                        {selectAccountCount.parent} Accounts{' '}
+                        {selectAccountCount.child} Childs
+                      </span>
+
+                      <ArrowDownDisabledIcon />
                     </button>
                   )}
                   <AccountModal
@@ -752,7 +760,7 @@ export const CreateUserGroup: React.FC = () => {
                       currentGroupType?.group_type_name as string
                     }
                   />
-                  {groupInformationError.groupName && (
+                  {groupInformationError.accounts && (
                     <span className='text-red-500 text-[11px]'>
                       {groupInformationError.accounts}
                     </span>

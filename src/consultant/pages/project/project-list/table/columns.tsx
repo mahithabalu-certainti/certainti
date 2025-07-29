@@ -489,31 +489,31 @@ export const getAllProjectListColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'qre',
-    label: 'QRE %',
-    sortable: true,
-    sortId: 'qre',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => (row.qre ? row.qre : '-'),
-  },
-  {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE %',
     sortable: true,
     sortId: 'qre_final',
     width: 130,
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
     sx: {
       textAlign: 'right',
     },
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
     render: (row: Project) =>
       row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
+  },
+  {
+    id: 'qre',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qre',
+    width: 130,
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'project_point_of_contact',
