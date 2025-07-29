@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { accountDetailsProps } from '../../../../../account-details/utils';
 import {
@@ -10,6 +10,9 @@ import {
 import { useProjectFinancialResourceCost } from '../../../../../../services/financial/financial-service';
 import { ListTable } from '../../../../../../../components/table';
 import { getFinancialResourceCostColumns } from './columns';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface FinancialResourceCostProps {
   refreshTrigger: number;
@@ -50,6 +53,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       limit: 100,
       filters: appliedFilters,
     });
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const { data, isLoading, isError } = useProjectFinancialResourceCost(
     {
@@ -95,6 +99,24 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableParams, fiscalyear, appliedFilters]);
 
+  // Permissions
+  const financialResourceCostViewFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    financialResourceCostViewFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [financialResourceCostViewFields]);
+
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
@@ -121,10 +143,13 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
 
+  const financialResourceCostColumns =
+    getFinancialResourceCostColumns(permissionMap);
+
   return (
     <ListTable
       data={resourceCostList}
-      columns={getFinancialResourceCostColumns()}
+      columns={financialResourceCostColumns}
       getRowId={getRowId}
       hoverHighlight={false}
       tableStyle={{

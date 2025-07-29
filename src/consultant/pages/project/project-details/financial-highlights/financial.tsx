@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
@@ -62,7 +62,6 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') || 'summary';
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const isResourceCostViewEnable = checkPermission(
@@ -74,6 +73,21 @@ const Financial: React.FC<ProjectFinancialProps> = ({
     permission,
     AllPermissions.PROJECT_FINANCIAL_SUMMARY_VIEW
   );
+
+  const initialTab = useMemo(() => {
+    if (isSummaryViewEnable) return 'summary';
+    if (isResourceCostViewEnable) return 'resource_cost';
+    return 'summary';
+  }, [isSummaryViewEnable, isResourceCostViewEnable]);
+
+  useEffect(() => {
+    if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
+      handleTabChange(initialTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, searchParams]);
+
+  const tabParam = searchParams.get('tab') || initialTab;
 
   const countriesList = useGetAllCountries();
   const region = useFetchState(currentCountry);

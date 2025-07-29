@@ -4,7 +4,7 @@ import {
   useGetAllCountries,
 } from '../../../../../common-service';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { FinancialIcon } from '../../../../../assets';
 import { StateWiseSummary, Summary } from './tab';
@@ -95,6 +95,28 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     AllPermissions.ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW
   );
 
+  const initialTab = useMemo(() => {
+    if (isSummaryViewEnable) return 'summary';
+    if (isStatewiseSummaryViewEnable) return 'state_wise_summary';
+    if (isProjectCostViewEnable) return 'project_cost';
+    if (isResourceCostViewEnable) return 'resource_cost';
+    return 'summary';
+  }, [
+    isSummaryViewEnable,
+    isStatewiseSummaryViewEnable,
+    isProjectCostViewEnable,
+    isResourceCostViewEnable,
+  ]);
+
+  useEffect(() => {
+    if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
+      handleTabChange(initialTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, searchParams]);
+
+  const tabParam = searchParams.get('tab') || initialTab;
+
   const fiscalYearOptions = getFiscalYears(20);
   const countriesList = useGetAllCountries();
   const resourceTypeOptions = useGetResourceType();
@@ -133,7 +155,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     setShowFilter(!showFilter);
   };
 
-  const tabParam = searchParams.get('tab') || 'summary';
   const headerButtons = [
     {
       label: 'Download',

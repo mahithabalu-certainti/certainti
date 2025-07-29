@@ -148,6 +148,11 @@ export const ProjectDetails = () => {
     AllMenus.FINANCIAL_HIGHLIGHTS
   );
 
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -155,7 +160,7 @@ export const ProjectDetails = () => {
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
-      return false;
+      return !isFinancialResourceCostExportEnable;
     } else {
       return true;
     }
