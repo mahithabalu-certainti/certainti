@@ -240,7 +240,7 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['rid']?.read &&
               !permissionMapTaskForm?.['rid']?.edit,
           }),
-          createTextField('created_on', 'Created On', {
+          createTextField('created_datetime', 'Created On', {
             required: false,
             disabled: isEditView,
             hide:
@@ -248,7 +248,7 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['created_datetime']?.read &&
               !permissionMapTaskForm?.['created_datetime']?.edit,
           }),
-          createTextField('created_name', 'Created By', {
+          createTextField('created_by', 'Created By', {
             required: false,
             disabled: isEditView,
             hide:
@@ -264,7 +264,7 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['r_number']?.read &&
               !permissionMapTaskForm?.['r_number']?.edit,
           }),
-          createTextField('updated_on', 'Updated On', {
+          createTextField('modified_datetime', 'Updated On', {
             required: false,
             disabled: isEditView,
             hide:
@@ -272,7 +272,7 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['modified_datetime']?.read &&
               !permissionMapTaskForm?.['modified_datetime']?.edit,
           }),
-          createTextField('modified_name', 'Updated By', {
+          createTextField('modified_by', 'Updated By', {
             required: false,
             disabled: isEditView,
             hide:
