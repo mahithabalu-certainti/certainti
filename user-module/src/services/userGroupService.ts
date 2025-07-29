@@ -1590,12 +1590,12 @@ private createUserCountCondition(operator: string, value: number): any {
       userGroupMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
 
       // Access via user_group_account_mapping by org_id
-      const groupAccountMappings = await UserGroupAccountMapping.findAll({
-        where: { account_rid: user.org_id },
-        attributes: ['group_rid'],
-        raw: true,
-      });
-      groupAccountMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
+      //const groupAccountMappings = await UserGroupAccountMapping.findAll({
+      //  where: { account_rid: user.org_id },
+       // attributes: ['group_rid'],
+       // raw: true,
+    //  });
+   //   groupAccountMappings.forEach(mapping => groupRidSet.add(mapping.group_rid));
 
       if (groupRidSet.size === 0) {
         return {
