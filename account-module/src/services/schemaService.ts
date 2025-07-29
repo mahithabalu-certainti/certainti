@@ -92,6 +92,7 @@ class SchemaService {
 
       await this.createProjectTaskTable(schemaName, sequelize);
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
+      await this.createProjectTaskHistoryTable(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
@@ -1298,8 +1299,29 @@ class SchemaService {
         event_name varchar(100) NOT NULL,
         event_type varchar(100) NOT NULL,
         event_status varchar(100) NOT NULL,
-        CONSTRAINT project_task_timeline_pkey PRIMARY KEY (rid),
         CONSTRAINT project_task_timeline_r_number_key UNIQUE (r_number)
+      );
+    `);
+  }
+
+  private async createProjectTaskHistoryTable(schemaName: string, sequelize: any){
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_task_history_seq START 1`
+    );
+  
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".project_task_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) DEFAULT (('PTAH-'::text || lpad(nextval('trd365_00358.project_task_history_seq'::regclass)::text, 10, '0'::text))) NOT NULL,
+        project_task_rid varchar(50) NOT NULL,
+        attribute_name varchar(100) NOT NULL,
+        old_value varchar(2000) NULL,
+        new_value varchar(2000) NOT NULL,
+        modified_datetime timestamptz NOT NULL,
+        created_datetime timestamptz NOT NULL,
+        modified_by varchar(50) NOT NULL,
+        created_by varchar(50) NOT NULL,
+        CONSTRAINT project_task_history_r_number_key UNIQUE (r_number)
       );
     `);
   }

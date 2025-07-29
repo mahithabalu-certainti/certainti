@@ -1129,6 +1129,37 @@ export class ProjectResourceService {
     }
   }
 
+  async getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const resourceCodes = await this.projectResourceSchema.listAssignedResourceCodes(
+        accountNumber,
+        accountId,
+        projectFiscalId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resourceCodes,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   private async updateFiscalTables(
     accountNumber: string,
     projectResourceData: any,

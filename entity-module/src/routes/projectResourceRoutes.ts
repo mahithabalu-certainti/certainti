@@ -34,6 +34,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.projectResourcesController.resourceCodes
 );
+routes.get(
+  "/assignedcodes/:accountId/:projectFiscalId",
+  checkUserStatusMiddleware("NA"),
+  controller.projectResourcesController.assignedResourceCodes
+);
 routes.post(
   "/new",
   checkUserStatusMiddleware("projects_resources_create"),
