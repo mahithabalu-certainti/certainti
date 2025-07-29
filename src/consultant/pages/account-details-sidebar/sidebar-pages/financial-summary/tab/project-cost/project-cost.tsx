@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ListTable } from '../../../../../../../components/table';
 
 import { getFinancialProjectCostColumns } from './columns';
@@ -13,6 +13,9 @@ import {
   ExportType,
   ProjectFinancialProjectExportParams,
 } from '../../../../../../types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { AllPermissions } from '../../../../../../../common-service';
 
 interface FinancialProjectCostProps {
   accountDetails?: accountDetailsProps;
@@ -62,6 +65,25 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
 
   const getRowId = (row: FinancialProjectCostList) => row?.rid || '';
 
+  // Permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  console.log('permission', permission);
+  const costViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    costViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [costViewEditFields]);
+
   useEffect(() => {
     if (projectCostData) {
       setProjectCostList(projectCostData?.costs || []);
@@ -86,9 +108,10 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
+      fiscalYear: Number(fiscalyear),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams]);
+  }, [tableParams, fiscalyear, appliedFilters]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -117,7 +140,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   return (
     <ListTable
       data={projectCostList || []}
-      columns={getFinancialProjectCostColumns()}
+      columns={getFinancialProjectCostColumns(permissionMap)}
       getRowId={getRowId}
       hoverHighlight={false}
       tableStyle={{

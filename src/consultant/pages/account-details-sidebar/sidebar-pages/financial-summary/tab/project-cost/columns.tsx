@@ -1,8 +1,11 @@
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { FinancialProjectCostList } from '../../../../../../types/account-financial';
 
-export const getFinancialProjectCostColumns =
-  (): ListTableColumn<FinancialProjectCostList>[] => [
+export const getFinancialProjectCostColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<FinancialProjectCostList>[] => {
+  console.log('permissionMap', permissionMap);
+  return [
     {
       id: 'project_code',
       editId: 'project_code',
@@ -27,6 +30,9 @@ export const getFinancialProjectCostColumns =
       label: 'Fiscal Year',
       width: 130,
       sortable: true,
+      hide:
+        !permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read,
       render: (row: FinancialProjectCostList) => {
         if (typeof row.fiscal_year === 'number') {
           return `FY-${row.fiscal_year}`;
@@ -107,3 +113,4 @@ export const getFinancialProjectCostColumns =
       sortable: true,
     },
   ];
+};

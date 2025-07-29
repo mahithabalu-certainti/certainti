@@ -90,9 +90,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
+      fiscalYear: Number(fiscalyear),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams]);
+  }, [tableParams, fiscalyear, appliedFilters]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';

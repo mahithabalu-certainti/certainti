@@ -178,12 +178,12 @@ export const AccountDetails = () => {
       sortBy: 'project_code',
       sortOrder: 'ASC',
       filters: {},
+      fiscalYear: 0,
     });
 
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
-    console.log('handle export called...');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
@@ -223,12 +223,10 @@ export const AccountDetails = () => {
 
     const financialPayload = {
       accountNumber: accountDetailsForEdit?.accountById?.r_number,
-      fiscalYear: projectData?.fiscal_year,
       accountRid: accountid,
     };
 
     const financialProjectPayload = {
-      fiscalYear: projectData?.fiscal_year,
       accountRid: accountid,
     };
 
