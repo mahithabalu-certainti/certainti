@@ -84,6 +84,7 @@ export const STATUS_MESSAGE = {
   projectTaskIdMissing : "Project Task RID is missing",
   fiscalIdMissing : "Project-Fiscal RID is missing",
   projectCodeMissing : "Project-Code missing",
+  resourceNotFound : "Resource not found",
   active : "Active",
   inactive : "In-Active",
   resourceInactive : "Resource you are trying to update is currently In-Active",
@@ -561,6 +562,9 @@ export const rawQueries = {
   },
   fetchChildAccountsByParentAccountRid(){
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid = :parentRid`
+  },
+  findResourceByCode(schemaName: string, resource_code: string){
+     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`
   },
   async updateSetting(schemaName : string, data : any, orgDb : Sequelize, mainDb : Sequelize) {
     let tableName : string[];
