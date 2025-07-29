@@ -451,6 +451,41 @@ async function resourceCodes(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function assignedResourceCodes(req: Request, res: Response): Promise<void> {
+  const methodName = "Get assigned resource codes";
+  try {
+    const { accountId, projectFiscalId } = req.params;
+    const projectResourceCodes = await projectResourceServices.getAssignedResourceCodes(
+      accountId,
+      projectFiscalId
+    );
+    if (projectResourceCodes.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectResourceCodes.data);
+      return;
+    } else {
+      errorLog(methodName, projectResourceCodes.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectResourceCodes.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
   createProjectResource,
   updateProjectResource,
@@ -460,4 +495,5 @@ export default {
   resourceSkillRolesSubtype,
   listProjectResource,
   exportProjectResource,
+  assignedResourceCodes
 };
