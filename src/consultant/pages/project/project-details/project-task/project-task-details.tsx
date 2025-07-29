@@ -2,6 +2,12 @@ import { CircularProgress, Typography } from '@mui/material';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import { TruncateWithTooltip } from '../../../../../components/truncate-with-tooltip';
 import { applyHidePermission, getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
+import DetailsTable from '../../../../../components/details-section/details-table';
+import { useMemo } from 'react';
+import { AllPermissions } from '../../../../../common-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { getDetailsAttachmentColumns } from '../../../../../components/details-section/helpers';
 
 interface ErrorProps {
   message?: string;
@@ -174,7 +180,27 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   detailsError,
   permissionMapTaskTableColumn,
 }) => {
-  // const projectTaskData = resourceDetails?.data?.projectResourceDetails;
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+
+  const attachmentColumns = getDetailsAttachmentColumns(
+    attachmentPermissionMap
+  );
 
   if (isDetailsLoading) {
     return (
@@ -219,7 +245,6 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     { label: 'Resource Code', value: projectTaskData.resource_code },
     { label: 'Resource Name', value: projectTaskData.resource_name },
     { label: 'Resource Type', value: projectTaskData.resource_type_name },
-    // { label: 'Resource Org Name', value: projectTaskData.resource_orgname }, 
     { label: 'Resource Role', value: projectTaskData.resource_role },
   ];
   // const locationInfo: DetailItem[] = [
@@ -257,6 +282,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   const descriptionDetails = applyHidePermission(description, permissionMapTaskTableColumn || {});
   const projectTaskDetails = applyHidePermission(projectDetails, permissionMapTaskTableColumn || {});
   const auditInfoDetails = applyHidePermission(auditInfo, permissionMapTaskTableColumn || {});
+
   return (
     <div>
       <DetailsSection
@@ -275,6 +301,16 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
         isAudit={true}
       />
       <DetailsSection title='Comments' data={descriptionDetails as DetailItem[]} />
+      {projectTaskData?.attachment &&
+        projectTaskData?.attachment.length > 0 &&
+        // isAttachmentViewEnable && 
+        (
+          <DetailsTable
+            title='Attachments'
+            columns={attachmentColumns}
+            data={projectTaskData.attachment || []}
+          />
+        )}
       <DetailsSection
         title='Audit Information'
         data={auditInfoDetails as DetailItem[]}

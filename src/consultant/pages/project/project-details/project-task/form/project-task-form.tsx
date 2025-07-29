@@ -33,6 +33,7 @@ import { ProjectTaskInput } from '../../../../../types/project-task';
 import { useGetProjectResourceCode } from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
+import { FiscalYearType } from '../../../../../types/project';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -44,6 +45,10 @@ const ProjectTaskForm: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const account_Id = queryParams.get('account_Id');
   const project_Id = queryParams.get('project_Id');
+  const projectPFY = queryParams.get('PFY');
+  const fiscalYear: FiscalYearType | undefined = projectPFY
+    ? JSON.parse(projectPFY)
+    : undefined;
   const getProjectTask = useProjectTaskDetail(taskId as string, account_Id as string);
   const projectTask = getProjectTask.data;
   const projectTaskDetailsData = useMemo(
@@ -72,6 +77,7 @@ const ProjectTaskForm: React.FC = () => {
           ? 'Project Task updated successfully'
           : 'Project Task created successfully'
       );
+      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -226,6 +232,7 @@ const ProjectTaskForm: React.FC = () => {
             // currency.isLoading,
             // disableFields,
             isEditView,
+            fiscalYear,
             permissionMapTaskForm
           )}
           // loading={allCountries.isLoading || state.isLoading}

@@ -157,9 +157,9 @@ export const fetchDetails = async (
   return response.data;
 };
 
-export const useProjectTaskDetail = (taskId: string, accountRid?: string) => {
+export const useProjectTaskDetail = (taskId: string, accountRid?: string, refreshTaskDetailPageTrigger?: number) => {
   return useQuery<ProjectTaskDetailsApiResponse, Error>({
-    queryKey: ['project-resource-detail', taskId, accountRid],
+    queryKey: ['project-resource-detail', taskId, accountRid, refreshTaskDetailPageTrigger],
     queryFn: async () => {
       return fetchDetails(taskId, accountRid);
     },

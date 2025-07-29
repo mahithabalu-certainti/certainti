@@ -190,7 +190,7 @@ export const getProjectTaskColumns = (
     },
     {
       id: 'r_number',
-      label: 'Task ID',
+      label: 'Project Task ID',
       sortable: true,
       sortId: 'r_number',
       width: 140,

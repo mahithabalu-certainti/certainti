@@ -77,7 +77,7 @@ export const projectResourceFilterFields = (
     {
       name: 'Effort Hours',
       value: 'total_hours_pro_res',
-      type: 'text',
+      type: 'number',
       hide:
         !resourcepermissionMap?.['total_cost_pro_res']?.read &&
         !resourcepermissionMap?.['total_cost_pro_res']?.edit,
@@ -85,7 +85,7 @@ export const projectResourceFilterFields = (
     {
       name: 'Cost',
       value: 'total_cost_pro_res',
-      type: 'text',
+      type: 'number',
       hide:
         !resourcepermissionMap?.['total_cost_pro_res']?.read &&
         !resourcepermissionMap?.['total_cost_pro_res']?.edit,

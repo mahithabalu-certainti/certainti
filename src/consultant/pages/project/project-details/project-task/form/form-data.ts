@@ -8,6 +8,7 @@ import {
   createTextField,
   PROJECT_TASK_REGEX,
 } from '../../../../../../common-utils';
+import { FiscalYearType } from '../../../../../types/project';
 
 // 1. Extract date constants
 const DATE_CONFIG = {
@@ -25,19 +26,19 @@ const getFiscalYears = (range: number) => {
 };
 
 // 3. Extract date calculations
-const getDateConstraints = (yearsBack: number) => {
-  const currentDate = new Date();
-  const minDate = new Date();
-  minDate.setFullYear(currentDate.getFullYear() - yearsBack);
-  const previousDate = new Date(currentDate);
-  previousDate.setDate(currentDate.getDate() - 1);
-  return { currentDate, minDate, previousDate };
-};
+// const getDateConstraints = (yearsBack: number) => {
+//   const currentDate = new Date();
+//   const minDate = new Date();
+//   minDate.setFullYear(currentDate.getFullYear() - yearsBack);
+//   const previousDate = new Date(currentDate);
+//   previousDate.setDate(currentDate.getDate() - 1);
+//   return { currentDate, minDate, previousDate };
+// };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
-const { currentDate, previousDate } = getDateConstraints(
-  DATE_CONFIG.MIN_YEARS_BACK
-);
+// const { currentDate, previousDate } = getDateConstraints(
+//   DATE_CONFIG.MIN_YEARS_BACK
+// );
 
 export const ProjectTaskFormData = (
   memoizedProjectResourceCode: SelectOption[],
@@ -50,9 +51,32 @@ export const ProjectTaskFormData = (
   // currencyLoading?: boolean,
   // disableFields?: boolean
   isEditView?: boolean,
+  projectPFY?: FiscalYearType | undefined,
   permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>,
 ): FormType[] => {
-  console.log("permissionMapTaskForm", permissionMapTaskForm)
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const endDateMax =
+    projectPFY?.endDate && Number(projectPFY.year) !== currentYear
+      ? new Date(projectPFY.endDate)
+      : today;
+
+  const previousDate = new Date(today);
+  previousDate.setDate(today.getDate() - 1);
+
+  const startDateMin = projectPFY?.startDate
+    ? new Date(projectPFY.startDate)
+    : undefined;
+
+  const startDateMax = projectPFY?.endDate
+    ? Number(projectPFY.year) === currentYear
+      ? previousDate
+      : (() => {
+        const date = new Date(projectPFY.endDate);
+        date.setDate(date.getDate() - 1);
+        return date;
+      })()
+    : undefined;
   return useMemo(
     () => [
       {
@@ -61,7 +85,6 @@ export const ProjectTaskFormData = (
         fields: [
           createAutoCompleteField('resource_code', 'Resource Code', {
             options: memoizedProjectResourceCode,
-            // options: [{ label: 'one', value: 'one' }, { label: 'two', value: 'two' }, { label: 'three', value: 'three' },],
             required: true,
             onChange: true,
             placeholder: 'Enter Resource Code',
@@ -124,8 +147,8 @@ export const ProjectTaskFormData = (
         fields: [
           createDateField('start_date', 'Effective From', {
             required: false,
-            minDate: new Date('1950-01-01'),
-            maxDate: previousDate,
+            minDate: startDateMin,
+            maxDate: startDateMax,
             disableFutureDates: true,
             // disabled:
             //   isEditView &&
@@ -138,7 +161,8 @@ export const ProjectTaskFormData = (
           }),
           createDateField('end_date', 'End Date', {
             required: false,
-            maxDate: currentDate,
+            minDate: startDateMin,
+            maxDate: endDateMax,
             greaterThan: {
               field: 'resource_startdate',
               message: 'End Date must be after Start Date',
@@ -203,7 +227,62 @@ export const ProjectTaskFormData = (
           }),
         ],
       },
+      {
+        sectionName: 'Audit Information',
+        fillType: 'half',
+        hide: !isEditView,
+        fields: [
+          createTextField('rid', 'Record ID', {
+            required: false,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['rid']?.read &&
+              !permissionMapTaskForm?.['rid']?.edit,
+          }),
+          createTextField('created_on', 'Created On', {
+            required: false,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['created_datetime']?.read &&
+              !permissionMapTaskForm?.['created_datetime']?.edit,
+          }),
+          createTextField('created_name', 'Created By', {
+            required: false,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['created_by']?.read &&
+              !permissionMapTaskForm?.['created_by']?.edit,
+          }),
+          createTextField('r_number', 'Project Task ID', {
+            required: false,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['r_number']?.read &&
+              !permissionMapTaskForm?.['r_number']?.edit,
+          }),
+          createTextField('updated_on', 'Updated On', {
+            required: false,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['modified_datetime']?.read &&
+              !permissionMapTaskForm?.['modified_datetime']?.edit,
+          }),
+          createTextField('modified_name', 'Updated By', {
+            required: false,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['modified_by']?.read &&
+              !permissionMapTaskForm?.['modified_by']?.edit,
+          }),
+        ],
+      },
     ],
-    [isEditView, memoizedProjectResourceCode, permissionMapTaskForm]
+    [endDateMax, isEditView, memoizedProjectResourceCode, permissionMapTaskForm, startDateMax, startDateMin]
   );
 };

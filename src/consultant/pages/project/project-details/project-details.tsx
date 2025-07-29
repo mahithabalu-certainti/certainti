@@ -76,7 +76,7 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
-const [projectTaskParams, setProjectTaskParams] =
+  const [projectTaskParams, setProjectTaskParams] =
     useState<ProjectTaskListExportParams>({
       sortBy: 'resource_code',
       sortOrder: 'ASC',
@@ -197,24 +197,25 @@ const [projectTaskParams, setProjectTaskParams] =
     }
   };
 
-  const accountEx = 'D001-1b18d36d-5c6f-45d6-8bd3-bd1b12d7bffc';
-  const projectEx = 'D001-cda74b9d-08b1-4f7c-9b7e-36224206a40e';
   const handleExport = (exportType: ExportType) => {
     const list = searchParams.get('list');
+
     const financialPayload = {
       accountNumber: projectData?.account_number,
       fiscalYear: projectData?.fiscal_year,
       projectRid: projectID,
       accountRid: accountID,
-    }; 
+    };
     const projectResourcePayload = {
       projectRid: projectID,
       accountRid: accountID,
     };
+
     if (
-      searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'financial' &&
-      searchParams.get('list') !== 'projectResources'
+      list !== 'attachments' &&
+      list !== 'financial' &&
+      list !== 'projectResources' &&
+      list !== 'projectsTask'
     ) {
       return;
     }
@@ -224,21 +225,22 @@ const [projectTaskParams, setProjectTaskParams] =
         accountRid: accountID,
         entityId: projectID,
         attachmentLevel: 'project',
-      }; 
+      };
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
       });
       return;
-    } 
-     if (list === 'financial' && exportType === 'financial') {
+    }
+
+    if (list === 'financial' && exportType === 'financial') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
       });
       return;
-    }  
-    if (list === 'project_resource' && exportType === 'project_resource') {
+    }
+    if (list === 'projectResources' && exportType === 'project_resource') {
       exportProjectResoure({
         ...projectResourceParams,
         ...projectResourcePayload,
@@ -248,10 +250,9 @@ const [projectTaskParams, setProjectTaskParams] =
 
     if (list === 'projectsTask' && exportType === 'projectTask') {
       const projectTaskExportPayload = {
-        accountRid: accountEx,
-        projectRid: projectEx,
+        accountRid: accountID,
+        projectRid: projectID,
       };
-
       exportProjectTaskData({ ...projectTaskExportPayload, ...projectTaskParams });
       return;
     }
@@ -345,6 +346,7 @@ const [projectTaskParams, setProjectTaskParams] =
         return <ProjectTask
           projectID={projectID}
           accountID={accountID}
+          projectFiscalYear={fiscalYear}
           setExportType={setExportType}
           setProjectTaskParams={setProjectTaskParams}
         />;

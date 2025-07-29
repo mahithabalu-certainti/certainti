@@ -33,6 +33,8 @@ import { taskClient } from '../../../../../api/graphql/clients/client';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import Uploads from '../../../../../components/Attachments/upload';
+import { FiscalYearType } from '../../../../types/project';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -63,11 +65,13 @@ const projectTabs: ProjectsTabs[] = [
 export const ProjectTask = ({
   projectID,
   accountID,
+  projectFiscalYear,
   setExportType,
   setProjectTaskParams,
 }: {
   projectID?: string;
   accountID?: string;
+  projectFiscalYear?: FiscalYearType;
   setExportType?: (
     type: ExportType
   ) => void;
@@ -100,7 +104,6 @@ export const ProjectTask = ({
   //   {}
   // );
   // const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -108,6 +111,9 @@ export const ProjectTask = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const [refreshTaskDetailPageTrigger, setRefreshTaskDetailPageTrigger] = useState<number>(
     Date.now()
   );
   const [projectTaskList, setProjectTaskList] = useState<
@@ -160,7 +166,7 @@ export const ProjectTask = ({
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useProjectTaskDetail(taskId || '', accountID || '');
+  } = useProjectTaskDetail(taskId || '', accountID || '', refreshTaskDetailPageTrigger);
 
   const totalItems = data?.count || 0;
   useEffect(() => {
@@ -205,21 +211,53 @@ export const ProjectTask = ({
       })) || [],
     [projectResourceCodeOptions?.data?.resourceCodes]
   );
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'project_task');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
+  const showUploads = searchParams.get('attachment_entity') === 'project_task';
   const actionMenuItems = [
     {
       label: 'Edit',
-      onClick: (row: ProjectTaskListType) => handleEditProjectResource(row),
+      onClick: (row: ProjectTaskListType) => handleEditProjectTask(row),
     },
   ];
 
   const headerButtonsEdit = [
     {
+      label: 'Add Attachment',
+      variant: 'outlined' as const,
+      onClick: () => handleOpen(),
+      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
+      // hide: value !== 'details' || !attachmentCreateEnable,
+      // disabled: accountInActive ? accountInActive : resourceInActive,
+    },
+    {
       label: 'Edit',
       variant: 'outlined' as const,
-      onClick: (row: ProjectTaskListType) => handleEditProjectResource(row),
+      onClick: () => handleProjectTaskDetailEdit(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
   ];
+  const PFY = projectFiscalYear;
+  const handleProjectTaskDetailEdit = () => {
+    if (resourceData) {
+      const path = resourceData?.rid
+        ? PROJECT_TASK_EDIT.replace(':taskId', resourceData.rid)
+        : PROJECT_TASK_EDIT;
+      const queryParams = new URLSearchParams({
+        account_Id: resourceData?.account_rid || '',
+        project_Id: resourceData?.project_rid || '',
+        PFY: PFY ? JSON.stringify(PFY) : '',
+        source: 'editProjectTask',
+      });
+      navigate(`${path}?${queryParams.toString()}`);
+    }
+  };
   const headerButtonsCreate = [
     {
       label: 'New',
@@ -243,7 +281,6 @@ export const ProjectTask = ({
       pathname: location.pathname,
       search: searchParams.toString(),
     });
-    setFilterVisibility(true);
     //   resetFilter(
     //       {
     //   setAppliedFilters,
@@ -270,21 +307,20 @@ export const ProjectTask = ({
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
-      // PFY: JSON.stringify(PFY),
+      PFY: JSON.stringify(PFY),
       source: 'createProjectTask',
     });
     navigate(`${PROJECT_TASK}/create?${queryParams.toString()}`);
   };
 
-  const handleEditProjectResource = (row: ProjectTaskListType) => {
+  const handleEditProjectTask = (row: ProjectTaskListType) => {
     const path = row?.rid
       ? PROJECT_TASK_EDIT.replace(':taskId', row.rid)
       : PROJECT_TASK_EDIT;
-    // const PFY = projectFiscalYear;
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_rid || '',
-      // PFY: PFY ? JSON.stringify(PFY) : '',
+      PFY: PFY ? JSON.stringify(PFY) : '',
       source: 'editProjectTask',
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -298,7 +334,6 @@ export const ProjectTask = ({
     setProjectResData(row);
     setShowProjectResourceDetails(true);
     setShowFilter(false);
-    setFilterVisibility(false);
   };
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
@@ -308,22 +343,19 @@ export const ProjectTask = ({
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
   };
+  const taskDetailPageRefresh = () => {
+    setRefreshTaskDetailPageTrigger(Date.now());
+  }
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousProject = [...projectTaskList];
 
     const selectedProject = projectTaskList.find(
       (pro) => pro.rid === rowId
     );
-    // let hasResourceTye = false;
-    // let hasCountry = false;
-    // let hasRegion = false;
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;
-        // if (item.columnId === 'resource_type_name') hasResourceTye = true;
-        // if (item.columnId === 'country_name') hasCountry = true;
-        // if (item.columnId === 'region_name') hasRegion = true;
         return acc;
       },
       {
@@ -332,10 +364,6 @@ export const ProjectTask = ({
         fiscal_year: selectedProject?.fiscal_year,
       }
     );
-
-    // if (hasCountry && !hasRegion) {
-    //   updateData['region_rid'] = '';
-    // }
 
     try {
       const res = await updateProjectTaskMutation({
@@ -364,6 +392,7 @@ export const ProjectTask = ({
       setProjectTaskList(previousProject);
     }
   };
+  const filterShow = !searchParams.get('page')
   if (!projectTaskIsEnable) return <AccessRestricted />;
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
@@ -372,11 +401,13 @@ export const ProjectTask = ({
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
-        filterVisibility={filterVisibility}
+        filterVisibility={
+          filterShow
+        }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
-        showRefresh={true}
+        showRefresh={filterShow}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={0}
@@ -385,67 +416,71 @@ export const ProjectTask = ({
         projectResourceAccountID={accountID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
       />
-      <>
-        <ProjectTaskTableHeader
-          value={resourceData ? 'project-task-details' : 'projects-task'}
-          title={resourceData ? 'Project Task' : 'Project Task'}
-          titleIcon={
-            resourceData ? <ResourceProfileIcon /> : <CreateResourceIcon />
-          }
-          count={totalItems}
-          showBackArrow={resourceData ? true : false}
-          headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
-          projectResourceNumber={resourceData?.r_number}
-          onBackClick={handleBackClick}
-        />
-        <div className='border border-[#CBD6E2]'>
-          {showProjectResourceDetails ? (
-            <ProjectTaskDetails
-              projectTaskData={
-                resourceData as unknown as ProjectTaskDetailsType || undefined
-              }
-              isDetailsLoading={isDetailsLoading}
-              detailsError={detailsError}
-              permissionMapTaskTableColumn={permissionMapTaskTableColumn}
-            />
-          ) : (
-            <ListTable
-              data={projectTaskList}
-              columns={projectTaskColumns}
-              actionMenuItems={actionMenuItems}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              actionWidth={60}
-              actionDisplayMode='dropdown'
-              loading={isLoading}
-              error={error ? 'Failed to load projects' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage ?? 1}
-              totalItems={data?.count || 0}
-              onPageChange={setCurrentPage}
-              onRowsPerPageChange={setRowsPerPage}
-              sortBy={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSorting}
-              selectable={false}
-              onSelectionChange={(selectedIds: unknown) =>
-                console.log('Selected:', selectedIds)
-              }
-              component='project task'
-              onCellEdit={handleCellEdit}
-            // onFieldChange={handleFieldChange}
-            />
-          )}
-        </div>
-      </>
+      {showUploads ? (
+        <Uploads accountId={accountID} attachID={taskId} onUploadSuccess={taskDetailPageRefresh} />
+      ) : (
+        <>
+          <ProjectTaskTableHeader
+            value={resourceData ? 'project-task-details' : 'projects-task'}
+            title={resourceData ? 'Project Task' : 'Project Task'}
+            titleIcon={
+              resourceData ? <ResourceProfileIcon /> : <CreateResourceIcon />
+            }
+            count={totalItems}
+            showBackArrow={resourceData ? true : false}
+            headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
+            projectResourceNumber={resourceData?.r_number}
+            onBackClick={handleBackClick}
+          />
+          <div className='border border-[#CBD6E2]'>
+            {showProjectResourceDetails ? (
+              <ProjectTaskDetails
+                projectTaskData={
+                  resourceData as unknown as ProjectTaskDetailsType || undefined
+                }
+                isDetailsLoading={isDetailsLoading}
+                detailsError={detailsError}
+                permissionMapTaskTableColumn={permissionMapTaskTableColumn}
+              />
+            ) : (
+              <ListTable
+                data={projectTaskList}
+                columns={projectTaskColumns}
+                actionMenuItems={actionMenuItems}
+                getRowId={getRowId}
+                hoverHighlight={false}
+                tableStyle={{
+                  height: '100%',
+                  maxHeight: 'calc(100vh - 290px)',
+                  overflow: 'auto',
+                }}
+                stickyHeader={true}
+                stickyColumnsCount={1}
+                actionWidth={60}
+                actionDisplayMode='dropdown'
+                loading={isLoading}
+                error={error ? 'Failed to load projects' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
+                rowsPerPage={rowsPerPage}
+                currentPage={currentPage ?? 1}
+                totalItems={data?.count || 0}
+                onPageChange={setCurrentPage}
+                onRowsPerPageChange={setRowsPerPage}
+                sortBy={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSorting}
+                selectable={false}
+                onSelectionChange={(selectedIds: unknown) =>
+                  console.log('Selected:', selectedIds)
+                }
+                component='project task'
+                onCellEdit={handleCellEdit}
+              // onFieldChange={handleFieldChange}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
