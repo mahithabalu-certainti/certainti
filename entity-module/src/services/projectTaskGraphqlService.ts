@@ -3,9 +3,12 @@ import { initMainDbSequelize } from "../config/mainDataSource"
 import { initOrgSequelize } from "../config/orgDataSource"
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
 import { setInlineForProjectTask } from "../utils/helpers"
+import { ProjectTaskSchemaService } from "../services/projectTask/schemaService";
+
 
 const services = Configurations.getInstance().getServices();
 const projectTaskService = services.projectTaskServices;
+const projectTaskSchemaService = new ProjectTaskSchemaService();
 
 export default class ProjectTaskGraphqlServies {
     async updateInlineGraphqlDetails(data : any) {
@@ -44,7 +47,7 @@ export default class ProjectTaskGraphqlServies {
                         }
                     }
                 }
-                
+
                 let getSetData = setInlineForProjectTask(checkForExistingData[0][0], data)
                 if(getSetData.statusMessage != null) {
                     return {
@@ -57,6 +60,23 @@ export default class ProjectTaskGraphqlServies {
                     
                     if(updatedProjectTask) {
                         let fetchLatestUpdatedData = await projectTaskService.getProjectTaskById(data.account_rid, data.rid);
+                        
+                        await projectTaskSchemaService.addProjectTaskTimelineForInlineEdit(
+                        checkAccountExists[0][0].r_number,
+                        "update",
+                        data.account_rid,
+                        data.rid,
+                        data.userId,
+                        );
+
+                        await projectTaskSchemaService.addProjctTaskHistoryForInline(
+                        checkAccountExists[0][0].r_number,
+                        data,
+                        checkForExistingData[0][0],
+                        data.rid,
+                        data.userId
+                        )
+
                         let latestData : any = fetchLatestUpdatedData.data
                         let finalStructuredData = {
                             rid: latestData.rid,
