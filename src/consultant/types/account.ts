@@ -51,6 +51,47 @@ export interface AccountFieldsApiResponse extends CommonApiResponse {
   data: AccountDetailsResponse;
 }
 
+export interface FinancialSummaryApiResponse extends CommonApiResponse {
+  data: FinancialSummaryDetails;
+}
+
+interface ResourceMetric {
+  rid: string;
+  metric: string;
+  fte: number;
+  subcon: number;
+  nonlabor: number;
+}
+
+interface DetailedMetric {
+  rid: string;
+  metric_name: string;
+  project_level: number;
+  project_resource_level: number;
+  project_task_level?: number; // Optional as one item lacks it
+  permission: string;
+}
+
+export type ClaimJurisdiction = {
+  rid: string;
+  name: string;
+  rd_credits_fte: number;
+  rd_credits_subcon: number;
+  rd_credits_nonlabor: number;
+  rd_credits_total: number;
+  permission: string;
+};
+
+export interface FinancialSummaryDetails {
+  account_rid: string;
+  fiscal_year: number;
+  rd_eligible_projects: number | null;
+  resource_metrics: ResourceMetric[];
+  detailed_metrics: DetailedMetric[];
+  claim_jurisdiction: ClaimJurisdiction[];
+  permission: string;
+}
+
 export interface States {
   rid: string;
   state_name: string;
@@ -186,6 +227,7 @@ export interface AccountById {
     currency_code: string;
     currency_symbol: string;
   };
+  region_rid?: string | null;
 }
 
 export interface KeyContacts {
@@ -442,5 +484,19 @@ export type ExportType =
   | 'attachments'
   | 'imports'
   | 'financial'
+  | 'financial_resource_cost'
+  | 'financial_project_cost'
   | 'resource_attachments'
-  | 'projectTask';
+  | 'resource_attachments'
+  | 'projectTask'
+  | 'project_resource';
+
+export type FinancialSummaryFlag = 'all' | 'rd_qualified';
+
+export interface FinancialSummaryBody {
+  account_rid: string;
+  fiscal_year: number;
+  flag: FinancialSummaryFlag;
+  summaryType: string;
+  region_rid: string;
+}

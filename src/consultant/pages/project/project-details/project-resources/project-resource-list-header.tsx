@@ -13,6 +13,9 @@ interface ProjectResourceTableHeaderProps {
     variant: 'text' | 'outlined' | 'contained';
     onClick: (row?: any) => void;
     sx?: SxProps<Theme>;
+    hide?: boolean;
+    disabled?: boolean;
+    loading?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -66,19 +69,23 @@ const ProjectResourceTableHeader: React.FC<ProjectResourceTableHeaderProps> = ({
 
         <div className='flex items-center gap-2'>
           <div className='flex gap-2'>
-            {headerButtons?.map((button, index) => (
-              <TextButton
-                key={`header-button-${index}`}
-                label={button.label}
-                onClick={
-                  button.label.toLowerCase() === 'view'
-                    ? toggleViewMode
-                    : button.onClick
-                }
-                aria-label={button.label}
-                sx={button.sx}
-              />
-            ))}
+            {headerButtons?.map((button, index) =>
+              button.hide ? null : (
+                <TextButton
+                  key={`header-button-${index}`}
+                  label={button.label}
+                  onClick={
+                    button.label.toLowerCase() === 'view'
+                      ? toggleViewMode
+                      : button.onClick
+                  }
+                  loading={button.loading}
+                  aria-label={button.label}
+                  sx={button.sx}
+                  disabled={button.disabled}
+                />
+              )
+            )}
           </div>
         </div>
       </div>

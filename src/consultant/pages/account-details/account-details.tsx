@@ -56,6 +56,8 @@ import {
   AccountFieldsApiResponse,
   ExportType,
   MenuItem,
+  ProjectFinancialProjectExportParams,
+  ProjectFinancialResourceExportParams,
 } from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
@@ -63,17 +65,21 @@ import { exportAttachmentsData } from '../../services/attachments/attachments-se
 import { AttachmentsListExportParams } from '../../types/attachment';
 import { exportImportsData } from '../../services/import';
 import { ImportsListURLParams } from '../../types/imports';
+import {
+  exportFinancialProjectCost,
+  exportFinancialResourceCost,
+} from '../../services/financial/financial-service';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
 
+  const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
   const [accountDetailsForEdit, setAccountDetailsForEdit] =
     useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
-  const { modules, permission } = useSelector(
+  const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
 
@@ -88,6 +94,11 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
   );
+  const isFinancialHighlightsEnable = checkPermission(
+    menus,
+    AllMenus.FINANCIAL_HIGHLIGHTS
+  );
+
   // const isAccountDetailsDownloadEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
@@ -113,6 +124,16 @@ export const AccountDetails = () => {
   const isImportExportEnable = checkPermission(
     permission,
     AllPermissions.IMPORTS_EXPORT
+  );
+
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+
+  const isFinancialProjectCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -158,6 +179,21 @@ export const AccountDetails = () => {
     account_rid: accountid || '',
   });
 
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [financialProjectCostParams, setFinancialProjectCostParams] =
+    useState<ProjectFinancialProjectExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: 0,
+    });
+
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
@@ -165,7 +201,8 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'imports'
+      searchParams.get('list') !== 'imports' &&
+      searchParams.get('list') !== 'financial'
     ) {
       return;
     }
@@ -197,6 +234,15 @@ export const AccountDetails = () => {
       }),
     };
 
+    const financialPayload = {
+      accountNumber: accountDetailsForEdit?.accountById?.r_number,
+      accountRid: accountid,
+    };
+
+    const financialProjectPayload = {
+      accountRid: accountid,
+    };
+
     if (exportType === 'project') {
       exportProjectData(exportType, {
         ...projectParams,
@@ -213,6 +259,16 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'financial_resource_cost') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
+      });
+    } else if (exportType === 'financial_project_cost') {
+      exportFinancialProjectCost({
+        ...financialProjectCostParams,
+        ...financialProjectPayload,
+      });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -295,6 +351,10 @@ export const AccountDetails = () => {
       return !isAttachmentViewEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
+    } else if (list === 'financial' && tab === 'resource_cost') {
+      return !isFinancialResourceCostExportEnable;
+    } else if (list === 'financial' && tab === 'project_cost') {
+      return !isFinancialProjectCostExportEnable;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -339,7 +399,16 @@ export const AccountDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <FinancialSummary />;
+        return (
+          <FinancialSummary
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            countryId={data?.data.accountById.country_rid}
+            stateId={data?.data.accountById.region_rid}
+          />
+        );
       case 'details':
         return (
           <Details
@@ -414,8 +483,8 @@ export const AccountDetails = () => {
 
   const disable = data?.data?.accountById?.is_parent;
 
-  const sideMenuItems = useMemo<MenuItem[]>(
-    () => [
+  const sideMenuItems = useMemo<MenuItem[]>(() => {
+    const allMenus = [
       {
         name: 'Details',
         key: 'details',
@@ -440,7 +509,7 @@ export const AccountDetails = () => {
       {
         name: 'Financial Highlights',
         key: 'financial',
-        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
       },
@@ -516,9 +585,11 @@ export const AccountDetails = () => {
           },
         ],
       },
-    ],
-    [disable]
-  ); // Only recalculate when 'disable' changes
+    ];
+    return isFinancialHighlightsEnable
+      ? allMenus
+      : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
+  }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
     window.history.back();

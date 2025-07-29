@@ -8,7 +8,7 @@ export const getAccountAssignUsersColumns =
         id: 'first_name',
         editId: 'first_name',
         sortId: 'first_name',
-        label: 'User Full Name',
+        label: 'Username',
         width: 150,
         sortable: true,
         sticky: true,

@@ -102,72 +102,73 @@ const DetailsSection: React.FC<{
         <div className='text-sm my-[6px] px-6 grid gap-y-3'>
           {fullColumn
             ? data.map((item, index) => (
-              <div
-                key={index}
-                className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
-              >
-                <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
-                  {item.label}
-                </div>
-                <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
-                  <TruncateWithTooltip
-                    text={String(item.value)}
-                    maxWidth={'100%'}
-                    className='truncate inline-block max-w-full'
-                    alwaysShowTooltip={true}
-                    tooltipMaxWidth={'50vw'}
-                  >
-                    {renderValue(item.value)}
-                  </TruncateWithTooltip>
-                </div>
-              </div>
-            ))
-            : leftColumn.map((leftItem, index) => {
-              const midItem = middleColumn[index];
-              const rightItem = isAudit ? undefined : rightColumn[index];
-
-              const itemsToRender = isAudit
-                ? [leftItem, midItem]
-                : [leftItem, midItem, rightItem];
-
-              return (
                 <div
                   key={index}
-                  className={`grid grid-cols-1 gap-6 ${isAudit ? 'md:grid-cols-2 w-full' : 'md:grid-cols-3'
-                    }`}
+                  className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
                 >
-                  {itemsToRender.map(
-                    (item, idx) =>
-                      item && (
-                        <div
-                          key={idx}
-                          className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0'
-                        >
-                          <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
-                            {item.label}
-                          </div>
-                          <div className='font-medium text-[13px] truncate min-w-0'>
-                            <TruncateWithTooltip
-                              // text={String(item.value)}
-                              maxWidth={'100%'}
-                              className='truncate inline-block max-w-full'
-                              alwaysShowTooltip={
-                                item.value &&
+                  <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
+                    {item.label}
+                  </div>
+                  <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
+                    <TruncateWithTooltip
+                      text={String(item.value)}
+                      maxWidth={'100%'}
+                      className='truncate inline-block max-w-full'
+                      alwaysShowTooltip={true}
+                      tooltipMaxWidth={'50vw'}
+                    >
+                      {renderValue(item.value)}
+                    </TruncateWithTooltip>
+                  </div>
+                </div>
+              ))
+            : leftColumn.map((leftItem, index) => {
+                const midItem = middleColumn[index];
+                const rightItem = isAudit ? undefined : rightColumn[index];
+
+                const itemsToRender = isAudit
+                  ? [leftItem, midItem]
+                  : [leftItem, midItem, rightItem];
+
+                return (
+                  <div
+                    key={index}
+                    className={`grid grid-cols-1 gap-6 ${
+                      isAudit ? 'md:grid-cols-2 w-full' : 'md:grid-cols-3'
+                    }`}
+                  >
+                    {itemsToRender.map(
+                      (item, idx) =>
+                        item && (
+                          <div
+                            key={idx}
+                            className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0'
+                          >
+                            <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
+                              {item.label}
+                            </div>
+                            <div className='font-medium text-[13px] truncate min-w-0'>
+                              <TruncateWithTooltip
+                                // text={String(item.value)}
+                                maxWidth={'100%'}
+                                className='truncate inline-block max-w-full'
+                                alwaysShowTooltip={
+                                  item.value &&
                                   item.value !== 'empty' &&
                                   item.value !== '-'
-                                  ? true
-                                  : false
-                              }
-                            >
-                              {renderValue(item.value, item.label)}
-                            </TruncateWithTooltip>
+                                    ? true
+                                    : false
+                                }
+                              >
+                                {renderValue(item.value, item.label)}
+                              </TruncateWithTooltip>
+                            </div>
                           </div>
-                        </div>
-                      )
-                  )}
-                </div>
-              );
-            })}
+                        )
+                    )}
+                  </div>
+                );
+              })}
         </div>
       </div>
     </>
@@ -256,7 +257,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
   ];
   const projectDetails: DetailItem[] = [
     {
-      label: 'Effective From',
+      label: 'Resource Start Date',
       value: getDateFormat(resourceData.start_date ?? undefined),
     },
     {

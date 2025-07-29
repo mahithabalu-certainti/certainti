@@ -290,7 +290,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
         {message && (
           <div
-            className={`w-[502px] mt-2 text-sm ${
+            className={`w-[502px] max-w-[502px] mt-2 break-all text-sm ${
               message.type === 'error' ? 'text-red-600' : 'text-green-600'
             }`}
           >

@@ -12,6 +12,8 @@ export type SummaryDetailedMetric = {
   project_level: string | number;
   project_resource_level: string | number;
   project_task_level?: string | number;
+  permission: string;
+  hide?: boolean;
 };
 
 export type SummaryRdPercent = {
@@ -25,9 +27,9 @@ export type SummaryRdPercent = {
 export type SummaryClaimJurisdiction = {
   rid: string;
   name: string;
-  rd_credits_fte: string | number;
-  rd_credits_subcon: string | number;
-  rd_credits_nonlabor: string | number;
+  claim_rd_credits_fte: string | number;
+  claim_rd_credits_subcon: string | number;
+  claim_rd_credits_nonlabor: string | number;
 };
 
 export type SummaryQRE = {
@@ -97,6 +99,22 @@ export interface ProjectFinancialResourceExportParams {
   accountNumber?: string;
   fiscalYear?: number;
   projectRid?: string;
+  accountRid?: string;
+}
+export interface ProjectResourceExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  accountNumber?: string;
+  projectRid?: string;
+  accountRid?: string;
+}
+
+export interface ProjectFinancialProjectExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number;
   accountRid?: string;
 }
 

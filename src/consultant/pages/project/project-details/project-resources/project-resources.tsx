@@ -36,9 +36,10 @@ import {
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
-import { SelectOption } from '../../../../types';
+import { ExportType, SelectOption } from '../../../../types';
 // import { useGetResourceType } from '../../../../services/resource-list';
 import { useFetchState } from '../../../../services/account';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -64,10 +65,16 @@ export const ProjectResources = ({
   projectID,
   accountID,
   projectFiscalYear,
+  setExportType,
+  setAttachmentParams,
 }: {
   projectID?: string;
   accountID?: string;
   projectFiscalYear?: FiscalYearType;
+  setExportType?: (type: ExportType) => void;
+  setAttachmentParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -166,6 +173,16 @@ export const ProjectResources = ({
       setProjectResourceList(data?.projectResources || []);
     }
   }, [data]);
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('project_resource');
+    }
+    setAttachmentParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+    });
+  }, [sortField, sortOrder, appliedFilters]);
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     accountID as string
   );
@@ -258,21 +275,21 @@ export const ProjectResources = ({
         handleEditProjectResource(row),
     },
   ];
+  const isResourceCreateViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_CREATE
+  );
 
-  const headerButtonsEdit = [
+  const headerButtons = [
     {
-      label: 'Edit',
+      label: resourceData ? 'Edit' : 'New',
       variant: 'outlined' as const,
-      onClick: () => handleProjectResourceDetailEdit(),
+      onClick: () =>
+        resourceData
+          ? handleProjectResourceDetailEdit()
+          : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-    },
-  ];
-  const headerButtonsCreate = [
-    {
-      label: 'New',
-      variant: 'outlined' as const,
-      onClick: () => handleCreateProjectResource(),
-      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+      hide: !isResourceCreateViewEnable,
     },
   ];
   const handleFilter = () => {
@@ -447,7 +464,7 @@ export const ProjectResources = ({
           }
           count={totalItems}
           showBackArrow={resourceData ? true : false}
-          headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
+          headerButtons={headerButtons}
           projectResourceNumber={resourceData?.r_number}
           onBackClick={handleBackClick}
         />

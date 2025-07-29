@@ -123,6 +123,7 @@ export enum AllMenus {
   ACCOUNT_SETTINGS = 'manage_account_settings',
   PROJECT_SETTINGS = 'manage_project_settings',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
+  FINANCIAL_HIGHLIGHTS = 'financial_highlights',
 }
 
 export enum AllModules {
@@ -201,6 +202,17 @@ export enum AllPermissions {
   MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
   PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
   PROJECT_FINANCIAL_TIMELINE = 'project_financial_timeline',
+  ACCOUNT_FINANCIAL_OVERVIEW = 'account_financial_overview',
+  ACCOUNT_FINANCIAL_TIMELINE = 'account_financial_timeline',
+  PROJECT_FINANCIAL_SUMMARY_VIEW = 'project_summary_view',
+  PROJECT_FINANCIAL_RESOURCE_COST_VIEW = 'project_resource_cost_view',
+  PROJECT_FINANCIAL_RESOURCE_COST_EXPORT = 'project_resource_cost_export',
+  ACCOUNT_FINANCIAL_SUMMARY_VIEW = 'account_summary_view',
+  ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW = 'account_statewise_summary_view',
+  ACCOUNT_FINANCIAL_PROJECT_COST_VIEW = 'account_project_cost_view',
+  ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
+  ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
+  ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
 }
 
 export interface Country {
