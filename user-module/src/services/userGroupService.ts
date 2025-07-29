@@ -1654,14 +1654,10 @@ private createUserCountCondition(operator: string, value: number): any {
       offset,
       attributes: {
         include: [
-          [
-            literal(`(
-              SELECT COUNT(*)
-              FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-              WHERE ugm.group_rid = "UserGroup".rid
-            )`),
-            'user_count',
-          ],
+            [
+              Sequelize.literal(`(${getUserGroupUserCount(MAIN_SCHEMA_NAME)})`),
+              "user_count",
+            ],
         ],
       },
       include: includeClause,
@@ -1736,7 +1732,6 @@ private createUserCountCondition(operator: string, value: number): any {
           allowedFieldSet.add(field.field_name);
         }
       }
-      console.log(allowedFieldSet)
       const userGroup = await UserGroup.findAll(
         {
           where: whereClause,
