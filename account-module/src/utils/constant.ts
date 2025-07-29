@@ -146,6 +146,17 @@ export const rawQueries = {
     FROM ${MAIN_SCHEMA_NAME}.user 
     WHERE rid IN (:userIds)
   `,
+   SQL_GET_GROUP_TYPE: `SELECT rid FROM "${MAIN_SCHEMA_NAME}"."user_group_type" WHERE type = :group_type_name LIMIT 1`,
+   SQL_GET_EX_GROUP_DATA:`SELECT ug.rid, ug.group_name
+   FROM "${MAIN_SCHEMA_NAME}"."user_groups" ug
+   JOIN "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" ugam
+     ON ug.rid = ugam.group_rid
+   JOIN "${MAIN_SCHEMA_NAME}"."user_group_type" ugt
+     ON ug.group_type_rid = ugt.rid
+   WHERE ugam.account_rid = :account_rid
+     AND ugt.type = :group_type_name
+   LIMIT 1`,
+   UPDATE_GROUP_NAME: `UPDATE trd365.user_groups SET group_name = :group_name WHERE rid = :group_rid`,
 }
 
 export const DEFAULT_ACCOUNT_DETAILS = {
