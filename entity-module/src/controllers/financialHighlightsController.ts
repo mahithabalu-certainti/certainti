@@ -192,23 +192,23 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.federal.name,
-                rd_credits_fte : result.data.federal.rd_credits_fte,
-                rd_credits_subcon : result.data.federal.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.federal.rd_credits_nonlabor,
+                claim_rd_credits_fte : result.data.federal.rd_credits_fte,
+                claim_rd_credits_subcon : result.data.federal.rd_credits_subcon,
+                claim_rd_credits_nonlabor : result.data.federal.rd_credits_nonlabor,
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.state_wise.name,
-                rd_credits_fte : result.data.state_wise.rd_credits_fte,
-                rd_credits_subcon : result.data.state_wise.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.state_wise.rd_credits_nonlabor
+                claim_rd_credits_fte : result.data.state_wise.rd_credits_fte,
+                claim_rd_credits_subcon : result.data.state_wise.rd_credits_subcon,
+                claim_rd_credits_nonlabor : result.data.state_wise.rd_credits_nonlabor
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.grand_total.name,
-                rd_credits_fte : result.data.grand_total.rd_credits_fte,
-                rd_credits_subcon : result.data.grand_total.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.grand_total.rd_credits_nonlabor
+                claim_rd_credits_fte : result.data.grand_total.rd_credits_fte,
+                claim_rd_credits_subcon : result.data.grand_total.rd_credits_subcon,
+                claim_rd_credits_nonlabor : result.data.grand_total.rd_credits_nonlabor
             })
             let finalData = {
                 account_rid : data.account_rid,
