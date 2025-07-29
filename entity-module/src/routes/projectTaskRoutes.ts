@@ -24,5 +24,10 @@ routes.post(
   checkUserStatusMiddleware("projects_task_create"),
   controller.projectTaskController.createProjectTask
 );
+routes.put(
+  "/update",
+  checkUserStatusMiddleware("projects_task_create"),
+  controller.projectTaskController.updateProjectTask
+);
 
 export default routes;
