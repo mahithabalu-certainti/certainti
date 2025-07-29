@@ -26,7 +26,7 @@ routes.post(
 );
 routes.put(
   "/update",
-  checkUserStatusMiddleware("projects_task_create"),
+  checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.updateProjectTask
 );
 
