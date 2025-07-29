@@ -101,6 +101,14 @@ export interface ProjectFinancialResourceExportParams {
   projectRid?: string;
   accountRid?: string;
 }
+export interface ProjectResourceExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  accountNumber?: string;
+  projectRid?: string;
+  accountRid?: string;
+}
 
 export interface ProjectFinancialProjectExportParams {
   sortBy?: string;

@@ -1000,6 +1000,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 fontWeight: '400',
               }}
+              disabled={field.disabled}
               onClick={() => {
                 const logoFileInput = document.getElementById(
                   'upload-logo'
@@ -2279,6 +2280,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                 border: field.error
                                   ? '1px solid #fb2c36 !important'
                                   : 'none',
+                                backgroundColor: field?.disabled
+                                  ? '#f3f4f6 !important'
+                                  : 'inherit',
                                 '&:focus': {
                                   border: field.error
                                     ? '1px solid #fb2c36'

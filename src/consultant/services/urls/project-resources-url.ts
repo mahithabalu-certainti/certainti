@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ProjectFinancialResourceExportParams } from '../../types';
 import { ProjectResourcesListParams } from '../../types/project-resources';
 import { baseUrl } from './resource-cost-skill-urls';
 
@@ -49,4 +50,25 @@ export const ProjectResourcesURL = ({
 
 export const DetailURL = (account_Id: string, resourceId: string) => {
   return `${baseUrl}/api/project_resources/detail/${account_Id}/${resourceId}`;
+};
+export const ProjectResourceExportURL = ({
+  sortBy,
+  sortOrder,
+  filters,
+  // fiscalYear,
+  // accountNumber,
+  projectRid,
+  accountRid,
+}: ProjectFinancialResourceExportParams): string => {
+  const baseUrl = `/api/project_resources/export/${accountRid}/${projectRid}`;
+  const searchParams = new URLSearchParams();
+
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  // Only add filters if the object has properties
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

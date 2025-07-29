@@ -69,7 +69,7 @@ interface DetailedMetric {
   project_level: number;
   project_resource_level: number;
   project_task_level?: number; // Optional as one item lacks it
-  permission: string
+  permission: string;
 }
 
 export type ClaimJurisdiction = {
@@ -79,8 +79,8 @@ export type ClaimJurisdiction = {
   rd_credits_subcon: number;
   rd_credits_nonlabor: number;
   rd_credits_total: number;
-  permission: string
-}
+  permission: string;
+};
 
 export interface FinancialSummaryDetails {
   account_rid: string;
@@ -486,7 +486,9 @@ export type ExportType =
   | 'financial'
   | 'financial_resource_cost'
   | 'financial_project_cost'
-  | 'resource_attachments';
+  | 'resource_attachments'
+  | 'resource_attachments'
+  | 'project_resource';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

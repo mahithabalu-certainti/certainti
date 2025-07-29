@@ -43,6 +43,7 @@ import {
 } from '../../../../components/Attachments/helpers';
 import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
+import { checkPermission } from '../../../../common-utils';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -491,6 +492,12 @@ const TabPanel: React.FC<TabProps> = ({
       setToggleEnabled(event.target.checked);
     }
   };
+
+  const isProjectViewEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
+
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>
@@ -546,20 +553,19 @@ const TabPanel: React.FC<TabProps> = ({
 
         <Box className='flex items-center'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {tabValue === 'account_projects_view_overview' &&
-            keyProjectTask !== 'ProjectResources' && (
-              <div className='flex items-center gap-2'>
-                <span className='font-semibold text-[13px] text-[#425A76]'>
-                  Include Parent
-                </span>
-                <Switch
-                  checked={toggleEnabled}
-                  onChange={handleToggleChange}
-                  size='small'
-                  color='success'
-                />
-              </div>
-            )}
+          {isProjectViewEditEnable && keyProjectTask !== 'ProjectResources' && (
+            <div className='flex items-center gap-2'>
+              <span className='font-semibold text-[13px] text-[#425A76]'>
+                Include Parent
+              </span>
+              <Switch
+                checked={toggleEnabled}
+                onChange={handleToggleChange}
+                size='small'
+                color='success'
+              />
+            </div>
+          )}
           {filterVisibility && value !== 'details' && (
             <>
               <Box className='relative'>

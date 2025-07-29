@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import {
+  generatePath,
   useLocation,
   useNavigate,
   useParams,
@@ -49,6 +50,8 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
+import { ACCOUNT_DETAILS } from '../../../../routes';
+import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
@@ -72,6 +75,12 @@ export const ProjectDetails = () => {
 
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [projectResourceParams, setProjectResourceParams] =
+    useState<AttachmentsListExportParams>({
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
@@ -147,10 +156,13 @@ export const ProjectDetails = () => {
     menus,
     AllMenus.FINANCIAL_HIGHLIGHTS
   );
-
   const isFinancialResourceCostExportEnable = checkPermission(
     permission,
     AllPermissions.PROJECT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+  const isResourceExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
   );
 
   const checkExport = () => {
@@ -161,6 +173,8 @@ export const ProjectDetails = () => {
       return !isAttachmentViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
+    } else if (list === 'projectResources') {
+      return !isResourceExportViewEnable;
     } else {
       return true;
     }
@@ -169,7 +183,8 @@ export const ProjectDetails = () => {
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'financial'
+      searchParams.get('list') !== 'financial' &&
+      searchParams.get('list') !== 'projectResources'
     ) {
       return;
     }
@@ -186,6 +201,10 @@ export const ProjectDetails = () => {
       projectRid: projectID,
       accountRid: accountID,
     };
+    const projectResourcePayload = {
+      projectRid: projectID,
+      accountRid: accountID,
+    };
     if (exportType === 'attachments') {
       exportAttachmentsData('attachments', {
         ...attachmentParams,
@@ -195,6 +214,11 @@ export const ProjectDetails = () => {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
+      });
+    } else if (exportType === 'project_resource') {
+      exportProjectResoure({
+        ...projectResourceParams,
+        ...projectResourcePayload,
       });
     } else {
       return;
@@ -277,6 +301,8 @@ export const ProjectDetails = () => {
             projectID={projectID}
             accountID={accountID}
             projectFiscalYear={fiscalYear}
+            setExportType={setExportType}
+            setAttachmentParams={setProjectResourceParams}
           />
         );
       case 'projectsTask':
@@ -314,7 +340,10 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    const path = generatePath(ACCOUNT_DETAILS, {
+      accountid: accountID,
+    });
+    navigate(path, { replace: true });
   };
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {

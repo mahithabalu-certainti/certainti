@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AdminSubmenuActiveIcon, BackIcon } from '../../assets';
+import { AdminSubmenuActiveIcon, ArrowBackIcon, BackIcon } from '../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
@@ -248,7 +248,9 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
                 className={`w-[12px] h-[12px] flex-shrink-0 ${
-                  isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  isActive
+                    ? 'opacity-100'
+                    : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
                 }`}
                 style={{
                   transition: 'opacity 250ms ease-in-out',
@@ -259,21 +261,11 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
               <div
                 className='w-3 h-3 flex-shrink-0'
                 style={{
-                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(-90deg)',
                   transition: 'transform 300ms ease-in-out',
                 }}
               >
-                <svg
-                  viewBox='0 0 24 24'
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth={2}
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                >
-                  <path d='M8.59 16.59L13.17 12 8.59 7.41' />
-                </svg>
+                <ArrowBackIcon className='w-3 h-3 flex-shrink-0' />
               </div>
             )}
           </button>

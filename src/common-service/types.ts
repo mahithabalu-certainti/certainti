@@ -241,7 +241,7 @@ export enum MenuOption {
   ACCOUNTS = 'accounts',
   DASHBOARD = 'dashboard',
   PROJECTS = 'projects',
-  TIMESHEET = 'timesheet',
+  TIMESHEET = 'timeline',
   CASES = 'cases',
   SURVEY = 'survey',
   NOTES = 'notes',

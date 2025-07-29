@@ -174,12 +174,12 @@ export const ResourceFormData = (
             required: true,
             disabled:
               isEditView &&
-              resourcePermissionMap?.['resource_type']?.read &&
-              !resourcePermissionMap?.['resource_type']?.edit,
+              resourcePermissionMap?.['resource_type_rid']?.read &&
+              !resourcePermissionMap?.['resource_type_rid']?.edit,
             hide:
               isEditView &&
-              !resourcePermissionMap?.['resource_type']?.read &&
-              !resourcePermissionMap?.['resource_type']?.edit,
+              !resourcePermissionMap?.['resource_type_rid']?.read &&
+              !resourcePermissionMap?.['resource_type_rid']?.edit,
             onChange: true,
             resetDependsFields: ['resource_orgname'],
           }),
@@ -207,7 +207,11 @@ export const ResourceFormData = (
               },
             ],
             placeholder: 'Enter Resource Org Name',
-            disabled: disableOrgname,
+            disabled:
+              disableOrgname ||
+              (isEditView &&
+                resourcePermissionMap?.['resource_orgname']?.read &&
+                !resourcePermissionMap?.['resource_orgname']?.edit),
             hide:
               isEditView &&
               !resourcePermissionMap?.['resource_orgname']?.read &&
@@ -292,13 +296,13 @@ export const ResourceFormData = (
             placeholder: 'Enter First Name',
             disabled:
               (isEditView &&
-                resourcePermissionMap?.['resource_fristname']?.read &&
-                !resourcePermissionMap?.['resource_fristname']?.edit) ||
+                resourcePermissionMap?.['resource_firstname']?.read &&
+                !resourcePermissionMap?.['resource_firstname']?.edit) ||
               isResourceFullNameEmpty,
             hide:
               isEditView &&
-              !resourcePermissionMap?.['resource_fristname']?.read &&
-              !resourcePermissionMap?.['resource_fristname']?.edit,
+              !resourcePermissionMap?.['resource_firstname']?.read &&
+              !resourcePermissionMap?.['resource_firstname']?.edit,
             onChange: true,
           }),
           createTextField('resource_lastname', 'Last Name', {

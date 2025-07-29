@@ -217,9 +217,14 @@ const Imports: React.FC<ImportsProps> = ({
   };
 
   const handleDownload = (documentUrl: string) => {
-    if (documentUrl) {
-      window.open(documentUrl, '_blank');
-    }
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDocument = (rowId: string) => {

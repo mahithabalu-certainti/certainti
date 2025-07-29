@@ -117,6 +117,7 @@ const icons = {
   importDetailsIcon: () => import('./import-details-icon.svg?react'),
   ConfigIcon: () => import('./config-icon.svg?react'),
   ManageGroupIcon: () => import('./Managegroup.svg?react'),
+  arrowDownDisabledIcon: () => import('./arrow-down-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -140,6 +141,7 @@ export const AdministrationIcon = createLazySvgIcon('administration');
 export const AllAccountIcon = createLazySvgIcon('allAccount');
 export const ArrowBackIcon = createLazySvgIcon('arrowBackIcon');
 export const ArrowDownIcon = createLazySvgIcon('arrowDown');
+export const ArrowDownDisabledIcon = createLazySvgIcon('arrowDownDisabledIcon');
 export const ArrowIcon = createLazySvgIcon('arrowIcon');
 export const ArrowUpIcon = createLazySvgIcon('arrowUp');
 export const AttachmentIcon = createLazySvgIcon('attachment');
