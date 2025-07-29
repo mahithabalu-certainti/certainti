@@ -151,6 +151,7 @@ export class ProjectFiscalRegion
   public r_number?: string;
   public project_rid!: string;
   public project_fiscal_rid!: string;
+  
   public eid?: string;
 
   public created_datetime?: Date;

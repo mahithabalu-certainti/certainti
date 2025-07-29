@@ -2351,6 +2351,89 @@ const createProjectTaskSchema = Joi.object({
   comments: Joi.string().max(2000).optional().allow("").allow(null),
 });
 
+const updateProjectTaskSchema = Joi.object({
+  project_task_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  resource_code: Joi.string().min(3).max(50).required(),
+  country_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  region_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the format YYYY-MM-DD",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid start_date date.",
+    }),
+  end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isProjectResEndDateAfterStartDate, "End Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "end_date must be in the formatYYYY-MM-DD",
+      "any.invalid": "Effective end date must be after the start date.",
+      "date.invalidFormat":
+        "Invalid end_date. Please use the format YYYY-MM-DD",
+    }),
+
+  total_hours_pro_task: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  
+  total_cost_pro_task: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  
+  comments: Joi.string().max(2000).optional().allow("").allow(null),
+});
+
 const listResourceCostSchemaForFinancialHighlights = Joi.object({
   projectRid: Joi.string().pattern(uuidRegex).max(255).optional(),
   page: Joi.string()
@@ -2494,6 +2577,7 @@ export {
   projectTaskByIdSchema,
   exportListProjectTasksSchema,
   createProjectTaskSchema,
+  updateProjectTaskSchema,
   listResourceCostSchemaForFinancialHighlights,
   exportResourceCostSchemaForFinancialHighlights,
   listAccountLevelProjectCostsSchema,

@@ -14,6 +14,7 @@ import {
   exportListProjectTasksSchema,
   listProjectTasksSchema,
   projectTaskByIdSchema,
+  updateProjectTaskSchema,
 } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
@@ -271,9 +272,61 @@ async function exportAllProjectTasks(
   }
 }
 
+async function updateProjectTask(req: Request, res: Response): Promise<void> {
+  const methodName = "Update project task";
+  try {
+    const value = await validateRequest(req, updateProjectTaskSchema, res);
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      return;
+    }
+    const projectResource = await projectTaskService.updateProjectTask(
+      value,
+      userId
+    );
+    if (projectResource.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectResource.data);
+      return;
+    } else {
+      errorLog(methodName, projectResource.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectResource.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
   getProjectTasks,
   getProjectTaskById,
   exportAllProjectTasks,
   createProjectTask,
+  updateProjectTask
 };
