@@ -1849,8 +1849,8 @@ class SchemaService {
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
       const accountMetaClause = accountMeta.length > 0
-      ? `AND acc.rid = ANY(?)`
-      : "";
+      ? `AND acc.rid = ANY(ARRAY[?]::text[])`
+        : "";
 
     const projectIdsQuery = bothParentAndChild
       ? `
@@ -1891,6 +1891,9 @@ class SchemaService {
       ...(accountMeta.length > 0 ? [accountMeta] : []),
       ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
     ];
+
+    console.log("Final SQL:", projectIdsQuery);
+    console.log("Replacements:", projectIdsReplacements);
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
