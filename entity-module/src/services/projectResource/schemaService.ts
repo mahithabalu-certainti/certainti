@@ -5077,9 +5077,42 @@ export class ProjectResourceSchemaService {
     let resourceCodes = await Resources.findAll({
       attributes: ["rid", "resource_code", "resource_type_rid"],
       where: whereClause,
+      order: [["resource_code", "ASC"]]
     });
 
     if(resourceCodes && resourceCodes.length > 0){
+      resourceCodes = await this.insertResourceTypeName(resourceCodes);
+    }
+
+    return resourceCodes;
+  }
+
+  async listAssignedResourceCodes(accountNumber: string, accountId: string, projectFiscalId: string){
+    const { Resources, ProjectResource } = await this.getModels(accountNumber);
+
+    const assignedResources = await ProjectResource.findAll({
+      attributes: ["resource_rid"],
+      where: {
+        project_fiscal_rid: projectFiscalId,
+        account_rid: accountId,
+      },
+    });
+
+    const resourceRids = assignedResources.map((res: any) => res.resource_rid);
+
+    if (resourceRids.length === 0) {
+      return [];
+    }
+
+    let resourceCodes = await Resources.findAll({
+      attributes: ["rid", "resource_code", "resource_type_rid"],
+      where: {
+        rid: resourceRids,
+      },
+      order: [["resource_code", "ASC"]]
+    });
+
+    if (resourceCodes && resourceCodes.length > 0) {
       resourceCodes = await this.insertResourceTypeName(resourceCodes);
     }
 

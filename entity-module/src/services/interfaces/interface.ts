@@ -579,6 +579,12 @@ export interface IProjectResourceService {
     errorMessage?: string;
     data?: { projectResources: any };
   }>;
+  getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }>;
 }
 
 export interface IAttachmentGraphqlServices {
