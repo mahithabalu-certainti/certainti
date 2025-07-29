@@ -76,6 +76,7 @@ export class ProjectMapper {
       modified_by: null,
 
       project_code: data.project_code,
+      project_fiscal_rid: "",
       industry_rid: data.industry_rid || null,
       industry_name: data.industry_name || null,
       fiscal_year: data.fiscal_year,
@@ -254,7 +255,7 @@ export class ProjectMapper {
 
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
-      project_point_of_contact_email:projectPointOfContactEmail
+      project_point_of_contact_email: projectPointOfContactEmail,
     };
   }
 
@@ -851,7 +852,7 @@ export class ProjectResourceMapper {
       country_rid: updateProjectResource.country_rid ?? null,
       region_rid: updateProjectResource.region_rid ?? null,
       currency_rid: updateProjectResource.currency_rid ?? null,
-      start_date:  null,
+      start_date: null,
       end_date: null,
       effort_project_resource_level:
         updateProjectResource.effort_project_resource_level ?? null,
@@ -875,7 +876,7 @@ export class ProjectTaskMapper {
     userId: string,
     projectResourceCode: string,
     projectData: ProjectFiscal,
-    resourceData: Resources,
+    resourceData: Resources
   ) {
     return {
       eid: null,
@@ -885,6 +886,36 @@ export class ProjectTaskMapper {
       account_rid: projectTask.account_rid,
       project_rid: projectData.project_rid,
       project_fiscal_rid: projectTask.project_fiscal_rid,
+      resource_rid: resourceData.rid!,
+      project_resource_code: projectResourceCode,
+      fiscal_year: projectData.fiscal_year,
+
+      start_date: startDate ? startDate.toDate() : null,
+      end_date: endDate ? endDate.toDate() : null,
+
+      total_hours_pro_task: projectTask.total_hours_pro_task || null,
+      total_cost_pro_task: projectTask.total_cost_pro_task || null,
+
+      country_rid: resourceData.country_rid || null,
+      region_rid: resourceData.region_rid || null,
+      currency_rid: projectTask.currency_rid || null,
+
+      comments: projectTask.comments || null,
+    };
+  }
+  static mapToProjectTaskUpdate(
+    projectTask: ICreateProjectTask,
+    startDate: moment.Moment | null,
+    endDate: moment.Moment | null,
+    userId: string,
+    projectResourceCode: string,
+    projectData: ProjectFiscal,
+    resourceData: Resources
+  ) {
+    return {
+      modified_by: userId,
+      modified_datetime: new Date(),
+
       resource_rid: resourceData.rid!,
       project_resource_code: projectResourceCode,
       fiscal_year: projectData.fiscal_year,

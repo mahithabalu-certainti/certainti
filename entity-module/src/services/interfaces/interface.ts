@@ -9,6 +9,7 @@ import {
   IResourceSkill,
   IUpdateProject,
   IUpdateProjectResource,
+  IUpdateProjectTask,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
@@ -653,6 +654,15 @@ export interface IImportListGraphqlServices {
 export interface IProjectTaskIngestionService {
   createProjectTask(
     projectTaskData: ICreateProjectTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectTask: any };
+  }>;
+  updateProjectTask(
+    projectTaskData: IUpdateProjectTask,
     userId: string
   ): Promise<{
     statusCode: number;

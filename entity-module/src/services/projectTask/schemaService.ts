@@ -5,7 +5,7 @@ import {
   ProjectTask,
   setupProjectTaskSequence,
 } from "../../models/projectTask";
-import { ICreateProjectTask } from "../../utils/types";
+import { ICreateProjectTask, IUpdateProjectTask } from "../../utils/types";
 import moment from "moment";
 import { ProjectTaskMapper } from "../../utils/projectMapper";
 import AccountDetails from "../../models/accountDetails";
@@ -25,6 +25,7 @@ import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
+import { ProjectTaskHistory, setupProjectTaskHistorySequence } from "../../models/projectTaskHiistory";
 
 export class ProjectTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -40,6 +41,7 @@ export class ProjectTaskSchemaService {
       ProjectFiscalRegion: ReturnType<typeof ProjectFiscalRegion.initialize>;
       ProjectTask: ReturnType<typeof ProjectTask.initialize>;
       ProjectTaskTimeline: ReturnType<typeof ProjectTaskTimeline.initialize>;
+      ProjectTaskHistory: ReturnType<typeof ProjectTaskHistory.initialize>;
       ProjectResource: ReturnType<typeof ProjectResource.initialize>;
       ProjectResourceFiscal: ReturnType<
         typeof ProjectResourceFiscal.initialize
@@ -102,6 +104,10 @@ export class ProjectTaskSchemaService {
       sequelize,
       schemaName
     );
+    const ProjectTaskHistoryModel = await ProjectTaskHistory.initialize(
+      sequelize,
+      schemaName
+    );
 
     const ProjectResourceModel = await ProjectResource.initialize(
       sequelize,
@@ -149,6 +155,7 @@ export class ProjectTaskSchemaService {
       ResourceFiscal: ResourcesFiscalModel,
       ResourceFiscalRegion: ResourceFiscalRegionModel,
       ProjectTaskTimeline: ProjectTaskTimelineModel,
+      ProjectTaskHistory: ProjectTaskHistoryModel,
       ProjectResource: ProjectResourceModel,
       ProjectFiscal: ProjectFiscalModel,
       Resources: ResourcesModel,
@@ -168,10 +175,12 @@ export class ProjectTaskSchemaService {
     try {
       await ProjectTask.sync({ force: false });
       await ProjectTaskTimeline.sync({ force: false });
+      await ProjectTaskHistory.sync({ force: false });
       if (this.orgDbSequelize) {
         const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
         await setupProjectTaskSequence(this.orgDbSequelize, schemaName);
         await setupProjectTaskTimelineSeq(this.orgDbSequelize, schemaName);
+        await setupProjectTaskHistorySequence(this.orgDbSequelize, schemaName);
       }
     } catch (err) {
       throw new Error("Error creating project resources table");
@@ -242,6 +251,49 @@ export class ProjectTaskSchemaService {
     return createdProjectResource;
   }
 
+  async updateProjectTask(
+    accountNumber: string,
+    projectTaskData: IUpdateProjectTask,
+    userId: string,
+    projectData: ProjectFiscal,
+    resourceData: Resources,
+    transaction: Transaction
+  ) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+
+    const startDate = projectTaskData.start_date
+      ? moment.utc(projectTaskData.start_date, "YYYY-MM-DD")
+      : null;
+    const endDate = projectTaskData.end_date
+      ? moment.utc(projectTaskData.end_date, "YYYY-MM-DD")
+      : null;
+
+    const projectResourceCode =
+      projectData.project_code + "-" + resourceData.resource_code;
+
+    const baseData = ProjectTaskMapper.mapToProjectTaskUpdate(
+      projectTaskData,
+      startDate,
+      endDate,
+      userId,
+      projectResourceCode,
+      projectData,
+      resourceData
+    );
+
+    const updatedProjectResource = await ProjectTask.update({
+      ...baseData,
+      region_rid: resourceData.region_rid
+    }, {
+      where: {
+        rid: projectTaskData.project_task_rid,
+      },
+      transaction,
+    });
+
+    return updatedProjectResource;
+  }
+
   async addProjectTaskTimeline(
     accountNumber: string,
     eventName: string,
@@ -265,13 +317,85 @@ export class ProjectTaskSchemaService {
           created_datetime: new Date(),
         },
         {
-          transaction,
+          transaction
         }
       );
     } catch (err) {
       console.log("Error addinng timelne", err);
       throw new Error("Error creating project resource timline");
     }
+  }
+
+  async addProjctTaskHistory(
+    accountNumber: string,
+    newProjectTaskData: ICreateProjectTask,
+    existingProjectTaskData: any,
+    projectTaskId: string,
+    userId: string,
+    transaction: Transaction
+  ){
+    const { ProjectTaskHistory } = await this.getModels(accountNumber);
+
+    const excludedFields = [
+      "modified_by",
+      "account_rid",
+      "project_rid",
+      "project_fiscal_rid",
+      "project_task_rid",
+      "resource_code",
+      "modified_datetime",
+    ];
+
+    const cleanedNewData = Object.fromEntries(
+      Object.entries(newProjectTaskData).filter(
+        ([key]) => !excludedFields.includes(key)
+      )
+    );
+
+    const historyChanges = Object.entries(cleanedNewData)
+      .filter(([key, newValue]) => {
+        const oldValue = existingProjectTaskData[key];
+
+        if (newValue == null && oldValue == null) return false;
+
+        // Handle numeric comparison with fixed precision
+        if (!isNaN(newValue) && !isNaN(oldValue)) {
+          const roundedNew = Number(parseFloat(newValue).toFixed(2));
+          const roundedOld = Number(parseFloat(oldValue).toFixed(2));
+          return roundedNew !== roundedOld;
+        }
+
+        // Fallback to string comparison
+        return String(newValue ?? "") !== String(oldValue ?? "");
+      })
+      .map(([key, newValue]) => ({
+        project_task_rid: projectTaskId,
+        attribute_name: key,
+        old_value:
+          existingProjectTaskData[key] !== null &&
+          existingProjectTaskData[key] !== undefined
+            ? String(existingProjectTaskData[key])
+            : "",
+        new_value:
+          newValue !== null && newValue !== undefined ? String(newValue) : "",
+        modified_by: userId,
+        r_number: "",
+        created_by: userId,
+      }));
+
+    if (historyChanges.length === 0) return;
+
+    const latest = await ProjectTaskHistory.findAll();
+
+    historyChanges.forEach((change, i) => {
+      change.r_number = `PTAH${(latest.length + i + 1)
+        .toString()
+        .padStart(4, "0")}`;
+    });
+
+    await ProjectTaskHistory.bulkCreate(historyChanges, {
+      transaction
+    });
   }
 
   async startAggregation(
@@ -346,6 +470,7 @@ export class ProjectTaskSchemaService {
       projectTaskData,
       projectData,
       fiscalYear,
+      resourceId,
       userId,
       transaction
     );
@@ -367,13 +492,14 @@ export class ProjectTaskSchemaService {
       accountNumber,
       projectTaskData.account_rid,
       fiscalYear,
+      resourceId,
       transaction
     );
   }
 
   async addProjectResource(
     accountNumber: string,
-    projectTaskData: ICreateProjectTask,
+    projectTaskData: ICreateProjectTask | IUpdateProjectTask,
     projectData: ProjectFiscal,
     resourceData: Resources,
     fiscalYear: number,
@@ -517,7 +643,18 @@ export class ProjectTaskSchemaService {
     const { ProjectTask, ProjectResourceFiscalRegion } = await this.getModels(
       accountNumber
     );
-    const { project_fiscal_rid, account_rid, region_rid } = projectTaskData;
+    const { project_fiscal_rid, account_rid } = projectTaskData;
+
+    const resource = await Resources.findOne({
+      where: { rid: resourceId },
+      transaction,
+    });
+  
+    const region_rid = resource?.region_rid;
+  
+    if (!region_rid) {
+      return;
+    }
 
     const aggregated: any = await ProjectTask.findOne({
       attributes: [
@@ -686,6 +823,17 @@ export class ProjectTaskSchemaService {
     );
     const { account_rid } = projectTaskData;
 
+    const resource = await Resources.findOne({
+      where: { rid: resourceId },
+      transaction,
+    });
+  
+    const region_rid = resource?.region_rid;
+  
+    if (!region_rid) {
+      return;
+    }
+
     const aggregated: any = await ProjectTask.findOne({
       attributes: [
         "fiscal_year",
@@ -711,7 +859,7 @@ export class ProjectTaskSchemaService {
         account_rid,
         resource_rid: resourceId,
         fiscal_year: fiscalYear,
-        region_rid: projectTaskData.region_rid,
+        region_rid: region_rid,
       },
       group: ["fiscal_year", "resource_rid", "account_rid", "region_rid"],
       raw: true,
@@ -726,13 +874,13 @@ export class ProjectTaskSchemaService {
           where: {
             account_rid,
             resource_rid: resourceId,
-            country_region_rid: projectTaskData.region_rid,
+            country_region_rid: region_rid,
           },
           defaults: {
             account_rid,
             resource_rid: resourceId,
             fiscal_year: fiscalYear,
-            country_region_rid: projectTaskData.region_rid || null,
+            country_region_rid: region_rid || null,
             country_rid: projectTaskData.country_rid || null,
             resource_type_rid: resourceData.resource_type_rid,
             resource_code: resourceData.resource_code,
@@ -758,7 +906,7 @@ export class ProjectTaskSchemaService {
 
   async aggregateProjectFiscal(
     accountNumber: string,
-    projectTaskData: ICreateProjectTask,
+    projectTaskData: ICreateProjectTask | IUpdateProjectTask,
     fiscalYear: number,
     transaction: Transaction
   ) {
@@ -886,12 +1034,24 @@ export class ProjectTaskSchemaService {
     projectTaskData: ICreateProjectTask,
     projectData: ProjectFiscal,
     fiscalYear: number,
+    resourceId: string,
     userId: string,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectFiscalRegion, Resources } =
       await this.getModels(accountNumber);
-    const { account_rid, project_fiscal_rid, region_rid } = projectTaskData;
+    const { account_rid, project_fiscal_rid } = projectTaskData;
+
+    const resource = await Resources.findOne({
+      where: { rid: resourceId },
+      transaction,
+    });
+  
+    const region_rid = resource?.region_rid;
+  
+    if (!region_rid) {
+      return;
+    }
 
     const totalAggregate: any = await ProjectTask.findOne({
       attributes: [
@@ -1039,6 +1199,7 @@ export class ProjectTaskSchemaService {
               projectData.project_classification_other || null,
             project_client_group: projectData.project_client_group || null,
             project_description: projectData.project_description || null,
+            project_fiscal_rid: "",
             status_rid: projectData.status_rid || "",
           },
           { transaction }
@@ -1306,25 +1467,35 @@ export class ProjectTaskSchemaService {
     accountNumber: string,
     account_rid: string,
     fiscalYear: number,
+    resourceId: string,
     transaction: Transaction
   ) {
     const { ProjectFiscalRegion, AccountFiscalRegion } = await this.getModels(
       accountNumber
     );
 
+    const resource = await Resources.findOne({
+      where: { rid: resourceId },
+      transaction,
+    });
+
+    const region_rid = resource?.region_rid;
+
+    if (!region_rid) {
+      return;
+    }
+
     // Step 1: Get all distinct region_rid values from ProjectFiscalRegion
-    const regions: ProjectFiscalRegion[] = await ProjectFiscalRegion.findAll(
-      {
-        attributes: [[Sequelize.col("region_rid"), "region_rid"]],
-        where: {
-          account_rid,
-          fiscal_year: fiscalYear,
-        },
-        group: ["region_rid"],
-        raw: true,
-        transaction,
-      }
-    );
+    const regions: ProjectFiscalRegion[] = await ProjectFiscalRegion.findAll({
+      attributes: [[Sequelize.col("region_rid"), "region_rid"]],
+      where: {
+        account_rid,
+        fiscal_year: fiscalYear,
+      },
+      group: ["region_rid"],
+      raw: true,
+      transaction,
+    });
 
     for (const { region_rid } of regions) {
       // Step 2: Ensure AccountFiscalRegion exists for region
@@ -1444,6 +1615,1136 @@ export class ProjectTaskSchemaService {
     }
   }
 
+  async startUpdateAggregation(
+    accountNumber: string,
+    projectTaskData: IUpdateProjectTask,
+    taskData: ProjectTask,
+    resourceData: Resources,
+    fiscalYear: number,
+    resourceId: string,
+    projectData: ProjectFiscal,
+    userId: string,
+    transaction: Transaction
+  ){
+    // project resource
+    await this.addProjectResource(
+      accountNumber,
+      projectTaskData,
+      projectData,
+      resourceData,
+      fiscalYear,
+      resourceId,
+      userId,
+      transaction
+    );
+    await this.aggregateProjectResourceFiscalOnUpdate(
+      accountNumber,
+      projectTaskData,
+      taskData,
+      fiscalYear,
+      resourceId,
+      userId,
+      transaction
+    );
+    await this.aggregateProjectResourceFiscalRegionOnUpdate(
+      accountNumber,
+      projectTaskData,
+      taskData,
+      fiscalYear,
+      resourceId,
+      userId,
+      transaction
+    );
+
+    // resources 
+    await this.aggregateResourceFiscalOnUpdate(
+      accountNumber,
+      projectTaskData,
+      taskData,
+      resourceId,
+      resourceData,
+      userId,
+      transaction
+    );
+    await this.aggregateResourceFiscalRegionOnUpdate(
+      accountNumber,
+      projectTaskData,
+      taskData,
+      resourceId,
+      resourceData,
+      userId,
+      transaction
+    );
+
+    //project 
+    await this.aggregateProjectFiscal(
+      accountNumber,
+      projectTaskData,
+      fiscalYear,
+      transaction,
+    );
+    await this.aggregateProjectFiscalRegionOnUpdate(
+      accountNumber,
+      projectTaskData,
+      taskData,
+      fiscalYear,
+      resourceId,
+      resourceData,
+      userId,
+      transaction
+    );
+
+    // account 
+    await this.aggregateAccountFiscal(
+      accountNumber,
+      projectTaskData.account_rid,
+      fiscalYear,
+      transaction
+    );
+    await this.aggregateAccountFiscalRegionOnUpdate(
+      accountNumber,
+      projectTaskData,
+      taskData,
+      fiscalYear,
+      resourceId,
+      resourceData,
+      userId,
+      transaction
+    );
+  }
+
+  async aggregateProjectResourceFiscalOnUpdate(
+    accountNumber: string,
+    projectTaskData: ICreateProjectTask,
+    existingProjectTask: ProjectTask,
+    fiscalYear: number,
+    resourceId: string,
+    userId: string,
+    transaction: Transaction
+  ){
+    const { ProjectTask, ProjectResourceFiscal } = await this.getModels(accountNumber);
+
+    const newGroupKey = {
+      project_fiscal_rid: projectTaskData.project_fiscal_rid,
+      account_rid: projectTaskData.account_rid,
+      fiscal_year: fiscalYear,
+      resource_rid: resourceId,
+    };
+
+    const oldGroupKey = {
+      project_fiscal_rid: existingProjectTask.project_fiscal_rid,
+      account_rid: existingProjectTask.account_rid,
+      fiscal_year: existingProjectTask.fiscal_year,
+      resource_rid: existingProjectTask.resource_rid,
+    };
+
+    const isGroupChanged = (
+      newGroupKey.project_fiscal_rid !== oldGroupKey.project_fiscal_rid ||
+      newGroupKey.account_rid !== oldGroupKey.account_rid ||
+      newGroupKey.fiscal_year !== oldGroupKey.fiscal_year ||
+      newGroupKey.resource_rid !== oldGroupKey.resource_rid
+    );
+
+    // 🔁 Step 1: Recalculate old group aggregate if changed
+    if (isGroupChanged) {
+      const oldAggregate = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+          [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+        ],
+        where: {
+          project_fiscal_rid: oldGroupKey.project_fiscal_rid,
+          account_rid: oldGroupKey.account_rid,
+          fiscal_year: oldGroupKey.fiscal_year,
+          resource_rid: oldGroupKey.resource_rid
+        },
+        transaction
+      });
+
+      const oldCost = parseFloat(oldAggregate[0].get('totalCost') as string) || 0;
+      const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
+
+      if (oldCost === 0 && oldEffort === 0) {
+        // Check if any tasks still reference the old group
+        const taskCount = await ProjectTask.count({
+          where: {
+            project_fiscal_rid: oldGroupKey.project_fiscal_rid,
+            account_rid: oldGroupKey.account_rid,
+            fiscal_year: oldGroupKey.fiscal_year,
+            resource_rid: oldGroupKey.resource_rid
+          },
+          transaction
+        });
+  
+        if (taskCount === 0) {
+          // 🗑️ No more tasks reference this group → safe to delete
+          await ProjectResourceFiscal.destroy({
+            where: oldGroupKey,
+            transaction
+          });
+        } else {
+          // Update zero aggregates (still used elsewhere)
+          await ProjectResourceFiscal.update(
+            {
+              total_cost_from_tasks: oldCost,
+              total_hours_from_tasks: oldEffort,
+              modified_by: userId,
+              modified_datetime: new Date()
+            },
+            {
+              where: oldGroupKey,
+              transaction
+            }
+          );
+        }
+      } else {
+        // Non-zero aggregate → just update
+        await ProjectResourceFiscal.update(
+          {
+            total_cost_from_tasks: oldCost,
+            total_hours_from_tasks: oldEffort,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: oldGroupKey,
+            transaction
+          }
+        );
+      }
+    }
+
+    // 🔁 Step 2: Ensure new group exists
+    const existingNewGroup = await ProjectResourceFiscal.findOne({
+      where: newGroupKey,
+      transaction
+    });
+
+    if (!existingNewGroup) {
+      await ProjectResourceFiscal.create({
+        ...newGroupKey,
+        total_cost_from_tasks: projectTaskData.total_cost_pro_task,
+        total_hours_from_tasks: projectTaskData.total_hours_pro_task,
+        created_by: userId,
+        created_datetime: new Date(),
+        project_rid: existingProjectTask.project_rid,
+        project_resource_rid: "",
+      }, { transaction });
+    }
+
+    // 🔁 Step 3: Recalculate new group aggregate
+    const newAggregate = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+        [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+      ],
+      where: {
+        project_fiscal_rid: newGroupKey.project_fiscal_rid,
+        account_rid: newGroupKey.account_rid,
+        fiscal_year: newGroupKey.fiscal_year,
+        resource_rid: newGroupKey.resource_rid
+      },
+      transaction
+    });
+
+    const newCost = parseFloat(newAggregate[0].get('totalCost') as string) || 0;
+    const newEffort = parseFloat(newAggregate[0].get('totalEffort') as string) || 0;
+
+    await ProjectResourceFiscal.update(
+      {
+        total_hours_from_tasks: newEffort,
+        total_cost_from_tasks: newCost,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: newGroupKey,
+        transaction
+      }
+    );
+  }
+
+  async aggregateProjectResourceFiscalRegionOnUpdate(
+    accountNumber: string,
+    projectTaskData: ICreateProjectTask,
+    existingProjectTask: ProjectTask,
+    fiscalYear: number,
+    resourceId: string,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const {
+      ProjectTask,
+      ProjectResourceFiscalRegion,
+      Resources
+    } = await this.getModels(accountNumber);
+  
+    // Step 0: Fetch region_rid from resource for both new and old
+    const [newResource, oldResource] = await Promise.all([
+      Resources.findOne({
+        where: { rid: resourceId },
+        transaction
+      }),
+      Resources.findOne({
+        where: { rid: existingProjectTask.resource_rid },
+        transaction
+      })
+    ]);
+  
+    if (!newResource || !oldResource) {
+      throw new Error('Unable to resolve resource_rid to region_rid');
+    }
+  
+    const newRegionRid = newResource.region_rid;
+    const oldRegionRid = oldResource.region_rid;
+  
+    const newGroupKey = {
+      project_fiscal_rid: projectTaskData.project_fiscal_rid,
+      account_rid: projectTaskData.account_rid,
+      fiscal_year: fiscalYear,
+      resource_rid: resourceId,
+      region_rid: newRegionRid
+    };
+  
+    const oldGroupKey = {
+      project_fiscal_rid: existingProjectTask.project_fiscal_rid,
+      account_rid: existingProjectTask.account_rid,
+      fiscal_year: existingProjectTask.fiscal_year,
+      resource_rid: existingProjectTask.resource_rid,
+      region_rid: oldRegionRid
+    };
+  
+    const isGroupChanged = (
+      newGroupKey.project_fiscal_rid !== oldGroupKey.project_fiscal_rid ||
+      newGroupKey.account_rid !== oldGroupKey.account_rid ||
+      newGroupKey.fiscal_year !== oldGroupKey.fiscal_year ||
+      newGroupKey.resource_rid !== oldGroupKey.resource_rid ||
+      newGroupKey.region_rid !== oldGroupKey.region_rid
+    );
+  
+    // Step 1: Recalculate and cleanup old group if changed
+    if (isGroupChanged) {
+      const oldAggregate = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+          [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+        ],
+        where: oldGroupKey,
+        transaction
+      });
+  
+      const oldCost = parseFloat(oldAggregate[0].get('totalCost') as string) || 0;
+      const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
+  
+      const remainingTasks = await ProjectTask.count({
+        where: oldGroupKey,
+        transaction
+      });
+  
+      if (oldCost === 0 && oldEffort === 0 && remainingTasks === 0) {
+        await ProjectResourceFiscalRegion.destroy({
+          where: oldGroupKey,
+          transaction
+        });
+      } else {
+        await ProjectResourceFiscalRegion.update(
+          {
+            total_cost_from_tasks: oldCost,
+            total_hours_from_tasks: oldEffort,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: oldGroupKey,
+            transaction
+          }
+        );
+      }
+    }
+  
+    // Step 2: Ensure new group exists
+    const existingNewGroup = await ProjectResourceFiscalRegion.findOne({
+      where: newGroupKey,
+      transaction
+    });
+  
+    if (!existingNewGroup) {
+      if(newRegionRid){
+        await ProjectResourceFiscalRegion.create({
+          ...newGroupKey,
+          total_cost_from_tasks: projectTaskData.total_cost_pro_task,
+          total_hours_from_tasks: projectTaskData.total_hours_pro_task,
+          region_rid: newRegionRid,
+          created_by: userId,
+          created_datetime: new Date(),
+          project_rid: existingProjectTask.project_rid
+        }, { transaction });
+      }
+    }
+  
+    // Step 3: Recalculate and update new group aggregate
+    const newAggregate = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+        [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+      ],
+      where: newGroupKey,
+      transaction
+    });
+  
+    const newCost = parseFloat(newAggregate[0].get('totalCost') as string) || 0;
+    const newEffort = parseFloat(newAggregate[0].get('totalEffort') as string) || 0;
+  
+    await ProjectResourceFiscalRegion.update(
+      {
+        total_hours_from_tasks: newEffort,
+        total_cost_from_tasks: newCost,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: newGroupKey,
+        transaction
+      }
+    );
+  }  
+
+  async aggregateResourceFiscalOnUpdate(
+    accountNumber: string,
+    projectTaskData: ICreateProjectTask,
+    existingProjectTask: ProjectTask,
+    resourceId: string,
+    resourceData: Resources,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const {
+      ProjectTask,
+      ResourceFiscal
+    } = await this.getModels(accountNumber);
+  
+    const newGroupKey = {
+      account_rid: projectTaskData.account_rid,
+      resource_rid: resourceId
+    };
+  
+    const oldGroupKey = {
+      account_rid: existingProjectTask.account_rid,
+      resource_rid: existingProjectTask.resource_rid
+    };
+  
+    const isGroupChanged = (
+      newGroupKey.account_rid !== oldGroupKey.account_rid ||
+      newGroupKey.resource_rid !== oldGroupKey.resource_rid
+    );
+  
+    // 🔁 Step 1: Recalculate and clean old group if changed
+    if (isGroupChanged) {
+      const oldAggregate = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+          [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+        ],
+        where: {
+          account_rid: oldGroupKey.account_rid,
+          resource_rid: oldGroupKey.resource_rid
+        },
+        transaction
+      });
+  
+      const oldCost = parseFloat(oldAggregate[0].get('totalCost') as string) || 0;
+      const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
+  
+      const taskCount = await ProjectTask.count({
+        where: {
+          account_rid: oldGroupKey.account_rid,
+          resource_rid: oldGroupKey.resource_rid
+        },
+        transaction
+      });
+  
+      if (oldCost === 0 && oldEffort === 0 && taskCount === 0) {
+        await ResourceFiscal.destroy({
+          where: oldGroupKey,
+          transaction
+        });
+      } else {
+        await ResourceFiscal.update(
+          {
+            total_cost_for_year_project_task_level: oldCost,
+            total_effort_for_year_project_task_level: oldEffort,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: oldGroupKey,
+            transaction
+          }
+        );
+      }
+    }
+  
+    // 🔁 Step 2: Ensure new group exists
+    const existingNewGroup = await ResourceFiscal.findOne({
+      where: newGroupKey,
+      transaction
+    });
+  
+    if (!existingNewGroup) {
+      await ResourceFiscal.create({
+        ...newGroupKey,
+        total_cost_for_year_project_task_level: projectTaskData.total_cost_pro_task,
+        total_effort_for_year_project_task_level: projectTaskData.total_hours_pro_task,
+        created_by: userId,
+        resource_type_rid: resourceData.resource_type_rid,
+        resource_code: resourceData.resource_code,
+        created_datetime: new Date()
+      }, { transaction });
+    }
+  
+    // 🔁 Step 3: Recalculate and update new group aggregate
+    const newAggregate = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+        [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+      ],
+      where: {
+        account_rid: newGroupKey.account_rid,
+        resource_rid: newGroupKey.resource_rid
+      },
+      transaction
+    });
+  
+    const newCost = parseFloat(newAggregate[0].get('totalCost') as string) || 0;
+    const newEffort = parseFloat(newAggregate[0].get('totalEffort') as string) || 0;
+  
+    await ResourceFiscal.update(
+      {
+        total_cost_for_year_project_task_level: newCost,
+        total_effort_for_year_project_task_level: newEffort,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: newGroupKey,
+        transaction
+      }
+    );
+  }  
+
+  async aggregateResourceFiscalRegionOnUpdate(
+    accountNumber: string,
+    projectTaskData: ICreateProjectTask,
+    existingProjectTask: ProjectTask,
+    resourceId: string,
+    resourceData: Resources, // passed from calling context to avoid re-fetch
+    userId: string,
+    transaction: Transaction
+  ) {
+    const {
+      ProjectTask,
+      ResourceFiscalRegion,
+      Resources
+    } = await this.getModels(accountNumber);
+  
+    // Step 0: Get region_rid for new and old resource
+    const [oldResource] = await Promise.all([
+      Resources.findOne({
+        where: { rid: existingProjectTask.resource_rid },
+        transaction
+      })
+    ]);
+  
+    if (!resourceData || !oldResource) {
+      throw new Error('Unable to resolve region_rid from resource');
+    }
+  
+    const newRegionRid = resourceData.region_rid;
+    const oldRegionRid = oldResource.region_rid;
+  
+    const newGroupKey = {
+      account_rid: projectTaskData.account_rid,
+      resource_rid: resourceId,
+      region_rid: newRegionRid
+    };
+  
+    const oldGroupKey = {
+      account_rid: existingProjectTask.account_rid,
+      resource_rid: existingProjectTask.resource_rid,
+      region_rid: oldRegionRid
+    };
+  
+    const isGroupChanged = (
+      newGroupKey.account_rid !== oldGroupKey.account_rid ||
+      newGroupKey.resource_rid !== oldGroupKey.resource_rid ||
+      newGroupKey.region_rid !== oldGroupKey.region_rid
+    );
+  
+    // 🔁 Step 1: Recalculate old group aggregate
+    if (isGroupChanged) {
+      const oldAggregate = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+          [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+        ],
+        where: oldGroupKey,
+        transaction
+      });
+  
+      const oldCost = parseFloat(oldAggregate[0].get('totalCost') as string) || 0;
+      const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
+  
+      const taskCount = await ProjectTask.count({
+        where: oldGroupKey,
+        transaction
+      });
+  
+      if (oldCost === 0 && oldEffort === 0 && taskCount === 0) {
+        await ResourceFiscalRegion.destroy({
+          where: {
+            account_rid: existingProjectTask.account_rid,
+            resource_rid: existingProjectTask.resource_rid,
+            country_region_rid: oldRegionRid
+          },
+          transaction
+        });
+      } else {
+        await ResourceFiscalRegion.update(
+          {
+            total_cost_for_year_project_task_level: oldCost,
+            total_effort_for_year_project_task_level: oldEffort,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: {
+              account_rid: existingProjectTask.account_rid,
+              resource_rid: existingProjectTask.resource_rid,
+              country_region_rid: oldRegionRid
+            },
+            transaction
+          }
+        );
+      }
+    }
+  
+    // 🔁 Step 2: Ensure new group exists
+    const existingNewGroup = await ResourceFiscalRegion.findOne({
+      where: {
+        account_rid: projectTaskData.account_rid,
+        resource_rid: resourceId,
+        country_region_rid: newRegionRid
+      },
+      transaction
+    });
+  
+    if (!existingNewGroup) {
+      if(newRegionRid){
+        await ResourceFiscalRegion.create({
+          account_rid: projectTaskData.account_rid,
+          resource_rid: resourceId,
+          country_region_rid: newRegionRid,
+          total_cost_for_year_project_task_level: projectTaskData.total_cost_pro_task,
+          total_effort_for_year_project_task_level: projectTaskData.total_hours_pro_task,
+          resource_type_rid: resourceData.resource_type_rid,
+          resource_code: resourceData.resource_code,
+          created_by: userId,
+          created_datetime: new Date()
+        }, { transaction });
+      }
+    }
+  
+    // 🔁 Step 3: Recalculate new group aggregate
+    const newAggregate = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+        [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+      ],
+      where: newGroupKey,
+      transaction
+    });
+  
+    const newCost = parseFloat(newAggregate[0].get('totalCost') as string) || 0;
+    const newEffort = parseFloat(newAggregate[0].get('totalEffort') as string) || 0;
+  
+    await ResourceFiscalRegion.update(
+      {
+        total_effort_for_year_project_task_level: newEffort,
+        total_cost_for_year_project_task_level: newCost,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: {
+          account_rid: projectTaskData.account_rid,
+          resource_rid: resourceId,
+          country_region_rid: newRegionRid
+        },
+        transaction
+      }
+    );
+  }  
+
+  async aggregateProjectFiscalRegionOnUpdate(
+    accountNumber: string,
+    projectTaskData: IUpdateProjectTask,
+    existingProjectTask: ProjectTask,
+    fiscalYear: number,
+    resourceId: string,
+    resourceData: Resources,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const {
+      ProjectTask,
+      ProjectFiscalRegion,
+      Resources,
+      Project
+    } = await this.getModels(accountNumber);
+  
+    const oldResource = await Resources.findOne({
+      where: { rid: existingProjectTask.resource_rid },
+      transaction
+    });
+  
+    if (!resourceData || !oldResource) {
+      throw new Error('Unable to resolve region_rid for resource');
+    }
+  
+    const newRegionRid = resourceData.region_rid;
+    const oldRegionRid = oldResource.region_rid;
+  
+    const newGroupKey = {
+      account_rid: projectTaskData.account_rid,
+      fiscal_year: fiscalYear,
+      project_rid: existingProjectTask.project_rid,
+      region_rid: newRegionRid
+    };
+  
+    const oldGroupKey = {
+      account_rid: existingProjectTask.account_rid,
+      fiscal_year: existingProjectTask.fiscal_year,
+      project_rid: existingProjectTask.project_rid,
+      region_rid: oldRegionRid
+    };
+  
+    const isGroupChanged = (
+      newGroupKey.account_rid !== oldGroupKey.account_rid ||
+      newGroupKey.fiscal_year !== oldGroupKey.fiscal_year ||
+      newGroupKey.project_rid !== oldGroupKey.project_rid ||
+      newGroupKey.region_rid !== oldGroupKey.region_rid
+    );
+  
+    // 🔁 Step 1: Recalculate and clean old group if changed
+    if (isGroupChanged) {
+      const oldAggregate = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+          [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+        ],
+        where: oldGroupKey,
+        transaction
+      });
+    
+      const oldCost = parseFloat(oldAggregate[0].get('totalCost') as string) || 0;
+      const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
+    
+      const taskCount = await ProjectTask.count({
+        where: oldGroupKey,
+        transaction
+      });
+    
+      // 👇 NEW: FTE/Subcon breakdown for old group
+      const groupedOldByType: any = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.col("resource.resource_type_rid"), "resource_type_rid"],
+          [Sequelize.fn("SUM", Sequelize.col("total_cost_pro_task")), "total_cost"],
+          [Sequelize.fn("SUM", Sequelize.col("total_hours_pro_task")), "total_effort"]
+        ],
+        include: [
+          {
+            model: Resources,
+            as: "resource",
+            attributes: ["resource_type_rid"],
+            required: true
+          }
+        ],
+        where: oldGroupKey,
+        group: ["resource.resource_type_rid"],
+        raw: true,
+        transaction
+      });
+    
+      let old_cost_fte_from_tasks = null;
+      let old_effort_fte_from_tasks = null;
+      let old_cost_subcon_from_tasks = null;
+      let old_effort_subcon_from_tasks = null;
+    
+      for (const row of groupedOldByType) {
+        const resourceTypeId = row.resource_type_rid;
+        if (!resourceTypeId) continue;
+    
+        const [resourceType]: any = await this.fetchResourceType(resourceTypeId);
+        const typeName = resourceType?.resource_type_name?.toLowerCase();
+    
+        if (typeName === "full-time") {
+          old_cost_fte_from_tasks = row.total_cost;
+          old_effort_fte_from_tasks = row.total_effort;
+        } else if (typeName === "sub con") {
+          old_cost_subcon_from_tasks = row.total_cost;
+          old_effort_subcon_from_tasks = row.total_effort;
+        }
+      }
+    
+      if (oldCost === 0 && oldEffort === 0 && taskCount === 0) {
+        await ProjectFiscalRegion.destroy({
+          where: oldGroupKey,
+          transaction
+        });
+      } else {
+        await ProjectFiscalRegion.update(
+          {
+            total_cost_from_tasks: oldCost,
+            total_effort_from_tasks: oldEffort,
+            total_cost_fte_from_tasks: old_cost_fte_from_tasks,
+            total_effort_fte_from_tasks: old_effort_fte_from_tasks,
+            total_cost_subcon_from_tasks: old_cost_subcon_from_tasks,
+            total_effort_subcon_from_tasks: old_effort_subcon_from_tasks,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: oldGroupKey,
+            transaction
+          }
+        );
+      }
+    }    
+  
+    // 🔁 Step 2: Ensure new group exists
+    const existingNewGroup = await ProjectFiscalRegion.findOne({
+      where: newGroupKey,
+      transaction
+    });
+  
+    if (!existingNewGroup) {
+      const projectData = await Project.findOne({
+        where: {
+          rid: existingProjectTask.project_rid
+        }
+      });
+  
+      if (projectData) {
+        await ProjectFiscalRegion.create({
+          ...newGroupKey,
+          total_cost_from_tasks: projectTaskData.total_cost_pro_task,
+          total_effort_from_tasks: projectTaskData.total_hours_pro_task,
+          project_code: projectData?.project_code,
+          project_type_rid: projectData?.project_type_rid,
+          max_ai_interaction: projectData?.max_ai_interaction,
+          auto_send_ai_interaction: projectData.auto_send_ai_interaction,
+          status_rid: projectData.status_rid,
+          project_fiscal_rid: "",
+          created_by: userId,
+          created_datetime: new Date()
+        }, { transaction });
+      }
+    }
+  
+    // 🔁 Step 3: Recalculate and update new group aggregate, including FTE/Subcon
+    const groupedByType: any[] = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.col("resource.resource_type_rid"), "resource_type_rid"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_pro_task")), "total_cost"],
+        [Sequelize.fn("SUM", Sequelize.col("total_hours_pro_task")), "total_effort"]
+      ],
+      include: [
+        {
+          model: Resources,
+          as: "resource",
+          attributes: ["resource_type_rid"],
+          required: true
+        }
+      ],
+      where: newGroupKey,
+      group: ["resource.resource_type_rid"],
+      raw: true,
+      transaction
+    });
+  
+    let total_cost_fte_from_tasks = null;
+    let total_effort_fte_from_tasks = null;
+    let total_cost_subcon_from_tasks = null;
+    let total_effort_subcon_from_tasks = null;
+  
+    for (const row of groupedByType) {
+      const resourceTypeId = row.resource_type_rid;
+      if (!resourceTypeId) continue;
+  
+      const [resourceType]: any = await this.fetchResourceType(resourceTypeId);
+      const typeName = resourceType?.resource_type_name?.toLowerCase();
+  
+      if (typeName === "full-time") {
+        total_cost_fte_from_tasks = row.total_cost;
+        total_effort_fte_from_tasks = row.total_effort;
+      } else if (typeName === "sub con") {
+        total_cost_subcon_from_tasks = row.total_cost;
+        total_effort_subcon_from_tasks = row.total_effort;
+      }
+    }
+  
+    const totalAggregate = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+        [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+      ],
+      where: newGroupKey,
+      transaction
+    });
+  
+    const newCost = parseFloat(totalAggregate[0].get('totalCost') as string) || 0;
+    const newEffort = parseFloat(totalAggregate[0].get('totalEffort') as string) || 0;
+  
+    await ProjectFiscalRegion.update(
+      {
+        total_cost_from_tasks: newCost,
+        total_effort_from_tasks: newEffort,
+        total_cost_fte_from_tasks,
+        total_effort_fte_from_tasks,
+        total_cost_subcon_from_tasks,
+        total_effort_subcon_from_tasks,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: newGroupKey,
+        transaction
+      }
+    );
+  }  
+
+  async aggregateAccountFiscalRegionOnUpdate(
+    accountNumber: string,
+    projectTaskData: IUpdateProjectTask,
+    existingProjectTask: ProjectTask,
+    fiscalYear: number,
+    resourceId: string,
+    resourceData: Resources,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const {
+      ProjectTask,
+      AccountFiscalRegion,
+      Resources
+    } = await this.getModels(accountNumber);
+  
+    const oldResource = await Resources.findOne({
+      where: { rid: existingProjectTask.resource_rid },
+      transaction
+    });
+  
+    if (!resourceData || !oldResource) {
+      throw new Error('Unable to resolve region_rid for resource');
+    }
+  
+    const newRegionRid = resourceData.region_rid;
+    const oldRegionRid = oldResource.region_rid;
+  
+    const newGroupKey = {
+      account_rid: projectTaskData.account_rid,
+      fiscal_year: fiscalYear,
+      region_rid: newRegionRid
+    };
+  
+    const oldGroupKey = {
+      account_rid: existingProjectTask.account_rid,
+      fiscal_year: existingProjectTask.fiscal_year,
+      region_rid: oldRegionRid
+    };
+  
+    const isGroupChanged = (
+      newGroupKey.account_rid !== oldGroupKey.account_rid ||
+      newGroupKey.fiscal_year !== oldGroupKey.fiscal_year ||
+      newGroupKey.region_rid !== oldGroupKey.region_rid
+    );
+  
+    // 🔁 Step 1: Recalculate and clean old group if changed
+    if (isGroupChanged) {
+      const oldAggregate = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+          [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+        ],
+        where: oldGroupKey,
+        transaction
+      });
+    
+      const oldCost = parseFloat(oldAggregate[0].get('totalCost') as string) || 0;
+      const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
+    
+      const taskCount = await ProjectTask.count({
+        where: oldGroupKey,
+        transaction
+      });
+    
+      // 👇 Recalculate FTE/SubCon for old group
+      const groupedOldByType: any[] = await ProjectTask.findAll({
+        attributes: [
+          [Sequelize.col("resource.resource_type_rid"), "resource_type_rid"],
+          [Sequelize.fn("SUM", Sequelize.col("total_cost_pro_task")), "total_cost"],
+          [Sequelize.fn("SUM", Sequelize.col("total_hours_pro_task")), "total_effort"]
+        ],
+        include: [
+          {
+            model: Resources,
+            as: "resource",
+            attributes: ["resource_type_rid"],
+            required: true
+          }
+        ],
+        where: oldGroupKey,
+        group: ["resource.resource_type_rid"],
+        raw: true,
+        transaction
+      });
+    
+      let old_cost_fte_from_tasks = null;
+      let old_effort_fte_from_tasks = null;
+      let old_cost_subcon_from_tasks = null;
+      let old_effort_subcon_from_tasks = null;
+    
+      for (const row of groupedOldByType) {
+        const resourceTypeId = row.resource_type_rid;
+        if (!resourceTypeId) continue;
+    
+        const [resourceType]: any = await this.fetchResourceType(resourceTypeId);
+        const typeName = resourceType?.resource_type_name?.toLowerCase();
+    
+        if (typeName === "full-time") {
+          old_cost_fte_from_tasks = row.total_cost;
+          old_effort_fte_from_tasks = row.total_effort;
+        } else if (typeName === "sub con") {
+          old_cost_subcon_from_tasks = row.total_cost;
+          old_effort_subcon_from_tasks = row.total_effort;
+        }
+      }
+    
+      if (oldCost === 0 && oldEffort === 0 && taskCount === 0) {
+        await AccountFiscalRegion.destroy({
+          where: oldGroupKey,
+          transaction
+        });
+      } else {
+        await AccountFiscalRegion.update(
+          {
+            total_project_task_cost: oldCost,
+            total_project_task_hours: oldEffort,
+            total_project_task_cost_fte: old_cost_fte_from_tasks,
+            total_project_task_hours_fte: old_effort_fte_from_tasks,
+            total_project_task_cost_subcon: old_cost_subcon_from_tasks,
+            total_project_task_hours_subcon: old_effort_subcon_from_tasks,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: oldGroupKey,
+            transaction
+          }
+        );
+      }
+    }    
+  
+    // 🔁 Step 2: Ensure new group exists
+    const existingNewGroup = await AccountFiscalRegion.findOne({
+      where: newGroupKey,
+      transaction
+    });
+  
+    if (!existingNewGroup) {
+      await AccountFiscalRegion.create({
+        ...newGroupKey,
+        total_project_task_cost: projectTaskData.total_cost_pro_task,
+        total_project_task_hours: projectTaskData.total_hours_pro_task,
+        created_by: userId,
+        created_datetime: new Date()
+      }, { transaction });
+    }
+  
+    // 🔁 Step 3: FTE & Subcon Aggregation by resource_type
+    const groupedByType: any[] = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.col("resource.resource_type_rid"), "resource_type_rid"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_pro_task")), "total_cost"],
+        [Sequelize.fn("SUM", Sequelize.col("total_hours_pro_task")), "total_effort"]
+      ],
+      include: [
+        {
+          model: Resources,
+          as: "resource",
+          attributes: ["resource_type_rid"],
+          required: true
+        }
+      ],
+      where: newGroupKey,
+      group: ["resource.resource_type_rid"],
+      raw: true,
+      transaction
+    });
+  
+    let total_cost_fte_from_tasks = null;
+    let total_effort_fte_from_tasks = null;
+    let total_cost_subcon_from_tasks = null;
+    let total_effort_subcon_from_tasks = null;
+  
+    for (const row of groupedByType) {
+      const resourceTypeId = row.resource_type_rid;
+      if (!resourceTypeId) continue;
+  
+      const [resourceType]: any = await this.fetchResourceType(resourceTypeId);
+      const typeName = resourceType?.resource_type_name?.toLowerCase();
+  
+      if (typeName === "full-time") {
+        total_cost_fte_from_tasks = row.total_cost;
+        total_effort_fte_from_tasks = row.total_effort;
+      } else if (typeName === "sub con") {
+        total_cost_subcon_from_tasks = row.total_cost;
+        total_effort_subcon_from_tasks = row.total_effort;
+      }
+    }
+  
+    // 🔁 Step 4: Total aggregate (overall cost & hours)
+    const newAggregate = await ProjectTask.findAll({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
+        [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
+      ],
+      where: newGroupKey,
+      transaction
+    });
+  
+    const newCost = parseFloat(newAggregate[0].get('totalCost') as string) || 0;
+    const newEffort = parseFloat(newAggregate[0].get('totalEffort') as string) || 0;
+  
+    // 🔁 Step 5: Update final record
+    await AccountFiscalRegion.update(
+      {
+        total_project_task_cost: newCost,
+        total_project_task_hours: newEffort,
+        total_project_task_cost_fte: total_cost_fte_from_tasks,
+        total_project_task_hours_fte: total_effort_fte_from_tasks,
+        total_project_task_cost_subcon: total_cost_subcon_from_tasks,
+        total_project_task_hours_subcon: total_effort_subcon_from_tasks,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: newGroupKey,
+        transaction
+      }
+    );
+  }  
+
   async fetchResourceType(resourceTypeId: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.getMainSequelize();
@@ -1458,5 +2759,26 @@ export class ProjectTaskSchemaService {
     );
 
     return results;
+  }
+
+  async validateProjectTaskById(
+    accountNumber: string,
+    projectTaskId: string,
+    accountId: string
+  ) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+
+    const projectTaskData = await ProjectTask.findOne({
+      where: {
+        rid: projectTaskId,
+        account_rid: accountId,
+      },
+    });
+
+    if (!projectTaskData) {
+      throw new Error("Project task does not exist for the given account");
+    }
+
+    return projectTaskData;
   }
 }

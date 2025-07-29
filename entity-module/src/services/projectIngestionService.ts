@@ -1266,6 +1266,7 @@ class ProjectIngestionService {
         effective_metric_type: null,
         created_by: projectData.created_by,
         project_rid: projectData.project_fiscal_id, 
+        project_fiscal_rid: "",
 
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,

@@ -5,6 +5,7 @@ export interface ProjectFiscalRegionAttributes {
   rid: string;
   r_number?: string;
   project_rid: string;
+  project_fiscal_rid: string;
   eid?: string;
 
   created_datetime?: Date;
@@ -149,6 +150,8 @@ export class ProjectFiscalRegion
   public rid!: string;
   public r_number?: string;
   public project_rid!: string;
+  public project_fiscal_rid!: string;
+  
   public eid?: string;
 
   public created_datetime?: Date;
@@ -317,6 +320,10 @@ export class ProjectFiscalRegion
           allowNull: true,
         },
         project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_fiscal_rid:{
           type: DataTypes.STRING(50),
           allowNull: false,
         },
