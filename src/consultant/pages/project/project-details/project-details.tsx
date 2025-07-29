@@ -206,6 +206,10 @@ const [projectTaskParams, setProjectTaskParams] =
       fiscalYear: projectData?.fiscal_year,
       projectRid: projectID,
       accountRid: accountID,
+    }; 
+    const projectResourcePayload = {
+      projectRid: projectID,
+      accountRid: accountID,
     };
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -221,29 +225,20 @@ const [projectTaskParams, setProjectTaskParams] =
         entityId: projectID,
         attachmentLevel: 'project',
       }; 
-
-    const financialPayload = {
-      accountNumber: projectData?.account_number,
-      fiscalYear: projectData?.fiscal_year,
-      projectRid: projectID,
-      accountRid: accountID,
-    };
-    const projectResourcePayload = {
-      projectRid: projectID,
-      accountRid: accountID,
-    };
-    if (exportType === 'attachments') {
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
       });
       return;
-    } else if (exportType === 'financial') {
+    } 
+     if (list === 'financial' && exportType === 'financial') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
       });
-    }  if (exportType === 'project_resource') {
+      return;
+    }  
+    if (list === 'project_resource' && exportType === 'project_resource') {
       exportProjectResoure({
         ...projectResourceParams,
         ...projectResourcePayload,
