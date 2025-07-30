@@ -357,14 +357,14 @@ async function getProjectOfAccounts(req: Request, res: Response): Promise<void> 
       listProjectOfAccountSchema,
       "",
       res,
-      "GET"
+      "POST"
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
     let parsedFilters: Record<string, any> = {};
 
     try {
-      parsedFilters = JSON.parse(validatedData.filters);
+      parsedFilters = validatedData.filters;
     } catch (error) {
       errorLog(
         methodName,
@@ -813,6 +813,7 @@ async function getUserGroupType(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
 
 
 export { 

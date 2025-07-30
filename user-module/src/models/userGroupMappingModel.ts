@@ -11,6 +11,7 @@ interface UserGroupMappingAttributes {
   modified_datetime?: Date;
   group_rid: string;
   user_rid: string;
+  group?:UserGroup;
   
 }
 
@@ -30,6 +31,7 @@ export class UserGroupMapping
   public modified_by?: string;
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
+  public group?:UserGroup;
 
 
   static initialize(sequelize: Sequelize) {
