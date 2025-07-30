@@ -854,7 +854,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 }
 
 export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year : number, schemaName : string, region_rid : string) => {
-    let query = 
+    let query =
     `
     WITH calculate_rd_claimed_projects AS (
     SELECT DISTINCT ON (a.account_rid)
