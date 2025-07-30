@@ -151,6 +151,7 @@ export const transformFormData = (
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
     account_id: formData.account_id,
+    project_id: formData.project_id,
     account_number: formData.account_number,
     project_code: formData.project_code,
     project_name: formData.project_name,
