@@ -448,6 +448,11 @@ const Projects: React.FC<ProjectsProps> = ({
     }
   };
 
+  const isProjectViewEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
+
   if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
 
   return (
@@ -466,6 +471,8 @@ const Projects: React.FC<ProjectsProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
+        toggleLabel='Include Parent'
+        showToggle={isProjectViewEditEnable}
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
       />

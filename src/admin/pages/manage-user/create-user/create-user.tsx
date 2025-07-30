@@ -31,6 +31,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { transFormPayload } from './utils';
+import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -48,6 +49,13 @@ export const CreateUser: React.FC = () => {
     isConsultantFirm: '',
     org_id: '',
   });
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [userUpdateSuccess, setUserUpdateSuccess] = useState<boolean>(false);
+
   const { successToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
@@ -69,9 +77,7 @@ export const CreateUser: React.FC = () => {
   const createUser = useCreateUserDetails();
 
   // Permission Mangement
-  const { permission } = useSelector(
-    (state: RootState) => state.permission
-  );
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const userViewEditFields = useMemo(
     () =>
@@ -94,7 +100,7 @@ export const CreateUser: React.FC = () => {
   // );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  const commonSuccess = updateUser.isSuccess || createUser.isSuccess;
+  const commonSuccess = userUpdateSuccess || createUser.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -222,7 +228,41 @@ export const CreateUser: React.FC = () => {
     );
 
     if (isEditView && userData) {
-      updateUser.mutate(payload);
+      updateUser.mutate(payload, {
+        onSuccess: (response) => {
+          if (
+            response?.statusCode === 210 &&
+            response.data.requiresConfirmation
+          ) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ?? 'Are you sure you want to proceed?',
+              onConfirm: () => {
+                const updatedPayload = {
+                  ...payload,
+                  remove_group_memberships: true,
+                };
+                updateUser.mutate(updatedPayload, {
+                  onSuccess: () => {
+                    setUserUpdateSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setUserUpdateSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
     } else {
       createUser.mutate(payload);
     }
@@ -280,7 +320,6 @@ export const CreateUser: React.FC = () => {
     allCountries.isLoading ||
     statusOptions.isLoading ||
     userRoles.isLoading;
-
 
   return (
     <>
@@ -351,6 +390,25 @@ export const CreateUser: React.FC = () => {
           />
         )}
       </div>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

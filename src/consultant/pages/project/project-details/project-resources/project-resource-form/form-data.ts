@@ -354,7 +354,7 @@ export const ProjectResourceFormData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            placeholder: 'Enter an effort',
+            placeholder: 'Enter Effort',
             disabled:
               isEditView &&
               permissionMap?.['total_hours_pro_res']?.read &&

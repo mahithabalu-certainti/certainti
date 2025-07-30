@@ -44,9 +44,6 @@ import {
 import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
-import { checkPermission } from '../../../../common-utils';
-// import { useGetAllCountries } from '../../../../common-service';
-// import { SelectOption } from '../../../types';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -63,11 +60,15 @@ interface TabProps {
   setSortFilterCount: (count: number) => void;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
-  keyProjectTask?: string;
+  toggleLabel?: string;
   projectResourceAccountID?: string;
+  showToggle?: boolean;
   fieldOptions?: FieldOptionType;
   handleFilterChange?: (fieldName: string, value: FilterValue) => void;
-  permissionMapTaskTableColumn?: Record<string, { read: boolean; edit: boolean }>;
+  permissionMapTaskTableColumn?: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -85,7 +86,8 @@ const TabPanel: React.FC<TabProps> = ({
   setSortFilterCount,
   toggleEnabled,
   setToggleEnabled,
-  keyProjectTask,
+  toggleLabel = 'Include Parent',
+  showToggle = false,
   projectResourceAccountID,
   fieldOptions,
   handleFilterChange,
@@ -135,7 +137,7 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceTypeOptions = useGetResourceType();
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
-  const projectTypeOptions = useGetProjectType();  //memoizedProjectResourceTaskCode
+  const projectTypeOptions = useGetProjectType(); //memoizedProjectResourceTaskCode
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     projectResourceAccountID as string
   );
@@ -409,23 +411,45 @@ const TabPanel: React.FC<TabProps> = ({
         // memoizedCountry,
         // regionData,
         memoizedResourceType,
-        permissionMapTaskTableColumn,
+        permissionMapTaskTableColumn
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
-        memoizedCurrency,
-        memoizedResourceStatus,
-        resourceCostpermissionMap
-      )
+          memoizedCurrency,
+          memoizedResourceStatus,
+          resourceCostpermissionMap
+        )
       : getSkillFilterFields(
-        memoizedSkillType,
-        skillSubTypeData,
-        memoizedSkillLevels,
-        resourceSkillpermissionMap
-      );
-  }, [value, memoizedCountry, regionData, memoizedStatus, memoizedResourceType, resourcepermissionMap, memoizedClassification, memoizedProjectTypes, projectPermissionMap, memoizedProjectResourceCode, permissionProjectResourcesMap, permissionMapTaskTableColumn, fieldOptions, attachmentPermissionMap, memoizedCurrency, memoizedResourceStatus, resourceCostpermissionMap, memoizedSkillType, skillSubTypeData, memoizedSkillLevels, resourceSkillpermissionMap]);
+          memoizedSkillType,
+          skillSubTypeData,
+          memoizedSkillLevels,
+          resourceSkillpermissionMap
+        );
+  }, [
+    value,
+    memoizedCountry,
+    regionData,
+    memoizedStatus,
+    memoizedResourceType,
+    resourcepermissionMap,
+    memoizedClassification,
+    memoizedProjectTypes,
+    projectPermissionMap,
+    memoizedProjectResourceCode,
+    permissionProjectResourcesMap,
+    permissionMapTaskTableColumn,
+    fieldOptions,
+    attachmentPermissionMap,
+    memoizedCurrency,
+    memoizedResourceStatus,
+    resourceCostpermissionMap,
+    memoizedSkillType,
+    skillSubTypeData,
+    memoizedSkillLevels,
+    resourceSkillpermissionMap,
+  ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -459,11 +483,6 @@ const TabPanel: React.FC<TabProps> = ({
       setToggleEnabled(event.target.checked);
     }
   };
-
-  const isProjectViewEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECTS_VIEW_EDIT
-  );
 
   return (
     <Box>
@@ -519,11 +538,10 @@ const TabPanel: React.FC<TabProps> = ({
         )}
         <Box className='flex items-center'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {isProjectViewEditEnable && tabValue === 'account_projects_view_overview' && keyProjectTask !== 'ProjectResources' &&
-            keyProjectTask !== 'ProjectTask' && (
+          {showToggle && (
             <div className='flex items-center gap-2'>
               <span className='font-semibold text-[13px] text-[#425A76]'>
-                Include Parent
+                {toggleLabel}
               </span>
               <Switch
                 checked={toggleEnabled}
@@ -544,7 +562,7 @@ const TabPanel: React.FC<TabProps> = ({
                 >
                   <ResourceFilterIcon />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                    sortFilterCount > 0 ? (
+                  sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
                       <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                       <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>

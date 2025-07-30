@@ -13,6 +13,7 @@ import {
   UserRolesApiResponse,
   UserPermissionApiResponse,
   OrgNameApiResponse,
+  UpdateUserResponse,
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
 import { generateFile } from '../helpers';
@@ -136,9 +137,9 @@ export const getUpdateUserUrl = (): string => {
  */
 export const updateUserDetails = async (
   body: Partial<UserDetail>
-): Promise<CommonApiResponse> => {
+): Promise<UpdateUserResponse> => {
   try {
-    const { data } = await userServiceApi.put<CommonApiResponse>(
+    const { data } = await userServiceApi.put<UpdateUserResponse>(
       getUpdateUserUrl(),
       body
     );
@@ -154,7 +155,7 @@ export const updateUserDetails = async (
  * @returns UseMutationResult for updating user details
  */
 export const useUpdateUserDetails = () => {
-  return useMutation<CommonApiResponse, Error, Partial<UserDetail>>({
+  return useMutation<UpdateUserResponse, Error, Partial<UserDetail>>({
     mutationFn: (body) =>
       updateUserDetails({ ...body, organization: ORGANIZATION }),
   });

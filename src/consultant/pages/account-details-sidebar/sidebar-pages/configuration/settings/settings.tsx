@@ -116,6 +116,7 @@ const Settings: React.FC<SettingsProps> = ({
         ? 'Yes'
         : 'No',
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountDetails]);
 
   const handleFormSubmit = (data: object) => {
@@ -165,6 +166,7 @@ const Settings: React.FC<SettingsProps> = ({
         }}
       >
         <FormBuilder
+          key={JSON.stringify(accountDetails)}
           data={settingsFormFields(permissionMap, disableFiscalDates)}
           formRef={formRef}
           outData={handleFormSubmit}
