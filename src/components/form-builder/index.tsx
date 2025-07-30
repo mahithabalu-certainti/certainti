@@ -1182,6 +1182,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     boxShadow: 'none',
                   },
                 },
+                '.MuiSelect-select': {
+                  padding: '6px 6px',
+                  color: fieldValue === '' ? '#7D98B6' : 'black',
+                },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
                 },

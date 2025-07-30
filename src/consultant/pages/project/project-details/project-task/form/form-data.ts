@@ -105,7 +105,7 @@ export const ProjectTaskFormData = (
             maxDate: endDateMax,
             greaterThan: {
               field: 'start_date',
-              message: 'End Date must be after Start Date',
+              message: 'End Date must be after Effective From',
             },
             disabled:
               isEditView &&
