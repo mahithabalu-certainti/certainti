@@ -97,6 +97,14 @@ export function handleSuccessResponse(
   return successResponse(res, constants.SUCCESS, constants.SUCCESS_MESSAGE, data);
 }
 
+export function handleCustomResponse(
+  res: Response,
+  data: any,
+  requiresConfirmation?:boolean
+) {
+  return successResponse(res, constants.CONFLICT,'CONFIRMATION_POPUP', {requiresConfirmation},data);
+}
+
 export function handleErrorResponse(
   res: Response,
   statusCode: number,

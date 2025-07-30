@@ -11,6 +11,7 @@ import { Status } from "../models/statusModel";
 import { PermissionObjectMapping } from "../models/permissionObjectMappingModel";
 import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
+import { UserGroup } from "../models/userGroupModel";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -145,6 +146,7 @@ class UserService {
     statusCode: number;
     message: string;
     errorMessage?: string;
+    requiresConfimration?: boolean;
     data?: { user: any };
   }> {
     try {
@@ -177,6 +179,21 @@ class UserService {
           message: constants.NOT_FOUND_MESSAGE,
           errorMessage: "User not found",
         };
+      }
+      if (user.org_id !== org_id) {
+        const userGroups = await this.getUserAccessStatus(userId);
+      if (userGroups.hasAccess) {
+        return {
+          statusCode: constants.CONFLICT, // 409 Conflict or use a custom code
+          message: constants.CONFLICT_MESSAGE,
+          errorMessage: `This user currently has access to this organization directly or through the following groups:
+            ${userGroups.groupNames.join(', ')}
+            If you continue, their existing access to the organization will be updated.
+            Do you want to proceed?`,
+          requiresConfimration:true
+        };
+      }
+
       }
 
       //REstrict if user belongs the group if the user belongs to any group
@@ -223,6 +240,66 @@ class UserService {
       };
     } catch (err) {
       return this.throwServiceError(err as Error);
+    }
+  }
+
+  async getUserAccessStatus(userId: string): Promise<{
+    hasAccess: boolean;
+    groupNames: string[];
+  }> {
+    try {
+      // 1. Check for direct access first
+      const directAccess = await UserGroupEntityAccess.findOne({
+        where: { user_rid: userId }
+      });
+
+      if (directAccess) {
+        return {
+          hasAccess: true,
+          groupNames: []
+        };
+      }
+
+      // 2. Check for group-based access
+      const userGroups = await UserGroupMapping.findAll({
+        where: { user_rid: userId },
+        include: [{
+          model: UserGroup,
+          as: 'group',
+          attributes: ['group_name'],
+          required: true
+        }],
+        raw: true,
+        nest: true
+      });
+
+      const groupNames = userGroups
+        .map(g => g.group?.group_name)
+        .filter((name): name is string => typeof name === 'string');
+
+      const groupRids = userGroups.map(g => g.group_rid);
+
+      if (groupRids.length > 0) {
+        const groupAccess = await UserGroupEntityAccess.findOne({
+          where: { group_rid: { [Op.in]: groupRids } }
+        });
+
+        return {
+          hasAccess: Boolean(groupAccess),
+          groupNames: groupAccess ? groupNames : []
+        };
+      }
+
+      return {
+        hasAccess: false,
+        groupNames: []
+      };
+    } catch (error) {
+      console.error('Error checking user access:', error);
+      return {
+        hasAccess: false,
+        groupNames: []
+      };
     }
   }
 

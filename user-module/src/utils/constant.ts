@@ -6,6 +6,7 @@ export const constants = {
   NOT_FOUND: 404,
   FORBIDDEN: 403,//For inactive_users
   FAILED: 500,
+  CONFLICT:409,
   UNAUTHORIZED: 401,//For users with no permssion_access
   SUCCESS_MESSAGE: "Success",
   BAD_REQUEST_MESSAGE: "BadRequest",
@@ -13,6 +14,7 @@ export const constants = {
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
   FORBIDDEN_MESSAGE: "Forbidden",
+  CONFLICT_MESSAGE:"Conflict",
 
   ENV_TRD365: "TRD365",
   ENV_EA: "EA",

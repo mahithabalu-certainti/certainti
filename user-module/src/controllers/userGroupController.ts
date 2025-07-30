@@ -814,37 +814,6 @@ async function getUserGroupType(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function getUserAccessInfo(req: Request, res: Response): Promise<void> {
-  const methodName = "List Access Of User";
-  try {
-   
-    const groupTypes = await services.userGroupService.getUserAccessInfo(req.params?.userId);
-    if (groupTypes.statusCode === constants.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, groupTypes.data);
-      return;
-    } else {
-      errorLog(methodName, groupTypes.errorMessage);
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        groupTypes.message
-      );
-      return;
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      constants.FAILED,
-      constants.FAILED_MESSAGE,
-      error.message
-    );
-    return;
-  }
-}
 
 
 export { 
@@ -860,6 +829,5 @@ export {
    assignEntityAccessToAccount,
    assignEntityAccessToProject,
    getUserGroupType,
-   getProjectOfAccounts,
-   getUserAccessInfo
+   getProjectOfAccounts
   };
