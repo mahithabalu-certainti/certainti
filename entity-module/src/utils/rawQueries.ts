@@ -877,8 +877,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
     FROM 
         ${schemaName}.account_fiscal a
 		LEFT JOIN ${schemaName}.account_fiscal_region af ON af.account_rid = a.account_rid
-		LEFT JOIN ${schemaName}.project p ON p.region_rid = af.region_rid
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = af.region_rid
         WHERE 
         a.account_rid = '${account_rid}'
         AND
@@ -894,7 +893,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         FROM 
         ${schemaName}.account_fiscal a
 		LEFT JOIN ${schemaName}.account_fiscal_region af ON af.account_rid = a.account_rid
-		LEFT JOIN ${schemaName}.project p ON p.region_rid = af.region_rid
+		LEFT JOIN ${schemaName}.project_fiscal p ON p.region_rid = af.region_rid
         WHERE 
         a.account_rid = '${account_rid}'
         AND
@@ -1007,8 +1006,6 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             ad.account_rid = '${account_rid}'
             AND
             af.fiscal_year = ${fiscal_year}
-			AND
-			afr.region_rid = '${region_rid}'
         GROUP BY af.account_rid, af.total_projects_rd_credits_fte, af.total_projects_rd_credits_subcon, 
                  pf.rd_credits_nonlabor_fed_level, af.total_projects_rd_credits
     ),
@@ -1022,8 +1019,8 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         FROM
         ${schemaName}.account_fiscal_region af
         LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = af.account_rid
-        LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid AND p.region_rid = af.region_rid
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+        LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid AND pf.region_rid = af.region_rid
         WHERE 
         ad.account_rid = '${account_rid}'
         AND
@@ -1151,12 +1148,11 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
     let query = 
     `
     WITH calculate_rd_credits_projects AS (
-        SELECT DISTINCT COUNT(*) OVER() AS total_projects_rd_credits, p.account_rid
+        SELECT DISTINCT COUNT(*) OVER() AS total_projects_rd_credits, af.account_rid
         FROM 
         ${schemaName}.account_fiscal af
         LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = af.account_rid
-        LEFT JOIN ${schemaName}.project p ON p.region_rid = afr.region_rid
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid
         WHERE 
         pf.is_rd_claim_qualified = true
         and
@@ -1174,7 +1170,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         a.account_rid
         FROM
 		${schemaName}.account_details a
-        LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
+        LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = a.account_rid
+        LEFT JOIN ${schemaName}.project p ON p.account_rid = afr.account_rid
         LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
         a.account_rid = '${account_rid}'
@@ -1183,7 +1180,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         AND
         pf.is_rd_claim_qualified = true
         AND
-		pf.region_rid = '${region_rid}'
+		afr.region_rid = '${region_rid}'
 		GROUP BY
 		a.account_rid
     ),
@@ -1195,7 +1192,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
                 SUM(COALESCE(pf.total_effort_fte_from_tasks,0)) AS project_task_level
             FROM
             ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = afr.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
             WHERE 
             ad.account_rid = '${account_rid}'
@@ -1204,7 +1202,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.is_rd_claim_qualified = true
             AND
-		    pf.region_rid = '${region_rid}'
+		    afr.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
     ),
@@ -1216,7 +1214,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             SUM(COALESCE(pf.total_effort_subcon_from_tasks,0)) AS project_task_level
             FROM
             ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = afr.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
             WHERE 
             ad.account_rid = '${account_rid}'
@@ -1225,7 +1224,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.is_rd_claim_qualified = true
             AND
-		    pf.region_rid = '${region_rid}'
+		    afr.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
             ),
@@ -1237,6 +1236,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             SUM(COALESCE(pf.total_cost_fte_from_tasks,0)) AS project_task_level
         FROM
             ${schemaName}.account_details ad
+            LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
             LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
             WHERE 
@@ -1246,7 +1246,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.is_rd_claim_qualified = true
             AND
-		    pf.region_rid = '${region_rid}'
+		    afr.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
     ),
@@ -1258,7 +1258,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             SUM(COALESCE(pf.total_cost_subcon_from_tasks,0)) AS project_task_level
         FROM
             ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = afr.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
             WHERE 
             ad.account_rid = '${account_rid}'
@@ -1267,7 +1268,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.is_rd_claim_qualified = true
             AND
-		    pf.region_rid = '${region_rid}'
+		    afr.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
     ),
@@ -1278,7 +1279,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             SUM(COALESCE(pf.total_cost_nonlabor_from_prj_res,0)) AS project_resource_level
         FROM
             ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = afr.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
             WHERE 
             ad.account_rid = '${account_rid}'
@@ -1287,7 +1289,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.is_rd_claim_qualified = true
             AND
-		    pf.region_rid = '${region_rid}'
+		    afr.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
     ),
@@ -1300,7 +1302,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             SUM(COALESCE(pf.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project p ON p.account_rid = afr.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
             WHERE 
             ad.account_rid = '${account_rid}'
@@ -1308,23 +1311,21 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             pf.fiscal_year = ${fiscal_year}
             AND
             pf.is_rd_claim_qualified = true
-            AND
-		    pf.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
     ),
     calculate_rd_credits_statewise AS (
     SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
-            SUM(COALESCE(afr.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
-            SUM(COALESCE(afr.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
-            SUM(COALESCE(afr.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
-            SUM(COALESCE(afr.rd_credits_total,0)) AS rd_credits_total
+            SUM(COALESCE(pf.rd_credits_fte_fed_level,0)) AS rd_credits_fte,
+            SUM(COALESCE(pf.rd_credits_subcon_fed_level,0)) AS rd_credits_subcon,
+            SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0)) AS rd_credits_nonlabor,
+            SUM(COALESCE(pf.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_details ad
-			LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.project_fiscal_region afr ON afr.project_rid = p.rid
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid
+            LEFT JOIN ${schemaName}.account_fiscal_region fr ON fr.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal_region afr ON afr.region_rid = fr.region_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = afr.project_rid
             WHERE 
             ad.account_rid = '${account_rid}'
             AND
@@ -1332,7 +1333,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.is_rd_claim_qualified = true
             AND
-		    pf.region_rid = '${region_rid}'
+		    afr.region_rid = '${region_rid}'
             GROUP BY
             ad.account_rid
     ),
