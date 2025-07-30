@@ -46,6 +46,9 @@ import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../../types/attachment';
+import { ProjectTask } from './project-task/project-task';
+import { ProjectTaskListExportParams } from '../../../types/project-task';
+import { exportProjectTaskData } from '../../../services/project/project-task-service'; 
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
@@ -70,7 +73,12 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
-
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectTaskListExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'resource_code',
@@ -167,8 +175,16 @@ export const ProjectDetails = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
 
+    const page = searchParams.get('page');
+    if (page === 'details') {
+      return true;
+    }
+
+
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
+    } else if (list === 'projectsTask') {
+      return false;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'projectResources') {
@@ -179,19 +195,7 @@ export const ProjectDetails = () => {
   };
 
   const handleExport = (exportType: ExportType) => {
-    if (
-      searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'financial' &&
-      searchParams.get('list') !== 'projectResources'
-    ) {
-      return;
-    }
-
-    const attachmentPayload = {
-      accountRid: accountID,
-      entityId: projectID,
-      attachmentLevel: 'project',
-    };
+    const list = searchParams.get('list');
 
     const financialPayload = {
       accountNumber: projectData?.account_number,
@@ -203,25 +207,57 @@ export const ProjectDetails = () => {
       projectRid: projectID,
       accountRid: accountID,
     };
-    if (exportType === 'attachments') {
+
+    if (
+      list !== 'attachments' &&
+      list !== 'financial' &&
+      list !== 'projectResources' &&
+      list !== 'projectsTask'
+    ) {
+      return;
+    }
+
+    if (list === 'attachments' && exportType === 'attachments') {
+      const attachmentPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
       });
-    } else if (exportType === 'financial') {
+      return;
+    }
+
+    if (list === 'financial' && exportType === 'financial') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
       });
-    } else if (exportType === 'project_resource') {
+      return;
+    }
+    if (list === 'projectResources' && exportType === 'project_resource') {
       exportProjectResoure({
         ...projectResourceParams,
         ...projectResourcePayload,
       });
-    } else {
       return;
     }
+
+    if (list === 'projectsTask' && exportType === 'projectTask') {
+      const projectTaskExportPayload = {
+        accountRid: accountID,
+        projectRid: projectID,
+      };
+      exportProjectTaskData({ ...projectTaskExportPayload, ...projectTaskParams });
+      return;
+    }
+
+    return;
   };
+
+
 
   const menuItems = [
     {
@@ -304,7 +340,14 @@ export const ProjectDetails = () => {
           />
         );
       case 'projectsTask':
-        return <NotFound />;
+        return <ProjectTask
+          projectID={projectID}
+          accountID={accountID}
+          projectFiscalYear={fiscalYear}
+          setExportType={setExportType}
+          setProjectTaskParams={setProjectTaskParams}
+        />;
+
       case 'interactions':
         return <NotFound />;
       case 'technicalSummary':
@@ -485,11 +528,10 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
-          }`}
+          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px]'
+            : 'w-[220px] min-w-[220px] max-w-[220px]'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

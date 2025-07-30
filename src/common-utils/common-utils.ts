@@ -210,6 +210,43 @@ export const createSelectField = (
   dependantLabel: others.dependantLabel,
 });
 
+export const createAutoCompleteField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'autocomplete',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+});
+
 export const createButton = (
   name: string,
   label: string,
@@ -472,6 +509,44 @@ export const PROJECT_RESOURCE_REGEX = {
   // Date Validation (format only)
   DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
 };
+export const PROJECT_TASK_REGEX = {
+  // UUID VALIDATION STANDARD FORMAT
+  UUID: /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
+
+  //RESOURCE CODE REGEX WHICH ACCEPTS ONLY ALPHANUMERIC AND HYPHEN
+  RESOURCE_CODE: /^[A-Za-z][A-Za-z0-9_-]{2,49}$/,
+  // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
+  FULL_NAME:
+    /^(?![ '\\-])(?=[A-Za-z '\\-]{2,100}$)(?!.*[ '\\-]$)[A-Za-z '\\-]+$/,
+  // Resource Ref Id: Alphanumeric with hyphen/apostrophe, 1-20 chars
+  RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,20}$/,
+  // Organization Name: Extended chars for org names, 4-100 chars
+  ORG_NAME: /^(?![ .,&'\\-])(?!.*[ .,&'\\-]$)[A-Za-z0-9 .,&'\\-]{3,100}$/,
+
+  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,50}$/,
+
+  // Designation: Job titles with special chars, 4-100 chars
+  DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
+
+  // Project resource cost regex
+  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
+
+  // NON NEGATIVE POSTIVE INTEGER
+  EFFORT: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+
+  // Description: Multiline text, 0-2000 chars
+  DESCRIPTION: /^[\s\S]{0,2000}$/,
+
+  // Status/Type: For enum validation
+  ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
+
+  // Country: Standard name validation
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+
+  // Date Validation (format only)
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+};
 /**
  * Resource Form Field Regex Patterns
  *
@@ -522,13 +597,12 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${
-    errorData?.statusMessage
-      ? typeof errorData.statusMessage === 'object'
-        ? Object.values(errorData.statusMessage).join(', ')
-        : errorData.statusMessage || ''
-      : errorData?.message || data.message
-  }</p>`;
+  return `<p>${errorData?.statusMessage
+    ? typeof errorData.statusMessage === 'object'
+      ? Object.values(errorData.statusMessage).join(', ')
+      : errorData.statusMessage || ''
+    : errorData?.message || data.message
+    }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {

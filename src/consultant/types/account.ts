@@ -461,7 +461,7 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
 export interface FormField {
   id: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'select' | 'textarea' | 'date';
+  type: 'text' | 'number' | 'email' | 'select' | 'textarea' | 'checkbox' | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;
@@ -488,6 +488,7 @@ export type ExportType =
   | 'financial_project_cost'
   | 'resource_attachments'
   | 'resource_attachments'
+  | 'projectTask'
   | 'project_resource';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
