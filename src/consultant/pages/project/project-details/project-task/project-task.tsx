@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
@@ -11,13 +10,10 @@ import {
 import {
   PROJECT_TASK,
   PROJECT_TASK_EDIT,
-  // PROJECT_TASK_CREATE,
-  // PROJECT_TASK_EDIT,
 } from '../../../../../routes';
 
 import { getProjectTaskColumns } from '../project-task/columns';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-// import { resetFilter } from '../../../account-details-sidebar/components/filter/utils';
 import { AllMenus, AllModules, AllPermissions } from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
 import { ProjectTaskDetailsType, ProjectTaskListExportParams, ProjectTaskListType } from '../../../../types/project-task';
@@ -83,13 +79,8 @@ export const ProjectTask = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [
     projectsTabs,
-    // setProjectsTabs
   ] = useState(projectTabs);
-  const [
-    ,
-    // sortFilterCount
-    setSortFilterCount,
-  ] = useState<number>(0);
+  const [, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
@@ -100,10 +91,6 @@ export const ProjectTask = ({
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
-  // const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-  //   {}
-  // );
-  // const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -159,9 +146,10 @@ export const ProjectTask = ({
     refreshProjectsTrigger
   );
   const taskId = searchParams.get('pro_task_id');
-  // const accountId = searchParams.get('pro_acc_id');
-  // get project resource detail
-  // project resource details
+  const taskDetails = searchParams.get('page');
+  const checkDetail = taskDetails === "details";
+  const viewDetails = !!checkDetail;
+
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
@@ -192,7 +180,6 @@ export const ProjectTask = ({
   };
 
   useEffect(() => {
-    // update sub tab when refereshing the page
     const page = searchParams.get('page');
     if (page) {
       setShowProjectResourceDetails(true);
@@ -274,20 +261,12 @@ export const ProjectTask = ({
     setShowProjectResourceDetails(!showProjectResourceDetails);
     setProjectResData(null);
     setShowFilter(false);
-    // clear query params
     searchParams.delete('pro_task_id');
     searchParams.delete('page');
     navigate({
       pathname: location.pathname,
       search: searchParams.toString(),
     });
-    //   resetFilter(
-    //       {
-    //   setAppliedFilters,
-    //   setFilterStates,
-    //   setSelectedFilters,
-    //       }
-    //   );
   };
   useEffect(() => {
     if (setExportType) {
@@ -302,7 +281,7 @@ export const ProjectTask = ({
   }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
 
   const handleCreateProjectResource = () => {
-    const account_Id = accountID ?? ''; // fallback to empty string
+    const account_Id = accountID ?? '';
     const project_Id = projectID ?? '';
     const queryParams = new URLSearchParams({
       account_Id,
@@ -329,7 +308,6 @@ export const ProjectTask = ({
   const handleProjectTaskClick = (row: ProjectTaskListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_task_id', row?.rid ?? '');
-    // searchParams.set('pro_acc_id', row?.account_rid ?? '');
     navigate({ search: searchParams.toString() });
     setProjectResData(row);
     setShowProjectResourceDetails(true);
@@ -421,14 +399,14 @@ export const ProjectTask = ({
       ) : (
         <>
           <ProjectTaskTableHeader
-            value={resourceData ? 'project-task-details' : 'projects-task'}
-            title={resourceData ? 'Project Task' : 'Project Task'}
+            value={viewDetails ? 'project-task-details' : 'projects-task'}
+            title={viewDetails ? 'Project Task' : 'Project Task'}
             titleIcon={
-              resourceData ? <ResourceProfileIcon /> : <CreateResourceIcon />
+              viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
             }
             count={totalItems}
-            showBackArrow={resourceData ? true : false}
-            headerButtons={resourceData ? headerButtonsEdit : headerButtonsCreate}
+            showBackArrow={viewDetails ? true : false}
+            headerButtons={viewDetails ? headerButtonsEdit : headerButtonsCreate}
             projectResourceNumber={resourceData?.r_number}
             onBackClick={handleBackClick}
           />
@@ -475,7 +453,6 @@ export const ProjectTask = ({
                 }
                 component='project task'
                 onCellEdit={handleCellEdit}
-              // onFieldChange={handleFieldChange}
               />
             )}
           </div>

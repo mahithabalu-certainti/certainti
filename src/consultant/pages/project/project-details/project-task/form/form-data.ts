@@ -1,9 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../../types';
 import {
   createAutoCompleteField,
   createDateField,
-  // createSelectField,
   createTextAreaField,
   createTextField,
   PROJECT_TASK_REGEX,
@@ -25,31 +25,11 @@ const getFiscalYears = (range: number) => {
   });
 };
 
-// 3. Extract date calculations
-// const getDateConstraints = (yearsBack: number) => {
-//   const currentDate = new Date();
-//   const minDate = new Date();
-//   minDate.setFullYear(currentDate.getFullYear() - yearsBack);
-//   const previousDate = new Date(currentDate);
-//   previousDate.setDate(currentDate.getDate() - 1);
-//   return { currentDate, minDate, previousDate };
-// };
-
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
-// const { currentDate, previousDate } = getDateConstraints(
-//   DATE_CONFIG.MIN_YEARS_BACK
-// );
+
 
 export const ProjectTaskFormData = (
   memoizedProjectResourceCode: SelectOption[],
-  // country: SelectOption[],
-  // states: SelectOption[],
-  // city: SelectOption[],
-  // currency: SelectOption[],
-  // stateLoading?: boolean,
-  // cityLoading?: boolean,
-  // currencyLoading?: boolean,
-  // disableFields?: boolean
   isEditView?: boolean,
   projectPFY?: FiscalYearType | undefined,
   permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>,
@@ -97,50 +77,10 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['resource_code']?.read &&
               !permissionMapTaskForm?.['resource_code']?.edit,
           }),
-          // createTextField('resource_role', 'Resource Role', {
-          //   required: false,
-          //   regex: PROJECT_TASK_REGEX.ROLE,
-          //   regexErrorMessage:
-          //     'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-          //   placeholder: 'Enter Resource Role',
-          // }),
-          // createSelectField('fiscal_year', 'Fiscal Year', {
-          //   options: fiscalYears,
-          //   placeholder: '-Select-',
-          //   required: true,
-          //   onChange: true,
-          // }),
-          // createSelectField('resource_status', 'Resource Status', {
-          //   options: PROJECT_TASK_STATUS_OPTIONS,
-          //   placeholder: '-Select-',
-          //   required: false,
-          // }),
+
         ],
       },
-      // {
-      //   sectionName: 'Location and Currency Information',
-      //   fillType: 'half',
-      //   fields: [
-      //     createSelectField('country_rid', 'Country', {
-      //       options: country,
-      //       placeholder: 'Choose Country',
-      //       required: false,
-      //       onChange: true,
-      //       resetDependsFields: ['region'],
-      //     }),
-      //     createSelectField('region_rid', 'Region', {
-      //       options: states,
-      //       placeholder: 'Choose Region',
-      //       required: false,
-      //       isLoading: stateLoading,
-      //     }),
-      //     createSelectField('currency_rid', 'Currency', {
-      //       options: currency,
-      //       required: false,
-      //       placeholder: 'Choose Currency',
-      //     }),
-      //   ],
-      // },
+
       {
         sectionName: 'Project Details',
         fillType: 'half',
@@ -150,14 +90,14 @@ export const ProjectTaskFormData = (
             minDate: startDateMin,
             maxDate: startDateMax,
             disableFutureDates: true,
-            // disabled:
-            //   isEditView &&
-            //   permissionMapTaskForm?.['start_date']?.read &&
-            //   !permissionMapTaskForm?.['start_date']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMapTaskForm?.['start_date']?.read &&
-            //   !permissionMapTaskForm?.['start_date']?.edit,
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['start_date']?.read &&
+              !permissionMapTaskForm?.['start_date']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['start_date']?.read &&
+              !permissionMapTaskForm?.['start_date']?.edit,
           }),
           createDateField('end_date', 'End Date', {
             required: false,
@@ -167,14 +107,14 @@ export const ProjectTaskFormData = (
               field: 'resource_startdate',
               message: 'End Date must be after Start Date',
             },
-            // disabled:
-            //   isEditView &&
-            //   permissionMapTaskForm?.['end_date']?.read &&
-            //   !permissionMapTaskForm?.['end_date']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMapTaskForm?.['end_date']?.read &&
-            //   !permissionMapTaskForm?.['end_date']?.edit,
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['end_date']?.read &&
+              !permissionMapTaskForm?.['end_date']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['end_date']?.read &&
+              !permissionMapTaskForm?.['end_date']?.edit,
           }),
           createTextField('total_cost_pro_task', 'Cost', {
             required: false,

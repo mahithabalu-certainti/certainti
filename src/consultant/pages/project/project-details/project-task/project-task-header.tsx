@@ -58,7 +58,7 @@ const ProjectTaskTableHeader: React.FC<ProjectResourceTableHeaderProps> = ({
                 {value !== 'projects-task' && projectResourceNumber}
               </div>
             </div>
-            {value !== 'project-resource-details' && (
+            {value !== 'project-task-details' && (
               <h1 className='text-[12px] -mt-1.5 font-medium text-[#7D98B6] '>{`${(count ?? 0) > 0 ? count : 0} items`}</h1>
             )}
           </div>

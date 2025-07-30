@@ -1,4 +1,4 @@
-import { CircularProgress, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import { TruncateWithTooltip } from '../../../../../components/truncate-with-tooltip';
 import { applyHidePermission, getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
@@ -8,6 +8,7 @@ import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { getDetailsAttachmentColumns } from '../../../../../components/details-section/helpers';
+import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 
 interface ErrorProps {
   message?: string;
@@ -31,7 +32,6 @@ const DetailsSection: React.FC<{
   fullColumn?: boolean;
   isAudit?: boolean;
 }> = ({ title, data, customStyle, fullColumn, isAudit }) => {
-  // Split data into two columns
   const leftColumn: DetailItem[] = [];
   const middleColumn: DetailItem[] = [];
   const rightColumn: DetailItem[] = [];
@@ -148,7 +148,6 @@ const DetailsSection: React.FC<{
                           </div>
                           <div className='font-medium text-[13px] truncate min-w-0'>
                             <TruncateWithTooltip
-                              // text={String(item.value)}
                               maxWidth={'100%'}
                               className='truncate inline-block max-w-full'
                               alwaysShowTooltip={
@@ -204,12 +203,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
 
   if (isDetailsLoading) {
     return (
-      <div className='flex items-center justify-center h-64'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading task details...
-        </Typography>
-      </div>
+      <DetailsSectionSkeleton className='p-0 m-0' />
     );
   }
 

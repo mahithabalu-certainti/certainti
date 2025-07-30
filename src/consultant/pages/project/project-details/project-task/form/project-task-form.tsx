@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   useEffect, useMemo,
-  // useState
 } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
@@ -9,15 +8,9 @@ import { useToast } from '../../../../../../hooks';
 import {
   AllPermissions,
   Layout,
-  OnChange,
-  // useGetAllCountries 
+  // OnChange,
 } from '../../../../../../common-service';
-// import {
-// useFetchCurrency,
-// useFetchState,
-// } from '../../../../../services/account';
 import {
-  // SelectOption, 
   SelectResourceOption
 } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
@@ -34,6 +27,7 @@ import { useGetProjectResourceCode } from '../../../../../services/project-resou
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { FiscalYearType } from '../../../../../types/project';
+import { formatDateToYYYYMMDDWithTime, getDateFormat } from '../../../../../../common-utils';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -54,6 +48,15 @@ const ProjectTaskForm: React.FC = () => {
   const projectTaskDetailsData = useMemo(
     () => ({
       ...projectTask?.data,
+      ...(projectTask?.data &&
+      {
+        start_date: getDateFormat(projectTask?.data.start_date),
+        end_date: getDateFormat(projectTask?.data.end_date),
+        created_datetime: formatDateToYYYYMMDDWithTime(projectTask?.data.created_datetime) || '-',
+        created_by: formatDateToYYYYMMDDWithTime(projectTask?.data.created_by) || '-',
+        modified_datetime: formatDateToYYYYMMDDWithTime(projectTask?.data.modified_datetime) || '-',
+        modified_by: projectTask?.data.modified_by || '-',
+      })
     }),
     [projectTask]
   );
@@ -79,7 +82,6 @@ const ProjectTaskForm: React.FC = () => {
       );
       goBack();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -171,12 +173,11 @@ const ProjectTaskForm: React.FC = () => {
     window.history.back();
   };
 
-  const onChangeField = (data: OnChange) => {
-    console.log("data", data)
-    // if (data.fieldName === 'country_rid') {
-    //   setCurrentCountry(data.fieldValue as string);
-    // }
-  };
+  // const onChangeField = (data: OnChange) => {
+  // if (data.fieldName === 'country_rid') {
+  //   setCurrentCountry(data.fieldValue as string);
+  // }
+  // };
 
   return (
     <>
@@ -196,7 +197,7 @@ const ProjectTaskForm: React.FC = () => {
 
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project {'>'} {projectTaskDetailsData?.resource_code}
+              Project {'>'} {projectTaskDetailsData?.r_number}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
@@ -223,26 +224,17 @@ const ProjectTaskForm: React.FC = () => {
         <FormBuilder
           data={ProjectTaskFormData(
             memoizedProjectResourceCode,
-            // memoizedCountry,
-            // memoizedState,
-            // memoizeCity,
-            // memoizedCurrency,
-            // state.isLoading
-            // city.isLoading,
-            // currency.isLoading,
-            // disableFields,
             isEditView,
             fiscalYear,
             permissionMapTaskForm
           )}
-          // loading={allCountries.isLoading || state.isLoading}
           values={
             isEditView && projectTaskDetailsData ? { ...projectTaskDetailsData } : undefined
           }
           outData={submitData}
           formRef={formRef}
           layout={Layout.TYPE_1}
-          onChange={onChangeField}
+          onChange={() => console.log('onChange')}
           keyStart='start_date'
           keyEnd='end_date'
         />

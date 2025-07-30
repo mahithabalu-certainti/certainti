@@ -27,7 +27,7 @@ import {
   CloseIcon,
   KeyContactRemoveIcon,
   KeyContactAddIcon,
-  SearchBlackIcon,
+  // SearchBlackIcon,
   VerticalSeparatorIcon,
   ErrorInfoIcon,
 } from '../../assets';
@@ -88,7 +88,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -1149,10 +1149,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
-            <SearchBlackIcon
+            {/* <SearchBlackIcon
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
-            />
+            /> */}
             <Autocomplete
               options={field.options || []}
               disableClearable
@@ -1167,6 +1167,39 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   value: '',
                 }
               }
+              size='small'
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
+                  height: '32px',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                  borderRadius: '2px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                },
+                '& svg': {
+                  color: '#7D98B6',
+                },
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -2269,7 +2302,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                `${field.type}` === 'radio'
+                                  `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2301,9 +2334,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: '1px solid #60A5FA !important',
-                                  },
+                                {
+                                  border: '1px solid #60A5FA !important',
+                                },
                               },
                             }}
                             key={colIndex}

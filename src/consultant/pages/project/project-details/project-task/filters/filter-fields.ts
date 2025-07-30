@@ -12,8 +12,6 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 
 export const projectTaskFilterFields = (
     memoizedProjectResourceCode: { option: string; value: string }[],
-    // memoizedCountry: { option: string; value: string }[],
-    // region: { option: string; value: string }[],
     resourceTypeOptions: { option: string; value: string }[],
     permissionMapTaskTableColumn?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [

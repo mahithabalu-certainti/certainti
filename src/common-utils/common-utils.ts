@@ -532,7 +532,7 @@ export const PROJECT_TASK_REGEX = {
   COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
 
   // NON NEGATIVE POSTIVE INTEGER
-  EFFORT: /^[1-9][0-9]*$/,
+  EFFORT: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
 
   // Description: Multiline text, 0-2000 chars
   DESCRIPTION: /^[\s\S]{0,2000}$/,

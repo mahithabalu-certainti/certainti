@@ -20,10 +20,7 @@ export const projectTaskPayloadData = (
   };
 
   if (isEdit && project_task_rid) {
-  data.project_task_rid = project_task_rid;
-  // if (formData.total_hours_pro_res !== undefined) {
-  //   data.total_hours_pro_res = String(formData.total_hours_pro_res) || null;
-  // }
+    data.project_task_rid = project_task_rid;
   }
   return data;
 };

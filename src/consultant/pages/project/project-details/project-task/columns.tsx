@@ -2,7 +2,6 @@ import {
   costDisplay,
   getDateFormat,
   PROJECT_RESOURCE_REGEX,
-  // formatDateToYYYYMMDDWithTime,
   valueDisplay,
 } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
@@ -11,14 +10,14 @@ import { ProjectTaskListType } from '../../../../types/project-task';
 
 export const formatDateToYMD = (dateString: string): string => {
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return ''; // Handle invalid dates
+  if (isNaN(date.getTime())) return '';
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 export const getProjectTaskColumns = (
-  onClick: (row: ProjectTaskListType) => void, // onClick: (row: Project) => void
+  onClick: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
   permissionMapTaskTableColumn: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ProjectTaskListType>[] => [
