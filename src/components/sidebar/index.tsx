@@ -206,19 +206,26 @@ export const Sidebar: React.FC<SideBarProps> = ({
     });
   }, [menus]);
   const memoizedAdminNavItems = useMemo(() => {
-    return sideNavAdminItems.map((item) => ({
-      ...item,
-      subItemTitle: item.subItemTitle.map((subItem) => {
-        const menu = menus.find((menu) => menu.name === subItem.id);
-        return {
-          ...subItem,
-          hide: menu && !menu.is_enabled,
-        };
-      }),
-      openStatus: item.subItemTitle.some((subItem) =>
-        matchCheck(subItem, trimmedPathname(2))
-      ),
-    }));
+    return sideNavAdminItems
+      .map((item) => ({
+        ...item,
+        subItemTitle: item.subItemTitle.map((subItem) => {
+          const menu = menus.find((menu) => menu.name === subItem.id);
+          return {
+            ...subItem,
+            hide: menu && !menu.is_enabled,
+          };
+        }),
+        openStatus: item.subItemTitle.some((subItem) =>
+          matchCheck(subItem, trimmedPathname(2))
+        ),
+      }))
+      .filter((item) => {
+        const visibleSubItems = item.subItemTitle.filter(
+          (subItem) => !subItem.hide
+        );
+        return visibleSubItems.length > 0;
+      });
   }, [menus, trimmedPathname]);
   const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(
     memoizedAdminNavItems
