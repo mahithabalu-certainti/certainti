@@ -676,6 +676,7 @@ export class ProjectResourceMapper {
       project_name: data.project_name || null,
       program_name: data.program_name || null,
       account_rid: data.account_rid,
+      project_fiscal_rid: data.rid,
 
       country_rid: data.country_rid || null,
       currency_rid: data.currency_rid || null,

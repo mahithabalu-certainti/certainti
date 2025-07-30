@@ -1939,11 +1939,16 @@ class SchemaService {
         pfs.project_rid, 
         pfs.project_fiscal_rid, 
         pfs.r_number, 
-        pfs.account_rid
+        pfs.account_rid,
+        COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
       INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
       LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
       LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = pfs.currency_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
       WHERE pfs.project_rid = ps.project_rid 
         AND pfs.account_rid = ps.account_rid
         ${fiscalYearClause}

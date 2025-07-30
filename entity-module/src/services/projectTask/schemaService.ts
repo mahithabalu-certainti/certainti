@@ -205,12 +205,25 @@ export class ProjectTaskSchemaService {
       project_fiscal_rid: projectTaskData.project_fiscal_rid,
       account_rid: projectTaskData.account_rid,
       resource_rid: resourceId,
+      [Op.and]: [
+        { start_date: { [Op.gte]: startDate?.toDate() } }, 
+        Sequelize.where(
+          Sequelize.cast(Sequelize.col("end_date"), "date"),
+          {
+            [Op.lte]: endDate?.toDate(),
+          }
+        ),
+      ],
     };
 
-    if (startDate) whereClause.start_date = { [Op.lte]: endDate };
-    if (endDate) whereClause.end_date = { [Op.gte]: startDate };
+    // if (startDate) whereClause.start_date = { [Op.gte]: startDate?.toDate() };
+    // if (endDate) whereClause.end_date = { [Op.lte]: endDate?.toDate() };
 
-    const existingTasks = await ProjectTask.findAll(whereClause);
+    const existingTasks = await ProjectTask.findAll({
+      where: {
+        ...whereClause
+      }
+    });
     return existingTasks;
   }
 

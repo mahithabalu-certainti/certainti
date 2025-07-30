@@ -498,7 +498,7 @@ async getAttachments(
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
     // 🔷 Map final results
-    const attachments = paginatedAttachments.map(attachment => ({
+    let attachments = paginatedAttachments.map(attachment => ({
       ...attachment.get({ plain: true }),
       document_type: documentTypeMap.get(attachment.document_type_rid) || null,
       document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
@@ -560,10 +560,9 @@ async getAttachments(
       });
     }
     
-    let filteredAttachments = [];
     // Apply uploaded_by filter if present
     if (uploadedByFilter) {
-        filteredAttachments = attachments.filter(attachment => {
+        attachments = attachments.filter(attachment => {
         const uploadedBy = attachment.uploaded_by?.toLowerCase() || '';
         const operator = Object.keys(uploadedByFilter)[0];
         const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
@@ -574,22 +573,13 @@ async getAttachments(
           default: return false;
         }
       });
+    }
 
-      // Add "mb" suffix to size values for attachments
-      filteredAttachments = filteredAttachments.map(attachment => ({
+    // Add "mb" suffix to size values for attachments
+      attachments = attachments.map(attachment => ({
       ...attachment,
       size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
       }));
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: { 
-          attachments: filteredAttachments,
-          totalCount: filteredAttachments.length
-        }
-      };
-    }
 
     return {
       statusCode: HttpStatus.SUCCESS,
@@ -984,7 +974,7 @@ async exportAttachments(
     };
     // Apply uploaded_by filter if present
     if (uploadedByFilter) {
-        let filteredAttachments = attachments.filter(attachment => {
+        attachments = attachments.filter(attachment => {
         const uploadedBy = attachment.uploaded_by?.toLowerCase() || '';
         const operator = Object.keys(uploadedByFilter)[0];
         const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
@@ -995,32 +985,13 @@ async exportAttachments(
           default: return false;
         }
       });
+    }
 
-      // Add "mb" suffix to size values for attachments
-      filteredAttachments = filteredAttachments.map(attachment => ({
+    // Add "mb" suffix to size values for attachments
+       attachments = attachments.map(attachment => ({
         ...attachment,
         size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
       }));
-
-      filteredAttachments = filteredAttachments.map((at) => {
-      const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
-      const filtered: Record<string, any> = {};
-      for (const [fieldKey, value] of Object.entries(rawMapped)) {
-        const label = labelMap[fieldKey]; // field_desc
-        if (allowedFieldSet.has(label)) {
-          filtered[label] = value; // export with label name
-        }
-      }
-      return filtered;
-    });
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: { 
-          attachments: filteredAttachments,
-        }
-      };
-    }
 
     attachments = attachments.map((at) => {
     const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys

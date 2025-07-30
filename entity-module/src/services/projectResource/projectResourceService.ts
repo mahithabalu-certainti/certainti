@@ -669,7 +669,7 @@ export class ProjectResourceService {
           sortBy,
           sortOrder
         );
-
+       
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1561,26 +1561,32 @@ export class ProjectResourceService {
   ): any {
     if (isNumberField) {
       if (fieldFilter.equals !== undefined) {
-        return { [Op.eq]: fieldFilter.equals };
+        const value = String(fieldFilter.equals).includes('.') ? fieldFilter.equals : `${fieldFilter.equals}.00`;
+        return { [Op.eq]: value };
       }
       if (fieldFilter.not_equals !== undefined) {
+        const value = String(fieldFilter.not_equals).includes('.') ? fieldFilter.not_equals : `${fieldFilter.not_equals}.00`;
         return {
-          [Op.or]: [{ [Op.ne]: fieldFilter.not_equals }, { [Op.is]: null }],
+          [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }],
         };
       }
       if (fieldFilter.less_than !== undefined) {
-        return { [Op.lt]: fieldFilter.less_than };
+        const value = String(fieldFilter.less_than).includes('.') ? fieldFilter.less_than : `${fieldFilter.less_than}.00`;
+        return { [Op.lt]: value };
       }
       if (fieldFilter.greater_than !== undefined) {
-        return { [Op.gt]: fieldFilter.greater_than };
+        const value = String(fieldFilter.greater_than).includes('.') ? fieldFilter.greater_than : `${fieldFilter.greater_than}.00`;
+        return { [Op.gt]: value };
       }
       if (
         fieldFilter.between &&
         Array.isArray(fieldFilter.between) &&
         fieldFilter.between.length === 2
       ) {
+        const value1 = String(fieldFilter.between[0]).includes('.') ? fieldFilter.between[0] : `${fieldFilter.between[0]}.00`;
+        const value2 = String(fieldFilter.between[1]).includes('.') ? fieldFilter.between[1] : `${fieldFilter.between[1]}.00`;
         return {
-          [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
+          [Op.between]: [value1, value2],
         };
       }
       if (fieldFilter.is_empty === true) {
