@@ -564,8 +564,82 @@ export const rawQueries = {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.account WHERE parent_account_rid = :parentRid`
   },
   findResourceByCode(schemaName: string, resource_code: string){
-     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`
-  },
+     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`},
+  GET_ACCOUNT_ACCESS:`
+(
+  (
+    EXISTS (
+      SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+      WHERE uea.user_rid = ? 
+      AND uea.entity_type = 'ACCOUNT'
+      AND uea.entity_rid = ps.account_rid
+      AND uea.access_type = 'INCLUDE' 
+    )
+    OR EXISTS (
+      SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+        ON ugea.group_rid = ugm.group_rid
+      WHERE ugm.user_rid = ?
+      AND ugea.entity_type = 'ACCOUNT'
+      AND ugea.entity_rid = ps.account_rid
+      AND ugea.access_type = 'INCLUDE'
+    )
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+    WHERE uea.user_rid = ? 
+    AND uea.entity_type = 'ACCOUNT'
+    AND uea.entity_rid = ps.account_rid
+    AND uea.access_type = 'EXCLUDE'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+    JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+      ON ugea.group_rid = ugm.group_rid
+    WHERE ugm.user_rid = ?
+    AND ugea.entity_type = 'ACCOUNT'
+    AND ugea.entity_rid = ps.account_rid
+    AND ugea.access_type = 'EXCLUDE'
+  )
+)`,
+  GET_PROJECT_ACCESS:`
+      AND (
+        (
+          EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+            WHERE uea.user_rid = ? 
+            AND uea.entity_type = 'PROJECT'
+            AND uea.entity_rid = ps.project_rid
+            AND uea.access_type = 'INCLUDE'
+          )
+          OR EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+            JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+              ON ugea.group_rid = ugm.group_rid
+            WHERE ugm.user_rid = ?
+            AND ugea.entity_type = 'PROJECT'
+            AND ugea.entity_rid = ps.project_rid
+            AND ugea.access_type = 'INCLUDE'
+          )
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+          WHERE uea.user_rid = ? 
+          AND uea.entity_type = 'PROJECT'
+          AND uea.entity_rid = ps.project_rid
+          AND uea.access_type = 'EXCLUDE'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+          JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+            ON ugea.group_rid = ugm.group_rid
+          WHERE ugm.user_rid = ?
+          AND ugea.entity_type = 'PROJECT'
+          AND ugea.entity_rid = ps.project_rid
+          AND ugea.access_type = 'EXCLUDE'
+        )
+      )
+    `,
   async updateSetting(schemaName : string, data : any, orgDb : Sequelize, mainDb : Sequelize) {
     let tableName : string[];
     let whereParams : string = ``
