@@ -78,7 +78,7 @@ export const CreateUserGroup: React.FC = () => {
   // hooks
   const { groupId } = useParams();
   const dispatch = useAppDispatch();
-  const { successToast, errorToast } = useToast();
+  const { successToast } = useToast();
   const navigate = useNavigate();
 
   // UseStates
@@ -140,13 +140,7 @@ export const CreateUserGroup: React.FC = () => {
   const createUserGroup = useCreateUserGroup();
   const updateUserGroup = useUpdateUserGroup();
   const availableUsers = useGetUsersByAccount();
-  const availableProjects = useGetprojectByAccount(
-    {
-      ...projectParams,
-      account_rid: selectedAccounts.join(','),
-    },
-    tabs === Tabs.PROJECT
-  );
+  const availableProjects = useGetprojectByAccount();
   const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const userGroupDetails = useGetUserGroupDetails(groupId as string);
 
@@ -228,10 +222,28 @@ export const CreateUserGroup: React.FC = () => {
   useEffect(() => {
     // trigger when page change
     if (tabs === Tabs.USER) {
-      callAvailableUsers();
+      availableUsers.mutate({
+        is_consultant_only_group: groupInformation.isConsultantOnly,
+        account_rid: selectedAccounts,
+        limit: userParams.limit?.toString() as string,
+        page: userParams.page?.toString() as string,
+        ...(isEditView && { group_rid: groupId as string }),
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userParams.page, userParams.limit, tabs]);
+  useEffect(() => {
+    // trigger when page change
+    if (tabs === Tabs.PROJECT) {
+      availableProjects.mutate({
+        account_rid: selectedAccounts,
+        limit: projectParams.limit?.toString() as string,
+        page: projectParams.page?.toString() as string,
+        ...(isEditView && { group_rid: groupId as string }),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectParams.page, projectParams.limit, tabs]);
   useEffect(() => {
     if (isEditView && userGroupData) {
       const {
@@ -366,15 +378,6 @@ export const CreateUserGroup: React.FC = () => {
   };
   const getRowId = (row: ActiveUserForGroup) => row.rid;
   const getProjectRowId = (row: ProjectListByAccounts) => row.project_rid;
-  const callAvailableUsers = () => {
-    availableUsers.mutate({
-      is_consultant_only_group: groupInformation.isConsultantOnly,
-      account_rid: selectedAccounts,
-      limit: userParams.limit?.toString() as string,
-      page: userParams.page?.toString() as string,
-      ...(isEditView && { group_rid: groupId as string }),
-    });
-  };
   const validateGroupName = (value: string) => {
     // Check for empty value
     if (!value.trim()) {
@@ -444,14 +447,9 @@ export const CreateUserGroup: React.FC = () => {
       if (Object.values(newErrors).every((val) => val === '')) {
         // If No errors
         setTabs(Tabs.USER);
-        callAvailableUsers();
       }
     } else if (tabs === Tabs.USER) {
-      if (addedUsers.length === 0) {
-        errorToast('Please choose any one User');
-      } else {
-        setTabs(Tabs.PROJECT);
-      }
+      setTabs(Tabs.PROJECT);
     } else if (tabs === Tabs.PROJECT) {
       const commonData = {
         group_name: prefixGroupName + groupInformation.groupName,
@@ -904,7 +902,9 @@ const AccountModal: React.FC<AccountModalProps> = ({
       setSelectedAccounts(
         checked
           ? parentId
-            ? [...selectedAccounts, id].concat(parentId) //when child choose parent should active
+            ? selectedAccounts.includes(parentId)
+              ? [...selectedAccounts, id]
+              : [...selectedAccounts, id].concat(parentId) //when child choose parent should active
             : [...selectedAccounts, id]
           : childrens //when Parent Remove child should remove
             ? selectedAccounts.filter(

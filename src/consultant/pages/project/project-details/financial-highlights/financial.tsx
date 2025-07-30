@@ -9,7 +9,7 @@ import { FinancialIcon } from '../../../../../assets';
 import SummayListTable from './summary/summay-list';
 import ResourceCost from './resource-cost/resource-cost';
 import { NewProjectData } from '../../../../types/project';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getProjectFinancialResCostFields } from './helpers';
 import { useFetchState } from '../../../../services/account';
 import { FilterValue } from '../../../account-details-sidebar/components/filter/filterType';
@@ -50,6 +50,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   setExportType,
   setResCostExportParams,
 }) => {
+  const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -61,7 +62,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const isResourceCostViewEnable = checkPermission(
@@ -82,7 +83,8 @@ const Financial: React.FC<ProjectFinancialProps> = ({
 
   useEffect(() => {
     if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
-      handleTabChange(initialTab);
+      searchParams.set('tab', initialTab);
+      navigate({ search: searchParams.toString() }, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab, searchParams]);
@@ -130,7 +132,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
 
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
-    setSearchParams(searchParams);
+    navigate({ search: searchParams.toString() }, { replace: true });
     setResourceCostCount(0);
   };
 
