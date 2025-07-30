@@ -251,6 +251,20 @@ function isStrictIsoDate(value: any): boolean {
 function isNumber(value : any) {
   return !isNaN(value) && /^\d+$/.test(value);
 }
+export const getCurrencyDetailsQuery = (schemaName: string, currencyIds: string[]) => {
+  const query = `
+    SELECT rid, currency_name, currency_symbol, currency_code
+    FROM ${schemaName}.currency
+    WHERE rid IN (:ids)
+  `;
+
+  const replacements = {
+    ids: currencyIds,
+  };
+
+  return { query, replacements };
+};
+
 export const listAllLoadFailures = (schemaName: string, import_rid: string, entity_type: string) => {
   const query = `
     WITH import_data AS (

@@ -39,6 +39,7 @@ import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
+import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -4859,39 +4860,38 @@ export class ProjectResourceSchemaService {
     }
   }
 
-async insertProjectCurrencyData(projectResources: any[]): Promise<any[]> {
-  try {
-    if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.getMainSequelize();
-    }
-
-    // Get unique currency_rids
-    const uniqueCurrencyIds = [
-      ...new Set(
-        projectResources
-          .map((res) => res.currency_rid)
-          .filter((id) => id !== null && id !== undefined)
-      ),
-    ];
-
-    const currencyMap = new Map<string, { currency_code: string; currency_symbol: string }>();
-
-    if (uniqueCurrencyIds.length > 0) {
-      const currenciesResult: any[] = await this.mainDbSequelize.query(
-        `SELECT rid, currency_name, currency_symbol, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
-        {
-          replacements: { ids: uniqueCurrencyIds },
-          type: "SELECT",
-        }
-      );
-
-      for (const currency of currenciesResult) {
-        currencyMap.set(currency.rid, {
-          currency_code: currency.currency_code,
-          currency_symbol: currency.currency_symbol,
-        });
+  async insertProjectCurrencyData(projectResources: any[]): Promise<any[]> {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.getMainSequelize();
       }
-    }
+
+      // Get unique currency_rids
+      const uniqueCurrencyIds = [
+        ...new Set(
+          projectResources
+            .map((res) => res.currency_rid)
+            .filter((id) => id !== null && id !== undefined)
+        ),
+      ];
+
+      const currencyMap = new Map<string, { currency_code: string; currency_symbol: string }>();
+
+      if (uniqueCurrencyIds.length > 0) {
+        const { query, replacements } = getCurrencyDetailsQuery(MAIN_SCHEMA_NAME, uniqueCurrencyIds);
+
+        const currenciesResult: any[] = await this.mainDbSequelize.query(query, {
+          replacements,
+          type: "SELECT",
+        });
+
+        for (const currency of currenciesResult) {
+          currencyMap.set(currency.rid, {
+            currency_code: currency.currency_code,
+            currency_symbol: currency.currency_symbol,
+          });
+        }
+      }
 
     // Enrich each project resource object with currency code and symbol
     const enrichedResources = projectResources.map((resource) => {
