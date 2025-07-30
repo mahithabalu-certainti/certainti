@@ -321,9 +321,25 @@ export const fetchImportListByRid = (rid : string, schemaName : string) => {
 export const summaryHighlightsQuery = (account_rid : string, fiscal_year : number, schemaName : string) => {
     let query = 
     `
-    WITH resource_metrics AS (
+    WITH calculate_rd_credits_projects AS (
+    SELECT DISTINCT ON (a.account_rid) 
+            COUNT(*)OVER() AS total_projects_rd_credits,
+            a.account_rid
+        FROM 
+        ${schemaName}.account_fiscal a
+        LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
+        WHERE 
+            a.account_rid = '${account_rid}'
+            AND
+            a.fiscal_year = ${fiscal_year} 
+            AND
+            p.is_rd_qualified = true
+        GROUP BY
+        a.account_rid, p.rid
+    ),
+    resource_metrics AS (
         SELECT DISTINCT ON (a.account_rid) 
-            a.total_projects_rd_credits, a.total_fte, a.total_subcon,
+            a.total_fte, a.total_subcon,
             SUM(COALESCE(pf.total_nonlabor_prj, 0)) AS  total_nonlabor,
             a.account_rid
         FROM 
@@ -335,7 +351,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
             AND
             a.fiscal_year = ${fiscal_year} 
         GROUP BY
-        a.account_rid,a.total_projects_rd_credits,a.total_fte, a.total_subcon
+        a.account_rid,a.total_fte, a.total_subcon
     ),
     calculate_hours_fte AS (
         SELECT DISTINCT ON (ad.account_rid)
@@ -478,7 +494,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
         'nonlabor', rm.total_nonlabor,
-        'total_projects_rd_credits', rm.total_projects_rd_credits
+        'total_projects_rd_credits', crcp.total_projects_rd_credits
         ) AS resource_metrics,
 
         jsonb_build_object(
@@ -546,6 +562,7 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         
         FROM
         ${schemaName}.account_details ad
+        LEFT JOIN calculate_rd_credits_projects crcp ON crcp.account_rid = ad.account_rid
         LEFT JOIN resource_metrics rm ON rm.account_rid = ad.account_rid
         LEFT JOIN calculate_hours_fte chf ON chf.account_rid = ad.account_rid
         LEFT JOIN calculate_cost_fte ccf ON ccf.account_rid = ad.account_rid
@@ -575,7 +592,7 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         AND
         pf.fiscal_year = ${fiscal_year}
         GROUP BY
-        p.is_rd_qualified, p.rid, p.account_rid
+        p.account_rid, p.rid
     ),
     calculate_resource_metrics AS (
         SELECT 
@@ -839,9 +856,29 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
 export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year : number, schemaName : string, region_rid : string) => {
     let query = 
     `
-    WITH resource_metrics AS (
+    WITH calculate_rd_claimed_projects AS (
+    SELECT DISTINCT ON (a.account_rid)
+    a.account_rid,
+    COALESCE(COUNT(*) OVER(), 0) AS total_projects_rd_credits
+    FROM 
+        ${schemaName}.account_fiscal a
+		LEFT JOIN ${schemaName}.account_fiscal_region af ON af.account_rid = a.account_rid
+		LEFT JOIN ${schemaName}.project p ON p.region_rid = af.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+        WHERE 
+        a.account_rid = '${account_rid}'
+        AND
+        a.fiscal_year = ${fiscal_year}
+        AND
+        af.region_rid = '${region_rid}'
+        AND
+        pf.is_rd_claim_qualified = true 
+    GROUP BY
+    a.account_rid
+    ),
+    resource_metrics AS (
         SELECT DISTINCT ON (a.account_rid) 
-            COALESCE(a.total_projects_rd_credits,0) as total_projects_rd_credits, COALESCE(a.total_fte,0) as total_fte, COALESCE(a.total_subcon,0) as total_subcon, a.account_rid
+        COALESCE(a.total_fte,0) as total_fte, COALESCE(a.total_subcon,0) as total_subcon, a.account_rid
         FROM 
         ${schemaName}.account_fiscal a
 		LEFT JOIN ${schemaName}.account_fiscal_region af ON af.account_rid = a.account_rid
@@ -1014,7 +1051,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         'metric','No Of Resources',
         'fte', rm.total_fte,
         'subcon', rm.total_subcon,
-        'total_projects_rd_credits', rm.total_projects_rd_credits
+        'total_projects_rd_credits', crcp.total_projects_rd_credits
         ) AS resource_metrics,
 
         jsonb_build_object(
@@ -1082,6 +1119,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         
         FROM
         ${schemaName}.account_details ad
+        LEFT JOIN calculate_rd_claimed_projects crcp ON crcp.account_rid = ad.account_rid
         LEFT JOIN resource_metrics rm ON rm.account_rid = ad.account_rid
         LEFT JOIN calculate_hours_fte chf ON chf.account_rid = ad.account_rid
         LEFT JOIN calculate_cost_fte ccf ON ccf.account_rid = ad.account_rid
@@ -1105,7 +1143,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         FROM ${schemaName}.project p 
         LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = p.account_rid
         WHERE 
-        p.is_rd_qualified = true
+        pf.is_rd_claim_qualified = true
         and
         p.account_rid = '${account_rid}'
         AND
@@ -1113,7 +1151,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         AND
 		pf.region_rid = '${region_rid}'
         GROUP BY
-        p.is_rd_qualified, p.rid, p.account_rid
+        p.account_rid
     ),
     calculate_resource_metrics AS (
         SELECT 
@@ -1130,7 +1168,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         AND
         pf.fiscal_year = ${fiscal_year}
         AND
-        p.is_rd_qualified = true
+        pf.is_rd_claim_qualified = true
         AND
 		pf.region_rid = '${region_rid}'
 		GROUP BY
@@ -1151,7 +1189,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
@@ -1172,7 +1210,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
@@ -1193,7 +1231,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
@@ -1214,7 +1252,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
@@ -1234,7 +1272,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
@@ -1256,7 +1294,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
@@ -1279,7 +1317,7 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            p.is_rd_qualified = true
+            pf.is_rd_claim_qualified = true
             AND
 		    pf.region_rid = '${region_rid}'
             GROUP BY
