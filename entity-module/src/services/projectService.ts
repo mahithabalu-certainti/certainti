@@ -996,69 +996,13 @@ export class ProjectService {
     // Else allow all projects (no extra access checks)
   } else {
     // Non-global user – apply account/project access checks
-    replacements.push(userId, userId);
-    const accountAccessSubquery = `
-    (
-      EXISTS (
-        SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
-        WHERE uea.user_rid = ? 
-        AND uea.entity_type = 'ACCOUNT'
-        AND uea.entity_rid = ps.account_rid
-        AND uea.access_type = 'INCLUDE' 
-      )
-      OR EXISTS (
-        SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
-        JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
-          ON ugea.group_rid = ugm.group_rid
-        WHERE ugm.user_rid = ?
-        AND ugea.entity_type = 'ACCOUNT'
-        AND ugea.entity_rid = ps.account_rid
-        AND ugea.access_type = 'INCLUDE'
-      )
-    )
-  `;
-    accessControlWhere += ` AND ${accountAccessSubquery}`;
+   const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+   replacements.push(userId, userId, userId, userId);
+   accessControlWhere += ` AND ${accountAccessSubquery}`;
 
     if (!isdefaultparent) {
       // Add project-level access checks if not a parent group
-      accessControlWhere += `
-      AND (
-        (
-          EXISTS (
-            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
-            WHERE uea.user_rid = ? 
-            AND uea.entity_type = 'PROJECT'
-            AND uea.entity_rid = ps.project_rid
-            AND uea.access_type = 'INCLUDE'
-          )
-          OR EXISTS (
-            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
-            JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
-              ON ugea.group_rid = ugm.group_rid
-            WHERE ugm.user_rid = ?
-            AND ugea.entity_type = 'PROJECT'
-            AND ugea.entity_rid = ps.project_rid
-            AND ugea.access_type = 'INCLUDE'
-          )
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
-          WHERE uea.user_rid = ? 
-          AND uea.entity_type = 'PROJECT'
-          AND uea.entity_rid = ps.project_rid
-          AND uea.access_type = 'EXCLUDE'
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
-          JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
-            ON ugea.group_rid = ugm.group_rid
-          WHERE ugm.user_rid = ?
-          AND ugea.entity_type = 'PROJECT'
-          AND ugea.entity_rid = ps.project_rid
-          AND ugea.access_type = 'EXCLUDE'
-        )
-      )
-    `;
+      accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
       replacements.push(userId, userId, userId, userId);
     }
 

@@ -2737,16 +2737,7 @@ async createUserGroup(
     }
 
 
-    const newGroupResult = await sequelize.query<{ rid: string }>(
-      `
-      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (
-        group_name, group_type_rid, created_by
-      )
-      VALUES (
-        :group_name, :group_type_rid, :created_by
-      )
-      RETURNING rid
-      `,
+    const newGroupResult = await sequelize.query<{ rid: string }>(rawQueries.CREATE_AUTO_ASSIGNED_GROUP,
       {
         replacements: {
           group_name: 'G-' + accountData.account_name,
@@ -2764,14 +2755,7 @@ async createUserGroup(
     // 4. If it's a child, map it to AUTO_ASSIGNED_PARENT group of parent
     if (!is_parent && parent_account_rid) {
       const autoAssignedParentGroup = await sequelize.query<{ group_rid: string }>(
-        `
-        SELECT ug.rid AS group_rid
-        FROM "${MAIN_SCHEMA_NAME}"."user_groups" ug
-        JOIN "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" ugam ON ug.rid = ugam.group_rid
-        JOIN "${MAIN_SCHEMA_NAME}"."user_group_type" ugt ON ug.group_type_rid = ugt.rid
-        WHERE ugam.account_rid = :parent_account_rid
-          AND ugt.type = 'AUTO_ASSIGNED_PARENT'
-        `,
+       rawQueries.GET_PARENT_USER_GROUP_TYPE,
         {
           replacements: { parent_account_rid },
           type: QueryTypes.SELECT,
@@ -2782,14 +2766,7 @@ async createUserGroup(
       const parentGroupRid = autoAssignedParentGroup?.[0]?.group_rid;
       if (parentGroupRid) {
         await sequelize.query(
-          `
-          INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
-            group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
-          )
-          VALUES (
-            :group_rid, 'ACCOUNT', :entity_rid, 'INCLUDE', :created_by, NOW()
-          )
-          `,
+         rawQueries.CREATE_ENTITY_ACCESS,
           {
             replacements: {
               group_rid: parentGroupRid,
@@ -2800,37 +2777,20 @@ async createUserGroup(
           }
         );
         // 5. Insert into user_group_account_mapping for parent
-        await sequelize.query(
-      `
-      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
-        group_rid, account_rid, created_by
-      )
-      VALUES (
-        :group_rid, :account_rid, :created_by
-      )
-      `,
-      {
-        replacements: {
-          group_rid: parentGroupRid,
-          account_rid,
-          created_by: userId,
-        },
-        transaction,
-      }
-       );
-        
+        await sequelize.query(rawQueries.CREATE_ACCOUNT_MAPPING,
+        {
+          replacements: {
+            group_rid: parentGroupRid,
+            account_rid,
+            created_by: userId,
+          },
+          transaction,
+        }
+       ); 
       }
     }
     // 5. Insert into user_group_account_mapping
-    await sequelize.query(
-      `
-      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
-        group_rid, account_rid, created_by
-      )
-      VALUES (
-        :group_rid, :account_rid, :created_by
-      )
-    `,
+    await sequelize.query(rawQueries.CREATE_ACCOUNT_MAPPING,
       {
         replacements: {
           group_rid: groupRid,
@@ -2843,14 +2803,7 @@ async createUserGroup(
 
     // 6. Insert into user_group_entity_access
     await sequelize.query(
-      `
-      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
-        group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
-      )
-      VALUES (
-        :group_rid, 'ACCOUNT', :entity_rid, 'INCLUDE', :created_by, NOW()
-      )
-      `,
+     rawQueries.CREATE_ENTITY_ACCESS,
       {
         replacements: {
           group_rid: groupRid,
@@ -2873,13 +2826,7 @@ async getUserGroupType(userRid: string): Promise<string | null>   {
   const mainDbSequelize = await initSequelize();
   
   try {
-    const results = await mainDbSequelize.query<{ group_type: string }>(`
-      SELECT type group_type
-      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
-      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
-      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
-      WHERE ugm.user_rid = :userRid
-      LIMIT 1`,  // Important if user can only have one group type
+    const results = await mainDbSequelize.query<{ group_type: string }>(rawQueries.GET_USER_GROUP_TYPE,  // Important if user can only have one group type
     {
       replacements: { userRid },
       type: QueryTypes.SELECT
@@ -2910,17 +2857,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
       parent_account_rid: string | null;
       is_child: boolean;
     }>(
-      `
-      SELECT 
-        ugea.entity_rid,
-        a.parent_account_rid,
-        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
-      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
-      WHERE ugea.user_rid = :userRid 
-        AND ugea.entity_type = 'ACCOUNT'
-        AND ugea.access_type = 'INCLUDE'
-      `,
+      rawQueries.GET_ACCOUNT_DIRECT_ACCESS_USER_IDS,
       {
         replacements: { userRid },
         type: QueryTypes.SELECT
@@ -2929,13 +2866,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
 
     // 2. Direct EXCLUDE access — normalize and store in a Set
     const directExclude = await mainDbSequelize.query<{ entity_rid: string }>(
-      `
-      SELECT ugea.entity_rid
-      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
-      WHERE ugea.user_rid = :userRid 
-        AND ugea.entity_type = 'ACCOUNT'
-        AND ugea.access_type = 'EXCLUDE'
-      `,
+     rawQueries.GET_ACCOUNT_DIRECT_EXCLUDE_ACCESS_USER_IDS,
       {
         replacements: { userRid },
         type: QueryTypes.SELECT,
@@ -2952,21 +2883,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
       parent_account_rid: string | null;
       is_child: boolean;
     }>(
-      `
-      WITH user_groups AS (
-        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
-        WHERE user_rid = :userRid
-      )
-      SELECT DISTINCT 
-        gea.entity_rid,
-        a.parent_account_rid,
-        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
-      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
-      JOIN user_groups ug ON gea.group_rid = ug.group_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
-      WHERE gea.entity_type = 'ACCOUNT'
-        AND gea.access_type = 'INCLUDE'
-      `,
+    rawQueries.GET_GROUP_ACCESS,
       {
         replacements: { userRid },
         type: QueryTypes.SELECT
@@ -3002,7 +2919,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
  async getAllowedExportFields(userId: string, permission_name: string): Promise<any[]> {
   const mainDbSequelize = await initSequelize();
   const [userInfo] = await mainDbSequelize.query(
-  `SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;`,
+  rawQueries.GET_USER_PROFILE,
   {
     replacements: { userId },
     type: QueryTypes.SELECT,
@@ -3016,14 +2933,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
   const sequelize = await initSequelize();
   const [profileFields, userFields] = await Promise.all([
     sequelize.query(
-      `
-      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
-      FROM trd365.profile_fields_access pfa
-      JOIN trd365.permission_fields pf ON pfa.permission_field_id = pf.rid
-      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
-      WHERE mp.permission_name = :permissionName
-        AND pfa.profile_id = :profileId
-      `,
+     rawQueries.GET_PROFILE_PERMISSION,
       {
         replacements: {
           permissionName: permission_name,
@@ -3033,14 +2943,7 @@ async getAccessibleAccountInfo(userRid: string): Promise<Array<{
       }
     ),
     sequelize.query(
-      `
-      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
-      FROM trd365.user_fields_access ufa
-      JOIN trd365.permission_fields pf ON ufa.permission_field_id = pf.rid
-      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
-      WHERE mp.permission_name = :permissionName
-        AND ufa.user_id = :userId
-      `,
+      rawQueries.GET_USER_EXTENDED_PERMISSION,
       {
         replacements: {
           permissionName: permission_name,
