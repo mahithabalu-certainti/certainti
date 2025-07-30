@@ -43,6 +43,7 @@ export type ProjectResourcesListType = {
   insurance?: string | null;
   deductions?: string | null;
   description?: string | null;
+  currency_symbol?: string;
 };
 
 export interface ProjectResourcesApiResponse extends CommonApiResponse {

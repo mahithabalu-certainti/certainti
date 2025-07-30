@@ -201,6 +201,7 @@ export type Project = {
   project_fiscal_rid?: string;
   ProjectFiscal: ProjectFiscalSummary[];
   _level?: number;
+  currency_rid?: string;
 };
 export type ProjectFiscalSummary = {
   project_code: string;
