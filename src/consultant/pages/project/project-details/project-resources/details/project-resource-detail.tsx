@@ -334,7 +334,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     permissionMap
   );
   const auditInfoDetails = applyHidePermission(auditInfo, permissionMap);
-  console.log('auditInfoDetails', resourceData);
+
   return (
     <div>
       <DetailsSection
