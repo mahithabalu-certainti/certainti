@@ -53,6 +53,7 @@ const ProjectResourceForm: React.FC = () => {
   const [searchParams] = useSearchParams();
   const account_Id = searchParams.get('account_Id');
   const project_Id = searchParams.get('project_Id');
+  const currency_rid = searchParams.get('currency_rid');
   const projectPFY = searchParams.get('PFY');
   const fiscalYear: FiscalYearType | undefined = projectPFY
     ? JSON.parse(projectPFY)
@@ -67,18 +68,20 @@ const ProjectResourceForm: React.FC = () => {
   const projectResourceData = useMemo(
     () => ({
       ...projectResource?.projectResource,
-      updated_on: projectResource?.projectResource?.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(
-            projectResource?.projectResource?.modified_datetime
-          )
-        : '-',
-      created_on: projectResource?.projectResource?.created_datetime
-        ? formatDateToYYYYMMDDWithTime(
-            projectResource?.projectResource?.created_datetime
-          )
-        : null,
-      created_by: projectResource?.projectResource?.created_name || null,
-      modified_name: projectResource?.projectResource?.modified_name || '-',
+      ...(projectResource?.projectResource && {
+        updated_on: projectResource?.projectResource?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(
+              projectResource?.projectResource?.modified_datetime
+            )
+          : '-',
+        created_on: projectResource?.projectResource?.created_datetime
+          ? formatDateToYYYYMMDDWithTime(
+              projectResource?.projectResource?.created_datetime
+            )
+          : null,
+        created_by: projectResource?.projectResource?.created_name || null,
+        modified_name: projectResource?.projectResource?.modified_name || '-',
+      }),
     }),
     [projectResource]
   );
@@ -153,26 +156,6 @@ const ProjectResourceForm: React.FC = () => {
       ) || [],
     [projectResourceSkillTypeOptions?.data?.data?.resourceRolesSubType]
   );
-
-  // const memoizedProjectResourceRollSkill: SelectOption[] = useMemo(
-  //   () =>
-  //     projectResourceRollSkillOptions?.data?.data?.resourceRoles.map(
-  //       (item) => ({
-  //         label: item.skill_role_name,
-  //         value: item.rid,
-  //       })
-  //     ) || [],
-  //   [projectResourceRollSkillOptions?.data?.data?.resourceRoles]
-  // );
-
-  // const memoizedProjectTypes: SelectOption[] = useMemo(
-  //   () =>
-  //     projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-  //       label: item.resource_type_name,
-  //       value: item.rid,
-  //     })) || [],
-  //   [projectResourceTypeOptions?.data?.data?.resouceType]
-  // );
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
@@ -363,7 +346,7 @@ const ProjectResourceForm: React.FC = () => {
           values={
             isEditView && projectResourceData
               ? { ...projectResourceData }
-              : undefined
+              : { currency_rid: currency_rid }
           }
           outData={submitData}
           formRef={formRef}

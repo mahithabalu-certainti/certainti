@@ -331,6 +331,7 @@ const Projects: React.FC<ProjectsProps> = ({
     const queryParams = new URLSearchParams({
       accountID: project?.account_rid ?? '',
       source: 'account',
+      currency_rid: project?.currency_rid ?? '',
     });
 
     navigate(`${path}?${queryParams.toString()}`);

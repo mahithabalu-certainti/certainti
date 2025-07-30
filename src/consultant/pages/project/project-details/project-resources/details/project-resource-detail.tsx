@@ -1,4 +1,4 @@
-import { CircularProgress, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { ProjectResourceDetailsType } from '../../../../../types/project-resources';
 import { TruncateWithTooltip } from '../../../../../../components/truncate-with-tooltip';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../../../../../../common-utils';
 import { useMemo } from 'react';
 import { AllPermissions, Permissions } from '../../../../../../common-service';
+import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 
 interface ErrorProps {
   message?: string;
@@ -196,14 +197,15 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     return map;
   }, [projectViewEditFields]);
 
-  if (isDetailsLoading) {
+  if (isDetailsLoading || !resourceData) {
     return (
-      <div className='flex items-center justify-center h-64'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading resource details...
-        </Typography>
-      </div>
+      // <div className='flex items-center justify-center h-64'>
+      //   <CircularProgress />
+      //   <Typography variant='body1' className='ml-4'>
+      //     Loading resource details...
+      //   </Typography>
+      // </div>
+      <DetailsSectionSkeleton />
     );
   }
 

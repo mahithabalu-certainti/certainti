@@ -98,6 +98,12 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: [] as string[],
     skill_subtype_rid: [] as string[] | undefined[],
   });
+  useEffect(() => {
+    const tab = location.pathname.split('/').pop();
+    if (tab) {
+      setTabValue(tab);
+    }
+  }, [location.pathname]);
 
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
   const [regionData, setRegionData] = useState<
@@ -155,15 +161,6 @@ const TabPanel: React.FC<TabProps> = ({
       })) || [],
     [allCountries.data?.data.country]
   );
-
-  // const memoizedRegion: { option: string; value: string }[] = useMemo(
-  //   () =>
-  //     Regions.data?.data.states.map((role) => ({
-  //       option: role.state_name,
-  //       value: role.rid,
-  //     })) || [],
-  //   [Regions.data?.data.states]
-  // );
   const { permission } = useSelector((state: RootState) => state.permission);
   const projectResourcesViewEditFields = useMemo(
     () =>
@@ -332,16 +329,6 @@ const TabPanel: React.FC<TabProps> = ({
     handleSortClose();
   };
 
-  // const MENU_ITEMS = [
-  //   {
-  //     label: 'Assign Permission to User',
-  //     onClick: () => console.log('user clicked'),
-  //   },
-  //   {
-  //     label: 'View Permissions',
-  //     onClick: () => console.log('View Permissions clicked'),
-  //   },
-  // ];
   const menuActivity = [
     {
       label: 'Create Task',
@@ -371,16 +358,6 @@ const TabPanel: React.FC<TabProps> = ({
       ) || [],
     [currency.data?.data.currency]
   );
-
-  // const getFilterFields = () => {
-  //   if (!value) return resourceFilterFields(memoizedCountry, regionData);
-  //   if (value === 'projects') {
-  //     return projectFilterFields;
-  //   }
-  //   return value === 'cost'
-  //     ? getCostFilterFields(memoizedCurrency)
-  //     : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
-  // };
 
   // Permissions
   const attachmentEditFields = useMemo(
