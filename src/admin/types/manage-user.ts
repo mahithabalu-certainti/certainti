@@ -246,3 +246,9 @@ export interface UserPayload {
   phone?: string | null;
   organization?: string;
 }
+
+export interface UpdateUserResponse extends CommonApiResponse {
+  data: {
+    requiresConfirmation: boolean;
+  };
+}

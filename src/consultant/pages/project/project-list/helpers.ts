@@ -143,13 +143,13 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'Assessment Status',
-    value: 'status_rid',
+    value: 'assessment_status',
     type: 'enum',
     options: statusOptions,
     operatorOption: enumOptions,
     hide:
-      !projectPermissionMap?.['status_rid']?.read &&
-      !projectPermissionMap?.['status_rid']?.edit,
+      !projectPermissionMap?.['assessment_status']?.read &&
+      !projectPermissionMap?.['assessment_status']?.edit,
   },
   {
     name: 'QRE %',

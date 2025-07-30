@@ -173,7 +173,18 @@ const ImportFile: React.FC<ImportFileProps> = ({
         setLoading(false);
       }
     } catch (error) {
-      console.error('Upload failed:', error);
+      if (
+        (error as { response?: { status?: number } })?.response?.status === 400
+      ) {
+        const message =
+          (error as { response?: { data?: { detail: { message?: string } } } })
+            ?.response?.data?.detail?.message || 'Failed to upload the file.';
+        errorToast(message);
+      } else {
+        errorToast(
+          error instanceof Error ? error.message : 'Failed to upload the file.'
+        );
+      }
       showError('Failed to upload the file.');
       setLoading(false);
     }
@@ -254,15 +265,18 @@ const ImportFile: React.FC<ImportFileProps> = ({
         </div>
       </div>
 
-      <div className='flex flex-col items-center justify-center gap-4 px-4 py-10'>
+      <div
+        className={`flex flex-col items-center justify-center gap-4 px-4 py-10 ${accountInActive ? 'opacity-50' : ''}`}
+        style={{ pointerEvents: accountInActive || loading ? 'none' : 'all' }}
+      >
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={openFileDialog}
-          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${
-            accountInActive
-              ? 'border-gray-300 cursor-not-allowed opacity-50'
-              : 'border-[#0176D3] cursor-pointer'
+          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
+            message && message.type === 'error'
+              ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
+              : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
           }`}
         >
           <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
@@ -297,13 +311,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
             {message.text}
           </div>
         )}
-
-        {/* {selectedFiles.length > 0 && (
-          <div className='flex items-center justify-center font-[14px]  text-[#2D3E4F]'>
-            <div className='pr-2'>Selected File:- </div>
-            <div>{selectedFiles[0].name}</div>
-          </div>
-        )} */}
       </div>
     </div>
   );

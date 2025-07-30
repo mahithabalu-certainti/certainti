@@ -1535,7 +1535,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             inputClass={`!outline-none placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : ''}${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
-            containerClass='!w-full focus-within:outline-none focus-within:!border-2 focus-within:!border-blue-400'
+            containerClass='!w-full focus-within:outline-none focus-within:!border-1 focus-within:!border-blue-400 !rounded-xs'
             inputProps={{
               name: field.name,
               disabled: field.disabled,

@@ -447,7 +447,6 @@ export const ProjectResources = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        keyProjectTask={'ProjectResources'}
         projectResourceAccountID={accountID}
       />
       <>

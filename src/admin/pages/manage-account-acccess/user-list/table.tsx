@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
 import { manageUserListColumns } from './column';
@@ -84,9 +83,10 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
   };
   useEffect(() => {
     if (commonSuccess) {
-      successToast('user updated successfully');
+      successToast('Updated successfully');
       handleBack();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess]);
   useEffect(() => {
     if (data?.data?.users?.length) {

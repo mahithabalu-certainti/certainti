@@ -7,21 +7,29 @@ import {
   useProjectTaskDetail,
   useProjectTask,
 } from '../../../../services/project/project-task-service';
-import {
-  PROJECT_TASK,
-  PROJECT_TASK_EDIT,
-} from '../../../../../routes';
+import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
 
 import { getProjectTaskColumns } from '../project-task/columns';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AllMenus, AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
-import { ProjectTaskDetailsType, ProjectTaskListExportParams, ProjectTaskListType } from '../../../../types/project-task';
+import {
+  ProjectTaskDetailsType,
+  ProjectTaskListExportParams,
+  ProjectTaskListType,
+} from '../../../../types/project-task';
 import { RootState } from '../../../../../store/store';
 import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
 import { ExportType, SelectOption } from '../../../../types';
-import { CellEditData, FieldChangeValue } from '../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
@@ -68,18 +76,14 @@ export const ProjectTask = ({
   projectID?: string;
   accountID?: string;
   projectFiscalYear?: FiscalYearType;
-  setExportType?: (
-    type: ExportType
-  ) => void;
+  setExportType?: (type: ExportType) => void;
   setProjectTaskParams: React.Dispatch<
     React.SetStateAction<ProjectTaskListExportParams>
   >;
 }) => {
   const { errorToast, successToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [
-    projectsTabs,
-  ] = useState(projectTabs);
+  const [projectsTabs] = useState(projectTabs);
   const [, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
@@ -100,22 +104,18 @@ export const ProjectTask = ({
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
-  const [refreshTaskDetailPageTrigger, setRefreshTaskDetailPageTrigger] = useState<number>(
-    Date.now()
+  const [refreshTaskDetailPageTrigger, setRefreshTaskDetailPageTrigger] =
+    useState<number>(Date.now());
+  const [projectTaskList, setProjectTaskList] = useState<ProjectTaskListType[]>(
+    []
   );
-  const [projectTaskList, setProjectTaskList] = useState<
-    ProjectTaskListType[]
-  >([]);
   const [updateProjectTaskMutation] = useMutation(UPDATE_PROJECT_TASK, {
     client: taskClient,
   });
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
-  const projectTaskIsEnable = checkPermission(
-    modules,
-    AllModules.PROJECT_TASK
-  );
+  const projectTaskIsEnable = checkPermission(modules, AllModules.PROJECT_TASK);
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -147,14 +147,18 @@ export const ProjectTask = ({
   );
   const taskId = searchParams.get('pro_task_id');
   const taskDetails = searchParams.get('page');
-  const checkDetail = taskDetails === "details";
+  const checkDetail = taskDetails === 'details';
   const viewDetails = !!checkDetail;
 
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useProjectTaskDetail(taskId || '', accountID || '', refreshTaskDetailPageTrigger);
+  } = useProjectTaskDetail(
+    taskId || '',
+    accountID || '',
+    refreshTaskDetailPageTrigger
+  );
 
   const totalItems = data?.count || 0;
   useEffect(() => {
@@ -316,20 +320,18 @@ export const ProjectTask = ({
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
-    permissionMapTaskTableColumn,
+    permissionMapTaskTableColumn
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
   };
   const taskDetailPageRefresh = () => {
     setRefreshTaskDetailPageTrigger(Date.now());
-  }
+  };
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousProject = [...projectTaskList];
 
-    const selectedProject = projectTaskList.find(
-      (pro) => pro.rid === rowId
-    );
+    const selectedProject = projectTaskList.find((pro) => pro.rid === rowId);
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
@@ -371,7 +373,7 @@ export const ProjectTask = ({
       setProjectTaskList(previousProject);
     }
   };
-  const filterShow = !searchParams.get('page')
+  const filterShow = !searchParams.get('page');
   if (!projectTaskIsEnable) return <AccessRestricted />;
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
@@ -380,9 +382,7 @@ export const ProjectTask = ({
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
-        filterVisibility={
-          filterShow
-        }
+        filterVisibility={filterShow}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
@@ -391,12 +391,15 @@ export const ProjectTask = ({
         handleSorting={handleSorting}
         sortFilterCount={0}
         setSortFilterCount={setSortFilterCount}
-        keyProjectTask={'ProjectTask'}
         projectResourceAccountID={accountID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
       />
       {showUploads ? (
-        <Uploads accountId={accountID} attachID={taskId} onUploadSuccess={taskDetailPageRefresh} />
+        <Uploads
+          accountId={accountID}
+          attachID={taskId}
+          onUploadSuccess={taskDetailPageRefresh}
+        />
       ) : (
         <>
           <ProjectTaskTableHeader
@@ -407,7 +410,9 @@ export const ProjectTask = ({
             }
             count={totalItems}
             showBackArrow={viewDetails ? true : false}
-            headerButtons={viewDetails ? headerButtonsEdit : headerButtonsCreate}
+            headerButtons={
+              viewDetails ? headerButtonsEdit : headerButtonsCreate
+            }
             projectResourceNumber={resourceData?.r_number}
             onBackClick={handleBackClick}
           />
@@ -415,7 +420,8 @@ export const ProjectTask = ({
             {showProjectResourceDetails ? (
               <ProjectTaskDetails
                 projectTaskData={
-                  resourceData as unknown as ProjectTaskDetailsType || undefined
+                  (resourceData as unknown as ProjectTaskDetailsType) ||
+                  undefined
                 }
                 isDetailsLoading={isDetailsLoading}
                 detailsError={detailsError}
