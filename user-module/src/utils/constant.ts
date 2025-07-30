@@ -6,6 +6,7 @@ export const constants = {
   NOT_FOUND: 404,
   FORBIDDEN: 403,//For inactive_users
   FAILED: 500,
+  CONFLICT:409,
   UNAUTHORIZED: 401,//For users with no permssion_access
   SUCCESS_MESSAGE: "Success",
   BAD_REQUEST_MESSAGE: "BadRequest",
@@ -13,6 +14,7 @@ export const constants = {
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
   FORBIDDEN_MESSAGE: "Forbidden",
+  CONFLICT_MESSAGE:"Conflict",
 
   ENV_TRD365: "TRD365",
   ENV_EA: "EA",
@@ -99,7 +101,7 @@ export const constants = {
       LIMIT :limit OFFSET :offset
 `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT: `
-    SELECT 
+    SELECT distinct
       ps.project_rid,
       ps.project_name,
       ps.project_code,
@@ -121,8 +123,7 @@ export const constants = {
     {orderByClause}
     LIMIT :limit OFFSET :offset
   `,
-
-  SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(*) as total_count
+  SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(DISTINCT ps.project_rid) as total_count
       FROM ${MAIN_SCHEMA_NAME}.project_summary ps
       WHERE {whereClauses}`,
   SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count

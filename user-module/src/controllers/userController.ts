@@ -24,6 +24,7 @@ import {
   successLog,
   validateRequest,
   generateExcelBase64,
+  handleCustomResponse,
 } from "../utils/helpers";
 
 const services = configurations.getInstance().getServices();
@@ -217,7 +218,14 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       successLog(methodName);
       handleSuccessResponse(res, user.data);
       return;
-    } else {
+    } 
+     if (user.statusCode === constants.CONFLICT) {
+      successLog(methodName);
+      handleCustomResponse(res, user.errorMessage,user.requiresConfimration);
+      return;
+    } 
+    
+    else {
       errorLog(methodName, user.message);
       handleErrorResponse(
         res,

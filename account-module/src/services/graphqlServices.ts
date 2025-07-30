@@ -5,6 +5,7 @@ import { Status } from "../models/statusModel"
 import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
 import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
 import { Sequelize, Op, QueryTypes } from "sequelize";
+import SchemaService from "./schemaService"
 
 class AccountGraphQlServices {
     async inlineEditAccount(data : any) {
@@ -70,6 +71,11 @@ class AccountGraphQlServices {
                         data: null
                     };
                     }
+                const existingAcc = await Account.findOne({
+                    where: {
+                    rid: { [Op.eq]: fetchAccountById.rid }
+                    }
+                });
                 let updateAccount = await Account.update(setAccountData.newDbData, {
                     where: {
                         rid: fetchAccountById.rid
@@ -82,6 +88,16 @@ class AccountGraphQlServices {
                         data: null
                     };
                     }
+                if(existingAcc)
+                {
+                    const existingAccName = existingAcc?.account_name
+                    if (data.account_name !== existingAccName) 
+                    {
+                        const schemaService = new SchemaService();
+                        await schemaService.updateGroupNameForAccount(existingAcc.rid,data.userId,existingAcc.is_parent,data.account_name);
+                    }
+                
+                }           
                 let accDetailsData = setAccountData.newDbAccDetailsData;
                 await setAccountDetails(accDetailsData, schemaName, fetchAccountById.rid, sequelize)
                 if (data.key_contacts !== undefined) {
