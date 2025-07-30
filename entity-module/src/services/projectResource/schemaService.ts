@@ -4663,6 +4663,7 @@ export class ProjectResourceSchemaService {
 
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
+      projectResource = await this.insertProjectCurrencyData(projectResource);
       projectResource = await this.insertResourceTypeData(accountNumber, projectResource);
       projectResource = await this.insertResourceCode(accountNumber, projectResource);
 
@@ -4857,6 +4858,58 @@ export class ProjectResourceSchemaService {
       throw new Error("Error fetching region data: " + (err as Error).message);
     }
   }
+
+async insertProjectCurrencyData(projectResources: any[]): Promise<any[]> {
+  try {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
+    }
+
+    // Get unique currency_rids
+    const uniqueCurrencyIds = [
+      ...new Set(
+        projectResources
+          .map((res) => res.currency_rid)
+          .filter((id) => id !== null && id !== undefined)
+      ),
+    ];
+
+    const currencyMap = new Map<string, { currency_code: string; currency_symbol: string }>();
+
+    if (uniqueCurrencyIds.length > 0) {
+      const currenciesResult: any[] = await this.mainDbSequelize.query(
+        `SELECT rid, currency_name, currency_symbol, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: uniqueCurrencyIds },
+          type: "SELECT",
+        }
+      );
+
+      for (const currency of currenciesResult) {
+        currencyMap.set(currency.rid, {
+          currency_code: currency.currency_code,
+          currency_symbol: currency.currency_symbol,
+        });
+      }
+    }
+
+    // Enrich each project resource object with currency code and symbol
+    const enrichedResources = projectResources.map((resource) => {
+      const currencyData = currencyMap.get(resource.currency_rid) || { currency_code: null, currency_symbol: null };
+
+      return {
+        ...(resource.dataValues ?? resource),
+        currency_code: currencyData.currency_code,
+        currency_symbol: currencyData.currency_symbol,
+      };
+    });
+
+    return enrichedResources;
+  } catch (err) {
+    console.error(err);
+    throw new Error("Error fetching currency data: " + (err as Error).message);
+  }
+}
 
   async insertResourceTypeData(accountNumber: string, projectResources: any[]): Promise<any[]> {
     try {
