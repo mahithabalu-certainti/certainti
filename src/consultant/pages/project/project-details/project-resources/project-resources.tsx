@@ -89,14 +89,13 @@ export const ProjectResources = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('resource_code');
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const [projectResData, setProjectResData] =
     useState<ProjectResourcesListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
 
-  const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -111,6 +110,11 @@ export const ProjectResources = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const navigate = useNavigate();
+  // const [searchParams] = useSearchParams();
+  const fileId = searchParams.get('page');
+
+  const viewDetails = fileId === 'details';
+
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
@@ -222,14 +226,7 @@ export const ProjectResources = ({
   const handleCountry = (country: string) => {
     setCurrentCountry(country);
   };
-  // const memoizedProjectTypes: SelectOption[] = useMemo(
-  //   () =>
-  //     projectResourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-  //       label: item.resource_type_name,
-  //       value: item.rid,
-  //     })) || [],
-  //   [projectResourceTypeOptions?.data?.data?.resouceType]
-  // );
+
   const handleProjectResourceDetailEdit = () => {
     if (resourceData) {
       const path = PROJECT_RESOURCE_EDIT.replace(
@@ -243,6 +240,19 @@ export const ProjectResources = ({
       navigate(`${path}?${queryParams.toString()}`);
     }
   };
+  const handleEditProjectResource = (row: ProjectResourcesListType) => {
+    const path = row?.rid
+      ? PROJECT_RESOURCE_EDIT.replace(':resourceId', row.rid)
+      : PROJECT_RESOURCE_EDIT;
+    const PFY = projectFiscalYear;
+    const queryParams = new URLSearchParams({
+      account_Id: row?.account_rid || '',
+      project_Id: row?.project_rid || '',
+      PFY: PFY ? JSON.stringify(PFY) : '',
+      source: 'editProjectResource',
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'resource_code';
@@ -254,7 +264,7 @@ export const ProjectResources = ({
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
     } else {
-      setSortFilterCount(1);
+      // setSortFilterCount(1);
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
@@ -263,6 +273,7 @@ export const ProjectResources = ({
   useEffect(() => {
     // update sub tab when refereshing the page
     const page = searchParams.get('page');
+
     if (page) {
       setShowProjectResourceDetails(true);
     }
@@ -282,14 +293,14 @@ export const ProjectResources = ({
 
   const headerButtons = [
     {
-      label: resourceData ? 'Edit' : 'New',
+      label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
       onClick: () =>
-        resourceData
+        viewDetails
           ? handleProjectResourceDetailEdit()
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: !isResourceCreateViewEnable,
+      hide: viewDetails ? false : !isResourceCreateViewEnable,
     },
   ];
   const handleFilter = () => {
@@ -307,11 +318,10 @@ export const ProjectResources = ({
       pathname: location.pathname,
       search: searchParams.toString(),
     });
-    setFilterVisibility(true);
   };
 
   const PFY = projectFiscalYear;
-
+  const currency_rid = searchParams.get('currency_rid');
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? ''; // fallback to empty string
     const project_Id = projectID ?? '';
@@ -320,23 +330,11 @@ export const ProjectResources = ({
       project_Id,
       PFY: JSON.stringify(PFY),
       source: 'createProjectResource',
+      currency_rid: currency_rid ?? '',
     });
     navigate(`${PROJECT_RESOURCE_CREATE}?${queryParams.toString()}`);
   };
 
-  const handleEditProjectResource = (row: ProjectResourcesListType) => {
-    const path = row?.rid
-      ? PROJECT_RESOURCE_EDIT.replace(':resourceId', row.rid)
-      : PROJECT_RESOURCE_EDIT;
-    const PFY = projectFiscalYear;
-    const queryParams = new URLSearchParams({
-      account_Id: row?.account_rid || '',
-      project_Id: row?.project_rid || '',
-      PFY: PFY ? JSON.stringify(PFY) : '',
-      source: 'editProjectResource',
-    });
-    navigate(`${path}?${queryParams.toString()}`);
-  };
   const handleProjectResourceClick = (row: ProjectResourcesListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_res_id', row?.rid ?? '');
@@ -344,7 +342,6 @@ export const ProjectResources = ({
     setProjectResData(row);
     setShowProjectResourceDetails(true);
     setShowFilter(false);
-    setFilterVisibility(false);
   };
   useEffect(() => {
     const resourceId = searchParams.get('pro_res_id');
@@ -432,7 +429,7 @@ export const ProjectResources = ({
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
-    <div className='w-full pt-2 pb-2 pl-2 pr-4'>
+    <div className='w-full pt-2 pb-2 pl-2 pr-4 bg'>
       <TabPanel
         value={'project-resources'}
         appliedFilters={appliedFilters}
@@ -441,11 +438,11 @@ export const ProjectResources = ({
           setShowFilter(false);
         }}
         showFilter={showFilter}
-        filterVisibility={filterVisibility}
+        filterVisibility={!viewDetails}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
-        showRefresh={true}
+        showRefresh={!viewDetails}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
@@ -456,14 +453,14 @@ export const ProjectResources = ({
       <>
         <ProjectResourceTableHeader
           value={
-            resourceData ? 'project-resource-details' : 'projects-resources'
+            viewDetails ? 'project-resource-details' : 'projects-resources'
           }
-          title={resourceData ? 'Project Resource' : 'Project Resources'}
+          title={'Project Resource'}
           titleIcon={
-            resourceData ? <ResourceProfileIcon /> : <CreateResourceIcon />
+            viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
           }
           count={totalItems}
-          showBackArrow={resourceData ? true : false}
+          showBackArrow={viewDetails}
           headerButtons={headerButtons}
           projectResourceNumber={resourceData?.r_number}
           onBackClick={handleBackClick}

@@ -351,8 +351,9 @@ export const ProjectResourceFormData = (
           }),
           createTextField('total_hours_pro_res', 'Effort', {
             required: false,
-            regex: PROJECT_RESOURCE_REGEX.EFFORT,
-            regexErrorMessage: 'Effort must be a positive number',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter an effort',
             disabled:
               isEditView &&
