@@ -123,7 +123,7 @@ export const getProjectTaskColumns = (
         validation: [
           {
             regex: PROJECT_TASK_REGEX.COST_REGEX,
-            errorMessage: 'Cost must be a 18-digit number with up to 2 decimals',
+            errorMessage: 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
           },
         ],
       },
@@ -155,7 +155,7 @@ export const getProjectTaskColumns = (
         validation: [
           {
             regex: PROJECT_TASK_REGEX.EFFORT,
-            errorMessage: 'Effort must be a positive number',
+            errorMessage: 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
           },
         ],
       },

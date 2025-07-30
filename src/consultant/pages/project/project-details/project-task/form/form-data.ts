@@ -120,7 +120,7 @@ export const ProjectTaskFormData = (
             required: false,
             regex: PROJECT_TASK_REGEX.COST_REGEX,
             regexErrorMessage:
-              'Cost must be a 18-digit number with up to 2 decimals',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Cost',
             disabled:
               isEditView &&
@@ -133,8 +133,8 @@ export const ProjectTaskFormData = (
           }),
           createTextField('total_hours_pro_task', 'Effort', {
             required: false,
-            regex: PROJECT_TASK_REGEX.EFFORT,
-            regexErrorMessage: 'Effort must be a positive number',
+            regex: PROJECT_TASK_REGEX.EFFORT, 
+            regexErrorMessage: 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter an effort',
             disabled:
               isEditView &&
