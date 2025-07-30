@@ -58,6 +58,10 @@ export const PROJECT = '/project';
 export const PROJECT_CREATE = `${PROJECT}/create`;
 export const PROJECT_EDIT = `${PROJECT}/edit/:projectid`;
 export const PROJECT_DETAILS = `${PROJECT}/details/:projectid`;
+//Project Task route
+export const PROJECT_TASK = '/project/task';
+export const PROJECT_TASK_CREATE = `${PROJECT_TASK}/create`;
+export const PROJECT_TASK_EDIT = `${PROJECT_TASK}/edit/:taskId`;
 
 //Project resources route
 export const PROJECT_RESOURCE = '/project/resource';
