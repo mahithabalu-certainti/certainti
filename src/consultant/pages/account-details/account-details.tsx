@@ -510,7 +510,7 @@ export const AccountDetails = () => {
         name: 'Financial Highlights',
         key: 'financial',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
+        disabled: disable,
         icon: FinancialIcon,
       },
       {

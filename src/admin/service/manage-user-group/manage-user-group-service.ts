@@ -46,7 +46,7 @@ export const useManageUserGroupList = (
 };
 
 export const getUserGroupExportUrl = (params: UserListParams = {}) => {
-    const queryParams: Record<string, unknown> = {
+  const queryParams: Record<string, unknown> = {
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters,
@@ -97,27 +97,26 @@ export const fetchUsersByAccount = async (
 };
 
 export const useGetUsersByAccount = () => {
-  return useMutation<ActiveUserForGroupApiResponse, Error, FetchUsersByAccountBody>({
+  return useMutation<
+    ActiveUserForGroupApiResponse,
+    Error,
+    FetchUsersByAccountBody
+  >({
     mutationFn: (body) => fetchUsersByAccount(body),
   });
 };
 
-export const fetchProjectsByAccount = async (queryParams: UserGroupParam) => {
-  const response = await userServiceApi.get<ProjectListByAccountsApiResponse>(
-    `/api/user_group/projects-of-accounts?${buildQueryString(queryParams)}`
+export const fetchProjectsByAccount = async (body: UserGroupParam) => {
+  const response = await userServiceApi.post<ProjectListByAccountsApiResponse>(
+    `/api/user_group/projects-of-accounts`,
+    body
   );
   return response.data;
 };
 
-export const useGetprojectByAccount = (
-  queryParams: UserGroupParam,
-  enabled: boolean
-) => {
-  return useQuery<ProjectListByAccountsApiResponse, Error>({
-    queryKey: ['getProjectByAccount', queryParams],
-    queryFn: () => fetchProjectsByAccount(queryParams),
-    retry: 0,
-    enabled,
+export const useGetprojectByAccount = () => {
+  return useMutation<ProjectListByAccountsApiResponse, Error, UserGroupParam>({
+    mutationFn: (body) => fetchProjectsByAccount(body),
   });
 };
 
