@@ -339,6 +339,7 @@ export const ProjectTask = ({
       {
         rid: rowId,
         account_rid: selectedProject?.account_rid,
+        project_fiscal_rid: selectedProject?.project_fiscal_rid,
         fiscal_year: selectedProject?.fiscal_year,
       }
     );

@@ -234,8 +234,7 @@ mutation UpdateProjectTask($data: updateInlineProjectTask!) {
             r_number
             account_rid
             account_name
-            project_rid
-            project_fiscal_rid
+            project_rid 
             project_name
             project_code
             project_resource_rid

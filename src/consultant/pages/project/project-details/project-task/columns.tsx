@@ -1,7 +1,7 @@
 import {
   costDisplay,
   getDateFormat,
-  PROJECT_RESOURCE_REGEX,
+  PROJECT_TASK_REGEX,
   valueDisplay,
 } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
@@ -122,7 +122,7 @@ export const getProjectTaskColumns = (
         placeholder: 'Enter Cost',
         validation: [
           {
-            regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
+            regex: PROJECT_TASK_REGEX.COST_REGEX,
             errorMessage: 'Cost must be a 18-digit number with up to 2 decimals',
           },
         ],
@@ -154,7 +154,7 @@ export const getProjectTaskColumns = (
         placeholder: 'Enter an effort',
         validation: [
           {
-            regex: PROJECT_RESOURCE_REGEX.EFFORT,
+            regex: PROJECT_TASK_REGEX.EFFORT,
             errorMessage: 'Effort must be a positive number',
           },
         ],
@@ -181,7 +181,7 @@ export const getProjectTaskColumns = (
         placeholder: 'Enter Comments',
         validation: [
           {
-            regex: PROJECT_RESOURCE_REGEX.DESCRIPTION,
+            regex: PROJECT_TASK_REGEX.DESCRIPTION,
             errorMessage: 'Maximum 2000 characters allowed',
           },
         ],

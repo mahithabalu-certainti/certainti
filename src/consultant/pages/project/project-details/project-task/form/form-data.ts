@@ -104,7 +104,7 @@ export const ProjectTaskFormData = (
             minDate: startDateMin,
             maxDate: endDateMax,
             greaterThan: {
-              field: 'resource_startdate',
+              field: 'start_date',
               message: 'End Date must be after Start Date',
             },
             disabled:

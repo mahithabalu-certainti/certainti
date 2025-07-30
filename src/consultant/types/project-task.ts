@@ -28,6 +28,7 @@ export type ProjectTaskListType = {
   rid: string;
   r_number: string;
   account_rid: string;
+  project_fiscal_rid: string;
   account_name: string;
   project_rid: string;
   project_name: string | null;
@@ -92,6 +93,7 @@ export interface ProjectTaskDetailsType {
   region_rid: string;
   region_name: string;
   currency_rid: string;
+  currency_symbol: string;
   resource_orgname: string | null;
   description: string;
   comments: string | null;

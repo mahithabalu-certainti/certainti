@@ -53,7 +53,7 @@ const ProjectTaskForm: React.FC = () => {
         start_date: getDateFormat(projectTask?.data.start_date),
         end_date: getDateFormat(projectTask?.data.end_date),
         created_datetime: formatDateToYYYYMMDDWithTime(projectTask?.data.created_datetime) || '-',
-        created_by: formatDateToYYYYMMDDWithTime(projectTask?.data.created_by) || '-',
+        created_by: projectTask?.data.created_by || '-',
         modified_datetime: formatDateToYYYYMMDDWithTime(projectTask?.data.modified_datetime) || '-',
         modified_by: projectTask?.data.modified_by || '-',
       })
@@ -61,10 +61,6 @@ const ProjectTaskForm: React.FC = () => {
     [projectTask]
   );
 
-  // const allCountries = useGetAllCountries();
-  // const currency = useFetchCurrency();
-  // const state = useFetchState(currentCountry);
-  // const city = useFetchCity(currentCountry.state);
   const createProjectTask = useCreateProjectTask();
   const updateProjectTask = useUpdateProjectTask();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
@@ -109,42 +105,7 @@ const ProjectTaskForm: React.FC = () => {
         resource_type_name: item.resource_type_name,
       })) || [],
     [projectResourceCodeOptions?.data?.resourceCodes]
-  );
-  // const memoizedCountry: SelectOption[] = useMemo(
-  //   () =>
-  //     allCountries.data?.data.country.map((country) => ({
-  //       label: country.country_name,
-  //       value: country.rid,
-  //     })) || [],
-  //   [allCountries.data?.data.country]
-  // );
-
-  // const memoizedCurrency: SelectOption[] = useMemo(
-  //   () =>
-  //     currency.data?.data.currency.map((account) => ({
-  //       label: account.currency_name,
-  //       value: account.rid,
-  //     })) || [],
-  //   [currency.data?.data.currency]
-  // );
-
-  // const memoizedState: SelectOption[] = useMemo(
-  //   () =>
-  //     state.data?.data.states.map((state) => ({
-  //       label: state.state_name,
-  //       value: state.rid,
-  //     })) || [],
-  //   [state.data?.data.states]
-  // );
-
-  //   const memoizeCity: SelectOption[] = useMemo(
-  //     () =>
-  //       city.data?.data.cities.map((role) => ({
-  //         label: role.city_name,
-  //         value: role.rid,
-  //       })) || [],
-  //     [city.data?.data.cities]
-  //   );
+  ); 
 
   const submitData = (formValues: Partial<ProjectTaskInput>) => {
     const project_task_rid = isEditView ? (taskId as string) : '';
@@ -173,12 +134,7 @@ const ProjectTaskForm: React.FC = () => {
     window.history.back();
   };
 
-  // const onChangeField = (data: OnChange) => {
-  // if (data.fieldName === 'country_rid') {
-  //   setCurrentCountry(data.fieldValue as string);
-  // }
-  // };
-
+  
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>

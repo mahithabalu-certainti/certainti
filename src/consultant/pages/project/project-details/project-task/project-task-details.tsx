@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import { TruncateWithTooltip } from '../../../../../components/truncate-with-tooltip';
-import { applyHidePermission, getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
+import { applyHidePermission, costDisplay, getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
 import DetailsTable from '../../../../../components/details-section/details-table';
 import { useMemo } from 'react';
 import { AllPermissions } from '../../../../../common-service';
@@ -256,7 +256,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
       label: 'End Date',
       value: getDateFormat(projectTaskData.end_date ?? undefined),
     },
-    { label: 'Cost', value: projectTaskData.total_cost_pro_task },
+    { label: 'Cost', value: costDisplay(projectTaskData.total_cost_pro_task, projectTaskData?.currency_symbol) },
     { label: 'Effort', value: projectTaskData.total_hours_pro_task },
   ];
 
