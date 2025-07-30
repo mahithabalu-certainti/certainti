@@ -5005,21 +5005,21 @@ export class ProjectResourceSchemaService {
       }
 
       // Text fields (contains / not contains)
-      if (typeof value === "string") {
-        if (filter.contains !== undefined) {
-          return value.toLowerCase().includes(filter.contains.toLowerCase());
-        }
-        if (filter.not_contains !== undefined) {
-          return !value
-            .toLowerCase()
-            .includes(filter.not_contains.toLowerCase());
-        }
-      }
+      // if (typeof value === "string") {
+      //   if (filter.contains !== undefined) {
+      //     return value.toLowerCase().includes(filter.contains.toLowerCase());
+      //   }
+      //   if (filter.not_contains !== undefined) {
+      //     return !value
+      //       .toLowerCase()
+      //       .includes(filter.not_contains.toLowerCase());
+      //   }
+      // }
 
-      // Generic field equality
-      if (filter.equals !== undefined) return value === filter.equals;
-      if (filter.not_equals !== undefined) return value !== filter.not_equals;
-      if (filter.is_empty === true) return value === null || value === "";
+      // // Generic field equality
+      // if (filter.equals !== undefined) return value === filter.equals;
+      // if (filter.not_equals !== undefined) return value !== filter.not_equals;
+      // if (filter.is_empty === true) return value === null || value === "";
 
       return true;
     };
