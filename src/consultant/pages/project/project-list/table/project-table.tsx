@@ -173,6 +173,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     const queryParams = new URLSearchParams({
       accountID: project?.account_rid ?? '',
       source: 'project',
+      currency_rid: project?.currency_rid ?? '',
     });
 
     navigate(`${path}?${queryParams.toString()}`);
