@@ -82,7 +82,7 @@ export const ProjectTaskFormData = (
       },
 
       {
-        sectionName: 'Project Details',
+        sectionName: 'Project Task Details',
         fillType: 'half',
         fields: [
           createDateField('start_date', 'Effective From', {

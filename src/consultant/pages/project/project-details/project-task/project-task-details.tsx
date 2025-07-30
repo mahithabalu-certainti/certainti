@@ -290,14 +290,13 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
         data={locationInfo as DetailItem[]}
       /> */}
       <DetailsSection
-        title='Project Details'
+        title='Project Task Details'
         data={projectTaskDetails as DetailItem[]}
         isAudit={true}
       />
       <DetailsSection title='Comments' data={descriptionDetails as DetailItem[]} />
       {projectTaskData?.attachment &&
         projectTaskData?.attachment.length > 0 &&
-        // isAttachmentViewEnable && 
         (
           <DetailsTable
             title='Attachments'
