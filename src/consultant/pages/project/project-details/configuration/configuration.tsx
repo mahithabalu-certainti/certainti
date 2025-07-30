@@ -7,7 +7,11 @@ import {
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -36,6 +40,7 @@ const ConfigTabs: ResourceTabs[] = [
 const Configuration: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
+  const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -60,7 +65,11 @@ const Configuration: React.FC = () => {
     permission,
     AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
   );
-
+  const projectSettingsEnable = checkPermission(
+    modules,
+    AllMenus.PROJECT_SETTINGS
+  );
+  console.log('projectSettingsEnable', projectSettingsEnable);
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
   };
@@ -88,7 +97,13 @@ const Configuration: React.FC = () => {
           />
         );
       case 'settings':
-        return <Settings formRef={formRef} setIsFormSaving={setIsFormSaving} />;
+        return (
+          <Settings
+            formRef={formRef}
+            setIsFormSaving={setIsFormSaving}
+            setIsSaveDisable={setIsSaveDisable}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -120,7 +135,7 @@ const Configuration: React.FC = () => {
       variant: 'contained' as const,
       onClick: () => handleSubmit(),
       hide: list === 'users',
-      disabled: false,
+      disabled: isSaveDisable,
       loading: isFormSaving,
     },
   ];

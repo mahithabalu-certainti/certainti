@@ -591,16 +591,16 @@ export const AccFormData = (
             disabled: true,
             hide:
               isEditView &&
-              !permissionMap?.['modified_by']?.read &&
-              !permissionMap?.['modified_by']?.edit,
+              !permissionMap?.['modified_datetime']?.read &&
+              !permissionMap?.['modified_datetime']?.edit,
           }),
           createTextField('updated_by', 'Updated By', {
             required: false,
             disabled: true,
             hide:
               isEditView &&
-              !permissionMap?.['modified_datetime']?.read &&
-              !permissionMap?.['modified_datetime']?.edit,
+              !permissionMap?.['modified_by']?.read &&
+              !permissionMap?.['modified_by']?.edit,
           }),
         ],
       },
