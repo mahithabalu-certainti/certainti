@@ -102,11 +102,7 @@ export const ProjectTaskFormData = (
           createDateField('end_date', 'End Date', {
             required: false,
             minDate: startDateMin,
-            maxDate: endDateMax,
-            greaterThan: {
-              field: 'start_date',
-              message: 'End Date must be after Effective From',
-            },
+            maxDate: endDateMax, 
             disabled:
               isEditView &&
               permissionMapTaskForm?.['end_date']?.read &&

@@ -1934,9 +1934,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               field.name === 'project_startdate' ||
               field.name === 'project_enddate'
             ) {
-              const startDate = constructFormData[
-                'project_startdate'
-              ] as string;
+              const startDate = constructFormData['project_startdate'] as string;
               const endDate = constructFormData['project_enddate'] as string;
 
               if ((startDate && !endDate) || (!startDate && endDate)) {
@@ -1947,7 +1945,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) {
+              if (startDate && endDate) { 
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 
@@ -1974,7 +1972,49 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
+           // Handle project task dates validation
+            if (
+              field.name === 'start_date' ||
+              field.name === 'end_date'
+            ) {
+              const startDate = constructFormData['start_date'] as string;
+              const endDate = constructFormData['end_date'] as string;
 
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both Start Date and End Date must be be provided',
+                };
+              }
+
+              if (startDate && endDate) { 
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'start_date'
+                        ? 'Start Date cannot be the same as End Date'
+                        : 'End Date cannot be the same as Start Date',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'start_date'
+                        ? 'Start Date cannot be after End Date'
+                        : 'End Date cannot be before Start Date',
+                  };
+                }
+              }
+            }
             // Handle resource dates validation
             if (
               field.name === 'resource_startdate' ||
