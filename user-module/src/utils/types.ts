@@ -66,7 +66,7 @@ export interface IUpdateUserData {
   modified_by: string;
   is_consultant_firm:boolean;
   org_id:string;
-  
+  removeGroupMemberships?:boolean | false;
 }
 
 export interface ProjectAccessView {

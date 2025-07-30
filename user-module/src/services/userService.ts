@@ -164,6 +164,7 @@ class UserService {
         phone,
         is_consultant_firm,
         org_id,
+        removeGroupMemberships
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -178,38 +179,7 @@ class UserService {
         };
       }
 
-      console.log(user)
-
       //REstrict if user belongs the group if the user belongs to any group
-      if (user.org_id !== org_id) {
-        // Step 1: Get group_rids of the user
-        const groupMappings = await UserGroupMapping.findAll({
-          where: { user_rid: userId },
-          attributes: ['group_rid'],
-          raw: true
-        });
-        const groupRids = groupMappings.map(g => g.group_rid);
-
-        // Step 2: Check user_group_entity_access for direct or group-based access
-        const accessExists = await UserGroupEntityAccess.findOne({
-          where: {
-            [Op.or]: [
-              { user_rid: userId },
-              { group_rid: { [Op.in]: groupRids } }
-            ]
-          }
-        });
-
-        if (accessExists) {
-          return {
-            statusCode: constants.BAD_REQUEST,
-            message: constants.BAD_REQUEST_MESSAGE,
-            errorMessage: "Cannot change organization: Please remove user access in the current organization before updating",
-          };
-        }
-      }
-
-
       const updatedData = await repository.update(
         {
           first_name,
@@ -238,6 +208,10 @@ class UserService {
 
       if (organization === constants.ENV_EA) {
         this.updateUserDetails(userData, userId);
+      }
+      if(removeGroupMemberships)
+      {
+         this.revokeAllGroupAccessForUser(userId)     
       }
 
       return {
@@ -484,6 +458,24 @@ class UserService {
       function_group_id,
       mobile,
     });
+  }
+
+    /**
+   * Removes all group-related access and mappings for a given user.
+   * This includes their entries in `UserGroupEntityAccess` and `UserGroupMapping`.
+   * 
+   * @param userId - The ID of the user whose access is being revoked.
+   * @throws If database operations fail (caller should handle errors).
+   */
+  async revokeAllGroupAccessForUser(userId: string): Promise<void> {
+    // Execute deletions in parallel for efficiency (since they’re independent)
+    await Promise.all([
+      // Remove all entity access entries for the user
+      UserGroupEntityAccess.destroy({ where: { user_rid: userId } }),
+      // Remove all group mappings for the user
+      UserGroupMapping.destroy({ where: { user_rid: userId } }),
+    ]);
+    console.log(`Revoked all group access for user ${userId}`); 
   }
 
   /**

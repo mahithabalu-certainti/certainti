@@ -19,7 +19,8 @@ import {
   getAccountGroups,
   assignEntityAccessToAccount,
   assignEntityAccessToProject,
-  getUserGroupType
+  getUserGroupType,
+  getUserAccessInfo
 
 
 } from "./userGroupController";
@@ -58,7 +59,8 @@ const controller = {
     getProjectOfAccounts,
     assignEntityAccessToAccount,
     assignEntityAccessToProject,
-    getUserGroupType
+    getUserGroupType,
+    getUserAccessInfo
   }
 };
 

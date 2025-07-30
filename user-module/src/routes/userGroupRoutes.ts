@@ -19,9 +19,10 @@ routes.get("/export", checkUserStatusMiddleware("user_group_export"), controller
 routes.post("/listUsers", checkUserStatusMiddleware("NA"), controller.userGroupController.getActiveUsersForGrouping);
 //user group access
 routes.get("/account/:accountid/users", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountUsers);
+routes.post("/users/:userId/accessInfo", checkUserStatusMiddleware("NA"), controller.userGroupController.getUserAccessInfo);
 routes.get("/account/:accountid/groups", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountGroups);
 routes.get("/project/users", checkUserStatusMiddleware("NA"), controller.userGroupController.getProjectUsers);
-routes.get("/projects-of-accounts", checkUserStatusMiddleware("NA"), controller.userGroupController.getProjectOfAccounts);
+routes.post("/projects-of-accounts", checkUserStatusMiddleware("NA"), controller.userGroupController.getProjectOfAccounts);
 routes.post("/assign-access-to-account", checkUserStatusMiddleware("manage_account_access_view_edit"), controller.userGroupController.assignEntityAccessToAccount);
 routes.post("/assign-access-to-project", checkUserStatusMiddleware("manage_account_access_view_edit"), controller.userGroupController.assignEntityAccessToProject);
 

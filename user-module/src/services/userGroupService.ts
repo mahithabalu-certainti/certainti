@@ -3005,6 +3005,70 @@ async  getProjectsWithUserAccessFlag(
   }
 }
 
+
+async getUserAccessInfo(userId: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { errorMessage: string | null,  requiresConfirmation:boolean };
+}> {
+  try {
+    // Step 1: Get group_rids and names of the user
+    const groupMappings = await UserGroupMapping.findAll({
+      where: { user_rid: userId },
+      include: [
+        {
+          model: UserGroup, // assuming you have UserGroup model associated
+          attributes: ['group_name'],
+          as:'group'
+        }
+      ],
+      attributes: ['group_rid'],
+      raw: true,
+      nest: true
+    });
+
+    const groupRids = groupMappings.map(g => g.group_rid);
+    const groupNames = groupMappings.map(g => g.group?.group_name).filter(Boolean);
+
+    // Step 2: Check user_group_entity_access for direct or group-based access
+    const accessExists = await UserGroupEntityAccess.findOne({
+      where: {
+        [Op.or]: [
+          { user_rid: userId },
+          { group_rid: { [Op.in]: groupRids } }
+        ]
+      }
+    });
+
+    if (accessExists) {
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          errorMessage: `This user currently has access to this organization directly or through the following groups:
+          ${groupNames.join(', ')}
+          If you continue, their existing access to the organization will be updated.
+          Do you want to proceed?`,
+          requiresConfirmation:true
+        }
+      };
+    }
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        errorMessage: null,
+          requiresConfirmation:false
+      },
+    };
+  } catch (err) {
+    return this.throwServiceError(err as Error);
+  }
+}
+
+
 async getUserGroupType(type: string): Promise<{
   statusCode: number;
   message: string;

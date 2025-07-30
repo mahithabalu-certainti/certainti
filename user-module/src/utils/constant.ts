@@ -99,7 +99,7 @@ export const constants = {
       LIMIT :limit OFFSET :offset
 `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT: `
-    SELECT 
+    SELECT distinct
       ps.project_rid,
       ps.project_name,
       ps.project_code,
@@ -121,8 +121,7 @@ export const constants = {
     {orderByClause}
     LIMIT :limit OFFSET :offset
   `,
-
-  SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(*) as total_count
+  SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(DISTINCT ps.project_rid) as total_count
       FROM ${MAIN_SCHEMA_NAME}.project_summary ps
       WHERE {whereClauses}`,
   SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
