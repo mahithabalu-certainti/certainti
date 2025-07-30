@@ -259,7 +259,8 @@ const updateUserSchema = Joi.object({
   phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().allow('', null).label("Phone"),
   modified_by: Joi.string().max(255).allow('', null).optional(),
   is_consultant_firm:Joi.boolean().required(),
-  org_id:Joi.string().required()
+  org_id:Joi.string().required(),
+  remove_group_memberships: Joi.boolean().optional().default(false),
 });
 
 const userDetailsUpdateSchema = Joi.object({
