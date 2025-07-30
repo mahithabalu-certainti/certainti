@@ -103,7 +103,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
                         break
                     } 
                     else {
-                        filterValues = `LOWER(${alias}.${keyColumns}) != '${values.toLowerCase().replace(/'/g, "''")}'`
+                        filterValues = `LOWER(${alias}.${keyColumns}) IS DISTINCT FROM '${values.toLowerCase().replace(/'/g, "''")}'`
                         filterArray.push(filterValues)
                         break
                     } 
