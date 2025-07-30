@@ -189,25 +189,6 @@ async accountList(
     // Get parent accounts with minimal data first
     let parentAccounts = await repository.findAll(queryOptions);
      // Set restricted fields to null for parents we only access through children
-     if(!isCustomGlobal)
-     {
-        parentAccounts = parentAccounts.map(parent => {
-      if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
-        restrictedFields.forEach(field => {
-          parent.setDataValue(field, null);
-        });
-      }
-      (parent as any).hasAccountAccess = !parentIdsOnlyThroughChildren.includes(parent.rid);
-      return parent;
-       });
-     }
-     else
-     {
-      parentAccounts = parentAccounts.map(parent => {
-         (parent as any).setDataValue('hasAccountAccess', true);
-        return parent;
-      });
-     }
     
 
     // Set USD currency for accounts with no currency
@@ -265,7 +246,7 @@ async accountList(
     });
 
     // Get full account data only for the needed records
-    const updatedAccount = await this.schemaService.insertFiscalInfoOnly(
+    let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
       parentAccounts,
       filters,
       limit,
@@ -275,6 +256,23 @@ async accountList(
       'create',
       fiscalYear
     );
+
+    if (!isCustomGlobal) {
+      updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
+          restrictedFields.forEach(field => {
+            parent[field] = null;
+          });
+        }
+        parent.hasAccountAccess = !parentIdsOnlyThroughChildren.includes(parent.rid);
+        return parent;
+      });
+    } else {
+      updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        parent.hasAccountAccess = true;
+        return parent;
+      });
+    }
 
     // Optimize count query
     const totalCount = await this.getOptimizedCount(repository, parentWhereClause);
@@ -587,17 +585,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
 
     // Get parent accounts with minimal data first
     let parentAccounts = await repository.findAll(queryOptions);
-     if(!isCustomGlobal)
-     {
-        parentAccounts = parentAccounts.map(parent => {
-      if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
-        restrictedFields.forEach(field => {
-          parent.setDataValue(field, null);
-        });
-      }
-      return parent;
-    });
-     }
+    
 
     // Set USD currency for accounts with no currency
     this.setDefaultCurrency(parentAccounts, usdCurrency);
@@ -659,12 +647,29 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
         });
         // Get full account data only for the needed records
-        const updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
+        let updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
           finalSortBy,
           finalSortOrder,
           'download',
           fiscalYear
         );
+         if (!isCustomGlobal) {
+          updatedAccount.data = updatedAccount.data.map((parent: any) => {
+            if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
+              restrictedFields.forEach(field => {
+                parent[field] = null;
+              });
+            }
+            parent.hasAccountAccess = !parentIdsOnlyThroughChildren.includes(parent.rid);
+            return parent;
+          });
+        } else {
+          updatedAccount.data = updatedAccount.data.map((parent: any) => {
+            parent.hasAccountAccess = true;
+            return parent;
+          });
+        }
+
         const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"accounts_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of allowedFieldsForExport) {

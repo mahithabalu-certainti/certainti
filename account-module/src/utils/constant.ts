@@ -157,6 +157,79 @@ export const rawQueries = {
      AND ugt.type = :group_type_name
    LIMIT 1`,
    UPDATE_GROUP_NAME: `UPDATE trd365.user_groups SET group_name = :group_name WHERE rid = :group_rid`,
+   CREATE_AUTO_ASSIGNED_GROUP:`INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (group_name, group_type_rid, created_by)
+      VALUES (:group_name, :group_type_rid, :created_by) RETURNING rid`,
+   CREATE_ENTITY_ACCESS: `INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
+            group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
+          )
+          VALUES (
+            :group_rid, 'ACCOUNT', :entity_rid, 'INCLUDE', :created_by, NOW()
+          )
+          `,
+   CREATE_ACCOUNT_MAPPING:  `INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" (
+        group_rid, account_rid, created_by
+      )
+      VALUES (
+        :group_rid, :account_rid, :created_by
+      )
+      `,
+   GET_PARENT_USER_GROUP_TYPE:` SELECT ug.rid AS group_rid
+        FROM "${MAIN_SCHEMA_NAME}"."user_groups" ug
+        JOIN "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" ugam ON ug.rid = ugam.group_rid
+        JOIN "${MAIN_SCHEMA_NAME}"."user_group_type" ugt ON ug.group_type_rid = ugt.rid
+        WHERE ugam.account_rid = :parent_account_rid
+          AND ugt.type = 'AUTO_ASSIGNED_PARENT'`,
+    GET_USER_GROUP_TYPE:`
+      SELECT type group_type
+      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
+      WHERE ugm.user_rid = :userRid
+      LIMIT 1`,
+    GET_ACCOUNT_DIRECT_ACCESS_USER_IDS:`SELECT 
+        ugea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'INCLUDE'`,
+    GET_ACCOUNT_DIRECT_EXCLUDE_ACCESS_USER_IDS: `
+      SELECT ugea.entity_rid
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'EXCLUDE'`,
+    GET_GROUP_ACCESS:  `
+      WITH user_groups AS (
+        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+        WHERE user_rid = :userRid
+      )
+      SELECT DISTINCT 
+        gea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
+      JOIN user_groups ug ON gea.group_rid = ug.group_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
+      WHERE gea.entity_type = 'ACCOUNT'
+        AND gea.access_type = 'INCLUDE'`,
+      GET_USER_PROFILE:`SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1`,
+      GET_PROFILE_PERMISSION: `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND pfa.profile_id = :profileId`,
+      GET_USER_EXTENDED_PERMISSION:`
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId` 
 }
 
 export const DEFAULT_ACCOUNT_DETAILS = {
