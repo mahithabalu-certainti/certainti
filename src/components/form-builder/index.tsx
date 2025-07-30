@@ -1984,7 +1984,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Start Date and End Date must be be provided',
+                  error: 'Both Effective From and End Date must be be provided',
                 };
               }
 
@@ -1998,8 +1998,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...field,
                     error:
                       field.name === 'start_date'
-                        ? 'Start Date cannot be the same as End Date'
-                        : 'End Date cannot be the same as Start Date',
+                        ? 'Effective From cannot be the same as End Date'
+                        : 'End Date cannot be the same as Effective From',
                   };
                 }
 
@@ -2009,8 +2009,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...field,
                     error:
                       field.name === 'start_date'
-                        ? 'Start Date cannot be after End Date'
-                        : 'End Date cannot be before Start Date',
+                        ? 'Effective From cannot be after End Date'
+                        : 'End Date cannot be before Effective From',
                   };
                 }
               }
