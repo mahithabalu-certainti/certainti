@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  generatePath,
   useLocation,
   useNavigate,
   useParams,
@@ -50,7 +49,6 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
-import { ACCOUNT_DETAILS } from '../../../../routes';
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
 
 export const ProjectDetails = () => {
@@ -340,10 +338,7 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    const path = generatePath(ACCOUNT_DETAILS, {
-      accountid: accountID,
-    });
-    navigate(path, { replace: true });
+    window.history.back();
   };
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {
