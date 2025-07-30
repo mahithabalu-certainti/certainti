@@ -179,7 +179,8 @@ export class ProjectInjestionTaskService {
         return validationResult;
       }
 
-      const { accountNumber, resourceData, projectData, taskData } = validationResult;
+      const { accountNumber, resourceData, projectData, taskData } =
+        validationResult;
 
       const newEffort = new Decimal(total_hours_pro_task || "0");
 
@@ -228,7 +229,7 @@ export class ProjectInjestionTaskService {
         }
       }
 
-      // Proceed to update 
+      // Proceed to update
       const updatedTask = await this.projectTaskSchema.updateProjectTask(
         accountNumber,
         projectTaskData,
@@ -253,7 +254,7 @@ export class ProjectInjestionTaskService {
           project_task_rid,
           userId,
           transaction
-        )
+        );
       }
 
       await this.projectTaskSchema.startUpdateAggregation(
@@ -281,6 +282,91 @@ export class ProjectInjestionTaskService {
       await transaction.rollback();
       console.log(":Errror creataing project task", error);
       throw this.throwServiceError(error as Error);
+    }
+  }
+
+  async runAggregationAfterInlineUpdate(
+    accountNumber: string,
+    projectTaskData: any,
+    fullTaskData: ProjectTask
+  ) {
+    const dbInit = await this.projectTaskSchema.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      const { rid, userId, account_rid } = projectTaskData;
+
+      const mergedTaskData = {
+        ...fullTaskData,
+        ...projectTaskData,
+      };
+
+      const shouldRunAggregation =
+        "resource_code" in projectTaskData ||
+        "total_cost_pro_task" in projectTaskData ||
+        "total_hours_pro_task" in projectTaskData;
+
+      if (!shouldRunAggregation) {
+        await transaction.rollback();
+      }
+
+      const {
+        resource_code: updatedResourceCode,
+        project_fiscal_rid,
+        account_rid: effectiveAccountRid,
+        resource_rid,
+      } = mergedTaskData;
+  
+      let resolvedResourceCode = updatedResourceCode;
+  
+      if (!resolvedResourceCode && resource_rid) {
+        const resource = await this.projectResourceSchema.validateResourceById(
+          accountNumber,
+          resource_rid,
+          account_rid
+        );
+        if (!resource) {
+          await transaction.rollback();
+          return;
+        }
+        resolvedResourceCode = resource.resource_code;
+      }
+  
+      if (!resolvedResourceCode) {
+        await transaction.rollback();
+        return;
+      }
+
+      const validationResult = await this.validateProjectTaskUpdateInputs({
+        account_rid: effectiveAccountRid,
+        resource_code: resolvedResourceCode,
+        project_fiscal_rid,
+        project_task_rid: rid,
+        projectResourceSchema: this.projectResourceSchema,
+        projectTaskSchema: this.projectTaskSchema,
+      });
+
+      if (!validationResult.success) {
+        return validationResult;
+      }
+
+      const { resourceData, projectData, taskData } = validationResult;
+
+      await this.projectTaskSchema.startUpdateAggregation(
+        accountNumber,
+        mergedTaskData,
+        fullTaskData,
+        resourceData,
+        projectData.fiscal_year,
+        resourceData.rid!,
+        projectData,
+        userId,
+        transaction
+      );
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      console.log("Error aggregation project task", err);
     }
   }
 

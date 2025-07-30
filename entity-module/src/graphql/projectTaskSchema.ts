@@ -47,6 +47,7 @@ export const projectTaskSchema = gql`
   input updateInlineProjectTask {
     rid: String!
     account_rid: String!
+    project_fiscal_rid: String!
     fiscal_year: Int
     total_hours_pro_task: String
     total_cost_pro_task: String
