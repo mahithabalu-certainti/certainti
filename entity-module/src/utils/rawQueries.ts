@@ -857,7 +857,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
     let query =
     `
     WITH calculate_rd_claimed_projects AS (
-    SELECT DISTINCT ON (a.account_rid)
+    SELECT
     a.account_rid,
     COALESCE(COUNT(*) OVER(), 0) AS total_projects_rd_credits
     FROM 
@@ -872,9 +872,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         AND
         af.region_rid = '${region_rid}'
         AND
-        pf.is_rd_claim_qualified = true 
-    GROUP BY
-    a.account_rid
+        pf.is_rd_claim_qualified = true
     ),
     resource_metrics AS (
         SELECT DISTINCT ON (a.account_rid) 
@@ -1140,18 +1138,19 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
     `
     WITH calculate_rd_credits_projects AS (
         SELECT DISTINCT COUNT(*) OVER() AS total_projects_rd_credits, p.account_rid
-        FROM ${schemaName}.project p 
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = p.account_rid
+        FROM 
+        ${schemaName}.account_fiscal af
+        LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = af.account_rid
+        LEFT JOIN ${schemaName}.project p ON p.region_rid = afr.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
         pf.is_rd_claim_qualified = true
         and
-        p.account_rid = '${account_rid}'
+        af.account_rid = '${account_rid}'
         AND
-        pf.fiscal_year = ${fiscal_year}
+        af.fiscal_year = ${fiscal_year}
         AND
-		pf.region_rid = '${region_rid}'
-        GROUP BY
-        p.account_rid
+		afr.region_rid = '${region_rid}'
     ),
     calculate_resource_metrics AS (
         SELECT 
