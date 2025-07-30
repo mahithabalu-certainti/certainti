@@ -83,6 +83,13 @@ export const Navbar: React.FC<NavbarProps> = ({
     () => checkPermission(permission, AllPermissions.ACCOUNTS_VIEW_EDIT),
     [permission]
   );
+  const isAccountsNameEnabled = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields?.find((it) => it.name === 'account_name')?.read ?? false,
+    [permission]
+  );
   const isViewProfileEnable = useMemo(
     () => checkPermission(permission, AllPermissions.PROFILE_VIEW_EDIT),
     [permission]
@@ -419,32 +426,39 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             {!showAdminSidebar && isViewAccountsEnable && (
               <>
-                <div className='relative'>
-                  <button
-                    aria-describedby={globalFilterId}
-                    onClick={handleGlobalFilterModal}
-                    className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
-                  >
+                {isAccountsNameEnabled && (
+                  <>
                     <div className='relative'>
-                      <GlobeIcon alt='global' className='h-[16px] w-[16px]' />
-                      {isFilterApplied && (
-                        <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
-                          <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                      <button
+                        aria-describedby={globalFilterId}
+                        onClick={handleGlobalFilterModal}
+                        className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+                      >
+                        <div className='relative'>
+                          <GlobeIcon
+                            alt='global'
+                            className='h-[16px] w-[16px]'
+                          />
+                          {isFilterApplied && (
+                            <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
+                              <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <span className='text-[13px] font-normal text-white'>
+                          Global
+                        </span>
+                      </button>
+                      <GlobalFilterModal
+                        isOpen={isGlobalModalOpen}
+                        filterAnchorEl={globalAnchorEl}
+                        filterId={globalFilterId}
+                        handleClose={handleCloseGlobalFilter}
+                      />
                     </div>
-                    <span className='text-[13px] font-normal text-white'>
-                      Global
-                    </span>
-                  </button>
-                  <GlobalFilterModal
-                    isOpen={isGlobalModalOpen}
-                    filterAnchorEl={globalAnchorEl}
-                    filterId={globalFilterId}
-                    handleClose={handleCloseGlobalFilter}
-                  />
-                </div>
-                <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
+                    <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
+                  </>
+                )}
                 <FiscalYearDropdown
                   fiscalYear={fiscalYear}
                   fiscalYearsDropDown={fiscalYearsDropDown}

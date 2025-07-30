@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AllPermissions,
   useGetAllCountries,
@@ -63,11 +63,12 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   countryId,
   stateId,
 }) => {
+  const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
   const [fiscalyear, setFiscalyear] = useState('2025');
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -110,7 +111,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
 
   useEffect(() => {
     if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
-      handleTabChange(initialTab);
+      searchParams.set('tab', initialTab);
+      navigate({ search: searchParams.toString() }, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab, searchParams]);
@@ -145,7 +147,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
 
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
-    setSearchParams(searchParams);
+    navigate({ search: searchParams.toString() }, { replace: true });
     setCount(0);
     setAppliedFilters({});
     clearFilters(`account-financial-${tabParam}`);
