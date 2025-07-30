@@ -79,10 +79,16 @@ export const fetchDetails = async (
 
 export const useProjectResourceDetail = (
   account_Id: string,
-  resourceId: string
+  resourceId: string,
+  detailReFetchTrigger?: number
 ) => {
   return useQuery<ProjectResourceDetailsApiResponse, Error>({
-    queryKey: ['project-resource-detail', account_Id, resourceId],
+    queryKey: [
+      'project-resource-detail',
+      account_Id,
+      resourceId,
+      detailReFetchTrigger,
+    ],
     queryFn: async () => {
       return fetchDetails(account_Id, resourceId);
     },

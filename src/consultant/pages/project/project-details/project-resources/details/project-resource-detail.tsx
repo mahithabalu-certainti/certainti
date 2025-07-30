@@ -1,20 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Typography } from '@mui/material';
+import React, { useMemo } from 'react';
 import { ProjectResourceDetailsType } from '../../../../../types/project-resources';
 import { TruncateWithTooltip } from '../../../../../../components/truncate-with-tooltip';
 import {
   applyHidePermission,
+  checkPermission,
   getDateFormat,
   getDateTimeFormat,
 } from '../../../../../../common-utils';
-import { useMemo } from 'react';
 import { AllPermissions, Permissions } from '../../../../../../common-service';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
+import DetailsTable from '../../../../../../components/details-section/details-table';
+import { getDetailsAttachmentColumns } from '../../../../../../components/details-section/helpers';
+import { AttachmentList } from '../../../../../types/attachment';
 
 interface ErrorProps {
   message?: string;
 }
 interface ResourceDetailsProps {
   resourceData?: ProjectResourceDetailsType;
+  attachment?: AttachmentList[];
   isDetailsLoading?: boolean;
   detailsError?: ErrorProps | null | undefined;
   permission?: Permissions[];
@@ -178,6 +184,7 @@ const DetailsSection: React.FC<{
 
 const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
   resourceData,
+  attachment,
   isDetailsLoading,
   detailsError,
   permission,
@@ -196,6 +203,28 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     });
     return map;
   }, [projectViewEditFields]);
+  const isAttachmentViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+  const attachmentViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const attachmentPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    attachmentViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [attachmentViewEditFields]);
+
+  const attachmentColumns = getDetailsAttachmentColumns(
+    attachmentPermissionMap
+  );
 
   if (isDetailsLoading || !resourceData) {
     return (
@@ -305,7 +334,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     permissionMap
   );
   const auditInfoDetails = applyHidePermission(auditInfo, permissionMap);
-
+  console.log('auditInfoDetails', resourceData);
   return (
     <div>
       <DetailsSection
@@ -325,6 +354,13 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
         title='Comments'
         data={descriptionDetails as DetailItem[]}
       />
+      {attachment && attachment.length > 0 && isAttachmentViewEnable && (
+        <DetailsTable
+          title='Attachments'
+          columns={attachmentColumns}
+          data={attachment || []}
+        />
+      )}
       <DetailsSection
         title='Audit Information'
         data={auditInfoDetails as DetailItem[]}

@@ -36,7 +36,7 @@ import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
-import { useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
+import { useGetAppliedProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -63,6 +63,7 @@ interface TabProps {
   toggleLabel?: string;
   projectResourceAccountID?: string;
   showToggle?: boolean;
+  projectResourceProjectID?: string;
   fieldOptions?: FieldOptionType;
   handleFilterChange?: (fieldName: string, value: FilterValue) => void;
   permissionMapTaskTableColumn?: Record<
@@ -89,6 +90,7 @@ const TabPanel: React.FC<TabProps> = ({
   toggleLabel = 'Include Parent',
   showToggle = false,
   projectResourceAccountID,
+  projectResourceProjectID,
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
@@ -137,9 +139,10 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceTypeOptions = useGetResourceType();
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
-  const projectTypeOptions = useGetProjectType(); //memoizedProjectResourceTaskCode
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    projectResourceAccountID as string
+  const projectTypeOptions = useGetProjectType();
+  const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
+    projectResourceAccountID as string,
+    projectResourceProjectID as string
   );
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
