@@ -7,8 +7,7 @@ import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
   AllPermissions,
-  Layout,
-  // OnChange,
+  Layout, 
 } from '../../../../../../common-service';
 import {
   SelectResourceOption
@@ -30,9 +29,7 @@ import { FiscalYearType } from '../../../../../types/project';
 import { formatDateToYYYYMMDDWithTime, getDateFormat } from '../../../../../../common-utils';
 
 const ProjectTaskForm: React.FC = () => {
-  const formRef = React.useRef<HTMLFormElement>(null);
-
-  // const [currentCountry, setCurrentCountry] = useState('');
+  const formRef = React.useRef<HTMLFormElement>(null); 
   const { successToast } = useToast();
   const location = useLocation();
   const { taskId } = useParams();

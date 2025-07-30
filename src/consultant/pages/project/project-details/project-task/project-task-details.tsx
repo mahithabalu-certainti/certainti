@@ -240,12 +240,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     { label: 'Resource Name', value: projectTaskData.resource_name },
     { label: 'Resource Type', value: projectTaskData.resource_type_name },
     { label: 'Resource Role', value: projectTaskData.resource_role },
-  ];
-  // const locationInfo: DetailItem[] = [
-  //   { label: 'Country', value: projectTaskData.country_name },
-  //   { label: 'Region', value: projectTaskData.region_name },
-  //   { label: 'Currency', value: projectTaskData.currency_name },
-  // ];
+  ]; 
 
   const projectDetails: DetailItem[] = [
     {
@@ -284,11 +279,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
         data={IdentityDetails as DetailItem[]}
         customStyle='pt-0 mt-0'
         isAudit={true}
-      />
-      {/* <DetailsSection
-        title='Location and Currency Information'
-        data={locationInfo as DetailItem[]}
-      /> */}
+      /> 
       <DetailsSection
         title='Project Task Details'
         data={projectTaskDetails as DetailItem[]}

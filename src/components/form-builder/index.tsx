@@ -27,7 +27,7 @@ import {
   CloseIcon,
   KeyContactRemoveIcon,
   KeyContactAddIcon,
-  // SearchBlackIcon,
+  // SearchBlackIcon, /* It may use in future, based on client confirmation */
   VerticalSeparatorIcon,
   ErrorInfoIcon,
 } from '../../assets';
@@ -1149,6 +1149,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
+            /* It may use in future, based on client confirmation */
             {/* <SearchBlackIcon
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'

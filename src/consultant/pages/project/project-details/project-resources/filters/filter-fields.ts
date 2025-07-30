@@ -10,7 +10,7 @@ export const projectResourceFilterFields = (
   memoizedProjectResourceCode: { option: string; value: string }[],
   memoizedCountry: { option: string; value: string }[],
   region: { option: string; value: string }[],
-  // resourceTypeOptions: { option: string; value: string }[],
+  // resourceTypeOptions: { option: string; value: string }[], /* It may use in future, based on client confirmation */
   resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
     {
@@ -24,6 +24,7 @@ export const projectResourceFilterFields = (
         !resourcepermissionMap?.['resource_code']?.read &&
         !resourcepermissionMap?.['resource_code']?.edit,
     },
+    /* It may use in future, based on client confirmation */
     // {
     //   name: 'Resource Name',
     //   value: 'resource_name',
@@ -53,6 +54,7 @@ export const projectResourceFilterFields = (
         !resourcepermissionMap?.['region_rid']?.read &&
         !resourcepermissionMap?.['region_rid']?.edit,
     },
+    /* It may use in future, based on client confirmation */
     // {
     //   name: 'Resource Type',
     //   value: 'resource_type_rid',
@@ -114,6 +116,7 @@ export const projectResourceFilterFields = (
         !resourcepermissionMap?.['description']?.read &&
         !resourcepermissionMap?.['description']?.edit,
     },
+    /* It may use in future, based on client confirmation */
     //   {
     //     name: 'Resource ID',
     //     value: 'r_number',

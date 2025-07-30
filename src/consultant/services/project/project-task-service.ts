@@ -15,8 +15,7 @@ import {
   ProjectTaskListExportParams,
   ProjectTaskInput,
   createProjectTaskApiResponse,
-  ProjectTaskDetailsApiResponse,
-  //   ProjectTaskDetailsType,
+  ProjectTaskDetailsApiResponse, 
 } from '../../types/project-task';
 import { DetailURL, getProjectTaskExportURL, ProjectTaskURL } from '../urls/project-task-url';
 
@@ -220,7 +219,6 @@ export const useUpdateProjectTask = (
 export const exportProjectTaskData = async (
   params: ProjectTaskListExportParams
 ) => {
-  console.log("export-params", params)
   try {
     const response = await resourceServiceApi.get(getProjectTaskExportURL(params));
     const base64Data = response.data?.data;
