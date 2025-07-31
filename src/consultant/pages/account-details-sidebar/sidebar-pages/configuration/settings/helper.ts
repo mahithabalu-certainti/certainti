@@ -1,5 +1,4 @@
 import {
-  createFiscalDateField,
   createRadioField,
   createTextField,
   PROJECT_YES_NO_OPTIONS,
@@ -8,39 +7,13 @@ import {
 import { FormType } from '../../../../../types';
 
 export const settingsFormFields = (
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  disableFiscalDates: boolean = false
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return [
     {
       sectionName: '',
       fillType: 'half',
       fields: [
-        createFiscalDateField('fiscal_start_date', 'Fiscal Start', {
-          required: true,
-          disabled:
-            disableFiscalDates ||
-            (permissionMap?.['fiscal_start_date']?.read &&
-              !permissionMap?.['fiscal_start_date']?.edit),
-          hide:
-            !permissionMap?.['fiscal_start_date']?.read &&
-            !permissionMap?.['fiscal_start_date']?.edit,
-        }),
-        createFiscalDateField('fiscal_end_date', 'Fiscal End', {
-          required: true,
-          disabled:
-            disableFiscalDates ||
-            (permissionMap?.['fiscal_end_date']?.read &&
-              !permissionMap?.['fiscal_end_date']?.edit),
-          hide:
-            !permissionMap?.['fiscal_end_date']?.read &&
-            !permissionMap?.['fiscal_end_date']?.edit,
-          toBeNotSame: {
-            key: 'fiscal_start_date',
-            errorMessage:
-              'Fiscal End Date cannot be the same as the Fiscal Start Date',
-          },
-        }),
         createTextField(
           'max_interaction_follow_up',
           'Max Interaction Follow Up',
