@@ -662,8 +662,6 @@ export const rawQueries = {
       tableName = [`account_details`]
       setValues = 
       `
-      fiscal_start_date = '${data.fiscal_start_date}',
-      fiscal_end_date = '${data.fiscal_end_date}',
       blended_rate_fte = ${data.blended_rate_fte == '' ? null : parseFloat(data.blended_rate_fte)},
       blended_rate_subcon = ${data.blended_rate_subcon == '' ? null : parseFloat(data.blended_rate_subcon) },
       autosend_interaction = ${data.autosend_interaction},
