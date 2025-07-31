@@ -1,17 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {
-  useEffect, useMemo,
-} from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
-import {
-  AllPermissions,
-  Layout, 
-} from '../../../../../../common-service';
-import {
-  SelectResourceOption
-} from '../../../../../types';
+import { AllPermissions, Layout } from '../../../../../../common-service';
+import { FormFiscalDateType, SelectResourceOption } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
 import { ProjectTaskFormData } from './form-data';
@@ -25,11 +18,13 @@ import { ProjectTaskInput } from '../../../../../types/project-task';
 import { useGetProjectResourceCode } from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { FiscalYearType } from '../../../../../types/project';
-import { formatDateToYYYYMMDDWithTime, getDateFormat } from '../../../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getDateFormat,
+} from '../../../../../../common-utils';
 
 const ProjectTaskForm: React.FC = () => {
-  const formRef = React.useRef<HTMLFormElement>(null); 
+  const formRef = React.useRef<HTMLFormElement>(null);
   const { successToast } = useToast();
   const location = useLocation();
   const { taskId } = useParams();
@@ -37,23 +32,29 @@ const ProjectTaskForm: React.FC = () => {
   const account_Id = queryParams.get('account_Id');
   const project_Id = queryParams.get('project_Id');
   const projectPFY = queryParams.get('PFY');
-  const fiscalYear: FiscalYearType | undefined = projectPFY
+  const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
-  const getProjectTask = useProjectTaskDetail(taskId as string, account_Id as string);
+  const getProjectTask = useProjectTaskDetail(
+    taskId as string,
+    account_Id as string
+  );
   const projectTask = getProjectTask.data;
   const projectTaskDetailsData = useMemo(
     () => ({
       ...projectTask?.data,
-      ...(projectTask?.data &&
-      {
+      ...(projectTask?.data && {
         start_date: getDateFormat(projectTask?.data.start_date),
         end_date: getDateFormat(projectTask?.data.end_date),
-        created_datetime: formatDateToYYYYMMDDWithTime(projectTask?.data.created_datetime) || '-',
+        created_datetime:
+          formatDateToYYYYMMDDWithTime(projectTask?.data.created_datetime) ||
+          '-',
         created_by: projectTask?.data.created_by || '-',
-        modified_datetime: formatDateToYYYYMMDDWithTime(projectTask?.data.modified_datetime) || '-',
+        modified_datetime:
+          formatDateToYYYYMMDDWithTime(projectTask?.data.modified_datetime) ||
+          '-',
         modified_by: projectTask?.data.modified_by || '-',
-      })
+      }),
     }),
     [projectTask]
   );
@@ -102,7 +103,7 @@ const ProjectTaskForm: React.FC = () => {
         resource_type_name: item.resource_type_name,
       })) || [],
     [projectResourceCodeOptions?.data?.resourceCodes]
-  ); 
+  );
 
   const submitData = (formValues: Partial<ProjectTaskInput>) => {
     const project_task_rid = isEditView ? (taskId as string) : '';
@@ -110,7 +111,9 @@ const ProjectTaskForm: React.FC = () => {
       {
         ...formValues,
         account_rid: account_Id || undefined,
-        project_fiscal_rid: isEditView ? projectTaskDetailsData?.project_fiscal_rid : project_Id || undefined,
+        project_fiscal_rid: isEditView
+          ? projectTaskDetailsData?.project_fiscal_rid
+          : project_Id || undefined,
       },
       project_task_rid,
       isEditView
@@ -131,7 +134,6 @@ const ProjectTaskForm: React.FC = () => {
     window.history.back();
   };
 
-  
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
@@ -178,11 +180,13 @@ const ProjectTaskForm: React.FC = () => {
           data={ProjectTaskFormData(
             memoizedProjectResourceCode,
             isEditView,
-            fiscalYear,
+            fiscalDate,
             permissionMapTaskForm
           )}
           values={
-            isEditView && projectTaskDetailsData ? { ...projectTaskDetailsData } : undefined
+            isEditView && projectTaskDetailsData
+              ? { ...projectTaskDetailsData }
+              : undefined
           }
           outData={submitData}
           formRef={formRef}

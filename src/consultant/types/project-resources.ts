@@ -99,7 +99,7 @@ export interface ProjectResourceDetailsType {
   country_code: string | null;
   region_name: string | null;
   currency_name: string | null;
-  currency_symbol: string | null;
+  currency_symbol: string;
   created_name: string | null;
   modified_name: string | null;
   status_name: string | null;

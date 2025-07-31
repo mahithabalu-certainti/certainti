@@ -18,12 +18,12 @@ import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
+  AllMenus,
   AllModules,
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
 import { ListTable } from '../../../../../components/table';
-import { FiscalYearType } from '../../../../types/project';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -36,7 +36,11 @@ import {
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useGetAppliedProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ExportType,
+  FormFiscalDateType,
+  SelectOption,
+} from '../../../../types';
 // import { useGetResourceType } from '../../../../services/resource-list';
 import { useFetchState } from '../../../../services/account';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
@@ -65,13 +69,13 @@ const projectTabs: ResourceTabs[] = [
 export const ProjectResources = ({
   projectID,
   accountID,
-  projectFiscalYear,
+  projectFiscalDate,
   setExportType,
   setAttachmentParams,
 }: {
   projectID?: string;
   accountID?: string;
-  projectFiscalYear?: FiscalYearType;
+  projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
@@ -137,7 +141,7 @@ export const ProjectResources = ({
   );
   // const detailsResourceId = searchParams.get('pro_res_id');
   // Permission Mangement
-  const { modules, permission } = useSelector(
+  const { modules, permission, menus } = useSelector(
     (state: RootState) => state.permission
   );
   const projectIsEnable = checkPermission(
@@ -251,7 +255,7 @@ export const ProjectResources = ({
     const path = row?.rid
       ? PROJECT_RESOURCE_EDIT.replace(':resourceId', row.rid)
       : PROJECT_RESOURCE_EDIT;
-    const PFY = projectFiscalYear;
+    const PFY = projectFiscalDate;
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_rid || '',
@@ -297,6 +301,18 @@ export const ProjectResources = ({
     permission,
     AllPermissions.PROJECTS_RESOURCES_CREATE
   );
+  const isAttachmentViewEnableMenu = checkPermission(
+    menus,
+    AllMenus.ATTACHMENTS
+  );
+  const isAttachmentViewEnableMenuModule = checkPermission(
+    modules,
+    AllModules.ATTACHMENTS
+  );
+  const isAttachmentViewEnablepeormission = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -313,7 +329,11 @@ export const ProjectResources = ({
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      hide: !viewDetails,
+      hide:
+        !viewDetails ||
+        !isAttachmentViewEnableMenu ||
+        !isAttachmentViewEnableMenuModule ||
+        !isAttachmentViewEnablepeormission,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -343,7 +363,7 @@ export const ProjectResources = ({
     });
   };
 
-  const PFY = projectFiscalYear;
+  const PFY = projectFiscalDate;
   const currency_rid = searchParams.get('currency_rid');
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? ''; // fallback to empty string

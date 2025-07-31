@@ -7,14 +7,13 @@ export const getProjectTaskUrl = (accountRid: string, projectRid: string) =>
   `/api/project_tasks/list?accountRid=${accountRid}&projectRid=${projectRid}`;
 
 const returnURL = (baseUrl: string, params: Record<string, any>): string => {
-  const { page, limit, sortBy, sortOrder, filters, fiscalYear } = params;
+  const { page, limit, sortBy, sortOrder, filters } = params;
   const searchParams = new URLSearchParams();
 
   if (page !== undefined) searchParams.set('page', String(page));
   if (limit !== undefined) searchParams.set('limit', String(limit));
   if (sortBy) searchParams.set('sortBy', sortBy);
   if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -27,7 +26,6 @@ export const ProjectTaskURL = ({
   sortBy,
   sortOrder,
   filters,
-  fiscalYear,
   accountRid,
   projectRid,
 }: ProjectResourcesListParams): string => {
@@ -38,7 +36,6 @@ export const ProjectTaskURL = ({
     sortBy,
     sortOrder,
     filters,
-    fiscalYear,
   });
 };
 
@@ -50,7 +47,6 @@ export const getProjectTaskExportURL = ({
   sortBy,
   sortOrder,
   filters,
-  fiscalYear,
   projectRid,
   accountRid,
 }: ProjectTaskListExportParams): string => {
@@ -62,7 +58,6 @@ export const getProjectTaskExportURL = ({
   if (projectRid !== undefined) {
     searchParams.set('projectRid', projectRid.toString());
   }
-  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }

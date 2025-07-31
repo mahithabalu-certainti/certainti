@@ -1,4 +1,7 @@
-import { industryOperator } from '../../../../consultant/pages/account-list/helpers';
+import {
+  industryOperator,
+  keyOptions,
+} from '../../../../consultant/pages/account-list/helpers';
 import {
   FieldConfig,
   FilterSelectOption,
@@ -63,8 +66,7 @@ export const getManageGroupListFilterFields = (): FieldConfig[] => [
   {
     label: 'Number of Users',
     name: 'user_count',
-    type: 'text',
-    operatorOption: textfieldOptions,
+    type: 'number',
   },
 ];
 export const getManageProjectListFilterFields = (): FieldConfig[] => [
@@ -78,6 +80,6 @@ export const getManageProjectListFilterFields = (): FieldConfig[] => [
     label: 'Project Name',
     name: 'project_name',
     type: 'text',
-    operatorOption: textfieldOptions,
+    operatorOption: keyOptions,
   },
 ];

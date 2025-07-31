@@ -25,7 +25,11 @@ import {
 import { RootState } from '../../../../../store/store';
 import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ExportType,
+  FormFiscalDateType,
+  SelectOption,
+} from '../../../../types';
 import {
   CellEditData,
   FieldChangeValue,
@@ -38,7 +42,6 @@ import { useGetProjectResourceCode } from '../../../../services/project-resource
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
-import { FiscalYearType } from '../../../../types/project';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -69,13 +72,13 @@ const projectTabs: ProjectsTabs[] = [
 export const ProjectTask = ({
   projectID,
   accountID,
-  projectFiscalYear,
+  projectFiscalDate,
   setExportType,
   setProjectTaskParams,
 }: {
   projectID?: string;
   accountID?: string;
-  projectFiscalYear?: FiscalYearType;
+  projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setProjectTaskParams: React.Dispatch<
     React.SetStateAction<ProjectTaskListExportParams>
@@ -91,15 +94,12 @@ export const ProjectTask = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('resource_code');
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
   const [searchParams] = useSearchParams();
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -138,7 +138,6 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
       accountRid: accountID,
       projectRid: projectID,
     },
@@ -234,7 +233,7 @@ export const ProjectTask = ({
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
   ];
-  const PFY = projectFiscalYear;
+  const PFY = projectFiscalDate;
   const handleProjectTaskDetailEdit = () => {
     if (resourceData) {
       const path = resourceData?.rid
@@ -280,9 +279,8 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
     });
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters,]);
 
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? '';
@@ -332,7 +330,6 @@ export const ProjectTask = ({
     const previousProject = [...projectTaskList];
 
     const selectedProject = projectTaskList.find((pro) => pro.rid === rowId);
-
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;
