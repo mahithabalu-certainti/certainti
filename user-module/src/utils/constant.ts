@@ -153,12 +153,18 @@ export const constants = {
       END as has_access,
       uga.access_type
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
-     LEFT JOIN trd365.account acc
+     LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
       ON acc.rid = ps.account_rid
     INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
       ON uga.entity_rid = ps.project_rid 
       AND uga.entity_type = 'PROJECT'
       AND uga.group_rid = :group_rid`,
+  USER_OF_SELECTED_ACCOUNTS:`
+    SELECT DISTINCT ugm.user_rid
+    FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+    JOIN ${MAIN_SCHEMA_NAME}.user u ON ugm.user_rid = u.rid
+    WHERE ugm.group_rid = :group_rid
+      AND u.org_id IN (:revokedAccounts)`,
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 } as const;

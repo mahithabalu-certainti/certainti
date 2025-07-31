@@ -166,7 +166,7 @@ class UserService {
         phone,
         is_consultant_firm,
         org_id,
-        removeGroupMemberships
+        remove_group_memberships
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -226,7 +226,7 @@ class UserService {
       if (organization === constants.ENV_EA) {
         this.updateUserDetails(userData, userId);
       }
-      if(removeGroupMemberships)
+      if(remove_group_memberships)
       {
          this.revokeAllGroupAccessForUser(userId)     
       }

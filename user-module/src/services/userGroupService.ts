@@ -2298,6 +2298,24 @@ async assignAccountsToGroup({
 
     //  Revoke accounts
     if (toRevoke.length > 0) {
+       const sequelize = await initSequelize();
+       // Step 2: Remove users associated ONLY with those revoked accounts from the group
+      const usersToRemove = await sequelize.query<{ user_rid: string }>(
+      constants.USER_OF_SELECTED_ACCOUNTS,
+      {
+        replacements: { group_rid, revokedAccounts: toRevoke },
+        type: QueryTypes.SELECT,
+      }
+    );
+    const userRids = usersToRemove.map((u) => u.user_rid);
+    if (userRids.length > 0) {
+      await UserGroupMapping.destroy({
+        where: {
+          group_rid,
+          user_rid: { [Op.in]: userRids },
+        },
+      });
+    }
       const revokeCount = await UserGroupAccountMapping.destroy({
         where: {
           group_rid,
@@ -2306,6 +2324,7 @@ async assignAccountsToGroup({
       });
 
       deleted.push(...toRevoke);
+     
     }
 
     return {
