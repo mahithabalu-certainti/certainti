@@ -7,6 +7,7 @@ export const projectTaskSchema = gql`
       account_rid: String,
       account_name: String,
       project_rid: String,
+      project_fiscal_rid: String,
       project_name: String,
       project_code: String,
       project_resource_rid: String,
