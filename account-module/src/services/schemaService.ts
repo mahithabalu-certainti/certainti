@@ -1651,6 +1651,7 @@ class SchemaService {
         rd_credits_fed_level numeric(18, 2) NULL,
         rd_credits_total numeric(18, 2) NULL,
         description varchar(2000) NULL,
+        project_resource_rid varchar(50) NOT NULL,
         CONSTRAINT project_resources_fiscal_r_number_key UNIQUE (r_number)
       );  
     `);
