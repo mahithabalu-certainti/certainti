@@ -613,7 +613,7 @@ class SchemaService {
       rd_credits_nonlabor_fed_level DECIMAL(18,2),
       rd_credits_fed_level DECIMAL(18,2),
       rd_credits_total DECIMAL(18,2),
-      is_rd_claim_qualified BOOLEAN DEFAULT false
+      is_rd_claim_qualified BOOLEAN DEFAULT false,
 
       effective_total_fte integer NULL,
       effective_total_subcon integer NULL,
