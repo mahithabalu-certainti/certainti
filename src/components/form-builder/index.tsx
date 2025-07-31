@@ -27,7 +27,7 @@ import {
   CloseIcon,
   KeyContactRemoveIcon,
   KeyContactAddIcon,
-  SearchBlackIcon,
+  // SearchBlackIcon, /* It may use in future, based on client confirmation */
   VerticalSeparatorIcon,
   ErrorInfoIcon,
 } from '../../assets';
@@ -43,6 +43,7 @@ import {
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -88,7 +89,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -1149,14 +1150,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
-            <SearchBlackIcon
+            {/* <SearchBlackIcon // It may use in future, based on client confirmation
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
-            />
+            /> */}
             <Autocomplete
               options={field.options || []}
               disableClearable
-              popupIcon={null}
+              popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue: SelectOption) => {
                 handleChange(newValue?.value || '');
@@ -1167,6 +1168,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   value: '',
                 }
               }
+              size='small'
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
+                  height: '32px',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
+                '.MuiSelect-select': {
+                  padding: '6px 6px',
+                  color: fieldValue === '' ? '#7D98B6' : 'black',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                  borderRadius: '2px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                },
+                '& svg': {
+                  color: '#7D98B6',
+                },
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -1497,7 +1535,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             inputClass={`!outline-none placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : ''}${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
-            containerClass='!w-full focus-within:outline-none focus-within:!border-2 focus-within:!border-blue-400'
+            containerClass='!w-full focus-within:outline-none focus-within:!border-1 focus-within:!border-blue-400 !rounded-xs'
             inputProps={{
               name: field.name,
               disabled: field.disabled,
@@ -1897,9 +1935,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               field.name === 'project_startdate' ||
               field.name === 'project_enddate'
             ) {
-              const startDate = constructFormData[
-                'project_startdate'
-              ] as string;
+              const startDate = constructFormData['project_startdate'] as string;
               const endDate = constructFormData['project_enddate'] as string;
 
               if ((startDate && !endDate) || (!startDate && endDate)) {
@@ -1937,7 +1973,49 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
+            // Handle project task dates validation
+            if (
+              field.name === 'start_date' ||
+              field.name === 'end_date'
+            ) {
+              const startDate = constructFormData['start_date'] as string;
+              const endDate = constructFormData['end_date'] as string;
 
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both Effective From and End Date must be be provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'start_date'
+                        ? 'Effective From cannot be the same as End Date'
+                        : 'End Date cannot be the same as Effective From',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'start_date'
+                        ? 'Effective From cannot be after End Date'
+                        : 'End Date cannot be before Effective From',
+                  };
+                }
+              }
+            }
             // Handle resource dates validation
             if (
               field.name === 'resource_startdate' ||
@@ -2269,7 +2347,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                `${field.type}` === 'radio'
+                                  `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2301,9 +2379,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: '1px solid #60A5FA !important',
-                                  },
+                                {
+                                  border: '1px solid #60A5FA !important',
+                                },
                               },
                             }}
                             key={colIndex}

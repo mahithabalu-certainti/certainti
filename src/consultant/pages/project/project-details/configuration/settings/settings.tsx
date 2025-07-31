@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
 import { useToast } from '../../../../../../hooks';
@@ -14,6 +14,7 @@ import { Box } from '@mui/material';
 interface SettingsProps {
   formRef: React.RefObject<HTMLFormElement>;
   setIsFormSaving: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsSaveDisable: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface UpdateSettingsSuccess {
@@ -30,7 +31,11 @@ interface FormValues extends Record<string, FormValueType> {
   auto_send_ai_interaction: string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
+const Settings: React.FC<SettingsProps> = ({
+  formRef,
+  setIsFormSaving,
+  setIsSaveDisable,
+}) => {
   const { successToast } = useToast();
   const updateSettings = useProjectUpdateSettings();
   const [searchParams] = useSearchParams();
@@ -43,6 +48,16 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
     projectid as string
   );
   const projectDetails = data?.data?.project;
+
+  useEffect(() => {
+    const formConfig = settingsFormFields(permissionMap);
+
+    const allFieldsDisabled = formConfig.every((section) =>
+      section.fields.every((field) => field.disabled === true)
+    );
+    setIsSaveDisable(allFieldsDisabled);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -86,6 +101,7 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
         ? 'Yes'
         : 'No',
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectDetails]);
 
   const handleFormSubmit = (data: object) => {
@@ -131,6 +147,7 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
           }}
         >
           <FormBuilder
+            key={JSON.stringify(projectDetails)}
             data={settingsFormFields(permissionMap)}
             formRef={formRef}
             outData={handleFormSubmit}

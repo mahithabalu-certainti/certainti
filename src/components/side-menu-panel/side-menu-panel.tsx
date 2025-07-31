@@ -53,6 +53,12 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         const updatedItem = { ...item, hide: menu && !menu.is_enabled };
         if (item.subMenu) {
           updatedItem.subMenu = updateMenuItems(item.subMenu);
+          const allSubmenusHidden = updatedItem.subMenu.every(
+            (subItem) => subItem.hide
+          );
+          if (allSubmenusHidden) {
+            updatedItem.hide = true;
+          }
         }
         return updatedItem;
       });
@@ -282,7 +288,10 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
             }}
           >
             {item.subMenu?.map((submenu) => (
-              <li key={submenu.key} className='min-h-[32px] mb-1'>
+              <li
+                key={submenu.key}
+                className={`${submenu.hide ? 'hidden' : 'block'} min-h-[32px] mb-1`}
+              >
                 <button
                   onClick={() => handleSelect(submenu.key, item.key)}
                   disabled={submenu.disabled}

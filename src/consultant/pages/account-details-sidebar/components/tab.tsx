@@ -35,17 +35,15 @@ import { useGetProjectType } from '../../../services/project';
 import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fileds';
-import { useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
+import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
+import { useGetAppliedProjectResourceCode, useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
 } from '../../../../components/Attachments/helpers';
 import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
-import { checkPermission } from '../../../../common-utils';
-// import { useGetAllCountries } from '../../../../common-service';
-// import { SelectOption } from '../../../types';
+import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -62,10 +60,16 @@ interface TabProps {
   setSortFilterCount: (count: number) => void;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
-  keyProjectTask?: string;
+  toggleLabel?: string;
   projectResourceAccountID?: string;
+  showToggle?: boolean;
+  projectResourceProjectID?: string;
   fieldOptions?: FieldOptionType;
   handleFilterChange?: (fieldName: string, value: FilterValue) => void;
+  permissionMapTaskTableColumn?: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -83,10 +87,13 @@ const TabPanel: React.FC<TabProps> = ({
   setSortFilterCount,
   toggleEnabled,
   setToggleEnabled,
-  keyProjectTask,
+  toggleLabel = 'Include Parent',
+  showToggle = false,
   projectResourceAccountID,
+  projectResourceProjectID,
   fieldOptions,
   handleFilterChange,
+  permissionMapTaskTableColumn,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -133,14 +140,25 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    projectResourceAccountID as string
+  const { data: getProjectTaskResourceCode } = useGetProjectResourceCode(projectResourceAccountID as string);
+  const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
+    projectResourceAccountID as string,
+    projectResourceProjectID as string
   );
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
+  const memoizedProjectTaskResourceCode: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        getProjectTaskResourceCode?.data?.resourceCodes.map((item) => ({
+          option: item.resource_code,
+          value: item.resource_code,
+        })) || [],
+      [getProjectTaskResourceCode?.data?.resourceCodes]
+    );
   const memoizedProjectResourceCode: { option: string; value: string }[] =
     useMemo(
       () =>
@@ -400,20 +418,26 @@ const TabPanel: React.FC<TabProps> = ({
         // memoizedResourceType,
         permissionProjectResourcesMap
       );
+    if (value === 'project-task')
+      return projectTaskFilterFields(
+        memoizedProjectTaskResourceCode,
+        memoizedResourceType,
+        permissionMapTaskTableColumn
+      );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
-          memoizedCurrency,
-          memoizedResourceStatus,
-          resourceCostpermissionMap
-        )
+        memoizedCurrency,
+        memoizedResourceStatus,
+        resourceCostpermissionMap
+      )
       : getSkillFilterFields(
-          memoizedSkillType,
-          skillSubTypeData,
-          memoizedSkillLevels,
-          resourceSkillpermissionMap
-        );
+        memoizedSkillType,
+        skillSubTypeData,
+        memoizedSkillLevels,
+        resourceSkillpermissionMap
+      );
   }, [
     value,
     memoizedCountry,
@@ -426,6 +450,7 @@ const TabPanel: React.FC<TabProps> = ({
     projectPermissionMap,
     memoizedProjectResourceCode,
     permissionProjectResourcesMap,
+    permissionMapTaskTableColumn,
     fieldOptions,
     attachmentPermissionMap,
     memoizedCurrency,
@@ -469,11 +494,6 @@ const TabPanel: React.FC<TabProps> = ({
       setToggleEnabled(event.target.checked);
     }
   };
-
-  const isProjectViewEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECTS_VIEW_EDIT
-  );
 
   return (
     <Box>
@@ -527,13 +547,12 @@ const TabPanel: React.FC<TabProps> = ({
             })}
           </Tabs>
         )}
-
         <Box className='flex items-center'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
-          {isProjectViewEditEnable && keyProjectTask !== 'ProjectResources' && (
+          {showToggle && (
             <div className='flex items-center gap-2'>
               <span className='font-semibold text-[13px] text-[#425A76]'>
-                Include Parent
+                {toggleLabel}
               </span>
               <Switch
                 checked={toggleEnabled}
@@ -554,7 +573,7 @@ const TabPanel: React.FC<TabProps> = ({
                 >
                   <ResourceFilterIcon />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                  sortFilterCount > 0 ? (
+                    sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
                       <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                       <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>

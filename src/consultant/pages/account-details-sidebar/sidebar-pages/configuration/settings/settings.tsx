@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Box } from '@mui/material';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
@@ -15,6 +15,7 @@ import SkeletonForm from '../../../../../../components/form-builder/skeleton-for
 interface SettingsProps {
   formRef: React.RefObject<HTMLFormElement>;
   setIsFormSaving: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsSaveDisable: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface UpdateSettingsSuccess {
@@ -33,7 +34,11 @@ interface FormValues extends Record<string, FormValueType> {
   auto_send_ai_interaction: string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
+const Settings: React.FC<SettingsProps> = ({
+  formRef,
+  setIsFormSaving,
+  setIsSaveDisable,
+}) => {
   const { successToast } = useToast();
   const updateSettings = useAccountUpdateSettings();
 
@@ -46,6 +51,7 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
+
   const settingsViewEditFields = useMemo(
     () =>
       permission.find(
@@ -59,6 +65,16 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
       accountDetails?.fiscal_start_date && accountDetails?.fiscal_end_date
     );
   }, [accountDetails]);
+
+  useEffect(() => {
+    const formConfig = settingsFormFields(permissionMap, disableFiscalDates);
+
+    const allFieldsDisabled = formConfig.every((section) =>
+      section.fields.every((field) => field.disabled === true)
+    );
+    setIsSaveDisable(allFieldsDisabled);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -100,6 +116,7 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
         ? 'Yes'
         : 'No',
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountDetails]);
 
   const handleFormSubmit = (data: object) => {
@@ -149,6 +166,7 @@ const Settings: React.FC<SettingsProps> = ({ formRef, setIsFormSaving }) => {
         }}
       >
         <FormBuilder
+          key={JSON.stringify(accountDetails)}
           data={settingsFormFields(permissionMap, disableFiscalDates)}
           formRef={formRef}
           outData={handleFormSubmit}

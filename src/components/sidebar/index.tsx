@@ -22,22 +22,7 @@ import {
   AdminChevronDownIcon,
   AdminChevronUpIcon,
   AdministrationIcon,
-  AdminPermissionIcon,
   AdminSubmenuActiveIcon,
-  ManagerUserIcon,
-  ManageProfileIcon,
-  ManageGroupIcon,
-  ManageUserAccessIcon,
-  ConfigureSettingIcon,
-  ManageSettingsIcon,
-  ManageGeoIcon,
-  AdminTemplateIcon,
-  ImportTemplateIcon,
-  InteractionTemplateIcon,
-  ChecklistTemplateIcon,
-  TaskTemplateIcon,
-  SurveyTemplateIcon,
-  EmailTemplateIcon,
 } from '../../assets';
 import {
   AdminNavItem,
@@ -45,135 +30,12 @@ import {
   SubItemTitle,
 } from '../../consultant/types';
 import { useAuthHook } from '../../hooks/use-auth';
-import {
-  ADMIN_MANAGE_USER,
-  CHECKLIST_TEMPLATES,
-  EMAIL_TEMPLATES,
-  IMPORT_TEMPLATES,
-  INTERACTION_TEMPLATES,
-  MANAGE_GEO_BASED_RULE,
-  MANAGE_PROFILE,
-  MANAGE_SETTINGS,
-  // MANAGE_USER_ACCESS,
-  MANAGE_ACCOUNT_ACCESS,
-  MANAGE_USER_GROUP,
-  TASK_TEMPLATES,
-  SURVEY_TEMPLATES,
-} from '../../routes';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { MenuOption } from '../../common-service';
 import { accountNavItems } from './accounts-menu';
 import LogoSmall from '../../assets/icons/logo-small.svg?react';
 import Logo from '../../assets/icons/logo.svg?react';
-
-const sideNavAdminItems: AdminNavItem[] = [
-  {
-    title: 'Admin Permission',
-    icon: AdminPermissionIcon,
-    openStatus: false,
-    subItemTitle: [
-      {
-        id: MenuOption.MANAGE_USER,
-        name: 'Manage User',
-        icon: ManagerUserIcon,
-        link: ADMIN_MANAGE_USER,
-        matchLink: ADMIN_MANAGE_USER,
-      },
-      {
-        id: MenuOption.MANAGE_PROFILE,
-        name: 'Manage Profile',
-        icon: ManageProfileIcon,
-        link: MANAGE_PROFILE,
-        matchLink: MANAGE_PROFILE,
-      },
-      {
-        id: MenuOption.MANAGE_USER_GROUP,
-        name: 'Manage User Group',
-        icon: ManageGroupIcon,
-        link: MANAGE_USER_GROUP,
-        matchLink: MANAGE_USER_GROUP,
-      },
-      {
-        id: MenuOption.MANAGE_ACCOUNT_ACCESS,
-        name: 'Manage Account Access',
-        icon: ManageUserAccessIcon,
-        link: MANAGE_ACCOUNT_ACCESS,
-        matchLink: MANAGE_ACCOUNT_ACCESS,
-      },
-    ],
-  },
-  {
-    title: 'Configure Settings',
-    icon: ConfigureSettingIcon,
-    openStatus: false,
-    subItemTitle: [
-      {
-        id: MenuOption.MANAGE_SETTINGS,
-        name: 'Manage Settings',
-        icon: ManageSettingsIcon,
-        link: MANAGE_SETTINGS,
-        matchLink: MANAGE_SETTINGS,
-      },
-      {
-        id: MenuOption.MANAGE_GEO_BASED_RULE,
-        name: 'Manage Geo-Based Rule',
-        icon: ManageGeoIcon,
-        link: MANAGE_GEO_BASED_RULE,
-        matchLink: MANAGE_GEO_BASED_RULE,
-      },
-    ],
-  },
-  {
-    title: 'Admin Template',
-    icon: AdminTemplateIcon,
-    openStatus: false,
-    subItemTitle: [
-      {
-        id: MenuOption.IMPORT_TEMPLATE,
-        name: 'Import templates',
-        icon: ImportTemplateIcon,
-        link: IMPORT_TEMPLATES,
-        matchLink: IMPORT_TEMPLATES,
-      },
-      {
-        id: MenuOption.INTERACTION_TEMPLATE,
-        name: 'Interaction templates',
-        icon: InteractionTemplateIcon,
-        link: INTERACTION_TEMPLATES,
-        matchLink: INTERACTION_TEMPLATES,
-      },
-      {
-        id: MenuOption.EMAIL_TEMPLATE,
-        name: 'Email templates',
-        icon: EmailTemplateIcon,
-        link: EMAIL_TEMPLATES,
-        matchLink: EMAIL_TEMPLATES,
-      },
-      {
-        id: MenuOption.SURVEY_TEMPLATE,
-        name: 'Survey templates',
-        icon: SurveyTemplateIcon,
-        link: SURVEY_TEMPLATES,
-        matchLink: SURVEY_TEMPLATES,
-      },
-      {
-        id: MenuOption.TASK_TEMPLATE,
-        name: 'Task templates',
-        icon: TaskTemplateIcon,
-        link: TASK_TEMPLATES,
-        matchLink: TASK_TEMPLATES,
-      },
-      {
-        id: MenuOption.CHECKLIST_TEMPLATE,
-        name: 'Checklist templates',
-        icon: ChecklistTemplateIcon,
-        link: CHECKLIST_TEMPLATES,
-        matchLink: CHECKLIST_TEMPLATES,
-      },
-    ],
-  },
-];
+import { sideNavAdminItems } from './admin-menus';
 
 const matchCheck = (subItem: SubItemTitle, pathname: string): boolean => {
   return subItem.matchLink === pathname;
@@ -206,19 +68,26 @@ export const Sidebar: React.FC<SideBarProps> = ({
     });
   }, [menus]);
   const memoizedAdminNavItems = useMemo(() => {
-    return sideNavAdminItems.map((item) => ({
-      ...item,
-      subItemTitle: item.subItemTitle.map((subItem) => {
-        const menu = menus.find((menu) => menu.name === subItem.id);
-        return {
-          ...subItem,
-          hide: menu && !menu.is_enabled,
-        };
-      }),
-      openStatus: item.subItemTitle.some((subItem) =>
-        matchCheck(subItem, trimmedPathname(2))
-      ),
-    }));
+    return sideNavAdminItems
+      .map((item) => ({
+        ...item,
+        subItemTitle: item.subItemTitle.map((subItem) => {
+          const menu = menus.find((menu) => menu.name === subItem.id);
+          return {
+            ...subItem,
+            hide: menu && !menu.is_enabled,
+          };
+        }),
+        openStatus: item.subItemTitle.some((subItem) =>
+          matchCheck(subItem, trimmedPathname(2))
+        ),
+      }))
+      .filter((item) => {
+        const visibleSubItems = item.subItemTitle.filter(
+          (subItem) => !subItem.hide
+        );
+        return visibleSubItems.length > 0;
+      });
   }, [menus, trimmedPathname]);
   const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(
     memoizedAdminNavItems

@@ -37,6 +37,7 @@ const ConfigTabs: ResourceTabs[] = [
 const Configuration: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
+  const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -89,7 +90,13 @@ const Configuration: React.FC = () => {
           />
         );
       case 'settings':
-        return <Settings formRef={formRef} setIsFormSaving={setIsFormSaving} />;
+        return (
+          <Settings
+            formRef={formRef}
+            setIsFormSaving={setIsFormSaving}
+            setIsSaveDisable={setIsSaveDisable}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -121,7 +128,7 @@ const Configuration: React.FC = () => {
       variant: 'contained' as const,
       onClick: () => handleSubmit(),
       hide: list === 'users',
-      disabled: false,
+      disabled: isSaveDisable,
       loading: isFormSaving,
     },
   ];

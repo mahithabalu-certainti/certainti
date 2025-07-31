@@ -35,11 +35,12 @@ import {
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
-import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import { useGetAppliedProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import { ExportType, SelectOption } from '../../../../types';
 // import { useGetResourceType } from '../../../../services/resource-list';
 import { useFetchState } from '../../../../services/account';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
+import Uploads from '../../../../../components/Attachments/upload';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -86,6 +87,7 @@ export const ProjectResources = ({
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
+  const [detailrefecth, setDetailRefetch] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('resource_code');
@@ -112,6 +114,7 @@ export const ProjectResources = ({
   const navigate = useNavigate();
   // const [searchParams] = useSearchParams();
   const fileId = searchParams.get('page');
+  const resID = searchParams.get('pro_res_id');
 
   const viewDetails = fileId === 'details';
 
@@ -163,7 +166,8 @@ export const ProjectResources = ({
     error: detailsError,
   } = useProjectResourceDetail(
     projectResData?.account_rid as string,
-    projectResData?.rid as string
+    projectResData?.rid as string,
+    detailrefecth as number
   );
   // const resourceData = resourceDetails?.data?.projectResource;
   const resourceData = useMemo(() => {
@@ -187,8 +191,9 @@ export const ProjectResources = ({
       filters: appliedFilters,
     });
   }, [sortField, sortOrder, appliedFilters]);
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+  const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
+    accountID as string,
+    projectID as string
   );
   // const projectResourceTypeOptions = useGetResourceType();
   const countriesList = useGetAllCountries();
@@ -226,7 +231,9 @@ export const ProjectResources = ({
   const handleCountry = (country: string) => {
     setCurrentCountry(country);
   };
-
+  const handleDetailReFetch = () => {
+    setDetailRefetch(Date.now());
+  };
   const handleProjectResourceDetailEdit = () => {
     if (resourceData) {
       const path = PROJECT_RESOURCE_EDIT.replace(
@@ -290,8 +297,24 @@ export const ProjectResources = ({
     permission,
     AllPermissions.PROJECTS_RESOURCES_CREATE
   );
-
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'project_resource');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
+  const showUploads =
+    searchParams.get('attachment_entity') === 'project_resource';
   const headerButtons = [
+    {
+      label: 'Add Attachment',
+      variant: 'outlined' as const,
+      onClick: () => handleOpen(),
+      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
+      hide: !viewDetails,
+    },
     {
       label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
@@ -438,7 +461,7 @@ export const ProjectResources = ({
           setShowFilter(false);
         }}
         showFilter={showFilter}
-        filterVisibility={!viewDetails}
+        filterVisibility={!viewDetails && !showUploads}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
@@ -447,71 +470,84 @@ export const ProjectResources = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        keyProjectTask={'ProjectResources'}
         projectResourceAccountID={accountID}
+        projectResourceProjectID={projectID}
       />
       <>
-        <ProjectResourceTableHeader
-          value={
-            viewDetails ? 'project-resource-details' : 'projects-resources'
-          }
-          title={'Project Resource'}
-          titleIcon={
-            viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
-          }
-          count={totalItems}
-          showBackArrow={viewDetails}
-          headerButtons={headerButtons}
-          projectResourceNumber={resourceData?.r_number}
-          onBackClick={handleBackClick}
-        />
-        <div className='border border-[#CBD6E2]'>
-          {showProjectResourceDetails ? (
-            <ProjectResourceDetails
-              resourceData={resourceDetails?.data?.projectResource || undefined}
-              isDetailsLoading={isDetailsLoading}
-              detailsError={detailsError}
-              permission={permission}
-            />
-          ) : (
-            <ListTable
-              data={projectResourceList}
-              columns={projectResourcesColumns}
-              actionMenuItems={actionMenuItems}
-              getRowId={(row: ProjectResourcesListType): string =>
-                row.rid || ''
+        {showUploads ? (
+          <Uploads
+            accountId={accountID}
+            attachID={resID}
+            onUploadSuccess={handleDetailReFetch}
+          />
+        ) : (
+          <>
+            <ProjectResourceTableHeader
+              value={
+                viewDetails ? 'project-resource-details' : 'projects-resources'
               }
-              hoverHighlight={false}
-              tableStyle={{
-                height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              actionWidth={60}
-              actionDisplayMode='dropdown'
-              loading={isLoading}
-              error={error ? 'Failed to load projects' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage ?? 1}
-              totalItems={data?.count || 0}
-              onPageChange={setCurrentPage}
-              onRowsPerPageChange={setRowsPerPage}
-              sortBy={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSorting}
-              selectable={false}
-              onSelectionChange={(selectedIds: unknown) =>
-                console.log('Selected:', selectedIds)
+              title={'Project Resource'}
+              titleIcon={
+                viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
               }
-              component='project resources'
-              onCellEdit={handleCellEdit}
-              onFieldChange={handleFieldChange}
+              count={totalItems}
+              showBackArrow={viewDetails}
+              headerButtons={headerButtons}
+              projectResourceNumber={resourceData?.r_number}
+              onBackClick={handleBackClick}
             />
-          )}
-        </div>
+            <div className='border border-[#CBD6E2]'>
+              {showProjectResourceDetails ? (
+                <ProjectResourceDetails
+                  resourceData={
+                    resourceDetails?.data?.projectResource || undefined
+                  }
+                  attachment={resourceDetails?.data?.attachment || []}
+                  isDetailsLoading={isDetailsLoading}
+                  detailsError={detailsError}
+                  permission={permission}
+                />
+              ) : (
+                <ListTable
+                  data={projectResourceList}
+                  columns={projectResourcesColumns}
+                  actionMenuItems={actionMenuItems}
+                  getRowId={(row: ProjectResourcesListType): string =>
+                    row.rid || ''
+                  }
+                  hoverHighlight={false}
+                  tableStyle={{
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  actionWidth={60}
+                  actionDisplayMode='dropdown'
+                  loading={isLoading}
+                  error={error ? 'Failed to load projects' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage ?? 1}
+                  totalItems={data?.count || 0}
+                  onPageChange={setCurrentPage}
+                  onRowsPerPageChange={setRowsPerPage}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSorting}
+                  selectable={false}
+                  onSelectionChange={(selectedIds: unknown) =>
+                    console.log('Selected:', selectedIds)
+                  }
+                  component='project resources'
+                  onCellEdit={handleCellEdit}
+                  onFieldChange={handleFieldChange}
+                />
+              )}
+            </div>
+          </>
+        )}
       </>
     </div>
   );

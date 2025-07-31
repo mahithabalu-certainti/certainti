@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { manageUserGroupColumns } from './column';
 import {
@@ -76,9 +75,10 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   }, [data]);
   useEffect(() => {
     if (commonSuccess) {
-      successToast('group updated successfully');
+      successToast('Updated successfully');
       handleBack();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess]);
   useEffect(() => {
     if (data?.data?.groups?.length) {

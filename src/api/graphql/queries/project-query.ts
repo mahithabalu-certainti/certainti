@@ -223,3 +223,49 @@ export const UPDATE_PROJECT_RESOURCE = gql`
     }
   }
 `;
+
+export const UPDATE_PROJECT_TASK = gql`
+mutation UpdateProjectTask($data: updateInlineProjectTask!) {
+    updateProjectTask(data: $data) {
+        statusCode
+        statusCodeValue
+        statusMessage
+        data {
+            r_number
+            account_rid
+            account_name
+            project_rid 
+            project_fiscal_rid
+            project_name
+            project_code
+            project_resource_rid
+            resource_rid
+            resource_code
+            fiscal_year
+            start_date
+            end_date
+            resource_name
+            resource_type_rid
+            resource_type_name
+            designation
+            resource_role
+            status_rid
+            country_rid
+            country_name
+            region_rid
+            region_name
+            currency_rid
+            resource_orgname
+            total_cost_pro_task
+            total_hours_pro_task
+            description
+            comments
+            created_datetime
+            modified_datetime
+            created_by
+            modified_by
+            rid
+        }
+    }
+}
+`;
