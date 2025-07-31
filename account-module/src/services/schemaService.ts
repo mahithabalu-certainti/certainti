@@ -766,8 +766,7 @@ class SchemaService {
         project_description varchar(2000) NULL,
         project_fiscal_rid varchar(50) NOT NULL,
         CONSTRAINT project_fiscal_region_r_number_key UNIQUE (r_number)
-      );
-    `);
+      );`);
   }
 
   private async createProjectTimelineTable(schemaName: string, sequelize: any) {
