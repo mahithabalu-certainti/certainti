@@ -227,7 +227,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'insurance', data_type: 'Decimal(18,2)' ,required:false},
         { column_name: 'deductions', data_type: 'Decimal(18,2)' ,required:false},
         { column_name: 'resource_cost', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'comments', data_type: 'text',required:false },
+        { column_name: 'comments', data_type: 'text',required:false }
       ];
     case 'project_task':
       return [
@@ -248,7 +248,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'resource_city', data_type: 'String',required:false },
         { column_name: 'resource_state_province', data_type: 'String',required:false },
         { column_name: 'resource_country', data_type: 'String',required:false },
-        { column_name: 'project_type', data_type: 'ENUM' ,required:false},
+        { column_name: 'project_type', data_type: 'ENUM' ,required:false}
       ];
 
     case 'resource_skill':
