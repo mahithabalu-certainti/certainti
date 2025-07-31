@@ -31,6 +31,7 @@ export type Field = {
   read: boolean;
   edit: boolean;
   is_read_only: boolean;
+  is_edit_only: boolean;
   updatedByDependsOn?: boolean;
   hasReadExtendedPermsission?: boolean;
   hasEditExtendedPermsission?: boolean;
@@ -523,6 +524,24 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       }
     }
     field.is_modified = true; //set flag for indentify changes(For API)
+
+    // If field is being checked (either read or edit), check parent permission and enable all is_edit_only fields
+    if (isEnabled) {
+      // Get parent permission
+      const permissionId = field.permission_id as string;
+      const permission = index.permission.get(permissionId);
+      if (permission) {
+        // Enable all sibling fields with is_edit_only true
+        const siblingFields = getFieldsForPermission(permissionId);
+        siblingFields.forEach((f) => {
+          if (f.is_edit_only) {
+            f.read = true;
+            f.is_modified = true;
+          }
+        });
+      }
+    }
+
     recalcUp('permission', field.permission_id as string);
     dependsOnByImplement(isEnabled);
     return formData;
@@ -538,6 +557,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     if (selectType === 'leftReadAll') {
       allFields
         ?.slice(0, Math.ceil(partialData))
+        .filter((item) => !item.is_edit_only) //ignore is_edit_only data
         .filter(
           (item) => !(item.hasReadExtendedPermsission === false && item.read) // ignore Extended permission data
         )
@@ -564,6 +584,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     } else if (selectType === 'rightReadAll') {
       allFields
         ?.slice(Math.ceil(partialData))
+        .filter((item) => !item.is_edit_only) //ignore is_edit_only data
         .filter(
           (item) => !(item.hasReadExtendedPermsission === false && item.read) // ignore Extended permission data
         )
@@ -877,9 +898,13 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                             </span>
                                             <CheckBox
                                               value={
-                                                firstHalfFields.every(
-                                                  (field) => field.read
-                                                ) ?? false
+                                                firstHalfFields
+                                                  .filter(
+                                                    (item) => !item.is_edit_only
+                                                  )
+                                                  .every(
+                                                    (field) => field.read
+                                                  ) ?? false
                                               }
                                               id={
                                                 'leftReadAll-' + permission.name
@@ -968,7 +993,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                   dependsOn={
                                                     field.updatedByDependsOn
                                                   }
-                                                  disabled={isDisabledRead}
+                                                  disabled={
+                                                    isDisabledRead ||
+                                                    field.is_edit_only
+                                                  }
                                                 />
                                               </div>
                                               <div className='flex items-center gap-2'>
@@ -1018,9 +1046,13 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                             </span>
                                             <CheckBox
                                               value={
-                                                secondHalfFields.every(
-                                                  (field) => field.read
-                                                ) ?? false
+                                                secondHalfFields
+                                                  .filter(
+                                                    (item) => !item.is_edit_only
+                                                  )
+                                                  .every(
+                                                    (field) => field.read
+                                                  ) ?? false
                                               }
                                               id={
                                                 'rightReadAll-' +
@@ -1112,7 +1144,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                   dependsOn={
                                                     field.updatedByDependsOn
                                                   }
-                                                  disabled={isDisabledRead}
+                                                  disabled={
+                                                    isDisabledRead ||
+                                                    field.is_edit_only
+                                                  }
                                                 />
                                               </div>
                                               <div className='flex items-center gap-2'>

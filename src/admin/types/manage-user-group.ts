@@ -44,7 +44,7 @@ export interface GroupByIdAccount {
   has_access: boolean;
 }
 
-interface GroupByIdProjects {
+export interface GroupByIdProjects {
   project_rid: string;
   project_name: string;
   project_code: string;
