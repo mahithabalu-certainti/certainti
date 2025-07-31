@@ -43,6 +43,7 @@ import {
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -1156,7 +1157,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <Autocomplete
               options={field.options || []}
               disableClearable
-              popupIcon={null}
+              popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue: SelectOption) => {
                 handleChange(newValue?.value || '');
@@ -1945,7 +1946,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) { 
+              if (startDate && endDate) {
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 
@@ -1972,7 +1973,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
-           // Handle project task dates validation
+            // Handle project task dates validation
             if (
               field.name === 'start_date' ||
               field.name === 'end_date'
@@ -1988,7 +1989,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) { 
+              if (startDate && endDate) {
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 

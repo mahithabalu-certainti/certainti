@@ -36,7 +36,7 @@ import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
-import { useGetAppliedProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
+import { useGetAppliedProjectResourceCode, useGetProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -140,6 +140,7 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
+  const { data: getProjectTaskResourceCode } = useGetProjectResourceCode(projectResourceAccountID as string);
   const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
     projectResourceAccountID as string,
     projectResourceProjectID as string
@@ -149,6 +150,15 @@ const TabPanel: React.FC<TabProps> = ({
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
+  const memoizedProjectTaskResourceCode: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        getProjectTaskResourceCode?.data?.resourceCodes.map((item) => ({
+          option: item.resource_code,
+          value: item.resource_code,
+        })) || [],
+      [getProjectTaskResourceCode?.data?.resourceCodes]
+    );
   const memoizedProjectResourceCode: { option: string; value: string }[] =
     useMemo(
       () =>
@@ -410,9 +420,7 @@ const TabPanel: React.FC<TabProps> = ({
       );
     if (value === 'project-task')
       return projectTaskFilterFields(
-        memoizedProjectResourceCode,
-        // memoizedCountry,
-        // regionData,
+        memoizedProjectTaskResourceCode,
         memoizedResourceType,
         permissionMapTaskTableColumn
       );
@@ -420,16 +428,16 @@ const TabPanel: React.FC<TabProps> = ({
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
-          memoizedCurrency,
-          memoizedResourceStatus,
-          resourceCostpermissionMap
-        )
+        memoizedCurrency,
+        memoizedResourceStatus,
+        resourceCostpermissionMap
+      )
       : getSkillFilterFields(
-          memoizedSkillType,
-          skillSubTypeData,
-          memoizedSkillLevels,
-          resourceSkillpermissionMap
-        );
+        memoizedSkillType,
+        skillSubTypeData,
+        memoizedSkillLevels,
+        resourceSkillpermissionMap
+      );
   }, [
     value,
     memoizedCountry,
@@ -565,7 +573,7 @@ const TabPanel: React.FC<TabProps> = ({
                 >
                   <ResourceFilterIcon />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                  sortFilterCount > 0 ? (
+                    sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
                       <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                       <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
