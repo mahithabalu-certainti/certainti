@@ -488,7 +488,9 @@ export const CreateUserGroup: React.FC = () => {
           group_rid: groupId as string,
           accounts: getUnCheckedData(selectedAccounts, userGroupData?.accounts),
           users: getUnCheckedData(addedUsers, userGroupData?.users),
-          projects: { ...commonData.projects, ...getUnCheckedProjects() },
+          projects: groupTypeNotCustom
+            ? {}
+            : { ...commonData.projects, ...getUnCheckedProjects() },
         };
         updateUserGroup.mutate(constructDataForUpdate);
       } else {
