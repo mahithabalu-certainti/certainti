@@ -27,6 +27,7 @@ import {
 import { SelectOption } from '../../../../consultant/types';
 import { useFetchIndustrys } from '../../../../consultant/services/account';
 import {
+  clearFilters,
   formatFilterForApi,
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
@@ -67,6 +68,7 @@ const AccountList = () => {
     searchParams.delete('username');
     searchParams.delete('groupname');
     setAppliedFilters({});
+    clearFilters();
     navigate({ search: searchParams.toString() });
   };
   const handleBackAccount = () => {

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
+import { clearFilters } from '../filter-component/utils';
+import { FilterType } from '../../admin/types';
 
 interface TabItem {
   label: string;
@@ -9,9 +11,12 @@ interface TabItem {
 
 interface UsersProps {
   tabs: TabItem[];
+  setAppliedFilters: React.Dispatch<
+    React.SetStateAction<Record<string, FilterType>>
+  >;
 }
 
-const Users: React.FC<UsersProps> = ({ tabs }) => {
+const Users: React.FC<UsersProps> = ({ tabs, setAppliedFilters }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = Number(searchParams.get('tabIndex')) || 0;
 
@@ -28,6 +33,8 @@ const Users: React.FC<UsersProps> = ({ tabs }) => {
     setActiveTab(newValue);
     searchParams.set('tabIndex', newValue.toString());
     setSearchParams(searchParams, { replace: true });
+    clearFilters();
+    setAppliedFilters({});
   };
 
   return (

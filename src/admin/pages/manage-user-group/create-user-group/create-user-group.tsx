@@ -225,8 +225,9 @@ export const CreateUserGroup: React.FC = () => {
       availableUsers.mutate({
         is_consultant_only_group: groupInformation.isConsultantOnly,
         account_rid: selectedAccounts,
-        limit: userParams.limit?.toString() as string,
-        page: userParams.page?.toString() as string,
+        limit: userParams.limit as number,
+        page: userParams.page as number,
+        group_type_rid: groupInformation.groupType,
         ...(isEditView && { group_rid: groupId as string }),
       });
     }
@@ -237,8 +238,9 @@ export const CreateUserGroup: React.FC = () => {
     if (tabs === Tabs.PROJECT) {
       availableProjects.mutate({
         account_rid: selectedAccounts,
-        limit: projectParams.limit?.toString() as string,
-        page: projectParams.page?.toString() as string,
+        limit: projectParams.limit,
+        page: projectParams.page,
+        group_type_rid: groupInformation.groupType,
         ...(isEditView && { group_rid: groupId as string }),
       });
     }
@@ -420,16 +422,24 @@ export const CreateUserGroup: React.FC = () => {
     selectedData: string[],
     apiData?: GroupByIdAccount[] | GroupByIdUsers[]
   ): UserGroupDetailsCommon[] => {
-    return (
-      apiData?.map(({ rid, has_access }) => {
-        const isSelected = selectedData.includes(rid);
+    const oldData = apiData?.map(({ rid, has_access }) => {
+      const isSelected = selectedData.includes(rid);
+      return {
+        rid,
+        is_enabled: isSelected,
+        is_modified: isSelected !== has_access,
+      };
+    });
+    const newData = selectedData
+      .filter((item) => !apiData?.find((it) => it.rid === item)) //Remove API data
+      .map((id) => {
         return {
-          rid,
-          is_enabled: isSelected,
-          is_modified: isSelected !== has_access,
+          rid: id,
+          is_enabled: true,
+          is_modified: true,
         };
-      }) || []
-    );
+      });
+    return oldData?.concat(newData) || [];
   };
   const switchTabAndSubmit = () => {
     if (tabs === Tabs.FORM) {
@@ -478,7 +488,9 @@ export const CreateUserGroup: React.FC = () => {
           group_rid: groupId as string,
           accounts: getUnCheckedData(selectedAccounts, userGroupData?.accounts),
           users: getUnCheckedData(addedUsers, userGroupData?.users),
-          projects: { ...commonData.projects, ...getUnCheckedProjects() },
+          projects: groupTypeNotCustom
+            ? {}
+            : { ...commonData.projects, ...getUnCheckedProjects() },
         };
         updateUserGroup.mutate(constructDataForUpdate);
       } else {

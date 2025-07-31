@@ -157,10 +157,11 @@ export interface UserGroupUpdateDetails extends Partial<UserGroupDetails> {
   group_rid: string;
 }
 
-export interface FetchUsersByAccountBody{
-  page: string,
-  limit: string,
-  is_consultant_only_group: boolean,
-  account_rid: string[],
-  group_rid?: string
+export interface FetchUsersByAccountBody {
+  page: number;
+  limit: number;
+  is_consultant_only_group: boolean;
+  account_rid: string[];
+  group_type_rid?: string;
+  group_rid?: string;
 }

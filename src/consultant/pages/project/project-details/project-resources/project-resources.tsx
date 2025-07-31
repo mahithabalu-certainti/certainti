@@ -18,6 +18,7 @@ import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
+  AllMenus,
   AllModules,
   AllPermissions,
   useGetAllCountries,
@@ -137,7 +138,7 @@ export const ProjectResources = ({
   );
   // const detailsResourceId = searchParams.get('pro_res_id');
   // Permission Mangement
-  const { modules, permission } = useSelector(
+  const { modules, permission, menus } = useSelector(
     (state: RootState) => state.permission
   );
   const projectIsEnable = checkPermission(
@@ -297,6 +298,18 @@ export const ProjectResources = ({
     permission,
     AllPermissions.PROJECTS_RESOURCES_CREATE
   );
+  const isAttachmentViewEnableMenu = checkPermission(
+    menus,
+    AllMenus.ATTACHMENTS
+  );
+  const isAttachmentViewEnableMenuModule = checkPermission(
+    modules,
+    AllModules.ATTACHMENTS
+  );
+  const isAttachmentViewEnablepeormission = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -313,7 +326,11 @@ export const ProjectResources = ({
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      hide: !viewDetails,
+      hide:
+        !viewDetails ||
+        !isAttachmentViewEnableMenu ||
+        !isAttachmentViewEnableMenuModule ||
+        !isAttachmentViewEnablepeormission,
     },
     {
       label: viewDetails ? 'Edit' : 'New',

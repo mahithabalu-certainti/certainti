@@ -13,6 +13,7 @@ import {
 } from '../../../types/manage-account';
 import { useToast } from '../../../../hooks';
 import { FilterType } from '../../../types';
+import { clearFilters } from '../../../../components/filter-component/utils';
 interface UserTableProps {
   isProfileViewEnable?: boolean;
   appliedFilters: Record<string, FilterType>;
@@ -62,6 +63,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
     searchParams.delete('groupname');
     navigate({ search: searchParams.toString() });
     setAppliedFilters({});
+    clearFilters();
   };
   useEffect(() => {
     if (data) {

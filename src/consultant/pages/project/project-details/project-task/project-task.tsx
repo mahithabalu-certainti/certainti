@@ -91,15 +91,12 @@ export const ProjectTask = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('resource_code');
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
   const [searchParams] = useSearchParams();
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -138,7 +135,6 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
       accountRid: accountID,
       projectRid: projectID,
     },
@@ -280,9 +276,8 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
     });
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters,]);
 
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? '';
@@ -332,7 +327,6 @@ export const ProjectTask = ({
     const previousProject = [...projectTaskList];
 
     const selectedProject = projectTaskList.find((pro) => pro.rid === rowId);
-
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;

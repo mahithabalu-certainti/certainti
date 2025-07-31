@@ -43,6 +43,7 @@ import {
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -1149,15 +1150,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
-            /* It may use in future, based on client confirmation */
-            {/* <SearchBlackIcon
+            {/* <SearchBlackIcon // It may use in future, based on client confirmation
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
             /> */}
             <Autocomplete
               options={field.options || []}
               disableClearable
-              popupIcon={null}
+              popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue: SelectOption) => {
                 handleChange(newValue?.value || '');
@@ -1946,7 +1946,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) { 
+              if (startDate && endDate) {
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 
@@ -1973,7 +1973,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
-           // Handle project task dates validation
+            // Handle project task dates validation
             if (
               field.name === 'start_date' ||
               field.name === 'end_date'
@@ -1989,7 +1989,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) { 
+              if (startDate && endDate) {
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 
