@@ -19,6 +19,7 @@ import {
   ResourceType,
   ProjectResourceNewPayload,
   SelectResourceOption,
+  FormFiscalDateType,
 } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
@@ -37,7 +38,6 @@ import {
 import { projectResourcesPayloadData } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { FiscalYearType } from '../../../../../types/project';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 
 const ProjectResourceForm: React.FC = () => {
@@ -55,7 +55,7 @@ const ProjectResourceForm: React.FC = () => {
   const project_Id = searchParams.get('project_Id');
   const currency_rid = searchParams.get('currency_rid');
   const projectPFY = searchParams.get('PFY');
-  const fiscalYear: FiscalYearType | undefined = projectPFY
+  const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
 
@@ -292,7 +292,7 @@ const ProjectResourceForm: React.FC = () => {
     isResourceType,
     states.isLoading,
     isEditView,
-    fiscalYear,
+    fiscalDate,
     permissionMap
   );
 

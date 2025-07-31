@@ -1,6 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
-import { FormType, SelectOption } from '../../../../../types';
+import {
+  FormFiscalDateType,
+  FormType,
+  SelectOption,
+} from '../../../../../types';
 import {
   createAutoCompleteField,
   createDateField,
@@ -8,7 +11,6 @@ import {
   createTextField,
   PROJECT_TASK_REGEX,
 } from '../../../../../../common-utils';
-import { FiscalYearType } from '../../../../../types/project';
 
 // 1. Extract date constants
 const DATE_CONFIG = {
@@ -27,36 +29,12 @@ const getFiscalYears = (range: number) => {
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
 
-
 export const ProjectTaskFormData = (
   memoizedProjectResourceCode: SelectOption[],
   isEditView?: boolean,
-  projectPFY?: FiscalYearType | undefined,
-  permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>,
+  fiscalDate?: FormFiscalDateType,
+  permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const endDateMax =
-    projectPFY?.endDate && Number(projectPFY.year) !== currentYear
-      ? new Date(projectPFY.endDate)
-      : today;
-
-  const previousDate = new Date(today);
-  previousDate.setDate(today.getDate() - 1);
-
-  const startDateMin = projectPFY?.startDate
-    ? new Date(projectPFY.startDate)
-    : undefined;
-
-  const startDateMax = projectPFY?.endDate
-    ? Number(projectPFY.year) === currentYear
-      ? previousDate
-      : (() => {
-        const date = new Date(projectPFY.endDate);
-        date.setDate(date.getDate() - 1);
-        return date;
-      })()
-    : undefined;
   return useMemo(
     () => [
       {
@@ -77,7 +55,6 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['resource_code']?.read &&
               !permissionMapTaskForm?.['resource_code']?.edit,
           }),
-
         ],
       },
 
@@ -87,8 +64,8 @@ export const ProjectTaskFormData = (
         fields: [
           createDateField('start_date', 'Effective From', {
             required: false,
-            minDate: startDateMin,
-            maxDate: startDateMax,
+            minDate: fiscalDate?.startMin,
+            maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
             disabled:
               isEditView &&
@@ -101,8 +78,8 @@ export const ProjectTaskFormData = (
           }),
           createDateField('end_date', 'End Date', {
             required: false,
-            minDate: startDateMin,
-            maxDate: endDateMax, 
+            minDate: fiscalDate?.startMin,
+            maxDate: fiscalDate?.endMax,
             disabled:
               isEditView &&
               permissionMapTaskForm?.['end_date']?.read &&
@@ -129,8 +106,9 @@ export const ProjectTaskFormData = (
           }),
           createTextField('total_hours_pro_task', 'Effort', {
             required: false,
-            regex: PROJECT_TASK_REGEX.EFFORT, 
-            regexErrorMessage: 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            regex: PROJECT_TASK_REGEX.EFFORT,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter effort',
             disabled:
               isEditView &&
@@ -219,6 +197,13 @@ export const ProjectTaskFormData = (
         ],
       },
     ],
-    [endDateMax, isEditView, memoizedProjectResourceCode, permissionMapTaskForm, startDateMax, startDateMin]
+    [
+      fiscalDate?.endMax,
+      fiscalDate?.startMax,
+      fiscalDate?.startMin,
+      isEditView,
+      memoizedProjectResourceCode,
+      permissionMapTaskForm,
+    ]
   );
 };

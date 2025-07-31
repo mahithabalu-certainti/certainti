@@ -25,7 +25,11 @@ import {
 import { RootState } from '../../../../../store/store';
 import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ExportType,
+  FormFiscalDateType,
+  SelectOption,
+} from '../../../../types';
 import {
   CellEditData,
   FieldChangeValue,
@@ -38,7 +42,6 @@ import { useGetProjectResourceCode } from '../../../../services/project-resource
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
-import { FiscalYearType } from '../../../../types/project';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -69,13 +72,13 @@ const projectTabs: ProjectsTabs[] = [
 export const ProjectTask = ({
   projectID,
   accountID,
-  projectFiscalYear,
+  projectFiscalDate,
   setExportType,
   setProjectTaskParams,
 }: {
   projectID?: string;
   accountID?: string;
-  projectFiscalYear?: FiscalYearType;
+  projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setProjectTaskParams: React.Dispatch<
     React.SetStateAction<ProjectTaskListExportParams>
@@ -230,7 +233,7 @@ export const ProjectTask = ({
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
   ];
-  const PFY = projectFiscalYear;
+  const PFY = projectFiscalDate;
   const handleProjectTaskDetailEdit = () => {
     if (resourceData) {
       const path = resourceData?.rid

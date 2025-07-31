@@ -21,6 +21,8 @@ import {
   enumValue,
   ErrorHandling,
   FieldType,
+  FiscalDates,
+  FormFiscalDateType,
   InputType,
   SelectOption,
   YesNo,
@@ -597,12 +599,13 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${errorData?.statusMessage
-    ? typeof errorData.statusMessage === 'object'
-      ? Object.values(errorData.statusMessage).join(', ')
-      : errorData.statusMessage || ''
-    : errorData?.message || data.message
-    }</p>`;
+  return `<p>${
+    errorData?.statusMessage
+      ? typeof errorData.statusMessage === 'object'
+        ? Object.values(errorData.statusMessage).join(', ')
+        : errorData.statusMessage || ''
+      : errorData?.message || data.message
+  }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
@@ -755,4 +758,64 @@ export const getFiscalYears = (range: number) => {
     const year = currentYear - i;
     return { label: `FY-${year}`, value: String(year) };
   });
+};
+
+export const getFiscalParseDateFromMMDD = (mmdd: string, year: number) => {
+  if (!mmdd) return undefined;
+  const [monthStr, dayStr] = mmdd.split('/');
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  return new Date(
+    `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  );
+};
+
+export const getFiscalDateBounds = (
+  year: string,
+  accountFiscalDates: FiscalDates
+): FormFiscalDateType => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const fiscalYear = Number(year);
+
+  const [startMonthStr, startDayStr] = accountFiscalDates.startDate.split('/');
+  const [endMonthStr, endDayStr] = accountFiscalDates.endDate.split('/');
+
+  const startMonth = Number(startMonthStr);
+  const startDay = Number(startDayStr);
+  const endMonth = Number(endMonthStr);
+  const endDay = Number(endDayStr);
+
+  const endDateYear =
+    endMonth < startMonth || (endMonth === startMonth && endDay < startDay)
+      ? fiscalYear + 1
+      : fiscalYear;
+
+  const startDateMin = getFiscalParseDateFromMMDD(
+    accountFiscalDates.startDate,
+    fiscalYear
+  );
+  const accountEndDate = getFiscalParseDateFromMMDD(
+    accountFiscalDates.endDate,
+    endDateYear
+  );
+
+  const endDateMax =
+    fiscalYear === currentYear ? today : accountEndDate || today;
+
+  const previousDate = new Date(today);
+  previousDate.setDate(today.getDate() - 1);
+
+  const startDateMax = accountEndDate
+    ? fiscalYear === currentYear
+      ? previousDate
+      : new Date(accountEndDate.getTime() - 24 * 60 * 60 * 1000)
+    : undefined;
+
+  return {
+    year: Number(year),
+    startMin: startDateMin,
+    startMax: startDateMax,
+    endMax: endDateMax,
+  };
 };
