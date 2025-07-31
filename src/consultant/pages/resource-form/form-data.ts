@@ -8,7 +8,7 @@ import {
   REGEX_PATTERNS,
   RESOURCE_REGEX,
 } from '../../../common-utils';
-import { FormType, SelectOption } from '../../types';
+import { FormFiscalDateType, FormType, SelectOption } from '../../types';
 
 // 1. Extract date constants
 const minYear = 2000;
@@ -52,7 +52,7 @@ const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
-const { currentDate, previousDate, minDate } = getDateConstraints(
+const { currentDate, previousDate } = getDateConstraints(
   DATE_CONFIG.COST_FISCAL_YEARS_RANGE
 );
 
@@ -87,6 +87,7 @@ export const ResourceFormData = (
   currentResource?: { resource_firstname: string; resource_lastname: string },
   autoCalculatedValue?: number,
   accountName?: string,
+  fiscalDate?: FormFiscalDateType,
   resourcePermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   resourceCostPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   resourceSkillPermissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -507,8 +508,8 @@ export const ResourceFormData = (
           }),
           createDateField('financial_start_date', 'Effective Date', {
             required: false,
-            minDate: minDate,
-            maxDate: previousDate,
+            minDate: fiscalDate?.startMin,
+            maxDate: fiscalDate?.startMax,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['effective_from']?.read &&
@@ -520,8 +521,8 @@ export const ResourceFormData = (
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
-            minDate: minDate,
-            maxDate: currentDate,
+            minDate: fiscalDate?.startMin,
+            maxDate: fiscalDate?.endMax,
             startDateLabel: 'financial_start_date',
             disabled:
               isEditView &&
@@ -993,6 +994,8 @@ export const ResourceFormData = (
     ],
     [
       disableCostAndSkill,
+      isEditView,
+      resourcePermissionMap,
       resourceTypeOptions,
       disableOrgname,
       isAnyResourceNameFilled,
@@ -1007,23 +1010,32 @@ export const ResourceFormData = (
       cityLoading,
       accountName,
       disableCost,
+      resourceCostPermissionMap,
       currency,
       currencyLoading,
+      fiscalDate?.startMin,
+      fiscalDate?.startMax,
+      fiscalDate?.endMax,
       isresourceType,
       isSalaryRequired,
       autoCalculatedValue,
       resourceStatusOptions,
-      isEditView,
       disableSkill,
+      resourceSkillPermissionMap,
       skillTypeOptions,
       isOthersSkillTypeSelected,
       skillSubTypeOptions,
       skillSubTypeLoading,
       isOthersSubTypeSelected,
       skillLevelOptions,
-      resourcePermissionMap,
-      resourceSkillPermissionMap,
-      resourceCostPermissionMap,
+      commandsHide,
+      commandsDisable,
+      ridHide,
+      createdOnHide,
+      createdByHide,
+      rNumberHide,
+      modifiedOnHide,
+      modifiedByHide,
     ]
   );
 };

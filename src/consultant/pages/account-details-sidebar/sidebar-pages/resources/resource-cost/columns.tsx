@@ -6,14 +6,13 @@ import {
 } from '../../../../../../common-utils';
 import TextButton from '../../../../../../components/button/text-button';
 import {
+  DependencyRowData,
   ListOption,
   ListTableColumn,
 } from '../../../../../../components/table/types';
+import { FormFiscalDateType } from '../../../../../types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
-import {
-  DATE_CONFIG,
-  getDateConstraints,
-} from '../../../../resource-form/form-data';
+import { DATE_CONFIG } from '../../../../resource-form/form-data';
 import { dateFormatToYYYYMMDD } from '../utils';
 
 const getFiscalYears = (range: number) => {
@@ -25,9 +24,6 @@ const getFiscalYears = (range: number) => {
 };
 
 const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
-const { currentDate, previousDate } = getDateConstraints(
-  DATE_CONFIG.COST_FISCAL_YEARS_RANGE
-);
 
 export const getResourceCostColumns = (
   currencyOptions: ListOption[],
@@ -36,7 +32,9 @@ export const getResourceCostColumns = (
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
   resourceInActive?: boolean,
-  attachmentCreateEnable?: boolean
+  attachmentCreateEnable?: boolean,
+  handleGetFiscalYear?: (year: string) => void,
+  fiscalDate?: FormFiscalDateType
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -72,6 +70,11 @@ export const getResourceCostColumns = (
       required: true,
       placeholder: '',
       options: fiscalYearsCost,
+      onChange: true,
+      getFieldData: (rowData: DependencyRowData) => {
+        handleGetFiscalYear?.(String(rowData.fiscal_year));
+        return String(rowData.fiscal_year);
+      },
       // Reset date fields when fiscal year changes
       resetDependentFields: ['effective_from', 'end_date'],
     },
@@ -98,9 +101,13 @@ export const getResourceCostColumns = (
       required: false,
       placeholder: 'YYYY-MM-DD',
       dateConfig: {
-        fiscalYearValidation: true,
         disableFutureDates: true,
-        maxDate: previousDate,
+        minDate: fiscalDate?.startMin,
+        maxDate: fiscalDate?.startMax,
+      },
+      getFieldData: (rowData: DependencyRowData) => {
+        handleGetFiscalYear?.(String(rowData.fiscal_year));
+        return String(rowData.effective_from);
       },
       resetDependentFields: ['end_date'],
       dependencies: [
@@ -139,9 +146,13 @@ export const getResourceCostColumns = (
       required: false,
       placeholder: 'YYYY-MM-DD',
       dateConfig: {
-        fiscalYearValidation: true,
         disableFutureDates: true,
-        maxDate: currentDate,
+        minDate: fiscalDate?.startMin,
+        maxDate: fiscalDate?.endMax,
+      },
+      getFieldData: (rowData: DependencyRowData) => {
+        handleGetFiscalYear?.(String(rowData.fiscal_year));
+        return String(rowData.end_date);
       },
       dependencies: [
         {

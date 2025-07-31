@@ -39,7 +39,7 @@ import {
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
-import { OthersEnum, SelectOption } from '../../types';
+import { FormFiscalDateType, OthersEnum, SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
 import {
   ResourceTypeEnum,
@@ -57,6 +57,7 @@ import {
 import ConfirmationPopup from '../../../common-utils/confirmation-popup.tsx';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store.ts';
+import { getFiscalDateBounds } from '../../../common-utils/common-utils.ts';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -96,6 +97,9 @@ const ResourceForm: React.FC = () => {
     resource_firstname: '',
     resource_lastname: '',
   });
+  const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
+    year: 0,
+  });
   const [disableOrgname, setDisableOrgname] = useState<boolean>(false);
   const [, setResourceFinancials] = useState({
     salary: '',
@@ -118,6 +122,12 @@ const ResourceForm: React.FC = () => {
   const resourceName = isEditView
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
+
+  const account = location?.state?.data?.accountDetails;
+  const accountFiscalDates = {
+    startDate: account?.fiscal_start_date || '',
+    endDate: account?.fiscal_end_date || '',
+  };
 
   const costAndSKillAccountInfo = state?.data?.accountById;
   const skillCostResourceId =
@@ -370,6 +380,9 @@ const ResourceForm: React.FC = () => {
             : '-',
       };
       setFormValues(costValues);
+      setFiscalDate({
+        year: Number(costInfo?.fiscal_year),
+      });
       setIsSalaryRequired(
         costInfo?.salary === null ||
           costInfo?.salary === undefined ||
@@ -434,6 +447,16 @@ const ResourceForm: React.FC = () => {
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
+
+  useEffect(() => {
+    if (fiscalDate.year !== 0 && accountFiscalDates) {
+      const bounds = getFiscalDateBounds(
+        String(fiscalDate.year),
+        accountFiscalDates
+      );
+      setFiscalDate(bounds);
+    }
+  }, [fiscalDate.year, isEditView]);
 
   const countryId = resource?.data?.resourceDetails.country_rid;
   const stateId = resource?.data?.resourceDetails.region_rid;
@@ -838,6 +861,9 @@ const ResourceForm: React.FC = () => {
         setIsSalaryRequired(salaryValue === '');
       }
     }
+    if (fieldName === 'fiscal_year') {
+      setFiscalDate({ year: Number(fieldValue) });
+    }
   };
 
   const isresourceType =
@@ -874,6 +900,7 @@ const ResourceForm: React.FC = () => {
     currentResource,
     autoCalculatedValue,
     accountName,
+    fiscalDate,
     resourcePermissionMap,
     resourceCostPermissionMap,
     resourceSKillPermissionMap

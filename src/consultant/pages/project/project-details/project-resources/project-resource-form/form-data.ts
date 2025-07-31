@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
 import {
+  FormFiscalDateType,
   FormType,
   SelectOption,
   SelectResourceOption,
@@ -14,7 +14,6 @@ import {
   REGEX_PATTERNS,
   // REGEX_PATTERNS,
 } from '../../../../../../common-utils';
-import { FiscalYearType } from '../../../../../types/project';
 
 // 1. Extract date constants
 const DATE_CONFIG = {
@@ -64,33 +63,9 @@ export const ProjectResourceFormData = (
   // currencyLoading?: boolean,
   // disableFields?: boolean,
   isEditView?: boolean,
-  projectPFY?: FiscalYearType | undefined,
+  fiscalDate?: FormFiscalDateType,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const endDateMax =
-    projectPFY?.endDate && Number(projectPFY.year) !== currentYear
-      ? new Date(projectPFY.endDate)
-      : today;
-
-  const previousDate = new Date(today);
-  previousDate.setDate(today.getDate() - 1);
-
-  const startDateMin = projectPFY?.startDate
-    ? new Date(projectPFY.startDate)
-    : undefined;
-
-  const startDateMax = projectPFY?.endDate
-    ? Number(projectPFY.year) === currentYear
-      ? previousDate
-      : (() => {
-          const date = new Date(projectPFY.endDate);
-          date.setDate(date.getDate() - 1);
-          return date;
-        })()
-    : undefined;
-
   return useMemo(
     () => [
       {
@@ -320,8 +295,8 @@ export const ProjectResourceFormData = (
         fields: [
           createDateField('start_date', 'Resource Start Date', {
             required: false,
-            minDate: startDateMin,
-            maxDate: startDateMax,
+            minDate: fiscalDate?.startMin,
+            maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
             disabled:
               isEditView &&
@@ -334,8 +309,8 @@ export const ProjectResourceFormData = (
           }),
           createDateField('end_date', 'End Date', {
             required: false,
-            minDate: startDateMin,
-            maxDate: endDateMax,
+            minDate: fiscalDate?.startMin,
+            maxDate: fiscalDate?.endMax,
             greaterThan: {
               field: 'start_date',
               message: 'End Date must be after Start Date',
@@ -535,17 +510,14 @@ export const ProjectResourceFormData = (
       projectResourceCodes,
       isEditView,
       permissionMap,
-      // projectResourceSkillType,
-      // projectResourceRollSkill,
-      // showSkillRoleOthersField,
       resourceStatusOptions,
       country,
       states,
       stateLoading,
       currency,
-      startDateMin,
-      startDateMax,
-      endDateMax,
+      fiscalDate?.startMin,
+      fiscalDate?.startMax,
+      fiscalDate?.endMax,
       isResourceType,
     ]
   );
