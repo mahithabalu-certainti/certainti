@@ -24,7 +24,7 @@ export const projectResourceFilterFields = (
         !resourcepermissionMap?.['resource_code']?.read &&
         !resourcepermissionMap?.['resource_code']?.edit,
     },
-    /* It may use in future, based on client confirmation */
+    // It may use in future, based on client confirmation 
     // {
     //   name: 'Resource Name',
     //   value: 'resource_name',
@@ -54,7 +54,7 @@ export const projectResourceFilterFields = (
         !resourcepermissionMap?.['region_rid']?.read &&
         !resourcepermissionMap?.['region_rid']?.edit,
     },
-    /* It may use in future, based on client confirmation */
+    // It may use in future, based on client confirmation 
     // {
     //   name: 'Resource Type',
     //   value: 'resource_type_rid',
@@ -116,7 +116,7 @@ export const projectResourceFilterFields = (
         !resourcepermissionMap?.['description']?.read &&
         !resourcepermissionMap?.['description']?.edit,
     },
-    /* It may use in future, based on client confirmation */
+    // It may use in future, based on client confirmation 
     //   {
     //     name: 'Resource ID',
     //     value: 'r_number',
