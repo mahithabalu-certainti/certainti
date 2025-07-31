@@ -11,7 +11,7 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 ];
 
 export const projectTaskFilterFields = (
-    memoizedProjectResourceCode: { option: string; value: string }[],
+    memoizedProjectTaskResourceCode: { option: string; value: string }[],
     resourceTypeOptions: { option: string; value: string }[],
     permissionMapTaskTableColumn?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
@@ -20,7 +20,7 @@ export const projectTaskFilterFields = (
             value: 'resource_code',
             type: 'enum',
             required: true,
-            options: memoizedProjectResourceCode,
+            options: memoizedProjectTaskResourceCode,
             filterOptions: requiredFieldFilterOptionsForEnum,
             hide:
                 !permissionMapTaskTableColumn?.['resource_code']?.read &&
@@ -37,7 +37,7 @@ export const projectTaskFilterFields = (
 
         {
             name: 'Resource Type',
-            value: 'resource_type_name',
+            value: 'resource_type_rid',
             type: 'enum',
             required: true,
             options: resourceTypeOptions,
@@ -55,11 +55,18 @@ export const projectTaskFilterFields = (
                 !permissionMapTaskTableColumn?.['resource_role']?.read &&
                 !permissionMapTaskTableColumn?.['resource_role']?.edit,
         },
-
+        {
+            name: 'Task Date',
+            value: 'start_date',
+            type: 'date',
+            hide:
+                !permissionMapTaskTableColumn?.['start_date']?.read &&
+                !permissionMapTaskTableColumn?.['start_date']?.edit,
+        },
 
         {
             name: 'Cost',
-            value: 'total_cost_pro_res',
+            value: 'total_cost_pro_task',
             type: 'text',
             hide:
                 !permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
@@ -67,7 +74,7 @@ export const projectTaskFilterFields = (
         },
         {
             name: 'Effort Hours',
-            value: 'total_hours_pro_res',
+            value: 'total_hours_pro_task',
             type: 'text',
             hide:
                 !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
