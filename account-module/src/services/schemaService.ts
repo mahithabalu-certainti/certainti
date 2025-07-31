@@ -1653,8 +1653,7 @@ class SchemaService {
         description varchar(2000) NULL,
         project_resource_rid varchar(50) NOT NULL,
         CONSTRAINT project_resources_fiscal_r_number_key UNIQUE (r_number)
-      );  
-    `);
+      );`);
   }
 
   async createProjectResourceFiscalRegionTable(
