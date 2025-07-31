@@ -126,8 +126,9 @@ const listProjectOfAccountSchema = Joi.object({
     Joi.array().items(Joi.string())
   ).optional(),
   group_rid: Joi.string().optional().label("Group Id"),
-  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
-  limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
+  group_type_rid: Joi.string().optional().label("Group Type Id"),
+   page: Joi.number().integer().default(1),
+  limit: Joi.number().integer().default(1000),
   filters: Joi.object().default("{}"),
   sortBy: Joi.string().default("first_name"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
@@ -151,8 +152,9 @@ const listActiveUserGroupSchema = Joi.object({
  
   is_consultant_only_group:Joi.boolean().optional().allow('',null),
   group_rid:Joi.string().optional().allow('',null),
-  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
-  limit: Joi.string().pattern(/^[0-9]+$/).default("1000"),
+  group_type_rid: Joi.string().optional().label("Group Type Id"),
+  page: Joi.number().integer().default(1),
+  limit: Joi.number().integer().default(1000),
   filters: Joi.object().default("{}"),
   sortBy: Joi.string().default("first_name"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),

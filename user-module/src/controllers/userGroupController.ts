@@ -181,18 +181,15 @@ async function getActiveUsersForGrouping(req: Request, res: Response): Promise<v
       );
     }
 
-    const page: number = parseInt(validatedData.page, 10) || 1;
-    const limit: number = parseInt(validatedData.limit, 10) || 10;
-
     const { is_consultant_only_group,account_rid,group_rid,sortBy,sortOrder} = validatedData;
     let account;
     if(!group_rid)
     {
-       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid,page,limit,sortBy,sortOrder,parsedFilters);
+       account = await services.userGroupService.getActiveUsersForGrouping(is_consultant_only_group,account_rid,validatedData.page,validatedData.limit,sortBy,sortOrder,parsedFilters);
     }
     else
     {
-      account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid,page,limit,sortBy,sortOrder,parsedFilters);
+      account = await services.userGroupService.getActiveUsersForUpdate(is_consultant_only_group,account_rid,group_rid,validatedData.page,validatedData.limit,sortBy,sortOrder,parsedFilters);
     }
     
     
@@ -372,15 +369,11 @@ async function getProjectOfAccounts(req: Request, res: Response): Promise<void> 
       );
     }
 
-    const page: number = parseInt(validatedData.page, 10) || 1;
-    const limit: number = parseInt(validatedData.limit, 10) || 10;
-    
-
     const projectUsers = await services.userGroupService.getProjectsOfSelectedAccounts(
       validatedData.account_rid,
       validatedData?.group_rid,
-      page,
-      limit,
+      validatedData.page,
+      validatedData.limit,
       parsedFilters,
       validatedData.sortBy,
       validatedData.sortOrder,);
