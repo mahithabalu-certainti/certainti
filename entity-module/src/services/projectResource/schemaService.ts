@@ -4746,26 +4746,26 @@ export class ProjectResourceSchemaService {
     const labelMap: Record<string, string> = {
         "resource_code": "Resource Code",
         "resource_name": "Name",
-        "country_rid": "Country",
-        "region_rid": "Region",
+        "country_rid": "Resource Country",
+        "region_rid": "Resource Region",
         "fiscal_year":"Fiscal Year",
         "resource_type_rid": "Resource Type",
         "resource_role": "Role",
-        "total_project_hours": "Total Project Hours",
+        "total_hours_pro_res": "Effort (Hours)",
         "total_cost_pro_res": "Cost",
         "resource_designation": "Designation",
         "qre_percent": "QRE %",
         "qre_final": "QRE",
-        "comments": "Comments",
-        "r_number": "Project Resource ID",
+        "description": "Comments",
+        // "r_number": "Project Resource ID",
       };
     let exportData = projectResource.map((resource: any) => {
        const exportData: Record<string, string> = {};   
       let resultMap =  {
         "resource_code": resource.resource_code || "-",
         "resource_name": resource.resource_name || "-",
-        "country_name": resource.country_name || "-",
-        "region_name": resource.region_name || "-",
+        "country_rid": resource.country_name || "-",
+        "region_rid": resource.region_name || "-",
         "fiscal_year": resource.fiscal_year || "-",
         "resource_type_rid": resource?.resource_type_name || "-",
         "resource_role": resource.resource_role || "-",
@@ -4773,8 +4773,8 @@ export class ProjectResourceSchemaService {
         "total_cost_pro_res": resource.total_cost_pro_res || "-",
         "qre_percent": resource.qre_percent || "-",
         "qre_final": resource.qre_final || "-",
-        "domments": resource.description || "-",
-        "r_number": resource.project_resource_code || "-",
+        "description": resource.description || "-",
+        // "r_number": resource.project_resource_code || "-",
       };      
       for (const [field, value] of Object.entries(resultMap)) {
       if (allowedFieldSet.has(field)) {
