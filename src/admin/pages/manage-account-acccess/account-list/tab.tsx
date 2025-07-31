@@ -58,6 +58,7 @@ const UserTab: React.FC<UserTabProps> = ({
                 ),
               },
             ]}
+            setAppliedFilters={setAppliedFilters}
           />
         </div>
       )}

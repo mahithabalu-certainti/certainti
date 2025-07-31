@@ -1,6 +1,7 @@
 import {
   costDisplay,
   PROJECT_RESOURCE_REGEX,
+  REGEX_PATTERNS,
   valueDisplay,
 } from '../../../../../../common-utils';
 import {
@@ -234,8 +235,9 @@ export const getProjectResourcesColumns = (
       placeholder: 'Enter an effort',
       validation: [
         {
-          regex: PROJECT_RESOURCE_REGEX.EFFORT,
-          errorMessage: 'Effort must be a positive number',
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
         },
       ],
     },

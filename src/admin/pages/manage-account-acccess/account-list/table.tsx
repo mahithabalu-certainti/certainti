@@ -7,6 +7,7 @@ import { Suspense } from 'react';
 import { AccountList } from '../../../../consultant/types';
 import { useAccounts } from '../../../../consultant/services/account';
 import { FilterType } from '../../../types';
+import { clearFilters } from '../../../../components/filter-component/utils';
 
 interface AcoountTableProps {
   appliedFilters: Record<string, FilterType>;
@@ -55,6 +56,7 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
     searchParams.set('tabIndex', '0');
     navigate({ search: searchParams.toString() }, { replace: true });
     setAppliedFilters({});
+    clearFilters();
   };
   const {
     data,
