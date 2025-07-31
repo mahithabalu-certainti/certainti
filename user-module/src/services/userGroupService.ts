@@ -346,19 +346,17 @@ async assignUserToUserGroups(
     // Assign accounts
     const modifiedAccounts = accounts?.filter(a => a.is_modified);
     if (modifiedAccounts && modifiedAccounts?.length > 0) {
+      await this.assignEntityAccessToAccount({
+        group_rid,
+        accounts: modifiedAccounts,
+        userId
+      });
       await this.assignAccountsToGroup({
         accounts: modifiedAccounts,
         group_rid,
         userId
       });
-
-    
-        await this.assignEntityAccessToAccount({
-          group_rid,
-          accounts: modifiedAccounts,
-          userId
-        });
-      
+     
     }
 
     // Assign projects
@@ -2254,85 +2252,31 @@ async assignAccountsToGroup({
         errorMessage: "Both account_rid and group_rid are required.",
       };
     }
-
-    const toAssign: string[] = [];
-    const toRevoke: string[] = [];
-
-    for (const account of accounts) {
-      if (!account.is_modified) continue;
-
-      if (account.is_enabled) {
-        toAssign.push(account.rid);
-      } else {
-        toRevoke.push(account.rid);
-      }
-    }
-
-    const created: string[] = [];
-    const deleted: string[] = [];
-
-    // ✅ Assign accounts (create mappings if not already present)
-    if (toAssign.length > 0) {
-      const existing = await UserGroupAccountMapping.findAll({
-        where: {
-          group_rid,
-          account_rid: { [Op.in]: toAssign },
-        },
-        attributes: ["account_rid"],
-      });
-
-      const existingSet = new Set(existing.map((e) => e.account_rid));
-      const newMappings = toAssign
-        .filter((rid) => !existingSet.has(rid))
-        .map((rid) => ({
-          group_rid,
-          account_rid: rid,
-          created_by: userId,
-        }));
-
-      if (newMappings.length > 0) {
-        await UserGroupAccountMapping.bulkCreate(newMappings);
-        created.push(...newMappings.map((m) => m.account_rid));
-      }
-    }
-
-    //  Revoke accounts
-    if (toRevoke.length > 0) {
-       const sequelize = await initSequelize();
-       // Step 2: Remove users associated ONLY with those revoked accounts from the group
-      const usersToRemove = await sequelize.query<{ user_rid: string }>(
-      constants.USER_OF_SELECTED_ACCOUNTS,
-      {
-        replacements: { group_rid, revokedAccounts: toRevoke },
-        type: QueryTypes.SELECT,
-      }
+    const { toAssign, toRevoke } = accounts.reduce<{
+      toAssign: string[];
+      toRevoke: string[];
+    }>(
+      (acc, account) => {
+        if (account.is_modified) {
+          account.is_enabled 
+            ? acc.toAssign.push(account.rid) 
+            : acc.toRevoke.push(account.rid);
+        }
+        return acc;
+      },
+      { toAssign: [], toRevoke: [] }
     );
-    const userRids = usersToRemove.map((u) => u.user_rid);
-    if (userRids.length > 0) {
-      await UserGroupMapping.destroy({
-        where: {
-          group_rid,
-          user_rid: { [Op.in]: userRids },
-        },
-      });
-    }
-      const revokeCount = await UserGroupAccountMapping.destroy({
-        where: {
-          group_rid,
-          account_rid: { [Op.in]: toRevoke },
-        },
-      });
-
-      deleted.push(...toRevoke);
-     
-    }
-
-    return {
+    // Process assignments and revocations in parallel
+    const [created, deleted] = await Promise.all([
+      this.createAccountMappings(group_rid,toAssign,userId),
+      this.revokeAccountMappings(group_rid,toRevoke),
+    ]);
+     return {
       statusCode: constants.SUCCESS,
       message: `Account access updated. Created: ${created.length}, Deleted: ${deleted.length}`,
       data: { created, deleted },
     };
-  } catch (err: any) {
+    } catch (err: any) {
     console.error("Error assigning accounts to group:", err);
     return {
       statusCode: constants.FAILED,
@@ -2341,6 +2285,82 @@ async assignAccountsToGroup({
     };
   }
 }
+
+ // Helper functions
+  async  createAccountMappings(group_rid:string,accountRids: string[],userId:string): Promise<string[]> {
+    if (accountRids.length === 0) return [];
+
+    const existing = await UserGroupAccountMapping.findAll({
+      where: {
+        group_rid,
+        account_rid: { [Op.in]: accountRids },
+      },
+      attributes: ["account_rid"],
+      raw: true,
+    });
+
+    const existingSet = new Set(existing.map(e => e.account_rid));
+    const newMappings = accountRids
+      .filter(rid => !existingSet.has(rid))
+      .map(rid => ({
+        group_rid,
+        account_rid: rid,
+        created_by: userId,
+      }));
+
+    if (newMappings.length > 0) {
+      await UserGroupAccountMapping.bulkCreate(newMappings);
+      return newMappings.map(m => m.account_rid);
+    }
+    return [];
+  }
+
+  async  revokeAccountMappings(group_rid:string,accountRids: string[]): Promise<string[]> {
+    if (accountRids.length === 0) return [];
+
+    const sequelize = await initSequelize();
+    
+    const [usersToRemove, projectsToRemove] = await Promise.all([
+      sequelize.query<{ user_rid: string }>(
+        constants.USER_OF_SELECTED_ACCOUNTS,
+        {
+          replacements: { group_rid, revokedAccounts: accountRids },
+          type: QueryTypes.SELECT,
+        }
+      ),
+      sequelize.query<{ entity_rid: string }>(
+        constants.PROJECT_OF_SELECTED_ACCOUNTS,
+        {
+          replacements: { group_rid, revokedAccounts: accountRids },
+          type: QueryTypes.SELECT,
+        }
+      ),
+    ]);
+
+    const userRids = usersToRemove.map(u => u.user_rid);
+    const projectRids = projectsToRemove.map(p => p.entity_rid);
+    await Promise.all([
+      userRids.length > 0 && UserGroupMapping.destroy({
+        where: {
+          group_rid,
+          user_rid: { [Op.in]: userRids },
+        },
+      }),
+      UserGroupEntityAccess.destroy({
+        where: {
+          group_rid,
+          entity_rid: { [Op.in]: [...accountRids, ...projectRids] },
+        },
+      }),
+      UserGroupAccountMapping.destroy({
+        where: {
+          group_rid,
+          account_rid: { [Op.in]: accountRids },
+        },
+      }),
+    ]);
+    return accountRids;
+  }
 
 
 /**
@@ -3083,6 +3103,9 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
         case 'not_equals':
         case 'ne':
            conditions.push(`${lowerColumn} != '${String(value).toLowerCase()}'`);
+          break;
+        case 'is_empty':
+          conditions.push(`(${lowerColumn} IS NULL OR ${lowerColumn} = '')`);
           break;
         case 'contains':
           conditions.push(`${lowerColumn} LIKE '%${String(value).toLowerCase()}%'`);
