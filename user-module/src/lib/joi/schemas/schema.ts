@@ -34,7 +34,7 @@ const createUserGroupSchema = Joi.object({
   projects: Joi.object()
     .pattern(
       Joi.string(), // project_rid
-      Joi.boolean()        // has_access_enabled
+      Joi.boolean() // has_access_enabled
     )
     .optional()
     .label("Projects"),

@@ -2296,7 +2296,7 @@ async assignAccountsToGroup({
         account_rid: { [Op.in]: accountRids },
       },
       attributes: ["account_rid"],
-      raw: true, // Better performance
+      raw: true,
     });
 
     const existingSet = new Set(existing.map(e => e.account_rid));

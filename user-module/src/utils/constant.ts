@@ -170,7 +170,7 @@ export const constants = {
     FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugm
     JOIN ${MAIN_SCHEMA_NAME}.project_summary p ON ugm.entity_rid = p.project_rid
     WHERE ugm.group_rid = :group_rid
-      AND p.account_rid IN (:revokedAccounts)`,
+    AND p.account_rid IN (:revokedAccounts)`,
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 } as const;
