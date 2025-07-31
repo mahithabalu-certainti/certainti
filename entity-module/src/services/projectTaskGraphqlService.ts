@@ -120,6 +120,7 @@ export default class ProjectTaskGraphqlServies {
               account_rid: latestData.account_rid,
               account_name: latestData.account_name || null,
               project_rid: latestData.project_rid,
+              project_fiscal_rid: latestData.project_fiscal_rid,
               project_name: latestData.project_name || null,
               project_code: latestData.project_code,
               project_resource_code: latestData.project_resource_code,
