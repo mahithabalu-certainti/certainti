@@ -60,14 +60,8 @@ const Settings: React.FC<SettingsProps> = ({
     [permission]
   );
 
-  const disableFiscalDates = useMemo(() => {
-    return Boolean(
-      accountDetails?.fiscal_start_date && accountDetails?.fiscal_end_date
-    );
-  }, [accountDetails]);
-
   useEffect(() => {
-    const formConfig = settingsFormFields(permissionMap, disableFiscalDates);
+    const formConfig = settingsFormFields(permissionMap);
 
     const allFieldsDisabled = formConfig.every((section) =>
       section.fields.every((field) => field.disabled === true)
@@ -167,7 +161,7 @@ const Settings: React.FC<SettingsProps> = ({
       >
         <FormBuilder
           key={JSON.stringify(accountDetails)}
-          data={settingsFormFields(permissionMap, disableFiscalDates)}
+          data={settingsFormFields(permissionMap)}
           formRef={formRef}
           outData={handleFormSubmit}
           values={formValues}

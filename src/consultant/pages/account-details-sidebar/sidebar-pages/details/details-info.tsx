@@ -17,6 +17,7 @@ import { RootState } from '../../../../../store/store';
 import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
+import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 import { getDetailsAttachmentColumns } from '../../../../../components/details-section/helpers';
 
 interface DetailsInfoProps {
@@ -50,6 +51,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 }) => {
   const accountById = detailsInfo?.accountById;
   const accountDetails = detailsInfo?.accountDetails;
+  const dataResidency =
+    DATA_STORAGE_OPTIONS.find(
+      (option) => option.value === accountDetails?.data_storage
+    )?.label || '-';
 
   const { permission } = useSelector((state: RootState) => state.permission);
   const userViewEditFields = useMemo(
@@ -202,6 +207,21 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       keyContactStatus: contact?.status_name,
     }));
 
+  const accountSettings: DetailItem[] = [
+    {
+      label: 'Fiscal Start',
+      value: accountDetails?.fiscal_start_date,
+      key: 'fiscal_start_date',
+    },
+
+    {
+      label: 'Fiscal End',
+      value: accountDetails?.fiscal_end_date,
+      key: 'fiscal_end_date',
+    },
+    { label: 'Data Residency', value: dataResidency, key: 'data_storage' },
+  ];
+
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: accountDetails?.account_rid, key: 'rid' },
     { label: 'Account ID', value: accountById?.r_number, key: 'r_number' },
@@ -231,6 +251,12 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   const businessDetails = applyHidePermission(businessInfo, permissionMap);
   const locationDetails = applyHidePermission(locationInfo, permissionMap);
   const descriptionDetails = applyHidePermission(description, permissionMap);
+  const accountSettingsDetails = applyHidePermission(
+    accountSettings,
+    permissionMap
+  );
+
+  console.log('accountSettingsDetails', accountSettingsDetails);
 
   return (
     <Fragment>
@@ -257,7 +283,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
           ccAvailable={true}
         />
       )}
-
+      <DetailsSection title='Account Settings' data={accountSettingsDetails} />
       <DetailsSection
         title='Comments'
         data={descriptionDetails}

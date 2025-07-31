@@ -252,7 +252,7 @@ export enum MenuOption {
   MANAGE_PROFILE = 'manage_profile',
   MANAGE_USER_GROUP = 'manage_user_group',
   MANAGE_USER_ACCESS = 'manage_user_access',
-  MANAGE_ACCOUNT_ACCESS = 'manage-account-access',
+  MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   MANAGE_SETTINGS = 'manage_settings',
   MANAGE_GEO_BASED_RULE = 'manage_geo-based_rule',
   IMPORT_TEMPLATE = 'import_template',
