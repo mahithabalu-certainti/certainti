@@ -217,16 +217,38 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'resource_id', data_type: 'String', required:true},
         { column_name: 'resource_name', data_type: 'String' ,required:false},
         { column_name: 'resource_type', data_type: 'ENUM',required:true },
+        { column_name: 'resource_organization', data_type: 'String' ,required:false},
         { column_name: 'currency', data_type: 'String',required:false },
         { column_name: 'start_date', data_type: 'Date' ,required:false},
         { column_name: 'end_date', data_type: 'Date',required:false },
-        { column_name: 'annual_compensation', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'monthly_compensation', data_type: 'Decimal(18,2)' ,required:false},
-        { column_name: 'weekly_compensation', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'daily_compensation', data_type: 'Decimal(18,2)' ,required:false},
-        { column_name: 'hourly_compensation', data_type: 'Decimal(18,2)' ,required:false},
-        { column_name: 'bi_weekly_compensation', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'comments', data_type: 'text',required:false },
+        { column_name: 'effort_in_hours', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'salary', data_type: 'Decimal(18,2)' ,required:false},
+        { column_name: 'bonus', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'insurance', data_type: 'Decimal(18,2)' ,required:false},
+        { column_name: 'deductions', data_type: 'Decimal(18,2)' ,required:false},
+        { column_name: 'resource_cost', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'comments', data_type: 'text',required:false }
+      ];
+    case 'project_task':
+      return [
+        { column_name: 'project_id', data_type: 'String', required:true},
+        { column_name: 'project_name', data_type: 'String' ,required:false},
+        { column_name: 'project_description', data_type: 'String',required:true },
+        { column_name: 'resource_id', data_type: 'String' ,required:true},
+        { column_name: 'resource_name', data_type: 'String',required:false },
+        { column_name: 'resource_type', data_type: 'ENUM' ,required:false},
+        { column_name: 'resource_designation', data_type: 'String',required:false },
+        { column_name: 'resource_role', data_type: 'String',required:false },
+        { column_name: 'total_experience', data_type: 'Integer' ,required:false},
+        { column_name: 'task_start_date', data_type: 'Date',required:true },
+        { column_name: 'task_end_date', data_type: 'Date',required:false },
+        { column_name: 'total_hours', data_type: 'Decimal(18,2)' ,required:true},
+        { column_name: 'total_cost', data_type: 'Decimal(18,2)' ,required:false},
+        { column_name: 'resource_task_description', data_type: 'String',required:false },
+        { column_name: 'resource_city', data_type: 'String',required:false },
+        { column_name: 'resource_state_province', data_type: 'String',required:false },
+        { column_name: 'resource_country', data_type: 'String',required:false },
+        { column_name: 'project_type', data_type: 'ENUM' ,required:false}
       ];
 
     case 'resource_skill':

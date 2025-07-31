@@ -180,6 +180,10 @@ class UserService {
           errorMessage: "User not found",
         };
       }
+      if(remove_group_memberships)
+      {
+         this.revokeAllGroupAccessForUser(userId)     
+      }
       if (user.org_id !== org_id) {
         const userGroups = await this.getUserAccessStatus(userId);
       if (userGroups.hasAccess) {
@@ -226,10 +230,7 @@ class UserService {
       if (organization === constants.ENV_EA) {
         this.updateUserDetails(userData, userId);
       }
-      if(remove_group_memberships)
-      {
-         this.revokeAllGroupAccessForUser(userId)     
-      }
+     
 
       return {
         statusCode: constants.SUCCESS,
