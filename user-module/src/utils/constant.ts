@@ -113,7 +113,7 @@ export const constants = {
       END as has_access,
       uga.access_type
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
-     LEFT JOIN trd365.account acc
+     LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
       ON acc.rid = ps.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
       ON uga.entity_rid = ps.project_rid 
@@ -140,7 +140,7 @@ export const constants = {
      FROM ${MAIN_SCHEMA_NAME}.account a
      JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
      ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
-  SQL_GET_DEFAULT_PROJECT_ACCESS:`SELECT rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_summary`,
+  SQL_GET_DEFAULT_PROJECT_ACCESS:`SELECT project_rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_summary`,
   SQL_GET_SELECTED_PROJECT_ACCESS: `SELECT 
       ps.project_rid,
       ps.project_name,

@@ -1762,9 +1762,9 @@ if (includeDependencies) {
     sequelize.query(
       `
       SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
-      FROM trd365.profile_fields_access pfa
-      JOIN trd365.permission_fields pf ON pfa.permission_field_id = pf.rid
-      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
       WHERE mp.permission_name = :permissionName
         AND pfa.profile_id = :profileId
       `,
@@ -1779,9 +1779,9 @@ if (includeDependencies) {
     sequelize.query(
       `
       SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
-      FROM trd365.user_fields_access ufa
-      JOIN trd365.permission_fields pf ON ufa.permission_field_id = pf.rid
-      JOIN trd365.module_permission mp ON pf.module_permission_id = mp.rid
+      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
       WHERE mp.permission_name = :permissionName
         AND ufa.user_id = :userId
       `,
