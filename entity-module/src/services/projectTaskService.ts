@@ -87,14 +87,9 @@ async listProjectTasks(
     });
 
 let resourceFilter: Record<string, any> | undefined;
-let projectNameFilter: Record<string, any> | undefined;
     if (filters.resource_name) {
     resourceFilter = filters.resource_name;
     delete filters.resource_name;
-    }
-    if (filters.project_name) {
-    projectNameFilter = filters.project_name;
-    delete filters.project_name;
     }
 
     // ✅ Build where clause with project filter
@@ -117,7 +112,7 @@ let projectNameFilter: Record<string, any> | undefined;
         },
         {
           model: ProjectFiscalModel,
-          attributes: ['project_name', 'project_code'],
+          attributes: ['project_name', 'project_code', 'currency_rid'],
           required: false,
           as: 'project'
         },
@@ -140,23 +135,9 @@ let projectNameFilter: Record<string, any> | undefined;
       : [];
     const resourceTypeMap = new Map(resourceTypes.map((type: any) => [type.rid, type.resource_type_name]));
 
-    const regionRids = allTasks.map(task => task.region_rid).filter(rid => rid);
-    const countryRids = allTasks.map(task => task.country_rid).filter(rid => rid);
-    const currencyRids = allTasks.map(task => task.currency_rid).filter(rid => rid);
+    const currencyRids = allTasks.map(task => (task as any)?.project?.currency_rid).filter(rid => rid);
 
-    const [regions, countries, currencies] = await Promise.all([
-      regionRids.length
-        ? mainSequelize.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:regionRids)`,
-          { replacements: { regionRids }, type: 'SELECT' }
-        )
-        : [],
-      countryRids.length
-        ? mainSequelize.query(
-          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRids)`,
-          { replacements: { countryRids }, type: 'SELECT' }
-        )
-        : [],
+    const [currencies] = await Promise.all([
       currencyRids.length
         ? mainSequelize.query(
           `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
@@ -165,8 +146,6 @@ let projectNameFilter: Record<string, any> | undefined;
         : []  
     ]);
 
-    const regionMap = new Map(regions.map((region: any) => [region.rid, region.state_name]));
-    const countryMap = new Map(countries.map((country: any) => [country.rid, country.country_name]));
     const currencyMap = new Map(currencies.map((currency: any) => [currency.rid, currency.currency_symbol]));    
 
     // ✅ Format all tasks
@@ -189,12 +168,8 @@ let projectNameFilter: Record<string, any> | undefined;
       resource_type_rid: (task as any).resource?.resource_type_rid || null,
       resource_type_name: resourceTypeMap.get((task as any).resource?.resource_type_rid) || null, // FIXED
       resource_role: (task as any).resource?.resource_role || null,
-      country_rid: task.country_rid,
-      country_name: countryMap.get(task.country_rid) || null,
-      region_rid: task.region_rid,
-      region_name: regionMap.get(task.region_rid) || null,
-      currency_rid: task.currency_rid,
-      currency_symbol: currencyMap.get(task.currency_rid) || null,
+      currency_rid: (task as any).project?.currency_rid,
+      currency_symbol: currencyMap.get((task as any).project?.currency_rid) || null,
       resource_orgname: (task as any).resource?.resource_orgname || null,
       total_hours_pro_task: task.total_hours_pro_task,
       total_cost_pro_task: task.total_cost_pro_task,
@@ -205,23 +180,19 @@ let projectNameFilter: Record<string, any> | undefined;
       modified_datetime: task.modified_datetime
     }));
 
-    if (resourceFilter || projectNameFilter) {
+    if (resourceFilter) {
     formattedTasks = formattedTasks.filter(task => {
     const resourcePass = resourceFilter
       ? this.applyTextFilter(task.resource_name, resourceFilter)
       : true;
 
-    const projectPass = projectNameFilter
-      ? this.applyTextFilter(task.project_name, projectNameFilter)
-      : true;
-
-    return resourcePass && projectPass;
+    return resourcePass;
   });
 }
 
 
     // ✅ Handle special sorting cases
-    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_cost_pro_task', 'total_hours_pro_task', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
+    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_cost_pro_task', 'total_hours_pro_task', 'comments', 'created_datetime', 'modified_datetime'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -230,34 +201,6 @@ let projectNameFilter: Record<string, any> | undefined;
       formattedTasks.sort((a, b) => {
         const aName = a.resource_type_name;
         const bName = b.resource_type_name;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'region') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.region_name;
-        const bName = b.region_name;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'country') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.country_name;
-        const bName = b.country_name;
         if (finalSortOrder === 'ASC') {
           if (!aName) return -1;
           if (!bName) return 1;
@@ -286,34 +229,6 @@ let projectNameFilter: Record<string, any> | undefined;
       formattedTasks.sort((a, b) => {
         const aName = a.resource_name;
         const bName = b.resource_name;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'project_code') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.project_code;
-        const bName = b.project_code;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'project_name') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.project_name;
-        const bName = b.project_name;
         if (finalSortOrder === 'ASC') {
           if (!aName) return -1;
           if (!bName) return 1;
@@ -420,14 +335,9 @@ async listProjectTasksExport(
     });
 
     let resourceFilter: Record<string, any> | undefined;
-    let projectNameFilter: Record<string, any> | undefined;
     if (filters.resource_name) {
     resourceFilter = filters.resource_name;
     delete filters.resource_name;
-    }
-    if (filters.project_name) {
-    projectNameFilter = filters.project_name;
-    delete filters.project_name;
     }
 
     // ✅ Build where clause with project filter
@@ -450,7 +360,7 @@ async listProjectTasksExport(
         },
         {
           model: ProjectFiscalModel,
-          attributes: ['project_name', 'project_code'],
+          attributes: ['project_name', 'project_code', 'currency_rid'],
           required: false,
           as: 'project'
         },
@@ -473,23 +383,9 @@ async listProjectTasksExport(
       : [];
     const resourceTypeMap = new Map(resourceTypes.map((type: any) => [type.rid, type.resource_type_name]));
 
-    const regionRids = allTasks.map(task => task.region_rid).filter(rid => rid);
-    const countryRids = allTasks.map(task => task.country_rid).filter(rid => rid);
-    const currencyRids = allTasks.map(task => task.currency_rid).filter(rid => rid);
+    const currencyRids = allTasks.map(task => (task as any)?.project?.currency_rid).filter(rid => rid);
 
-    const [regions, countries, currencies] = await Promise.all([
-      regionRids.length
-        ? mainSequelize.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:regionRids)`,
-          { replacements: { regionRids }, type: 'SELECT' }
-        )
-        : [],
-      countryRids.length
-        ? mainSequelize.query(
-          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRids)`,
-          { replacements: { countryRids }, type: 'SELECT' }
-        )
-        : [],
+    const [currencies] = await Promise.all([
       currencyRids.length
         ? mainSequelize.query(
           `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
@@ -498,8 +394,6 @@ async listProjectTasksExport(
         : []  
     ]);
 
-    const regionMap = new Map(regions.map((region: any) => [region.rid, region.state_name]));
-    const countryMap = new Map(countries.map((country: any) => [country.rid, country.country_name]));
     const currencyMap = new Map(currencies.map((currency : any) => [currency.rid, currency.currency_symbol]));
 
     // ✅ Format all tasks
@@ -522,12 +416,8 @@ async listProjectTasksExport(
       resource_type_rid: (task as any).resource?.resource_type_rid || null,
       resource_type_name: resourceTypeMap.get((task as any).resource?.resource_type_rid) || null, // FIXED
       resource_role: (task as any).resource?.resource_role || null,
-      country_rid: task.country_rid,
-      country_name: countryMap.get(task.country_rid) || null,
-      region_rid: task.region_rid,
-      region_name: regionMap.get(task.region_rid) || null,
-      currency_rid: task.currency_rid,
-      currency_symbol: currencyMap.get(task.currency_rid) || null,
+      currency_rid: (task as any).project?.currency_rid,
+      currency_symbol: currencyMap.get((task as any).project?.currency_rid) || null,
       resource_orgname: (task as any).resource?.resource_orgname || null,
       total_hours_pro_task: task.total_hours_pro_task,
       total_cost_pro_task: task.total_cost_pro_task,
@@ -538,22 +428,18 @@ async listProjectTasksExport(
       modified_datetime: task.modified_datetime
     }));
 
-     if (resourceFilter || projectNameFilter) {
+     if (resourceFilter) {
     formattedTasks = formattedTasks.filter(task => {
     const resourcePass = resourceFilter
       ? this.applyTextFilter(task.resource_name, resourceFilter)
       : true;
 
-    const projectPass = projectNameFilter
-      ? this.applyTextFilter(task.project_name, projectNameFilter)
-      : true;
-
-    return resourcePass && projectPass;
+    return resourcePass;
   });
 }
 
     // ✅ Handle special sorting cases
-    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_hours_pro_task', 'total_cost_pro_task', 'comments', 'region', 'country', 'created_datetime', 'modified_datetime'];
+    const validSortFields = ['resource_code', 'r_number', 'resource_name', 'resource_type', 'resource_role', 'start_date', 'total_hours_pro_task', 'total_cost_pro_task', 'comments', 'created_datetime', 'modified_datetime'];
     const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
     const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
@@ -562,34 +448,6 @@ async listProjectTasksExport(
       formattedTasks.sort((a, b) => {
         const aName = a.resource_type_name;
         const bName = b.resource_type_name;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'region') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.region_name;
-        const bName = b.region_name;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'country') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.country_name;
-        const bName = b.country_name;
         if (finalSortOrder === 'ASC') {
           if (!aName) return -1;
           if (!bName) return 1;
@@ -618,34 +476,6 @@ async listProjectTasksExport(
       formattedTasks.sort((a, b) => {
         const aName = a.resource_name;
         const bName = b.resource_name;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'project_code') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.project_code;
-        const bName = b.project_code;
-        if (finalSortOrder === 'ASC') {
-          if (!aName) return -1;
-          if (!bName) return 1;
-          return aName.localeCompare(bName);
-        } else {
-          if (!aName) return 1;
-          if (!bName) return -1;
-          return bName.localeCompare(aName);
-        }
-      });
-    } else if (finalSortBy === 'project_name') {
-      formattedTasks.sort((a, b) => {
-        const aName = a.project_name;
-        const bName = b.project_name;
         if (finalSortOrder === 'ASC') {
           if (!aName) return -1;
           if (!bName) return 1;
@@ -689,29 +519,19 @@ async listProjectTasksExport(
         }
 
       const labelMap: Record<string, string> = {
-        "account_name": "Account Name",
-        "project_code": "Project Code",
-        "project_name": "Project Name",
         "resource_code": "Resource Code",
         "resource_name": "Resource Name",
-        "fiscal_year": "Fiscal Year",
         "resource_type_name": "Resource Type",
         "resource_role": "Role",
         "start_date": "Task Date",
         "total_cost_pro_task": "Cost",
         "total_hours_pro_task": "Effort in Hrs",
         "comments": "Comments",
-        "region_name": "Region",
-        "country_name": "Country",
-        "r_number": "Task ID"
+        "r_number": "Project Task ID"
 };
       const fieldValueMap: Record<string, string> = {
         "resource_type_rid": "resource_type_name",
-        "region_rid":"region_name",
-        "country_rid":"country_name",
         "resource_rid": "resource_name",
-        "account_rid": "account_name",
-        "project_rid": "project_name",
         "currency_rid": "currency_symbol"
       };
 
@@ -746,7 +566,7 @@ async listProjectTasksExport(
     this.logger.error('Error in listProjectTasks:', error);
     return {
       statusCode: 500,
-      message: 'Failed to fetch attachments',
+      message: 'Failed to fetch project tasks',
       errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
       data: { tasks: [], totalCount: 0 }
     };
@@ -844,7 +664,7 @@ async getProjectTaskById(
         },
         {
           model: ProjectFiscalModel,
-          attributes: ['project_name', 'project_code'],
+          attributes: ['project_name', 'project_code', 'currency_rid'],
           required: false,
           as: 'project'
         },
@@ -865,7 +685,7 @@ async getProjectTaskById(
       };
     }
 
-    const [resourceTypeData, regionData, countryData, currencyData] = await Promise.all([
+    const [resourceTypeData, currencyData] = await Promise.all([
       (task as any).resource?.resource_type_rid ? mainSequelize.query(
         rawQueries.GET_RESOURCE_TYPES,
         { 
@@ -873,23 +693,7 @@ async getProjectTaskById(
           type: 'SELECT'
         }
       ) : Promise.resolve([]),
-
-      task.region_rid ? mainSequelize.query(
-        rawQueries.GET_REGIONS,
-        {
-          replacements: { regionRid: task.region_rid },
-          type: 'SELECT'
-        }
-      ) : Promise.resolve([]),
-
-      task.country_rid ? mainSequelize.query(
-        rawQueries.GET_COUNTRIES,
-        {
-          replacements: { countryRid: task.country_rid },
-          type: 'SELECT'
-        }
-      ) : Promise.resolve([]),
-      task.currency_rid ? mainSequelize.query(
+      (task as any).project?.currency_rid ? mainSequelize.query(
         rawQueries.GET_CURRENCIES,
         {
           replacements: { currencyRid: task.currency_rid },
@@ -899,8 +703,6 @@ async getProjectTaskById(
     ]);
 
     const [resourceType] = resourceTypeData;
-    const [region] = regionData;
-    const [country] = countryData;
     const [currency] = currencyData;
 
     const attachments = await this.fetchAttachmentsBytaskId(taskRid);
@@ -964,11 +766,7 @@ async getProjectTaskById(
       resource_type_rid: taskWithUserDetails.dataValues.resource?.resource_type_rid,
       resource_type_name: (resourceType as any)?.resource_type_name || null,
       resource_role: taskWithUserDetails.dataValues.resource?.resource_role,
-      country_rid: taskWithUserDetails.dataValues.country_rid,
-      country_name: (country as any)?.country_name || null,
-      region_rid: taskWithUserDetails.dataValues.region_rid,
-      region_name: (region as any)?.state_name || null,
-      currency_rid: taskWithUserDetails.dataValues.currency_rid,
+      currency_rid: taskWithUserDetails.dataValues.project?.currency_rid,
       currency_symbol: (currency as any)?.currency_symbol || null,
       currency_name: (currency as any)?.currency_name || null,
       resource_orgname: taskWithUserDetails.dataValues.resource?.resource_orgname,
@@ -1069,14 +867,6 @@ private buildRawWhereClause(
           case 'contains': condition['$resource.resource_role$'] = { [Op.iLike]: `%${value}%` }; break;
           case 'is_empty': condition['$resource.resource_role$'] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
         }
-        break;
-      case 'project_code':
-        switch (operator.toLowerCase()) {
-          case 'equals': condition['$project.project_code$'] = { [Op.iLike]: value }; break;
-          case 'not_equals': condition['$project.project_code$'] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
-          case 'contains': condition['$project.project_code$'] = { [Op.iLike]: `%${value}%` }; break;
-          case 'is_empty': condition['$project.project_code$'] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
-        }
         break;  
       case 'comments':        
       case 'r_number':    
@@ -1127,15 +917,6 @@ private buildRawWhereClause(
           case 'is_empty': condition['$resource.resource_type_rid$'] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
         }
         break;  
-      case 'country_rid':
-      case 'region_rid':    
-        switch (operator.toLowerCase()) {
-          case 'equals': condition[field] = { [Op.eq]: value }; break;
-          case 'not_equals': condition[field] = { [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }] }; break;          
-          case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
-          case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
-        }
-        break;
 
       default:
         console.log(`Unhandled filter field: ${field}`);
@@ -1198,7 +979,6 @@ async fetchAttachmentsBytaskId(task_rid: string): Promise<any[]> {
       };
 
       const createdName = await getUserFullName(createdById);
-      console.log("createdName :",createdName);
       const modifiedName = await getUserFullName(modifiedById);
 
       return {
