@@ -1053,7 +1053,7 @@ async insertClientTemplateDetails(
   account_number: string,
   account_rid: string,
 ) {
-  const entityTypes = ['resource','resource_cost','resource_skill','project','project_resource'];
+  const entityTypes = ['resource','resource_cost','resource_skill','project','project_resource','project_task'];
   
   // Loop through each entity type
   for (const entity of entityTypes) {
