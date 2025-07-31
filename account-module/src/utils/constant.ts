@@ -156,7 +156,7 @@ export const rawQueries = {
    WHERE ugam.account_rid = :account_rid
      AND ugt.type = :group_type_name
    LIMIT 1`,
-   UPDATE_GROUP_NAME: `UPDATE trd365.user_groups SET group_name = :group_name WHERE rid = :group_rid`,
+   UPDATE_GROUP_NAME: `UPDATE ${MAIN_SCHEMA_NAME}.user_groups SET group_name = :group_name WHERE rid = :group_rid`,
    CREATE_AUTO_ASSIGNED_GROUP:`INSERT INTO "${MAIN_SCHEMA_NAME}"."user_groups" (group_name, group_type_rid, created_by)
       VALUES (:group_name, :group_type_rid, :created_by) RETURNING rid`,
    CREATE_ENTITY_ACCESS: `INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
