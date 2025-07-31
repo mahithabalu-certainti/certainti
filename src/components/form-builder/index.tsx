@@ -43,6 +43,7 @@ import {
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
+import FiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -88,7 +89,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -1030,6 +1031,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'select': {
         const fieldValue =
           (constructFormData[field.name] || field.defaultValue) ?? '';
+        if (field.isFiscalYear) {
+          return (
+            <div className='w-full'>
+              <FiscalYearDropdown
+                fiscalYear={String(fieldValue)}
+                fiscalYearsDropDown={field.options || []}
+                onChange={(e) => handleChange(e.target.value)}
+              />
+            </div>
+          );
+        }
+
         return (
           <div className='w-full'>
             <Select
@@ -1934,7 +1947,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               field.name === 'project_startdate' ||
               field.name === 'project_enddate'
             ) {
-              const startDate = constructFormData['project_startdate'] as string;
+              const startDate = constructFormData[
+                'project_startdate'
+              ] as string;
               const endDate = constructFormData['project_enddate'] as string;
 
               if ((startDate && !endDate) || (!startDate && endDate)) {
@@ -1945,7 +1960,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) { 
+              if (startDate && endDate) {
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 
@@ -1972,11 +1987,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
-           // Handle project task dates validation
-            if (
-              field.name === 'start_date' ||
-              field.name === 'end_date'
-            ) {
+            // Handle project task dates validation
+            if (field.name === 'start_date' || field.name === 'end_date') {
               const startDate = constructFormData['start_date'] as string;
               const endDate = constructFormData['end_date'] as string;
 
@@ -1988,7 +2000,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
 
-              if (startDate && endDate) { 
+              if (startDate && endDate) {
                 const start = dayjs(startDate);
                 const end = dayjs(endDate);
 
@@ -2346,7 +2358,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                  `${field.type}` === 'radio'
+                                `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2378,9 +2390,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
-                                },
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
                               },
                             }}
                             key={colIndex}

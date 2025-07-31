@@ -77,7 +77,7 @@ const FiscalYearDropdown = ({
 
   const selectedLabel =
     fiscalYearsDropDown.find((fy) => fy.value === fiscalYear)?.label ||
-    'FY-All';
+    'Choose Fiscal Year';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -99,6 +99,7 @@ const FiscalYearDropdown = ({
       ref={dropdownRef}
     >
       <button
+        type='button'
         onClick={() => setOpen((prev) => !prev)}
         className={`${open || Number(selectedYear) ? 'bg-[#FFFFFF26]' : 'bg-transparent'}
         text-white text-[13px] font-normal w-[107px] min-w-[107px] px-3 h-[25px] flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}

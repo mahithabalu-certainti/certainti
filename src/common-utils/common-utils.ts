@@ -190,6 +190,7 @@ export const createSelectField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     dependantLabel?: string;
+    isFiscalYear?: boolean;
   }
 ): FieldType => ({
   type: 'select',
@@ -208,6 +209,7 @@ export const createSelectField = (
   resetDependsFields: others.resetDependsFields,
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
+  isFiscalYear: others.isFiscalYear,
 });
 
 export const createAutoCompleteField = (
@@ -597,12 +599,13 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${errorData?.statusMessage
-    ? typeof errorData.statusMessage === 'object'
-      ? Object.values(errorData.statusMessage).join(', ')
-      : errorData.statusMessage || ''
-    : errorData?.message || data.message
-    }</p>`;
+  return `<p>${
+    errorData?.statusMessage
+      ? typeof errorData.statusMessage === 'object'
+        ? Object.values(errorData.statusMessage).join(', ')
+        : errorData.statusMessage || ''
+      : errorData?.message || data.message
+  }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
