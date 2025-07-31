@@ -89,7 +89,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -1289,26 +1289,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           ? dayjs(startDateValue as string, 'YYYY-MM-DD')
           : undefined;
 
-        // Get the selected fiscal year from form data
-        const selectedFiscalYear = constructFormData['fiscal_year'];
-        const isFinancialDateField =
-          field.name === 'financial_start_date' ||
-          field.name === 'financial_end_date';
-
         const customMinDate: Dayjs | undefined = (() => {
-          if (isFinancialDateField && selectedFiscalYear) {
-            const fiscalYearStart = dayjs(
-              `${selectedFiscalYear}-01-01`,
-              'YYYY-MM-DD'
-            );
-
-            if (isEndDateField && parsedStartDate) {
-              return parsedStartDate.add(1, 'day').isAfter(fiscalYearStart)
-                ? parsedStartDate.add(1, 'day')
-                : fiscalYearStart;
-            }
-            return fiscalYearStart;
-          }
           if (isEndDateField && parsedStartDate) {
             return parsedStartDate.add(1, 'day');
           }
@@ -1316,18 +1297,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         const customMaxDate: Dayjs | undefined = (() => {
-          if (isFinancialDateField && selectedFiscalYear) {
-            const fiscalYearEnd = dayjs(
-              `${selectedFiscalYear}-12-31`,
-              'YYYY-MM-DD'
-            );
-
-            if (field?.maxDate) {
-              const maxDate = dayjs(field.maxDate);
-              return fiscalYearEnd.isBefore(maxDate) ? fiscalYearEnd : maxDate;
-            }
-            return fiscalYearEnd;
-          }
           if (isEndDateField && startDateValue) {
             return field?.maxDate
               ? dayjs(field.maxDate).isBefore(today)
@@ -1725,17 +1694,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
               if (selectedFiscalYear) {
                 // Fiscal year bounds
-                const fiscalYearStart = dayjs(
-                  `${selectedFiscalYear}-01-01`,
-                  'YYYY-MM-DD'
-                );
-                const fiscalYearEnd = dayjs(
-                  `${selectedFiscalYear}-12-31`,
-                  'YYYY-MM-DD'
-                );
+                const fiscalYearStart = field.minDate
+                  ? dayjs(field.minDate, 'YYYY-MM-DD').startOf('day')
+                  : dayjs(`${selectedFiscalYear}-01-01`, 'YYYY-MM-DD').startOf(
+                      'day'
+                    );
+
+                const fiscalYearEnd = field.maxDate
+                  ? dayjs(field.maxDate, 'YYYY-MM-DD').endOf('day')
+                  : dayjs(`${selectedFiscalYear}-12-31`, 'YYYY-MM-DD').endOf(
+                      'day'
+                    );
 
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
+                  const startDateValue = constructFormData[
+                    'financial_start_date'
+                  ] as string;
 
                   // Check against fiscal year bounds
                   if (
@@ -1745,7 +1720,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
+                      error: `${field.name === 'financial_start_date' ? 'Effective' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
+                    };
+                  }
+
+                  if (
+                    field.minDate &&
+                    currentDate.isBefore(dayjs(field.minDate), 'day') &&
+                    startDateValue
+                  ) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `Effective date cannot be before ${dayjs(field.minDate).format('YYYY-MM-DD')}`,
                     };
                   }
 
@@ -1757,7 +1744,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
+                      error: `${field.name === 'financial_start_date' ? 'Effective' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
                     };
                   }
                 }
@@ -1777,7 +1764,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: 'End date cannot be the same as start date',
+                      error: 'End date cannot be the same as Effective date',
                     };
                   }
 
@@ -1785,7 +1772,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: 'End date must be after start date',
+                      error: 'End date must be after Effective date',
                     };
                   }
                 }
@@ -1807,7 +1794,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   hasError = true;
                   return {
                     ...field,
-                    error: 'Both start date and end date must be provided',
+                    error: 'Both Effective date and end date must be provided',
                   };
                 }
               }
@@ -1935,7 +1922,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               field.name === 'project_startdate' ||
               field.name === 'project_enddate'
             ) {
-              const startDate = constructFormData['project_startdate'] as string;
+              const startDate = constructFormData[
+                'project_startdate'
+              ] as string;
               const endDate = constructFormData['project_enddate'] as string;
 
               if ((startDate && !endDate) || (!startDate && endDate)) {
@@ -1973,13 +1962,36 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
-            // Handle project task dates validation
-            if (
-              field.name === 'start_date' ||
-              field.name === 'end_date'
-            ) {
+            // Handle project resource and task dates validation
+            if (field.name === 'start_date' || field.name === 'end_date') {
               const startDate = constructFormData['start_date'] as string;
               const endDate = constructFormData['end_date'] as string;
+              if (dateValue) {
+                const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
+
+                if (
+                  field.minDate &&
+                  currentDate.isBefore(dayjs(field.minDate), 'day') &&
+                  startDate
+                ) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: `Effective date cannot be before ${dayjs(field.minDate).format('YYYY-MM-DD')}`,
+                  };
+                }
+
+                if (
+                  field.maxDate &&
+                  currentDate.isAfter(dayjs(field.maxDate), 'day')
+                ) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: `${field.name === 'start_date' ? 'Effective' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
+                  };
+                }
+              }
 
               if ((startDate && !endDate) || (!startDate && endDate)) {
                 hasError = true;
@@ -2347,7 +2359,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                  `${field.type}` === 'radio'
+                                `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2379,9 +2391,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
-                                },
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
                               },
                             }}
                             key={colIndex}

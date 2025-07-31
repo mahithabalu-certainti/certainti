@@ -461,7 +461,14 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
 export interface FormField {
   id: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'select' | 'textarea' | 'checkbox' | 'date';
+  type:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'select'
+    | 'textarea'
+    | 'checkbox'
+    | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;
@@ -500,3 +507,15 @@ export interface FinancialSummaryBody {
   summaryType: string;
   region_rid: string;
 }
+
+export type FormFiscalDateType = {
+  year: number;
+  startMin?: Date;
+  startMax?: Date;
+  endMax?: Date;
+};
+
+export type FiscalDates = {
+  startDate: string;
+  endDate: string;
+};

@@ -26,9 +26,11 @@ import {
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
-import { FiscalYearType, NewProjectData } from '../../../types/project';
+import { NewProjectData } from '../../../types/project';
 import {
   ExportType,
+  FiscalDates,
+  FormFiscalDateType,
   MenuItem,
   ProjectFinancialResourceExportParams,
 } from '../../../types';
@@ -40,7 +42,7 @@ import {
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { checkPermission } from '../../../../common-utils';
+import { checkPermission, getFiscalDateBounds } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
 import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
@@ -48,7 +50,7 @@ import { exportAttachmentsData } from '../../../services/attachments/attachments
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { ProjectTask } from './project-task/project-task';
 import { ProjectTaskListExportParams } from '../../../types/project-task';
-import { exportProjectTaskData } from '../../../services/project/project-task-service'; 
+import { exportProjectTaskData } from '../../../services/project/project-task-service';
 import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
@@ -61,7 +63,7 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
-  const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
+  // const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
   const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
@@ -91,6 +93,9 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+  const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
+    year: 0,
+  });
 
   const navigate = useNavigate();
   // Permission Mangement
@@ -136,23 +141,25 @@ export const ProjectDetails = () => {
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
 
-  const formatDate = (year: number, mmdd: string): string => {
-    const [month, day] = mmdd.split('/');
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  };
-
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
       setProjectDetails(transformProjectData(data.data));
       setProjectData(project);
-      setFiscalYear({
-        year: project.fiscal_year,
-        startDate: formatDate(project.fiscal_year, project.fiscal_start_date),
-        endDate: formatDate(project.fiscal_year, project.fiscal_end_date),
+      handleGetFiscalYear(project?.fiscal_year, {
+        startDate: project?.fiscal_start_date || '',
+        endDate: project?.fiscal_end_date || '',
       });
     }
   }, [data]);
+
+  const handleGetFiscalYear = (
+    year: string,
+    accountFiscalDates: FiscalDates
+  ) => {
+    const bounds = getFiscalDateBounds(year, accountFiscalDates);
+    setFiscalDate(bounds);
+  };
 
   const isAttachmentViewEnable = checkPermission(
     permission,
@@ -179,7 +186,6 @@ export const ProjectDetails = () => {
     if (page === 'details') {
       return true;
     }
-
 
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
@@ -250,14 +256,15 @@ export const ProjectDetails = () => {
         accountRid: accountID,
         projectRid: projectID,
       };
-      exportProjectTaskData({ ...projectTaskExportPayload, ...projectTaskParams });
+      exportProjectTaskData({
+        ...projectTaskExportPayload,
+        ...projectTaskParams,
+      });
       return;
     }
 
     return;
   };
-
-
 
   const menuItems = [
     {
@@ -334,19 +341,21 @@ export const ProjectDetails = () => {
           <ProjectResources
             projectID={projectID}
             accountID={accountID}
-            projectFiscalYear={fiscalYear}
+            projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
           />
         );
       case 'projectsTask':
-        return <ProjectTask
-          projectID={projectID}
-          accountID={accountID}
-          projectFiscalYear={fiscalYear}
-          setExportType={setExportType}
-          setProjectTaskParams={setProjectTaskParams}
-        />;
+        return (
+          <ProjectTask
+            projectID={projectID}
+            accountID={accountID}
+            projectFiscalDate={fiscalDate}
+            setExportType={setExportType}
+            setProjectTaskParams={setProjectTaskParams}
+          />
+        );
 
       case 'interactions':
         return <NotFound />;
@@ -528,10 +537,11 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px]'
-            : 'w-[220px] min-w-[220px] max-w-[220px]'
-            }`}
+          className={`flex transition-all duration-300 ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px]'
+              : 'w-[220px] min-w-[220px] max-w-[220px]'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

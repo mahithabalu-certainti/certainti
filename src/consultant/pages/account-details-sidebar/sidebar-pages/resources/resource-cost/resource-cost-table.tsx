@@ -9,7 +9,10 @@ import {
   useResourceCost,
   useUpdateCostAccept,
 } from '../../../../../services/resource-cost/resource-cost-service';
-import { FieldChangeValue } from '../../../../../../components/table/types';
+import {
+  FieldChangeEvent,
+  FieldChangeValue,
+} from '../../../../../../components/table/types';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCECOST } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
@@ -25,7 +28,11 @@ import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import Uploads from '../../../../../../components/Attachments/upload';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup.tsx';
-import { checkPermission } from '../../../../../../common-utils/common-utils.ts';
+import {
+  checkPermission,
+  getFiscalDateBounds,
+} from '../../../../../../common-utils/common-utils.ts';
+import { FormFiscalDateType } from '../../../../../types/account.ts';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -85,6 +92,15 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     message: string;
     onConfirm: () => void;
   }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
+    year: 0,
+  });
+
+  const account = accountDetails?.data?.accountDetails;
+  const accountFiscalDates = {
+    startDate: account?.fiscal_start_date || '',
+    endDate: account?.fiscal_end_date || '',
+  };
 
   const {
     data: costList,
@@ -264,6 +280,17 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     setSelectedRowId(rowId);
   };
 
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'fiscal_year' && event.value) {
+      handleGetFiscalYear(String(event.value));
+    }
+  };
+
+  const handleGetFiscalYear = (year: string) => {
+    const bounds = getFiscalDateBounds(year, accountFiscalDates);
+    setFiscalDate(bounds);
+  };
+
   const getRowId = (row: ResourceCostList) => row?.rid || '';
 
   const resourceCostColumns = getResourceCostColumns(
@@ -273,7 +300,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     accountInActive,
     handleAttachmentClick,
     resourceInActive,
-    attachmentCreateEnable
+    attachmentCreateEnable,
+    handleGetFiscalYear,
+    fiscalDate
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
@@ -406,6 +435,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
           sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
           onSort={handleSortRequest}
           onCellEdit={handleCellEdit}
+          onFieldChange={handleFieldChange}
         />
       )}
       <ConfirmationPopup
