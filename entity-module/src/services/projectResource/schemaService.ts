@@ -2596,6 +2596,8 @@ export class ProjectResourceSchemaService {
         entity_rid: projectResourceId,
         created_by: userId,
         created_datetime: new Date(),
+      }, {
+        transaction
       });
     } catch (err) {
       console.log("Error addinng timelne", err);
