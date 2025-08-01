@@ -201,7 +201,11 @@ export class ProjectInjestionTaskService {
               resourceData.rid!
             );
 
-          const totalExistingEffort = existingTasks.reduce(
+          const filteredTasks = existingTasks.filter(
+            (task) => task.rid !== projectTaskData.project_task_rid 
+          );
+
+          const totalExistingEffort = filteredTasks.reduce(
             (sum: Decimal, task: ProjectTask) => {
               const effort = new Decimal(task.total_hours_pro_task || "0");
               return sum.plus(effort);
