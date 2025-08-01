@@ -11,6 +11,7 @@ export const projectResourceSchema = gql`
     modified_datetime: String
     account_rid: String!
     project_rid: String!
+    project_fiscal_rid: String!
     resource_rid: String!
     project_code: String!
     project_resource_code: String!
@@ -60,7 +61,7 @@ export const projectResourceSchema = gql`
 
   input updateInlineProjectResource {
     account_rid: String!
-    project_rid: String!
+    project_fiscal_rid: String!
     project_resource_rid: String!
     resource_name: String
     resource_code: String
