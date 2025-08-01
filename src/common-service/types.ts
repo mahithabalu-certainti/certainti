@@ -31,6 +31,7 @@ export interface ProfileResponse {
   read?: boolean;
   edit?: boolean;
   is_read_only?: boolean;
+  is_edit_only?: boolean;
   depends_on_menu?: string[];
   depends_on_module?: string[];
   depends_on_permission?: string[];
@@ -99,7 +100,7 @@ export enum AllMenus {
   DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
-  TIMESHEETS = 'timesheets',
+  TIMESHEETS = 'timeline',
   CASES = 'cases',
   SURVEY = 'survey',
   NOTES = 'notes',

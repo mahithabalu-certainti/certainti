@@ -24,6 +24,7 @@ import { ListTable } from '../../../../components/table';
 import {
   ActiveUserForGroup,
   GroupByIdAccount,
+  GroupByIdProjects,
   GroupByIdUsers,
   ProjectListByAccounts,
   UserGroupDetails,
@@ -408,17 +409,27 @@ export const CreateUserGroup: React.FC = () => {
 
     return '';
   };
-  const getUnCheckedProjects = () => {
-    return userGroupData?.projects
+  const getModifiedProjects = (
+    selectedData: string[],
+    apiData?: GroupByIdProjects[]
+  ) => {
+    const oldData = apiData
       ?.filter(
-        (proj) => proj.has_access && !addedProjects.includes(proj.project_rid)
+        (proj) => proj.has_access && !selectedData.includes(proj.project_rid)
       )
       .reduce<Record<string, boolean>>((proj, item) => {
         proj[item.project_rid] = false;
         return proj;
       }, {});
+    const newData = selectedData
+      .filter((item) => !apiData?.find((it) => it.project_rid === item)) //Remove API data
+      .reduce<Record<string, boolean>>((proj, key) => {
+        proj[key] = true;
+        return proj;
+      }, {});
+    return { ...oldData, ...newData };
   };
-  const getUnCheckedData = (
+  const getModifiedDatas = (
     selectedData: string[],
     apiData?: GroupByIdAccount[] | GroupByIdUsers[]
   ): UserGroupDetailsCommon[] => {
@@ -486,11 +497,9 @@ export const CreateUserGroup: React.FC = () => {
         const constructDataForUpdate = {
           ...commonData,
           group_rid: groupId as string,
-          accounts: getUnCheckedData(selectedAccounts, userGroupData?.accounts),
-          users: getUnCheckedData(addedUsers, userGroupData?.users),
-          projects: groupTypeNotCustom
-            ? {}
-            : { ...commonData.projects, ...getUnCheckedProjects() },
+          accounts: getModifiedDatas(selectedAccounts, userGroupData?.accounts),
+          users: getModifiedDatas(addedUsers, userGroupData?.users),
+          projects: getModifiedProjects(addedProjects, userGroupData?.projects),
         };
         updateUserGroup.mutate(constructDataForUpdate);
       } else {

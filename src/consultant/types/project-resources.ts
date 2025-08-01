@@ -44,6 +44,7 @@ export type ProjectResourcesListType = {
   deductions?: string | null;
   description?: string | null;
   currency_symbol?: string;
+  project_fiscal_rid?: string;
 };
 
 export interface ProjectResourcesApiResponse extends CommonApiResponse {
@@ -105,6 +106,7 @@ export interface ProjectResourceDetailsType {
   status_name: string | null;
   resource_type_name: string | null;
   assigned_skill_role: string | null;
+  project_fiscal_rid: string;
 }
 
 export type ProjectResourcePayload = {
