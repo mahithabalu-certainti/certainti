@@ -44,13 +44,19 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       setLocalActiveKey(listParam);
     }
   }, []); // Empty dependency array - only run on mount
-  const { modules } = useSelector((state: RootState) => state.permission);
+  const { modules, menus } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   useEffect(() => {
     const updateMenuItems = (items: MenuItem[]): MenuItem[] => {
       return items.map((item) => {
-        const menu = modules.find((menu) => menu.name === item.id);
-        const updatedItem = { ...item, hide: menu && !menu.is_enabled };
+        const module = modules.find((module) => module.name === item.id);
+        const menu = menus.find((menu) => menu.name === item.id);
+        const updatedItem = {
+          ...item,
+          hide: module ? !module.is_enabled : menu ? !menu.is_enabled : false,
+        };
         if (item.subMenu) {
           updatedItem.subMenu = updateMenuItems(item.subMenu);
           const allSubmenusHidden = updatedItem.subMenu.every(
@@ -64,7 +70,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       });
     };
     setAccountMenus(updateMenuItems(menuItems));
-  }, [modules, menuItems]);
+  }, [modules, menus, menuItems]);
 
   useEffect(() => {
     if (!localActiveKey) {
