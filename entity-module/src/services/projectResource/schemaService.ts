@@ -141,6 +141,11 @@ export class ProjectResourceSchemaService {
       schemaName
     );
 
+    ProjectResourceModel.belongsTo(ResourcesModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_resource",
+    });
     const models = {
       ProjectResource: ProjectResourceModel,
       Project: ProjectModel,
@@ -3118,7 +3123,43 @@ export class ProjectResourceSchemaService {
       raw: true,
       transaction,
     });
-
+    
+    const byTypeAggregates: any[] = await ProjectResource.findAll({
+      attributes: [
+        [Sequelize.col("project_resource_resource.resource_type_rid"), "resource_type_rid"],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.cast(Sequelize.col("total_hours_pro_res"), "DECIMAL")
+          ),
+          "total_effort",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.cast(Sequelize.col("total_cost_pro_res"), "DECIMAL")
+          ),
+          "total_cost",
+        ],
+      ],
+      include: [
+        {
+          model: Resources,
+          as: "project_resource_resource",
+          attributes: ["resource_type_rid"],
+          required: true,
+        },
+      ],
+      where: {
+        account_rid: accountId,
+        fiscal_year: fiscalYear,
+        project_fiscal_rid: projectId,
+      },
+      group: ["project_resource_resource.resource_type_rid"],
+      raw: true,
+      transaction,
+    });
+ 
     if (!aggregates) return;
 
     if (!aggregates || aggregates.length === 0) return;
@@ -3133,7 +3174,7 @@ export class ProjectResourceSchemaService {
     let total_subcon_count = 0;
     let total_nonlabor_count = 0;
 
-    for (const row of aggregates) {
+    for (const row of byTypeAggregates) {
       const typeName = resourceTypeMap[row.resource_type_rid] || "";
       const cost = Number(row.total_cost || 0);
       const effort = Number(row.total_effort || 0);
