@@ -6,7 +6,7 @@ import {
   useCallback,
   Suspense,
 } from 'react';
-import { ArrowDownIcon, FiscalYearArrowIcon } from '../../assets';
+import { ArrowDownDisabledIcon, FiscalYearArrowIcon } from '../../assets';
 
 interface FiscalYearOption {
   label: string;
@@ -19,7 +19,7 @@ interface Props {
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-const FiscalYearDropdown = ({
+const FormFiscalYearDropdown = ({
   fiscalYear,
   fiscalYearsDropDown,
   onChange,
@@ -98,12 +98,18 @@ const FiscalYearDropdown = ({
       <button
         type='button'
         onClick={() => setOpen((prev) => !prev)}
-        className='bg-white text-[#2D3E4F] text-[13px] font-normal w-full px-3 h-[32px] flex justify-between items-center cursor-pointer focus:outline-none rounded-[2px] border border-[#CBD6E2] hover:border-[#425A76]'
+        className='bg-white text-[#2D3E4F] text-[13px] font-normal w-full px-3 h-[32px] flex justify-between items-center cursor-pointer focus:border-[2px] focus:border-[#60A5FA] focus:bg-white rounded-[2px] border border-[#CBD6E2]'
         aria-haspopup='true'
         aria-expanded={open}
       >
-        {selectedLabel}
-        <ArrowDownIcon
+        <span
+          className={`${
+            !fiscalYear && 'text-[#7D98B6]'
+          } text-[13px] font-normal`}
+        >
+          {selectedLabel}
+        </span>
+        <ArrowDownDisabledIcon
           alt='dropdown arrow'
           className={`transition-transform duration-300 ${
             open ? 'rotate-180' : ''
@@ -172,4 +178,4 @@ const FiscalYearDropdown = ({
   );
 };
 
-export default FiscalYearDropdown;
+export default FormFiscalYearDropdown;

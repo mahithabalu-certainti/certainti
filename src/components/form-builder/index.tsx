@@ -44,7 +44,7 @@ import {
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
-import FiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
+import FormFiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -1035,7 +1035,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (field.isFiscalYear) {
           return (
             <div className='w-full'>
-              <FiscalYearDropdown
+              <FormFiscalYearDropdown
                 fiscalYear={String(fieldValue)}
                 fiscalYearsDropDown={field.options || []}
                 onChange={(e) => handleChange(e.target.value)}
