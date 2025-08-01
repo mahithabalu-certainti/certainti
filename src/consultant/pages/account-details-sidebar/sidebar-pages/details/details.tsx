@@ -55,6 +55,7 @@ const Details: React.FC<DetailsProps> = ({
   accountDetails,
   isLoading,
   isError,
+  isAccountEditEnable
 }) => {
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
@@ -124,7 +125,7 @@ const Details: React.FC<DetailsProps> = ({
       disabled: false, //accountInActive,
       onClick: handleEdit,
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: !isAccountEditEnable,
     },
   ];
 

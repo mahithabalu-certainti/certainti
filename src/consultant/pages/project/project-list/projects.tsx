@@ -53,6 +53,13 @@ export const Projects: React.FC = () => {
     (state: RootState) => state.permission
   );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const isProjectViewEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_VIEW_EDIT
@@ -290,7 +297,7 @@ export const Projects: React.FC = () => {
             onRefreshClick();
           }}
           setTotalCount={setTotalCount}
-          isProjectEditEnable={true}
+          isProjectEditEnable={isProjectFieldsEditable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
           toggleEnabled={toggleEnabled}

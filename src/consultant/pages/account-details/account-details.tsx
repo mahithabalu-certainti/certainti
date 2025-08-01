@@ -136,6 +136,14 @@ export const AccountDetails = () => {
     AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
   );
 
+  const isAccountFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -415,6 +423,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data } as accountDetailsProps}
             isLoading={isPending}
             isError={isError}
+            isAccountEditEnable={isAccountFieldsEditable}
           />
         );
       case 'resources':
@@ -611,10 +620,14 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={{
-            label: 'Edit',
-            onClick: handleEditAccount,
-          }}
+          primaryButton={
+            isAccountFieldsEditable
+              ? {
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
+              : undefined
+          }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}
