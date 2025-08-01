@@ -18,10 +18,10 @@ import currency from "currency.js";
 import Decimal from "decimal.js";
 
 export class ProjectTaskService {
-  private schemaService: SchemaService;
-  private projectIngestionService: ProjectIngestionService;
-  private resourceService: ResourceService;
-  private logger: Logger;
+  schemaService: SchemaService;
+  projectIngestionService: ProjectIngestionService;
+  resourceService: ResourceService;
+  logger: Logger;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -33,7 +33,6 @@ export class ProjectTaskService {
   async listProjectTasks(
     accountRid: string,
     projectRid: string,
-    projectResourceRid: string,
     filters: Record<string, any> = {},
     search?: string,
     page: number = 1,
@@ -106,9 +105,6 @@ export class ProjectTaskService {
       const { whereClause } = this.buildRawWhereClause(filters, search);
       whereClause[Op.and] = whereClause[Op.and] || [];
       whereClause[Op.and].push({ project_fiscal_rid: projectRid });
-      if (projectResourceRid) {
-        whereClause[Op.and].push({ project_resource_rid: projectResourceRid });
-      }
 
       // ✅ Get all tasks without pagination first to properly handle sorting of related data
       const allTasks = await ProjectTaskModel.findAll({
@@ -145,6 +141,7 @@ export class ProjectTaskService {
       const resourceTypeRids = allTasks
         .map((task) => (task as any)?.resource.resource_type_rid)
         .filter((rid) => rid);
+
       const resourceTypes = resourceTypeRids.length
         ? await mainSequelize.query(
             `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRids)`,
@@ -333,7 +330,6 @@ export class ProjectTaskService {
     userId: string,
     accountRid: string,
     projectRid: string,
-    projectResourceRid: string,
     filters: Record<string, any> = {},
     search?: string,
     sortBy: string = "created_datetime",
@@ -404,9 +400,6 @@ export class ProjectTaskService {
       const { whereClause } = this.buildRawWhereClause(filters, search);
       whereClause[Op.and] = whereClause[Op.and] || [];
       whereClause[Op.and].push({ project_fiscal_rid: projectRid });
-      if (projectResourceRid) {
-        whereClause[Op.and].push({ project_resource_rid: projectResourceRid });
-      }
 
       // ✅ Get all tasks without pagination first to properly handle sorting of related data
       const allTasks = await ProjectTaskModel.findAll({
@@ -810,17 +803,17 @@ export class ProjectTaskService {
       }
 
       const [resourceTypeData, currencyData] = await Promise.all([
-        (task as any).resource?.resource_type_rid
+        (task as any).dataValues.resource?.resource_type_rid
           ? mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
               replacements: {
-                resourceTypeRid: (task as any).resource?.resource_type_rid,
+                resourceTypeRid: (task as any).dataValues.resource?.resource_type_rid,
               },
               type: "SELECT",
             })
           : Promise.resolve([]),
-        (task as any).project?.currency_rid
+        (task as any).dataValues.project?.currency_rid
           ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
-              replacements: { currencyRid: task.currency_rid },
+              replacements: { currencyRid: (task as any).dataValues.project?.currency_rid },
               type: "SELECT",
             })
           : Promise.resolve([]),
@@ -953,7 +946,7 @@ export class ProjectTaskService {
     }
   }
 
-  private buildRawWhereClause(
+  buildRawWhereClause(
     filters: Record<string, any>,
     search?: string
   ): { whereClause: any } {

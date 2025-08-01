@@ -2210,7 +2210,6 @@ const exportListProjectResourceSchema = Joi.object({
 const listProjectTasksSchema = Joi.object({
   projectRid: Joi.string().pattern(uuidRegex).required(),
   accountRid: Joi.string().pattern(uuidRegex).required(),
-  projectResourceRid: Joi.string().pattern(uuidRegex).optional(),
     page: Joi.number()
         .integer()
         .min(1)
@@ -2250,7 +2249,6 @@ const listProjectTasksSchema = Joi.object({
 const exportListProjectTasksSchema = Joi.object({
   projectRid: Joi.string().pattern(uuidRegex).required(),
   accountRid: Joi.string().pattern(uuidRegex).required(),
-  projectResourceRid: Joi.string().pattern(uuidRegex).optional(),
     search: Joi.string()
         .max(255)
         .allow('')
