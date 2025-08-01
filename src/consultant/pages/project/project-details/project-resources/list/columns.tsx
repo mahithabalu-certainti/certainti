@@ -222,7 +222,7 @@ export const getProjectResourcesColumns = (
       textAlign: 'right',
     },
     render: (row: ProjectResourcesListType) =>
-      row.total_cost_pro_res ? valueDisplay(row.total_hours_pro_res) : '-',
+      row.total_hours_pro_res ? valueDisplay(row.total_hours_pro_res) : '-',
     editable:
       permissionMap?.['total_hours_pro_res']?.read &&
       permissionMap?.['total_hours_pro_res']?.edit,
