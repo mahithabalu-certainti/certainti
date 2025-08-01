@@ -33,7 +33,7 @@ const FormFiscalYearDropdown = ({
   const [selectedYear, setSelectedYear] = useState(fiscalYear || '');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [fiscalYearRange, setFiscalYearRange] = useState(0); // temporary default
+  const [fiscalYearRange, setFiscalYearRange] = useState(0);
 
   useEffect(() => {
     const base = Number(fiscalYear) || currentYear;
@@ -137,7 +137,8 @@ const FormFiscalYearDropdown = ({
                     />
                   </button>
                   <span className='text-[#2D3E4F] text-[15px] font-bold'>
-                    {fiscalYearRange} - {fiscalYearRange + 9}
+                    {fiscalYearRange} -{' '}
+                    {Math.min(currentYear, fiscalYearRange + 9)}
                   </span>
                   <button
                     type='button'
