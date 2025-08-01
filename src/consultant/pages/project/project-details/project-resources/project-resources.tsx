@@ -246,7 +246,7 @@ export const ProjectResources = ({
       );
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
-        project_Id: resourceData.project_rid,
+        project_Id: resourceData?.project_fiscal_rid,
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -258,7 +258,7 @@ export const ProjectResources = ({
     const PFY = projectFiscalDate;
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
-      project_Id: row?.project_rid || '',
+      project_Id: row?.project_fiscal_rid || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       source: 'editProjectResource',
     });
@@ -432,7 +432,7 @@ export const ProjectResources = ({
       },
       {
         account_rid: selectedProject?.account_rid,
-        project_rid: selectedProject?.project_rid,
+        project_fiscal_rid: selectedProject?.project_fiscal_rid,
         project_resource_rid: rowId,
       }
     );
