@@ -90,7 +90,6 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     });
     return map;
   }, [summaryViewEditFields]);
-  console.log('permissionMap', permissionMap);
 
   // UseEffects
   useEffect(() => {

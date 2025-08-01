@@ -36,7 +36,7 @@ import { setFiscalYear } from '../../store/slices/account-slice';
 import { checkPermission, fiscalYears } from '../../common-utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PROFILE } from '../../routes';
-import { FiscalYearDropdown } from '../fiscal-dropdown';
+import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 import { useMsal } from '@azure/msal-react';
 import { msalResetPasswordConfig } from '../../config/msalConfig';
@@ -463,9 +463,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
                   </>
                 )}
-                <FiscalYearDropdown
+                <GlobalFiscalYearDropdown
                   fiscalYear={fiscalYear}
-                  fiscalYearsDropDown={fiscalYearsDropDown}
+                  fiscalYearsOptions={fiscalYearsDropDown}
+                  isGlobal={true}
                   onChange={(e) => dispatch(setFiscalYear(e.target.value))}
                 />
                 <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />

@@ -256,8 +256,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     permissionMap
   );
 
-  console.log('accountSettingsDetails', accountSettingsDetails);
-
   return (
     <Fragment>
       <DetailsSection

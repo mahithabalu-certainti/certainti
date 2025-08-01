@@ -192,6 +192,7 @@ export const createSelectField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     dependantLabel?: string;
+    isFiscalYear?: boolean;
   }
 ): FieldType => ({
   type: 'select',
@@ -210,6 +211,7 @@ export const createSelectField = (
   resetDependsFields: others.resetDependsFields,
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
+  isFiscalYear: others.isFiscalYear,
 });
 
 export const createAutoCompleteField = (

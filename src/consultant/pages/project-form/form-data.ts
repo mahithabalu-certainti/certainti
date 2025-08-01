@@ -234,6 +234,7 @@ export const FormData = (
             placeholder: 'Choose Fiscal Year',
             required: true,
             onChange: true,
+            isFiscalYear: true,
             disabled:
               isEditView &&
               permissionMap?.['fiscal_year']?.read &&

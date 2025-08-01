@@ -227,6 +227,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
         showFilter={showFilter}
+        showFiscalYear={true}
       />
       <SectionHeader
         title='Financial Summary'

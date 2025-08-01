@@ -23,7 +23,6 @@ import {
   ProjectTaskListType,
 } from '../../../../types/project-task';
 import { RootState } from '../../../../../store/store';
-import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
 import {
   ExportType,
@@ -42,6 +41,7 @@ import { useGetProjectResourceCode } from '../../../../services/project-resource
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
+import SectionHeader from '../../../../../components/details-section/section-header';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -75,6 +75,7 @@ export const ProjectTask = ({
   projectFiscalDate,
   setExportType,
   setProjectTaskParams,
+  projectCode
 }: {
   projectID?: string;
   accountID?: string;
@@ -83,6 +84,7 @@ export const ProjectTask = ({
   setProjectTaskParams: React.Dispatch<
     React.SetStateAction<ProjectTaskListExportParams>
   >;
+  projectCode?: string;
 }) => {
   const { errorToast, successToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -123,6 +125,12 @@ export const ProjectTask = ({
         ?.fields?.some((field) => field.edit),
     [permission]
   );
+
+  const isAttachmentCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -225,19 +233,20 @@ export const ProjectTask = ({
     },
   ];
 
-  const headerButtonsEdit = [
+  const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      // hide: value !== 'details' || !attachmentCreateEnable,
-      // disabled: accountInActive ? accountInActive : resourceInActive,
+      hide:
+        !viewDetails ||
+        !isAttachmentCreateEnable,
     },
     {
-      label: 'Edit',
+      label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
-      onClick: () => handleProjectTaskDetailEdit(),
+      onClick: () => viewDetails ? handleProjectTaskDetailEdit() : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !isProjectTaskFieldsEditable
     },
@@ -253,18 +262,12 @@ export const ProjectTask = ({
         project_Id: resourceData?.project_rid || '',
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
+        projectCode: projectCode ?? '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
   };
-  const headerButtonsCreate = [
-    {
-      label: 'New',
-      variant: 'outlined' as const,
-      onClick: () => handleCreateProjectResource(),
-      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-    },
-  ];
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -298,6 +301,7 @@ export const ProjectTask = ({
       account_Id,
       project_Id,
       PFY: JSON.stringify(PFY),
+      projectCode: projectCode ?? '',
       source: 'createProjectTask',
     });
     navigate(`${PROJECT_TASK}/create?${queryParams.toString()}`);
@@ -311,6 +315,7 @@ export const ProjectTask = ({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_rid || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
+      projectCode: projectCode ?? '',
       source: 'editProjectTask',
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -408,18 +413,16 @@ export const ProjectTask = ({
         />
       ) : (
         <>
-          <ProjectTaskTableHeader
-            value={viewDetails ? 'project-task-details' : 'projects-task'}
-            title={viewDetails ? 'Project Task' : 'Project Task'}
+          <SectionHeader
+            title={'Project Task'}
             titleIcon={
               viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
             }
             count={totalItems}
+            showItemCount={!viewDetails}
             showBackArrow={viewDetails ? true : false}
-            headerButtons={
-              viewDetails ? headerButtonsEdit : headerButtonsCreate
-            }
-            projectResourceNumber={resourceData?.r_number}
+            buttons={headerButtons}
+            subValue={resourceData?.r_number}
             onBackClick={handleBackClick}
           />
           <div className='border border-[#CBD6E2]'>

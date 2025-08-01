@@ -71,7 +71,7 @@ export const getProjectTaskColumns = (
       id: 'resource_type_name',
       label: 'Resource Type',
       sortable: true,
-      sortId: 'resource_type_name',
+      sortId: 'resource_type',
       width: 160,
       hide:
         !permissionMapTaskTableColumn?.['resource_type_name']?.read &&
