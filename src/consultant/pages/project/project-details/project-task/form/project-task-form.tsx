@@ -32,6 +32,7 @@ const ProjectTaskForm: React.FC = () => {
   const account_Id = queryParams.get('account_Id');
   const project_Id = queryParams.get('project_Id');
   const projectPFY = queryParams.get('PFY');
+  const projectCode = queryParams.get('projectCode');
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -152,7 +153,7 @@ const ProjectTaskForm: React.FC = () => {
 
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project {'>'} {projectTaskDetailsData?.r_number}
+              Project &gt; {projectCode || ''} {isEditView && `> ${projectTaskDetailsData.resource_code || ''}`}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
