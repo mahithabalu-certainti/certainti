@@ -92,6 +92,7 @@ export const Accounts: React.FC = () => {
     permission,
     AllPermissions.ACCOUNTS_CREATE
   );
+
   // const isAccountEditEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_EDIT
@@ -122,6 +123,7 @@ export const Accounts: React.FC = () => {
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
+      hide: true,
       onClick: () => console.log('manage user clicked'),
     },
     {
