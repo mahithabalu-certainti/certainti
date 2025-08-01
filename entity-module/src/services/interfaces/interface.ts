@@ -681,7 +681,6 @@ export interface IProjectTaskService {
   listProjectTasks(
     accountRid: string,
     projectRid: string,
-    projectResourceRid: string,
     filters: Record<string, any>,
     search: string,
     page: number,
@@ -699,7 +698,6 @@ export interface IProjectTaskService {
     userId: string,
     accountRid: string,
     projectRid: string,
-    projectResourceRid: string,
     filters: Record<string, any>,
     search: string,
     sortBy: string,
