@@ -23,7 +23,6 @@ import {
   ProjectTaskListType,
 } from '../../../../types/project-task';
 import { RootState } from '../../../../../store/store';
-import ProjectTaskTableHeader from './project-task-header';
 import ProjectTaskDetails from './project-task-details';
 import {
   ExportType,
@@ -42,6 +41,7 @@ import { useGetProjectResourceCode } from '../../../../services/project-resource
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
+import SectionHeader from '../../../../../components/details-section/section-header';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -116,6 +116,12 @@ export const ProjectTask = ({
     (state: RootState) => state.permission
   );
   const projectTaskIsEnable = checkPermission(modules, AllModules.PROJECT_TASK);
+
+  const isAttachmentCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -217,19 +223,20 @@ export const ProjectTask = ({
     },
   ];
 
-  const headerButtonsEdit = [
+  const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      // hide: value !== 'details' || !attachmentCreateEnable,
-      // disabled: accountInActive ? accountInActive : resourceInActive,
+      hide:
+        !viewDetails ||
+        !isAttachmentCreateEnable,
     },
     {
-      label: 'Edit',
+      label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
-      onClick: () => handleProjectTaskDetailEdit(),
+      onClick: () => viewDetails ? handleProjectTaskDetailEdit() : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
   ];
@@ -248,14 +255,7 @@ export const ProjectTask = ({
       navigate(`${path}?${queryParams.toString()}`);
     }
   };
-  const headerButtonsCreate = [
-    {
-      label: 'New',
-      variant: 'outlined' as const,
-      onClick: () => handleCreateProjectResource(),
-      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-    },
-  ];
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -399,18 +399,16 @@ export const ProjectTask = ({
         />
       ) : (
         <>
-          <ProjectTaskTableHeader
-            value={viewDetails ? 'project-task-details' : 'projects-task'}
-            title={viewDetails ? 'Project Task' : 'Project Task'}
+          <SectionHeader
+            title={'Project Task'}
             titleIcon={
               viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
             }
             count={totalItems}
+            showItemCount={!viewDetails}
             showBackArrow={viewDetails ? true : false}
-            headerButtons={
-              viewDetails ? headerButtonsEdit : headerButtonsCreate
-            }
-            projectResourceNumber={resourceData?.r_number}
+            buttons={headerButtons}
+            subValue={resourceData?.r_number}
             onBackClick={handleBackClick}
           />
           <div className='border border-[#CBD6E2]'>
