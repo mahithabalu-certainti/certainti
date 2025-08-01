@@ -153,7 +153,7 @@ const ProjectTaskForm: React.FC = () => {
 
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project &gt; {projectCode} {isEditView && `> ${projectTaskDetailsData.resource_code}`}
+              Project &gt; {projectCode || ''} {isEditView && `> ${projectTaskDetailsData.resource_code || ''}`}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
