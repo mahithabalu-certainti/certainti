@@ -75,6 +75,7 @@ export const ProjectTask = ({
   projectFiscalDate,
   setExportType,
   setProjectTaskParams,
+  projectCode
 }: {
   projectID?: string;
   accountID?: string;
@@ -83,6 +84,7 @@ export const ProjectTask = ({
   setProjectTaskParams: React.Dispatch<
     React.SetStateAction<ProjectTaskListExportParams>
   >;
+  projectCode?: string;
 }) => {
   const { errorToast, successToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -251,6 +253,7 @@ export const ProjectTask = ({
         project_Id: resourceData?.project_rid || '',
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
+        projectCode: projectCode ?? '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -289,6 +292,7 @@ export const ProjectTask = ({
       account_Id,
       project_Id,
       PFY: JSON.stringify(PFY),
+      projectCode: projectCode ?? '',
       source: 'createProjectTask',
     });
     navigate(`${PROJECT_TASK}/create?${queryParams.toString()}`);
@@ -302,6 +306,7 @@ export const ProjectTask = ({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_rid || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
+      projectCode: projectCode ?? '',
       source: 'editProjectTask',
     });
     navigate(`${path}?${queryParams.toString()}`);
