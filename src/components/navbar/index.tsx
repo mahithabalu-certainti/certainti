@@ -34,7 +34,7 @@ import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
 import { checkPermission, fiscalYears } from '../../common-utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passwordResetInstanceRef]);
-
+  const [searchparams] = useSearchParams();
   const handleLogout = useCallback(async () => {
     handleMenuClose();
     logout();
@@ -233,10 +233,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [instance]);
 
   const goToProfile = useCallback(() => {
-    navigate(PROFILE);
+    const params = new URLSearchParams(searchparams); // Clone current search params
+    params.set('userView', 'profile');
+    navigate({
+      pathname: PROFILE,
+      search: params.toString(),
+    });
     handleMenuClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate, searchparams, handleMenuClose]);
 
   const renderMenu = useMemo(
     () => (

@@ -9,6 +9,7 @@ import DetailsSectionSkeleton from '../skeleton-component/detailsskeleton';
 import { RootState } from '../../store/store';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   // Map your API data to the mock data structure
@@ -18,6 +19,9 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   ): string => {
     return value?.toString() || defaultValue;
   };
+  const [searchparams] = useSearchParams();
+  const profile = searchparams.get('userView');
+  const viewDetails = profile === 'profile';
   const { permission } = useSelector((state: RootState) => state.permission);
   const userViewEditFields = useMemo(
     () =>
@@ -158,14 +162,20 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     <Fragment>
       <DetailsSection
         title='Identity'
-        data={IdentityDetails}
+        data={viewDetails ? identityInfo : IdentityDetails}
         customStyle='pt-0 mt-0'
       />
-      <DetailsSection title='Access & Role' data={AccessDetails} />
-      <DetailsSection title='Address' data={AddressDetails} />
+      <DetailsSection
+        title='Access & Role'
+        data={viewDetails ? accessInfo : AccessDetails}
+      />
+      <DetailsSection
+        title='Address'
+        data={viewDetails ? addressInfo : AddressDetails}
+      />
       <DetailsSection
         title='Audit Information'
-        data={AuditDetails}
+        data={viewDetails ? auditInfo : AuditDetails}
         isAudit={true}
       />
     </Fragment>
