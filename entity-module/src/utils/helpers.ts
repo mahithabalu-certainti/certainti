@@ -165,7 +165,7 @@ export const validateAttachment = (data : any) => {
 
 export const validateProjectResourceRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
-  if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
+  // if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
   if(!data.project_resource_rid) return STATUS_MESSAGE.fiscalIdMissing
 }
 
