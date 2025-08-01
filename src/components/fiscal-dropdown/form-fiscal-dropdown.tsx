@@ -170,7 +170,7 @@ const FormFiscalYearDropdown = ({
                     onClick={() => handleYearClick(fy.value)}
                     disabled={fy.value > currentYear}
                   >
-                    {fy.label}
+                    {fy.value}
                   </button>
                 </div>
               ))}
