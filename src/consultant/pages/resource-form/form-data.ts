@@ -473,6 +473,7 @@ export const ResourceFormData = (
         fields: [
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYearsCost,
+            isFiscalYear: true,
             placeholder: 'Choose Fiscal Year',
             required: true,
             onChange: true,

@@ -15,17 +15,17 @@ interface FiscalYearOption {
 
 interface Props {
   fiscalYear: string;
-  fiscalYearsDropDown: FiscalYearOption[];
+  fiscalYearsOptions: FiscalYearOption[];
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const FormFiscalYearDropdown = ({
   fiscalYear,
-  fiscalYearsDropDown,
+  fiscalYearsOptions,
   onChange,
 }: Props) => {
   const currentYear = new Date().getFullYear();
-  const years = fiscalYearsDropDown.map((fy) => Number(fy.value));
+  const years = fiscalYearsOptions.map((fy) => Number(fy.value));
   const minYear = Math.min(...years);
   const maxYear = Math.max(...years);
 
@@ -44,13 +44,13 @@ const FormFiscalYearDropdown = ({
   }, [fiscalYear, currentYear]);
 
   const yearsInDecade = useMemo(() => {
-    return fiscalYearsDropDown
+    return fiscalYearsOptions
       .map((fy) => ({ value: Number(fy.value), label: fy.label }))
       .filter(
         (fy) => fy.value >= fiscalYearRange && fy.value < fiscalYearRange + 10
       )
       .sort((a, b) => a.value - b.value);
-  }, [fiscalYearsDropDown, fiscalYearRange]);
+  }, [fiscalYearsOptions, fiscalYearRange]);
 
   const handlePrevDecade = useCallback(() => {
     setFiscalYearRange((prev) => prev - 10);
@@ -73,7 +73,7 @@ const FormFiscalYearDropdown = ({
   );
 
   const selectedLabel =
-    fiscalYearsDropDown.find((fy) => fy.value === fiscalYear)?.label ||
+    fiscalYearsOptions.find((fy) => fy.value === fiscalYear)?.label ||
     'Choose Fiscal Year';
 
   useEffect(() => {
@@ -119,14 +119,14 @@ const FormFiscalYearDropdown = ({
       </button>
       <Suspense fallback={null}>
         {open && (
-          <div className='absolute right-0 mt-1 w-[308px] min-w-[308px] max-w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[2px] h-[204px]'>
+          <div className='absolute right-0 mt-1 w-full p-5 bg-white border border-[#CBD6E2] rounded-[2px] h-[185px]'>
             {yearsInDecade.length > 0 && (
               <div className='flex items-center justify-between text-[#425A76]'>
                 <div className='flex items-center gap-x-4'>
                   <button
                     type='button'
                     disabled={fiscalYearRange <= minYear}
-                    className='cursor-pointer disabled:cursor-not-allowed'
+                    className='cursor-pointer disabled:cursor-default'
                     onClick={handlePrevDecade}
                   >
                     <FiscalYearArrowIcon
@@ -137,13 +137,12 @@ const FormFiscalYearDropdown = ({
                     />
                   </button>
                   <span className='text-[#2D3E4F] text-[15px] font-bold'>
-                    {fiscalYearRange} -{' '}
-                    {Math.min(currentYear, fiscalYearRange + 9)}
+                    {fiscalYearRange} - {Math.min(fiscalYearRange + 9, maxYear)}
                   </span>
                   <button
                     type='button'
                     disabled={fiscalYearRange + 9 >= maxYear}
-                    className='cursor-pointer disabled:cursor-not-allowed'
+                    className='cursor-pointer disabled:cursor-default'
                     onClick={handleNextDecade}
                   >
                     <FiscalYearArrowIcon
@@ -156,20 +155,24 @@ const FormFiscalYearDropdown = ({
                 </div>
               </div>
             )}
-            <div className='flex items-center gap-x-9 gap-y-3 mt-4 flex-wrap'>
+            <div className='grid grid-cols-4 mt-4 gap-y-2'>
               {yearsInDecade.map((fy) => (
-                <button
+                <div
                   key={fy.value}
-                  className={`w-16 h-[20px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${
-                    Number(selectedYear) === fy.value
-                      ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]'
-                      : ''
-                  }`}
-                  onClick={() => handleYearClick(fy.value)}
-                  disabled={fy.value > currentYear}
+                  className='col-span-1 flex justify-center mb-3'
                 >
-                  {fy.label}
-                </button>
+                  <button
+                    className={`w-18 h-[22px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${
+                      Number(selectedYear) === fy.value
+                        ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]'
+                        : ''
+                    }`}
+                    onClick={() => handleYearClick(fy.value)}
+                    disabled={fy.value > currentYear}
+                  >
+                    {fy.label}
+                  </button>
+                </div>
               ))}
             </div>
           </div>

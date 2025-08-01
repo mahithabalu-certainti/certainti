@@ -5,6 +5,7 @@ import { uploadImportFile } from '../../../../../services/import';
 import { ImportIcon, UploadIcon } from '../../../../../../assets';
 import ActionImportDropdown from '../../../../../../components/actions-dropdown/import-dropdown';
 import SectionHeader from '../../../../../../components/details-section/section-header';
+import { GlobalFiscalYearDropdown } from '../../../../../../components';
 
 interface ImportFileProps {
   accountNo?: string | undefined;
@@ -61,16 +62,20 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
   const currentYear = new Date().getFullYear();
 
-  const fiscalYears = Array.from(
+  const fiscalYearsOptions: { label: string; value: string }[] = Array.from(
     { length: currentYear - 2000 + 1 },
     (_, index) => {
       const year = currentYear - index;
       return {
         label: `FY-${year}`,
-        onClick: () => setFiscalYear(year.toString()),
+        value: year.toString(),
       };
     }
   );
+  const handleFiscalYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFiscalYear(value);
+  };
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
@@ -258,9 +263,12 @@ const ImportFile: React.FC<ImportFileProps> = ({
             Fiscal Year
             <span className='text-red-500 ml-1'>*</span>
           </label>
-          <ActionImportDropdown
-            actions={fiscalYears}
-            label={`FY -${fiscalYear}`}
+          <GlobalFiscalYearDropdown
+            fiscalYear={fiscalYear}
+            fiscalYearsOptions={fiscalYearsOptions}
+            onChange={handleFiscalYearChange}
+            placeholder='FY-Year'
+            className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
           />
         </div>
       </div>

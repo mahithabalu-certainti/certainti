@@ -1037,7 +1037,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <div className='w-full'>
               <FormFiscalYearDropdown
                 fiscalYear={String(fieldValue)}
-                fiscalYearsDropDown={field.options || []}
+                fiscalYearsOptions={field.options || []}
                 onChange={(e) => handleChange(e.target.value)}
               />
             </div>
