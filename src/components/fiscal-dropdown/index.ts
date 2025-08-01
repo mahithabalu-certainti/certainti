@@ -1,1 +1,1 @@
-export { default as FiscalYearDropdown } from './fiscal-dropdown';
+export { default as GlobalFiscalYearDropdown } from './fiscal-dropdown';

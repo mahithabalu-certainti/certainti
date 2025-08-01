@@ -1,14 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import {
-  Box,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Switch,
-  Tab,
-  Tabs,
-} from '@mui/material';
+import { Box, Switch, Tab, Tabs } from '@mui/material';
 import { RefreshIcon, ResourceFilterIcon } from '../../assets';
 import Filter from '../../consultant/pages/account-details-sidebar/components/filter/filter';
 import { clearFilters } from '../../consultant/pages/account-details-sidebar/components/filter/utils';
@@ -18,6 +10,7 @@ import {
 } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
 import ActionImportDropdown from '../actions-dropdown/import-dropdown';
 import { SelectOption } from '../../consultant/types';
+import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 
 interface TabOption {
   id: string;
@@ -53,8 +46,9 @@ interface TabPanelProps {
   hideTabPanel?: boolean;
 
   allYears?: SelectOption[];
+  showFiscalYear?: boolean;
   fiscalYearValue?: string;
-  updatedYear?: (e: SelectChangeEvent<string>) => void;
+  updatedYear?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
@@ -84,6 +78,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   allYears,
   fiscalYearValue,
   updatedYear,
+  showFiscalYear,
 }) => {
   const location = useLocation();
   const [tabValue, setTabValue] = useState('');
@@ -137,7 +132,6 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   if (hideTabPanel) {
     return null;
   }
-
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>
@@ -247,84 +241,13 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               )}
             </>
           )}
-
-          {(allYears ?? []).length > 0 && (
-            <Select
-              name='fiscalYear'
-              className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-              displayEmpty
-              fullWidth
-              size='small'
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    maxWidth: 300,
-                    maxHeight: 300,
-                    marginTop: '4px',
-                    boxShadow:
-                      'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                    '& .MuiMenuItem-root': {
-                      fontSize: '13px',
-                      padding: '6px 12px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    },
-                  },
-                },
-              }}
-              sx={{
-                height: '26px',
-                fontSize: '13px',
-                marginLeft: '8px',
-                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  border: '1px solid #CBD6E2',
-                },
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused': {
-                    boxShadow: 'none',
-                  },
-                },
-                '.MuiSelect-select': {
-                  padding: '6px 6px',
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                },
-                '&.Mui-disabled': {
-                  backgroundColor: '#f3f4f6',
-                },
-                '& svg': {
-                  color: '#425A76',
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderRadius: '2px',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  border: '1px solid #CBD6E2',
-                },
-              }}
-              value={fiscalYearValue}
-              onChange={updatedYear}
-            >
-              {allYears?.map((it, i) => {
-                return (
-                  <MenuItem
-                    key={i}
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                    }}
-                    value={it.value}
-                    title={it.label}
-                  >
-                    {it.label}
-                  </MenuItem>
-                );
-              })}
-            </Select>
+          {showFiscalYear && allYears?.length && (
+            <GlobalFiscalYearDropdown
+              fiscalYear={String(fiscalYearValue)}
+              fiscalYearsOptions={allYears || []}
+              onChange={updatedYear || (() => {})}
+              className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
+            />
           )}
 
           <ActionImportDropdown
