@@ -72,6 +72,7 @@ export const ProjectResources = ({
   projectFiscalDate,
   setExportType,
   setAttachmentParams,
+  projectCode
 }: {
   projectID?: string;
   accountID?: string;
@@ -80,6 +81,7 @@ export const ProjectResources = ({
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
+  projectCode?: string,
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -247,6 +249,7 @@ export const ProjectResources = ({
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
         project_Id: resourceData?.project_fiscal_rid,
+        projectCode: projectCode ?? '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -260,6 +263,7 @@ export const ProjectResources = ({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_fiscal_rid || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
+      projectCode: projectCode ?? '',
       source: 'editProjectResource',
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -374,6 +378,7 @@ export const ProjectResources = ({
       PFY: JSON.stringify(PFY),
       source: 'createProjectResource',
       currency_rid: currency_rid ?? '',
+      projectCode: projectCode ?? '',
     });
     navigate(`${PROJECT_RESOURCE_CREATE}?${queryParams.toString()}`);
   };

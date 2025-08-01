@@ -344,6 +344,7 @@ export const ProjectDetails = () => {
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
+            projectCode={projectData?.project_code}
           />
         );
       case 'projectsTask':
@@ -354,6 +355,7 @@ export const ProjectDetails = () => {
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
+            projectCode={projectData?.project_code}
           />
         );
 

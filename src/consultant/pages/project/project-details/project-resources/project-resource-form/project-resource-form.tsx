@@ -55,6 +55,7 @@ const ProjectResourceForm: React.FC = () => {
   const project_Id = searchParams.get('project_Id');
   const currency_rid = searchParams.get('currency_rid');
   const projectPFY = searchParams.get('PFY');
+  const projectCode = searchParams.get('projectCode');
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -314,7 +315,7 @@ const ProjectResourceForm: React.FC = () => {
 
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-              Project {'>'} {projectResourceData?.resource_code}
+              Project &gt; {projectCode || ''} {isEditView && `> ${projectResourceData.resource_code || ''}`}
             </div>
             {isEditView && (
               <h4 className='font-bold text-lg ml-2 leading-4'>
