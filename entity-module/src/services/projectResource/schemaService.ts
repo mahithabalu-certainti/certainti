@@ -3141,6 +3141,7 @@ export class ProjectResourceSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectResource.rid")), "count"]
       ],
       include: [
         {
@@ -3159,7 +3160,7 @@ export class ProjectResourceSchemaService {
       raw: true,
       transaction,
     });
- 
+
     if (!aggregates) return;
 
     if (!aggregates || aggregates.length === 0) return;
@@ -4026,11 +4027,11 @@ export class ProjectResourceSchemaService {
           total_project_hours: row.effective_effort,
           total_fte: row.effective_total_fte,
           total_subcon: row.effective_total_subcon,
-          total_project_hours_fte: row.effective_fte_effort,
-          total_project_hours_subcon: row.effective_subcon_effort,
-          total_project_cost_fte: row.effective_fte_cost,
-          total_project_cost_subcon: row.effective_subcon_cost,
-          total_project_cost_nonlabor: row.effective_nonlabor_cost,
+          total_project_res_hours_fte: row.effective_fte_effort,
+          total_project_res_hours_subcon: row.effective_subcon_effort,
+          total_project_res_cost_fte: row.effective_fte_cost,
+          total_project_res_cost_subcon: row.effective_subcon_cost,
+          total_project_res_cost_nonlabor: row.effective_nonlabor_cost,
         },
         {
           where: {
