@@ -526,6 +526,12 @@ export class ProjectFiscal
       }
     );
 
+    Project.hasMany(ProjectFiscal, {
+      foreignKey: "project_rid",
+      sourceKey: "rid",
+      as: "ProjectFiscal",
+    });
+
     ProjectFiscal.belongsTo(Project, {
       foreignKey: "project_rid",
       targetKey: "rid",
