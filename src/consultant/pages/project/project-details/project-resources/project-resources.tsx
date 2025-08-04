@@ -150,7 +150,13 @@ export const ProjectResources = ({
     modules,
     AllModules.PROJECT_RESOURCES
   );
-
+  const isProjectResourceFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -299,6 +305,7 @@ export const ProjectResources = ({
       label: 'Edit',
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
+      hide: !isProjectResourceFieldsEditable
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -347,7 +354,7 @@ export const ProjectResources = ({
           ? handleProjectResourceDetailEdit()
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: viewDetails ? false : !isResourceCreateViewEnable,
+      hide: viewDetails ? !isProjectResourceFieldsEditable : !isResourceCreateViewEnable,
     },
   ];
   const handleFilter = () => {

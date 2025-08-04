@@ -118,6 +118,13 @@ export const ProjectTask = ({
     (state: RootState) => state.permission
   );
   const projectTaskIsEnable = checkPermission(modules, AllModules.PROJECT_TASK);
+  const isProjectTaskFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_TASK_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   const isAttachmentCreateEnable = checkPermission(
     permission,
@@ -222,6 +229,7 @@ export const ProjectTask = ({
     {
       label: 'Edit',
       onClick: (row: ProjectTaskListType) => handleEditProjectTask(row),
+      hide: !isProjectTaskFieldsEditable
     },
   ];
 
@@ -240,6 +248,7 @@ export const ProjectTask = ({
       variant: 'outlined' as const,
       onClick: () => viewDetails ? handleProjectTaskDetailEdit() : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+      hide: !isProjectTaskFieldsEditable
     },
   ];
   const PFY = projectFiscalDate;
@@ -283,7 +292,7 @@ export const ProjectTask = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
     });
-  }, [sortField, sortOrder, appliedFilters,]);
+  }, [sortField, sortOrder, appliedFilters]);
 
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? '';

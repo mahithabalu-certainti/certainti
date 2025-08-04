@@ -63,9 +63,12 @@ const UserList: React.FC = () => {
     permission,
     AllPermissions.USER_CREATE
   );
-  const isUserEditEnable = checkPermission(
-    permission,
-    AllPermissions.USER_VIEW_EDIT
+  const isUserFieldsEditable = useMemo(
+    () =>
+      permission
+        ?.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
   );
   const isProfileViewEditEnable = checkPermission(
     permission,
@@ -357,7 +360,7 @@ const UserList: React.FC = () => {
             setTableParams(data);
             onRefreshClick();
           }}
-          isUserEditEnable={isUserEditEnable}
+          isUserEditEnable={isUserFieldsEditable}
           isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}
           refreshUserTrigger={refreshUserTrigger}

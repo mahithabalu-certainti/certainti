@@ -100,6 +100,25 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     permission || [],
     AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
   );
+  const isAccountCostFieldsEditable = useMemo(
+    () =>
+      permission
+        ?.find(
+          (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const isAccountSkillFieldsEditable = useMemo(
+    () =>
+      permission
+        ?.find(
+          (item) =>
+            item.name === AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   // const isResourceCostEditEnable = checkPermission(
   //   permission || [],
   //   AllPermissions.RESOURCE_COST_EDIT
@@ -230,7 +249,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setCostOrder={setCostOrder}
               costorderBy={costorderBy}
               setCostorderBy={setCostorderBy}
-              isResourceCostEditEnable={true}
+              isResourceCostEditEnable={isAccountCostFieldsEditable}
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
               refreshCostTrigger={refreshCostTrigger}
               setCount={setCount}
@@ -256,7 +275,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setSkillOrder={setSkillOrder}
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
-              isResourceSkillEditEnable={true}
+              isResourceSkillEditEnable={isAccountSkillFieldsEditable}
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
               refreshSkillTrigger={refreshSkillTrigger}
               setCount={setCount}

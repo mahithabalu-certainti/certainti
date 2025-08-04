@@ -83,6 +83,13 @@ export const Accounts: React.FC = () => {
     (state: RootState) => state.permission
   );
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const isAccountViewAllEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
@@ -304,7 +311,7 @@ export const Accounts: React.FC = () => {
           setOrderBy={setOrderBy}
           setPage={setPage}
           page={page}
-          isAccountEditEnable={true}
+          isAccountEditEnable={isAccountFieldsEditable}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
           countryOptions={countryOptions}

@@ -184,6 +184,15 @@ const Resource: React.FC<ResourceProps> = ({
   const resId = searchParams.get('res_id');
 
   // Permission Mangement
+  const isAccountResourceFieldsEditable = useMemo(
+    () =>
+      permission
+        ?.find(
+          (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const isResourceDownloadEnable = checkPermission(
     permission || [],
     AllPermissions.ACCOUNT_RESOURCES_EXPORT
@@ -416,7 +425,7 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
-      hide: false,
+      hide: !isAccountResourceFieldsEditable,
     },
     {
       label: 'Delete',
@@ -489,7 +498,10 @@ const Resource: React.FC<ResourceProps> = ({
           ? () => handleEditResource()
           : () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: handleCreateButtonEnable(),
+      hide:
+        value === 'details'
+          ? !isAccountResourceFieldsEditable
+          : handleCreateButtonEnable(),
     },
     {
       label: 'Download',

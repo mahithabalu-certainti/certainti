@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
-  ActivitiesIcon,
+  // ActivitiesIcon,
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
@@ -104,6 +104,13 @@ export const ProjectDetails = () => {
   );
 
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const projectDownloadIsEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_EXPORT
@@ -332,7 +339,7 @@ export const ProjectDetails = () => {
             isDetailsLoading={isLoading}
             detailsError={isError}
             projectDownloadIsEnable={projectDownloadIsEnable}
-            projectEditIsEnable={true}
+            projectEditIsEnable={isProjectFieldsEditable}
             permission={permission}
           />
         );
@@ -446,13 +453,13 @@ export const ProjectDetails = () => {
         disabled: false,
         icon: CasesIcon,
       },
-      {
-        name: 'Activities',
-        key: 'activities',
-        id: AllModules.ACTIVITIES,
-        disabled: false,
-        icon: ActivitiesIcon,
-      },
+      // {
+      //   name: 'Activities',
+      //   key: 'activities',
+      //   id: AllModules.ACTIVITIES,
+      //   disabled: false,
+      //   icon: ActivitiesIcon,
+      // },
       {
         name: 'Notes',
         key: 'notes',
@@ -519,11 +526,15 @@ export const ProjectDetails = () => {
           title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={{
-            label: 'Edit',
-            onClick: handleEditAccount,
-            disabled: accountInActive,
-          }}
+          primaryButton={
+            isProjectFieldsEditable
+              ? {
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                  disabled: accountInActive,
+                }
+              : undefined
+          }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}

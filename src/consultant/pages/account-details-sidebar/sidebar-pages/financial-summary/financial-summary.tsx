@@ -119,7 +119,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
 
   const tabParam = searchParams.get('tab') || initialTab;
 
-  const fiscalYearOptions = getFiscalYears(20);
+  const fiscalYearOptions = getFiscalYears(26);
   const countriesList = useGetAllCountries();
   const resourceTypeOptions = useGetResourceType();
 
