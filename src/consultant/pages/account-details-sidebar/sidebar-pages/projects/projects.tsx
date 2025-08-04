@@ -104,6 +104,13 @@ const Projects: React.FC<ProjectsProps> = ({
     (state: RootState) => state.permission
   );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const projectViewAllIsEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_VIEW_EDIT
@@ -249,7 +256,7 @@ const Projects: React.FC<ProjectsProps> = ({
       label: 'Edit',
       disabled: accountInActive,
       onClick: (row: Project) => handleEdit(row),
-      hide: false,
+      hide: !isProjectFieldsEditable,
     },
     {
       label: 'Delete',
