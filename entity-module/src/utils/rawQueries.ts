@@ -888,7 +888,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
     COALESCE(COUNT(*) OVER(), 0) AS total_projects_rd_credits
     FROM 
         ${schemaName}.account_fiscal_region af
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = af.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = af.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
         af.account_rid = '${account_rid}'
         AND
@@ -906,7 +906,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         af.account_rid
         FROM 
         ${schemaName}.account_fiscal_region af
-		LEFT JOIN ${schemaName}.project_fiscal p ON p.region_rid = af.region_rid AND p.account_rid = af.account_rid
+		LEFT JOIN ${schemaName}.project_fiscal p 
+        ON p.region_rid = af.region_rid 
+        AND p.account_rid = af.account_rid AND p.fiscal_year = ${fiscal_year}
         WHERE 
         af.account_rid = '${account_rid}'
         AND
@@ -923,7 +925,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             SUM(COALESCE(pf.total_effort_fte_from_tasks,0)) AS project_task_level
         FROM
         ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = afr.account_rid AND pf.region_rid = afr.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.account_rid = afr.account_rid 
+        AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
             afr.account_rid = '${account_rid}'
             AND
@@ -941,7 +945,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             SUM(COALESCE(pf.total_cost_fte_from_tasks,0)) AS project_task_level
 
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = afr.account_rid AND pf.region_rid = afr.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.account_rid = afr.account_rid 
+        AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
             afr.account_rid = '${account_rid}'
             AND
@@ -959,7 +965,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             SUM(COALESCE(pf.total_effort_subcon_from_tasks,0)) AS project_task_level
 
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = afr.account_rid AND pf.region_rid = afr.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.account_rid = afr.account_rid 
+        AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
             afr.account_rid = '${account_rid}'
             AND
@@ -977,7 +985,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             SUM(COALESCE(pf.total_cost_subcon_from_tasks,0)) AS project_task_level
         
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = afr.account_rid AND pf.region_rid = afr.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.account_rid = afr.account_rid 
+        AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
             afr.account_rid = '${account_rid}'
             AND
@@ -994,7 +1004,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             SUM(COALESCE(pf.total_cost_nonlabor_from_prj_res,0)) AS project_resource_level
         
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = afr.account_rid AND pf.region_rid = afr.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.account_rid = afr.account_rid 
+        AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
             afr.account_rid = '${account_rid}'
             AND
@@ -1032,7 +1044,9 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             SUM(COALESCE(pf.rd_credits_total,0)) AS rd_credits_total
         FROM
         ${schemaName}.account_fiscal_region af
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = af.account_rid AND pf.region_rid = af.region_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.account_rid = af.account_rid 
+        AND pf.region_rid = af.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
         af.account_rid = '${account_rid}'
         AND
@@ -1163,7 +1177,9 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         SELECT DISTINCT COUNT(*) OVER() AS total_projects_rd_credits, afr.account_rid
         FROM 
        ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid 
+        AND pf.fiscal_year = ${fiscal_year}
         WHERE 
         pf.is_rd_claim_qualified = true
         and
@@ -1182,7 +1198,10 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         afr.account_rid
         FROM
 		${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ON pf.region_rid = afr.region_rid 
+        AND pf.account_rid = afr.account_rid
+        AND pf.fiscal_year = ${fiscal_year}
         WHERE 
         afr.account_rid = '${account_rid}'
         AND
@@ -1323,7 +1342,10 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
             SUM(COALESCE(pf.rd_credits_total,0)) AS rd_credits_total
         FROM
             ${schemaName}.account_fiscal_region afr
-            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid AND pf.account_rid = afr.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf 
+            ON pf.region_rid = afr.region_rid 
+            AND pf.account_rid = afr.account_rid
+            AND pf.fiscal_year = ${fiscal_year}
             WHERE 
             afr.account_rid = '${account_rid}'
             AND
