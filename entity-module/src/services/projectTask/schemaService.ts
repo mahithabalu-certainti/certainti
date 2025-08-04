@@ -196,10 +196,10 @@ export class ProjectTaskSchemaService {
     const { ProjectTask } = await this.getModels(accountNumber);
 
     const startDate = projectTaskData.start_date
-      ? moment.utc(projectTaskData.start_date).add(1, 'days').startOf('day')
+      ? moment.utc(projectTaskData.start_date)
       : null;
     const endDate = projectTaskData.end_date
-      ? moment.utc(projectTaskData.end_date).add(1, 'days').startOf('day')
+      ? moment.utc(projectTaskData.end_date)
       : null;
 
     const whereClause: any = {
@@ -2555,7 +2555,7 @@ export class ProjectTaskSchemaService {
           max_ai_interaction: projectData?.max_ai_interaction,
           auto_send_ai_interaction: projectData.auto_send_ai_interaction,
           status_rid: projectData.status_rid,
-          project_fiscal_rid: "",
+          project_fiscal_rid: projectTaskData.project_fiscal_rid,
           created_by: userId,
           created_datetime: new Date()
         }, { transaction });
