@@ -1295,7 +1295,7 @@ class SchemaService {
         modified_by varchar(50) NULL,
         event_datetime timestamptz NOT NULL,
         created_datetime timestamptz NOT NULL,
-        modified_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz NULL,
         account_rid varchar(50) NOT NULL,
         entity_rid varchar(50) NOT NULL,
         event_name varchar(100) NOT NULL,
@@ -1314,7 +1314,7 @@ class SchemaService {
     await sequelize.query(`
       CREATE TABLE "${schemaName}".project_task_history (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        r_number varchar(20) DEFAULT (('PTAH-'::text || lpad(nextval('trd365_00358.project_task_history_seq'::regclass)::text, 10, '0'::text))) NOT NULL,
+        r_number varchar(20) DEFAULT (('PTAH-'::text || lpad(nextval('"${schemaName}".project_task_history_seq'::regclass)::text, 10, '0'::text))) NOT NULL,
         project_task_rid varchar(50) NOT NULL,
         attribute_name varchar(100) NOT NULL,
         old_value varchar(2000) NULL,

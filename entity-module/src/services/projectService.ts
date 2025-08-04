@@ -128,11 +128,13 @@ export class ProjectService {
         schemaName
       );
 
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         orgDbSequlize,
         schemaName
       );
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectTimelineModel = await ProjectTimeline.initialize(
         orgDbSequlize,
         schemaName
@@ -1426,6 +1428,7 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(sequilzeInstance, schemaName);
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName
@@ -1484,6 +1487,7 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(sequilzeInstance, schemaName);
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName

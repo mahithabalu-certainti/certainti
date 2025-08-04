@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
 export interface ProjectFiscalAttributes {
   rid: string;
   r_number?: string;
@@ -524,6 +525,12 @@ export class ProjectFiscal
         underscored: true,
       }
     );
+
+    ProjectFiscal.belongsTo(Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "Project",
+    });
 
     return ProjectFiscal;
   }

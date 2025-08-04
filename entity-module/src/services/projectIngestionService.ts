@@ -95,11 +95,11 @@ class ProjectIngestionService {
     const mainDbSequelize = await this.getMainSequelize();
 
     const KeyContactModel = await KeyContact.initialize(sequelize, schemaName);
+    const ProjectModel = await Project.initialize(sequelize, schemaName);
     const ProjectFiscalModel = await ProjectFiscal.initialize(
       sequelize,
       schemaName
     );
-    const ProjectModel = await Project.initialize(sequelize, schemaName);
 
     const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(sequelize, schemaName);
 
