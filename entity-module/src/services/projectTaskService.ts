@@ -254,6 +254,26 @@ export class ProjectTaskService {
             : priorityMap[b.resource_type_name] -
                 priorityMap[a.resource_type_name];
         });
+      } else if (
+        finalSortBy === "total_hours_pro_task" ||
+        finalSortBy === "total_cost_pro_task"
+      ) {
+        formattedTasks.sort((a, b) => {
+          const aVal = a[finalSortBy];
+          const bVal = b[finalSortBy];
+
+          const aIsEmpty = aVal === null || aVal === undefined;
+          const bIsEmpty = bVal === null || bVal === undefined;
+
+          if (aIsEmpty && !bIsEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (!aIsEmpty && bIsEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+          if (aIsEmpty && bIsEmpty) return 0;
+
+          const aNum = Number(aVal);
+          const bNum = Number(bVal);
+
+          return finalSortOrder === "ASC" ? aNum - bNum : bNum - aNum;
+        });
       } else if (finalSortBy === "resource_code") {
         formattedTasks.sort((a, b) => {
           const aName = a.resource_code;
@@ -549,6 +569,26 @@ export class ProjectTaskService {
             : priorityMap[b.resource_type_name] -
                 priorityMap[a.resource_type_name];
         });
+      } else if (
+        finalSortBy === "total_hours_pro_task" ||
+        finalSortBy === "total_cost_pro_task"
+      ) {
+        formattedTasks.sort((a, b) => {
+          const aVal = a[finalSortBy];
+          const bVal = b[finalSortBy];
+
+          const aIsEmpty = aVal === null || aVal === undefined;
+          const bIsEmpty = bVal === null || bVal === undefined;
+
+          if (aIsEmpty && !bIsEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (!aIsEmpty && bIsEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+          if (aIsEmpty && bIsEmpty) return 0;
+
+          const aNum = Number(aVal);
+          const bNum = Number(bVal);
+
+          return finalSortOrder === "ASC" ? aNum - bNum : bNum - aNum;
+        });
       } else if (finalSortBy === "resource_code") {
         formattedTasks.sort((a, b) => {
           const aName = a.resource_code;
@@ -657,7 +697,10 @@ export class ProjectTaskService {
             );
           } else {
             let value = task[actualField];
-            row[label] = value === null || value === undefined || value === "" ? "-" : value;
+            row[label] =
+              value === null || value === undefined || value === ""
+                ? "-"
+                : value;
           }
         }
         return row;
@@ -754,11 +797,8 @@ export class ProjectTaskService {
         sequelize,
         schemaName
       );
-      
-      const ProjectModel = Project.initialize(
-        sequelize,
-        schemaName
-      );
+
+      const ProjectModel = Project.initialize(sequelize, schemaName);
 
       const ProjectFiscalModel = ProjectFiscal.initialize(
         sequelize,
@@ -828,14 +868,17 @@ export class ProjectTaskService {
         (task as any).dataValues.resource?.resource_type_rid
           ? mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
               replacements: {
-                resourceTypeRid: (task as any).dataValues.resource?.resource_type_rid,
+                resourceTypeRid: (task as any).dataValues.resource
+                  ?.resource_type_rid,
               },
               type: "SELECT",
             })
           : Promise.resolve([]),
         (task as any).dataValues.project?.currency_rid
           ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
-              replacements: { currencyRid: (task as any).dataValues.project?.currency_rid },
+              replacements: {
+                currencyRid: (task as any).dataValues.project?.currency_rid,
+              },
               type: "SELECT",
             })
           : Promise.resolve([]),
@@ -906,6 +949,9 @@ export class ProjectTaskService {
               }
             )?.full_name || "",
           attached_to: task.r_number,
+          size_in_mb: attachment.size_in_mb
+            ? `${attachment.size_in_mb} mb`
+            : "0 mb",
         }));
       }
 
@@ -977,7 +1023,7 @@ export class ProjectTaskService {
     };
 
     // Defensive: handle undefined/null filters
-    if (!filters || typeof filters !== 'object') {
+    if (!filters || typeof filters !== "object") {
       filters = {};
     }
 
@@ -1045,7 +1091,7 @@ export class ProjectTaskService {
               break;
           }
           break;
-        
+
         case "resource_name":
           switch (operator.toLowerCase()) {
             case "equals":
@@ -1067,7 +1113,7 @@ export class ProjectTaskService {
               };
               break;
           }
-          break;  
+          break;
         case "resource_code":
           switch (operator.toLowerCase()) {
             case "equals":
@@ -1139,7 +1185,9 @@ export class ProjectTaskService {
             case "equals": {
               const date = new Date(value);
               if (isNaN(date.getTime())) {
-                throw new Error("Invalid date format provided for equals operator");
+                throw new Error(
+                  "Invalid date format provided for equals operator"
+                );
               }
               condition[field] = Sequelize.literal(
                 `DATE("${field}") = DATE('${date.toISOString()}')`
@@ -1149,7 +1197,9 @@ export class ProjectTaskService {
             case "before": {
               const date = new Date(value);
               if (isNaN(date.getTime())) {
-                throw new Error("Invalid date format provided for before operator");
+                throw new Error(
+                  "Invalid date format provided for before operator"
+                );
               }
               condition[field] = Sequelize.literal(
                 `DATE("${field}") < DATE('${date.toISOString()}')`
@@ -1159,7 +1209,9 @@ export class ProjectTaskService {
             case "after": {
               const date = new Date(value);
               if (isNaN(date.getTime())) {
-                throw new Error("Invalid date format provided for after operator");
+                throw new Error(
+                  "Invalid date format provided for after operator"
+                );
               }
               condition[field] = Sequelize.literal(
                 `DATE("${field}") > DATE('${date.toISOString()}')`
@@ -1168,19 +1220,23 @@ export class ProjectTaskService {
             }
             case "between": {
               if (!Array.isArray(value) || value.length !== 2) {
-                throw new Error("Between operator requires an array with two dates");
+                throw new Error(
+                  "Between operator requires an array with two dates"
+                );
               }
               const startDate = new Date(value[0]);
               const endDate = new Date(value[1]);
-              
+
               if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                throw new Error("Invalid date format provided for between operator");
+                throw new Error(
+                  "Invalid date format provided for between operator"
+                );
               }
-              
+
               if (startDate > endDate) {
                 throw new Error("Start date cannot be later than end date");
               }
-              
+
               condition[field] = Sequelize.literal(
                 `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
               );
@@ -1190,7 +1246,9 @@ export class ProjectTaskService {
               condition[field] = { [Op.is]: null };
               break;
             default:
-              throw new Error(`Unsupported operator ${operator} for date field`);
+              throw new Error(
+                `Unsupported operator ${operator} for date field`
+              );
           }
           break;
 
@@ -1198,11 +1256,13 @@ export class ProjectTaskService {
           // Process each operator in the filter object separately
           Object.entries(filter).forEach(([op, val]) => {
             if (val === undefined) return;
-            
+
             const nestedCondition: any = {};
             switch (op.toLowerCase()) {
               case "equals":
-                nestedCondition["$resource.resource_type_rid$"] = { [Op.eq]: val };
+                nestedCondition["$resource.resource_type_rid$"] = {
+                  [Op.eq]: val,
+                };
                 break;
               case "not_equals":
                 nestedCondition["$resource.resource_type_rid$"] = {
@@ -1220,7 +1280,7 @@ export class ProjectTaskService {
                 };
                 break;
             }
-            
+
             if (Object.keys(nestedCondition).length > 0) {
               whereClause[Op.and].push(nestedCondition);
             }
@@ -1297,7 +1357,7 @@ export class ProjectTaskService {
         created_name: createdName || null,
         modified_name: modifiedName || null,
       };
-      
+
       return taskWithUserDetails;
     } catch (err) {
       this.logger.error("Error adding user details:", err);
