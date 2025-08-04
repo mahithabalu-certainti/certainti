@@ -125,3 +125,7 @@ export const getUserDetailUrl = (userId: string): string => {
 export const USER_DETAIL_URL = getUserDetailUrl(
   '84268de1-936a-43c3-b98c-a48858c8bb42'
 );
+
+export const getUserProfileListURL = (): string => {
+  return `/api/user/list/profiles`;
+};

@@ -5,10 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { ImportsList, ImportsListURLParams } from '../../../../types/imports';
 import { getImportsListColumns } from './columns';
 import { getImportsFilterFields } from './helpers';
-import {
-  CellEditData,
-  FieldChangeValue,
-} from '../../../../../components/table/types';
 import { SectionTabPanel } from '../../../../../components';
 import { ImportIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
@@ -20,10 +16,6 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { resourceClient } from '../../../../../api/graphql/clients/client';
-import { useMutation } from '@apollo/client';
-import { IMPORT_UPDATE } from '../../../../../api/graphql/queries/import-query';
-import { useToast } from '../../../../../hooks';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const ImportsTabs: ResourceTabs[] = [
@@ -56,7 +48,6 @@ const Imports: React.FC<ImportsProps> = ({
   accountInActive,
   accountDetails,
 }) => {
-  const { errorToast } = useToast();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -70,7 +61,6 @@ const Imports: React.FC<ImportsProps> = ({
   const [sortField, setSortField] = useState<string>('r_number');
   const [importsList, setImportsList] = useState<ImportsList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [showUploads, setShowUploads] = useState<boolean>(false);
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -78,9 +68,6 @@ const Imports: React.FC<ImportsProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const fileId = searchParams.get('file_id');
   const viewDetails = !!fileId;
-  const [updateImport] = useMutation(IMPORT_UPDATE, {
-    client: resourceClient,
-  });
 
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
@@ -180,10 +167,10 @@ const Imports: React.FC<ImportsProps> = ({
     }
   };
 
-  const handleImport = () => {
-    const newShowUploads = !showUploads;
-    setShowUploads(newShowUploads);
-    if (newShowUploads) {
+  const showUploads = searchParams.get('upload') === 'true';
+
+  const handleImport = (value: boolean) => {
+    if (value) {
       searchParams.set('upload', 'true');
     } else {
       searchParams.delete('upload');
@@ -196,7 +183,7 @@ const Imports: React.FC<ImportsProps> = ({
       label: 'Import file',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: () => handleImport(),
+      onClick: () => handleImport(true),
       sx: { width: '90px', minWidth: '90px' },
       hide: false,
     },
@@ -243,7 +230,6 @@ const Imports: React.FC<ImportsProps> = ({
   const importsColumns = getImportsListColumns(
     handleDocument,
     handleDownload,
-    fiscalYears,
     permissionMap,
     isImportExportEnable
   );
@@ -254,49 +240,6 @@ const Imports: React.FC<ImportsProps> = ({
   );
 
   const getRowId = (row: ImportsList) => row.rid;
-
-  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-    const previousImports = [...importsList];
-
-    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
-      (data, item) => {
-        const key = item.editId || item.columnId;
-        data[key] = key === 'fiscal_year' ? Number(item.value) : item.value;
-        return data;
-      },
-      {
-        rid: rowId,
-        account_rid: accountid,
-      }
-    );
-
-    try {
-      const res = await updateImport({
-        variables: { data: updateData },
-      });
-      const result = res.data?.updateInlineEditForImports;
-      if (result?.statusCode === 200 && result.data) {
-        const updateImport = result.data;
-        setImportsList((prev) =>
-          prev.map((att) => {
-            if (att.rid === updateImport.rid) {
-              return {
-                ...att,
-                ...updateImport,
-              };
-            }
-            return att;
-          })
-        );
-      } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
-        setImportsList(previousImports);
-      }
-    } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
-      setImportsList(previousImports);
-    }
-  };
 
   if (!importsEnable || !importsViewEnable) return <AccessRestricted />;
 
@@ -324,7 +267,7 @@ const Imports: React.FC<ImportsProps> = ({
           accountId={accountid}
           accountInActive={accountInActive}
           onUploadSuccess={onRefreshClick}
-          handleShowUpload={handleImport}
+          handleShowUpload={() => handleImport(false)}
         />
       ) : viewDetails ? (
         <ImportDetails handleBackClick={handleBackClick} />
@@ -366,7 +309,6 @@ const Imports: React.FC<ImportsProps> = ({
               sortBy={sortField}
               sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
               onSort={handleSortRequest}
-              onCellEdit={handleCellEdit}
             />
           </div>
         </>

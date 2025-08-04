@@ -20,8 +20,8 @@ import { ADMIN_MANAGE_USER } from '../../../../routes';
 import {
   useCreateUserDetails,
   useFetchOrgNames,
+  useGetUserProfileList,
   useManageUserDetail,
-  useManageUserProfile,
   useManageUserRole,
   useUpdateUserDetails,
 } from '../../../service/manage-user/manage-user-service';
@@ -67,7 +67,7 @@ export const CreateUser: React.FC = () => {
     `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim();
 
   const statusOptions = useGetStatus();
-  const userProfiles = useManageUserProfile();
+  const userProfiles = useGetUserProfileList();
   const allCountries = useGetAllCountries();
   const userRoles = useManageUserRole();
   const states = useFetchState(currentCountry.country);
