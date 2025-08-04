@@ -192,13 +192,14 @@ export class ProjectTaskSchemaService {
     projectTaskData: ICreateProjectTask,
     resourceId: string
   ): Promise<ProjectTask[]> {
+
     const { ProjectTask } = await this.getModels(accountNumber);
 
     const startDate = projectTaskData.start_date
-      ? moment.utc(projectTaskData.start_date, "YYYY-MM-DD")
+      ? moment.utc(projectTaskData.start_date).add(1, 'days').startOf('day')
       : null;
     const endDate = projectTaskData.end_date
-      ? moment.utc(projectTaskData.end_date, "YYYY-MM-DD")
+      ? moment.utc(projectTaskData.end_date).add(1, 'days').startOf('day')
       : null;
 
     const whereClause: any = {

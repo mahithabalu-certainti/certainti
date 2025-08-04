@@ -107,11 +107,13 @@ export class ProjectResourceSchemaService {
     const ProjectResourceFiscalRegionModel =
       await ProjectResourceFiscalRegion.initialize(sequelize, schemaName);
 
+    const ProjectModel = await Project.initialize(sequelize, schemaName);
+
     const ProjectFiscalModel = await ProjectFiscal.initialize(
       sequelize,
       schemaName
     );
-    const ProjectModel = await Project.initialize(sequelize, schemaName);
+    
     const ProjectResourceTimelineModel =
       await ProjectResourceTimeline.initialize(sequelize, schemaName);
     const ProjectResourceHistoryModel = await ProjectResourceHistory.initialize(
