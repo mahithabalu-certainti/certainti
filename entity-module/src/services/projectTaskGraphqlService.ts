@@ -106,8 +106,11 @@ export default class ProjectTaskGraphqlServies {
               newProjectTaskData.resource_rid!
             );
 
+          const filteredTasks = existingTasks.filter(
+            (task) => task.rid !== data.rid 
+          );
 
-          const totalExistingEffort = existingTasks.reduce(
+          const totalExistingEffort = filteredTasks.reduce(
             (sum: Decimal, task: ProjectTask) => {
               const effort = new Decimal(task.total_hours_pro_task || "0");
               return sum.plus(effort);
