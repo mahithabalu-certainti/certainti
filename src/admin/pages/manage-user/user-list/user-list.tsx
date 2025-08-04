@@ -13,7 +13,7 @@ import { UserTable } from '../table/user-table';
 import { getUserFilterFields } from './helpers';
 import {
   exportUserList,
-  useManageUserProfile,
+  useGetUserProfileList,
   useManageUserRole,
 } from '../../../service';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
@@ -177,7 +177,7 @@ const UserList: React.FC = () => {
     },
   ];
 
-  const profileList = useManageUserProfile();
+  const profileList = useGetUserProfileList();
   const userRoles = useManageUserRole();
 
   const userProfiles = useMemo(() => {

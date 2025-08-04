@@ -1,13 +1,11 @@
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import TextButton from '../../../../../components/button/text-button';
 import { ListTableColumn } from '../../../../../components/table/types';
-import { SelectOption } from '../../../../types';
 import { ImportsList } from '../../../../types/imports';
 
 export const getImportsListColumns = (
   handleDocument: (rowId: string) => void,
   handleDownload: (documentUrl: string) => void,
-  fiscalYears: SelectOption[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   isImportExportEnable?: boolean
 ): ListTableColumn<ImportsList>[] => [
@@ -71,15 +69,7 @@ export const getImportsListColumns = (
     width: 140,
     sortable: true,
     hide: !permissionMap?.['fiscal']?.edit && !permissionMap?.['fiscal']?.read,
-    editable:
-      permissionMap?.['fiscal']?.edit && permissionMap?.['fiscal']?.read,
     render: (row: ImportsList) => row.fiscal && `FY-${row.fiscal}`,
-    field: {
-      type: 'select',
-      required: true,
-      placeholder: '',
-      options: fiscalYears,
-    },
   },
   {
     id: 'entity',

@@ -8,6 +8,7 @@ import {
   DocumentTypeResponse,
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
+  GetImportEntityTypeApiResponse,
   GetStatusApiResponse,
 } from './';
 
@@ -152,5 +153,36 @@ export const useGetStatus = () => {
     gcTime: Infinity, // Never delete from cache
     refetchOnMount: false, // Don't refetch on component mount
     refetchOnReconnect: false, // Don't refetch on reconnect
+  });
+};
+
+export const getImportEntityTypesUrl = (): string => {
+  return `/api/accounts/importEntityTypes`;
+};
+
+export const fetchImportEntityTypes =
+  async (): Promise<GetImportEntityTypeApiResponse> => {
+    try {
+      const { data } =
+        await accountServiceApi.get<GetImportEntityTypeApiResponse>(
+          getImportEntityTypesUrl()
+        );
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching entity type list:', error);
+      throw error;
+    }
+  };
+
+export const useGetImportEntityTypes = () => {
+  return useQuery<GetImportEntityTypeApiResponse, Error>({
+    queryKey: ['import-entity-types'],
+    queryFn: () => fetchImportEntityTypes(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };

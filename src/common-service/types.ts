@@ -341,3 +341,12 @@ export interface DocumentTypeResponse {
   statusMessage: string;
   data: DocumentTypeResponseData;
 }
+
+export interface EntityTypes {
+  rid: string;
+  entity_name: string;
+}
+
+export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
+  data: EntityTypes[];
+}

@@ -1,11 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '../../../../../../hooks';
-import { UploadImportPayload } from '../../../../../../common-service';
+import {
+  UploadImportPayload,
+  useGetImportEntityTypes,
+} from '../../../../../../common-service';
 import { uploadImportFile } from '../../../../../services/import';
 import { ImportIcon, UploadIcon } from '../../../../../../assets';
-import ActionImportDropdown from '../../../../../../components/actions-dropdown/import-dropdown';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { GlobalFiscalYearDropdown } from '../../../../../../components';
+import {
+  ButtonDropdown,
+  GlobalFiscalYearDropdown,
+} from '../../../../../../components';
 
 interface ImportFileProps {
   accountNo?: string | undefined;
@@ -32,15 +37,15 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const auth = localStorage.getItem('auth');
   const { userId } = auth ? JSON.parse(auth) : {};
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [entityType, setEntityType] = useState<string>('Select Type');
-  const [fiscalYear, setFiscalYear] = useState<string>('Year');
+  const [entityType, setEntityType] = useState<string>('');
+  const [fiscalYear, setFiscalYear] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (
       message?.type === 'error' &&
-      entityType !== 'Select Type' &&
-      fiscalYear !== 'Select Year' &&
+      entityType !== '' &&
+      fiscalYear !== '' &&
       selectedFiles.length > 0
     ) {
       setMessage(null);
@@ -49,16 +54,16 @@ const ImportFile: React.FC<ImportFileProps> = ({
   }, [entityType, fiscalYear, selectedFiles]);
 
   const { successToast, errorToast } = useToast();
-  const menuItems = [
-    { label: 'Resource', onClick: () => setEntityType('Resource') },
-    { label: 'Resource Cost', onClick: () => setEntityType('Resource Cost') },
-    { label: 'Resource Skill', onClick: () => setEntityType('Resource Skill') },
-    { label: 'Project', onClick: () => setEntityType('Project') },
-    {
-      label: 'Project Resource',
-      onClick: () => setEntityType('Project Resource'),
-    },
-  ];
+  const entityTypes = useGetImportEntityTypes();
+
+  const entityOptions = useMemo(
+    () =>
+      entityTypes.data?.data.map((type) => ({
+        label: type.entity_name,
+        value: type.entity_name,
+      })) || [],
+    [entityTypes.data?.data]
+  );
 
   const currentYear = new Date().getFullYear();
 
@@ -117,12 +122,12 @@ const ImportFile: React.FC<ImportFileProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (entityType === 'Select Type') {
+    if (!entityType) {
       showError('Please select an Entity Type.');
       return;
     }
 
-    if (fiscalYear === 'Year') {
+    if (!fiscalYear) {
       showError('Please select a Fiscal Year.');
       return;
     }
@@ -256,7 +261,13 @@ const ImportFile: React.FC<ImportFileProps> = ({
             Entity Type
             <span className='text-red-500 ml-1'>*</span>
           </label>
-          <ActionImportDropdown actions={menuItems} label={entityType} />
+          <ButtonDropdown
+            label='Select Type'
+            options={entityOptions}
+            disabled={entityTypes.isPending}
+            selectedValue={entityType}
+            onSelect={(value) => setEntityType(value)}
+          />
         </div>
         <div className='flex items-center gap-2'>
           <label className='font-normal text-[14px] text-[#2D3E4F]'>

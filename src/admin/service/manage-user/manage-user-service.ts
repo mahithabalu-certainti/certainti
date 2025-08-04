@@ -15,7 +15,11 @@ import {
   OrgNameApiResponse,
   UpdateUserResponse,
 } from '../../types/manage-user';
-import { getUserExportUrl, getUserListUrl } from '../urls';
+import {
+  getUserExportUrl,
+  getUserListUrl,
+  getUserProfileListURL,
+} from '../urls';
 import { generateFile } from '../helpers';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
@@ -323,6 +327,27 @@ export const useFetchOrgNames = () => {
   return useQuery<OrgNameApiResponse, Error>({
     queryKey: ['org-name-lists'], // Unique query key
     queryFn: () => fetchOrgNames(),
+    retry: 0,
+  });
+};
+
+export const fetchUserProfileList =
+  async (): Promise<UserProfileApiResponse> => {
+    try {
+      const { data } = await userServiceApi.get<UserProfileApiResponse>(
+        getUserProfileListURL()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching user profile list:', error);
+      throw error;
+    }
+  };
+
+export const useGetUserProfileList = () => {
+  return useQuery<UserProfileApiResponse, Error>({
+    queryKey: ['user-profile-list'],
+    queryFn: () => fetchUserProfileList(),
     retry: 0,
   });
 };
