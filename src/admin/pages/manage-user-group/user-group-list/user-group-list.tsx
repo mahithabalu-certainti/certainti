@@ -47,6 +47,13 @@ export const UserGroupList: React.FC = () => {
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
+  const isManageUserGroupFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.USER_GROUP_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const isUserGroupCreateEnable = checkPermission(
     permission,
     AllPermissions.USER_GROUP_CREATE
@@ -84,7 +91,10 @@ export const UserGroupList: React.FC = () => {
       })) || [],
     [allUserGroupTypes.data?.data.groupTypes]
   );
-  const userGroupFilterFields = getManageUserGroupFilterFields(allGroupTypes, permissionMap);
+  const userGroupFilterFields = getManageUserGroupFilterFields(
+    allGroupTypes,
+    permissionMap
+  );
 
   // Functions
   const onRefreshClick = () => {
@@ -231,7 +241,7 @@ export const UserGroupList: React.FC = () => {
               onRefreshClick();
             }}
             onSelectionChange={() => {}}
-            isProfileEditEnable
+            isProfileEditEnable={isManageUserGroupFieldsEditable}
             refreshUserGroupTrigger={refreshUserGroupTrigger}
           />
         </Suspense>
