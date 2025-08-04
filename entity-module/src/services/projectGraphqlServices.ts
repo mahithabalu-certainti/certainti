@@ -82,6 +82,7 @@ class ProjectGraphQlServices {
             updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid
             await this.projectIngestion.updateAccountFiscalAggregatesFromFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0])
             await this.projectIngestion.addAccountFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
+            await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
                 checkAccountExists[0][0].r_number,
                 checkAccountExists[0][0].rid
