@@ -525,16 +525,16 @@ async function exportAllImportedData (req : Request, res : Response) {
                 "File Name" : data.file_name,
                 "Format" : data.format,
                 "Size" : data.size,
+                "Fiscal Year" : data.fiscal,
                 "Entity" : data.entity,
                 "Total Records" : data.total_records,
-                "Fiscal Year" : data.fiscal,
                 "Records Loaded Successfully" : data.records_loaded_successfully,
-                "Records Failed to Load" : data.records_failed_to_load,
                 "Records with Warning" : data.records_with_warning,
+                "Records Failed to Load" : data.records_failed_to_load,
                 "Status" : data.status,
                 "Status Description" : data.status_description,
-                "Imported On" : new Date(data.imported_on).toISOString().slice(0, 10),
                 "Imported By" : data.imported_by,
+                "Imported On" : new Date(data.imported_on).toISOString().slice(0, 10),
             }
         })
 
