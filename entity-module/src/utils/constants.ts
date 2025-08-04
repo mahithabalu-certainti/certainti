@@ -134,7 +134,9 @@ export const STATUS_MESSAGE = {
   autoAccessmentMissing : "Auto Assessment missing",
   autoSendMissing : "Autosend Interaction missing",
   maxAiMissing : "Max AI Interaction missing",
-  accountSummaryHighlightsSuccess : "Financial Summary fetched successfully"
+  accountSummaryHighlightsSuccess : "Financial Summary fetched successfully",
+  effortExceeded : "Effort cannot exceed the total hours in the duration",
+  effort24HrsExceeded : "Effort cannot exceed 24 hours for the day",
 }
 
 export const TYPES = {

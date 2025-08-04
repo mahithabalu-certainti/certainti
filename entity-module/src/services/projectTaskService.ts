@@ -69,6 +69,7 @@ export class ProjectTaskService {
         sequelize,
         schemaName
       );
+      const ProjectModel = Project.initialize(sequelize, schemaName);
       const ProjectFiscalModel = ProjectFiscal.initialize(
         sequelize,
         schemaName
@@ -364,6 +365,7 @@ export class ProjectTaskService {
         sequelize,
         schemaName
       );
+      const ProjectModel = Project.initialize(sequelize, schemaName);
       const ProjectFiscalModel = ProjectFiscal.initialize(
         sequelize,
         schemaName
@@ -630,20 +632,32 @@ export class ProjectTaskService {
         currency_rid: "currency_symbol",
       };
 
+      // If no fields are allowed, return an array with an empty object
+      if (allowedFieldSet.size === 0) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            tasks: [{}],
+            totalCount: total,
+          },
+        };
+      }
+
       const exportDataPromises = formattedTasks.map(async (task: any) => {
         const row: Record<string, string> = {};
 
-        for (const [field, label] of Object.entries(labelMap)) {
-          if (allowedFieldSet.has(field)) {
-            const actualField = fieldValueMap[field] || field;
-            if (field === "total_cost_pro_task") {
-              row[label] = await this.formatNumberForExport(
-                task[actualField],
-                task.currency_symbol
-              );
-            } else {
-              row[label] = task[actualField] ?? "-";
-            }
+        for (const allowedField of allowedFieldSet) {
+          const actualField = fieldValueMap[allowedField] || allowedField;
+          const label = labelMap[actualField] || allowedField;
+          if (actualField === "total_cost_pro_task") {
+            row[label] = await this.formatNumberForExport(
+              task[actualField],
+              task.currency_symbol
+            );
+          } else {
+            let value = task[actualField];
+            row[label] = value === null || value === undefined || value === "" ? "-" : value;
           }
         }
         return row;
@@ -651,11 +665,13 @@ export class ProjectTaskService {
 
       const exportData = await Promise.all(exportDataPromises);
 
+      // Ensure we always return at least an empty object in the array if there are no tasks
+      const finalExportData = exportData.length > 0 ? exportData : [{}];
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          tasks: exportData,
+          tasks: finalExportData,
           totalCount: total,
         },
       };
@@ -738,6 +754,12 @@ export class ProjectTaskService {
         sequelize,
         schemaName
       );
+      
+      const ProjectModel = Project.initialize(
+        sequelize,
+        schemaName
+      );
+
       const ProjectFiscalModel = ProjectFiscal.initialize(
         sequelize,
         schemaName
@@ -954,6 +976,11 @@ export class ProjectTaskService {
       [Op.and]: [],
     };
 
+    // Defensive: handle undefined/null filters
+    if (!filters || typeof filters !== 'object') {
+      filters = {};
+    }
+
     // Search logic
     if (search) {
       whereClause[Op.and].push({
@@ -1018,7 +1045,29 @@ export class ProjectTaskService {
               break;
           }
           break;
-
+        
+        case "resource_name":
+          switch (operator.toLowerCase()) {
+            case "equals":
+              condition["$resource.resource_name$"] = { [Op.iLike]: value };
+              break;
+            case "not_equals":
+              condition["$resource.resource_name$"] = {
+                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+              };
+              break;
+            case "contains":
+              condition["$resource.resource_name$"] = {
+                [Op.iLike]: `%${value}%`,
+              };
+              break;
+            case "is_empty":
+              condition["$resource.resource_name$"] = {
+                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+              };
+              break;
+          }
+          break;  
         case "resource_code":
           switch (operator.toLowerCase()) {
             case "equals":
@@ -1089,6 +1138,9 @@ export class ProjectTaskService {
           switch (operator.toLowerCase()) {
             case "equals": {
               const date = new Date(value);
+              if (isNaN(date.getTime())) {
+                throw new Error("Invalid date format provided for equals operator");
+              }
               condition[field] = Sequelize.literal(
                 `DATE("${field}") = DATE('${date.toISOString()}')`
               );
@@ -1096,6 +1148,9 @@ export class ProjectTaskService {
             }
             case "before": {
               const date = new Date(value);
+              if (isNaN(date.getTime())) {
+                throw new Error("Invalid date format provided for before operator");
+              }
               condition[field] = Sequelize.literal(
                 `DATE("${field}") < DATE('${date.toISOString()}')`
               );
@@ -1103,49 +1158,74 @@ export class ProjectTaskService {
             }
             case "after": {
               const date = new Date(value);
+              if (isNaN(date.getTime())) {
+                throw new Error("Invalid date format provided for after operator");
+              }
               condition[field] = Sequelize.literal(
                 `DATE("${field}") > DATE('${date.toISOString()}')`
               );
               break;
             }
             case "between": {
-              if (Array.isArray(value)) {
-                const startDate = new Date(value[0]);
-                const endDate = new Date(value[1]);
-                condition[field] = Sequelize.literal(
-                  `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
-                );
+              if (!Array.isArray(value) || value.length !== 2) {
+                throw new Error("Between operator requires an array with two dates");
               }
+              const startDate = new Date(value[0]);
+              const endDate = new Date(value[1]);
+              
+              if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                throw new Error("Invalid date format provided for between operator");
+              }
+              
+              if (startDate > endDate) {
+                throw new Error("Start date cannot be later than end date");
+              }
+              
+              condition[field] = Sequelize.literal(
+                `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+              );
               break;
             }
             case "is_empty":
               condition[field] = { [Op.is]: null };
               break;
+            default:
+              throw new Error(`Unsupported operator ${operator} for date field`);
           }
           break;
 
         case "resource_type_rid":
-          switch (operator.toLowerCase()) {
-            case "equals":
-              condition["$resource.resource_type_rid$"] = { [Op.eq]: value };
-              break;
-            case "not_equals":
-              condition["$resource.resource_type_rid$"] = {
-                [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }],
-              };
-              break;
-            case "in":
-              condition["$resource.resource_type_rid$"] = {
-                [Op.in]: Array.isArray(value) ? value : [value],
-              };
-              break;
-            case "is_empty":
-              condition["$resource.resource_type_rid$"] = {
-                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
-              };
-              break;
-          }
-          break;
+          // Process each operator in the filter object separately
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+            
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["$resource.resource_type_rid$"] = { [Op.eq]: val };
+                break;
+              case "not_equals":
+                nestedCondition["$resource.resource_type_rid$"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["$resource.resource_type_rid$"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["$resource.resource_type_rid$"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+            
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          return; // Skip the default condition push at the end
 
         default:
           console.log(`Unhandled filter field: ${field}`);
@@ -1179,7 +1259,7 @@ export class ProjectTaskService {
 
       return result;
     } catch (error) {
-      console.error("Error fetching attachments:", error);
+      this.logger.error("Error fetching attachments:", error);
       throw new Error("Failed to fetch attachments");
     }
   }
@@ -1211,13 +1291,17 @@ export class ProjectTaskService {
       const createdName = await getUserFullName(createdById);
       const modifiedName = await getUserFullName(modifiedById);
 
-      return {
+      // Create a new object with user details instead of modifying the original
+      const taskWithUserDetails = {
         ...taskData,
         created_name: createdName || null,
         modified_name: modifiedName || null,
       };
+      
+      return taskWithUserDetails;
     } catch (err) {
-      throw new Error("Error adding user details" + (err as Error).message);
+      this.logger.error("Error adding user details:", err);
+      return taskData; // Return original task on error
     }
   }
 

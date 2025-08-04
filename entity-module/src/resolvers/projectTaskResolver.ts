@@ -23,6 +23,13 @@ export const projectTaskResolver: IResolvers = {
             statusMessage: result.statusMessage,
             data: result.data,
           };
+        } else if(result.statusCode == HttpStatus.BAD_REQUEST) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+            statusMessage: result.statusMessage,
+            data: result.data,
+          };
         } else {
           return {
             statusCode: HttpStatus.FAILED,
