@@ -501,7 +501,7 @@ export const rawQueries = {
     INSERT INTO ${schemaName}.project_history
     (created_by, created_datetime, project_rid, attribute_name, old_value, new_value)
     VALUES
-    ('${data.userId}', NOW(), '${data.project_rid}', '${attributeName}', '${oldValue}', '${newValue}')
+    ('${data.userId}', NOW(), '${data.project_fiscal_rid}', '${attributeName}', '${oldValue}', '${newValue}')
     `
   },
   checkForDuplicateFiscalYear (schemaName : string, data : any) {
