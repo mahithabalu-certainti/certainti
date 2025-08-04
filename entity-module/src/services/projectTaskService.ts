@@ -145,8 +145,8 @@ export class ProjectTaskService {
 
       const resourceTypes = resourceTypeRids.length
         ? await mainSequelize.query(
-            `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRids)`,
-            { replacements: { resourceTypeRids }, type: "SELECT" }
+            rawQueries.GET_RESOURCE_TYPES,
+            { replacements: { resourceTypeRid:resourceTypeRids }, type: "SELECT" }
           )
         : [];
       const resourceTypeMap = new Map(
@@ -160,8 +160,8 @@ export class ProjectTaskService {
       const [currencies] = await Promise.all([
         currencyRids.length
           ? mainSequelize.query(
-              `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
-              { replacements: { currencyRids }, type: "SELECT" }
+              rawQueries.GET_CURRENCIES,
+              { replacements: { currencyRid:currencyRids }, type: "SELECT" }
             )
           : [],
       ]);
@@ -460,8 +460,8 @@ export class ProjectTaskService {
         .filter((rid) => rid);
       const resourceTypes = resourceTypeRids.length
         ? await mainSequelize.query(
-            `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRids)`,
-            { replacements: { resourceTypeRids }, type: "SELECT" }
+            rawQueries.GET_RESOURCE_TYPES,
+            { replacements: { resourceTypeRid:resourceTypeRids }, type: "SELECT" }
           )
         : [];
       const resourceTypeMap = new Map(
@@ -475,8 +475,8 @@ export class ProjectTaskService {
       const [currencies] = await Promise.all([
         currencyRids.length
           ? mainSequelize.query(
-              `SELECT rid, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:currencyRids)`,
-              { replacements: { currencyRids }, type: "SELECT" }
+              rawQueries.GET_CURRENCIES,
+              { replacements: { currencyRid:currencyRids }, type: "SELECT" }
             )
           : [],
       ]);

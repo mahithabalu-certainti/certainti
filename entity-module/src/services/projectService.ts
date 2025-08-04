@@ -661,7 +661,10 @@ export class ProjectService {
           document_type: (documentType as any)?.type_name || '',
           document_category: (documentCategory as any)?.category_name || '',
           uploaded_by: (uploadedBy as any)?.full_name || '',
-          attached_to: attachedTo
+          attached_to: attachedTo,
+          size_in_mb: attachment.size_in_mb
+            ? `${attachment.size_in_mb} mb`
+            : "0 mb",
         };
       });
     }

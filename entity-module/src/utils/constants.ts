@@ -542,7 +542,7 @@ export const rawQueries = {
     WHERE rid IN (:userIds)
   `,
   GET_RESOURCE_TYPES: `
-  SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRid)
+  SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRid)
   `,
   GET_COUNTRIES:`
   SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
