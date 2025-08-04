@@ -94,7 +94,7 @@ export const ProjectTask = ({
     Record<string, string | number | boolean>
   >({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
@@ -130,7 +130,14 @@ export const ProjectTask = ({
     permission,
     AllPermissions.ATTACHMENT_CREATE
   );
-
+  const isTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_CREATE
+  );
+  const isTaskEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_VIEW_EDIT
+  );
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -248,7 +255,7 @@ export const ProjectTask = ({
       variant: 'outlined' as const,
       onClick: () => viewDetails ? handleProjectTaskDetailEdit() : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: !isProjectTaskFieldsEditable
+      hide: viewDetails ? !isTaskEditEnable : !isTaskCreateEnable,
     },
   ];
   const PFY = projectFiscalDate;
@@ -324,7 +331,7 @@ export const ProjectTask = ({
   const handleProjectTaskClick = (row: ProjectTaskListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_task_id', row?.rid ?? '');
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     setProjectResData(row);
     setShowProjectResourceDetails(true);
     setShowFilter(false);
@@ -434,7 +441,6 @@ export const ProjectTask = ({
                 }
                 isDetailsLoading={isDetailsLoading}
                 detailsError={detailsError}
-                permissionMapTaskTableColumn={permissionMapTaskTableColumn}
               />
             ) : (
               <ListTable

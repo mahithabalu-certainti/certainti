@@ -601,13 +601,12 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${
-    errorData?.statusMessage
-      ? typeof errorData.statusMessage === 'object'
-        ? Object.values(errorData.statusMessage).join(', ')
-        : errorData.statusMessage || ''
-      : errorData?.message || data.message
-  }</p>`;
+  return `<p>${errorData?.statusMessage
+    ? typeof errorData.statusMessage === 'object'
+      ? Object.values(errorData.statusMessage).join(', ')
+      : errorData.statusMessage || ''
+    : errorData?.message || data.message
+    }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
@@ -802,17 +801,19 @@ export const getFiscalDateBounds = (
     endDateYear
   );
 
-  const endDateMax =
-    fiscalYear === currentYear ? today : accountEndDate || today;
+  let endDateMax: Date;
+  if (
+    fiscalYear === currentYear ||
+    (fiscalYear < currentYear && endDateYear > currentYear) ||
+    (accountEndDate && today < accountEndDate)
+  ) {
+    endDateMax = today;
+  } else {
+    endDateMax = accountEndDate || today;
+  }
 
-  const previousDate = new Date(today);
-  previousDate.setDate(today.getDate() - 1);
-
-  const startDateMax = accountEndDate
-    ? fiscalYear === currentYear
-      ? previousDate
-      : new Date(accountEndDate.getTime() - 24 * 60 * 60 * 1000)
-    : undefined;
+  const startDateMax = new Date(endDateMax);
+  startDateMax.setDate(endDateMax.getDate() - 1);
 
   return {
     year: Number(year),

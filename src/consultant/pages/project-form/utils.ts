@@ -196,7 +196,7 @@ export const transformFormData = (
 
   if (isEdit && formData.rid) {
     // data.account_id = formData.rid;
-    data.project_fiscal_id = formData.project_id;
+    data.project_fiscal_id = formData.rid;
   }
 
   return data;

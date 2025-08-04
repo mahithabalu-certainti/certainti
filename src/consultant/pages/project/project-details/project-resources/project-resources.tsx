@@ -95,7 +95,7 @@ export const ProjectResources = ({
   >({});
   const [detailrefecth, setDetailRefetch] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [projectResData, setProjectResData] =

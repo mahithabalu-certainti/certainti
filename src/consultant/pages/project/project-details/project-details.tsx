@@ -184,7 +184,10 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECTS_RESOURCES_EXPORT
   );
-
+  const isTaskExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_EXPORT
+  );
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -197,7 +200,7 @@ export const ProjectDetails = () => {
     if (list === 'attachments') {
       return !isAttachmentViewEnable;
     } else if (list === 'projectsTask') {
-      return false;
+      return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'projectResources') {
@@ -550,11 +553,10 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
-          }`}
+          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px]'
+            : 'w-[220px] min-w-[220px] max-w-[220px]'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
