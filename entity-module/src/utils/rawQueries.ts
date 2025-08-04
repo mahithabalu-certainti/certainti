@@ -901,8 +901,8 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
     ),
     resource_metrics AS (
         SELECT DISTINCT ON (a.account_rid) 
-        SUM(COALESCE(p.total_fte_prj,0)) as total_fte, 
-        SUM(COALESCE(p.total_subcon_prj,0)) as total_subcon,
+        COALESCE(a.total_fte,0) as total_fte, 
+        COALESCE(a.total_subcon,0) as total_subcon,
         SUM(COALESCE(p.total_nonlabor_prj, 0)) AS total_nonlabor,
         a.account_rid
         FROM 
@@ -915,7 +915,7 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         a.fiscal_year = ${fiscal_year}
         AND
         af.region_rid = '${region_rid}' 
-        GROUP BY a.account_rid
+        GROUP BY a.account_rid, a.total_fte, a.total_subcon
     ),
     calculate_hours_fte AS (
        SELECT DISTINCT ON (ad.account_rid)
