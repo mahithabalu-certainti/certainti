@@ -134,7 +134,7 @@ export const getProjectTaskColumns = (
     },
     {
       id: 'total_hours_pro_task',
-      label: 'Effort',
+      label: 'Effort in Hrs',
       sortable: true,
       editId: 'total_hours_pro_task',
       sortId: 'total_hours_pro_task',

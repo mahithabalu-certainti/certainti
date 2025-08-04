@@ -1,4 +1,5 @@
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
+import { numberOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
     { option: 'Equals', value: 'equals' },
     { option: 'Not Equals', value: 'not_equals' },
@@ -67,7 +68,8 @@ export const projectTaskFilterFields = (
         {
             name: 'Cost',
             value: 'total_cost_pro_task',
-            type: 'text',
+            type: 'number',
+            operatorOption: numberOptions,
             hide:
                 !permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
                 !permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
@@ -75,7 +77,8 @@ export const projectTaskFilterFields = (
         {
             name: 'Effort Hours',
             value: 'total_hours_pro_task',
-            type: 'text',
+            type: 'number',
+            operatorOption: numberOptions,
             hide:
                 !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
                 !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,

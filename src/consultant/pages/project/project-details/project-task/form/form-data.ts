@@ -40,12 +40,16 @@ export const ProjectTaskFormData = (
       {
         sectionName: 'Basic Information',
         fillType: 'half',
+        hide:
+          isEditView &&
+          !permissionMapTaskForm?.['resource_code']?.read &&
+          !permissionMapTaskForm?.['resource_code']?.edit,
         fields: [
-          createAutoCompleteField('resource_code', 'Resource Code', {
+          createAutoCompleteField('resource_code', 'Project Resource Code', {
             options: memoizedProjectResourceCode,
             required: true,
             onChange: true,
-            placeholder: 'Enter Resource Code',
+            placeholder: 'Choose Resource Code',
             disabled:
               isEditView &&
               permissionMapTaskForm?.['resource_code']?.read &&
@@ -59,10 +63,10 @@ export const ProjectTaskFormData = (
       },
 
       {
-        sectionName: 'Project Task Details',
+        sectionName: 'Task Details',
         fillType: 'half',
         fields: [
-          createDateField('start_date', 'Effective From', {
+          createDateField('start_date', 'Start Date', {
             required: false,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
@@ -109,7 +113,7 @@ export const ProjectTaskFormData = (
             regex: PROJECT_TASK_REGEX.EFFORT,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            placeholder: 'Enter effort',
+            placeholder: 'Enter Effort',
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_hours_pro_task']?.read &&
