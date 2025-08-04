@@ -125,10 +125,6 @@ export const Projects: React.FC = () => {
   };
   const menuItems = [
     {
-      label: 'Manage user',
-      onClick: () => console.log('manage user clicked'),
-    },
-    {
       label: 'Export',
       hide: !isProjectExportEnable,
       onClick: () => handleExport(),

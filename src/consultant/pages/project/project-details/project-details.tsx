@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
-  ActivitiesIcon,
+  // ActivitiesIcon,
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
@@ -453,13 +453,13 @@ export const ProjectDetails = () => {
         disabled: false,
         icon: CasesIcon,
       },
-      {
-        name: 'Activities',
-        key: 'activities',
-        id: AllModules.ACTIVITIES,
-        disabled: false,
-        icon: ActivitiesIcon,
-      },
+      // {
+      //   name: 'Activities',
+      //   key: 'activities',
+      //   id: AllModules.ACTIVITIES,
+      //   disabled: false,
+      //   icon: ActivitiesIcon,
+      // },
       {
         name: 'Notes',
         key: 'notes',
