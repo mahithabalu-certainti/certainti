@@ -182,6 +182,7 @@ export interface IGeoDataService {
     count: number;
   }>
   >;
+  importEntityTypes():Promise<any>
 }
 
 export interface IAccountGraphQlServices {

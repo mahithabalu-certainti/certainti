@@ -31,4 +31,6 @@ routes.put('/update', checkUserStatusMiddleware("accounts_view_edit"),  upload.s
 routes.get("/industry", checkUserStatusMiddleware("NA"), controller.geoDataController.industries);
 routes.get("/keycontactroles", checkUserStatusMiddleware("NA"), controller.accountController.getKeyContactRoles);
 
+routes.get('/importEntityTypes', controller.geoDataController.fetchImportEntityTypes)
+
 export default routes;
