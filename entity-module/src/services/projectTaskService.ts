@@ -1114,28 +1114,6 @@ export class ProjectTaskService {
               break;
           }
           break;
-        case "resource_code":
-          switch (operator.toLowerCase()) {
-            case "equals":
-              condition["$resource.resource_code$"] = { [Op.iLike]: value };
-              break;
-            case "not_equals":
-              condition["$resource.resource_code$"] = {
-                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
-              };
-              break;
-            case "contains":
-              condition["$resource.resource_code$"] = {
-                [Op.iLike]: `%${value}%`,
-              };
-              break;
-            case "is_empty":
-              condition["$resource.resource_code$"] = {
-                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
-              };
-              break;
-          }
-          break;
         case "resource_role":
           switch (operator.toLowerCase()) {
             case "equals":
@@ -1276,6 +1254,40 @@ export class ProjectTaskService {
                 break;
               case "is_empty":
                 nestedCondition["$resource.resource_type_rid$"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          return; // Skip the default condition push at the end
+          case "resource_code":
+          // Process each operator in the filter object separately
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["$resource.resource_code$"] = {
+                  [Op.eq]: val,
+                };
+                break;
+              case "not_equals":
+                nestedCondition["$resource.resource_code$"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["$resource.resource_code$"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["$resource.resource_code$"] = {
                   [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
                 };
                 break;
