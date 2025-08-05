@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { ProjectResourcesListParams, ProjectTaskListExportParams } from '../../types/project-task';
+import {
+  ProjectResourcesListParams,
+  ProjectTaskListExportParams,
+} from '../../types/project-task';
 
 export const baseUrl = import.meta.env.VITE_RESOURCE_URL;
 export const getProjectTaskUrl = (accountRid: string, projectRid: string) =>

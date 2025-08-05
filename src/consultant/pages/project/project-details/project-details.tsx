@@ -553,10 +553,11 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px]'
-            : 'w-[220px] min-w-[220px] max-w-[220px]'
-            }`}
+          className={`flex transition-all duration-300 ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px]'
+              : 'w-[220px] min-w-[220px] max-w-[220px]'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

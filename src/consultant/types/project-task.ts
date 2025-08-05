@@ -191,7 +191,7 @@ export interface ProjectTaskInput {
   total_hours_pro_task: string | null;
   total_cost_pro_task: string | null;
   comments: string | null;
-};
+}
 //create task api response,
 export interface createProjectTaskApiResponse {
   statusCode: number;

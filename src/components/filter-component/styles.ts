@@ -1,4 +1,4 @@
-import { MenuProps } from "@mui/material";
+import { MenuProps } from '@mui/material';
 
 export const SELECT_STYLES = {
   fontWeight: 600,

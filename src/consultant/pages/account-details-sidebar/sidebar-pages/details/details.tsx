@@ -55,7 +55,7 @@ const Details: React.FC<DetailsProps> = ({
   accountDetails,
   isLoading,
   isError,
-  isAccountEditEnable
+  isAccountEditEnable,
 }) => {
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();

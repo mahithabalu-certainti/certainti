@@ -15,9 +15,13 @@ import {
   ProjectTaskListExportParams,
   ProjectTaskInput,
   createProjectTaskApiResponse,
-  ProjectTaskDetailsApiResponse, 
+  ProjectTaskDetailsApiResponse,
 } from '../../types/project-task';
-import { DetailURL, getProjectTaskExportURL, ProjectTaskURL } from '../urls/project-task-url';
+import {
+  DetailURL,
+  getProjectTaskExportURL,
+  ProjectTaskURL,
+} from '../urls/project-task-url';
 
 export const mockData = {
   statusCode: 200,
@@ -156,9 +160,18 @@ export const fetchDetails = async (
   return response.data;
 };
 
-export const useProjectTaskDetail = (taskId: string, accountRid?: string, refreshTaskDetailPageTrigger?: number) => {
+export const useProjectTaskDetail = (
+  taskId: string,
+  accountRid?: string,
+  refreshTaskDetailPageTrigger?: number
+) => {
   return useQuery<ProjectTaskDetailsApiResponse, Error>({
-    queryKey: ['project-resource-detail', taskId, accountRid, refreshTaskDetailPageTrigger],
+    queryKey: [
+      'project-resource-detail',
+      taskId,
+      accountRid,
+      refreshTaskDetailPageTrigger,
+    ],
     queryFn: async () => {
       return fetchDetails(taskId, accountRid);
     },
@@ -220,7 +233,9 @@ export const exportProjectTaskData = async (
   params: ProjectTaskListExportParams
 ) => {
   try {
-    const response = await resourceServiceApi.get(getProjectTaskExportURL(params));
+    const response = await resourceServiceApi.get(
+      getProjectTaskExportURL(params)
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -248,4 +263,3 @@ export const exportProjectTaskData = async (
     console.error('Export failed:', error);
   }
 };
-

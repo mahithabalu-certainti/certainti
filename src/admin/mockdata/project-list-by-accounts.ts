@@ -39,6 +39,6 @@ export const mockProjectListByAccounts: ProjectListByAccountsApiResponse = {
         project_code: '',
       },
     ],
-    totalCount: 10
+    totalCount: 10,
   },
 };

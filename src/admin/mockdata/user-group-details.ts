@@ -25,7 +25,7 @@ export const mockUserGroupDetails: UserGroupDetailsApiResponse = {
           is_consultant_firm: true,
           has_access: false,
           org_id: '',
-          status_rid: ''
+          status_rid: '',
         },
         {
           rid: 'D001-caace427-6365-469d-b8e5-d6322da67d40',
@@ -34,7 +34,7 @@ export const mockUserGroupDetails: UserGroupDetailsApiResponse = {
           is_consultant_firm: true,
           has_access: true,
           org_id: '',
-          status_rid: ''
+          status_rid: '',
         },
       ],
       accounts: [

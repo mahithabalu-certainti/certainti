@@ -72,7 +72,7 @@ export const ProjectResources = ({
   projectFiscalDate,
   setExportType,
   setAttachmentParams,
-  projectCode
+  projectCode,
 }: {
   projectID?: string;
   accountID?: string;
@@ -81,7 +81,7 @@ export const ProjectResources = ({
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
-  projectCode?: string,
+  projectCode?: string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -153,7 +153,9 @@ export const ProjectResources = ({
   const isProjectResourceFieldsEditable = useMemo(
     () =>
       permission
-        .find((item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT)
+        .find(
+          (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+        )
         ?.fields?.some((field) => field.edit),
     [permission]
   );
@@ -305,7 +307,7 @@ export const ProjectResources = ({
       label: 'Edit',
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
-      hide: !isProjectResourceFieldsEditable
+      hide: !isProjectResourceFieldsEditable,
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -354,7 +356,9 @@ export const ProjectResources = ({
           ? handleProjectResourceDetailEdit()
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: viewDetails ? !isProjectResourceFieldsEditable : !isResourceCreateViewEnable,
+      hide: viewDetails
+        ? !isProjectResourceFieldsEditable
+        : !isResourceCreateViewEnable,
     },
   ];
   const handleFilter = () => {

@@ -9,4 +9,4 @@ export * from './notes';
 export * from './projects';
 export * from './resources';
 export * from './timesheet';
-export * from './configuration'
+export * from './configuration';
