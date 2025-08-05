@@ -1672,6 +1672,7 @@ class SchemaService {
         region_rid varchar(50) NULL,
         currency_rid varchar(50) NULL,
         
+        
         effort_project_resource_level numeric(18, 2) NULL,
         cost_project_resource_level numeric(18, 2) NULL,
         cost_project_task_level numeric(18, 2) NULL,
