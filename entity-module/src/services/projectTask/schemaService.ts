@@ -732,7 +732,6 @@ export class ProjectTaskSchemaService {
           country_rid: projectTaskData.country_rid || null,
           currency_rid: projectTaskData.currency_rid || null,
           region_rid: projectTaskData.region_rid || null,
-          project_resource_rid: "", // need to remove in the db
           created_datetime: new Date(),
           total_hours_from_tasks: total_effort || null,
           total_cost_from_tasks: total_cost || null,
@@ -1950,8 +1949,7 @@ export class ProjectTaskSchemaService {
         total_hours_from_tasks: projectTaskData.total_hours_pro_task,
         created_by: userId,
         created_datetime: new Date(),
-        project_rid: existingProjectTask.project_rid,
-        project_resource_rid: "",
+        project_rid: existingProjectTask.project_rid
       }, { transaction });
     }
 
