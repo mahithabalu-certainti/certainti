@@ -9,6 +9,8 @@ import {
   ClassificationApiResponse,
   ColorCodeApiResponse,
   CurrencyApiResponse,
+  FinancialStateProps,
+  FinancialStatesApiResponse,
   GlobalAccountListResponse,
   IndustrysApiResponse,
   keyContactRolesApiResponse,
@@ -116,6 +118,15 @@ export const fetchState = async (
 ): Promise<StatesApiResponse> => {
   const { data } = await accountServiceApi.get<StatesApiResponse>(
     StateUrl(countryId)
+  );
+  return data;
+};
+
+export const fetchFinancialState = async (
+  params: FinancialStateProps
+): Promise<FinancialStatesApiResponse> => {
+  const { data } = await resourceServiceApi.get<FinancialStatesApiResponse>(
+    `/api/financialHighlight/regions/${params.accountId}/${params.countryId}/${params.fiscalYear}`
   );
   return data;
 };

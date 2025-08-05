@@ -36,6 +36,10 @@ export interface StatesApiResponse extends CommonApiResponse {
   };
 }
 
+export interface FinancialStatesApiResponse extends CommonApiResponse {
+  data: States[];
+}
+
 export interface CitysApiResponse extends CommonApiResponse {
   data: {
     cities: Cities[];
@@ -519,3 +523,9 @@ export type FiscalDates = {
   startDate: string;
   endDate: string;
 };
+
+export interface FinancialStateProps {
+  accountId: string;
+  countryId: string;
+  fiscalYear: string;
+}

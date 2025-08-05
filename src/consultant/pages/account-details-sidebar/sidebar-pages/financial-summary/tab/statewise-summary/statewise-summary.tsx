@@ -16,7 +16,10 @@ import {
 } from './columns';
 import { MenuItem, Select, Skeleton } from '@mui/material';
 import TextButton from '../../../../../../../components/button/text-button';
-import { useFetchState } from '../../../../../../services/account';
+import {
+  useFetchFinancialStates,
+  // useFetchState,
+} from '../../../../../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
@@ -53,7 +56,12 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 
   // API Hooks
   const { mutate, isPending, isError, data } = useGetFinancialSummary(true);
-  const states = useFetchState(countryId as string);
+  // const states = useFetchState(countryId as string);
+  const financislStates = useFetchFinancialStates({
+    accountId: accountid as string,
+    countryId: countryId as string,
+    fiscalYear,
+  });
 
   // Variables
   const projectTypes: SelectOption[] = [
@@ -68,11 +76,11 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   ];
   const memoizedState: SelectOption[] = useMemo(
     () =>
-      states.data?.data.states.map((state) => ({
+      financislStates.data?.data.map((state) => ({
         label: state.state_name,
         value: state.rid,
       })) || [],
-    [states.data?.data.states]
+    [financislStates.data?.data]
   );
   const allData = data?.data;
   const summaryViewEditFields = useMemo(
@@ -129,7 +137,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     <div className='flex flex-col gap-4'>
       <div>
         <div className='max-w-[80%] flex mb-5 mt-2 gap-3'>
-          {states.isPending ? (
+          {financislStates.isPending ? (
             <Skeleton variant='rounded' width='100%' height={32} />
           ) : (
             <Select
@@ -182,6 +190,9 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
               value={(region || stateId) as string}
               onChange={(e) => setRegion(e.target.value)}
             >
+              <MenuItem value='' disabled>
+                Select State
+              </MenuItem>
               {memoizedState.map((it, i) => {
                 return (
                   <MenuItem
