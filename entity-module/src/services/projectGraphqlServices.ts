@@ -88,7 +88,7 @@ class ProjectGraphQlServices {
                 data.account_rid
                 );
             
-            await this.projectIngestion.updateProjectResources(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0], updatedProjectFiscal[0][0].rid, updatedProjectFiscal[0][0].fiscal_year);
+            await this.projectIngestion.updateProjectResources(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0], findProjectFiscal[0][0].rid, findProjectFiscal[0][0].fiscal_year);
             await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, data))
             let attributeName;
             let newValue;
