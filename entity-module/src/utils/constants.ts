@@ -698,8 +698,13 @@ export const rawQueries = {
     }
     return HttpStatus.SUCCESS_MESSAGE 
   },
-  fetchStates(country_rid : string) {
-    return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state WHERE country_rid = '${country_rid}'`
+  fetchStates(stateIds : string[], country_rid : string) {
+    let formattedStateIds = stateIds.map((id : string) => `'${id}'`).join(',')
+    return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
+    WHERE 
+    rid IN (${formattedStateIds})
+    AND
+    country_rid = '${country_rid}'`
   },
   fetchStatesIds(schemaName : string, account_rid : string, fiscal_year : number) {
     return `
@@ -709,9 +714,6 @@ export const rawQueries = {
     AND
     fiscal_year = ${fiscal_year}
     `
-  },
-  fetchCountryRid(account_rid : string) {
-    return `SELECT country_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
   }
 }
 

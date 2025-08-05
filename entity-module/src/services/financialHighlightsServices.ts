@@ -703,23 +703,19 @@ export default class FinancialHighlightsService {
 
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
-    let countryRid : any = await mainDb.query(rawQueries.fetchCountryRid(data.account_rid))
-    let fetchStates = await mainDb.query(rawQueries.fetchStates(countryRid[0][0].country_rid))
-    let mapStates : Map<string, string> = new Map(fetchStates[0].map((state : any) => [state.rid, state.state_name]))
     let fetchDataBasedRegions = await orgDb.query(rawQueries.fetchStatesIds(schemaName, data.account_rid, data.fiscal_year))
-    let validDatas = []
-    let stateName : string | undefined;
-    
-    let finalData = fetchDataBasedRegions[0].map((d : any) => {
-      stateName = mapStates.get(d.region_rid)
-      if(stateName != undefined) {
-        validDatas.push({
-          rid : d.region_rid,
-          state_name : stateName
-        })
-      }
-      return validDatas
+    let validStateIds : string[] = []
+    fetchDataBasedRegions[0].filter((d : any) => d.region_rid != '' || null).map((states : any) => {
+      validStateIds.push(states.region_rid)
+      return validStateIds
     })
-    return finalData[0]
+    let fetchStates = await mainDb.query(rawQueries.fetchStates(validStateIds, data.country_rid))
+    let finalData = fetchStates[0].map((d : any) => {
+      return {
+        rid : d.rid,
+        state_name : d.state_name
+      }
+    })
+    return finalData
   }
 }
