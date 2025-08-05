@@ -1,1 +1,1 @@
-export * from './statewise-summary'
+export * from './statewise-summary';

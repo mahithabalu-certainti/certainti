@@ -1,1 +1,1 @@
-export * from './financial-service'
+export * from './financial-service';

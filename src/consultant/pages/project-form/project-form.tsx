@@ -289,8 +289,8 @@ const ProjectForm: React.FC = () => {
     setKeyContacts(fields);
     setIsKeyContactsReady(
       !getProjectData.isPending &&
-      !keyContactRoles.isPending &&
-      !statusOptions.isPending
+        !keyContactRoles.isPending &&
+        !statusOptions.isPending
     );
   }, [
     getProjectData.isPending,
@@ -496,14 +496,14 @@ const ProjectForm: React.FC = () => {
                 ? { ...projectData }
                 : !isEditView
                   ? {
-                    project_status: defaultActiveValue,
-                    status: defaultActiveValue,
-                    auto_send_ai_interaction:
-                      settings?.auto_send_interaction || enumValue.No,
-                    auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
-                    max_ai_interaction: settings?.max_ai_interactions,
-                    currency: settings?.currency_rid,
-                  }
+                      project_status: defaultActiveValue,
+                      status: defaultActiveValue,
+                      auto_send_ai_interaction:
+                        settings?.auto_send_interaction || enumValue.No,
+                      auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
+                      max_ai_interaction: settings?.max_ai_interactions,
+                      currency: settings?.currency_rid,
+                    }
                   : {}
             }
             outData={submitData}

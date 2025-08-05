@@ -3,7 +3,7 @@ import { ProjectTaskInput } from '../../../../../types/project-task';
 export const projectTaskPayloadData = (
   formData: Partial<ProjectTaskInput>,
   project_task_rid: string,
-  isEdit: boolean,
+  isEdit: boolean
 ): Partial<ProjectTaskInput> => {
   const data: Partial<ProjectTaskInput> = {
     account_rid: formData.account_rid,

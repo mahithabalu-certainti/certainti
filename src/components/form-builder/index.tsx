@@ -90,7 +90,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -1711,14 +1711,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 const fiscalYearStart = field.minDate
                   ? dayjs(field.minDate, 'YYYY-MM-DD').startOf('day')
                   : dayjs(`${selectedFiscalYear}-01-01`, 'YYYY-MM-DD').startOf(
-                    'day'
-                  );
+                      'day'
+                    );
 
                 const fiscalYearEnd = field.maxDate
                   ? dayjs(field.maxDate, 'YYYY-MM-DD').endOf('day')
                   : dayjs(`${selectedFiscalYear}-12-31`, 'YYYY-MM-DD').endOf(
-                    'day'
-                  );
+                      'day'
+                    );
 
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
@@ -2373,7 +2373,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                  `${field.type}` === 'radio'
+                                `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2405,9 +2405,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
-                                },
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
                               },
                             }}
                             key={colIndex}

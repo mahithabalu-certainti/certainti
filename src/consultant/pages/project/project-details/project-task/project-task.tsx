@@ -75,7 +75,7 @@ export const ProjectTask = ({
   projectFiscalDate,
   setExportType,
   setProjectTaskParams,
-  projectCode
+  projectCode,
 }: {
   projectID?: string;
   accountID?: string;
@@ -236,7 +236,7 @@ export const ProjectTask = ({
     {
       label: 'Edit',
       onClick: (row: ProjectTaskListType) => handleEditProjectTask(row),
-      hide: !isProjectTaskFieldsEditable
+      hide: !isProjectTaskFieldsEditable,
     },
   ];
 
@@ -246,14 +246,15 @@ export const ProjectTask = ({
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
-      hide:
-        !viewDetails ||
-        !isAttachmentCreateEnable,
+      hide: !viewDetails || !isAttachmentCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
       variant: 'outlined' as const,
-      onClick: () => viewDetails ? handleProjectTaskDetailEdit() : handleCreateProjectResource(),
+      onClick: () =>
+        viewDetails
+          ? handleProjectTaskDetailEdit()
+          : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: viewDetails ? !isTaskEditEnable : !isTaskCreateEnable,
     },

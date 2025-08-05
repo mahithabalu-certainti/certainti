@@ -1,6 +1,11 @@
 import { Typography } from '@mui/material';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
-import { applyHidePermission, costDisplay, getDateFormat, getDateTimeFormat } from '../../../../../common-utils';
+import {
+  applyHidePermission,
+  costDisplay,
+  getDateFormat,
+  getDateTimeFormat,
+} from '../../../../../common-utils';
 import DetailsTable from '../../../../../components/details-section/details-table';
 import { useMemo } from 'react';
 import { AllPermissions } from '../../../../../common-service';
@@ -65,9 +70,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   );
 
   if (isDetailsLoading) {
-    return (
-      <DetailsSectionSkeleton className='p-0 m-0' />
-    );
+    return <DetailsSectionSkeleton className='p-0 m-0' />;
   }
 
   if (detailsError) {
@@ -99,10 +102,26 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
   }
 
   const basicInfo: DetailItem[] = [
-    { key: 'resource_code', label: 'Resource Code', value: projectTaskData.resource_code },
-    { key: 'resource_name', label: 'Resource Name', value: projectTaskData.resource_name },
-    { key: 'resource_type_name', label: 'Resource Type', value: projectTaskData.resource_type_name },
-    { key: 'resource_role', label: 'Resource Role', value: projectTaskData.resource_role },
+    {
+      key: 'resource_code',
+      label: 'Resource Code',
+      value: projectTaskData.resource_code,
+    },
+    {
+      key: 'resource_name',
+      label: 'Resource Name',
+      value: projectTaskData.resource_name,
+    },
+    {
+      key: 'resource_type_name',
+      label: 'Resource Type',
+      value: projectTaskData.resource_type_name,
+    },
+    {
+      key: 'resource_role',
+      label: 'Resource Role',
+      value: projectTaskData.resource_role,
+    },
   ];
 
   const projectDetails: DetailItem[] = [
@@ -119,7 +138,10 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     {
       key: 'total_cost_pro_task',
       label: 'Cost',
-      value: costDisplay(projectTaskData.total_cost_pro_task, projectTaskData?.currency_symbol),
+      value: costDisplay(
+        projectTaskData.total_cost_pro_task,
+        projectTaskData?.currency_symbol
+      ),
     },
     {
       key: 'total_hours_pro_task',
@@ -130,20 +152,51 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
 
   const auditInfo: DetailItem[] = [
     { key: 'rid', label: 'Record ID', value: projectTaskData.rid },
-    { key: 'r_number', label: 'Project Task ID', value: projectTaskData.r_number },
-    { key: 'created_datetime', label: 'Created On', value: getDateTimeFormat(projectTaskData.created_datetime ?? undefined) },
-    { key: 'created_by', label: 'Created By', value: projectTaskData.created_by },
-    { key: 'modified_datetime', label: 'Updated On', value: getDateTimeFormat(projectTaskData.modified_datetime ?? undefined) },
-    { key: 'modified_by', label: 'Updated By', value: projectTaskData.modified_by },
-
+    {
+      key: 'r_number',
+      label: 'Project Task ID',
+      value: projectTaskData.r_number,
+    },
+    {
+      key: 'created_datetime',
+      label: 'Created On',
+      value: getDateTimeFormat(projectTaskData.created_datetime ?? undefined),
+    },
+    {
+      key: 'created_by',
+      label: 'Created By',
+      value: projectTaskData.created_by,
+    },
+    {
+      key: 'modified_datetime',
+      label: 'Updated On',
+      value: getDateTimeFormat(projectTaskData.modified_datetime ?? undefined),
+    },
+    {
+      key: 'modified_by',
+      label: 'Updated By',
+      value: projectTaskData.modified_by,
+    },
   ];
   const description: DetailItem[] = [
     { key: 'comments', label: 'Comments', value: projectTaskData.comments },
   ];
-  const IdentityDetails = applyHidePermission(basicInfo, permissionMapTaskTableColumn);
-  const descriptionDetails = applyHidePermission(description, permissionMapTaskTableColumn);
-  const projectTaskDetails = applyHidePermission(projectDetails, permissionMapTaskTableColumn);
-  const auditInfoDetails = applyHidePermission(auditInfo, permissionMapTaskTableColumn);
+  const IdentityDetails = applyHidePermission(
+    basicInfo,
+    permissionMapTaskTableColumn
+  );
+  const descriptionDetails = applyHidePermission(
+    description,
+    permissionMapTaskTableColumn
+  );
+  const projectTaskDetails = applyHidePermission(
+    projectDetails,
+    permissionMapTaskTableColumn
+  );
+  const auditInfoDetails = applyHidePermission(
+    auditInfo,
+    permissionMapTaskTableColumn
+  );
 
   return (
     <div>
@@ -158,10 +211,12 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
         data={projectTaskDetails as DetailItem[]}
         isAudit={true}
       />
-      <DetailsSection title='Comments' data={descriptionDetails as DetailItem[]} />
+      <DetailsSection
+        title='Comments'
+        data={descriptionDetails as DetailItem[]}
+      />
       {projectTaskData?.attachment &&
-        projectTaskData?.attachment.length > 0 &&
-        (
+        projectTaskData?.attachment.length > 0 && (
           <DetailsTable
             title='Attachments'
             columns={attachmentColumns}

@@ -1,1 +1,1 @@
-export * from './create-user-group'
+export * from './create-user-group';
