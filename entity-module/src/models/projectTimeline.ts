@@ -1,6 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constants";
 import { Project } from "./project";
+import AccountDetails from "./accountDetails";
 
 interface ProjectTimelineAttributes {
   rid?: string;
@@ -97,6 +98,12 @@ export class ProjectTimeline
       }
     );
     
+    ProjectTimeline.belongsTo(AccountDetails, {
+      foreignKey: 'account_rid',
+      targetKey: 'account_rid',
+      as: 'project_timeline_account',
+    });
+
       ProjectTimeline.belongsTo(Project, {
         foreignKey: 'entity_rid',
         targetKey: 'rid',

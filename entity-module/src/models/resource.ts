@@ -1,5 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import AccountDetails from "./accountDetails";
 
 export interface ResourcesAttributes {
   rid?: string;
@@ -219,6 +220,7 @@ export class Resources
         },        
       }      
     );
+    
     return Resources;
   }
 }

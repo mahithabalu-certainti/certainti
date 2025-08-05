@@ -1,5 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import AccountDetails from "./accountDetails";
 
 export interface AccountFiscalAttributes {
   rid: string;
@@ -346,7 +347,16 @@ export class AccountFiscal
         underscored: true,
       }
     );
+    
     return model;
+  }
+
+  static associate(models: any) {
+    AccountFiscal.belongsTo(models.AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account_fiscal_account",
+    });
   }
 }
 

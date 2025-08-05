@@ -123,6 +123,8 @@ class SchemaService {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
+      const AccountDetailsModel = await AccountDetails.initialize(sequelize, schemaName);
+
       const Resource = Resources.initialize(sequelize, schemaName);
       const ResourcesHistoryModel = await ResourcesHistory.initialize(
         sequelize,
@@ -164,10 +166,118 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceFiscalModel = await ResourceFiscal.initialize(
+        sequelize,
+        schemaName
+      );
       const ResourceFiscalRegionModel = await ResourceFiscalRegion.initialize(
         sequelize,
         schemaName
       );
+
+      Resource.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_account"
+      });
+
+      ResourceFiscalModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_fiscal_account"
+      });
+  
+      ResourceFiscalModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_fiscal_resource"
+      });
+
+      ResourceFiscalRegionModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_fiscal_region_account"
+      });
+  
+      ResourceFiscalRegionModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_fiscal_region_resource"
+      });
+
+      ResourcesTimelineModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_timeline_account"
+      });
+
+      ResourcesTimelineModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_timeline_resource"
+      });
+
+      ResourcesHistoryModel.belongsTo(Resources, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_history_resource"
+      });
+
+      ResourceCostModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_cost_account"
+      });
+      ResourceCostModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resource_cost_resource"
+      });
+      
+      ResourceCostTimelineModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_cost_timeline_account"
+      });
+      ResourceCostTimelineModel.belongsTo(Resource, {
+        foreignKey: "entity_rid",
+        targetKey: "rid",
+        as: "resource_cost_timeline_resource"
+      });
+
+      ResourceCostHistoryModel.belongsTo(Resource, {
+        foreignKey: "resource_cost_rid",
+        targetKey: "rid",
+        as: "resource_cost_history_resource"
+      });
+
+      ResourceSkillModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_skill_account"
+      });
+      ResourceSkillModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resource_skill_resource"
+      });
+
+      ResourceSkillTimelineModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_skill_timeline_account"
+      });
+      ResourceSkillTimelineModel.belongsTo(Resource, {
+        foreignKey: "entity_rid",
+        targetKey: "rid",
+        as: "resource_skill_timeline_resource"
+      });
+
+      ResourceSkillHistoryModel.belongsTo(Resource, {
+        foreignKey: "resource_skill_rid",
+        targetKey: "rid",
+        as: "resource_skill_history_resource"
+      });
 
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });

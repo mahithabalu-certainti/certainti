@@ -53,17 +53,11 @@ class SchemaService {
       await this.createAccountFiscalTable(schemaName, sequelize);
       await this.createAccountFiscalRegionTable(schemaName, sequelize);
 
-      await this.createProjectTable(schemaName, sequelize);
-      await this.createProjectHistoryTable(schemaName, sequelize);
+      await this.createProjectTable(schemaName, sequelize)
       await this.createProjectFiscalTable(schemaName, sequelize);
+      await this.createProjectHistoryTable(schemaName, sequelize);
       await this.createProjectFiscalRegionTable(schemaName, sequelize);
       await this.createProjectTimelineTable(schemaName, sequelize);
-
-      await this.createProjectResourcesTable(schemaName, sequelize);
-      await this.createProjectResourcesTimelineTable(schemaName, sequelize);
-      await this.createProjectResourcesHistoryTable(schemaName, sequelize);
-      await this.createProjectResourceFiscalTable(schemaName, sequelize);
-      await this.createProjectResourceFiscalRegionTable(schemaName, sequelize);
 
       await this.createDocumentTable(schemaName, sequelize);
       await this.createImportTable(schemaName, sequelize);
@@ -89,6 +83,12 @@ class SchemaService {
       await this.createAttachmentTable(schemaName, sequelize);
       await this.createAttachmentTimeline(schemaName, sequelize);
       await this.createResourceFiscalRegionTable(schemaName, sequelize);
+
+      await this.createProjectResourcesTable(schemaName, sequelize);
+      await this.createProjectResourcesTimelineTable(schemaName, sequelize);
+      await this.createProjectResourcesHistoryTable(schemaName, sequelize);
+      await this.createProjectResourceFiscalTable(schemaName, sequelize);
+      await this.createProjectResourceFiscalRegionTable(schemaName, sequelize);
 
       await this.createProjectTaskTable(schemaName, sequelize);
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
@@ -313,6 +313,10 @@ class SchemaService {
 
     `);
 
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".account_fiscal ADD CONSTRAINT account_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `)
+
       // Fields to index (excluding rid and r_number)
   const fieldsToIndex = [
     'account_rid', 'fiscal_year',
@@ -398,6 +402,10 @@ class SchemaService {
         CONSTRAINT account_fiscal_region_r_number_key UNIQUE (r_number)
       );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".account_fiscal_region ADD CONSTRAINT account_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectTable(schemaName: string, sequelize: any) {
@@ -469,6 +477,10 @@ class SchemaService {
 
     `);
 
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project ADD CONSTRAINT project_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `)
+
       // Fields to index (excluding rid and r_number)
   const fieldsToIndex = [
     'project_code', 'industry_rid', 'account_rid', 'project_name',
@@ -506,6 +518,11 @@ class SchemaService {
       new_value VARCHAR(2000) NOT NULL
       );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_history ADD CONSTRAINT project_history_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `)
+
   }
 
   private async createProjectFiscalTable(schemaName: string, sequelize: any) {
@@ -638,6 +655,12 @@ class SchemaService {
     );
 
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_fiscal ADD CONSTRAINT project_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_fiscal ADD CONSTRAINT project_fiscal_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+    `)
+
       // Fields to index (excluding rid and r_number)
   const fieldsToIndex = [
     'project_rid', 'project_code','fiscal_year',
@@ -767,6 +790,12 @@ class SchemaService {
         project_fiscal_rid varchar(50) NOT NULL,
         CONSTRAINT project_fiscal_region_r_number_key UNIQUE (r_number)
       );`);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_fiscal_region ADD CONSTRAINT project_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_fiscal_region ADD CONSTRAINT project_fiscal_region_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_fiscal_region ADD CONSTRAINT project_fiscal_region_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectTimelineTable(schemaName: string, sequelize: any) {
@@ -792,6 +821,11 @@ class SchemaService {
       CONSTRAINT project_timeline_r_number_key UNIQUE (r_number)
     );  
     `);
+
+    await sequelize.query(`
+     ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectResourcesTable(
@@ -865,6 +899,13 @@ class SchemaService {
         assigned_skill_role_type_rid varchar(50)
       );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectResourcesTimelineTable(
@@ -893,6 +934,11 @@ class SchemaService {
       CONSTRAINT project_resource_timeline_r_number_key UNIQUE (r_number)
       );  
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_resource_timeline ADD CONSTRAINT project_resource_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource_timeline ADD CONSTRAINT project_resource_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project_resource(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectResourcesHistoryTable(
@@ -917,6 +963,10 @@ class SchemaService {
       new_value VARCHAR(2000) NOT NULL
       );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_resource_history ADD CONSTRAINT project_resource_history_project_resource_rid_fkey FOREIGN KEY (project_resource_rid) REFERENCES "${schemaName}".project_resource(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createDocumentTable(schemaName: string, sequelize: any) {
@@ -1103,6 +1153,10 @@ class SchemaService {
       comments text,
       CONSTRAINT resource_code_account_key_unique UNIQUE (resource_code,account_rid))
      `);
+
+     await sequelize.query(`
+      ALTER TABLE "${schemaName}".resources ADD CONSTRAINT resources_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `)
      // List of columns to index (excluding rid and comments)
   const fieldsToIndex = [
     'account_rid',
@@ -1171,6 +1225,12 @@ class SchemaService {
     CONSTRAINT resource_fiscal_r_number_key UNIQUE (r_number)
 )
       `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_fiscal ADD CONSTRAINT resource_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".resource_fiscal ADD CONSTRAINT resource_fiscal_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
+
        // Fields to index (excluding rid and r_number since it has a unique constraint)
   const fieldsToIndex = [
     'account_rid',
@@ -1231,6 +1291,11 @@ class SchemaService {
         CONSTRAINT resource_fiscal_region_r_number_key UNIQUE (r_number)
       );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_fiscal_region ADD CONSTRAINT resource_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".resource_fiscal_region ADD CONSTRAINT resource_fiscal_region_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectTaskTable(schemaName: string, sequelize: any){
@@ -1269,6 +1334,7 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
     `)
   }
 
@@ -1294,6 +1360,11 @@ class SchemaService {
         CONSTRAINT project_task_timeline_r_number_key UNIQUE (r_number)
       );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_task_timeline ADD CONSTRAINT project_task_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_task_timeline ADD CONSTRAINT project_task_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project_task(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createProjectTaskHistoryTable(schemaName: string, sequelize: any){
@@ -1316,6 +1387,10 @@ class SchemaService {
         CONSTRAINT project_task_history_r_number_key UNIQUE (r_number)
       );
     `);
+
+    await sequelize.query(`
+     ALTER TABLE "${schemaName}".project_task_history ADD CONSTRAINT project_task_history_project_task_rid_fkey FOREIGN KEY (project_task_rid) REFERENCES "${schemaName}".project_task(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
@@ -1340,6 +1415,11 @@ class SchemaService {
           new_value varchar(1000) NOT NULL
       )
      `);
+
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resources_history ADD CONSTRAINT resources_history_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createResourceTimelineTable(
@@ -1367,6 +1447,11 @@ class SchemaService {
         event_datetime timestamptz NOT NULL
       )
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resources_timeline ADD CONSTRAINT resources_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".resources_timeline ADD CONSTRAINT resources_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
   }
 
   private async createResourceCostTable(schemaName: string, sequelize: any) {
@@ -1410,6 +1495,10 @@ class SchemaService {
         )
 
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_cost ADD CONSTRAINT resource_cost_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `);
     
   const fieldsToIndex = [
     'resource_code'
@@ -1450,6 +1539,11 @@ class SchemaService {
         event_datetime timestamptz NOT NULL
         );
     `)
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_cost_timeline ADD CONSTRAINT resource_cost_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".resource_cost_timeline ADD CONSTRAINT resource_cost_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resource_cost(rid) ON UPDATE CASCADE;
+    `)
    }
 
   private async createResourceCostHistoryTable(
@@ -1475,6 +1569,10 @@ class SchemaService {
           old_value varchar(255),
           new_value varchar(255) NOT NULL
       );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_cost_history ADD CONSTRAINT resource_cost_history_resource_cost_rid_fkey FOREIGN KEY (resource_cost_rid) REFERENCES "${schemaName}".resource_cost(rid) ON UPDATE CASCADE;  
     `);
   }
 
@@ -1516,6 +1614,11 @@ class SchemaService {
 );
 
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_skill ADD CONSTRAINT resource_skill_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `);
+
       const fieldsToIndex = [
     'resource_code'
   ];
@@ -1554,6 +1657,11 @@ class SchemaService {
           event_datetime timestamptz NOT NULL
         );
     `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
    }
 
   private async createResourceSkillHistoryTable(
@@ -1580,6 +1688,10 @@ class SchemaService {
           new_value varchar(255) NOT NULL
       );
     `);
+    
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resource_skill_history ADD CONSTRAINT resource_skill_history_resource_skill_rid_fkey FOREIGN KEY (resource_skill_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;  
+    `)
   }
 
   async createProjectResourceFiscalTable(
@@ -1639,7 +1751,15 @@ class SchemaService {
         rd_credits_total numeric(18, 2) NULL,
         description varchar(2000) NULL,
         CONSTRAINT project_resources_fiscal_r_number_key UNIQUE (r_number)
-      );`);
+      );  
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
   }
 
   async createProjectResourceFiscalRegionTable(
@@ -1702,6 +1822,13 @@ class SchemaService {
         CONSTRAINT project_resources_fiscal_region_r_number_key UNIQUE (r_number)
       );
     `);
+
+    await sequelize.query(`
+        ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+    `)
   }
 
   async insertAccountDetails(

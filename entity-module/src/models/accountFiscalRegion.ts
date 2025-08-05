@@ -359,6 +359,14 @@ export class AccountFiscalRegion
     );
     return model;
   }
+
+  static associate(models: any) {
+    AccountFiscalRegion.belongsTo(models.AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account_fiscal_region_account",
+    });
+  }
 }
 
 export async function setupAccountFiscalRegionSequence(

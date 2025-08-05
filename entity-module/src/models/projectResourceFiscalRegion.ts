@@ -209,6 +209,32 @@ export class ProjectResourceFiscalRegion
       }
     );
   }
+
+  static associate(models: any) {
+    ProjectResourceFiscalRegion.belongsTo(models.AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource__fiscal_region_account",
+    });
+
+    ProjectResourceFiscalRegion.belongsTo(models.Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_project",
+    });
+
+    ProjectResourceFiscalRegion.belongsTo(models.ProjectFiscal, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_project_fiscal",
+    });
+
+    ProjectResourceFiscalRegion.belongsTo(models.Resources, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_resource",
+    });
+  }
 }
 
 export async function setupProjectResourceFiscalRegionSequence(

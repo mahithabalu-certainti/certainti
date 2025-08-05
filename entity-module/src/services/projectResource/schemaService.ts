@@ -40,6 +40,7 @@ import { MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
 import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
+import AccountDetails from "../../models/accountDetails";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -94,6 +95,15 @@ export class ProjectResourceSchemaService {
     const sequelize = await this.getSequelize();
     this.mainDbSequelize = await this.getMainSequelize();
 
+    const AccountFiscalModel = await AccountFiscal.initialize(
+      sequelize,
+      schemaName
+    );
+    const AccountDetailsModel = await AccountDetails.initialize(
+      sequelize,
+      schemaName
+    );
+
     const ProjectResourceModel = await ProjectResource.initialize(
       sequelize,
       schemaName
@@ -116,6 +126,7 @@ export class ProjectResourceSchemaService {
     
     const ProjectResourceTimelineModel =
       await ProjectResourceTimeline.initialize(sequelize, schemaName);
+
     const ProjectResourceHistoryModel = await ProjectResourceHistory.initialize(
       sequelize,
       schemaName
@@ -130,10 +141,7 @@ export class ProjectResourceSchemaService {
       sequelize,
       schemaName
     );
-    const AccountFiscalModel = await AccountFiscal.initialize(
-      sequelize,
-      schemaName
-    );
+    
     const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(
       sequelize,
       schemaName
@@ -143,11 +151,101 @@ export class ProjectResourceSchemaService {
       schemaName
     );
 
+    ProjectResourceModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource_account",
+    });
+
+    ProjectResourceModel.belongsTo(ProjectModel, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_project",
+    });
+
+    ProjectResourceModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_project_fiscal",
+    });
+
     ProjectResourceModel.belongsTo(ResourcesModel, {
       foreignKey: "resource_rid",
       targetKey: "rid",
       as: "project_resource_resource",
     });
+
+    ProjectResourceFiscalModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource__fiscal_account",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(ProjectModel, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project_fiscal",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(ResourcesModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_resource",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource__fiscal_region_account",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(ProjectModel, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_project",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_project_fiscal",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(ResourcesModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_resource",
+    });
+
+    ProjectResourceTimelineModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource_timeline_account",
+    });
+    
+    ProjectResourceTimelineModel.belongsTo(ProjectResourceModel, {
+      foreignKey: "entity_rid",
+      targetKey: "rid",
+      as: "project_resource_timeline_project_resource"
+    });
+
+    ProjectResourceHistoryModel.belongsTo(ProjectResourceModel, {
+      foreignKey: "project_resource_rid",
+      targetKey: "rid",
+      as: "project_resource_histoy_project_resource"
+    });
+
+    // ProjectResourceModel.belongsTo(ResourcesModel, {
+    //   foreignKey: "resource_rid",
+    //   targetKey: "rid",
+    //   as: "project_resource_resource",
+    // });
     const models = {
       ProjectResource: ProjectResourceModel,
       Project: ProjectModel,
@@ -3109,12 +3207,6 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         fiscal_year: fiscalYear,
         project_fiscal_rid: projectId
-        // [Op.and]: [
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
-        //     Sequelize.fn("LOWER", projectCode)
-        //   ),
-        // ],
       },
       group: [
         "account_rid",
@@ -3182,7 +3274,7 @@ export class ProjectResourceSchemaService {
       const cost = Number(row.total_cost || 0);
       const effort = Number(row.total_effort || 0);
       const count = Number(row.count || 0);
-
+  
       switch (typeName) {
         case "full-time":
           total_cost_fte = cost;
@@ -3878,6 +3970,56 @@ export class ProjectResourceSchemaService {
           ),
           "effective_total_subcon",
         ],
+
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_from_prj_res, 0)")
+          ),
+          "total_cost_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_effort_from_prj_res, 0)")
+          ),
+          "total_effort_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_effort_fte_from_prj_res, 0)")
+          ),
+          "total_effort_fte_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_effort_subcon_from_prj_res, 0)")
+          ),
+          "total_effort_subcon_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_fte_from_prj_res, 0)")
+          ),
+          "total_cost_fte_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_subcon_from_prj_res, 0)")
+          ),
+          "total_cost_subcon_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_nonlabor_from_prj_res, 0)")
+          ),
+          "total_cost_nonlabor_from_prj_res",
+        ],
       ],
       where: {
         account_rid: accountId,
@@ -3898,11 +4040,13 @@ export class ProjectResourceSchemaService {
         total_project_hours: aggregates.effective_effort,
         total_fte: aggregates.effective_total_fte,
         total_subcon: aggregates.effective_total_subcon,
-        total_project_res_hours_fte: aggregates.effective_fte_effort,
-        total_project_res_hours_subcon: aggregates.effective_subcon_effort,
-        total_project_res_cost_fte: aggregates.effective_fte_cost,
-        total_project_res_cost_subcon: aggregates.effective_subcon_cost,
-        total_project_res_cost_nonlabor: aggregates.effective_nonlabor_cost,
+        total_project_res_cost: aggregates.total_cost_from_prj_res,
+        total_project_res_hours: aggregates.total_effort_from_prj_res,
+        total_project_res_hours_fte: aggregates.total_effort_fte_from_prj_res,
+        total_project_res_hours_subcon: aggregates.total_effort_subcon_from_prj_res,
+        total_project_res_cost_fte: aggregates.total_cost_fte_from_prj_res,
+        total_project_res_cost_subcon: aggregates.total_cost_subcon_from_prj_res,
+        total_project_res_cost_nonlabor: aggregates.total_cost_nonlabor_from_prj_res,
       },
       {
         where: {
