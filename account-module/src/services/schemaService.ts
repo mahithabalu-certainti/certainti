@@ -1291,6 +1291,7 @@ class SchemaService {
         event_name varchar(100) NOT NULL,
         event_type varchar(100) NOT NULL,
         event_status varchar(100) NOT NULL,
+        document_rid varchar(100) NULL,
         CONSTRAINT project_task_timeline_r_number_key UNIQUE (r_number)
       );
     `);
