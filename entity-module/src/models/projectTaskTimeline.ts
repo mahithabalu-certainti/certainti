@@ -4,6 +4,7 @@ import {
   R_NUMBER_PREFIX,
 } from "../utils/constants";
 import { ProjectTask } from "./projectTask";
+import AccountDetails from "./accountDetails";
 
 interface ProjectTaskTimelineAttributes {
   rid?: string;
@@ -119,7 +120,13 @@ export class ProjectTaskTimeline
     ProjectTaskTimeline.belongsTo(ProjectTask, {
       foreignKey: "entity_rid",
       targetKey: "rid",
-      as: "project",
+      as: "project_task_timeline_project_task",
+    });
+
+    ProjectTaskTimeline.belongsTo(AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_task_timeline_account",
     });
 
     ProjectTask.hasMany(ProjectTaskTimeline, {

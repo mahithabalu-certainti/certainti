@@ -792,20 +792,12 @@ export class ProjectTaskService {
         ""
       )}`;
 
-      // Initialize models
-      const AccountDetailsModel = AccountDetails.initialize(
-        sequelize,
-        schemaName
-      );
-
-      const ProjectModel = Project.initialize(sequelize, schemaName);
-
-      const ProjectFiscalModel = ProjectFiscal.initialize(
-        sequelize,
-        schemaName
-      );
-      const ResourceModel = Resources.initialize(sequelize, schemaName);
-      const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
+    // Initialize models
+    const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
+    const ProjectModel = Project.initialize(sequelize, schemaName);
+    const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
+    const ResourceModel = Resources.initialize(sequelize, schemaName);
+    const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
 
       // Define associations
       ProjectTaskModel.belongsTo(AccountDetailsModel, {

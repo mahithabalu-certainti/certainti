@@ -176,6 +176,12 @@ export class ProjectTask
       as: "account",
     });
 
+    ProjectTask.belongsTo(models.Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_task_project",
+    });
+
     ProjectTask.belongsTo(models.ProjectFiscal, {
       foreignKey: "project_fiscal_rid",
       targetKey: "rid",
@@ -188,6 +194,11 @@ export class ProjectTask
       as: "projectResource",
     });
 
+    ProjectTask.belongsTo(models.Resources, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "resource",
+    });
     ProjectTask.belongsTo(models.Resources, {
       foreignKey: "resource_rid",
       targetKey: "rid",

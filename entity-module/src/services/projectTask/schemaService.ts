@@ -136,6 +136,12 @@ export class ProjectTaskSchemaService {
       as: "account",
     });
 
+    ProjectTaskModel.belongsTo(ProjectModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_task_project",
+    });
+
     ProjectTaskModel.belongsTo(ProjectFiscalModel, {
       foreignKey: "project_fiscal_rid",
       targetKey: "rid",
@@ -146,6 +152,12 @@ export class ProjectTaskSchemaService {
       foreignKey: "resource_rid",
       targetKey: "rid",
       as: "resource",
+    });
+
+    ProjectTaskHistory.belongsTo(ProjectTaskModel, {
+      foreignKey: "project_task_rid",
+      targetKey: "rid",
+      as: "project_task_history_project_task",
     });
 
     const models = {

@@ -95,6 +95,14 @@ export class ProjectTaskHistory
     );
     return ProjectTaskHistory;
   }
+
+  static associate(models: any){
+    ProjectTaskHistory.belongsTo(models.ProjectTask, {
+      foreignKey: "project_task_rid",
+      targetKey: "rid",
+      as: "project_task_history_project_task",
+    });
+  }
 }
 
 export async function setupProjectTaskHistorySequence(
