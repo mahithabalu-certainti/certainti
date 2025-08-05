@@ -714,6 +714,27 @@ export const rawQueries = {
     AND
     fiscal_year = ${fiscal_year}
     `
+  },
+  updateProjectFiscalEffectiveDatas(schemaName : string, data : any) {
+    return `
+    UPDATE ${schemaName}.project_fiscal
+    SET 
+      effective_cost = ${data.total_cost_prj},
+      effective_effort = ${data.total_effort_prj},
+      effective_total_fte = ${data.total_fte_prj},
+      effective_total_subcon = ${data.total_subcon_prj},
+      effective_fte_effort = ${data.total_effort_fte_prj},
+      effective_subcon_effort = ${data.total_effort_subcon_prj},
+      effective_fte_cost = ${data.total_cost_fte_prj},
+      effective_subcon_cost = ${data.total_cost_subcon_prj},
+      effective_nonlabor_cost = ${data.total_cost_nonlabor_prj}
+    WHERE
+      rid = '${data.rid}'
+      AND
+      default_metric_type = 'project'
+      AND
+      effective_metric_type IS NULL
+    `
   }
 }
 
