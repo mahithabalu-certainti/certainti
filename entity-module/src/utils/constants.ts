@@ -698,6 +698,21 @@ export const rawQueries = {
     }
     return HttpStatus.SUCCESS_MESSAGE 
   },
+  fetchStates(country_rid : string) {
+    return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state WHERE country_rid = '${country_rid}'`
+  },
+  fetchStatesIds(schemaName : string, account_rid : string, fiscal_year : number) {
+    return `
+    SELECT region_rid FROM ${schemaName}.account_fiscal_region 
+    WHERE 
+    account_rid = '${account_rid}'
+    AND
+    fiscal_year = ${fiscal_year}
+    `
+  },
+  fetchCountryRid(account_rid : string) {
+    return `SELECT country_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  }
 }
 
 export const IMPORT_FILTER_COLUMNS : any = {
