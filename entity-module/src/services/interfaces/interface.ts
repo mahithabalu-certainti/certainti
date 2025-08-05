@@ -777,4 +777,5 @@ exportListAccountLevelProjectCostFinancialHighlights(
   errorMessage?: string;
   data?: { summaries: any[]; totalCount: number }
 }>
+fetchRegions(data : any) : Promise <any>
 }

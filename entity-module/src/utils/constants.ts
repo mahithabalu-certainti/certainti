@@ -698,6 +698,23 @@ export const rawQueries = {
     }
     return HttpStatus.SUCCESS_MESSAGE 
   },
+  fetchStates(stateIds : string[], country_rid : string) {
+    let formattedStateIds = stateIds.map((id : string) => `'${id}'`).join(',')
+    return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
+    WHERE 
+    rid IN (${formattedStateIds})
+    AND
+    country_rid = '${country_rid}'`
+  },
+  fetchStatesIds(schemaName : string, account_rid : string, fiscal_year : number) {
+    return `
+    SELECT region_rid FROM ${schemaName}.account_fiscal_region 
+    WHERE 
+    account_rid = '${account_rid}'
+    AND
+    fiscal_year = ${fiscal_year}
+    `
+  }
 }
 
 export const IMPORT_FILTER_COLUMNS : any = {

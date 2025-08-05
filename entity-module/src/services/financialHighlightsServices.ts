@@ -696,4 +696,26 @@ export default class FinancialHighlightsService {
 
     return { whereClause: whereClause[Op.and].length > 0 ? whereClause : {} };
   }
+
+  async fetchRegions(data : any) {
+    const mainDb = await this.getMainDbSequelize()
+    const orgDb = await this.getOrgDbSequelize()
+
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
+    let fetchDataBasedRegions = await orgDb.query(rawQueries.fetchStatesIds(schemaName, data.account_rid, data.fiscal_year))
+    let validStateIds : string[] = []
+    fetchDataBasedRegions[0].filter((d : any) => d.region_rid != '' || null).map((states : any) => {
+      validStateIds.push(states.region_rid)
+      return validStateIds
+    })
+    let fetchStates = await mainDb.query(rawQueries.fetchStates(validStateIds, data.country_rid))
+    let finalData = fetchStates[0].map((d : any) => {
+      return {
+        rid : d.rid,
+        state_name : d.state_name
+      }
+    })
+    return finalData
+  }
 }

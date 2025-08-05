@@ -9,5 +9,5 @@ routes.post('/state',checkUserStatusMiddleware('account_statewise_summary_view')
 routes.post('/project', checkUserStatusMiddleware('project_summary_view'),controllers.financialController.listFinancialHighlightsProjects)
 routes.get('/list/projectCost', checkUserStatusMiddleware('account_project_cost_view'),controllers.financialController.financialHighlightsProjectCostAccountLevel)
 routes.get('/list/projectCost/export', checkUserStatusMiddleware('account_project_cost_view'),controllers.financialController.exportFinancialHighlightsProjectCostAccountLevel)
-
+routes.get('/regions/:accountId/:countryId/:fiscalYear', controllers.financialController.fetchRegionsFromAccountFiscalRegions)
 export default routes

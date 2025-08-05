@@ -364,9 +364,25 @@ async function exportFinancialHighlightsProjectCostAccountLevel(req: Request, re
   }
 }
 
+  async function fetchRegionsFromAccountFiscalRegions (req : Request, res : Response){
+    try {
+      const {accountId, fiscalYear, countryId} = req.params;
+      const data : any = {}
+      data.account_rid = accountId
+      data.fiscal_year = fiscalYear
+      data.country_rid = countryId
+      const result = await services.financialHighlightServies.fetchRegions(data)
+      handleSuccessResponse(res, result)
+      return;
+    } catch (error : any) {
+      handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
+    }
+}
+
 export default {
     listFinancialHighlightsAccounts,
     listFinancialHighlightsProjects,
     financialHighlightsProjectCostAccountLevel,
-    exportFinancialHighlightsProjectCostAccountLevel
+    exportFinancialHighlightsProjectCostAccountLevel,
+    fetchRegionsFromAccountFiscalRegions
 }
