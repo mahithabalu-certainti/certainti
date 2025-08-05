@@ -77,16 +77,18 @@ class ProjectGraphQlServices {
             }
             let findProject : any = await orgSequelize.query(rawQueries.findProject(schemaName, data.project_rid, data.account_rid))
             let updatedProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
+            await orgSequelize.query(rawQueries.updateProjectFiscalEffectiveDatas(schemaName, updatedProjectFiscal[0][0]))
             await this.projectIngestion.updateProjectAggregatesFromFiscal(checkAccountExists[0][0].r_number, data.account_rid, findProject[0][0].project_code)
             await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProject[0][0].project_code, data.account_rid)
             updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid
-            await this.projectIngestion.updateAccountFiscalAggregatesFromFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0])
             await this.projectIngestion.addAccountFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
             await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
                 checkAccountExists[0][0].r_number,
-                checkAccountExists[0][0].rid
+                data.account_rid
                 );
+            
+            await this.projectIngestion.updateProjectResources(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0], updatedProjectFiscal[0][0].rid, updatedProjectFiscal[0][0].fiscal_year);
             await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, data))
             let attributeName;
             let newValue;
