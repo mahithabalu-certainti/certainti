@@ -1,5 +1,8 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { initOrgSequelize } from "../config/orgDataSource";
+import { Resources } from "../models/resource";
+import { ResourceFiscal } from "../models/resourceFiscal";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
 import moment from "moment";
@@ -184,7 +187,8 @@ export class ResourceService {
     search: string,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -226,24 +230,63 @@ export class ResourceService {
       );
 
       const rawResult = resources.resources || [];
-      let exportData = rawResult.map((resource: any) => {   
-        return {
-          "Account Name": resource.account_name || "-",
-          "Resource Code":resource.resource_code || "-",
-          "Name":resource.resource_name || "-",
-          "Resource Type": resource?.resource_type_name || "-",
-          "Org Name": resource.resource_orgname || "-",
-          "Designation": resource.resource_designation || "-",
-          "Role": resource.resource_role || "-",
-          "Region": resource.region_name || "-",
-          "Country": resource.country_name || "-",
-          "Total Project Hours": resource.total_project_hours || "-",
-          "Estimated R&D Hours": resource.estimated_rd_hours || "-",
-          "Status": resource.status_name,
-          "Comments": resource.comments || "-",
-          "Resource ID": resource.r_number || "-"
-        };
-      });
+      const [
+        accountFields,
+        resourceFields,
+      ] = await Promise.all([
+        this.schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+        this.schemaService.getAllowedExportFields(userId, "account_resources_view_edit")
+      ]);
+     // const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"account_resources_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of resourceFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+        const requiredAccountFields = new Set(["account_name"]); // Add more if needed
+      for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
+      const labelMap: Record<string, string> = {
+        "account_name": "Account Name",
+        "resource_code": "Resource Code",
+        "resource_name": "Name",
+        "resource_type_rid": "Resource Type",
+        "resource_orgname": "Org Name",
+        "resource_designation": "Designation",
+        "resource_role": "Role",
+        "country_rid": "Country",
+        "region_rid": "Region",
+        "total_project_hours": "Total Project Hours",
+        "estimated_rd_hours": "Estimated R&D Hours",
+        "status_rid": "Status",
+        "comments": "Comments",
+        "r_number": "Resource ID",
+      };
+      const fieldValueMap: Record<string, string> = {
+        "resource_type_rid": "resource_type_name",
+        "region_rid":"region_name",
+        "country_rid":"country_name",
+         "status_rid":"status_name",
+
+      };
+
+      const exportData = rawResult.map((resource: any) => {
+      const row: Record<string, string> = {};
+
+      for (const [field, label] of Object.entries(labelMap)) {
+       if (allowedFieldSet.has(field)) {
+      const actualField = fieldValueMap[field] || field; // fallback to same field if not mapped
+      row[label] = resource[actualField] ?? "-";
+      }
+      }
+
+      return row;
+    });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -307,12 +350,16 @@ export class ResourceService {
         );
       }
 
+      const existingResource = await this.schemaService.fetchExistingResource(accountNumber, resource_id);
+
       resourceData.modified_by = userId;
       const resource = await this.schemaService.updateResource(
         resourceData,
         accountNumber,
         accountId
       );
+
+      // await this.schemaService.updateProjectResource(accountNumber, resourceData, existingResource, accountId);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -390,6 +437,59 @@ export class ResourceService {
         resourceDetails.modified_by = userNames.modified_by_name;
       }
 
+      const attachments = await this.schemaService.fetchAttachmentsByResourceId(resourceId);
+      if(attachments.length>0){
+      const sequelize = await initMainDbSequelize();
+      // Extract IDs from attachments
+      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
+      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
+      const userIds = attachments.map(attachment => attachment.created_by);
+
+      // Execute all queries in parallel
+      const [documentTypes, documentCategories, users] = await Promise.all([
+        documentTypeIds.length > 0 
+          ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
+              replacements: { documentTypeIds }, 
+              type: 'SELECT' 
+            })
+          : Promise.resolve([]),
+
+        documentCategoryIds.length > 0
+          ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
+              replacements: { documentCategoryIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([]),
+
+        userIds.length > 0
+          ? sequelize.query(rawQueries.GET_USERS, {
+              replacements: { userIds },
+              type: 'SELECT'
+            })
+          : Promise.resolve([])
+      ]);
+
+      // Enhance attachments with related data
+      const mappedAttachments = attachments.map(attachment => {
+        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
+        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
+        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
+        const attachedTo = resourceDetails?.resource_code;
+
+        return {
+          ...attachment,
+          document_type: (documentType as any)?.type_name || '',
+          document_category: (documentCategory as any)?.category_name || '',
+          uploaded_by: (uploadedBy as any)?.full_name || '',
+          attached_to: attachedTo,
+          size_in_mb: attachment.size_in_mb
+            ? `${attachment.size_in_mb} mb`
+            : "0 mb"
+        };
+      });
+
+      resourceDetails.attachment = mappedAttachments || [];
+    }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -796,4 +896,32 @@ export class ResourceService {
 
     return result;
   }
+
+
+  async getResourcesByAccountId(accountNumber: string, accountRid: string) {
+    try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+      const query = `
+        SELECT 
+          r.rid
+        FROM "${schemaName}".resources r
+        WHERE r.account_rid = :accountRid
+        ORDER BY r.created_datetime DESC
+      `;
+
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { accountRid },
+        type: 'SELECT'
+      });
+
+      return results;
+
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      throw error;
+    }
+  }
+
 }

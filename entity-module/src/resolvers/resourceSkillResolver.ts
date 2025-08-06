@@ -1,5 +1,6 @@
 import configurations from "../config/config";
 import { HttpStatus } from "../utils/constants";
+import { validateResourceSkill } from "../utils/helpers";
 
 const services = configurations.getInstance().getServices();
 const resourceSkillService = services.resourceSkillServices;
@@ -105,6 +106,44 @@ const resourceSkillResolvers = {
 
       return result.data;
     },
+
+    updateResourceSkillInline : async(_ : any, {data} : {data : any}, ctx : any) => {
+      try {
+      data.userId = ctx.req.headers['x-user-id']
+      const requestValidation = validateResourceSkill(data);
+      if(requestValidation) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+          statusMessage : requestValidation
+        }
+      }
+      const result = await ctx.services.resourceSkillGraphqlServices.updateInlineResourceSkill(data)
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : result.statusMessage,
+          data : result.data
+        }
+      }
+      else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+          statusMessage : result.statusMessage,
+          data : result.data
+        }
+      } 
+      } catch (error : any) {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+          statusMessage : error.message,
+          data : null
+        }
+      }
+    }
   },
 };
 

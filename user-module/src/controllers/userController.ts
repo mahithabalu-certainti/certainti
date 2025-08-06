@@ -24,6 +24,7 @@ import {
   successLog,
   validateRequest,
   generateExcelBase64,
+  handleCustomResponse,
 } from "../utils/helpers";
 
 const services = configurations.getInstance().getServices();
@@ -116,6 +117,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
     await sendEmail(mailContent);
 
     if (user.statusCode === constants.SUCCESS) {
+     await services.userGroupService.assignUserToUserGroups(user?.data?.user,userId);
       successLog(methodName);
       handleSuccessResponse(res, user);
       return;
@@ -216,7 +218,14 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       successLog(methodName);
       handleSuccessResponse(res, user.data);
       return;
-    } else {
+    } 
+     if (user.statusCode === constants.CONFLICT) {
+      successLog(methodName);
+      handleCustomResponse(res, user.errorMessage,user.requiresConfimration);
+      return;
+    } 
+    
+    else {
       errorLog(methodName, user.message);
       handleErrorResponse(
         res,
@@ -401,6 +410,7 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
+    const userId = req.headers['x-user-id'] as string;
 
     const result = await services.userServices.exportUsers(
       value.search,
@@ -408,7 +418,8 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.organization,
-      value.timezone
+      value.timezone,
+      userId
     );
 
     if (result.statusCode === constants.SUCCESS) {

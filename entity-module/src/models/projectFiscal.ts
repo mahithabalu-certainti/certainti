@@ -1,5 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
+import AccountDetails from "./accountDetails";
 export interface ProjectFiscalAttributes {
   rid: string;
   r_number?: string;
@@ -115,6 +117,20 @@ export interface ProjectFiscalAttributes {
   rd_credits_nonlabor_fed_level?: number | null;
   rd_credits_fed_level?: number | null;
   rd_credits_total?: number | null;
+
+  effective_total_fte?: number | null;
+  effective_total_subcon?: number | null;
+  effective_total_nonlabor?: number | null;
+  effective_effort?: number | null;
+  effective_cost?: number | null;
+  effective_fte_effort?: number | null;
+  effective_fte_cost?: number | null;
+  effective_subcon_effort?: number | null;
+  effective_subcon_cost?: number | null;
+  effective_nonlabor_cost?: number | null;
+
+  effective_metric_type?: string | null;
+  default_metric_type?: string | null;
 
   interaction_cc_list?: string | null;
   assessment_status?: string | null;
@@ -244,6 +260,20 @@ export class ProjectFiscal
   public rd_credits_nonlabor_fed_level?: number | null;
   public rd_credits_fed_level?: number | null;
   public rd_credits_total?: number | null;
+
+  public effective_total_fte?: number | null;
+  public effective_total_subcon?: number | null;
+  public effective_total_nonlabor?: number | null;
+  public effective_effort?: number | null;
+  public effective_cost?: number | null;
+  public effective_fte_effort?: number | null;
+  public effective_fte_cost?: number | null;
+  public effective_subcon_effort?: number | null;
+  public effective_subcon_cost?: number | null;
+  public effective_nonlabor_cost?: number | null;
+
+  public effective_metric_type?: string | null;
+  public efault_metric_type?: string | null;
 
   public interaction_cc_list?: string | null;
   public assessment_status?: string | null;
@@ -446,6 +476,26 @@ export class ProjectFiscal
         rd_credits_fed_level: DataTypes.DECIMAL(18, 2),
         rd_credits_total: DataTypes.DECIMAL(18, 2),
 
+        effective_total_fte: DataTypes.INTEGER,
+        effective_total_subcon: DataTypes.INTEGER,
+        effective_total_nonlabor: DataTypes.INTEGER,
+        effective_cost: DataTypes.DECIMAL(18, 2),
+        effective_effort: DataTypes.DECIMAL(18, 2),
+        effective_fte_cost: DataTypes.DECIMAL(18, 2),
+        effective_fte_effort: DataTypes.DECIMAL(18, 2),
+        effective_subcon_cost: DataTypes.DECIMAL(18, 2),
+        effective_subcon_effort: DataTypes.DECIMAL(18, 2),
+        effective_nonlabor_cost: DataTypes.DECIMAL(18, 2),
+
+        effective_metric_type: {
+          type: DataTypes.STRING(50),
+          allowNull: true
+        },
+        default_metric_type: {
+          type: DataTypes.STRING(50),
+          allowNull: true
+        },
+
         // Misc
         interaction_cc_list: {
           type: DataTypes.STRING,
@@ -476,6 +526,18 @@ export class ProjectFiscal
         underscored: true,
       }
     );
+
+    ProjectFiscal.belongsTo(Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_fiscal_project"
+    });
+
+    ProjectFiscal.belongsTo(AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_fiscal_account"
+    })
 
     return ProjectFiscal;
   }

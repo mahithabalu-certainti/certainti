@@ -285,3 +285,133 @@ export interface IUpdateKeyContactDetail {
   include_in_communication: boolean;
   status_rid: string;
 }
+
+export interface ICreateAttachment {
+  browse_file: string,
+  account_rid: string,
+  document_name: string,
+  attach_to: string,
+  attachment_level: string,
+  fiscal_year: number,
+  format: string,
+  size_in_mb: number,
+  document_type_rid: string,
+  document_category_rid: string,
+  document_category_others: string,
+  document_type_others: string,
+  comments: string,
+}
+
+
+export interface ICreateProjectResource {
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_id: string;
+  project_code: string;
+  resource_code: string;
+  manager_name?: string;
+  manager_ref_id?: string;
+  assigned_skill_role_type_rid: string | null;
+  skill_role_rid: string | null;
+  skill_role_others: string | null;
+  status_rid?: string | null;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  effort_project_resource_level?: number | null;
+  cost_project_resource_level?: number | null;
+  salary?: number | null;
+  bonus?: number | null;
+  deductions?: number | null;
+  insurance?: number | null;
+  description?: string | null;
+  created_by: string;
+  modified_by?: string;
+}
+export interface IUpdateProjectResource {
+  project_resource_rid: string;
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_id: string;
+  resource_code: string;
+  manager_name?: string;
+  manager_ref_id?: string;
+  assigned_skill_role_type_rid: string | null;
+  skill_role_rid: string | null;
+  skill_role_others: string | null;
+  status_rid?: string | null;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  fiscal_year: number;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  effort_project_resource_level?: number | null;
+  cost_project_resource_level?: number | null;
+  salary?: number | null;
+  bonus?: number | null;
+  deductions?: number | null;
+  insurance?: number | null;
+  description?: string | null;
+  modified_by?: string;
+}
+
+export interface IUpdateInlineProjectResource {
+  project_resource_rid: string;
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_code?: string;
+  resource_name?: string;
+  resource_type_rid: string;
+  resource_role?: string | null;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  region_rid?: string | null;
+  description?: string | null;
+  modified_by?: string;
+  resource_rid?: string;
+}
+
+export interface ICreateProjectTask {
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_id: string;
+  resource_code: string;
+  total_hours_pro_task?: number;
+  total_cost_pro_task?: number;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  comments?: string | null;
+  created_by: string;
+  modified_by?: string;
+}
+
+export interface IUpdateProjectTask {
+  project_task_rid: string;
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_id: string;
+  resource_code: string;
+  total_hours_pro_task?: number;
+  total_cost_pro_task?: number;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  comments?: string | null;
+  created_by: string;
+  modified_by?: string;
+}

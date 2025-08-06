@@ -6,7 +6,24 @@ import {
   listUserById,
 } from "./userController";
 import { userProfiles, userPermissionById, userRoles, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions,exportUserProfiles,getUserExtendedPermissions,updateUserExtendedPermissions } from "./userManagementController";
+import {
+  createUserGroup,
+  updateUserGroup,
+  listUserGroup,
+  exportUserGroup,
+  getActiveUsersForGrouping,
+  listGroupDetailsById,
+  getAccountUsers,
+  getProjectUsers,
+  getProjectOfAccounts,
+  getAccountGroups,
+  assignEntityAccessToAccount,
+  assignEntityAccessToProject,
+  getUserGroupType
 
+
+} from "./userGroupController";
+import { get } from "http";
 const controller = {
   userController: {
     createUser,
@@ -28,6 +45,21 @@ const controller = {
     getUserExtendedPermissions,
     updateUserExtendedPermissions
   },
+  userGroupController:{
+    createUserGroup,
+    updateUserGroup,
+    getActiveUsersForGrouping,
+    listUserGroup,
+    exportUserGroup,
+    listGroupDetailsById,
+    getAccountUsers,
+    getAccountGroups,
+    getProjectUsers,
+    getProjectOfAccounts,
+    assignEntityAccessToAccount,
+    assignEntityAccessToProject,
+    getUserGroupType
+  }
 };
 
 export default controller;

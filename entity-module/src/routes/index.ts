@@ -3,7 +3,14 @@ import resourceCostRoutes from "./resourceCostRoutes";
 import resourceRoutes from "./resourceRoutes";
 import resourceSkillRoutes from "./resourceSkillRoutes";
 import projectRoutes from "./projectRoutes";
+import attachmentRoutes from "./attachmentRoutes";
+import projectResourceRoutes from "./projectResourceRoutes";
 import { errorLog, successLog } from "../utils/helpers";
+import projectTaskRoutes from "./projectTaskRoutes";
+
+import importRoutes from './importRoutes'
+import settingRoutes from '../routes/settingsRoutes'
+import financialRoutes from '../routes/financialHighlightsRoutes'
 
 const routes: Router = Router();
 
@@ -29,5 +36,11 @@ routes.use("/resources", resourceRoutes);
 routes.use("/resource_cost", resourceCostRoutes);
 routes.use("/resource_skill", resourceSkillRoutes);
 routes.use("/project", projectRoutes);
+routes.use("/attachment", attachmentRoutes);
+routes.use("/project_resources", projectResourceRoutes);
+routes.use("/import", importRoutes);
+routes.use("/project_tasks", projectTaskRoutes);
+routes.use('/settings', settingRoutes)
+routes.use('/financialHighlight', financialRoutes)
 
 export default routes;

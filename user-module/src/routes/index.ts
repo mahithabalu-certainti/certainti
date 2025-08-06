@@ -1,6 +1,7 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
 import { errorLog, successLog } from "../utils/helpers";
+import userGroupRoutes from "./userGroupRoutes";
 
 const routes: Router = Router();
 
@@ -25,5 +26,6 @@ routes.get("/health", async (req, res) => {
   }
 });
 routes.use("/user", userRoutes);
+routes.use("/user_group", userGroupRoutes);
 
 export default routes;

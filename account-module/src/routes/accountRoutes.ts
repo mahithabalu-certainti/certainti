@@ -6,8 +6,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const routes: Router = Router();
 
-routes.get('/list', checkUserStatusMiddleware("accounts_view_all"), controller.accountController.accounts);
-routes.get('/listOrgAccounts', checkUserStatusMiddleware("accounts_view_all"), controller.accountController.listOrgAccounts);
+routes.get('/list', checkUserStatusMiddleware("accounts_view_edit"), controller.accountController.accounts);
+routes.get('/listOrgAccounts', checkUserStatusMiddleware("accounts_view_edit"), controller.accountController.listOrgAccounts);
 routes.get('/list/global',checkUserStatusMiddleware("NA"), controller.accountController.ListGlobalAccounts);
 routes.get('/export', checkUserStatusMiddleware("accounts_export"), controller.accountController.exportAccounts);
 routes.get('/global', checkUserStatusMiddleware("NA"), controller.accountController.globalAccounts);
@@ -25,10 +25,12 @@ routes.get('/skillLevel', checkUserStatusMiddleware("NA"), controller.geoDataCon
 routes.get('/resourceStatus', checkUserStatusMiddleware("NA"), controller.geoDataController.resourceStatus);
 
 
-routes.get('/list/:id', checkUserStatusMiddleware("account_details_view"), controller.accountController.accountById);
+routes.get('/list/:id', checkUserStatusMiddleware("accounts_view_edit"), controller.accountController.accountById);
 routes.post('/new', checkUserStatusMiddleware("accounts_create"),upload.single('logo'), controller.accountController.createAccount);
-routes.put('/update', checkUserStatusMiddleware("accounts_edit_update"),  upload.single('logo'),controller.accountController.updateAccount);
+routes.put('/update', checkUserStatusMiddleware("accounts_view_edit"),  upload.single('logo'),controller.accountController.updateAccount);
 routes.get("/industry", checkUserStatusMiddleware("NA"), controller.geoDataController.industries);
 routes.get("/keycontactroles", checkUserStatusMiddleware("NA"), controller.accountController.getKeyContactRoles);
+
+routes.get('/importEntityTypes', controller.geoDataController.fetchImportEntityTypes)
 
 export default routes;

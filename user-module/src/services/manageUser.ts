@@ -2,6 +2,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { getAzureB2CToken } from "../middlewares/azureMiddleware";
 import configurations from "../config/config";
 import { Logger } from "winston";
+import { Status } from "../models/statusModel";
 
 const logger: Logger = configurations.getInstance().getLogger();
 
@@ -13,7 +14,7 @@ interface User {
 }
 
 interface UpdateUser {
-  status: string;
+  status_rid: string;
   first_name: string;
   last_name: string;
   azure_id?: string;
@@ -129,6 +130,9 @@ const updateAzureUser = async (users: UpdateUser) => {
     if (!existingUser.id) {
       throw new Error(`User does not exist`);
     }
+    const statusRecord = await Status.findOne({
+      where: { rid: users.status_rid },
+    });
 
     const userPayload = {
       displayName: `${users.first_name} ${users.last_name}`,
@@ -136,7 +140,7 @@ const updateAzureUser = async (users: UpdateUser) => {
       surname: users.last_name,
       accountEnabled: true
     };
-    if(users.status === 'inactive')
+    if(statusRecord?.status_description === 'inactive')
     {
       userPayload.accountEnabled = false;
     }

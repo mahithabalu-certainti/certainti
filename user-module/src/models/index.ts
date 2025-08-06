@@ -33,6 +33,12 @@ import { UserFieldsAccessHistory } from "./userFieldsAccessHistoryModel";
 import { ProfileHistory } from "./profileHistoryModel";
 import { OrganizationLicenses } from "./organisationLicense";
 import { Status } from "./statusModel";
+import { UserGroup } from "./userGroupModel";
+import { UserGroupMapping } from "./userGroupMappingModel";
+import { UserGroupEntityAccess } from "./UserGroupEntityAccessModel";
+import { PermissionObjectMapping } from "./permissionObjectMappingModel";
+import { UserGroupType } from "./userGroupTypesModel";
+import { UserGroupAccountMapping } from "./userGroupAccountMappingModel";
 
 
 export const models: {
@@ -68,7 +74,12 @@ export const models: {
   UserExtendedPermissionTimeline: typeof UserExtendedPermissionTimeline;
   OrganizationLicenses:typeof OrganizationLicenses;
   Status:typeof Status
-
+  PermissionObjectMapping:typeof PermissionObjectMapping;
+  UserGroup:typeof UserGroup;
+  UserGroupMapping:typeof UserGroupMapping;
+  UserGroupEntityAccess:typeof UserGroupEntityAccess;
+  UserGroupType:typeof UserGroupType;
+  UserGroupAccountMapping:typeof UserGroupAccountMapping;
 } = {
   BusinessTeams: BusinessTeams,
   Department: Department,
@@ -101,7 +112,13 @@ export const models: {
   ProfileHistory: ProfileHistory,
   UserExtendedPermissionTimeline:UserExtendedPermissionTimeline,
   OrganizationLicenses:OrganizationLicenses,
-  Status:Status
+  Status:Status,
+  PermissionObjectMapping:PermissionObjectMapping,
+  UserGroup:UserGroup,
+  UserGroupMapping:UserGroupMapping,
+  UserGroupEntityAccess:UserGroupEntityAccess,
+  UserGroupType:UserGroupType,
+  UserGroupAccountMapping:UserGroupAccountMapping
 };
 
 export async function initModels() {
@@ -139,6 +156,12 @@ export async function initModels() {
     ProfileHistory.initialize(sequelize);
     UserExtendedPermissionTimeline.initialize(sequelize)
     OrganizationLicenses.initialize(sequelize)
+    PermissionObjectMapping.initialize(sequelize)
+    UserGroup.initialize(sequelize)
+    UserGroupMapping.initialize(sequelize)
+    UserGroupEntityAccess.initialize(sequelize)
+    UserGroupType.initialize(sequelize)
+    UserGroupAccountMapping.initialize(sequelize)
   
     Object.values(models).forEach((model: any) => { 
       if (model.associate) { 

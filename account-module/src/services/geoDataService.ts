@@ -2,7 +2,7 @@ import { Country } from "../models/countryModel";
 import { Currency } from "../models/currencyModel";
 import { Region } from "../models/regionModel";
 import { States } from "../models/stateModel";
-import { HttpStatus } from "../utils/constant";
+import { HttpStatus, rawQueries } from "../utils/constant";
 import { models } from "../models";
 import { Industry } from "../models/industryModel";
 import { ColorCodes } from "../models/colorCodes";
@@ -12,6 +12,7 @@ import { ResourceStatus } from "../models/resourceStatus";
 import { ResourceType } from "../models/resourceType";
 import { SkillLevel } from "../models/skillLevel";
 import { Status } from "../models/statusModel";
+import { initSequelize } from "../config/maindbDataSource";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.
@@ -509,6 +510,12 @@ class GeoDataService {
       message: HttpStatus.FAILED_MESSAGE,
       errorMessage: err.message,
     };
+  }
+  async importEntityTypes() {
+    const mainDb = await initSequelize()
+    let rawQuery = rawQueries.GET_IMPORT_ENTITY_TYPES;
+    const result = await mainDb.query(rawQuery)
+    return result[0]
   }
 }
 

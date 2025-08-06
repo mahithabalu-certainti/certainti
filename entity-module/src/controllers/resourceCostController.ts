@@ -18,6 +18,8 @@ import {
   updateResourceCostSchema,
   exportResourceCostSchema,
   updateResourceDuplicateStatus,
+  listResourceCostSchemaForFinancialHighlights,
+  exportResourceCostSchemaForFinancialHighlights
 } from "../lib/joi/schemas/schema";
 
 // const logger = configurations.getInstance().getLogger();
@@ -120,7 +122,7 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
     );
 
     let parsedFilters: Record<string, any> = {};
-
+    const userId = req.headers["x-user-id"] as string;
     if (!value) {
       return;
     }
@@ -140,7 +142,7 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       value.accountNumber,
       value.fiscalYear,
-      value.resourceRid
+      value.resourceRid,userId
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
@@ -407,6 +409,159 @@ async function acceptStatus(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * @async
+ * @function resourceCostsForFinancialHighlights
+ * @description Handles the retrieval of resourceCost information.
+ *
+ * @param {Request} req - Express Request object.
+ * @param {Response} res - Express Response object.
+ * @returns {Promise<void>} - Sends a JSON response with resource cost data on success,
+ * or an error message on failure.
+ */
+async function resourceCostsForFinancialHighlights(req: Request, res: Response): Promise<void> {
+  const methodName = "resourceCosts For FinancialHighlights";
+  try {
+    const value = await validateRequest(
+      req,
+      listResourceCostSchemaForFinancialHighlights,
+      res,
+      "GET"
+    );
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const pageNum: number = parseInt(value.page, 10) || 1;
+    const limitNum: number = parseInt(value.limit, 10) || 10;
+
+    const resourceCost = await resourceCostService.resourceCostsForFinancialHighlights(
+      pageNum,
+      limitNum,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.accountNumber,
+      value.fiscalYear,
+      value.projectRid,
+      value.accountRid
+    );
+
+    if (resourceCost.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, resourceCost.data);
+    } else {
+      errorLog(methodName, resourceCost.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resourceCost.message
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(error.message);
+
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * @async
+ * @function exportResourceCostsForFinancialHighlights
+ * @description Handles the retrieval of resourceCost information for downloading.
+ *
+ * @param {Request} req - Express Request object.
+ * @param {Response} res - Express Response object.
+ * @returns {Promise<void>} - Sends a JSON response with resource cost data on success,
+ * or an error message on failure.
+ */
+async function exportResourceCostsForFinancialHighlights(req: Request, res: Response): Promise<void> {
+  const methodName = "export resourceCosts";
+  try {
+    const { accountRid, projectRid } = req.params;
+    const value = await validateRequest(
+      req,
+      exportResourceCostSchemaForFinancialHighlights,
+      res,
+      "GET"
+    );
+
+    let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string;
+    if (!value) {
+      return;
+    }
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const resourceCost = await resourceCostService.exportResourceCostsForFinancialHighlights(
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.accountNumber,
+      value.fiscalYear,
+      value.projectRid,
+      value.accountRid,
+      userId
+    );
+
+    if (resourceCost.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(
+          resourceCost?.data?.financialHighlights,
+          "Resource Cost"
+        )
+      );
+    } else {
+      errorLog(methodName, resourceCost.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resourceCost.message
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(error.message);
+
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   resourceCosts,
   exportResourceCosts,
@@ -414,4 +569,6 @@ export default {
   updateResourceCost,
   resourceCostById,
   acceptStatus,
+  resourceCostsForFinancialHighlights,
+  exportResourceCostsForFinancialHighlights
 };

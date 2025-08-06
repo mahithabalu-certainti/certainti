@@ -53,7 +53,7 @@ export class ProfileFieldsAccessHistory
         },
         modified_datetime: { 
           type: DataTypes.DATE, 
-          allowNull: false
+          allowNull: true
         },
         profile_fields_access_rid: {
           type: DataTypes.STRING(50),

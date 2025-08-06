@@ -66,5 +66,18 @@ export interface IUpdateUserData {
   modified_by: string;
   is_consultant_firm:boolean;
   org_id:string;
-  
+  remove_group_memberships?:boolean | false;
 }
+
+export interface ProjectAccessView {
+  rid: string;
+  project_name: string;
+  account_name:string;
+  account_rid: string;
+  has_project_enabled: boolean;
+  access_type: 'INCLUDE' | 'EXCLUDE' | null;
+  has_access: boolean; // Derived boolean field
+}
+
+
+
