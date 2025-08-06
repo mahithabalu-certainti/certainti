@@ -242,7 +242,7 @@ const AccountList = () => {
           {accountId && !type && (
             <div className='flex-end'>
               <TextButton
-                label='Cancel'
+                label='Back'
                 onClick={handleBackAccount}
                 sx={{
                   ...BUTTON_STYLES,
