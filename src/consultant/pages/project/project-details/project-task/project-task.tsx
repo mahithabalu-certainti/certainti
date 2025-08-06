@@ -98,7 +98,7 @@ export const ProjectTask = ({
   const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
-  const [showProjectResourceDetails, setShowProjectResourceDetails] =
+  const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
   const [searchParams] = useSearchParams();
 
@@ -164,7 +164,8 @@ export const ProjectTask = ({
   );
   const taskId = searchParams.get('pro_task_id');
   const taskDetails = searchParams.get('page');
-  const checkDetail = taskDetails === 'details';
+  const checkDetail = taskDetails === 'details' && taskId;
+
   const viewDetails = !!checkDetail;
 
   const {
@@ -202,10 +203,12 @@ export const ProjectTask = ({
 
   useEffect(() => {
     const page = searchParams.get('page');
-    if (page) {
-      setShowProjectResourceDetails(true);
+    if (page === 'details' && taskId) {
+      setShowProjectTaskDetails(true);
+    } else {
+      setShowProjectTaskDetails(false);
     }
-  }, [searchParams]);
+  }, [searchParams, taskId]);
 
   const resourceData = resourceDetails?.data;
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
@@ -277,7 +280,7 @@ export const ProjectTask = ({
   };
 
   const handleBackClick = () => {
-    setShowProjectResourceDetails(!showProjectResourceDetails);
+    setShowProjectTaskDetails(!showProjectTaskDetails);
     setProjectResData(null);
     setShowFilter(false);
     searchParams.delete('pro_task_id');
@@ -330,7 +333,7 @@ export const ProjectTask = ({
     searchParams.set('pro_task_id', row?.rid ?? '');
     navigate({ search: searchParams.toString() }, { replace: true });
     setProjectResData(row);
-    setShowProjectResourceDetails(true);
+    setShowProjectTaskDetails(true);
     setShowFilter(false);
   };
   const projectTaskColumns = getProjectTaskColumns(
@@ -430,7 +433,7 @@ export const ProjectTask = ({
             onBackClick={handleBackClick}
           />
           <div className='border border-[#CBD6E2]'>
-            {showProjectResourceDetails ? (
+            {showProjectTaskDetails ? (
               <ProjectTaskDetails
                 projectTaskData={
                   (resourceData as unknown as ProjectTaskDetailsType) ||
