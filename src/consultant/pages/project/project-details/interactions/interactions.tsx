@@ -16,6 +16,7 @@ import { getInteractionFilterFields } from './helpers';
 import InteractionDetails from './interaction-details/interaction-details';
 import { ActionItem } from '../../../../../components/table/types';
 import { INTERACTIONS, INTERACTIONS_CREATE } from '../../../../../routes';
+import { NewProjectData } from '../../../../types/project';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -33,9 +34,13 @@ const InteractionsTabs: OverviewTabs[] = [
 
 interface InteractionsProps {
   accountInActive: boolean;
+  projectDetails: NewProjectData | null;
 }
 
-const Interactions: React.FC<InteractionsProps> = ({ accountInActive }) => {
+const Interactions: React.FC<InteractionsProps> = ({
+  accountInActive,
+  projectDetails,
+}) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -57,6 +62,12 @@ const Interactions: React.FC<InteractionsProps> = ({ accountInActive }) => {
 
   const interactionId = searchParams.get('interaction_id');
   const viewDetails = !!interactionId;
+  const projectData = {
+    project_code: projectDetails?.project_code || '',
+    project_name: projectDetails?.program_name || '',
+    fiscal_year: projectDetails?.fiscal_year || '',
+    account_name: projectDetails?.account_name || '',
+  };
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -110,6 +121,7 @@ const Interactions: React.FC<InteractionsProps> = ({ accountInActive }) => {
       accountId,
       projectId,
       source: 'project',
+      projectDetails: JSON.stringify(projectData),
     });
     navigate(`${INTERACTIONS_CREATE}?${queryParams.toString()}`);
   };
@@ -120,6 +132,7 @@ const Interactions: React.FC<InteractionsProps> = ({ accountInActive }) => {
       accountId,
       projectId,
       source: 'project',
+      projectDetails: JSON.stringify(projectData),
     });
     navigate(`${INTERACTIONS}/edit/${row.rid}?${queryParams.toString()}`);
   };
@@ -219,6 +232,7 @@ const Interactions: React.FC<InteractionsProps> = ({ accountInActive }) => {
         <InteractionDetails
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
+          projectDetails={projectDetails}
         />
       ) : (
         <>

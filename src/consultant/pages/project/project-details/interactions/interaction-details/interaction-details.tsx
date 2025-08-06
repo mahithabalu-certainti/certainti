@@ -11,15 +11,18 @@ import { useInteractionDetails } from '../../../../../services/interactions/inte
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import InteractionQuestions from './interaction-qus';
 import { INTERACTIONS } from '../../../../../../routes';
+import { NewProjectData } from '../../../../../types/project';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
+  projectDetails: NewProjectData | null;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   accountInActive,
   handleBackClick,
+  projectDetails,
 }) => {
   const navigate = useNavigate();
   const { projectid } = useParams();
@@ -34,10 +37,17 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
 
   const handleEdit = () => {
     const projectId = projectid ?? '';
+    const projectData = {
+      project_code: projectDetails?.project_code || '',
+      project_name: projectDetails?.program_name || '',
+      fiscal_year: projectDetails?.fiscal_year || '',
+      account_name: projectDetails?.account_name || '',
+    };
     const queryParams = new URLSearchParams({
       accountId,
       projectId,
       source: 'project',
+      projectDetails: JSON.stringify(projectData),
     });
     navigate(`${INTERACTIONS}/edit/${data?.rid}?${queryParams.toString()}`);
   };

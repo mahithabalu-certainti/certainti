@@ -371,7 +371,12 @@ export const ProjectDetails = () => {
         );
 
       case 'interactions':
-        return <Interactions accountInActive={accountInActive} />;
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            projectDetails={projectData}
+          />
+        );
       case 'technicalSummary':
         return <NotFound />;
       case 'cases':
