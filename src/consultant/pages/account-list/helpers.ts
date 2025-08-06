@@ -1,4 +1,4 @@
-import { AccountList, ConvertedAccount } from '../../types';
+import { AccountList } from '../../types';
 import { FieldConfig, FilterSelectOption } from '../../types/account-filter';
 
 // const roleOptions: { label: string; value: string }[] = [
@@ -28,13 +28,17 @@ export const industryOperator: { label: string; value: string }[] = [
 
 export const getAccountFilterFields = (
   countryOptions: FilterSelectOption[],
-  industryOptions: FilterSelectOption[]
+  industryOptions: FilterSelectOption[],
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
     label: 'Account Name',
     name: 'account_name',
     type: 'text',
     operatorOption: textfieldOptions,
+    hide:
+      !permissionMap?.['account_name']?.read &&
+      !permissionMap?.['account_name']?.edit,
   },
   {
     label: 'Industry',
@@ -42,31 +46,74 @@ export const getAccountFilterFields = (
     type: 'enumSelect',
     options: industryOptions,
     operatorOption: industryOperator,
+    hide:
+      !permissionMap?.['industry_rid']?.read &&
+      !permissionMap?.['industry_rid']?.edit,
   },
   {
     label: 'Country',
     name: 'country',
     type: 'enumSelect',
     options: countryOptions,
+    hide:
+      !permissionMap?.['country_rid']?.read &&
+      !permissionMap?.['country_rid']?.edit,
   },
-  { label: 'Total Projects', name: 'total_projects', type: 'number' },
-  { label: 'Total Project Hours', name: 'total_project_hours', type: 'number' },
-  { label: 'Total Cost', name: 'total_project_cost', type: 'number' },
+  {
+    label: 'Total Projects',
+    name: 'total_projects',
+    type: 'number',
+    hide:
+      !permissionMap?.['total_projects']?.read &&
+      !permissionMap?.['total_projects']?.edit,
+  },
+  {
+    label: 'Total Project Hours',
+    name: 'total_project_hours',
+    type: 'number',
+    hide:
+      !permissionMap?.['total_project_hours']?.read &&
+      !permissionMap?.['total_project_hours']?.edit,
+  },
+  {
+    label: 'Total Cost',
+    name: 'total_project_cost',
+    type: 'number',
+    hide:
+      !permissionMap?.['total_project_cost']?.read &&
+      !permissionMap?.['total_project_cost']?.edit,
+  },
   {
     label: 'Estimated R&D Hours',
     name: 'qualifying_project_hours_fed',
     type: 'number',
+    hide:
+      !permissionMap?.['qualifying_project_hours_fed']?.read &&
+      !permissionMap?.['qualifying_project_hours_fed']?.edit,
   },
-  { label: 'QRE', name: 'qualifying_project_qre_fed', type: 'number' },
+  {
+    label: 'QRE',
+    name: 'qualifying_project_qre_fed',
+    type: 'number',
+    hide:
+      !permissionMap?.['qualifying_project_qre_fed']?.read &&
+      !permissionMap?.['qualifying_project_qre_fed']?.edit,
+  },
   {
     label: 'Estimated R&D Credits',
     name: 'qualifying_project_rd_credits_fed',
     type: 'number',
+    hide:
+      !permissionMap?.['qualifying_project_rd_credits_fed']?.read &&
+      !permissionMap?.['qualifying_project_rd_credits_fed']?.edit,
   },
   {
     label: 'Actual R&D Credits',
     name: 'total_projects_rd_credits',
     type: 'number',
+    hide:
+      !permissionMap?.['total_projects_rd_credits']?.read &&
+      !permissionMap?.['total_projects_rd_credits']?.edit,
   },
   // {
   //   label: 'Key Contacts',
@@ -80,24 +127,35 @@ export const getAccountFilterFields = (
     name: 'finance_executive',
     type: 'text',
     operatorOption: keyOptions,
+    hide:
+      !permissionMap?.['finance_executive']?.read &&
+      !permissionMap?.['finance_executive']?.edit,
   },
   {
     label: 'Finance Lead',
     name: 'finance_lead',
     type: 'text',
     operatorOption: keyOptions,
+    hide:
+      !permissionMap?.['finance_lead']?.read &&
+      !permissionMap?.['finance_lead']?.edit,
   },
   {
     label: 'Professional Services Consultant',
     name: 'professional_services_consultant',
     type: 'text',
     operatorOption: keyOptions,
+    hide:
+      !permissionMap?.['professional_services_consultant']?.read &&
+      !permissionMap?.['professional_services_consultant']?.edit,
   },
   {
     label: 'Account ID',
     name: 'account_number',
     type: 'text',
     operatorOption: textfieldOptions,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
   // {
   //   label: 'System Filter',
@@ -113,64 +171,21 @@ export const getAccountFilterFields = (
   },
 ];
 
-export function convertAccounts(
-  inputAccounts: AccountList[],
-  colorCodes: { color: string; bgColor: string }[] = []
-): ConvertedAccount[] {
-  const result: ConvertedAccount[] = [];
+export function processAccounts(
+  accounts: AccountList[],
+  colors: { bgColor: string; color: string }[]
+): AccountList[] {
+  if (!accounts || !Array.isArray(accounts) || colors.length === 0)
+    return accounts;
 
-  let colorIndex = 0;
+  return accounts.map((account, index) => {
+    const colorIndex = index % colors.length;
+    const assignedColor = colors[colorIndex];
 
-  function getNextColor() {
-    const color = colorCodes[colorIndex % colorCodes.length];
-    colorIndex++;
-    return color;
-  }
-
-  function processAccount(
-    account: AccountList,
-    parentAccountName: string | null = null,
-    isTopLevel: boolean = false
-  ): void {
-    const colorProps = isTopLevel
-      ? getNextColor()
-      : { color: undefined, bgColor: undefined };
-
-    const convertedAccount: ConvertedAccount = {
-      accountId: account.rid,
-      accountName: account.account_name,
-      industry:
-        account?.industry?.industry_name || account?.industry_name_other || '-',
-      country: account.country?.country_name || '-',
-      parentAccount: parentAccountName,
-      totalProjects: account?.total_projects || '-',
-      totalProjectHours: account?.total_project_hours || '-',
-      totalProjectCost: account?.total_project_cost,
-      estimatedHours: account?.qualifying_project_hours_fed || '-',
-      qre: account?.qualifying_project_qre_fed,
-      estimatedCredits: account?.qualifying_project_rd_credits_fed,
-      actualCredits: account?.total_projects_rd_credits,
-      financeExecutive: account?.finance_executive || '-',
-      financeHead: account?.finance_lead || '-',
-      professionalConsultant: account?.professional_services_consultant || '-',
-      accountNumber: account.r_number,
-      projectsByYear: account.projects_by_fiscal_year || [],
-      currency: account?.currency?.currency_symbol || '',
-      ...colorProps,
+    return {
+      ...account,
+      bgColor: assignedColor.bgColor,
+      color: assignedColor.color,
     };
-
-    result.push(convertedAccount);
-
-    if (account.child_accounts && account.child_accounts.length > 0) {
-      account.child_accounts.forEach((child) => {
-        processAccount(child, account.account_name, false);
-      });
-    }
-  }
-
-  inputAccounts.forEach((account) => {
-    processAccount(account, null, true); // mark top-level
   });
-
-  return result;
 }

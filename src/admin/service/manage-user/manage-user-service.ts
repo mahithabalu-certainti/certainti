@@ -13,8 +13,13 @@ import {
   UserRolesApiResponse,
   UserPermissionApiResponse,
   OrgNameApiResponse,
+  UpdateUserResponse,
 } from '../../types/manage-user';
-import { getUserExportUrl, getUserListUrl } from '../urls';
+import {
+  getUserExportUrl,
+  getUserListUrl,
+  getUserProfileListURL,
+} from '../urls';
 import { generateFile } from '../helpers';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
@@ -136,9 +141,9 @@ export const getUpdateUserUrl = (): string => {
  */
 export const updateUserDetails = async (
   body: Partial<UserDetail>
-): Promise<CommonApiResponse> => {
+): Promise<UpdateUserResponse> => {
   try {
-    const { data } = await userServiceApi.put<CommonApiResponse>(
+    const { data } = await userServiceApi.put<UpdateUserResponse>(
       getUpdateUserUrl(),
       body
     );
@@ -154,7 +159,7 @@ export const updateUserDetails = async (
  * @returns UseMutationResult for updating user details
  */
 export const useUpdateUserDetails = () => {
-  return useMutation<CommonApiResponse, Error, Partial<UserDetail>>({
+  return useMutation<UpdateUserResponse, Error, Partial<UserDetail>>({
     mutationFn: (body) =>
       updateUserDetails({ ...body, organization: ORGANIZATION }),
   });
@@ -269,7 +274,7 @@ export const getExtendedPermissionUrl = (): string => {
 };
 
 export const updateExtendedPermission = async (
-  body: Partial<UserDetail>
+  body: Partial<UpdateExtendedPermission>
 ): Promise<CommonApiResponse> => {
   try {
     const { data } = await userServiceApi.put<CommonApiResponse>(
@@ -322,6 +327,27 @@ export const useFetchOrgNames = () => {
   return useQuery<OrgNameApiResponse, Error>({
     queryKey: ['org-name-lists'], // Unique query key
     queryFn: () => fetchOrgNames(),
+    retry: 0,
+  });
+};
+
+export const fetchUserProfileList =
+  async (): Promise<UserProfileApiResponse> => {
+    try {
+      const { data } = await userServiceApi.get<UserProfileApiResponse>(
+        getUserProfileListURL()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching user profile list:', error);
+      throw error;
+    }
+  };
+
+export const useGetUserProfileList = () => {
+  return useQuery<UserProfileApiResponse, Error>({
+    queryKey: ['user-profile-list'],
+    queryFn: () => fetchUserProfileList(),
     retry: 0,
   });
 };

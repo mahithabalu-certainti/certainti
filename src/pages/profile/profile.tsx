@@ -21,7 +21,7 @@ export const Profile: React.FC = () => {
   const { permission } = useSelector((state: RootState) => state.permission);
   const isViewProfileEnable = checkPermission(
     permission,
-    AllPermissions.PROFILE_VIEW
+    AllPermissions.PROFILE_VIEW_EDIT
   );
 
   const goBack = () => {

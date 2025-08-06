@@ -1,16 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */ import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 import {
   DetailsKeyContactErrorIcon,
   ProjectsBook,
 } from '../../../../../assets';
 import TabPanel from './tab';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
-import { AllPermissions, Permissions } from '../../../../../common-service';
+import {
+  AllMenus,
+  AllPermissions,
+  Permissions,
+} from '../../../../../common-service';
 import { Box } from '@mui/material';
 
 const BUTTON_STYLES = {
@@ -30,7 +31,7 @@ interface ProjectsDataProps {
   projectEditIsEnable?: boolean;
 }
 export interface DetailsTabs {
-  id: AllPermissions;
+  id: AllPermissions | AllMenus;
   name: string;
   hide: boolean;
   disable?: boolean;
@@ -38,12 +39,12 @@ export interface DetailsTabs {
 
 const detailsTabs: DetailsTabs[] = [
   {
-    id: AllPermissions.PROJECT_DETAILS_OVERVIEW,
+    id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
     hide: false,
   },
   {
-    id: AllPermissions.PROJECT_DETAILS_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,
@@ -55,12 +56,13 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
-  projectDownloadIsEnable,
+  // projectDownloadIsEnable,
   projectEditIsEnable,
   permission,
 }) => {
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(0);
   const [tabValue, setTabValue] = useState('');
 
@@ -80,19 +82,19 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       }))
     );
   }, [permission]);
-
   const handleEdit = () => {
-    navigate(`/project/edit/${projectDetails?.rid}`, {
-      state: {
-        accountID: projectDetails?.account_rid,
-        projectID: projectDetails?.rid,
-        breadcrumbs: [
-          { label: 'Project' },
-          { label: projectDetails?.project_code },
-        ],
-      },
+    const source =
+      searchParams.get('source') === 'account' ? 'account' : 'project';
+
+    const queryParams = new URLSearchParams({
+      accountID: projectDetails?.account_rid ?? '',
+      projectID: projectDetails?.rid ?? '',
+      source,
     });
+
+    navigate(`/project/edit/${projectDetails?.rid}?${queryParams.toString()}`);
   };
+
   const isKeyContactAvailable =
     projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
   const headerButtons = [
@@ -109,7 +111,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      hide: !projectDownloadIsEnable,
+      // hide: !projectDownloadIsEnable,
+      hide: true,
     },
   ];
 
@@ -128,7 +131,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
 
   return (
     <div className='w-full'>
-      {!isKeyContactAvailable && (
+      {!isKeyContactAvailable && !isDetailsLoading && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <DetailsKeyContactErrorIcon alt='key-contact' />
@@ -160,6 +163,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             isDetailsLoading={isDetailsLoading}
             detailsError={detailsError}
             isKeyContactAvailable={isKeyContactAvailable}
+            permission={permission}
           />
         )}
       </Box>

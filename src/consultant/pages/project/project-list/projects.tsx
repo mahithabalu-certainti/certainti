@@ -53,17 +53,28 @@ export const Projects: React.FC = () => {
     (state: RootState) => state.permission
   );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const isProjectViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.PROJECT_PROJECTS_EXPORT
+    AllPermissions.PROJECTS_EXPORT
   );
-  const isProjectEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECT_PROJECTS_EDIT
-  );
+  // const isProjectEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECT_PROJECTS_EDIT
+  // );
   const isProjectDeleteEnable = checkPermission(
     permission,
-    AllPermissions.PROJECT_PROJECTS_DELETE
+    AllPermissions.PROJECTS_DELETE
   );
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -114,10 +125,6 @@ export const Projects: React.FC = () => {
   };
   const menuItems = [
     {
-      label: 'Manage user',
-      onClick: () => console.log('manage user clicked'),
-    },
-    {
       label: 'Export',
       hide: !isProjectExportEnable,
       onClick: () => handleExport(),
@@ -155,24 +162,46 @@ export const Projects: React.FC = () => {
     [projectTypeOptions?.data?.data?.projectType]
   );
 
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const projectFilterFields = getAllProjectFilterFields(
     memoizedClassification.map((item) => ({
       label: item.option,
       value: item.value,
     })),
     memoizedProjectTypes,
-    memoizedStatus
+    memoizedStatus,
+    projectPermissionMap
   );
+
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (setToggleEnabled) {
       setToggleEnabled(event.target.checked);
     }
   };
 
-  if (!projectIsEnable) return <AccessRestricted />;
+  const dropdownOptions = {
+    classification: Classification?.data,
+    projectType: projectTypeOptions?.data,
+  };
+
+  if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col w-full h-full'>
+    <div className='flex flex-col w-full  h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
@@ -264,10 +293,11 @@ export const Projects: React.FC = () => {
             onRefreshClick();
           }}
           setTotalCount={setTotalCount}
-          isProjectEditEnable={isProjectEditEnable}
+          isProjectEditEnable={isProjectFieldsEditable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
           toggleEnabled={toggleEnabled}
+          dropdownOptions={dropdownOptions}
         />
       </div>
     </div>

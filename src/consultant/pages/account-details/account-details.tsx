@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
@@ -18,7 +17,9 @@ import {
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TimeSheetIcon,
+  ConfigIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -35,31 +36,53 @@ import {
   Projects,
   Resources,
   Timesheet,
+  Configuration,
 } from '../account-details-sidebar';
-import { transformAccountData } from './utils';
-import { CircularProgress } from '@mui/material';
+import {
+  accountDetailsProps,
+  DisplayColumn,
+  transformAccountData,
+} from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
 import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
-import { AllModules, AllPermissions } from '../../../common-service';
+import { AllMenus, AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
-import { MenuItem } from '../../types';
+import {
+  AccountDetailsResponse,
+  AccountFieldsApiResponse,
+  ExportType,
+  MenuItem,
+  ProjectFinancialProjectExportParams,
+  ProjectFinancialResourceExportParams,
+} from '../../types';
 import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
+import { exportAttachmentsData } from '../../services/attachments/attachments-service';
+import { AttachmentsListExportParams } from '../../types/attachment';
+import { exportImportsData } from '../../services/import';
+import { ImportsListURLParams } from '../../types/imports';
+import {
+  exportFinancialProjectCost,
+  exportFinancialResourceCost,
+} from '../../services/financial/financial-service';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [accountDetails, setAccountDetails] = useState<any>(null);
-  const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
+
+  const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [accountDetailsForEdit, setAccountDetailsForEdit] =
+    useState<AccountFieldsApiResponse['data']>();
   const { accountid } = useParams();
-  const { modules, permission } = useSelector(
+  const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
@@ -69,27 +92,56 @@ export const AccountDetails = () => {
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
   const isAccountDetailsEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_DETAILS_VIEW
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
-  const isAccountDetailsDownloadEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
+  const isFinancialHighlightsEnable = checkPermission(
+    menus,
+    AllMenus.FINANCIAL_HIGHLIGHTS
   );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+
+  // const isAccountDetailsDownloadEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
+  // );
   // const isAccountExportEnable = checkPermission(
   //   permission,
   //   AllPermissions.ACCOUNT_EXPORT
   // );
   const isResourcesExportEnable = checkPermission(
     permission,
-    AllPermissions.RESOURCES_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
   const isProjectExportEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+    AllPermissions.PROJECTS_EXPORT
+  );
+
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+
+  const isImportExportEnable = checkPermission(
+    permission,
+    AllPermissions.IMPORTS_EXPORT
+  );
+
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+
+  const isFinancialProjectCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
+  );
+
+  const isAccountFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -98,12 +150,15 @@ export const AccountDetails = () => {
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [toggleEnabled, setToggleEnabled] = useState(false);
+  const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
+    Date.now()
+  );
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
     sortOrder: 'DESC',
     fiscalYear: String(convertedFiscalYear),
-    rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    rNumber: accountDetailsForEdit?.accountById?.r_number || '',
     resourceRid: '',
     filter: {},
   });
@@ -112,17 +167,50 @@ export const AccountDetails = () => {
     sortOrder: 'DESC',
     filters: {},
     fiscalYear: String(convertedFiscalYear),
-    accountNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
   });
-  const [exportType, setExportType] = useState<
-    'resource' | 'cost' | 'skill' | 'project'
-  >('resource');
-  const handleExport = (
-    exportType: 'resource' | 'cost' | 'skill' | 'project'
-  ) => {
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+    });
+
+  const [importsParams, setImportsParams] = useState<ImportsListURLParams>({
+    page: 1,
+    limit: 100,
+    sort: 'r_number',
+    sort_by: 'asc',
+    filters: {},
+    fiscal_year: convertedFiscalYear,
+    account_rid: accountid || '',
+  });
+
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [financialProjectCostParams, setFinancialProjectCostParams] =
+    useState<ProjectFinancialProjectExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: 0,
+    });
+
+  const [exportType, setExportType] = useState<ExportType>('resource');
+
+  const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'resources' &&
-      searchParams.get('list') !== 'projects'
+      searchParams.get('list') !== 'projects' &&
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'imports' &&
+      searchParams.get('list') !== 'financial'
     ) {
       return;
     }
@@ -143,6 +231,25 @@ export const AccountDetails = () => {
       ...(exportType !== 'resource' && { resourceRid }),
       ...(exportType === 'cost' && { fiscalYear }),
     };
+    const attachmentPayload = {
+      accountRid: accountid || rNumber,
+      entityId:
+        exportType === 'attachments' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'attachments' ? 'account' : 'resource',
+      ...(exportType === 'resource_attachments' && {
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+      }),
+    };
+
+    const financialPayload = {
+      accountNumber: accountDetailsForEdit?.accountById?.r_number,
+      accountRid: accountid,
+    };
+
+    const financialProjectPayload = {
+      accountRid: accountid,
+    };
 
     if (exportType === 'project') {
       exportProjectData(exportType, {
@@ -150,9 +257,33 @@ export const AccountDetails = () => {
         timezone,
         bothParentAndChild: toggleEnabled,
       });
+    } else if (
+      exportType === 'attachments' ||
+      exportType === 'resource_attachments'
+    ) {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
+    } else if (exportType === 'imports') {
+      exportImportsData(importsParams);
+    } else if (exportType === 'financial_resource_cost') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
+      });
+    } else if (exportType === 'financial_project_cost') {
+      exportFinancialProjectCost({
+        ...financialProjectCostParams,
+        ...financialProjectPayload,
+      });
     } else {
       exportData(exportType, exportPayload);
     }
+  };
+
+  const onRefreshClick = () => {
+    setRefreshAccountDetails(Date.now());
   };
 
   useEffect(() => {
@@ -181,23 +312,42 @@ export const AccountDetails = () => {
 
   const { data, isPending, isError } = useAccountDetail(
     accountid as string,
-    isAccountDetailsEnable
+    isAccountDetailsEnable,
+    refreshAccountDetails
   );
+
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   useEffect(() => {
     if (data?.data) {
-      setAccountDetails(transformAccountData(data.data));
+      setAccountDetails(transformAccountData(data?.data, permissionMap));
       setAccountDetailsForEdit(data.data);
     }
-  }, [data]);
-
+  }, [data, permissionMap]);
   const accountInActive =
     data?.data?.accountById?.status?.status_name?.toLowerCase() !== 'active';
 
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
-    if (tab === 'details') {
+    if (
+      tab === 'details' ||
+      searchParams.get('attachment_entity') ||
+      searchParams.get('file_id') ||
+      searchParams.get('upload')
+    ) {
       return true;
     }
 
@@ -205,6 +355,14 @@ export const AccountDetails = () => {
       return !isResourcesExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
+    } else if (list === 'attachments') {
+      return !isAttachmentViewEnable;
+    } else if (list === 'imports') {
+      return !isImportExportEnable;
+    } else if (list === 'financial' && tab === 'resource_cost') {
+      return !isFinancialResourceCostExportEnable;
+    } else if (list === 'financial' && tab === 'project_cost') {
+      return !isFinancialProjectCostExportEnable;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -225,7 +383,7 @@ export const AccountDetails = () => {
   ];
 
   const handleEditAccount = () => {
-    navigate(ACCOUNT + '/edit/' + data.data.accountById.rid, {
+    navigate(ACCOUNT + '/edit/' + data?.data?.accountById?.rid, {
       state: { accountDetailsForEdit },
     });
   };
@@ -249,15 +407,23 @@ export const AccountDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <FinancialSummary />;
+        return (
+          <FinancialSummary
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            countryId={data?.data.accountById.country_rid}
+            stateId={data?.data.accountById.region_rid}
+          />
+        );
       case 'details':
         return (
           <Details
-            accountDetails={{ ...data?.data }}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
             isLoading={isPending}
             isError={isError}
-            isAccountEditEnable={isAccountEditEnable}
-            isAccountDetailsDownloadEnable={isAccountDetailsDownloadEnable}
+            isAccountEditEnable={isAccountFieldsEditable}
           />
         );
       case 'resources':
@@ -270,11 +436,21 @@ export const AccountDetails = () => {
           />
         );
       case 'attachments':
-        return <Attachments />;
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+            refetchAccountDetails={onRefreshClick}
+          />
+        );
       case 'projects':
         return (
           <Projects
-            accountDetails={{ ...data, activeKey: 'Projects' }}
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'Projects',
+            }}
             setExportType={setExportType}
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
@@ -292,7 +468,19 @@ export const AccountDetails = () => {
       case 'timesheet':
         return <Timesheet />;
       case 'imports':
-        return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
+        return (
+          <Import
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'imports',
+            }}
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setImportsParams={setImportsParams}
+          />
+        );
+      case 'configuration':
+        return <Configuration />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -304,12 +492,12 @@ export const AccountDetails = () => {
 
   const disable = data?.data?.accountById?.is_parent;
 
-  const sideMenuItems = useMemo<MenuItem[]>(
-    () => [
+  const sideMenuItems = useMemo<MenuItem[]>(() => {
+    const allMenus = [
       {
         name: 'Details',
         key: 'details',
-        id: AllModules.DETAILS,
+        id: AllModules.ACCOUNTS,
         disabled: false,
         icon: DetailsIcon,
       },
@@ -323,21 +511,21 @@ export const AccountDetails = () => {
       {
         name: 'Projects',
         key: 'projects',
-        id: AllModules.PROJECTS,
+        id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
       },
       {
         name: 'Financial Highlights',
         key: 'financial',
-        id: AllModules.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: disable,
         icon: FinancialIcon,
       },
       {
         name: 'Cases',
         key: 'cases',
-        id: AllModules.CASES,
+        id: AllMenus.CASES,
         disabled: disable,
         icon: CasesIcon,
       },
@@ -351,48 +539,72 @@ export const AccountDetails = () => {
       {
         name: 'Notes',
         key: 'notes',
-        id: AllModules.NOTES,
+        id: AllMenus.NOTES,
         disabled: disable,
         icon: NotesSideIcon,
       },
       {
         name: 'Attachments',
         key: 'attachments',
-        id: AllModules.ATTACHMENTS,
+        id: AllMenus.ATTACHMENTS,
         disabled: disable,
         icon: AttachmentsSideIcon,
       },
       {
         name: 'Checklist',
         key: 'checklist',
-        id: AllModules.CHECKLISTS,
+        id: AllMenus.CHECKLISTS,
         disabled: disable,
         icon: ChecklistIcon,
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
-        id: AllModules.TIMESHEETS,
+        id: AllMenus.TIMESHEETS,
         disabled: disable,
         icon: TimeSheetIcon,
       },
       {
         name: 'Imports',
         key: 'imports',
-        id: AllModules.IMPORTS,
+        id: AllMenus.IMPORTS,
         disabled: disable,
         icon: ImportsIcon,
       },
-    ],
-    [disable]
-  ); // Only recalculate when 'disable' changes
+      {
+        name: 'Configuration',
+        key: 'configuration',
+        id: AllMenus.CONFIGURATION,
+        disabled: disable,
+        icon: ConfigIcon,
+        subMenu: [
+          {
+            name: 'Users',
+            key: 'users',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: disable,
+            icon: ResourcesIcon,
+          },
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.ACCOUNT_SETTINGS,
+            disabled: disable,
+            icon: SettingIcon,
+          },
+        ],
+      },
+    ];
+    return isFinancialHighlightsEnable
+      ? allMenus
+      : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
+  }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
     window.history.back();
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
-
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
@@ -409,7 +621,7 @@ export const AccountDetails = () => {
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={
-            isAccountEditEnable
+            isAccountFieldsEditable
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -451,13 +663,7 @@ export const AccountDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
         >
-          {isPending ? (
-            <div className='flex items-center justify-center w-full h-full'>
-              <CircularProgress />
-            </div>
-          ) : (
-            <Suspense fallback={null}>{renderContent()}</Suspense>
-          )}
+          <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
     </div>

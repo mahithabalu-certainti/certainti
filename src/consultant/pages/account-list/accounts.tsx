@@ -83,18 +83,27 @@ export const Accounts: React.FC = () => {
     (state: RootState) => state.permission
   );
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const isAccountViewAllEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_VIEW_ALL
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
+
   const isAccountCreateEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_CREATE
+    AllPermissions.ACCOUNTS_CREATE
   );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
-  );
+
+  // const isAccountEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EDIT
+  // );
   // Delete functionality will be implemented later
   // const isAccountDeleteEnable = checkPermission(
   //   permission,
@@ -103,12 +112,25 @@ export const Accounts: React.FC = () => {
   const isAccountDeleteEnable = false;
   const isAccountExportEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_EXPORT
+    AllPermissions.ACCOUNTS_EXPORT
   );
-
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
+      hide: true,
       onClick: () => console.log('manage user clicked'),
     },
     {
@@ -159,12 +181,6 @@ export const Accounts: React.FC = () => {
     );
   }, [countriesList]);
 
-  // const allCurrencies = useMemo(() => {
-  //   return (
-  //     currencyList.data?.data.currency.map((item) => item.currency_code) || []
-  //   );
-  // }, [currencyList]);
-
   const allIndustries: SelectOption[] = useMemo(
     () =>
       industry.data?.data.industries.map((industry) => ({
@@ -174,9 +190,27 @@ export const Accounts: React.FC = () => {
     [industry.data?.data.industries]
   );
 
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const industryOptions = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
+      })) || [],
+    [industry.data?.data.industries]
+  );
   const accountFilterFields = getAccountFilterFields(
     allCountries,
-    allIndustries
+    allIndustries,
+    permissionMap
   );
 
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -277,9 +311,12 @@ export const Accounts: React.FC = () => {
           setOrderBy={setOrderBy}
           setPage={setPage}
           page={page}
-          isAccountEditEnable={isAccountEditEnable}
+          isAccountEditEnable={isAccountFieldsEditable}
           isAccountDeleteEnable={isAccountDeleteEnable}
           refreshAccountTrigger={refreshAccountTrigger}
+          countryOptions={countryOptions}
+          industryOptions={industryOptions}
+          onRefreshClick={onRefreshClick}
         />
       </div>
     </div>

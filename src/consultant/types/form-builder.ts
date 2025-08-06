@@ -51,6 +51,7 @@ export interface FormTypeFields {
   iconUrl?: string | React.ElementType;
   assignDefaultValue?: boolean;
   dependantLabel?: string;
+  isFiscalYear?: boolean;
 }
 
 export type InputType =
@@ -74,7 +75,13 @@ export interface SelectOption {
   value: string;
   desc?: string;
 }
-
+export interface SelectResourceOption {
+  label: string;
+  value: string;
+  desc?: string;
+  resource_type_rid?: string;
+  resource_type_name?: string;
+}
 export interface ErrorHandling {
   regex: RegExp;
   errorMessage: string;
@@ -124,6 +131,7 @@ export interface FieldType {
   width?: string;
   assignDefaultValue?: boolean;
   dependantLabel?: string;
+  isFiscalYear?: boolean;
 }
 
 export type AllowedCountry =

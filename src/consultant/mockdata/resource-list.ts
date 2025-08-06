@@ -15,6 +15,7 @@ export const mockResourcesList: ResourcesListResponse = {
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
         status_name: '',
+        resource_type_name: '',
       },
       {
         rid: '85dd287c-ff89-4d25-9742-c6fd5062f3c2',
@@ -24,6 +25,7 @@ export const mockResourcesList: ResourcesListResponse = {
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
         status_name: '',
+        resource_type_name: '',
       },
       {
         rid: '0aac0571-a734-4502-9b81-3b07a38615b9',
@@ -33,6 +35,7 @@ export const mockResourcesList: ResourcesListResponse = {
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
         status_name: '',
+        resource_type_name: '',
       },
       {
         rid: '34625fab-98ee-4782-b0da-e49a02e34398',
@@ -42,6 +45,7 @@ export const mockResourcesList: ResourcesListResponse = {
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
         status_name: '',
+        resource_type_name: '',
       },
     ],
   },

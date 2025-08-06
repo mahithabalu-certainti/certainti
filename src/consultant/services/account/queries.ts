@@ -5,6 +5,8 @@ import {
   ClassificationApiResponse,
   ColorCodeApiResponse,
   CurrencyApiResponse,
+  FinancialStateProps,
+  FinancialStatesApiResponse,
   IndustrysApiResponse,
   ParentAccountApiResponse,
   StatesApiResponse,
@@ -15,6 +17,7 @@ import {
   fetchClassification,
   fetchColorCodes,
   fetchCurrency,
+  fetchFinancialState,
   fetchIndustrys,
   fetchParentAccounts,
   fetchState,
@@ -81,6 +84,15 @@ export const useFetchState = (countryId: string | string[] | null) => {
     queryFn: () => fetchState(countryId),
     retry: 0,
     enabled: !!countryId && countryId.length > 0, // Only fetch if countryId exists
+  });
+};
+
+export const useFetchFinancialStates = (params: FinancialStateProps) => {
+  return useQuery<FinancialStatesApiResponse, Error>({
+    queryKey: ['financialStates', params],
+    queryFn: () => fetchFinancialState(params),
+    retry: 0,
+    enabled: !!params.accountId && !!params.countryId && !!params.fiscalYear,
   });
 };
 

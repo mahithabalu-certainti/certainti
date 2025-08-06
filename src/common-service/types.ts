@@ -1,30 +1,55 @@
 import dayjs from 'dayjs';
 import { User } from '../admin/types/admin-user-detail';
-import { Privilege } from '../admin/types';
 
 export interface CommonApiResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
 }
-export interface CommonProfileApiResponse {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data: createProfileData;
+export interface ProfileApiResponse extends CommonApiResponse {
+  data: ManageProfileResponse;
 }
-export interface createProfileData {
+export interface ManageProfileResponse {
   profile_id: string;
   profile_number: string;
   profile_name: string;
   source_profile_id: string;
-  privileges: Privilege[];
+  privileges: ProfileResponse[];
 }
+export type ProfileType = 'menu' | 'module' | 'permission' | 'field';
+export interface ProfileResponse {
+  rid: string;
+  type: ProfileType;
+  name: string;
+  desc: string;
+  is_enabled?: boolean;
+  menu_id?: string;
+  module_id?: string;
+  permission_id?: string;
+  field_id?: string;
+  is_field_available?: boolean;
+  read?: boolean;
+  edit?: boolean;
+  is_read_only?: boolean;
+  is_edit_only?: boolean;
+  depends_on_menu?: string[];
+  depends_on_module?: string[];
+  depends_on_permission?: string[];
+  depended_by_menu?: string[];
+  depended_by_module?: string[];
+  depended_by_permission?: string[];
+  updatedByDependsOn?: boolean;
+  is_modified?: boolean;
+  has_extended_permission?: boolean;
+  hasReadExtendedPermsission?: boolean;
+  hasEditExtendedPermsission?: boolean;
+}
+
 export interface UpdateExtendedPermission {
   profile_id?: string;
   user_id: string;
   profile_name?: string;
-  privileges: Privilege[];
+  privileges: ProfileResponse[];
 }
 export interface GetAllCountriesApiResponse extends CommonApiResponse {
   data: {
@@ -40,14 +65,16 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
     permissions: Permissions[];
     organisation_name: string;
     logo_url: string;
+    profile_id: string;
   };
 }
 
 export interface Permissions {
   rid: string;
-  type: PermissionsMenus;
+  type: string;
   name: string;
   desc: string;
+  is_read_only?: boolean | null;
   is_enabled?: boolean;
   menu_id?: string;
   module_id?: string;
@@ -57,6 +84,10 @@ export interface Permissions {
   read?: boolean;
   edit?: boolean;
   fields?: Permissions[];
+  depends_on?: {
+    id: string;
+    type: string;
+  }[];
 }
 
 export enum PermissionsMenus {
@@ -65,96 +96,124 @@ export enum PermissionsMenus {
   PERMISSION = 'permission',
   FIELD = 'field',
 }
-
-export enum AllModules {
+export enum AllMenus {
+  DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
-  USER_MANAGEMENT = 'user_management',
-  PROFILE_MANAGEMENT = 'profile_management',
-  FINANCIAL_HIGHLIGHTS = 'financial_highlights',
-  DETAILS = 'details',
   PROJECTS = 'projects',
-  INTRACTION = 'interaction',
+  TIMESHEETS = 'timeline',
   CASES = 'cases',
-  ACTIVITIES = 'activities',
+  SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
   CHECKLISTS = 'checklists',
-  TIMESHEETS = 'timesheets',
   IMPORTS = 'imports',
-  RESOURCES = 'resources',
-  PROJECT_FINANCIAL_HIGHLIGHTS = 'project_financial_highlights',
-  PROJECT_DETAILS = 'project_details',
+  MANAGE_USER = 'manage_user',
+  MANAGE_PROFILE = 'manage_profile',
+  MANAGE_USER_GROUP = 'manage_user_group',
+  MANAGE_USER_ACCESS = 'manage_user_access',
+  // MANAGE_ACCOUNT_ACCESS = 'manage-account-access',
+  MANAGE_SETTINGS = 'manage_settings',
+  MANAGE_GEO_BASED_RULE = 'manage_geo-based_rule',
+  IMPORT_TEMPLATE = 'import_template',
+  INTERACTION_TEMPLATE = 'interaction_template',
+  EMAIL_TEMPLATE = 'email_template',
+  SURVEY_TEMPLATE = 'survey_template',
+  TASK_TEMPLATE = 'task_template',
+  CHECKLIST_TEMPLATE = 'checklist_template',
+  CONFIGURATION = 'configuration',
+  ACCOUNT_SETTINGS = 'manage_account_settings',
+  PROJECT_SETTINGS = 'manage_project_settings',
+  MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
+  FINANCIAL_HIGHLIGHTS = 'financial_highlights',
+}
+
+export enum AllModules {
+  ACCOUNTS = 'accounts',
+  PROJECTS = 'projects',
   PROJECT_RESOURCES = 'project_resources',
+  FINANCIAL_HIGHLIGHTS = 'financial_highlights',
+  RESOURCES = 'resources',
   PROJECT_TASK = 'project_task',
   PROJECT_INTERACTIONS = 'project_interactions',
+  RESOURCE_COST = 'resource cost',
+  RESOURCE_SKILL = 'resource skill',
   PROJECT_TECHNICAL_SUMMARY = 'project_technical_summary',
-  PROJECT_CASES = 'project_cases',
-  PROJECT_ACTIVITIES = 'project_activities',
-  PROJECT_NOTES = 'project_notes',
-  PROJECT_ATTACHMENTS = 'project_attachments',
-  PROJECT_CHECKLISTS = 'project_checklists',
+  ACTIVITIES = 'activities',
+  TIMELINE = 'timeline',
+  USER_MANAGEMENT = 'user_management',
+  USER_GROUP = 'manage_user_group',
+  PROFILE_MANAGEMENT = 'profile_management',
+  ATTACHMENTS = 'attachments',
+  IMPORTS = 'imports',
+  MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
 }
 
 export enum AllPermissions {
-  ACCOUNT_CREATE = 'accounts_create',
-  ACCOUNT_EDIT = 'accounts_edit_update',
-  ACCOUNT_DELETE = 'accounts_delete',
-  ACCOUNT_VIEW_ALL = 'accounts_view_all',
-  ACCOUNT_DETAILS_VIEW = 'account_details_view',
-  ACCOUNT_DETAILS_DOWNLOAD = 'account_details_download',
-  ACCOUNT_DETAILS_OVERVIEW = 'account_details_overview',
-  ACCOUNT_DETAILS_TIMELINE = 'account_details_timeline',
-  ACCOUNT_DETAILS_ADD_ACTIVITY = 'account_details_add_activity',
-  ACCOUNT_EXPORT = 'accounts_export',
-  RESOURCES_DOWNLOAD = 'account_resources_download',
-  RESOURCES_OVERVIEW = 'account_resources_view_overview',
-  RESOURCE_VIEW_TIMELINE = 'account_resources_view_timeline',
-  RESOURCE_VIEW_ALL = 'account_resources_view_all',
-  RESOURCE_VIEW = 'account_resources_resource_view',
-  RESOURCE_CREATE = 'account_resources_create',
-  RESOURCE_DELETE = 'account_resources_delete',
-  RESOURCE_EDIT = 'account_resources_edit_update',
-  RESOURCE_COST_CREATE = 'account_resources_cost_create',
-  RESOURCE_COST_VIEW = 'account_resources_resource_cost_view',
-  RESOURCE_COST_EDIT = 'account_resources_resource_cost_edit_update',
-  RESOURCE_COST_DELETE = 'account_resources_resource_cost_delete',
-  RESOURCE_COST_DOWNLOAD = 'account_resources_cost_download',
-  RESOURCE_SKILL_CREATE = 'account_resources_skill_create',
-  RESOURCE_SKILL_VIEW = 'account_resources_resource_skill_view',
-  RESOURCE_SKILL_EDIT = 'account_resources_resource_skill_edit_update',
-  RESOURCE_SKILL_DELETE = 'account_resources_resource_skill_delete',
-  RESOURCE_SKILL_DOWNLOAD = 'account_resources_skill_download',
-  USER_EXPORT = 'user_export',
-  USER_VIEW_ALL = 'user_view_all',
-  USER_VIEW_PERMISSION = 'user_view_permission',
-  USER_VIEW = 'user_view',
+  PROJECTS_CREATE = 'projects_create',
+  ACCOUNTS_CREATE = 'accounts_create',
+  ACCOUNT_RESOURCES_CREATE = 'account_resources_create',
+  PROJECTS_RESOURCES_CREATE = 'projects_resources_create',
   USER_CREATE = 'user_create',
-  USER_EDIT_UPDATE = 'user_edit_update',
-  USER_SUSPEND = 'user_suspend',
-  USER_ACTIVATE = 'user_activate',
-  USER_RESET_PASSWORD = 'user_reset_password',
+  USER_GROUP_CREATE = 'user_group_create',
   USER_DELETE = 'user_delete',
-  USER_ASSIGN_PERMISSION = 'user_assign_permission',
-  PROFILE_VIEW = 'profile_view',
   PROFILE_CREATE = 'profile_create',
-  PROFILE_EXPORT = 'profile_export',
-  PROFILE_EDIT = 'profile_edit_update',
+  PROJECTS_TASK_CREATE = 'projects_task_create',
+  ACCOUNT_RESOURCES_COST_CREATE = 'account_resources_cost_create',
+  ACCOUNT_RESOURCES_SKILL_CREATE = 'account_resources_skill_create',
   PROFILE_DELETE = 'profile_delete',
-  PROFILE_VIEW_ALL = 'profile_view_all',
-  ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_view_overview',
-  ACCOUNT_PROJECTS_TIMELINE = 'account_projects_view_timeline',
-  ACCOUNT_PROJECTS_VIEW_ALL = 'account_projects_view_all',
-  ACCOUNT_PROJECTS_EXPORT = 'account_project_export',
-  ACCOUNT_PROJECTS_CREATE = 'account_projects_create',
-  ACCOUNT_PROJECTS_DOWNLOAD = 'account_projects_download',
-  ACCOUNT_PROJECTS_EDIT = 'account_projects_edit_update',
-  ACCOUNT_PROJECTS_DELETE = 'account_projects_delete',
-  PROJECT_PROJECTS_DOWNLOAD = 'projects_projects_download',
-  PROJECT_PROJECTS_EXPORT = 'projects_projects_export',
-  PROJECT_PROJECTS_EDIT = 'projects_projects_edit',
-  PROJECT_PROJECTS_DELETE = 'projects_projects_delete',
-  PROJECT_DETAILS_OVERVIEW = 'project_details_overview',
-  PROJECT_DETAILS_TIMELINE = 'project_details_timeline',
+  PROJECTS_DELETE = 'projects_delete',
+  PROJECTS_RESOURCES_DELETE = 'projects_resources_delete',
+  PROJECTS_TASK_DELETE = 'projects_task_delete',
+  ACCOUNTS_DELETE = 'accounts_delete',
+  ACCOUNT_RESOURCES_DELETE = 'account_resources_delete',
+  ACCOUNT_RESOURCE_COST_DELETE = 'account_resource_cost_delete',
+  ACCOUNT_RESOURCE_SKILL_DELETE = 'account_resource_skill_delete',
+  PROJECTS_TASK_EXPORT = 'projects_task_export',
+  ACCOUNT_RESOURCES_EXPORT = 'account_resources_export',
+  ACCOUNT_RESOURCES_COST_EXPORT = 'account_resources_cost_export',
+  PROFILE_EXPORT = 'profile_export',
+  ACCOUNT_RESOURCES_SKILL_EXPORT = 'account_resources_skill_export',
+  PROJECTS_RESOURCES_EXPORT = 'projects_resources_export',
+  USER_EXPORT = 'user_export',
+  USER_GROUP_EXPORT = 'user_group_export',
+  PROJECTS_EXPORT = 'projects_export',
+  ACCOUNTS_EXPORT = 'accounts_export',
+  PROJECTS_VIEW_EDIT = 'projects_view_edit',
+  USER_VIEW_EDIT = 'user_view_edit',
+  USER_GROUP_VIEW_EDIT = 'user_group_view_edit',
+  PROFILE_VIEW_EDIT = 'profile_view_edit',
+  ACCOUNT_RESOURCES_VIEW_EDIT = 'account_resources_view_edit',
+  ACCOUNT_RESOURCE_COST_EDIT_VIEW = 'account_resource_cost_edit_view',
+  PROJECTS_RESOURCES_VIEW_EDIT = 'projects_resources_view_edit',
+  ACCOUNTS_VIEW_EDIT = 'accounts_view_edit',
+  PROJECTS_TASK_VIEW_EDIT = 'projects_task_view_edit',
+  ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
+  ACCOUNT_PROJECTS_TIMELINE = 'account_projects_timeline',
+  ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_overview',
+  ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
+  ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
+  ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
+  ACCOUNT_IMPORTS_OVERVIEW = 'account_imports_overview',
+  ACCOUNT_IMPORTS_TIMELINE = 'account_imports_timeline',
+  ATTACHMENT_CREATE = 'attachments_create',
+  ACCOUNT_SETTINGS_VIEW_EDIT = 'account_settings_view_edit',
+  PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
+  IMPORTS_VIEW_EDIT = 'imports_view_edit',
+  IMPORTS_EXPORT = 'imports_export',
+  MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
+  PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
+  PROJECT_FINANCIAL_TIMELINE = 'project_financial_timeline',
+  ACCOUNT_FINANCIAL_OVERVIEW = 'account_financial_overview',
+  ACCOUNT_FINANCIAL_TIMELINE = 'account_financial_timeline',
+  PROJECT_FINANCIAL_SUMMARY_VIEW = 'project_summary_view',
+  PROJECT_FINANCIAL_RESOURCE_COST_VIEW = 'project_resource_cost_view',
+  PROJECT_FINANCIAL_RESOURCE_COST_EXPORT = 'project_resource_cost_export',
+  ACCOUNT_FINANCIAL_SUMMARY_VIEW = 'account_summary_view',
+  ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW = 'account_statewise_summary_view',
+  ACCOUNT_FINANCIAL_PROJECT_COST_VIEW = 'account_project_cost_view',
+  ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
+  ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
+  ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
 }
 
 export interface Country {
@@ -183,7 +242,7 @@ export enum MenuOption {
   ACCOUNTS = 'accounts',
   DASHBOARD = 'dashboard',
   PROJECTS = 'projects',
-  TIMESHEET = 'timesheet',
+  TIMESHEET = 'timeline',
   CASES = 'cases',
   SURVEY = 'survey',
   NOTES = 'notes',
@@ -194,6 +253,7 @@ export enum MenuOption {
   MANAGE_PROFILE = 'manage_profile',
   MANAGE_USER_GROUP = 'manage_user_group',
   MANAGE_USER_ACCESS = 'manage_user_access',
+  MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   MANAGE_SETTINGS = 'manage_settings',
   MANAGE_GEO_BASED_RULE = 'manage_geo-based_rule',
   IMPORT_TEMPLATE = 'import_template',
@@ -255,4 +315,38 @@ export interface GetStatusApiResponse extends CommonApiResponse {
   data: {
     status: StatusItem[];
   };
+}
+
+export interface DocumentType {
+  rid: string;
+  type_name: string;
+  type_description: string | null;
+  category_rid: string;
+}
+
+export interface DocumentCategory {
+  rid: string;
+  category_name: string;
+  category_description: string | null;
+}
+
+export interface DocumentTypeResponseData {
+  documentTypes: DocumentType[];
+  documentCategories: DocumentCategory[];
+}
+
+export interface DocumentTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: DocumentTypeResponseData;
+}
+
+export interface EntityTypes {
+  rid: string;
+  entity_name: string;
+}
+
+export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
+  data: EntityTypes[];
 }

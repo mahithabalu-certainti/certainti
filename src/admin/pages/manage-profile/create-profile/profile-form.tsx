@@ -276,6 +276,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                         </MenuItem>
                       ))}
                     </Select>
+                    {errors.existingProfile && (
+                      <span className='text-red-500 text-[11px]'>
+                        {errors.existingProfile}
+                      </span>
+                    )}
                   </div>
                   {/* <div className='relative w-full'>
                     <select

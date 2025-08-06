@@ -1,0 +1,92 @@
+import { FinancialSummaryApiResponse } from '../types';
+
+export const mockFinancialHighlightsSummary: FinancialSummaryApiResponse = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: 'Operation completed successfully!',
+  data: {
+    account_rid: 'D001-61c08383-92ec-4b84-97b5-337993d8144f',
+    fiscal_year: 2024,
+    rd_eligible_projects: null,
+    permission: '',
+    resource_metrics: [
+      {
+        rid: '72247abf-5f14-4f9a-aee5-b1ae8972724f',
+        metric: 'No Of Resources',
+        fte: 1956,
+        subcon: 10864,
+        nonlabor: 230,
+      },
+    ],
+    detailed_metrics: [
+      {
+        rid: 'eedfa7ed-323d-4c97-a636-555e500f245b',
+        metric_name: 'FTE Hours',
+        project_level: 5000,
+        project_resource_level: 309,
+        project_task_level: 0,
+        permission: '',
+      },
+      {
+        rid: 'd5118e22-f691-49b5-95e4-14edba08c38d',
+        metric_name: 'FTE Cost',
+        project_level: 1964420.24,
+        project_resource_level: 384,
+        project_task_level: 0,
+        permission: '',
+      },
+      {
+        rid: '4a6743a5-982f-4dc1-a528-2e4e12cde17a',
+        metric_name: 'Sub Con Hours',
+        project_level: 3960,
+        project_resource_level: 360,
+        project_task_level: 0,
+        permission: '',
+      },
+      {
+        rid: 'ff6f868a-7be0-473f-ab74-affad9815472',
+        metric_name: 'Sub Con Cost',
+        project_level: 175279.96,
+        project_resource_level: 300,
+        project_task_level: 0,
+        permission: '',
+      },
+      {
+        rid: '27b3baf5-e1b0-4af3-bf7f-ec39af4c373a',
+        metric_name: 'Non Labor Cost',
+        project_level: 0,
+        project_resource_level: 2500,
+        permission: '',
+      },
+    ],
+    claim_jurisdiction: [
+      {
+        rid: '9d1a4d84-5b57-4a77-89e5-72a55e9ece7b',
+        name: 'Federal',
+        rd_credits_fte: 0,
+        rd_credits_subcon: 0,
+        rd_credits_nonlabor: 0,
+        rd_credits_total: 0,
+        permission: '',
+      },
+      {
+        rid: '81b5517e-a4e2-46ab-8d62-193cc033c12f',
+        name: 'Statewise',
+        rd_credits_fte: 0,
+        rd_credits_subcon: 0,
+        rd_credits_nonlabor: 65.98,
+        rd_credits_total: 0,
+        permission: '',
+      },
+      {
+        rid: '5dd2dcb6-99f0-41b8-b5ce-5828b49816a3',
+        name: 'Grand Total',
+        rd_credits_fte: 0,
+        rd_credits_subcon: 0,
+        rd_credits_nonlabor: 65.98,
+        rd_credits_total: 0,
+        permission: '',
+      },
+    ],
+  },
+};

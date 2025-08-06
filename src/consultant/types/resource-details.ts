@@ -1,3 +1,5 @@
+import { AttachmentList } from './attachment';
+
 export interface ResourceDetailsTypes {
   account_id: string;
   account_number: string;
@@ -40,6 +42,7 @@ export interface ResourceDetailsTypes {
   country_rid: string;
   region_rid: string;
   city_rid: string;
+  attachment: AttachmentList[];
 }
 
 export interface ResourceDetailsForPayload {

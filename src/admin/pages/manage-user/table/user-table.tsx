@@ -1,22 +1,39 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { useManageUserList } from '../../../service/manage-user/manage-user-service';
-import { ManageUser, User, UserListParams } from '../../../types/manage-user';
+import {
+  FilterCondition,
+  ManageUser,
+  User,
+  UserListParams,
+} from '../../../types/manage-user';
 import { getUserColumns } from './columns';
-import { ActionItem } from '../../../../components/table/types';
+import {
+  ActionItem,
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
+import { UPDATE_USER } from '../../../../api/graphql/queries/user-query';
+import { useMutation } from '@apollo/client';
+import { userClient } from '../../../../api/graphql/clients/client';
+import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 interface IUserTableProps {
-  appliedFilters: Record<string, any>;
+  appliedFilters: Record<string, FilterCondition>;
   tableParams: UserListParams;
   isUserEditEnable?: boolean;
   isUserViewEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
   refreshUserTrigger?: number;
+  profileOptions: { label: string; value: string }[];
+  roleOptions: { label: string; value: string }[];
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
@@ -27,9 +44,29 @@ export const UserTable: React.FC<IUserTableProps> = ({
   setTableParams,
   onSelectionChange,
   refreshUserTrigger,
+  profileOptions,
+  roleOptions,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
+  const { errorToast } = useToast();
+  const [updateUserMutation] = useMutation(UPDATE_USER, { client: userClient });
+
+  //permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -45,6 +82,16 @@ export const UserTable: React.FC<IUserTableProps> = ({
     refreshUserTrigger
   );
   const totalItems = data?.data?.count || 0;
+  const statusOptions = useGetStatus();
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
 
   const convertUserListData = (data: User[]): ManageUser[] => {
     if (!data) return [];
@@ -54,15 +101,35 @@ export const UserTable: React.FC<IUserTableProps> = ({
         id: item.rid,
         username: item.first_name,
         fullName: item.full_name,
+        azure_id: item.azure_id,
         email: item.email,
         profile: item.profile.profile_name,
+        profile_rid: item.profile.rid,
         status: item.status?.status_name,
+        status_rid: item.status_rid,
         role: item.business_teams.business_teams,
+        role_rid: item.business_teams.rid,
         created_datetime: item.created_datetime,
         modified_datetime: item.modified_datetime,
       };
     });
   };
+
+  const convertSingleUserData = (item: User): ManageUser => ({
+    id: item.rid,
+    username: item.first_name,
+    fullName: item.full_name,
+    azure_id: item.azure_id,
+    email: item.email,
+    profile: item.profile.profile_name,
+    profile_rid: item.profile.rid,
+    status: item.status?.status_name,
+    status_rid: item.status_rid,
+    role: item.business_teams.business_teams,
+    role_rid: item.business_teams.rid,
+    created_datetime: item.created_datetime,
+    modified_datetime: item.modified_datetime,
+  });
 
   useEffect(() => {
     if (data?.data) {
@@ -108,7 +175,13 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
   };
 
-  const userColumns = getUserColumns(handleView);
+  const userColumns = getUserColumns(
+    handleView,
+    profileOptions,
+    roleOptions,
+    memoizedStatus,
+    permissionMap
+  );
 
   const actionButtons: ActionItem<ManageUser>[] = [
     {
@@ -128,6 +201,48 @@ export const UserTable: React.FC<IUserTableProps> = ({
       },
     },
   ];
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousUsers = [...users];
+    // Find the matching user
+    const matchedUser = users.find((user) => user.id === rowId);
+    if (!matchedUser) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (usr, item) => {
+        const key = item.editId || item.columnId;
+        usr[key] = item.value;
+        return usr;
+      },
+      {
+        rid: rowId,
+        azure_id: matchedUser.azure_id,
+      }
+    );
+
+    try {
+      const res = await updateUserMutation({
+        variables: { input: updateData },
+      });
+      const result = res.data?.updateUser;
+      if (result?.success === true && result.user) {
+        const updatedUser = convertSingleUserData(result.user);
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === updatedUser.id ? updatedUser : user
+          )
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update field');
+        setUsers(previousUsers);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setUsers(previousUsers);
+    }
+  };
 
   return (
     <ListTable
@@ -163,6 +278,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
+      onCellEdit={handleCellEdit}
     />
   );
 };

@@ -18,7 +18,7 @@ import {
   MENU_PROPS,
   OPERATOR_STYLE,
   SELECT_STYLES,
-} from '../../../../../components/filter-component/helpers';
+} from '../../../../../components';
 
 function formatString(str: string | undefined): string {
   if (!str) return '';
@@ -651,6 +651,7 @@ export const CurrencySelectFilterControl: React.FC<{
           >
             {valueOptions.map((item) => (
               <MenuItem
+                title={item.option}
                 key={item.option}
                 value={item.value}
                 dense
@@ -782,6 +783,7 @@ export const EnumFilterControl: React.FC<{
         >
           {valueOptions.map((item) => (
             <MenuItem
+              title={item.option}
               key={item.option}
               value={item.value}
               dense
