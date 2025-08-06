@@ -601,13 +601,12 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${
-    errorData?.statusMessage
+  return `<p>${errorData?.statusMessage
       ? typeof errorData.statusMessage === 'object'
         ? Object.values(errorData.statusMessage).join(', ')
         : errorData.statusMessage || ''
       : errorData?.message || data.message
-  }</p>`;
+    }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
@@ -788,10 +787,10 @@ export const getFiscalDateBounds = (
   const endMonth = Number(endMonthStr);
   const endDay = Number(endDayStr);
 
-  const endDateYear =
-    endMonth < startMonth || (endMonth === startMonth && endDay < startDay)
-      ? fiscalYear + 1
-      : fiscalYear;
+  const isYearSpanning =
+    endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
+
+  const endDateYear = isYearSpanning ? fiscalYear + 1 : fiscalYear;
 
   const startDateMin = getFiscalParseDateFromMMDD(
     accountFiscalDates.startDate,
@@ -803,21 +802,25 @@ export const getFiscalDateBounds = (
   );
 
   let endDateMax: Date;
-  if (
-    fiscalYear === currentYear ||
-    (fiscalYear < currentYear && endDateYear > currentYear) ||
-    (accountEndDate && today < accountEndDate)
-  ) {
+  if (!startDateMin || !accountEndDate) {
     endDateMax = today;
   } else {
-    endDateMax = accountEndDate || today;
+    if (fiscalYear === currentYear) {
+      endDateMax = today > accountEndDate ? accountEndDate : accountEndDate;
+    }
+    else if (fiscalYear < currentYear) {
+      endDateMax = accountEndDate;
+    }
+    else {
+      endDateMax = accountEndDate;
+    }
   }
 
   const startDateMax = new Date(endDateMax);
   startDateMax.setDate(endDateMax.getDate() - 1);
 
   return {
-    year: Number(year),
+    year: fiscalYear,
     startMin: startDateMin,
     startMax: startDateMax,
     endMax: endDateMax,
