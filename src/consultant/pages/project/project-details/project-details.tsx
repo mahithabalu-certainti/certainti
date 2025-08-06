@@ -55,6 +55,7 @@ import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
+import { Interactions } from './interactions';
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
@@ -370,7 +371,7 @@ export const ProjectDetails = () => {
         );
 
       case 'interactions':
-        return <NotFound />;
+        return <Interactions accountInActive={accountInActive} />;
       case 'technicalSummary':
         return <NotFound />;
       case 'cases':

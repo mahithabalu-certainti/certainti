@@ -46,6 +46,8 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  INTERACTIONS_CREATE,
+  INTERACTIONS_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -116,6 +118,10 @@ const ManageAccountAccess = lazy(
   () => import('./admin/pages/manage-account-acccess/account-list/account-list')
 );
 
+const InteractionForm = lazy(
+  () => import('./components/interaction/interaction-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -176,6 +182,11 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   path={PROJECT_RESOURCE_EDIT}
                   element={<ProjectResourceForm />}
                 />
+                <Route
+                  path={INTERACTIONS_CREATE}
+                  element={<InteractionForm />}
+                />
+                <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />
                 <Route path={ATTACHMENTS} element={<Attachments />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
