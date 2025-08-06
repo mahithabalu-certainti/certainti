@@ -49,52 +49,10 @@ export class ProjectTaskService {
       const sequelize = await initOrgSequelize();
       const mainSequelize = await initMainDbSequelize();
 
-      const accountData = await this.schemaService.fetchAccountById(accountRid);
-      if (!accountData) throw new Error("Invalid account ID");
-
-      let schemaNumber = accountData.r_number;
-      if (accountData.storage_type === "store_in_parent") {
-        schemaNumber = await this.schemaService.fetchParentAccount(
-          accountData.parent_account_rid
-        );
-      }
-
-      const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
-        /\D/g,
-        ""
-      )}`;
+      const schemaName = await this.getSchemaInfo(accountRid);
 
       // ✅ Initialize all models first
-      const AccountDetailsModel = AccountDetails.initialize(
-        sequelize,
-        schemaName
-      );
-      const ProjectModel = Project.initialize(sequelize, schemaName);
-      const ProjectFiscalModel = ProjectFiscal.initialize(
-        sequelize,
-        schemaName
-      );
-      const ResourceModel = Resources.initialize(sequelize, schemaName);
-      const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
-
-      // ✅ Define associations after initialization
-      ProjectTaskModel.belongsTo(AccountDetailsModel, {
-        foreignKey: "account_rid",
-        targetKey: "account_rid",
-        as: "account",
-      });
-
-      ProjectTaskModel.belongsTo(ProjectFiscalModel, {
-        foreignKey: "project_fiscal_rid",
-        targetKey: "rid",
-        as: "project",
-      });
-
-      ProjectTaskModel.belongsTo(ResourceModel, {
-        foreignKey: "resource_rid",
-        targetKey: "rid",
-        as: "resource",
-      });
+      const { models } = await this.initializeModelsAndAssociations(schemaName);
 
       let resourceFilter: Record<string, any> | undefined;
       if (filters.resource_name) {
@@ -108,23 +66,23 @@ export class ProjectTaskService {
       whereClause[Op.and].push({ project_fiscal_rid: projectRid });
 
       // ✅ Get all tasks without pagination first to properly handle sorting of related data
-      const allTasks = await ProjectTaskModel.findAll({
+      const allTasks = await models.ProjectTaskModel.findAll({
         where: whereClause,
         include: [
           {
-            model: AccountDetailsModel,
+            model: models.AccountDetailsModel,
             attributes: ["account_name"],
             required: false,
             as: "account",
           },
           {
-            model: ProjectFiscalModel,
+            model: models.ProjectFiscalModel,
             attributes: ["project_name", "project_code", "currency_rid"],
             required: false,
             as: "project",
           },
           {
-            model: ResourceModel,
+            model: models.ResourceModel,
             attributes: [
               "resource_code",
               "resource_name",
@@ -139,74 +97,15 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const resourceTypeRids = allTasks
-        .map((task) => (task as any)?.resource.resource_type_rid)
-        .filter((rid) => rid);
-
-      const resourceTypes = resourceTypeRids.length
-        ? await mainSequelize.query(
-            rawQueries.GET_RESOURCE_TYPES,
-            { replacements: { resourceTypeRid:resourceTypeRids }, type: "SELECT" }
-          )
-        : [];
-      const resourceTypeMap = new Map(
-        resourceTypes.map((type: any) => [type.rid, type.resource_type_name])
-      );
-
-      const currencyRids = allTasks
-        .map((task) => (task as any)?.project?.currency_rid)
-        .filter((rid) => rid);
-
-      const [currencies] = await Promise.all([
-        currencyRids.length
-          ? mainSequelize.query(
-              rawQueries.GET_CURRENCIES,
-              { replacements: { currencyRid:currencyRids }, type: "SELECT" }
-            )
-          : [],
-      ]);
-
-      const currencyMap = new Map(
-        currencies.map((currency: any) => [
-          currency.rid,
-          currency.currency_symbol,
-        ])
+      const { resourceTypeMap, currencyMap } = await this.fetchRelatedData(
+        allTasks,
+        mainSequelize
       );
 
       // ✅ Format all tasks
-      let formattedTasks = allTasks.map((task) => ({
-        rid: task.rid,
-        r_number: task.r_number,
-        account_rid: task.account_rid,
-        account_name: (task as any).account?.account_name || null,
-        project_rid: task.project_rid,
-        project_fiscal_rid: task.project_fiscal_rid,
-        project_name: (task as any).project?.project_name || null,
-        project_code: (task as any).project?.project_code || null,
-        project_resource_code: task.project_resource_code,
-        resource_rid: task.resource_rid,
-        resource_code: (task as any).resource?.resource_code || null,
-        fiscal_year: task.fiscal_year,
-        start_date: task.start_date,
-        end_date: task.end_date,
-        resource_name: (task as any).resource?.resource_name || null,
-        resource_type_rid: (task as any).resource?.resource_type_rid || null,
-        resource_type_name:
-          resourceTypeMap.get((task as any).resource?.resource_type_rid) ||
-          null, // FIXED
-        resource_role: (task as any).resource?.resource_role || null,
-        currency_rid: (task as any).project?.currency_rid,
-        currency_symbol:
-          currencyMap.get((task as any).project?.currency_rid) || null,
-        resource_orgname: (task as any).resource?.resource_orgname || null,
-        total_hours_pro_task: task.total_hours_pro_task,
-        total_cost_pro_task: task.total_cost_pro_task,
-        comments: task.comments,
-        created_by: task.created_by,
-        modified_by: task.modified_by,
-        created_datetime: task.created_datetime,
-        modified_datetime: task.modified_datetime,
-      }));
+      let formattedTasks = allTasks.map((task) =>
+        this.formatTaskData(task, resourceTypeMap, currencyMap)
+      );
 
       if (resourceFilter) {
         formattedTasks = formattedTasks.filter((task) => {
@@ -219,109 +118,7 @@ export class ProjectTaskService {
       }
 
       // ✅ Handle special sorting cases
-      const validSortFields = [
-        "resource_code",
-        "r_number",
-        "resource_name",
-        "resource_type",
-        "resource_role",
-        "start_date",
-        "total_cost_pro_task",
-        "total_hours_pro_task",
-        "comments",
-        "created_datetime",
-        "modified_datetime",
-      ];
-      const finalSortBy = validSortFields.includes(sortBy)
-        ? sortBy
-        : "created_datetime";
-      const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
-        ? sortOrder.toUpperCase()
-        : "DESC";
-
-      // Sort based on the mapped names for special fields
-      if (finalSortBy === "resource_type") {
-        const priorityMap: Record<string, number> = {
-          "Full-Time": 1,
-          "Non-Labor": 2,
-          "Sub Con": 3,
-        };
-
-        formattedTasks.sort((a, b) => {
-          return finalSortOrder === "ASC"
-            ? priorityMap[a.resource_type_name] -
-                priorityMap[b.resource_type_name]
-            : priorityMap[b.resource_type_name] -
-                priorityMap[a.resource_type_name];
-        });
-      } else if (
-        finalSortBy === "total_hours_pro_task" ||
-        finalSortBy === "total_cost_pro_task"
-      ) {
-        formattedTasks.sort((a, b) => {
-          const aVal = a[finalSortBy];
-          const bVal = b[finalSortBy];
-
-          const aIsEmpty = aVal === null || aVal === undefined;
-          const bIsEmpty = bVal === null || bVal === undefined;
-
-          if (aIsEmpty && !bIsEmpty) return finalSortOrder === "ASC" ? 1 : -1;
-          if (!aIsEmpty && bIsEmpty) return finalSortOrder === "ASC" ? -1 : 1;
-          if (aIsEmpty && bIsEmpty) return 0;
-
-          const aNum = Number(aVal);
-          const bNum = Number(bVal);
-
-          return finalSortOrder === "ASC" ? aNum - bNum : bNum - aNum;
-        });
-      } else if (finalSortBy === "resource_code") {
-        formattedTasks.sort((a, b) => {
-          const aName = a.resource_code;
-          const bName = b.resource_code;
-
-          if (finalSortOrder === "ASC") {
-            if (!aName && bName) return 1;
-            if (aName && !bName) return -1;
-            return aName?.localeCompare(bName ?? "") ?? 0;
-          } else {
-            if (!aName && bName) return -1;
-            if (aName && !bName) return 1;
-            return bName?.localeCompare(aName ?? "") ?? 0;
-          }
-        });
-      } else if (finalSortBy === "resource_name") {
-        formattedTasks.sort((a, b) => {
-          const aName = a.resource_name;
-          const bName = b.resource_name;
-
-          if (finalSortOrder === "ASC") {
-            if (!aName && bName) return 1;
-            if (aName && !bName) return -1;
-            return aName?.localeCompare(bName ?? "") ?? 0;
-          } else {
-            if (!aName && bName) return -1;
-            if (aName && !bName) return 1;
-            return bName?.localeCompare(aName ?? "") ?? 0;
-          }
-        });
-      } else {
-        formattedTasks.sort((a, b) => {
-          const aVal = a[finalSortBy as keyof typeof a];
-          const bVal = b[finalSortBy as keyof typeof b];
-
-          if (finalSortOrder === "ASC") {
-            if ((aVal === null || aVal === undefined) && bVal != null) return 1;
-            if (aVal != null && (bVal === null || bVal === undefined))
-              return -1;
-            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-          } else {
-            if ((aVal === null || aVal === undefined) && bVal != null)
-              return -1;
-            if (aVal != null && (bVal === null || bVal === undefined)) return 1;
-            return bVal < aVal ? -1 : bVal > aVal ? 1 : 0;
-          }
-        });
-      }
+      formattedTasks = this.sortTasks(formattedTasks, sortBy, sortOrder);
 
       // ✅ Apply pagination after sorting
       const total = formattedTasks.length;
@@ -365,52 +162,10 @@ export class ProjectTaskService {
       const sequelize = await initOrgSequelize();
       const mainSequelize = await initMainDbSequelize();
 
-      const accountData = await this.schemaService.fetchAccountById(accountRid);
-      if (!accountData) throw new Error("Invalid account ID");
-
-      let schemaNumber = accountData.r_number;
-      if (accountData.storage_type === "store_in_parent") {
-        schemaNumber = await this.schemaService.fetchParentAccount(
-          accountData.parent_account_rid
-        );
-      }
-
-      const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
-        /\D/g,
-        ""
-      )}`;
+      const schemaName = await this.getSchemaInfo(accountRid);
 
       // ✅ Initialize all models first
-      const AccountDetailsModel = AccountDetails.initialize(
-        sequelize,
-        schemaName
-      );
-      const ProjectModel = Project.initialize(sequelize, schemaName);
-      const ProjectFiscalModel = ProjectFiscal.initialize(
-        sequelize,
-        schemaName
-      );
-      const ResourceModel = Resources.initialize(sequelize, schemaName);
-      const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
-
-      // ✅ Define associations after initialization
-      ProjectTaskModel.belongsTo(AccountDetailsModel, {
-        foreignKey: "account_rid",
-        targetKey: "account_rid",
-        as: "account",
-      });
-
-      ProjectTaskModel.belongsTo(ProjectFiscalModel, {
-        foreignKey: "project_fiscal_rid",
-        targetKey: "rid",
-        as: "project",
-      });
-
-      ProjectTaskModel.belongsTo(ResourceModel, {
-        foreignKey: "resource_rid",
-        targetKey: "rid",
-        as: "resource",
-      });
+      const { models } = await this.initializeModelsAndAssociations(schemaName);
 
       let resourceFilter: Record<string, any> | undefined;
       if (filters.resource_name) {
@@ -424,23 +179,23 @@ export class ProjectTaskService {
       whereClause[Op.and].push({ project_fiscal_rid: projectRid });
 
       // ✅ Get all tasks without pagination first to properly handle sorting of related data
-      const allTasks = await ProjectTaskModel.findAll({
+      const allTasks = await models.ProjectTaskModel.findAll({
         where: whereClause,
         include: [
           {
-            model: AccountDetailsModel,
+            model: models.AccountDetailsModel,
             attributes: ["account_name"],
             required: false,
             as: "account",
           },
           {
-            model: ProjectFiscalModel,
+            model: models.ProjectFiscalModel,
             attributes: ["project_name", "project_code", "currency_rid"],
             required: false,
             as: "project",
           },
           {
-            model: ResourceModel,
+            model: models.ResourceModel,
             attributes: [
               "resource_code",
               "resource_name",
@@ -455,73 +210,15 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const resourceTypeRids = allTasks
-        .map((task) => (task as any)?.resource.resource_type_rid)
-        .filter((rid) => rid);
-      const resourceTypes = resourceTypeRids.length
-        ? await mainSequelize.query(
-            rawQueries.GET_RESOURCE_TYPES,
-            { replacements: { resourceTypeRid:resourceTypeRids }, type: "SELECT" }
-          )
-        : [];
-      const resourceTypeMap = new Map(
-        resourceTypes.map((type: any) => [type.rid, type.resource_type_name])
-      );
-
-      const currencyRids = allTasks
-        .map((task) => (task as any)?.project?.currency_rid)
-        .filter((rid) => rid);
-
-      const [currencies] = await Promise.all([
-        currencyRids.length
-          ? mainSequelize.query(
-              rawQueries.GET_CURRENCIES,
-              { replacements: { currencyRid:currencyRids }, type: "SELECT" }
-            )
-          : [],
-      ]);
-
-      const currencyMap = new Map(
-        currencies.map((currency: any) => [
-          currency.rid,
-          currency.currency_symbol,
-        ])
+      const { resourceTypeMap, currencyMap } = await this.fetchRelatedData(
+        allTasks,
+        mainSequelize
       );
 
       // ✅ Format all tasks
-      let formattedTasks = allTasks.map((task) => ({
-        rid: task.rid,
-        r_number: task.r_number,
-        account_rid: task.account_rid,
-        account_name: (task as any).account?.account_name || null,
-        project_rid: task.project_rid,
-        project_fiscal_rid: task.project_fiscal_rid,
-        project_name: (task as any).project?.project_name || null,
-        project_code: (task as any).project?.project_code || null,
-        project_resource_code: task.project_resource_code,
-        resource_rid: task.resource_rid,
-        resource_code: (task as any).resource?.resource_code || null,
-        fiscal_year: task.fiscal_year,
-        start_date: task.start_date,
-        end_date: task.end_date,
-        resource_name: (task as any).resource?.resource_name || null,
-        resource_type_rid: (task as any).resource?.resource_type_rid || null,
-        resource_type_name:
-          resourceTypeMap.get((task as any).resource?.resource_type_rid) ||
-          null, // FIXED
-        resource_role: (task as any).resource?.resource_role || null,
-        currency_rid: (task as any).project?.currency_rid,
-        currency_symbol:
-          currencyMap.get((task as any).project?.currency_rid) || null,
-        resource_orgname: (task as any).resource?.resource_orgname || null,
-        total_hours_pro_task: task.total_hours_pro_task,
-        total_cost_pro_task: task.total_cost_pro_task,
-        comments: task.comments,
-        created_by: task.created_by,
-        modified_by: task.modified_by,
-        created_datetime: task.created_datetime,
-        modified_datetime: task.modified_datetime,
-      }));
+      let formattedTasks = allTasks.map((task) =>
+        this.formatTaskData(task, resourceTypeMap, currencyMap)
+      );
 
       if (resourceFilter) {
         formattedTasks = formattedTasks.filter((task) => {
@@ -534,109 +231,7 @@ export class ProjectTaskService {
       }
 
       // ✅ Handle special sorting cases
-      const validSortFields = [
-        "resource_code",
-        "r_number",
-        "resource_name",
-        "resource_type",
-        "resource_role",
-        "start_date",
-        "total_hours_pro_task",
-        "total_cost_pro_task",
-        "comments",
-        "created_datetime",
-        "modified_datetime",
-      ];
-      const finalSortBy = validSortFields.includes(sortBy)
-        ? sortBy
-        : "created_datetime";
-      const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
-        ? sortOrder.toUpperCase()
-        : "DESC";
-
-      // Sort based on the mapped names for special fields
-      if (finalSortBy === "resource_type") {
-        const priorityMap: Record<string, number> = {
-          "Full-Time": 1,
-          "Non-Labor": 2,
-          "Sub Con": 3,
-        };
-
-        formattedTasks.sort((a, b) => {
-          return finalSortOrder === "ASC"
-            ? priorityMap[a.resource_type_name] -
-                priorityMap[b.resource_type_name]
-            : priorityMap[b.resource_type_name] -
-                priorityMap[a.resource_type_name];
-        });
-      } else if (
-        finalSortBy === "total_hours_pro_task" ||
-        finalSortBy === "total_cost_pro_task"
-      ) {
-        formattedTasks.sort((a, b) => {
-          const aVal = a[finalSortBy];
-          const bVal = b[finalSortBy];
-
-          const aIsEmpty = aVal === null || aVal === undefined;
-          const bIsEmpty = bVal === null || bVal === undefined;
-
-          if (aIsEmpty && !bIsEmpty) return finalSortOrder === "ASC" ? 1 : -1;
-          if (!aIsEmpty && bIsEmpty) return finalSortOrder === "ASC" ? -1 : 1;
-          if (aIsEmpty && bIsEmpty) return 0;
-
-          const aNum = Number(aVal);
-          const bNum = Number(bVal);
-
-          return finalSortOrder === "ASC" ? aNum - bNum : bNum - aNum;
-        });
-      } else if (finalSortBy === "resource_code") {
-        formattedTasks.sort((a, b) => {
-          const aName = a.resource_code;
-          const bName = b.resource_code;
-
-          if (finalSortOrder === "ASC") {
-            if (!aName && bName) return 1;
-            if (aName && !bName) return -1;
-            return aName?.localeCompare(bName ?? "") ?? 0;
-          } else {
-            if (!aName && bName) return -1;
-            if (aName && !bName) return 1;
-            return bName?.localeCompare(aName ?? "") ?? 0;
-          }
-        });
-      } else if (finalSortBy === "resource_name") {
-        formattedTasks.sort((a, b) => {
-          const aName = a.resource_name;
-          const bName = b.resource_name;
-
-          if (finalSortOrder === "ASC") {
-            if (!aName && bName) return 1;
-            if (aName && !bName) return -1;
-            return aName?.localeCompare(bName ?? "") ?? 0;
-          } else {
-            if (!aName && bName) return -1;
-            if (aName && !bName) return 1;
-            return bName?.localeCompare(aName ?? "") ?? 0;
-          }
-        });
-      } else {
-        formattedTasks.sort((a, b) => {
-          const aVal = a[finalSortBy as keyof typeof a];
-          const bVal = b[finalSortBy as keyof typeof b];
-
-          if (finalSortOrder === "ASC") {
-            if ((aVal === null || aVal === undefined) && bVal != null) return 1;
-            if (aVal != null && (bVal === null || bVal === undefined))
-              return -1;
-            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-          } else {
-            if ((aVal === null || aVal === undefined) && bVal != null)
-              return -1;
-            if (aVal != null && (bVal === null || bVal === undefined)) return 1;
-            return bVal < aVal ? -1 : bVal > aVal ? 1 : 0;
-          }
-        });
-      }
+      formattedTasks = this.sortTasks(formattedTasks, sortBy, sortOrder);
 
       // ✅ Apply pagination after sorting
       const total = formattedTasks.length;
@@ -655,58 +250,23 @@ export class ProjectTaskService {
         }
       }
 
-      const labelMap: Record<string, string> = {
-        resource_code: "Resource Code",
-        resource_name: "Resource Name",
-        resource_type_name: "Resource Type",
-        resource_role: "Role",
-        start_date: "Task Date",
-        total_cost_pro_task: "Cost",
-        total_hours_pro_task: "Effort in Hrs",
-        comments: "Comments",
-        r_number: "Project Task ID",
-      };
-      const fieldValueMap: Record<string, string> = {
-        resource_type_rid: "resource_type_name",
-        resource_rid: "resource_name",
-        currency_rid: "currency_symbol",
-      };
-
-      // If no fields are allowed, return an array with an empty object
-      if (allowedFieldSet.size === 0) {
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: {
-            tasks: [{}],
-            totalCount: total,
-          },
-        };
-      }
-
-      const exportDataPromises = formattedTasks.map(async (task: any) => {
-        const row: Record<string, string> = {};
-
-        for (const allowedField of allowedFieldSet) {
-          const actualField = fieldValueMap[allowedField] || allowedField;
-          const label = labelMap[actualField] || allowedField;
-          if (actualField === "total_cost_pro_task") {
-            row[label] = await this.formatNumberForExport(
-              task[actualField],
+      const exportData = await Promise.all(
+        formattedTasks.map(async (task: any) => ({
+          "Resource Code": task.resource_code || "-",
+          "Resource Name": task.resource_name || "-",
+          "Resource Type": task.resource_type_name || "-",
+          Role: task.resource_role || "-",
+          "Task Date": task.start_date || "-",
+          Cost:
+            (await this.formatNumberForExport(
+              task.total_cost_pro_task,
               task.currency_symbol
-            );
-          } else {
-            let value = task[actualField];
-            row[label] =
-              value === null || value === undefined || value === ""
-                ? "-"
-                : value;
-          }
-        }
-        return row;
-      });
-
-      const exportData = await Promise.all(exportDataPromises);
+            )) || "-",
+          "Effort in Hrs": task.total_hours_pro_task || "-",
+          Comments: task.comments || "-",
+          "Project Task ID": task.r_number || "-",
+        }))
+      );
 
       // Ensure we always return at least an empty object in the array if there are no tasks
       const finalExportData = exportData.length > 0 ? exportData : [{}];
@@ -728,6 +288,251 @@ export class ProjectTaskService {
         data: { tasks: [], totalCount: 0 },
       };
     }
+  }
+
+  private async initializeModelsAndAssociations(schemaName: string) {
+    const sequelize = await initOrgSequelize();
+
+    // Initialize models
+    const AccountDetailsModel = AccountDetails.initialize(
+      sequelize,
+      schemaName
+    );
+    const ProjectModel = Project.initialize(sequelize, schemaName);
+    const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
+    const ResourceModel = Resources.initialize(sequelize, schemaName);
+    const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
+
+    // Define associations
+    ProjectTaskModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account",
+    });
+
+    ProjectTaskModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project",
+    });
+
+    ProjectTaskModel.belongsTo(ResourceModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "resource",
+    });
+
+    return {
+      sequelize,
+      models: {
+        AccountDetailsModel,
+        ProjectModel,
+        ProjectFiscalModel,
+        ResourceModel,
+        ProjectTaskModel,
+      },
+    };
+  }
+
+  private async getSchemaInfo(accountRid: string) {
+    const accountData = await this.schemaService.fetchAccountById(accountRid);
+    if (!accountData) throw new Error("Invalid account ID");
+
+    let schemaNumber = accountData.r_number;
+    if (accountData.storage_type === "store_in_parent") {
+      schemaNumber = await this.schemaService.fetchParentAccount(
+        accountData.parent_account_rid
+      );
+    }
+
+    return `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, "")}`;
+  }
+
+  private async fetchRelatedData(allTasks: any[], mainSequelize: any) {
+    // Fetch resource types
+    const resourceTypeRids = allTasks
+      .map((task) => (task as any)?.resource.resource_type_rid)
+      .filter((rid) => rid);
+
+    const resourceTypes = resourceTypeRids.length
+      ? await mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
+          replacements: { resourceTypeRid: resourceTypeRids },
+          type: "SELECT",
+        })
+      : [];
+
+    // Fetch currencies
+    const currencyRids = allTasks
+      .map((task) => (task as any)?.project?.currency_rid)
+      .filter((rid) => rid);
+
+    const [currencies] = await Promise.all([
+      currencyRids.length
+        ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
+            replacements: { currencyRid: currencyRids },
+            type: "SELECT",
+          })
+        : [],
+    ]);
+
+    return {
+      resourceTypeMap: new Map<string, string>(
+        resourceTypes.map((type: any) => [type.rid, type.resource_type_name])
+      ),
+      currencyMap: new Map<string, string>(
+        currencies.map((currency: any) => [
+          currency.rid,
+          currency.currency_symbol,
+        ])
+      ),
+    };
+  }
+
+  private formatTaskData(
+    task: any,
+    resourceTypeMap: Map<string, string>,
+    currencyMap: Map<string, string>
+  ) {
+    return {
+      rid: task.rid,
+      r_number: task.r_number,
+      account_rid: task.account_rid,
+      account_name: (task as any).account?.account_name || null,
+      project_rid: task.project_rid,
+      project_fiscal_rid: task.project_fiscal_rid,
+      project_name: (task as any).project?.project_name || null,
+      project_code: (task as any).project?.project_code || null,
+      project_resource_code: task.project_resource_code,
+      resource_rid: task.resource_rid,
+      resource_code: (task as any).resource?.resource_code || null,
+      fiscal_year: task.fiscal_year,
+      start_date: task.start_date,
+      end_date: task.end_date,
+      resource_name: (task as any).resource?.resource_name || null,
+      resource_type_rid: (task as any).resource?.resource_type_rid || null,
+      resource_type_name:
+        resourceTypeMap.get((task as any).resource?.resource_type_rid) || null,
+      resource_role: (task as any).resource?.resource_role || null,
+      currency_rid: (task as any).project?.currency_rid,
+      currency_symbol:
+        currencyMap.get((task as any).project?.currency_rid) || null,
+      resource_orgname: (task as any).resource?.resource_orgname || null,
+      total_hours_pro_task: task.total_hours_pro_task,
+      total_cost_pro_task: task.total_cost_pro_task,
+      comments: task.comments,
+      created_by: task.created_by,
+      modified_by: task.modified_by,
+      created_datetime: task.created_datetime,
+      modified_datetime: task.modified_datetime,
+    };
+  }
+
+  private sortTasks(formattedTasks: any[], sortBy: string, sortOrder: string) {
+    const validSortFields = [
+      "resource_code",
+      "r_number",
+      "resource_name",
+      "resource_type",
+      "resource_role",
+      "start_date",
+      "total_cost_pro_task",
+      "total_hours_pro_task",
+      "comments",
+      "created_datetime",
+      "modified_datetime",
+    ];
+
+    const finalSortBy = validSortFields.includes(sortBy)
+      ? sortBy
+      : "created_datetime";
+    const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
+      ? sortOrder.toUpperCase()
+      : "DESC";
+
+    // Apply sorting logic...
+    // Sort based on the mapped names for special fields
+    if (finalSortBy === "resource_type") {
+      const priorityMap: Record<string, number> = {
+        "Full-Time": 1,
+        "Non-Labor": 2,
+        "Sub Con": 3,
+      };
+
+      formattedTasks.sort((a, b) => {
+        return finalSortOrder === "ASC"
+          ? priorityMap[a.resource_type_name] -
+              priorityMap[b.resource_type_name]
+          : priorityMap[b.resource_type_name] -
+              priorityMap[a.resource_type_name];
+      });
+    } else if (
+      finalSortBy === "total_hours_pro_task" ||
+      finalSortBy === "total_cost_pro_task"
+    ) {
+      formattedTasks.sort((a, b) => {
+        const aVal = a[finalSortBy];
+        const bVal = b[finalSortBy];
+
+        const aIsEmpty = aVal === null || aVal === undefined;
+        const bIsEmpty = bVal === null || bVal === undefined;
+
+        if (aIsEmpty && !bIsEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+        if (!aIsEmpty && bIsEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+        if (aIsEmpty && bIsEmpty) return 0;
+
+        const aNum = Number(aVal);
+        const bNum = Number(bVal);
+
+        return finalSortOrder === "ASC" ? aNum - bNum : bNum - aNum;
+      });
+    } else if (finalSortBy === "resource_code") {
+      formattedTasks.sort((a, b) => {
+        const aName = a.resource_code;
+        const bName = b.resource_code;
+
+        if (finalSortOrder === "ASC") {
+          if (!aName && bName) return 1;
+          if (aName && !bName) return -1;
+          return aName?.localeCompare(bName ?? "") ?? 0;
+        } else {
+          if (!aName && bName) return -1;
+          if (aName && !bName) return 1;
+          return bName?.localeCompare(aName ?? "") ?? 0;
+        }
+      });
+    } else if (finalSortBy === "resource_name") {
+      formattedTasks.sort((a, b) => {
+        const aName = a.resource_name;
+        const bName = b.resource_name;
+
+        if (finalSortOrder === "ASC") {
+          if (!aName && bName) return 1;
+          if (aName && !bName) return -1;
+          return aName?.localeCompare(bName ?? "") ?? 0;
+        } else {
+          if (!aName && bName) return -1;
+          if (aName && !bName) return 1;
+          return bName?.localeCompare(aName ?? "") ?? 0;
+        }
+      });
+    } else {
+      formattedTasks.sort((a, b) => {
+        const aVal = a[finalSortBy as keyof typeof a];
+        const bVal = b[finalSortBy as keyof typeof b];
+
+        if (finalSortOrder === "ASC") {
+          if ((aVal === null || aVal === undefined) && bVal != null) return 1;
+          if (aVal != null && (bVal === null || bVal === undefined)) return -1;
+          return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        } else {
+          if ((aVal === null || aVal === undefined) && bVal != null) return -1;
+          if (aVal != null && (bVal === null || bVal === undefined)) return 1;
+          return bVal < aVal ? -1 : bVal > aVal ? 1 : 0;
+        }
+      });
+    }
+
+    return formattedTasks;
   }
 
   async formatNumberForExport(
@@ -1256,7 +1061,7 @@ export class ProjectTaskService {
             }
           });
           return; // Skip the default condition push at the end
-          case "resource_code":
+        case "resource_code":
           // Process each operator in the filter object separately
           Object.entries(filter).forEach(([op, val]) => {
             if (val === undefined) return;
