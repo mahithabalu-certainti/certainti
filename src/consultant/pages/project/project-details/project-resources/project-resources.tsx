@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
@@ -121,8 +122,8 @@ export const ProjectResources = ({
   // const [searchParams] = useSearchParams();
   const fileId = searchParams.get('page');
   const resID = searchParams.get('pro_res_id');
-
-  const viewDetails = fileId === 'details';
+  const checkDetail = fileId === 'details' && resID;
+  const viewDetails = !!checkDetail;
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -294,11 +295,11 @@ export const ProjectResources = ({
   };
 
   useEffect(() => {
-    // update sub tab when refereshing the page
     const page = searchParams.get('page');
-
-    if (page) {
+    if (page === 'details' && resID) {
       setShowProjectResourceDetails(true);
+    } else {
+      setShowProjectResourceDetails(false);
     }
   }, [searchParams]);
 
