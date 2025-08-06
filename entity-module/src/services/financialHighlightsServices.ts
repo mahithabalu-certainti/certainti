@@ -700,6 +700,7 @@ export default class FinancialHighlightsService {
   async fetchRegions(data : any) {
     const mainDb = await this.getMainDbSequelize()
     const orgDb = await this.getOrgDbSequelize()
+    let finalData : any
 
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
@@ -709,13 +710,19 @@ export default class FinancialHighlightsService {
       validStateIds.push(states.region_rid)
       return validStateIds
     })
-    let fetchStates = await mainDb.query(rawQueries.fetchStates(validStateIds, data.country_rid))
-    let finalData = fetchStates[0].map((d : any) => {
+    if(validStateIds.length > 0) {
+      let fetchStates = await mainDb.query(rawQueries.fetchStates(validStateIds, data.country_rid))
+    finalData = fetchStates[0].map((d : any) => {
       return {
         rid : d.rid,
         state_name : d.state_name
       }
     })
     return finalData
+    } else {
+      finalData = []
+      return finalData
+    }
+    
   }
 }
