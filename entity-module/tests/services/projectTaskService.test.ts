@@ -1,10 +1,4 @@
 // Ensure environment variables are set before any imports
-process.env.ORGDB_NAME = "thinkrd365_org";
-process.env.ORGDB_USERNAME = "adminUser";
-process.env.ORGDB_PASSWORD = "ip=T6gY5FXAVvgFl";
-process.env.ORGDB_ENDPOINT =
-  "development-thinkrd365-psqlserver-centralus-org.postgres.database.azure.com";
-process.env.NODE_ENV = "test";
 process.env.KEY_VAULT_URI = "https://mocked-key-vault-url.vault.azure.net/";
 
 import { Op, Sequelize, QueryTypes } from "sequelize";
