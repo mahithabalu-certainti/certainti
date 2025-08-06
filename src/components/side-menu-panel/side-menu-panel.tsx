@@ -259,8 +259,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
                 className={`w-[12px] h-[12px] flex-shrink-0 ${isActive
-                    ? 'opacity-100'
-                    : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
+                  ? 'opacity-100'
+                  : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
                   }`}
                 style={{
                   transition: 'opacity 250ms ease-in-out',
@@ -300,8 +300,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   onClick={() => handleSelect(submenu.key, item.key)}
                   disabled={submenu.disabled}
                   className={`${localActiveKey === submenu.key
-                      ? 'bg-[#0BBFB726] !font-bold'
-                      : ''
+                    ? 'bg-[#0BBFB726] !font-bold'
+                    : ''
                     } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
         text-left hover:bg-[#0BBFB726] ${submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
                     } ${isCollapsed ? 'pl-[19px]' : 'pl-11'} py-1.5 pr-3 justify-start`}
@@ -348,8 +348,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   {!isCollapsed && (
                     <AdminSubmenuActiveIcon
                       className={`w-[12px] h-[12px] flex-shrink-0 ${localActiveKey === submenu.key
-                          ? 'opacity-100'
-                          : 'opacity-0 group-hover:opacity-100'
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100'
                         }`}
                       style={{
                         transition: 'opacity 250ms ease-in-out',
