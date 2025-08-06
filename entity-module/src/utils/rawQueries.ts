@@ -512,8 +512,8 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         ) AS resource_metrics,
 
         jsonb_build_object(
-        'metric_name', 'FTE Hours',
-        'permission', 'fte_hours',
+        'metric_name', 'FTE Effort',
+        'permission', 'fte_effort',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -528,8 +528,8 @@ export const summaryHighlightsQuery = (account_rid : string, fiscal_year : numbe
         ) AS fte_cost,
 
         jsonb_build_object(
-        'metric_name', 'Sub Con Hours',
-        'permission', 'sub_con_hours',
+        'metric_name', 'Sub Con Effort',
+        'permission', 'sub_con_effort',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -799,8 +799,8 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         ) AS resource_metrics,
 
         jsonb_build_object(
-        'metric_name', 'FTE Hours',
-        'permission', 'fte_hours',
+        'metric_name', 'FTE Effort',
+        'permission', 'fte_effort',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -815,8 +815,8 @@ export const fetchIsRdQualifiedProjectQuery = (account_rid : string, schemaName 
         ) AS fte_cost,
 
         jsonb_build_object(
-        'metric_name', 'Sub Con Hours',
-        'permission', 'sub_con_hours',
+        'metric_name', 'Sub Con Effort',
+        'permission', 'sub_con_effort',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -1090,8 +1090,8 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         ) AS resource_metrics,
 
         jsonb_build_object(
-        'metric_name', 'FTE Hours',
-        'permission', 'fte_hours',
+        'metric_name', 'FTE Effort',
+        'permission', 'fte_effort',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -1106,8 +1106,8 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
         ) AS fte_cost,
 
         jsonb_build_object(
-        'metric_name', 'Sub Con Hours',
-        'permission', 'sub_con_hours',
+        'metric_name', 'Sub Con Effort',
+        'permission', 'sub_con_effort',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -1381,8 +1381,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         ) AS resource_metrics,
 
         jsonb_build_object(
-        'metric_name', 'FTE Hours',
-        'permission', 'fte_hours',
+        'metric_name', 'FTE Effort',
+        'permission', 'fte_effort',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -1397,8 +1397,8 @@ export const fetchIsRdQualifiedProjectQueryRegion = (account_rid : string, schem
         ) AS fte_cost,
 
         jsonb_build_object(
-        'metric_name', 'Sub Con Hours',
-        'permission', 'sub_con_hours',
+        'metric_name', 'Sub Con Effort',
+        'permission', 'sub_con_effort',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
@@ -1707,8 +1707,8 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         ) AS resource_metrics,
 
         jsonb_build_object(
-        'metric_name', 'FTE Hours',
-        'permission', 'fte_hours',
+        'metric_name', 'FTE Effort',
+        'permission', 'fte_effort',
         'project_level', chf.project_level,
         'project_resource_level', chf.project_resource_level,
         'project_task_level', chf.project_task_level
@@ -1723,8 +1723,8 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         ) AS fte_cost,
 
         jsonb_build_object(
-        'metric_name', 'Sub Con Hours',
-        'permission', 'sub_con_hours',
+        'metric_name', 'Sub Con Effort',
+        'permission', 'sub_con_effort',
         'project_level', csh.project_level,
         'project_resource_level', csh.project_resource_level,
         'project_task_level', csh.project_task_level
