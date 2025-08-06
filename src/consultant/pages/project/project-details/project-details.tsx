@@ -55,6 +55,7 @@ import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
+import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
@@ -394,8 +395,8 @@ export const ProjectDetails = () => {
         return <Configuration />;
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            Page Not Found
+          <div className='pr-4 pl-2 py-2 w-full'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
@@ -407,6 +408,13 @@ export const ProjectDetails = () => {
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {
     const allMenus = [
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: FinancialIcon,
+      },
       {
         name: 'Project Details',
         key: 'projectDetails',
@@ -427,13 +435,6 @@ export const ProjectDetails = () => {
         id: AllModules.PROJECT_TASK,
         disabled: false,
         icon: ProjectsSideIcon,
-      },
-      {
-        name: 'Financial Highlights',
-        key: 'financial',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: FinancialIcon,
       },
       {
         name: 'Interactions',

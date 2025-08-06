@@ -380,10 +380,13 @@ const Resource: React.FC<ResourceProps> = ({
     const activeTab = tabMenus.find((tab) => !tab.hide)?.value;
     setValue(activeTab as string);
   };
-
   useEffect(() => {
     // update the URL when open a resource sub tab
-    if (!viewResourceList && resourceData.rid) {
+    if (
+      !viewResourceList &&
+      resourceData.rid &&
+      searchParams.get('list') === 'resources'
+    ) {
       searchParams.set('res_id', resourceData.rid);
       searchParams.set('tab', value);
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -398,7 +401,7 @@ const Resource: React.FC<ResourceProps> = ({
   useEffect(() => {
     // update sub tab when refereshing the page
     const tab = searchParams.get('tab');
-    if (tab) {
+    if (tab && searchParams.get('list') === 'resources') {
       setValue(tab);
       setViewResourceList(false);
       setShowBackArrow(true);

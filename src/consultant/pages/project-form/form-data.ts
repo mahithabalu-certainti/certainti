@@ -170,7 +170,7 @@ const getDateConstraints = (yearsBack: number) => {
   return { currentDate, minDate, previousDate };
 };
 
-const { currentDate, minDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
+const { currentDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
 
 export const FormData = (
   statusOptions: SelectOption[],
@@ -301,7 +301,7 @@ export const FormData = (
 
           createDateField('project_enddate', 'End Date', {
             required: false,
-            minDate: new Date(minDate.getTime()),
+            minDate: new Date('2000-01-01'),
             maxDate: currentDate,
             disabled:
               isEditView &&
