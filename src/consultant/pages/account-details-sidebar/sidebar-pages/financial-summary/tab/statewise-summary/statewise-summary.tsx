@@ -14,15 +14,18 @@ import {
   getRdCreditsColumns,
   getResourceMetricColumns,
 } from './columns';
-import { MenuItem, Select, Skeleton } from '@mui/material';
+import { Box, MenuItem, Select, Skeleton } from '@mui/material';
 import TextButton from '../../../../../../../components/button/text-button';
 import { useFetchFinancialStates } from '../../../../../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
+import { DetailsKeyContactErrorIcon } from '../../../../../../../assets';
+import { accountDetailsProps } from '../../../../../account-details/utils';
 
 interface FinancialSummaryProps {
   fiscalYear: string;
+  accountDetails?: accountDetailsProps;
   countryId?: string | null;
   stateId?: string | null;
 }
@@ -31,6 +34,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   fiscalYear,
   countryId,
   stateId,
+  accountDetails,
 }) => {
   // hooks
   const { accountid } = useParams();
@@ -94,6 +98,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     });
     return map;
   }, [summaryViewEditFields]);
+  const accountName = accountDetails?.accountById?.account_name;
 
   // UseEffects
   useEffect(() => {
@@ -131,9 +136,23 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 
   return (
     <div className='flex flex-col gap-4'>
+      {accountName && !countryId && (
+        <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box -mt-3 -mx-3 -mb-1'>
+          <Box>
+            <DetailsKeyContactErrorIcon alt='key-contact' />
+          </Box>
+          <Box>
+            <span className='font-bold mr-1'>Country </span> -{' '}
+            <span className='ml-1 font-medium'>
+              {' '}
+              {`Not added for ${accountName}`}
+            </span>
+          </Box>
+        </Box>
+      )}
       <div>
         <div className='max-w-[80%] flex mb-5 mt-2 gap-3'>
-          {financislStates.isPending ? (
+          {financislStates.isLoading ? (
             <Skeleton variant='rounded' width='100%' height={32} />
           ) : (
             <Select
@@ -183,8 +202,17 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
                   borderRadius: '2px',
                 },
               }}
-              value={(region || stateId) as string}
+              value={region || stateId || ''}
               onChange={(e) => setRegion(e.target.value)}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return 'Select State';
+                }
+                const selectedOption = memoizedState.find(
+                  (it) => it.value === selected
+                );
+                return selectedOption ? selectedOption.label : 'Select State';
+              }}
             >
               <MenuItem value='' disabled>
                 Select State

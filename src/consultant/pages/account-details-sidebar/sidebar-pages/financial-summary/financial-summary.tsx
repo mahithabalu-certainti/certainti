@@ -26,7 +26,6 @@ import {
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-// import { clearFilters } from '../../components/filter/utils';
 
 const FinancialTabs = [
   {
@@ -251,6 +250,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             fiscalYear={fiscalyear}
             countryId={countryId}
             stateId={stateId}
+            accountDetails={accountDetails}
           />
         )}
         {tabParam === 'project_cost' && isProjectCostViewEnable && (
