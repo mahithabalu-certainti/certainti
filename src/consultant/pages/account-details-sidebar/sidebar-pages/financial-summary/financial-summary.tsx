@@ -157,18 +157,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     setShowFilter(!showFilter);
   };
 
-  const headerButtons = [
-    {
-      label: 'Download',
-      variant: 'contained' as const,
-      onClick: () => {},
-      sx: {
-        width: '96px',
-        minWidth: '96px',
-      },
-      hide: ['summary', 'state_wise_summary'].includes(tabParam),
-    },
-  ];
   const tabs = [
     { label: 'Summary', value: 'summary', hide: !isSummaryViewEnable },
     {
@@ -237,7 +225,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             className='w-7 h-7 p-1.5 bg-[#ffeae5] rounded-full [&>path]:stroke-[#f16840]'
           />
         }
-        buttons={headerButtons}
+        buttons={[]}
         count={count}
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
