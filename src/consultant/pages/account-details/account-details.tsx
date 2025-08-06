@@ -69,6 +69,7 @@ import {
   exportFinancialProjectCost,
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
+import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -483,8 +484,8 @@ export const AccountDetails = () => {
         return <Configuration />;
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            Page Not Found
+          <div className='w-full pr-4 pl-2 py-2'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
@@ -494,6 +495,13 @@ export const AccountDetails = () => {
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {
     const allMenus = [
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: disable,
+        icon: FinancialIcon,
+      },
       {
         name: 'Details',
         key: 'details',
@@ -514,13 +522,6 @@ export const AccountDetails = () => {
         id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
-      },
-      {
-        name: 'Financial Highlights',
-        key: 'financial',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: disable,
-        icon: FinancialIcon,
       },
       {
         name: 'Cases',
