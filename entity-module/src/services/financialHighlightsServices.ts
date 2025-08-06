@@ -719,7 +719,8 @@ export default class FinancialHighlightsService {
       }
     })
     return finalData
-    } else {
+    } 
+    else {
       finalData = []
       return finalData
     }
