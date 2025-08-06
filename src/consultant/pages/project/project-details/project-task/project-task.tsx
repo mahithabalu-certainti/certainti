@@ -134,10 +134,6 @@ export const ProjectTask = ({
     permission,
     AllPermissions.PROJECTS_TASK_CREATE
   );
-  const isTaskEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECTS_TASK_VIEW_EDIT
-  );
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -256,7 +252,7 @@ export const ProjectTask = ({
           ? handleProjectTaskDetailEdit()
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: viewDetails ? !isTaskEditEnable : !isTaskCreateEnable,
+      hide: viewDetails ? !isProjectTaskFieldsEditable : !isTaskCreateEnable,
     },
   ];
   const PFY = projectFiscalDate;
