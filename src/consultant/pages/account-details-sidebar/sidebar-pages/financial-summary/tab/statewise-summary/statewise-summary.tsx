@@ -16,10 +16,7 @@ import {
 } from './columns';
 import { MenuItem, Select, Skeleton } from '@mui/material';
 import TextButton from '../../../../../../../components/button/text-button';
-import {
-  useFetchFinancialStates,
-  // useFetchState,
-} from '../../../../../../services/account';
+import { useFetchFinancialStates } from '../../../../../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
@@ -56,7 +53,6 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 
   // API Hooks
   const { mutate, isPending, isError, data } = useGetFinancialSummary(true);
-  // const states = useFetchState(countryId as string);
   const financislStates = useFetchFinancialStates({
     accountId: accountid as string,
     countryId: countryId as string,
