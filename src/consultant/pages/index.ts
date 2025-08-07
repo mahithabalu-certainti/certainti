@@ -9,4 +9,4 @@ export * from './resource-form';
 // export * from './profile';
 export * from './project';
 export * from './attachments';
-export * from './interaction';
+export * from './interaction-form';

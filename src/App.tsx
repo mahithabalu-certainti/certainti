@@ -119,7 +119,7 @@ const ManageAccountAccess = lazy(
 );
 
 const InteractionForm = lazy(
-  () => import('./consultant/pages/interaction/interaction-form')
+  () => import('./consultant/pages/interaction-form/interaction-form')
 );
 
 // Loading component for Suspense fallback
