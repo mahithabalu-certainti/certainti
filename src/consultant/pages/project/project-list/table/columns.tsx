@@ -92,6 +92,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'project_name',
@@ -126,6 +127,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'project_type_name',
@@ -146,6 +148,7 @@ export const getAllProjectListColumns = (
       placeholder: '',
       options: projectTypeOption,
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'account_name',
@@ -183,6 +186,7 @@ export const getAllProjectListColumns = (
       placeholder: '',
       options: fiscalYears,
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'classification_name',
@@ -248,6 +252,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'project_client_group',
@@ -282,6 +287,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'project_group',
@@ -316,6 +322,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'total_effort',
@@ -347,6 +354,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'total_cost',
@@ -378,6 +386,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'total_cost_fte',
@@ -411,6 +420,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'total_cost_subcon',
@@ -444,6 +454,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'total_cost_nonlabor',
@@ -477,6 +488,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'assessment_status',
@@ -599,6 +611,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
+    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
   },
   {
     id: 'modified_datetime',

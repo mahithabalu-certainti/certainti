@@ -150,6 +150,7 @@ export const ProjectDetails = () => {
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
+  const projectInActive = data?.data?.project.status_name === 'In-Active';
 
   useEffect(() => {
     if (data?.data) {
@@ -352,6 +353,7 @@ export const ProjectDetails = () => {
       case 'projectResources':
         return (
           <ProjectResources
+            accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
             accountID={accountID}
             projectFiscalDate={fiscalDate}
@@ -363,6 +365,7 @@ export const ProjectDetails = () => {
       case 'projectsTask':
         return (
           <ProjectTask
+            accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
             accountID={accountID}
             projectFiscalDate={fiscalDate}
@@ -385,7 +388,7 @@ export const ProjectDetails = () => {
       case 'attachments':
         return (
           <Attachments
-            accountInActive={accountInActive}
+            accountOrProjectInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={onRefreshClick}

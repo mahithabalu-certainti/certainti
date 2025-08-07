@@ -679,7 +679,8 @@ const Resource: React.FC<ResourceProps> = ({
     handleCountry,
     region.isPending,
     permissionMap,
-    handleResourceClick
+    handleResourceClick,
+    accountInActive
   );
 
   const onRefreshClick = () => {

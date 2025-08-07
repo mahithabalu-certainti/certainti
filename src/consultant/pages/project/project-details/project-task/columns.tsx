@@ -19,7 +19,11 @@ export const formatDateToYMD = (dateString: string): string => {
 export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
-  permissionMapTaskTableColumn: Record<string, { read: boolean; edit: boolean }>
+  permissionMapTaskTableColumn: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >,
+  accountOrProjectInActive?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -39,7 +43,8 @@ export const getProjectTaskColumns = (
     },
     editable:
       permissionMapTaskTableColumn?.['resource_code']?.read &&
-      permissionMapTaskTableColumn?.['resource_code']?.edit,
+      permissionMapTaskTableColumn?.['resource_code']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMapTaskTableColumn?.['resource_code']?.read &&
       !permissionMapTaskTableColumn?.['resource_code']?.edit,
@@ -112,7 +117,8 @@ export const getProjectTaskColumns = (
     },
     editable:
       permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
-      permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
+      permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMapTaskTableColumn?.['total_cost_pro_task']?.read &&
       !permissionMapTaskTableColumn?.['total_cost_pro_task']?.edit,
@@ -145,7 +151,8 @@ export const getProjectTaskColumns = (
     },
     editable:
       permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
-      permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
+      permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
@@ -173,7 +180,8 @@ export const getProjectTaskColumns = (
     width: 200,
     editable:
       permissionMapTaskTableColumn?.['comments']?.read &&
-      permissionMapTaskTableColumn?.['comments']?.edit,
+      permissionMapTaskTableColumn?.['comments']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMapTaskTableColumn?.['comments']?.read &&
       !permissionMapTaskTableColumn?.['comments']?.edit,

@@ -56,14 +56,14 @@ interface AttachmentsProps {
   setAttachmentParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
-  accountInActive: boolean;
+  accountOrProjectInActive: boolean;
   refetchProjectDetails: () => void;
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
   setExportType,
   setAttachmentParams,
-  accountInActive,
+  accountOrProjectInActive,
   refetchProjectDetails,
 }) => {
   const { errorToast } = useToast();
@@ -219,7 +219,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountOrProjectInActive,
       onClick: () => handleOpen(),
       sx: { width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
@@ -267,7 +267,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
     memoizedDocumentTypes,
     handleDocumentCategory,
     permissionMap,
-    categoryTypes.isLoading
+    categoryTypes.isLoading,
+    accountOrProjectInActive
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
