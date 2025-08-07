@@ -312,7 +312,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
         text-left hover:bg-[#0BBFB726] ${
           submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-        } ${isCollapsed ? 'pl-[19px]' : 'pl-11'} py-1.5 pr-3 justify-start`}
+        } ${isCollapsed ? 'pl-[15px]' : 'pl-9'} py-1.5 pr-3 justify-start`}
                   style={{
                     transition: `background-color 0.3s ease-in-out, padding-left ${
                       isCollapsed ? '300ms' : '500ms'
