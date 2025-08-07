@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
@@ -23,6 +23,14 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_ACCOUNT } from '../../../../api/graphql/queries/account-query';
 import { useToast } from '../../../../hooks';
 import { AllPermissions } from '../../../../common-service';
+import { ColumnVisibilityPopover } from '../../../../components/table/column-visibility-popover';
+
+interface BaseTableColumn {
+  id: string;
+  label: string;
+  hide?: boolean;
+  [key: string]: any;
+}
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -281,11 +289,63 @@ const AccountTable: React.FC<Record<string, any>> = ({
     }
   };
 
+  // Hook for easier usage (optional)
+  const useColumnVisibility = <T extends BaseTableColumn>(
+    columns: T[]
+    // storageKey?: string
+  ) => {
+    const [visibleColumns, setVisibleColumns] = useState<T[]>(columns);
+
+    const handleColumnsChange = useCallback((updatedColumns: T[]) => {
+      setVisibleColumns(updatedColumns.filter((col) => !col.hide));
+    }, []);
+
+    return {
+      visibleColumns,
+      handleColumnsChange,
+    };
+  };
+
+  const [columnVisibilityAnchor, setColumnVisibilityAnchor] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const { visibleColumns, handleColumnsChange } =
+    useColumnVisibility(accountColumns);
+
+  const handleColumnVisibilityClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnVisibilityAnchor(event.currentTarget);
+  };
+
+  const handleColumnVisibilityClose = () => {
+    setColumnVisibilityAnchor(null);
+  };
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
+      {/* Show/Hide Fields Button */}
+      <div className='flex items-center justify-end px-6 py-2 border-b border-gray-200 bg-gray-50'>
+        <button
+          onClick={handleColumnVisibilityClick}
+          className='flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors font-medium'
+        >
+          Show/Hide Fields
+        </button>
+      </div>
+
+      {/* Column Visibility Popover */}
+      <ColumnVisibilityPopover
+        anchorEl={columnVisibilityAnchor}
+        open={Boolean(columnVisibilityAnchor)}
+        onClose={handleColumnVisibilityClose}
+        columns={accountColumns}
+        onColumnsChange={handleColumnsChange}
+        storageKey='demo-table-columns'
+      />
       <ListTable
         data={accountsList || []}
-        columns={accountColumns}
+        columns={visibleColumns}
         getRowId={getRowId}
         component={'account'}
         hoverHighlight={true}
