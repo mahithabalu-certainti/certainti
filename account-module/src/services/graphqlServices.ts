@@ -90,7 +90,7 @@ class AccountGraphQlServices {
                 // Update group name if account name changed
                 if (data.account_name != undefined && data.account_name !== existingAccName) 
                 {
-                    console.log("Account name changed from", existingAccName, "to", data.account_name);
+                    console.log("Account name changed from", existingAccName, "to ", data.account_name);
                     const schemaService = new SchemaService();
                     await schemaService.updateGroupNameForAccount(fetchAccountById.rid, data.userId, fetchAccountById.is_parent, data.account_name);
                 }           
