@@ -51,6 +51,8 @@ export const Accounts: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>();
+  const [columnVisibilityAnchor, setColumnVisibilityAnchor] =
+    React.useState<HTMLButtonElement | null>(null);
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -217,6 +219,12 @@ export const Accounts: React.FC = () => {
 
   if (!accountIsEnable || !isAccountViewAllEnable) return <AccessRestricted />;
 
+  const handleColumnVisibilityClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnVisibilityAnchor(event.currentTarget);
+  };
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] border-b border-[#CBD6E2] px-4'>
@@ -267,7 +275,7 @@ export const Accounts: React.FC = () => {
       </div>
 
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-        <div className='relative'>
+        <div className='flex gap-2 relative'>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -286,6 +294,13 @@ export const Accounts: React.FC = () => {
                 </span>
               </div>
             ) : null}
+          </button>
+          <button
+            aria-describedby={filterId}
+            className='w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative'
+            onClick={handleColumnVisibilityClick}
+          >
+            Show/Hide Fields
           </button>
           <Suspense fallback={null}>
             <FilterModal
@@ -317,6 +332,8 @@ export const Accounts: React.FC = () => {
           countryOptions={countryOptions}
           industryOptions={industryOptions}
           onRefreshClick={onRefreshClick}
+          setColumnVisibilityAnchor={setColumnVisibilityAnchor}
+          columnVisibilityAnchor={columnVisibilityAnchor}
         />
       </div>
     </div>

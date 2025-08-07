@@ -46,6 +46,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
   refreshAccountTrigger,
   countryOptions,
   industryOptions,
+  setColumnVisibilityAnchor,
+  columnVisibilityAnchor,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -306,34 +308,23 @@ const AccountTable: React.FC<Record<string, any>> = ({
     };
   };
 
-  const [columnVisibilityAnchor, setColumnVisibilityAnchor] =
-    React.useState<HTMLButtonElement | null>(null);
-
   const { visibleColumns, handleColumnsChange } =
     useColumnVisibility(accountColumns);
-
-  const handleColumnVisibilityClick = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setColumnVisibilityAnchor(event.currentTarget);
-  };
 
   const handleColumnVisibilityClose = () => {
     setColumnVisibilityAnchor(null);
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'account_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
-      {/* Show/Hide Fields Button */}
-      <div className='flex items-center justify-end px-6 py-2 border-b border-gray-200 bg-gray-50'>
-        <button
-          onClick={handleColumnVisibilityClick}
-          className='flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors font-medium'
-        >
-          Show/Hide Fields
-        </button>
-      </div>
-
       {/* Column Visibility Popover */}
       <ColumnVisibilityPopover
         anchorEl={columnVisibilityAnchor}
@@ -341,7 +332,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         onClose={handleColumnVisibilityClose}
         columns={accountColumns}
         onColumnsChange={handleColumnsChange}
-        storageKey='demo-table-columns'
+        columnRestrictions={RestrictedColumns}
       />
       <ListTable
         data={accountsList || []}
