@@ -56,8 +56,8 @@ export const getAllProjectListColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-
-      return onClick ? (
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
         <span
           onClick={() => onClick(row)}
           className={

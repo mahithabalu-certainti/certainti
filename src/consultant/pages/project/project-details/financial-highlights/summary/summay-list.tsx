@@ -135,7 +135,9 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
               projectDetails?.project_code ||
               '-'}
           </span>
-          <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
+          {fiscalYear && (
+            <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
+          )}
         </div>
         <ListTable
           data={resourceMetric}

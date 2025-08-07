@@ -38,7 +38,7 @@ export const getCostFilterFields = (
       !resourceCostpermissionMap?.['fiscal_year']?.edit,
   },
   {
-    name: 'Effective From',
+    name: 'Effective Date',
     value: 'effective_from',
     type: 'date',
     minDate: new Date('2000-01-01'),
