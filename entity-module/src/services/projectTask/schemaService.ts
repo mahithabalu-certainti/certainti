@@ -136,6 +136,12 @@ export class ProjectTaskSchemaService {
       as: "account",
     });
 
+    ProjectTaskModel.belongsTo(ProjectModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_task_project",
+    });
+
     ProjectTaskModel.belongsTo(ProjectFiscalModel, {
       foreignKey: "project_fiscal_rid",
       targetKey: "rid",
@@ -146,6 +152,12 @@ export class ProjectTaskSchemaService {
       foreignKey: "resource_rid",
       targetKey: "rid",
       as: "resource",
+    });
+
+    ProjectTaskHistory.belongsTo(ProjectTaskModel, {
+      foreignKey: "project_task_rid",
+      targetKey: "rid",
+      as: "project_task_history_project_task",
     });
 
     const models = {
@@ -192,13 +204,14 @@ export class ProjectTaskSchemaService {
     projectTaskData: ICreateProjectTask,
     resourceId: string
   ): Promise<ProjectTask[]> {
+
     const { ProjectTask } = await this.getModels(accountNumber);
 
     const startDate = projectTaskData.start_date
-      ? moment.utc(projectTaskData.start_date, "YYYY-MM-DD")
+      ? moment.utc(projectTaskData.start_date)
       : null;
     const endDate = projectTaskData.end_date
-      ? moment.utc(projectTaskData.end_date, "YYYY-MM-DD")
+      ? moment.utc(projectTaskData.end_date)
       : null;
 
     const whereClause: any = {
@@ -719,7 +732,6 @@ export class ProjectTaskSchemaService {
           country_rid: projectTaskData.country_rid || null,
           currency_rid: projectTaskData.currency_rid || null,
           region_rid: projectTaskData.region_rid || null,
-          project_resource_rid: "", // need to remove in the db
           created_datetime: new Date(),
           total_hours_from_tasks: total_effort || null,
           total_cost_from_tasks: total_cost || null,
@@ -1937,8 +1949,7 @@ export class ProjectTaskSchemaService {
         total_hours_from_tasks: projectTaskData.total_hours_pro_task,
         created_by: userId,
         created_datetime: new Date(),
-        project_rid: existingProjectTask.project_rid,
-        project_resource_rid: "",
+        project_rid: existingProjectTask.project_rid
       }, { transaction });
     }
 
@@ -2554,7 +2565,7 @@ export class ProjectTaskSchemaService {
           max_ai_interaction: projectData?.max_ai_interaction,
           auto_send_ai_interaction: projectData.auto_send_ai_interaction,
           status_rid: projectData.status_rid,
-          project_fiscal_rid: "",
+          project_fiscal_rid: projectTaskData.project_fiscal_rid,
           created_by: userId,
           created_datetime: new Date()
         }, { transaction });

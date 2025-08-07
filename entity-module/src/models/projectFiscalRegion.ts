@@ -1,5 +1,8 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
+import AccountDetails from "./accountDetails";
+import { ProjectFiscal } from "./projectFiscal";
 
 export interface ProjectFiscalRegionAttributes {
   rid: string;
@@ -534,6 +537,24 @@ export class ProjectFiscalRegion
         underscored: true,
       }
     );
+
+    ProjectFiscalRegion.belongsTo(Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_fiscal_region_project"
+    });
+
+    ProjectFiscalRegion.belongsTo(AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_fiscal_region_account"
+    });
+
+    ProjectFiscalRegion.belongsTo(ProjectFiscal, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_fiscal_region_project_fiscal"
+    });
 
     return ProjectFiscalRegion;
   }

@@ -128,11 +128,13 @@ export class ProjectService {
         schemaName
       );
 
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         orgDbSequlize,
         schemaName
       );
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectTimelineModel = await ProjectTimeline.initialize(
         orgDbSequlize,
         schemaName
@@ -659,7 +661,10 @@ export class ProjectService {
           document_type: (documentType as any)?.type_name || '',
           document_category: (documentCategory as any)?.category_name || '',
           uploaded_by: (uploadedBy as any)?.full_name || '',
-          attached_to: attachedTo
+          attached_to: attachedTo,
+          size_in_mb: attachment.size_in_mb
+            ? `${attachment.size_in_mb} mb`
+            : "0 mb",
         };
       });
     }
@@ -1426,6 +1431,7 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(sequilzeInstance, schemaName);
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName
@@ -1484,6 +1490,7 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(sequilzeInstance, schemaName);
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName

@@ -8,7 +8,7 @@ import { ProjectFiscal } from "../../models/projectFiscal";
 import { ProjectTask } from "../../models/projectTask";
 
 export class ProjectInjestionTaskService {
-  private projectTaskSchema: ProjectTaskSchemaService;
+  projectTaskSchema: ProjectTaskSchemaService;
   private projectResourceSchema: ProjectResourceSchemaService;
 
   constructor() {
@@ -201,7 +201,11 @@ export class ProjectInjestionTaskService {
               resourceData.rid!
             );
 
-          const totalExistingEffort = existingTasks.reduce(
+          const filteredTasks = existingTasks.filter(
+            (task) => task.rid !== projectTaskData.project_task_rid 
+          );
+
+          const totalExistingEffort = filteredTasks.reduce(
             (sum: Decimal, task: ProjectTask) => {
               const effort = new Decimal(task.total_hours_pro_task || "0");
               return sum.plus(effort);
@@ -285,13 +289,15 @@ export class ProjectInjestionTaskService {
     }
   }
 
-  async runAggregationAfterInlineUpdate(
+    async runAggregationAfterInlineUpdate(
     accountNumber: string,
     projectTaskData: any,
     fullTaskData: ProjectTask
   ) {
     const dbInit = await this.projectTaskSchema.getSequelize();
     const transaction = await dbInit.transaction();
+    let transactionCompleted = false; // Track transaction state manually
+
     try {
       const { rid, userId, account_rid } = projectTaskData;
 
@@ -307,6 +313,8 @@ export class ProjectInjestionTaskService {
 
       if (!shouldRunAggregation) {
         await transaction.rollback();
+        transactionCompleted = true;
+        return;
       }
 
       const {
@@ -315,9 +323,9 @@ export class ProjectInjestionTaskService {
         account_rid: effectiveAccountRid,
         resource_rid,
       } = mergedTaskData;
-  
+
       let resolvedResourceCode = updatedResourceCode;
-  
+
       if (!resolvedResourceCode && resource_rid) {
         const resource = await this.projectResourceSchema.validateResourceById(
           accountNumber,
@@ -326,13 +334,15 @@ export class ProjectInjestionTaskService {
         );
         if (!resource) {
           await transaction.rollback();
+          transactionCompleted = true;
           return;
         }
         resolvedResourceCode = resource.resource_code;
       }
-  
+
       if (!resolvedResourceCode) {
         await transaction.rollback();
+        transactionCompleted = true;
         return;
       }
 
@@ -346,6 +356,8 @@ export class ProjectInjestionTaskService {
       });
 
       if (!validationResult.success) {
+        await transaction.rollback();
+        transactionCompleted = true;
         return validationResult;
       }
 
@@ -364,9 +376,17 @@ export class ProjectInjestionTaskService {
       );
 
       await transaction.commit();
+      transactionCompleted = true;
     } catch (err) {
-      await transaction.rollback();
+      if (!transactionCompleted) {
+        try {
+          await transaction.rollback();
+        } catch (rollbackErr) {
+          console.error('Failed to rollback transaction:', rollbackErr);
+        }
+      }
       console.log("Error aggregation project task", err);
+      throw err; // Re-throw the error after handling
     }
   }
 

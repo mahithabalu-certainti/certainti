@@ -229,7 +229,9 @@ export const rawQueries = {
       JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
       JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
       WHERE mp.permission_name = :permissionName
-        AND ufa.user_id = :userId` 
+        AND ufa.user_id = :userId`,
+    GET_IMPORT_ENTITY_TYPES:
+    `SELECT rid, entity_name FROM ${MAIN_SCHEMA_NAME}.import_entity_types`
 }
 
 export const DEFAULT_ACCOUNT_DETAILS = {

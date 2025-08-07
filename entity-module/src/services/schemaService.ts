@@ -123,6 +123,11 @@ class SchemaService {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
+      const AccountDetailsModel = await AccountDetails.initialize(
+        sequelize,
+        schemaName
+      );
+
       const Resource = Resources.initialize(sequelize, schemaName);
       const ResourcesHistoryModel = await ResourcesHistory.initialize(
         sequelize,
@@ -164,10 +169,118 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceFiscalModel = await ResourceFiscal.initialize(
+        sequelize,
+        schemaName
+      );
       const ResourceFiscalRegionModel = await ResourceFiscalRegion.initialize(
         sequelize,
         schemaName
       );
+
+      Resource.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_account",
+      });
+
+      ResourceFiscalModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_fiscal_account",
+      });
+
+      ResourceFiscalModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_fiscal_resource",
+      });
+
+      ResourceFiscalRegionModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_fiscal_region_account",
+      });
+
+      ResourceFiscalRegionModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_fiscal_region_resource",
+      });
+
+      ResourcesTimelineModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resources_timeline_account",
+      });
+
+      ResourcesTimelineModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_timeline_resource",
+      });
+
+      ResourcesHistoryModel.belongsTo(Resources, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resources_history_resource",
+      });
+
+      ResourceCostModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_cost_account",
+      });
+      ResourceCostModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resource_cost_resource",
+      });
+
+      ResourceCostTimelineModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_cost_timeline_account",
+      });
+      ResourceCostTimelineModel.belongsTo(Resource, {
+        foreignKey: "entity_rid",
+        targetKey: "rid",
+        as: "resource_cost_timeline_resource",
+      });
+
+      ResourceCostHistoryModel.belongsTo(Resource, {
+        foreignKey: "resource_cost_rid",
+        targetKey: "rid",
+        as: "resource_cost_history_resource",
+      });
+
+      ResourceSkillModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_skill_account",
+      });
+      ResourceSkillModel.belongsTo(Resource, {
+        foreignKey: "resource_rid",
+        targetKey: "rid",
+        as: "resource_skill_resource",
+      });
+
+      ResourceSkillTimelineModel.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        targetKey: "account_rid",
+        as: "resource_skill_timeline_account",
+      });
+      ResourceSkillTimelineModel.belongsTo(Resource, {
+        foreignKey: "entity_rid",
+        targetKey: "rid",
+        as: "resource_skill_timeline_resource",
+      });
+
+      ResourceSkillHistoryModel.belongsTo(Resource, {
+        foreignKey: "resource_skill_rid",
+        targetKey: "rid",
+        as: "resource_skill_history_resource",
+      });
 
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
@@ -1798,7 +1911,7 @@ class SchemaService {
 
       // 4. Common SQL fragments
       const commonSelectFields = `
-        ps.project_code, ps.project_name, acc.account_name,
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
         ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type_rid, ps.project_client_group, ps.project_group,
@@ -1827,11 +1940,12 @@ class SchemaService {
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = acc.status_rid
       `;
 
       const commonGroupBy = `
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, ps.project_rid, ps.modified_datetime, 
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
         ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
@@ -1848,12 +1962,11 @@ class SchemaService {
         : "1=1";
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
-      const accountMetaClause = accountMeta.length > 0
-      ? `AND acc.rid = ANY(ARRAY[?]::text[])`
-        : "";
+      const accountMetaClause =
+        accountMeta.length > 0 ? `AND acc.rid = ANY(ARRAY[?]::text[])` : "";
 
-    const projectIdsQuery = bothParentAndChild
-      ? `
+      const projectIdsQuery = bothParentAndChild
+        ? `
         SELECT DISTINCT ps.project_rid
         FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
@@ -1865,7 +1978,7 @@ class SchemaService {
         ${accountMetaClause}
         ${fiscalYearClause}
       `
-      : `
+        : `
         SELECT DISTINCT ps.project_rid
         FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
@@ -1878,19 +1991,19 @@ class SchemaService {
         ${fiscalYearClause}
       `;
 
-    const projectIdsReplacements = bothParentAndChild
-  ? [
-      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-      ...whereReplacementsParent,
-      ...(accountMeta.length > 0 ? [accountMeta] : []),
-      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-    ]
-  : [
-      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-      ...whereReplacementsChild,
-      ...(accountMeta.length > 0 ? [accountMeta] : []),
-      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-    ];
+      const projectIdsReplacements = bothParentAndChild
+        ? [
+            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+            ...whereReplacementsParent,
+            ...(accountMeta.length > 0 ? [accountMeta] : []),
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+          ]
+        : [
+            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+            ...whereReplacementsChild,
+            ...(accountMeta.length > 0 ? [accountMeta] : []),
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+          ];
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
         type: "SELECT",
@@ -2134,7 +2247,7 @@ class SchemaService {
 
       // 4. Common SQL fragments
       const commonSelectFields = `
-        ps.project_code, ps.project_name, acc.account_name,
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
         ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type_rid, ps.project_client_group, ps.project_group,
@@ -2162,11 +2275,12 @@ class SchemaService {
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = acc.status_rid
       `;
 
       const commonGroupBy = `
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, ps.project_rid, ps.modified_datetime, 
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
         ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
@@ -2179,17 +2293,16 @@ class SchemaService {
       `;
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
-       const includeProjectFilter = accessibleIds.length > 0;
+      const includeProjectFilter = accessibleIds.length > 0;
       const accessibleProjectsCondition = includeProjectFilter
         ? `ps.project_rid = ANY(ARRAY[?]::text[])`
         : "1=1";
 
-      const accountMetaClause = accountMeta.length > 0
-      ? `AND acc.rid = ANY(?)`
-      : "";
+      const accountMetaClause =
+        accountMeta.length > 0 ? `AND acc.rid = ANY(ARRAY[?]::text[])` : "";
 
-    const projectIdsQuery = bothParentAndChild
-      ? `
+      const projectIdsQuery = bothParentAndChild
+        ? `
         SELECT DISTINCT ps.project_rid
         FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
@@ -2201,7 +2314,7 @@ class SchemaService {
         ${accountMetaClause}
         ${fiscalYearClause}
       `
-      : `
+        : `
         SELECT DISTINCT ps.project_rid
         FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid
@@ -2214,19 +2327,19 @@ class SchemaService {
         ${fiscalYearClause}
       `;
 
-    const projectIdsReplacements = bothParentAndChild
-  ? [
-      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-      ...whereReplacementsParent,
-      ...(accountMeta.length > 0 ? [accountMeta] : []),
-      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-    ]
-  : [
-      ...(accessibleIds.length > 0 ? [accessibleIds] : []),
-      ...whereReplacementsChild,
-      ...(accountMeta.length > 0 ? [accountMeta] : []),
-      ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
-    ];
+      const projectIdsReplacements = bothParentAndChild
+        ? [
+            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+            ...whereReplacementsParent,
+            ...(accountMeta.length > 0 ? [accountMeta] : []),
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+          ]
+        : [
+            ...(accessibleIds.length > 0 ? [accessibleIds] : []),
+            ...whereReplacementsChild,
+            ...(accountMeta.length > 0 ? [accountMeta] : []),
+            ...(fiscalYear && fiscalYear !== 0 ? [fiscalYear] : []),
+          ];
 
       const projectIdsResult = await mainDbSequelize.query(projectIdsQuery, {
         replacements: projectIdsReplacements,
@@ -2292,8 +2405,12 @@ class SchemaService {
           SELECT ${commonSelectFields},
           ${childAggSQL}
           ${commonJoins}
-          WHERE ps.project_rid IN (${projectIds.map(() => '?').join(',')})
-          ${accountMeta.length > 0 ? `AND acc.rid IN (${accountMeta.map(() => '?').join(',')})` : ''}
+          WHERE ps.project_rid IN (${projectIds.map(() => "?").join(",")})
+          ${
+            accountMeta.length > 0
+              ? `AND acc.rid IN (${accountMeta.map(() => "?").join(",")})`
+              : ""
+          }
           ${commonGroupBy}
         )
         SELECT * FROM base_projects
@@ -2936,7 +3053,7 @@ class SchemaService {
         replacements.push(condition);
       }
     }
-    
+
     return {
       conditions,
       replacements,
@@ -3635,35 +3752,37 @@ class SchemaService {
         }
       );
 
-    return result;
-  } catch (error) {
-    console.error('Error fetching attachments:', error);
-    throw new Error('Failed to fetch attachments');
-  }
-}
-
-async fetchAccountsByIds(accountRids: string[]) {
-  try {
-    const mainDbSequelize = await initMainDbSequelize();
-
-    // Return empty array if no account IDs provided
-    if (!accountRids || accountRids.length === 0) {
-      return [];
+      return result;
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      throw new Error("Failed to fetch attachments");
     }
-
-    const accounts = await mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:accountRids)`,
-      {
-        replacements: { accountRids },
-        type: "SELECT"
-      }
-    );
-
-    return accounts;
-  } catch (err) {
-    throw new Error("Error fetching accounts by IDs: " + (err as Error).message);
   }
-}
+
+  async fetchAccountsByIds(accountRids: string[]) {
+    try {
+      const mainDbSequelize = await initMainDbSequelize();
+
+      // Return empty array if no account IDs provided
+      if (!accountRids || accountRids.length === 0) {
+        return [];
+      }
+
+      const accounts = await mainDbSequelize.query(
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:accountRids)`,
+        {
+          replacements: { accountRids },
+          type: "SELECT",
+        }
+      );
+
+      return accounts;
+    } catch (err) {
+      throw new Error(
+        "Error fetching accounts by IDs: " + (err as Error).message
+      );
+    }
+  }
 
   async getUserGroupType(userRid: string): Promise<string | null> {
     const mainDbSequelize = await initMainDbSequelize();
@@ -3695,39 +3814,43 @@ async fetchAccountsByIds(accountRids: string[]) {
     }
   }
 
-  async getUserProfileType(userRid: string): Promise<{ profileName: string, email: string } | null> {
-  const mainDbSequelize = await initMainDbSequelize();
+  async getUserProfileType(
+    userRid: string
+  ): Promise<{ profileName: string; email: string } | null> {
+    const mainDbSequelize = await initMainDbSequelize();
 
-  try {
-    const results = await mainDbSequelize.query<{ profile_name: string; email: string }>(
-      `
+    try {
+      const results = await mainDbSequelize.query<{
+        profile_name: string;
+        email: string;
+      }>(
+        `
       SELECT p.profile_name, u.email
       FROM ${MAIN_SCHEMA_NAME}.user u
       JOIN ${MAIN_SCHEMA_NAME}.profile p ON u.profile_rid = p.rid 
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-      {
-        replacements: { userRid },
-        type: QueryTypes.SELECT,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
       }
-    );
 
-    if (!results || results.length === 0) {
-      return null;
+      // Return renamed keys to match camelCase (optional)
+      return {
+        profileName: results[0].profile_name,
+        email: results[0].email,
+      };
+    } catch (error) {
+      console.error("Error fetching user profile info:", error);
+      throw new Error("Failed to get user profile information");
     }
-
-    // Return renamed keys to match camelCase (optional)
-    return {
-      profileName: results[0].profile_name,
-      email: results[0].email,
-    };
-  } catch (error) {
-    console.error("Error fetching user profile info:", error);
-    throw new Error("Failed to get user profile information");
   }
-}
-
 
   async getAccessibleAccountInfo(userRid: string): Promise<
     Array<{
@@ -3904,20 +4027,25 @@ async fetchAccountsByIds(accountRids: string[]) {
     return exportableFields;
   }
 
-async fetchChildAccountRidByParentAccountId(mainSequelize: Sequelize, rid: string): Promise<any[]> {
-  try {
-    const childAccounts = await mainSequelize.query(
-      rawQueries.fetchChildAccountsByParentAccountRid(),
-      {
-        replacements: { parentRid: rid },
-        type: QueryTypes.SELECT
-      }
-    );
-    return childAccounts;
-  } catch (err) {
-    throw new Error("Error fetching child accounts: " + (err as Error).message);
+  async fetchChildAccountRidByParentAccountId(
+    mainSequelize: Sequelize,
+    rid: string
+  ): Promise<any[]> {
+    try {
+      const childAccounts = await mainSequelize.query(
+        rawQueries.fetchChildAccountsByParentAccountRid(),
+        {
+          replacements: { parentRid: rid },
+          type: QueryTypes.SELECT,
+        }
+      );
+      return childAccounts;
+    } catch (err) {
+      throw new Error(
+        "Error fetching child accounts: " + (err as Error).message
+      );
+    }
   }
-}
 }
 
 export default SchemaService;

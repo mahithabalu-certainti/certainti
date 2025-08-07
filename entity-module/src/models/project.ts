@@ -1,6 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 import { ProjectFiscal } from "./projectFiscal";
+import AccountDetails from "./accountDetails";
 export interface ProjectAttributes {
   rid: string;
   r_number?: string;
@@ -100,7 +101,7 @@ export class Project
   public project_client_group?: string | null;
   public project_group?: string | null;
 
-  public status_rid!:string;
+  public status_rid!: string;
 
   public country_rid?: string | null;
   public region_rid?: string | null;
@@ -139,7 +140,9 @@ export class Project
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
         r_number: {
@@ -286,13 +289,16 @@ export class Project
         underscored: true,
       }
     );
-      
-      Project.hasMany(ProjectFiscal, {
-      foreignKey: "project_rid",
-      sourceKey: "rid",
-      as: "ProjectFiscal",
+
+   
+
+    Project.belongsTo(AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_account",
     });
-  return model;
+
+    return model;
   }
 }
 

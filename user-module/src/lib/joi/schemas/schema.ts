@@ -15,7 +15,6 @@ const createUserGroupSchema = Joi.object({
         is_modified: Joi.boolean().required(),
       })
     )
-    .min(1)
     .required()
     .label("Users"),
   group_type_rid: Joi.string().required().label("Group Type"),
@@ -34,8 +33,8 @@ const createUserGroupSchema = Joi.object({
   is_consultant_only_group: Joi.boolean().required(),
   projects: Joi.object()
     .pattern(
-      Joi.string().min(1), // project_rid
-      Joi.boolean()        // has_access_enabled
+      Joi.string(), // project_rid
+      Joi.boolean() // has_access_enabled
     )
     .optional()
     .label("Projects"),
@@ -68,7 +67,7 @@ const updateUserGroupSchema = Joi.object({
     .label("Accounts"),
     projects: Joi.object()
     .pattern(
-      Joi.string().min(1), // project_rid
+      Joi.string(), // project_rid
       Joi.boolean()        // has_access_enabled
     )
     .optional()

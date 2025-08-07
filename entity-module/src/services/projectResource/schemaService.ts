@@ -40,6 +40,7 @@ import { MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
 import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
+import AccountDetails from "../../models/accountDetails";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -94,6 +95,15 @@ export class ProjectResourceSchemaService {
     const sequelize = await this.getSequelize();
     this.mainDbSequelize = await this.getMainSequelize();
 
+    const AccountFiscalModel = await AccountFiscal.initialize(
+      sequelize,
+      schemaName
+    );
+    const AccountDetailsModel = await AccountDetails.initialize(
+      sequelize,
+      schemaName
+    );
+
     const ProjectResourceModel = await ProjectResource.initialize(
       sequelize,
       schemaName
@@ -107,13 +117,16 @@ export class ProjectResourceSchemaService {
     const ProjectResourceFiscalRegionModel =
       await ProjectResourceFiscalRegion.initialize(sequelize, schemaName);
 
+    const ProjectModel = await Project.initialize(sequelize, schemaName);
+
     const ProjectFiscalModel = await ProjectFiscal.initialize(
       sequelize,
       schemaName
     );
-    const ProjectModel = await Project.initialize(sequelize, schemaName);
+    
     const ProjectResourceTimelineModel =
       await ProjectResourceTimeline.initialize(sequelize, schemaName);
+
     const ProjectResourceHistoryModel = await ProjectResourceHistory.initialize(
       sequelize,
       schemaName
@@ -128,10 +141,7 @@ export class ProjectResourceSchemaService {
       sequelize,
       schemaName
     );
-    const AccountFiscalModel = await AccountFiscal.initialize(
-      sequelize,
-      schemaName
-    );
+    
     const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(
       sequelize,
       schemaName
@@ -141,6 +151,101 @@ export class ProjectResourceSchemaService {
       schemaName
     );
 
+    ProjectResourceModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource_account",
+    });
+
+    ProjectResourceModel.belongsTo(ProjectModel, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_project",
+    });
+
+    ProjectResourceModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_project_fiscal",
+    });
+
+    ProjectResourceModel.belongsTo(ResourcesModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_resource",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource__fiscal_account",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(ProjectModel, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project_fiscal",
+    });
+
+    ProjectResourceFiscalModel.belongsTo(ResourcesModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_resource",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource__fiscal_region_account",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(ProjectModel, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_project",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_project_fiscal",
+    });
+
+    ProjectResourceFiscalRegionModel.belongsTo(ResourcesModel, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_region_resource",
+    });
+
+    ProjectResourceTimelineModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource_timeline_account",
+    });
+    
+    ProjectResourceTimelineModel.belongsTo(ProjectResourceModel, {
+      foreignKey: "entity_rid",
+      targetKey: "rid",
+      as: "project_resource_timeline_project_resource"
+    });
+
+    ProjectResourceHistoryModel.belongsTo(ProjectResourceModel, {
+      foreignKey: "project_resource_rid",
+      targetKey: "rid",
+      as: "project_resource_histoy_project_resource"
+    });
+
+    // ProjectResourceModel.belongsTo(ResourcesModel, {
+    //   foreignKey: "resource_rid",
+    //   targetKey: "rid",
+    //   as: "project_resource_resource",
+    // });
     const models = {
       ProjectResource: ProjectResourceModel,
       Project: ProjectModel,
@@ -1867,7 +1972,6 @@ export class ProjectResourceSchemaService {
         account_rid: projectResourceData.account_rid,
         project_rid: projectData.project_rid,
         project_fiscal_rid: projectResourceData.project_fiscal_rid,
-        project_resource_rid: createdProjectResource.rid,
         resource_rid: resource.rid || "",
         fiscal_year: projectData.fiscal_year,
         status_rid: projectResourceData.status_rid || null,
@@ -2206,7 +2310,6 @@ export class ProjectResourceSchemaService {
           project_fiscal_rid: projectResourceData.project_fiscal_rid,
           fiscal_year: fiscalYear,
           resource_rid: resource?.rid || "",
-          project_resource_rid: projectResourceData.project_resource_rid,
           status_rid: projectResourceData.status_rid || null,
           total_hours_pro_res: projectResourceData.total_hours_pro_res ?? 0,
           total_cost_pro_res: projectResourceData.total_cost_pro_res ?? 0,
@@ -2596,6 +2699,8 @@ export class ProjectResourceSchemaService {
         entity_rid: projectResourceId,
         created_by: userId,
         created_datetime: new Date(),
+      }, {
+        transaction
       });
     } catch (err) {
       console.log("Error addinng timelne", err);
@@ -3100,12 +3205,6 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         fiscal_year: fiscalYear,
         project_fiscal_rid: projectId
-        // [Op.and]: [
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
-        //     Sequelize.fn("LOWER", projectCode)
-        //   ),
-        // ],
       },
       group: [
         "account_rid",
@@ -3113,6 +3212,43 @@ export class ProjectResourceSchemaService {
         "project_fiscal_rid",
         "fiscal_year",
       ],
+      raw: true,
+      transaction,
+    });
+    
+    const byTypeAggregates: any[] = await ProjectResource.findAll({
+      attributes: [
+        [Sequelize.col("project_resource_resource.resource_type_rid"), "resource_type_rid"],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.cast(Sequelize.col("total_hours_pro_res"), "DECIMAL")
+          ),
+          "total_effort",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.cast(Sequelize.col("total_cost_pro_res"), "DECIMAL")
+          ),
+          "total_cost",
+        ],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectResource.rid")), "count"]
+      ],
+      include: [
+        {
+          model: Resources,
+          as: "project_resource_resource",
+          attributes: ["resource_type_rid"],
+          required: true,
+        },
+      ],
+      where: {
+        account_rid: accountId,
+        fiscal_year: fiscalYear,
+        project_fiscal_rid: projectId,
+      },
+      group: ["project_resource_resource.resource_type_rid"],
       raw: true,
       transaction,
     });
@@ -3131,12 +3267,12 @@ export class ProjectResourceSchemaService {
     let total_subcon_count = 0;
     let total_nonlabor_count = 0;
 
-    for (const row of aggregates) {
+    for (const row of byTypeAggregates) {
       const typeName = resourceTypeMap[row.resource_type_rid] || "";
       const cost = Number(row.total_cost || 0);
       const effort = Number(row.total_effort || 0);
       const count = Number(row.count || 0);
-
+  
       switch (typeName) {
         case "full-time":
           total_cost_fte = cost;
@@ -3832,6 +3968,56 @@ export class ProjectResourceSchemaService {
           ),
           "effective_total_subcon",
         ],
+
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_from_prj_res, 0)")
+          ),
+          "total_cost_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_effort_from_prj_res, 0)")
+          ),
+          "total_effort_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_effort_fte_from_prj_res, 0)")
+          ),
+          "total_effort_fte_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_effort_subcon_from_prj_res, 0)")
+          ),
+          "total_effort_subcon_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_fte_from_prj_res, 0)")
+          ),
+          "total_cost_fte_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_subcon_from_prj_res, 0)")
+          ),
+          "total_cost_subcon_from_prj_res",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_nonlabor_from_prj_res, 0)")
+          ),
+          "total_cost_nonlabor_from_prj_res",
+        ],
       ],
       where: {
         account_rid: accountId,
@@ -3852,11 +4038,13 @@ export class ProjectResourceSchemaService {
         total_project_hours: aggregates.effective_effort,
         total_fte: aggregates.effective_total_fte,
         total_subcon: aggregates.effective_total_subcon,
-        total_project_res_hours_fte: aggregates.effective_fte_effort,
-        total_project_res_hours_subcon: aggregates.effective_subcon_effort,
-        total_project_res_cost_fte: aggregates.effective_fte_cost,
-        total_project_res_cost_subcon: aggregates.effective_subcon_cost,
-        total_project_res_cost_nonlabor: aggregates.effective_nonlabor_cost,
+        total_project_res_cost: aggregates.total_cost_from_prj_res,
+        total_project_res_hours: aggregates.total_effort_from_prj_res,
+        total_project_res_hours_fte: aggregates.total_effort_fte_from_prj_res,
+        total_project_res_hours_subcon: aggregates.total_effort_subcon_from_prj_res,
+        total_project_res_cost_fte: aggregates.total_cost_fte_from_prj_res,
+        total_project_res_cost_subcon: aggregates.total_cost_subcon_from_prj_res,
+        total_project_res_cost_nonlabor: aggregates.total_cost_nonlabor_from_prj_res,
       },
       {
         where: {
@@ -3983,11 +4171,11 @@ export class ProjectResourceSchemaService {
           total_project_hours: row.effective_effort,
           total_fte: row.effective_total_fte,
           total_subcon: row.effective_total_subcon,
-          total_project_hours_fte: row.effective_fte_effort,
-          total_project_hours_subcon: row.effective_subcon_effort,
-          total_project_cost_fte: row.effective_fte_cost,
-          total_project_cost_subcon: row.effective_subcon_cost,
-          total_project_cost_nonlabor: row.effective_nonlabor_cost,
+          total_project_res_hours_fte: row.effective_fte_effort,
+          total_project_res_hours_subcon: row.effective_subcon_effort,
+          total_project_res_cost_fte: row.effective_fte_cost,
+          total_project_res_cost_subcon: row.effective_subcon_cost,
+          total_project_res_cost_nonlabor: row.effective_nonlabor_cost,
         },
         {
           where: {
@@ -4746,26 +4934,26 @@ export class ProjectResourceSchemaService {
     const labelMap: Record<string, string> = {
         "resource_code": "Resource Code",
         "resource_name": "Name",
-        "country_rid": "Country",
-        "region_rid": "Region",
+        "country_rid": "Resource Country",
+        "region_rid": "Resource Region",
         "fiscal_year":"Fiscal Year",
         "resource_type_rid": "Resource Type",
         "resource_role": "Role",
-        "total_project_hours": "Total Project Hours",
+        "total_hours_pro_res": "Effort (Hours)",
         "total_cost_pro_res": "Cost",
         "resource_designation": "Designation",
         "qre_percent": "QRE %",
         "qre_final": "QRE",
-        "comments": "Comments",
-        "r_number": "Project Resource ID",
+        "description": "Comments",
+        // "r_number": "Project Resource ID",
       };
     let exportData = projectResource.map((resource: any) => {
        const exportData: Record<string, string> = {};   
       let resultMap =  {
         "resource_code": resource.resource_code || "-",
         "resource_name": resource.resource_name || "-",
-        "country_name": resource.country_name || "-",
-        "region_name": resource.region_name || "-",
+        "country_rid": resource.country_name || "-",
+        "region_rid": resource.region_name || "-",
         "fiscal_year": resource.fiscal_year || "-",
         "resource_type_rid": resource?.resource_type_name || "-",
         "resource_role": resource.resource_role || "-",
@@ -4773,8 +4961,8 @@ export class ProjectResourceSchemaService {
         "total_cost_pro_res": resource.total_cost_pro_res || "-",
         "qre_percent": resource.qre_percent || "-",
         "qre_final": resource.qre_final || "-",
-        "domments": resource.description || "-",
-        "r_number": resource.project_resource_code || "-",
+        "description": resource.description || "-",
+        // "r_number": resource.project_resource_code || "-",
       };      
       for (const [field, value] of Object.entries(resultMap)) {
       if (allowedFieldSet.has(field)) {

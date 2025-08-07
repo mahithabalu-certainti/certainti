@@ -94,20 +94,6 @@ class ProjectIngestionService {
     const sequelize = await this.getSequelize();
     const mainDbSequelize = await this.getMainSequelize();
 
-    const KeyContactModel = await KeyContact.initialize(sequelize, schemaName);
-    const ProjectFiscalModel = await ProjectFiscal.initialize(
-      sequelize,
-      schemaName
-    );
-    const ProjectModel = await Project.initialize(sequelize, schemaName);
-
-    const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(sequelize, schemaName);
-
-    const ProjectTimelineModel = await ProjectTimeline.initialize(
-      sequelize,
-      schemaName
-    );
-
     const AccountDetailsModel = await AccountDetails.initialize(
       sequelize,
       schemaName
@@ -120,6 +106,37 @@ class ProjectIngestionService {
       sequelize,
       schemaName
     );
+
+    const KeyContactModel = await KeyContact.initialize(sequelize, schemaName);
+    const ProjectModel = await Project.initialize(sequelize, schemaName);
+    const ProjectFiscalModel = await ProjectFiscal.initialize(
+      sequelize,
+      schemaName
+    );
+
+    ProjectModel.hasMany(ProjectFiscalModel, {
+      foreignKey: "project_rid",
+      sourceKey: "rid",
+      as: "ProjectFiscal",
+    })
+
+    const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(sequelize, schemaName);
+
+    const ProjectTimelineModel = await ProjectTimeline.initialize(
+      sequelize,
+      schemaName
+    );
+
+    AccountFiscalModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account_fiscal_account",
+    });
+    AccountFiscalRegionModel.belongsTo(AccountDetailsModel, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account_fiscal_region_account",
+    });
 
     const ProjectHistoryModel = await ProjectHistory.initialize(
       sequelize,

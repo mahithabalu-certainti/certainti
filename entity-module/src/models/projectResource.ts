@@ -199,6 +199,32 @@ export class ProjectResource
 
     return ProjectResource;
   }
+
+  static associate(models: any) {
+    ProjectResource.belongsTo(models.AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "roject_resource_account",
+    });
+
+    ProjectResource.belongsTo(models.Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "roject_resource_project",
+    });
+
+    ProjectResource.belongsTo(models.ProjectFiscal, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "roject_resource_project_fiscal",
+    });
+
+    ProjectResource.belongsTo(models.Resources, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_resource",
+    });
+  }
 }
 
 export async function setupProjectResourceSequence(

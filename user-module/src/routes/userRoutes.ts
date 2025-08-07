@@ -7,6 +7,7 @@ const routes = Router();
 routes.get("/list", checkUserStatusMiddleware("user_view_edit"), controller.userController.listUsers);
 routes.get("/export", checkUserStatusMiddleware("user_export"), controller.userController.exportUsers);
 routes.get("/roles", checkUserStatusMiddleware("NA"), controller.userManagementController.userRoles);
+routes.get("/list/profiles", checkUserStatusMiddleware("NA"), controller.userManagementController.userProfiles);
 routes.get("/profiles", checkUserStatusMiddleware("profile_view_edit"), controller.userManagementController.userProfiles);
 routes.get("/:id", checkUserStatusMiddleware("user_view_edit"), controller.userController.listUserById);
 routes.get("/list/:id", checkUserStatusMiddleware("NA"), controller.userController.listUserById);

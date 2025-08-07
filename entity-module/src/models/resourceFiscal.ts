@@ -1,5 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import AccountDetails from "./accountDetails";
+import { Resources } from "./resource";
 
 interface ResourceFiscalAttributes {
   rid?: string;
@@ -333,6 +335,7 @@ export class ResourceFiscal
         },
       }
     );
+
     return model;
   }
 }

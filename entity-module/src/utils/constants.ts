@@ -134,7 +134,9 @@ export const STATUS_MESSAGE = {
   autoAccessmentMissing : "Auto Assessment missing",
   autoSendMissing : "Autosend Interaction missing",
   maxAiMissing : "Max AI Interaction missing",
-  accountSummaryHighlightsSuccess : "Financial Summary fetched successfully"
+  accountSummaryHighlightsSuccess : "Financial Summary fetched successfully",
+  effortExceeded : "Effort cannot exceed the total hours in the duration",
+  effort24HrsExceeded : "Effort cannot exceed 24 hours for the day",
 }
 
 export const TYPES = {
@@ -499,7 +501,7 @@ export const rawQueries = {
     INSERT INTO ${schemaName}.project_history
     (created_by, created_datetime, project_rid, attribute_name, old_value, new_value)
     VALUES
-    ('${data.userId}', NOW(), '${data.project_rid}', '${attributeName}', '${oldValue}', '${newValue}')
+    ('${data.userId}', NOW(), '${data.project_fiscal_rid}', '${attributeName}', '${oldValue}', '${newValue}')
     `
   },
   checkForDuplicateFiscalYear (schemaName : string, data : any) {
@@ -540,7 +542,7 @@ export const rawQueries = {
     WHERE rid IN (:userIds)
   `,
   GET_RESOURCE_TYPES: `
-  SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRid)
+  SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:resourceTypeRid)
   `,
   GET_COUNTRIES:`
   SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:countryRid)
@@ -662,8 +664,6 @@ export const rawQueries = {
       tableName = [`account_details`]
       setValues = 
       `
-      fiscal_start_date = '${data.fiscal_start_date}',
-      fiscal_end_date = '${data.fiscal_end_date}',
       blended_rate_fte = ${data.blended_rate_fte == '' ? null : parseFloat(data.blended_rate_fte)},
       blended_rate_subcon = ${data.blended_rate_subcon == '' ? null : parseFloat(data.blended_rate_subcon) },
       autosend_interaction = ${data.autosend_interaction},
@@ -698,6 +698,44 @@ export const rawQueries = {
     }
     return HttpStatus.SUCCESS_MESSAGE 
   },
+  fetchStates(stateIds : string[], country_rid : string) {
+    let formattedStateIds = stateIds.map((id : string) => `'${id}'`).join(',')
+    return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
+    WHERE 
+    rid IN (${formattedStateIds})
+    AND
+    country_rid = '${country_rid}'`
+  },
+  fetchStatesIds(schemaName : string, account_rid : string, fiscal_year : number) {
+    return `
+    SELECT region_rid FROM ${schemaName}.account_fiscal_region 
+    WHERE 
+    account_rid = '${account_rid}'
+    AND
+    fiscal_year = ${fiscal_year}
+    `
+  },
+  updateProjectFiscalEffectiveDatas(schemaName : string, data : any) {
+    return `
+    UPDATE ${schemaName}.project_fiscal
+    SET 
+      effective_cost = ${data.total_cost_prj},
+      effective_effort = ${data.total_effort_prj},
+      effective_total_fte = ${data.total_fte_prj},
+      effective_total_subcon = ${data.total_subcon_prj},
+      effective_fte_effort = ${data.total_effort_fte_prj},
+      effective_subcon_effort = ${data.total_effort_subcon_prj},
+      effective_fte_cost = ${data.total_cost_fte_prj},
+      effective_subcon_cost = ${data.total_cost_subcon_prj},
+      effective_nonlabor_cost = ${data.total_cost_nonlabor_prj}
+    WHERE
+      rid = '${data.rid}'
+      AND
+      default_metric_type = 'project'
+      AND
+      effective_metric_type IS NULL
+    `
+  }
 }
 
 export const IMPORT_FILTER_COLUMNS : any = {

@@ -10,16 +10,23 @@ import {
 import { setInlineForProjectTask } from "../utils/helpers";
 import { ProjectTaskSchemaService } from "../services/projectTask/schemaService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
+import Decimal from "decimal.js";
+import { ProjectTask } from "../models/projectTask";
+import { ProjectResourceSchemaService } from "./projectResource/schemaService";
 
 const services = Configurations.getInstance().getServices();
 const projectTaskService = services.projectTaskServices;
 const projectTaskSchemaService = new ProjectTaskSchemaService();
 
 export default class ProjectTaskGraphqlServies {
-  private projectTaskInjestionServie: ProjectInjestionTaskService;
+  private projectTaskInjestionService: ProjectInjestionTaskService;
+  private projectTaskSchema: ProjectTaskSchemaService;
+;
+
 
   constructor() {
-    this.projectTaskInjestionServie = new ProjectInjestionTaskService();
+    this.projectTaskInjestionService = new ProjectInjestionTaskService();
+    this.projectTaskSchema = new ProjectTaskSchemaService();
   }
 
   async updateInlineGraphqlDetails(data: any) {
@@ -29,6 +36,7 @@ export default class ProjectTaskGraphqlServies {
     const checkAccountExists: any = await mainSequelize.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)
     );
+
     if (checkAccountExists[0].length < 1) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
@@ -46,6 +54,7 @@ export default class ProjectTaskGraphqlServies {
           data.account_rid
         )
       );
+
       if (checkForExistingData[0].length < 1) {
         return {
           statusCode: HttpStatus.NOT_FOUND,
@@ -68,6 +77,65 @@ export default class ProjectTaskGraphqlServies {
             };
           }
         }
+
+        const newEffort = new Decimal(data.total_hours_pro_task || "0");
+
+      if (!newEffort.isZero() && !newEffort.isNaN()) {
+        const startDate = data.start_date? data.start_date : checkForExistingData[0][0].start_date;
+        const endDate = data.end_date? data.end_date : checkForExistingData[0][0].end_date;
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          const diffDays =
+            Math.floor(
+              (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+            ) + 1;
+          const maxAllowedEffort = new Decimal(diffDays * 24);
+
+          const existingProjectTask = checkForExistingData[0][0];
+
+          const newProjectTaskData = {
+            ...existingProjectTask,
+            ...data
+          }
+
+          const existingTasks: ProjectTask[] =
+            await this.projectTaskSchema.getExistingEffortInProjectTask(
+              accountNumber,
+              newProjectTaskData,
+              newProjectTaskData.resource_rid!
+            );
+
+          const filteredTasks = existingTasks.filter(
+            (task) => task.rid !== data.rid 
+          );
+
+          const totalExistingEffort = filteredTasks.reduce(
+            (sum: Decimal, task: ProjectTask) => {
+              const effort = new Decimal(task.total_hours_pro_task || "0");
+              return sum.plus(effort);
+            },
+            new Decimal(0)
+          );
+
+          const totalEffort = totalExistingEffort.plus(newEffort);
+          if (totalEffort.gt(maxAllowedEffort)) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              statusMessage: STATUS_MESSAGE.effortExceeded,
+              data: null
+            };
+          }
+        } else if (startDate && !endDate) {
+          if (newEffort.gt(24)) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              statusMessage: STATUS_MESSAGE.effort24HrsExceeded,
+              data: null,
+            };
+          }
+        }
+      }
 
         let getSetData = setInlineForProjectTask(
           checkForExistingData[0][0],
@@ -99,7 +167,7 @@ export default class ProjectTaskGraphqlServies {
               data.userId
             );
 
-            await this.projectTaskInjestionServie.runAggregationAfterInlineUpdate(
+            await this.projectTaskInjestionService.runAggregationAfterInlineUpdate(
               accountNumber,
               data,
               checkForExistingData[0][0]
@@ -120,14 +188,15 @@ export default class ProjectTaskGraphqlServies {
               account_rid: latestData.account_rid,
               account_name: latestData.account_name || null,
               project_rid: latestData.project_rid,
+              project_fiscal_rid: latestData.project_fiscal_rid,
               project_name: latestData.project_name || null,
               project_code: latestData.project_code,
               project_resource_code: latestData.project_resource_code,
               resource_rid: latestData.resource_rid,
               resource_code: latestData.resource_code,
               fiscal_year: latestData.fiscal_year,
-              start_date: latestData.start_date,
-              end_date: latestData.end_date,
+              start_date: latestData.start_date ? new Date(latestData.start_date).toISOString() : null,
+              end_date: latestData.end_date ? new Date(latestData.end_date).toISOString() : null,
               resource_name: latestData.resource_name,
               resource_type_rid: latestData.resource_type_rid,
               resource_type_name: latestData.resource_type_name,

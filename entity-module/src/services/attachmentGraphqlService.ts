@@ -4,10 +4,9 @@ import { initOrgSequelize } from "../config/orgDataSource"
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
 import { setInlineForAttachments } from "../utils/helpers"
 
-const services = Configurations.getInstance().getServices();
-const attachmentService = services.attachmentServices;
-
 export default class AttachmentGraphqlServies {
+    private attachmentService = Configurations.getInstance().getServices().attachmentServices;
+    
     async updateInlineGraphqlDetails(data : any) {
         const orgSequelize = await initOrgSequelize()
         const mainSequelize = await initMainDbSequelize()
@@ -65,8 +64,16 @@ export default class AttachmentGraphqlServies {
                     if(updatedAttachmentSummary && updatedAttachments) {
                         let graphqlData : any = {}
                         graphqlData.document_rid = data.rid
-                        let fetchLatestUpdatedData = await attachmentService.getAttachments(data.userId, checkForExistingData[0][0].attachment_level, checkForExistingData[0][0].attach_to, data.account_rid, 1, 1, '', {}, 'created_datetime', 'DESC', 0, graphqlData)
-                        let latestData : any = fetchLatestUpdatedData.data?.attachments[0]
+                        let fetchLatestUpdatedData = await this.attachmentService.getAttachments(data.userId, checkForExistingData[0][0].attachment_level, checkForExistingData[0][0].attach_to, data.account_rid, 1, 1, '', {}, 'created_datetime', 'DESC', 0, graphqlData)
+                        let latestData : any = fetchLatestUpdatedData?.data?.attachments?.[0] || null;
+                        if (!latestData) {
+                            await orgSequelize.query(rawQueries.insertAttachementTimeline(schemaName, data, null));
+                            return {
+                                statusCode: HttpStatus.SUCCESS,
+                                statusMessage: STATUS_MESSAGE.attachmentUpdatedSuccess,
+                                data: null,
+                            };
+                        }
                         let finalStructuredData = {
                             document_rid : latestData.rid,
                             r_number: latestData.r_number,

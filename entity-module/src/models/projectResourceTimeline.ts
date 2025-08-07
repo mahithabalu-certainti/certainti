@@ -1,5 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import AccountDetails from "./accountDetails";
+import { ProjectResource } from "./projectResource";
 
 interface ProjectResourceTimelineAttributes {
   rid?: string;
@@ -40,7 +42,7 @@ export class ProjectResourceTimeline
   public modified_datetime?: Date;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return ProjectResourceTimeline.init(
+    ProjectResourceTimeline.init(
       {
         rid: {
           type: DataTypes.STRING(50),
@@ -92,6 +94,8 @@ export class ProjectResourceTimeline
         underscored: true,
       }
     );
+
+    return ProjectResourceTimeline;
   }
 }
 

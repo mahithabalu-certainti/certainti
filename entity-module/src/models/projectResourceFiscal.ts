@@ -11,7 +11,6 @@ interface ProjectResourceFiscalAttributes {
   created_datetime: Date;
   modified_datetime?: Date;
 
-  project_resource_rid: string;
   account_rid: string;
   project_rid: string;
   project_fiscal_rid: string;
@@ -76,7 +75,6 @@ export class ProjectResourceFiscal
   public created_datetime!: Date;
   public modified_datetime?: Date;
 
-  public project_resource_rid!: string;
   public account_rid!: string;
   public project_rid!: string;
   public project_fiscal_rid!: string;
@@ -141,7 +139,6 @@ export class ProjectResourceFiscal
         created_datetime: { type: DataTypes.DATE, allowNull: false },
         modified_datetime: { type: DataTypes.DATE },
 
-        project_resource_rid: { type: DataTypes.STRING(50), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         project_rid: { type: DataTypes.STRING(50), allowNull: false },
         project_fiscal_rid: {type: DataTypes.STRING(50), allowNull: false},
@@ -212,15 +209,33 @@ export class ProjectResourceFiscal
         },
       }
     );
-
-    ProjectResource.hasMany(ProjectResourceFiscal, {
-      foreignKey: "project_resource_rid",
-    });
-    
-    ProjectResourceFiscal.belongsTo(ProjectResource, {
-      foreignKey: "project_resource_rid"
-    })
     return ProjectResourceFiscal;
+  }
+
+  static associate(models: any) {
+    ProjectResourceFiscal.belongsTo(models.AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "project_resource__fiscal_account",
+    });
+
+    ProjectResourceFiscal.belongsTo(models.Project, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project",
+    });
+
+    ProjectResourceFiscal.belongsTo(models.ProjectFiscal, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project_fiscal",
+    });
+
+    ProjectResourceFiscal.belongsTo(models.Resources, {
+      foreignKey: "resource_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_resource",
+    });
   }
 }
 
