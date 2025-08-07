@@ -55,6 +55,8 @@ export interface InteractionQuestion {
   answer: string;
   response_received_on: string;
   attachments: Attachment[];
+  mandatory: boolean;
+  notes: string;
 }
 
 export interface InteractionDetails {

@@ -103,6 +103,9 @@ export const mockInteractionDetailsMap: Record<string, InteractionDetails> = {
         answer:
           'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
         response_received_on: '2024-04-28',
+        notes:
+          'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
+        mandatory: true,
         attachments: [
           {
             file_id: 'f001',
@@ -122,6 +125,9 @@ export const mockInteractionDetailsMap: Record<string, InteractionDetails> = {
         question: 'What is the project status?',
         answer: '',
         response_received_on: '',
+        notes:
+          'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
+        mandatory: false,
         attachments: [],
       },
     ],
@@ -147,6 +153,9 @@ export const mockInteractionDetailsMap: Record<string, InteractionDetails> = {
         question: 'Was the compliance report submitted?',
         answer: 'Yes, submitted via portal',
         response_received_on: '2024-04-28',
+        notes:
+          'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
+        mandatory: true,
         attachments: [
           {
             file_id: 'f003',
