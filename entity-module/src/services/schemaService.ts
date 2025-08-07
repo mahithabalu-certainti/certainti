@@ -123,7 +123,10 @@ class SchemaService {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
-      const AccountDetailsModel = await AccountDetails.initialize(sequelize, schemaName);
+      const AccountDetailsModel = await AccountDetails.initialize(
+        sequelize,
+        schemaName
+      );
 
       const Resource = Resources.initialize(sequelize, schemaName);
       const ResourcesHistoryModel = await ResourcesHistory.initialize(
@@ -178,105 +181,105 @@ class SchemaService {
       Resource.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resources_account"
+        as: "resources_account",
       });
 
       ResourceFiscalModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resources_fiscal_account"
+        as: "resources_fiscal_account",
       });
-  
+
       ResourceFiscalModel.belongsTo(Resource, {
         foreignKey: "resource_rid",
         targetKey: "rid",
-        as: "resources_fiscal_resource"
+        as: "resources_fiscal_resource",
       });
 
       ResourceFiscalRegionModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resources_fiscal_region_account"
+        as: "resources_fiscal_region_account",
       });
-  
+
       ResourceFiscalRegionModel.belongsTo(Resource, {
         foreignKey: "resource_rid",
         targetKey: "rid",
-        as: "resources_fiscal_region_resource"
+        as: "resources_fiscal_region_resource",
       });
 
       ResourcesTimelineModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resources_timeline_account"
+        as: "resources_timeline_account",
       });
 
       ResourcesTimelineModel.belongsTo(Resource, {
         foreignKey: "resource_rid",
         targetKey: "rid",
-        as: "resources_timeline_resource"
+        as: "resources_timeline_resource",
       });
 
       ResourcesHistoryModel.belongsTo(Resources, {
         foreignKey: "resource_rid",
         targetKey: "rid",
-        as: "resources_history_resource"
+        as: "resources_history_resource",
       });
 
       ResourceCostModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resource_cost_account"
+        as: "resource_cost_account",
       });
       ResourceCostModel.belongsTo(Resource, {
         foreignKey: "resource_rid",
         targetKey: "rid",
-        as: "resource_cost_resource"
+        as: "resource_cost_resource",
       });
-      
+
       ResourceCostTimelineModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resource_cost_timeline_account"
+        as: "resource_cost_timeline_account",
       });
       ResourceCostTimelineModel.belongsTo(Resource, {
         foreignKey: "entity_rid",
         targetKey: "rid",
-        as: "resource_cost_timeline_resource"
+        as: "resource_cost_timeline_resource",
       });
 
       ResourceCostHistoryModel.belongsTo(Resource, {
         foreignKey: "resource_cost_rid",
         targetKey: "rid",
-        as: "resource_cost_history_resource"
+        as: "resource_cost_history_resource",
       });
 
       ResourceSkillModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resource_skill_account"
+        as: "resource_skill_account",
       });
       ResourceSkillModel.belongsTo(Resource, {
         foreignKey: "resource_rid",
         targetKey: "rid",
-        as: "resource_skill_resource"
+        as: "resource_skill_resource",
       });
 
       ResourceSkillTimelineModel.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         targetKey: "account_rid",
-        as: "resource_skill_timeline_account"
+        as: "resource_skill_timeline_account",
       });
       ResourceSkillTimelineModel.belongsTo(Resource, {
         foreignKey: "entity_rid",
         targetKey: "rid",
-        as: "resource_skill_timeline_resource"
+        as: "resource_skill_timeline_resource",
       });
 
       ResourceSkillHistoryModel.belongsTo(Resource, {
         foreignKey: "resource_skill_rid",
         targetKey: "rid",
-        as: "resource_skill_history_resource"
+        as: "resource_skill_history_resource",
       });
 
       await Resource.sync({ force: false });
@@ -1908,7 +1911,7 @@ class SchemaService {
 
       // 4. Common SQL fragments
       const commonSelectFields = `
-        ps.project_code, ps.project_name, acc.account_name,
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
         ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type_rid, ps.project_client_group, ps.project_group,
@@ -1937,11 +1940,12 @@ class SchemaService {
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = acc.status_rid
       `;
 
       const commonGroupBy = `
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, ps.project_rid, ps.modified_datetime, 
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
         ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
@@ -2243,7 +2247,7 @@ class SchemaService {
 
       // 4. Common SQL fragments
       const commonSelectFields = `
-        ps.project_code, ps.project_name, acc.account_name,
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
         ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type_rid, ps.project_client_group, ps.project_group,
@@ -2271,11 +2275,12 @@ class SchemaService {
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
         LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = acc.status_rid
       `;
 
       const commonGroupBy = `
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, ps.project_rid, ps.modified_datetime, 
+        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
         ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,

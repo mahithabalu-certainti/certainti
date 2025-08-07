@@ -200,45 +200,41 @@ export class ProjectTaskSchemaService {
   }
 
   async getExistingEffortInProjectTask(
-    accountNumber: string,
-    projectTaskData: ICreateProjectTask,
-    resourceId: string
-  ): Promise<ProjectTask[]> {
+  accountNumber: string,
+  projectTaskData: ICreateProjectTask,
+  resourceId: string
+): Promise<ProjectTask[]> {
 
-    const { ProjectTask } = await this.getModels(accountNumber);
+  const { ProjectTask } = await this.getModels(accountNumber);
 
-    const startDate = projectTaskData.start_date
-      ? moment.utc(projectTaskData.start_date)
-      : null;
-    const endDate = projectTaskData.end_date
-      ? moment.utc(projectTaskData.end_date)
-      : null;
+  const startDate = projectTaskData.start_date
+    ? moment.utc(projectTaskData.start_date)
+    : null;
+  const endDate = projectTaskData.end_date
+    ? moment.utc(projectTaskData.end_date)
+    : null;
 
-    const whereClause: any = {
-      project_fiscal_rid: projectTaskData.project_fiscal_rid,
-      account_rid: projectTaskData.account_rid,
-      resource_rid: resourceId,
-      [Op.and]: [
-        { start_date: { [Op.gte]: startDate?.toDate() } }, 
-        Sequelize.where(
-          Sequelize.cast(Sequelize.col("end_date"), "date"),
-          {
-            [Op.lte]: endDate?.toDate(),
-          }
-        ),
-      ],
-    };
+  const whereClause: any = {
+    project_fiscal_rid: projectTaskData.project_fiscal_rid,
+    account_rid: projectTaskData.account_rid,
+    resource_rid: resourceId,
+    [Op.and]: [
+      {
+        start_date: { [Op.lte]: endDate?.toDate() }, // Overlap condition
+      },
+      {
+        end_date: { [Op.gte]: startDate?.toDate() }, // Overlap condition
+      },
+    ],
+  };
 
-    // if (startDate) whereClause.start_date = { [Op.gte]: startDate?.toDate() };
-    // if (endDate) whereClause.end_date = { [Op.lte]: endDate?.toDate() };
+  const existingTasks = await ProjectTask.findAll({
+    where: whereClause,
+  });
 
-    const existingTasks = await ProjectTask.findAll({
-      where: {
-        ...whereClause
-      }
-    });
-    return existingTasks;
-  }
+  return existingTasks;
+}
+
 
   async addProjectTask(
     accountNumber: string,
@@ -902,6 +898,7 @@ export class ProjectTaskSchemaService {
         where: {
           account_rid,
           resource_rid: resourceId,
+          fiscal_year: fiscalYear
         },
         defaults: {
           account_rid,
@@ -997,6 +994,7 @@ export class ProjectTaskSchemaService {
             account_rid,
             resource_rid: resourceId,
             country_region_rid: region_rid,
+            fiscal_year: fiscalYear,
           },
           defaults: {
             account_rid,
@@ -1785,6 +1783,7 @@ export class ProjectTaskSchemaService {
       taskData,
       resourceId,
       resourceData,
+      fiscalYear,
       userId,
       transaction
     );
@@ -1794,6 +1793,7 @@ export class ProjectTaskSchemaService {
       taskData,
       resourceId,
       resourceData,
+      fiscalYear,
       userId,
       transaction
     );
@@ -2136,6 +2136,7 @@ export class ProjectTaskSchemaService {
     existingProjectTask: ProjectTask,
     resourceId: string,
     resourceData: Resources,
+    fiscalYear: number,
     userId: string,
     transaction: Transaction
   ) {
@@ -2146,17 +2147,20 @@ export class ProjectTaskSchemaService {
   
     const newGroupKey = {
       account_rid: projectTaskData.account_rid,
-      resource_rid: resourceId
+      resource_rid: resourceId,
+      fiscal_year: fiscalYear
     };
   
     const oldGroupKey = {
       account_rid: existingProjectTask.account_rid,
-      resource_rid: existingProjectTask.resource_rid
+      resource_rid: existingProjectTask.resource_rid,
+      fiscal_year: fiscalYear
     };
   
     const isGroupChanged = (
       newGroupKey.account_rid !== oldGroupKey.account_rid ||
-      newGroupKey.resource_rid !== oldGroupKey.resource_rid
+      newGroupKey.resource_rid !== oldGroupKey.resource_rid || 
+      newGroupKey.fiscal_year !== oldGroupKey.fiscal_year
     );
   
     // 🔁 Step 1: Recalculate and clean old group if changed
@@ -2168,7 +2172,8 @@ export class ProjectTaskSchemaService {
         ],
         where: {
           account_rid: oldGroupKey.account_rid,
-          resource_rid: oldGroupKey.resource_rid
+          resource_rid: oldGroupKey.resource_rid,
+          fiscal_year: fiscalYear
         },
         transaction
       });
@@ -2231,7 +2236,8 @@ export class ProjectTaskSchemaService {
       ],
       where: {
         account_rid: newGroupKey.account_rid,
-        resource_rid: newGroupKey.resource_rid
+        resource_rid: newGroupKey.resource_rid,
+        fiscal_year: fiscalYear
       },
       transaction
     });
@@ -2258,7 +2264,8 @@ export class ProjectTaskSchemaService {
     projectTaskData: ICreateProjectTask,
     existingProjectTask: ProjectTask,
     resourceId: string,
-    resourceData: Resources, // passed from calling context to avoid re-fetch
+    resourceData: Resources, // passed from calling context to avoid re-fetch,
+    fiscalYear: number,
     userId: string,
     transaction: Transaction
   ) {
@@ -2286,19 +2293,22 @@ export class ProjectTaskSchemaService {
     const newGroupKey = {
       account_rid: projectTaskData.account_rid,
       resource_rid: resourceId,
-      region_rid: newRegionRid
+      region_rid: newRegionRid,
+      fiscal_year: fiscalYear
     };
   
     const oldGroupKey = {
       account_rid: existingProjectTask.account_rid,
       resource_rid: existingProjectTask.resource_rid,
-      region_rid: oldRegionRid
+      region_rid: oldRegionRid,
+      fiscal_year: fiscalYear
     };
   
     const isGroupChanged = (
       newGroupKey.account_rid !== oldGroupKey.account_rid ||
       newGroupKey.resource_rid !== oldGroupKey.resource_rid ||
-      newGroupKey.region_rid !== oldGroupKey.region_rid
+      newGroupKey.region_rid !== oldGroupKey.region_rid || 
+      newGroupKey.fiscal_year !== oldGroupKey.fiscal_year
     );
   
     // 🔁 Step 1: Recalculate old group aggregate
@@ -2341,7 +2351,8 @@ export class ProjectTaskSchemaService {
             where: {
               account_rid: existingProjectTask.account_rid,
               resource_rid: existingProjectTask.resource_rid,
-              country_region_rid: oldRegionRid
+              country_region_rid: oldRegionRid,
+              fiscal_year: fiscalYear
             },
             transaction
           }
@@ -2354,7 +2365,8 @@ export class ProjectTaskSchemaService {
       where: {
         account_rid: projectTaskData.account_rid,
         resource_rid: resourceId,
-        country_region_rid: newRegionRid
+        country_region_rid: newRegionRid,
+        fiscal_year: fiscalYear
       },
       transaction
     });
@@ -2365,6 +2377,7 @@ export class ProjectTaskSchemaService {
           account_rid: projectTaskData.account_rid,
           resource_rid: resourceId,
           country_region_rid: newRegionRid,
+          fiscal_year: fiscalYear,
           total_cost_for_year_project_task_level: projectTaskData.total_cost_pro_task,
           total_effort_for_year_project_task_level: projectTaskData.total_hours_pro_task,
           resource_type_rid: resourceData.resource_type_rid,
@@ -2399,7 +2412,8 @@ export class ProjectTaskSchemaService {
         where: {
           account_rid: projectTaskData.account_rid,
           resource_rid: resourceId,
-          country_region_rid: newRegionRid
+          country_region_rid: newRegionRid,
+          fiscal_year: fiscalYear
         },
         transaction
       }

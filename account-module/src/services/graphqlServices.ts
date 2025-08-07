@@ -71,11 +71,9 @@ class AccountGraphQlServices {
                         data: null
                     };
                     }
-                const existingAcc = await Account.findOne({
-                    where: {
-                    rid: { [Op.eq]: fetchAccountById.rid }
-                    }
-                });
+                // Store existing account name before update for comparison
+                const existingAccName = fetchAccountById.account_name;
+                
                 let updateAccount = await Account.update(setAccountData.newDbData, {
                     where: {
                         rid: fetchAccountById.rid
@@ -87,16 +85,14 @@ class AccountGraphQlServices {
                         statusMessage: STATUS_MESSAGE.accountUpdateFailed,
                         data: null
                     };
-                    }
-                if(existingAcc)
-                {
-                    const existingAccName = existingAcc?.account_name
-                    if (data.account_name !== existingAccName) 
-                    {
-                        const schemaService = new SchemaService();
-                        await schemaService.updateGroupNameForAccount(existingAcc.rid,data.userId,existingAcc.is_parent,data.account_name);
-                    }
+                }
                 
+                // Update group name if account name changed
+                if (data.account_name != undefined && data.account_name !== existingAccName) 
+                {
+                    console.log("Account name changed from", existingAccName, "to ", data.account_name);
+                    const schemaService = new SchemaService();
+                    await schemaService.updateGroupNameForAccount(fetchAccountById.rid, data.userId, fetchAccountById.is_parent, data.account_name);
                 }           
                 let accDetailsData = setAccountData.newDbAccDetailsData;
                 await setAccountDetails(accDetailsData, schemaName, fetchAccountById.rid, sequelize)
