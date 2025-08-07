@@ -14,23 +14,6 @@ export const settingsFormFields = (
       sectionName: '',
       fillType: 'half',
       fields: [
-        createTextField(
-          'max_interaction_follow_up',
-          'Max Interaction Follow Up',
-          {
-            required: true,
-            placeholder: 'Enter Max Interaction Follow Up',
-            disabled:
-              permissionMap?.['max_interaction_follow_up']?.read &&
-              !permissionMap?.['max_interaction_follow_up']?.edit,
-            hide:
-              !permissionMap?.['max_interaction_follow_up']?.read &&
-              !permissionMap?.['max_interaction_follow_up']?.edit,
-            regex: REGEX_PATTERNS.MAX_AI_INTERACTIONS,
-            regexErrorMessage:
-              'Max Interaction Follow Up must be between 1 and 10',
-          }
-        ),
         createTextField('blended_rate_fte', 'Blended Rate - FTE', {
           required: false,
           placeholder: 'Enter Blended Rate - FTE',
@@ -57,6 +40,23 @@ export const settingsFormFields = (
           regexErrorMessage:
             'Only positive numbers allowed, up to 3 digits and 2 decimal places',
         }),
+        createTextField(
+          'max_interaction_follow_up',
+          'Max Interaction Follow Up',
+          {
+            required: true,
+            placeholder: 'Enter Max Interaction Follow Up',
+            disabled:
+              permissionMap?.['max_interaction_follow_up']?.read &&
+              !permissionMap?.['max_interaction_follow_up']?.edit,
+            hide:
+              !permissionMap?.['max_interaction_follow_up']?.read &&
+              !permissionMap?.['max_interaction_follow_up']?.edit,
+            regex: REGEX_PATTERNS.MAX_AI_INTERACTIONS,
+            regexErrorMessage:
+              'Max Interaction Follow Up must be between 1 and 10',
+          }
+        ),
         createRadioField('auto_assessment', 'Auto Assessment', {
           required: false,
           radioOptions: PROJECT_YES_NO_OPTIONS,

@@ -1,3 +1,4 @@
+import { costDisplay } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import {
   ClaimJurisdiction,
@@ -6,7 +7,8 @@ import {
 } from '../../../../../../types';
 
 export const getResourceMetricColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  currencySymbol?: string
 ): ListTableColumn<SummaryResourceMetric>[] => [
   {
     id: 'metric',
@@ -35,6 +37,8 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['fte']?.read,
+    render: (row: SummaryResourceMetric) =>
+      row.fte ? costDisplay(row.fte, currencySymbol) : '-',
   },
   {
     id: 'subcon',
@@ -46,6 +50,8 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['subcon']?.read,
+    render: (row: SummaryResourceMetric) =>
+      row.subcon ? costDisplay(row.subcon, currencySymbol) : '-',
   },
   {
     id: 'nonlabor',
@@ -57,61 +63,89 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['nonlabor']?.read,
+    render: (row: SummaryResourceMetric) =>
+      row.nonlabor ? costDisplay(row.nonlabor, currencySymbol) : '-',
   },
 ];
 
-export const getDetailedMetricColumns =
-  (): ListTableColumn<SummaryDetailedMetric>[] => [
-    {
-      id: 'metric_name',
-      label: 'Metrics',
-      sortable: false,
-      sortId: 'metric_name',
-      width: '25%',
-      sticky: true,
-      sx: {
-        position: 'sticky',
-        left: 0,
-        background: '#fff',
-        zIndex: 10,
-        borderRight: '1px solid #CBD6E2 !important',
-        borderBottom: '1px solid #CBD6E2 !important',
-      },
+export const getDetailedMetricColumns = (
+  currencySymbol?: string
+): ListTableColumn<SummaryDetailedMetric>[] => [
+  {
+    id: 'metric_name',
+    label: 'Metrics',
+    sortable: false,
+    sortId: 'metric_name',
+    width: '25%',
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
     },
-    {
-      id: 'project_level',
-      label: 'Project Level',
-      sortable: false,
-      sortId: 'project_level',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
+  },
+  {
+    id: 'project_level',
+    label: 'Project Level',
+    sortable: false,
+    sortId: 'project_level',
+    width: '25%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'project_resource_level',
-      label: 'Project Resource Level',
-      sortable: false,
-      sortId: 'project_resource_level',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_level, currencySymbol)
+        : '-',
+  },
+  {
+    id: 'project_resource_level',
+    label: 'Project Resource Level',
+    sortable: false,
+    sortId: 'project_resource_level',
+    width: '25%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'project_task_level',
-      label: 'Project Task Level',
-      sortable: false,
-      sortId: 'project_task_level',
-      width: '25%',
-      sx: {
-        textAlign: 'right',
-      },
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_resource_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_resource_level, currencySymbol)
+        : '-',
+  },
+  {
+    id: 'project_task_level',
+    label: 'Project Task Level',
+    sortable: false,
+    sortId: 'project_task_level',
+    width: '25%',
+    sx: {
+      textAlign: 'right',
     },
-  ];
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_task_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_task_level, currencySymbol)
+        : '-',
+  },
+];
 
 export const getClaimJurisdictionColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  currencySymbol?: string
 ): ListTableColumn<ClaimJurisdiction>[] => [
   {
     id: 'name',
@@ -140,6 +174,10 @@ export const getClaimJurisdictionColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['rd_credits_fte']?.read,
+    render: (row: ClaimJurisdiction) =>
+      row.rd_credits_fte
+        ? costDisplay(row.rd_credits_fte, currencySymbol)
+        : '-',
   },
   {
     id: 'rd_credits_subcon',
@@ -151,6 +189,10 @@ export const getClaimJurisdictionColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['rd_credits_subcon']?.read,
+    render: (row: ClaimJurisdiction) =>
+      row.rd_credits_subcon
+        ? costDisplay(row.rd_credits_subcon, currencySymbol)
+        : '-',
   },
   {
     id: 'rd_credits_nonlabor',
@@ -162,5 +204,9 @@ export const getClaimJurisdictionColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['rd_credits_nonlabor']?.read,
+    render: (row: ClaimJurisdiction) =>
+      row.rd_credits_nonlabor
+        ? costDisplay(row.rd_credits_nonlabor, currencySymbol)
+        : '-',
   },
 ];
