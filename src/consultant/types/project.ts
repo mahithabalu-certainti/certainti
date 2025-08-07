@@ -162,6 +162,7 @@ export type Project = {
   project_code: string;
   project_name: string | null;
   account_name?: string;
+  account_status_name?: string;
   account_id: string;
   project_rid: string;
   modified_datetime: string;
@@ -204,6 +205,7 @@ export type Project = {
   currency_rid?: string;
 };
 export type ProjectFiscalSummary = {
+  account_status_name?: string;
   project_code: string;
   project_group: string | null;
   project_name: string | null;

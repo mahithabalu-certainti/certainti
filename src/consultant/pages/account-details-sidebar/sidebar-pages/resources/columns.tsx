@@ -15,7 +15,8 @@ export const getResourceColumns = (
   onCountryClick: (country: string) => void,
   regionLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  onResourceIdClick?: (row: ResourceList) => void
+  onResourceIdClick?: (row: ResourceList) => void,
+  accountInActive?: boolean
 ): ListTableColumn<ResourceList>[] => [
   {
     id: 'resource_code',
@@ -46,7 +47,8 @@ export const getResourceColumns = (
       ),
     editable:
       permissionMap?.['resource_code']?.edit &&
-      permissionMap?.['resource_code']?.read,
+      permissionMap?.['resource_code']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_code']?.edit &&
       !permissionMap?.['resource_code']?.read,
@@ -84,7 +86,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['resource_name']?.edit &&
-      permissionMap?.['resource_name']?.read,
+      permissionMap?.['resource_name']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_name']?.edit &&
       !permissionMap?.['resource_name']?.read,
@@ -128,7 +131,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['resource_type_rid']?.edit &&
-      permissionMap?.['resource_type_rid']?.read,
+      permissionMap?.['resource_type_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_type_rid']?.edit &&
       !permissionMap?.['resource_type_rid']?.read,
@@ -157,7 +161,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['resource_orgname']?.edit &&
-      permissionMap?.['resource_orgname']?.read,
+      permissionMap?.['resource_orgname']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_orgname']?.edit &&
       !permissionMap?.['resource_orgname']?.read,
@@ -221,7 +226,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['resource_designation']?.edit &&
-      permissionMap?.['resource_designation']?.read,
+      permissionMap?.['resource_designation']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_designation']?.edit &&
       !permissionMap?.['resource_designation']?.read,
@@ -259,7 +265,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['resource_role']?.edit &&
-      permissionMap?.['resource_role']?.read,
+      permissionMap?.['resource_role']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_role']?.edit &&
       !permissionMap?.['resource_role']?.read,
@@ -293,7 +300,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['country_rid']?.edit &&
-      permissionMap?.['country_rid']?.read,
+      permissionMap?.['country_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['country_rid']?.edit &&
       !permissionMap?.['country_rid']?.read,
@@ -329,7 +337,8 @@ export const getResourceColumns = (
     sortable: true,
     editable:
       permissionMap?.['region_rid']?.edit &&
-      permissionMap?.['region_rid']?.read,
+      permissionMap?.['region_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['region_rid']?.edit &&
       !permissionMap?.['region_rid']?.read,
@@ -396,7 +405,8 @@ export const getResourceColumns = (
     ),
     editable:
       permissionMap?.['status_rid']?.edit &&
-      permissionMap?.['status_rid']?.read,
+      permissionMap?.['status_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['status_rid']?.edit &&
       !permissionMap?.['status_rid']?.read,
@@ -415,7 +425,9 @@ export const getResourceColumns = (
     width: 160,
     sortable: true,
     editable:
-      permissionMap?.['comments']?.edit && permissionMap?.['comments']?.read,
+      permissionMap?.['comments']?.edit &&
+      permissionMap?.['comments']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['comments']?.edit && !permissionMap?.['comments']?.read,
     field: {

@@ -286,6 +286,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         {value === 'attachments' && isAttachmentViewEnable && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <ResourceAttachmentsTable
+              accountDetails={accountDetails}
               fiscalYear={fiscalYearValue}
               appliedFilters={appliedFilters}
               resourceRid={resourceId}

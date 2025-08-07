@@ -141,13 +141,13 @@ export const getImportsListColumns = (
   },
   {
     id: 'status_descriptions',
-    sortId: 'status_description',
+    sortId: 'status_descriptions',
     label: 'Status Description',
     width: 240,
     sortable: true,
     hide:
-      !permissionMap?.['status_description']?.edit &&
-      !permissionMap?.['status_description']?.read,
+      !permissionMap?.['status_descriptions']?.edit &&
+      !permissionMap?.['status_descriptions']?.read,
   },
   // {
   //   id: 'import_type',
