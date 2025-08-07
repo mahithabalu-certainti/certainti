@@ -107,6 +107,8 @@ export const getFinancialResourceCostColumns = (
     hide:
       !permissionMap?.['qre_final']?.edit &&
       !permissionMap?.['qre_final']?.read,
+    render: (row: ProjectFinancialResourceCostList) =>
+      row.qre_final ? costDisplay(row.qre_final, currencySymbol) : '-',
   },
   {
     id: 'rd_credits_total',
@@ -120,5 +122,9 @@ export const getFinancialResourceCostColumns = (
     hide:
       !permissionMap?.['rd_credits_total']?.edit &&
       !permissionMap?.['rd_credits_total']?.read,
+    render: (row: ProjectFinancialResourceCostList) =>
+      row.rd_credits_total
+        ? costDisplay(row.rd_credits_total, currencySymbol)
+        : '-',
   },
 ];
