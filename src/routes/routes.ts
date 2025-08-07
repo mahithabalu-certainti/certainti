@@ -71,7 +71,7 @@ export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
 export const ATTACHMENTS = '/attachments';
 
 //CASES ROUTES
-export const CASES = '/cases';
+export const CASE = '/case';
 
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

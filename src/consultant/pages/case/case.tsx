@@ -10,7 +10,7 @@ import { ActionsDropdown } from '../../../components';
 import Filter from '../account-details-sidebar/components/filter/filter';
 import { CaseList } from './case-list/case-list';
 
-export const Cases: React.FC = () => {
+export const Case: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
@@ -157,4 +157,4 @@ export const Cases: React.FC = () => {
   );
 };
 
-export default Cases;
+export default Case;
