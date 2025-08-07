@@ -398,7 +398,7 @@ export const ProjectResources = ({
   const handleProjectResourceClick = (row: ProjectResourcesListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_res_id', row?.rid ?? '');
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     setProjectResData(row);
     setShowProjectResourceDetails(true);
     setShowFilter(false);
