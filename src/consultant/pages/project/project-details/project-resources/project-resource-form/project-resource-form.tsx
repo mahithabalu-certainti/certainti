@@ -48,6 +48,15 @@ const ProjectResourceForm: React.FC = () => {
   const [showSkillRoleOthersField, setShowSkillRoleOthersField] =
     useState(false);
   const [isResourceType, setIsResourceType] = useState(false);
+  const [isSalaryRequired, setIsSalaryRequired] = useState(true);
+  const [autoCalculatedValue, setAutoCalculatedValue] = useState<number>(0);
+  const [, setResourceFinancials] = useState({
+    salary: '',
+    bonus: '',
+    insurance: '',
+    total_cost_pro_res: '',
+    deductions: '',
+  });
   const { resourceId } = useParams();
 
   const [searchParams] = useSearchParams();
@@ -64,8 +73,29 @@ const ProjectResourceForm: React.FC = () => {
     account_Id as string,
     resourceId as string
   );
+  const calculateAutoValue = ({
+    salary = '0',
+    bonus = '0',
+    insurance = '0',
+    total_cost_pro_res = '0',
+    deductions = '0',
+  }: {
+    salary?: string;
+    bonus?: string;
+    insurance?: string;
+    total_cost_pro_res?: string;
+    deductions?: string;
+  }) => {
+    const s = parseFloat(salary) || 0;
+    const b = parseFloat(bonus) || 0;
+    const i = parseFloat(insurance) || 0;
+    const r = parseFloat(total_cost_pro_res) || 0;
+    const d = parseFloat(deductions) || 0;
+    return s + b + i + r - d;
+  };
 
   const projectResource = getProjectResource.data?.data;
+
   const projectResourceData = useMemo(
     () => ({
       ...projectResource?.projectResource,
@@ -84,6 +114,7 @@ const ProjectResourceForm: React.FC = () => {
         modified_name: projectResource?.projectResource?.modified_name || '-',
       }),
     }),
+
     [projectResource]
   );
 
@@ -219,6 +250,12 @@ const ProjectResourceForm: React.FC = () => {
   const goBack = () => {
     window.history.back();
   };
+  const defaultActiveValue = useMemo(() => {
+    const activeOption = memoizedStatus.find(
+      (option) => option.label.toLowerCase() === 'active'
+    );
+    return activeOption?.value || '';
+  }, [memoizedStatus]);
 
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country_rid') {
@@ -234,6 +271,7 @@ const ProjectResourceForm: React.FC = () => {
           ResourceType.full_time
       );
     }
+
     if (data.fieldName === 'assigned_skill_role_type_rid') {
       const selectedSkillSubType = memoizedProjectResourceSkillType.find(
         (option) => String(option.value) === String(data.fieldValue)
@@ -241,6 +279,33 @@ const ProjectResourceForm: React.FC = () => {
       setShowSkillRoleOthersField(
         selectedSkillSubType?.label.toLowerCase() === OthersEnum.Other
       );
+    }
+    if (
+      [
+        'salary',
+        'bonus',
+        'insurance',
+        'total_cost_pro_res',
+        'deductions',
+      ].includes(data.fieldName)
+    ) {
+      setResourceFinancials((prev) => {
+        const updated = {
+          ...prev,
+          [data.fieldName]: data.fieldValue as string,
+        };
+
+        const salary = parseFloat(updated.salary) || 0;
+        const bonus = parseFloat(updated.bonus) || 0;
+        const insurance = parseFloat(updated.insurance) || 0;
+        const resourceCost = parseFloat(updated.total_cost_pro_res) || 0;
+        const deductions = parseFloat(updated.deductions) || 0;
+
+        const total = salary + bonus + insurance + resourceCost - deductions;
+        setAutoCalculatedValue(parseFloat(total.toFixed(2)));
+
+        return updated;
+      });
     }
   };
   useEffect(() => {
@@ -279,7 +344,37 @@ const ProjectResourceForm: React.FC = () => {
     memoizedProjectResourceSkillType,
     projectResourceData?.assigned_skill_role_type_rid,
   ]);
+  useEffect(() => {
+    const financials = {
+      salary: projectResource?.projectResource?.salary || '',
+      bonus: projectResource?.projectResource?.bonus || '',
+      insurance: projectResource?.projectResource?.insurance || '',
+      total_cost_pro_res:
+        projectResource?.projectResource?.total_cost_pro_res || '',
+      deductions: projectResource?.projectResource?.deductions || '',
+    };
+    setResourceFinancials({
+      salary: String(financials.salary),
+      bonus: String(financials.bonus),
+      insurance: String(financials.insurance),
+      total_cost_pro_res: String(financials.total_cost_pro_res),
+      deductions: String(financials.deductions),
+    });
+    const total = calculateAutoValue({
+      salary: String(financials.salary),
+      bonus: String(financials.bonus),
+      insurance: String(financials.insurance),
+      total_cost_pro_res: String(financials.total_cost_pro_res),
+      deductions: String(financials.deductions),
+    });
+    setAutoCalculatedValue(parseFloat(total.toFixed(2)));
 
+    setIsSalaryRequired(
+      projectResource?.projectResource?.salary === null ||
+        projectResource?.projectResource?.salary === undefined ||
+        projectResource?.projectResource?.salary === 0
+    );
+  }, [projectResource]);
   const formConfig = ProjectResourceFormData(
     memoizedProjectResourceCode,
     // memoizedProjectTypes,
@@ -292,6 +387,8 @@ const ProjectResourceForm: React.FC = () => {
     // showSkillRoleOthersField,
     isResourceType,
     states.isLoading,
+    autoCalculatedValue,
+    isSalaryRequired,
     isEditView,
     fiscalDate,
     permissionMap
@@ -348,7 +445,7 @@ const ProjectResourceForm: React.FC = () => {
           values={
             isEditView && projectResourceData
               ? { ...projectResourceData }
-              : { currency_rid: currency_rid }
+              : { currency_rid: currency_rid, status_rid: defaultActiveValue }
           }
           outData={submitData}
           formRef={formRef}

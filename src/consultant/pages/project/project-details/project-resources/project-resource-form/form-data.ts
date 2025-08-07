@@ -6,6 +6,7 @@ import {
   SelectResourceOption,
 } from '../../../../../types';
 import {
+  createAutoCompleteField,
   createDateField,
   createSelectField,
   createTextAreaField,
@@ -62,6 +63,8 @@ export const ProjectResourceFormData = (
   // cityLoading?: boolean,
   // currencyLoading?: boolean,
   // disableFields?: boolean,
+  autoCalculatedValue?: number,
+  isSalaryRequired?: boolean,
   isEditView?: boolean,
   fiscalDate?: FormFiscalDateType,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -72,7 +75,7 @@ export const ProjectResourceFormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createSelectField('resource_code', 'Resource Code', {
+          createAutoCompleteField('resource_code', 'Resource Code', {
             options: projectResourceCodes,
             required: true,
             onChange: true,
@@ -92,140 +95,6 @@ export const ProjectResourceFormData = (
               !permissionMap?.['resource_code']?.read &&
               !permissionMap?.['resource_code']?.edit,
           }),
-          // createSelectField('resource_type_rid', 'Resource Type', {
-          //   options: projectTypes,
-          //   placeholder: 'Choose Resource Type',
-          //   required: true,
-          //   onChange: true,
-          //   resetDependsFields: [
-          //     'salary',
-          //     'bonus',
-          //     'insurance',
-          //     'resource_orgname',
-          //   ],
-          //   disabled:
-          //     isEditView &&
-          //     permissionMap?.['resource_type_rid']?.read &&
-          //     !permissionMap?.['resource_type_rid']?.edit,
-          //   hide:
-          //     isEditView &&
-          //     !permissionMap?.['resource_type_rid']?.read &&
-          //     !permissionMap?.['resource_type_rid']?.edit,
-          // }),
-          // createTextField('resource_orgname', 'Resource Org Name', {
-          //   required: false,
-          //   regex: PROJECT_RESOURCE_REGEX.ORG_NAME,
-          //   regexErrorMessage:
-          //     'Please enter 3-100 characters, including at least one letter. Special characters other than ampersand, hyphen, period, comma are not allowed.',
-          //   placeholder: 'Enter Organization Name',
-          //   // disabled: isResourceType,
-          //   disabled:
-          //     (isEditView &&
-          //       permissionMap?.['resource_orgname']?.read &&
-          //       !permissionMap?.['resource_orgname']?.edit) ||
-          //     isResourceType,
-          //   hide:
-          //     isEditView &&
-          //     !permissionMap?.['resource_orgname']?.read &&
-          //     !permissionMap?.['resource_orgname']?.edit,
-          // }),
-          // createTextField('resource_name', 'Resource Name', {
-          //   required: false,
-          //   regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
-          //   regexErrorMessage:
-          //     "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-          //   placeholder: 'Enter Resource Name',
-          //   disabled:
-          //     isEditView &&
-          //     permissionMap?.['resource_name']?.read &&
-          //     !permissionMap?.['resource_name']?.edit,
-          //   hide:
-          //     isEditView &&
-          //     !permissionMap?.['resource_name']?.read &&
-          //     !permissionMap?.['resource_name']?.edit,
-          // }),
-          // createTextField('designation', 'Designation', {
-          //   required: false,
-          //   regex: PROJECT_RESOURCE_REGEX.DESIGNATION,
-          //   regexErrorMessage:
-          //     "Please enter 3–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-          //   placeholder: 'Enter Resource Role',
-          //   disabled:
-          //     isEditView &&
-          //     permissionMap?.['designation']?.read &&
-          //     !permissionMap?.['designation']?.edit,
-          //   hide:
-          //     isEditView &&
-          //     !permissionMap?.['designation']?.read &&
-          //     !permissionMap?.['designation']?.edit,
-          // }),
-          // createTextField('resource_role', 'Resource Role', {
-          //   required: false,
-          //   regex: PROJECT_RESOURCE_REGEX.ROLE,
-          //   regexErrorMessage:
-          //     "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-          //   placeholder: 'Enter Resource Role',
-          //   disabled:
-          //     isEditView &&
-          //     permissionMap?.['resource_role']?.read &&
-          //     !permissionMap?.['resource_role']?.edit,
-          //   hide:
-          //     isEditView &&
-          //     !permissionMap?.['resource_role']?.read &&
-          //     !permissionMap?.['resource_role']?.edit,
-          // }),
-          // createSelectField(
-          //   'assigned_skill_role_type_rid',
-          //   'Resource Skill Role Type',
-          //   {
-          //     options: projectResourceSkillType,
-          //     placeholder: 'Choose Resource Skill Role Type',
-          //     required: false,
-          //     onChange: true,
-          //     resetDependsFields: ['skill_role_rid', 'skill_role_others'],
-          //     disabled:
-          //       isEditView &&
-          //       permissionMap?.['assigned_skill_role_type_rid']?.read &&
-          //       !permissionMap?.['assigned_skill_role_type_rid']?.edit,
-          //     hide:
-          //       isEditView &&
-          //       !permissionMap?.['assigned_skill_role_type_rid']?.read &&
-          //       !permissionMap?.['assigned_skill_role_type_rid']?.edit,
-          //   }
-          // ),
-          // createSelectField('skill_role_rid', 'Resource Skill Role', {
-          //   options: projectResourceRollSkill,
-          //   placeholder: 'Choose Resource Skill Role',
-          //   required: true,
-          //   // hide: !showSkillRoleOthersField,
-          //   disabled:
-          //     isEditView &&
-          //     permissionMap?.['skill_role_rid']?.read &&
-          //     !permissionMap?.['skill_role_rid']?.edit,
-          //   hide:
-          //     (isEditView &&
-          //       !permissionMap?.['skill_role_rid']?.read &&
-          //       !permissionMap?.['skill_role_rid']?.edit) ||
-          //     !showSkillRoleOthersField,
-          // }),
-          // createTextField('skill_role_others', 'Resource Skill Role Others', {
-          //   required: true,
-          //   regex: PROJECT_RESOURCE_REGEX.ROLE,
-          //   regexErrorMessage:
-          //     'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-          //   placeholder: 'Enter Resource Skill Role Others',
-          //   // hide: !showSkillRoleOthersField,
-          //   disabled:
-          //     isEditView &&
-          //     permissionMap?.['skill_role_others']?.read &&
-          //     !permissionMap?.['skill_role_others']?.edit,
-          //   hide:
-          //     (isEditView &&
-          //       !permissionMap?.['skill_role_others']?.read &&
-          //       !permissionMap?.['skill_role_others']?.edit) ||
-          //     !showSkillRoleOthersField,
-          // }),
-
           createSelectField('status_rid', 'Resource Status', {
             options: resourceStatusOptions,
             placeholder: 'Choose Resource Status',
@@ -343,6 +212,7 @@ export const ProjectResourceFormData = (
             required: false,
             placeholder: 'Enter Salary',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            onChange: true,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             // hide: !isResourceType,
@@ -360,6 +230,7 @@ export const ProjectResourceFormData = (
             required: false,
             placeholder: 'Enter Bonus',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            onChange: true,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             // hide: !isResourceType,
@@ -377,6 +248,7 @@ export const ProjectResourceFormData = (
             required: false,
             placeholder: 'Enter Insurance',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            onChange: true,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             // hide: !isResourceType,
@@ -394,6 +266,7 @@ export const ProjectResourceFormData = (
             required: false,
             placeholder: 'Enter Deductions',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            onChange: true,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
@@ -406,8 +279,9 @@ export const ProjectResourceFormData = (
               !permissionMap?.['deductions']?.edit,
           }),
           createTextField('total_cost_pro_res', 'Cost', {
-            required: false,
+            required: isSalaryRequired,
             regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
+            onChange: true,
             regexErrorMessage:
               'Cost must be a 18-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
@@ -419,6 +293,14 @@ export const ProjectResourceFormData = (
               isEditView &&
               !permissionMap?.['total_cost_pro_res']?.read &&
               !permissionMap?.['total_cost_pro_res']?.edit,
+          }),
+          createTextField('net_resource_cost', 'Net Resource Cost', {
+            required: false,
+            disabled: true,
+            onChange: true,
+            defaultValue: autoCalculatedValue
+              ? autoCalculatedValue.toString()
+              : '0',
           }),
         ],
       },
@@ -508,6 +390,9 @@ export const ProjectResourceFormData = (
     ],
     [
       projectResourceCodes,
+      isSalaryRequired,
+      autoCalculatedValue,
+      isSalaryRequired,
       isEditView,
       permissionMap,
       resourceStatusOptions,

@@ -216,13 +216,15 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
               hasSubmenus ? toggleExpanded(item.key) : handleSelect(item.key)
             }
             disabled={item.disabled}
-            className={`${isActive || hasActiveSubmenu ? 'bg-[#0BBFB726] !font-bold' : ''
-              } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
+            className={`${
+              isActive || hasActiveSubmenu ? 'bg-[#0BBFB726] !font-bold' : ''
+            } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
               text-left hover:bg-[#0BBFB726] ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
               ${paddingLeft} py-1.5 pr-3 justify-start`}
             style={{
-              transition: `background-color 0.3s ease-in-out, padding-left ${isCollapsed ? '300ms' : '500ms'
-                } ease-in-out`,
+              transition: `background-color 0.3s ease-in-out, padding-left ${
+                isCollapsed ? '300ms' : '500ms'
+              } ease-in-out`,
             }}
           >
             <Tooltip
@@ -249,20 +251,24 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 opacity: isCollapsed ? 0 : 1,
                 maxWidth: isCollapsed ? 0 : '100%',
                 transform: isCollapsed ? 'translateX(-10px)' : 'translateX(0)',
-                transition: `opacity ${isCollapsed ? '200ms' : '400ms'
-                  } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${isCollapsed ? '200ms' : '400ms'
-                  } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${isCollapsed ? '300ms' : '500ms'
-                  } ease-in-out`,
+                transition: `opacity ${
+                  isCollapsed ? '200ms' : '400ms'
+                } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${
+                  isCollapsed ? '200ms' : '400ms'
+                } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${
+                  isCollapsed ? '300ms' : '500ms'
+                } ease-in-out`,
               }}
             >
               {item.name}
             </span>
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
-                className={`w-[12px] h-[12px] flex-shrink-0 ${isActive
-                  ? 'opacity-100'
-                  : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
-                  }`}
+                className={`w-[12px] h-[12px] flex-shrink-0 ${
+                  isActive
+                    ? 'opacity-100'
+                    : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
+                }`}
                 style={{
                   transition: 'opacity 250ms ease-in-out',
                 }}
@@ -300,15 +306,18 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 <button
                   onClick={() => handleSelect(submenu.key, item.key)}
                   disabled={submenu.disabled}
-                  className={`${localActiveKey === submenu.key
-                    ? 'bg-[#0BBFB726] !font-bold'
-                    : ''
-                    } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
-        text-left hover:bg-[#0BBFB726] ${submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                    } ${isCollapsed ? 'pl-[19px]' : 'pl-11'} py-1.5 pr-3 justify-start`}
+                  className={`${
+                    localActiveKey === submenu.key
+                      ? 'bg-[#0BBFB726] !font-bold'
+                      : ''
+                  } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
+        text-left hover:bg-[#0BBFB726] ${
+          submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+        } ${isCollapsed ? 'pl-[19px]' : 'pl-11'} py-1.5 pr-3 justify-start`}
                   style={{
-                    transition: `background-color 0.3s ease-in-out, padding-left ${isCollapsed ? '300ms' : '500ms'
-                      } ease-in-out`,
+                    transition: `background-color 0.3s ease-in-out, padding-left ${
+                      isCollapsed ? '300ms' : '500ms'
+                    } ease-in-out`,
                   }}
                 >
                   <Tooltip
@@ -338,20 +347,24 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                       transform: isCollapsed
                         ? 'translateX(-10px)'
                         : 'translateX(0)',
-                      transition: `opacity ${isCollapsed ? '200ms' : '400ms'
-                        } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${isCollapsed ? '200ms' : '400ms'
-                        } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${isCollapsed ? '300ms' : '500ms'
-                        } ease-in-out`,
+                      transition: `opacity ${
+                        isCollapsed ? '200ms' : '400ms'
+                      } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${
+                        isCollapsed ? '200ms' : '400ms'
+                      } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${
+                        isCollapsed ? '300ms' : '500ms'
+                      } ease-in-out`,
                     }}
                   >
                     {submenu.name}
                   </span>
                   {!isCollapsed && (
                     <AdminSubmenuActiveIcon
-                      className={`w-[12px] h-[12px] flex-shrink-0 ${localActiveKey === submenu.key
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover:opacity-100'
-                        }`}
+                      className={`w-[12px] h-[12px] flex-shrink-0 ${
+                        localActiveKey === submenu.key
+                          ? 'opacity-100'
+                          : 'opacity-0 group-hover:opacity-100'
+                      }`}
                       style={{
                         transition: 'opacity 250ms ease-in-out',
                       }}
@@ -376,12 +389,14 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     >
       {/* Header */}
       <div
-        className={`flex items-center h-[30px] mb-1 ${isCollapsed ? 'justify-center' : ''
-          } ${isCollapsed ? 'px-3 ml-4' : 'px-7 pr-3'}`}
+        className={`flex items-center h-[30px] mb-1 ${
+          isCollapsed ? 'justify-center' : ''
+        } ${isCollapsed ? 'px-3 ml-4' : 'px-7 pr-3'}`}
       >
         <div
-          className={`flex items-center ${!isCollapsed ? 'justify-between w-full' : 'gap-0'
-            }`}
+          className={`flex items-center ${
+            !isCollapsed ? 'justify-between w-full' : 'gap-0'
+          }`}
         >
           <div className='flex items-center'>
             <span
