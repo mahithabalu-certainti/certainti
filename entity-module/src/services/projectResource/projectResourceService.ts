@@ -135,6 +135,7 @@ export class ProjectResourceService {
                 account_rid,
                 resource_code,
                 projectResourceData.region_rid,
+                projectFiscalData.fiscal_year,
                 transaction
               );
 
@@ -546,6 +547,7 @@ export class ProjectResourceService {
         resourceData,
         userId,
         existingProjectResource,
+        projectData.fiscal_year,
         transaction
       );
 
@@ -978,6 +980,7 @@ export class ProjectResourceService {
           resourceData,
           userId,
           existingProjectResource,
+          projectData.fiscal_year,
           transaction
         );
 
@@ -1203,6 +1206,7 @@ export class ProjectResourceService {
     resourceData: any,
     userId: string,
     existingProjectResource: any,
+    fiscalYear: number,
     transaction: any
   ) {
     await this.projectResourceSchema.updateResourceFiscal(
@@ -1211,6 +1215,7 @@ export class ProjectResourceService {
       userId,
       projectResourceData,
       resourceData,
+      fiscalYear,
       transaction,
       existingProjectResource
     );
@@ -1234,6 +1239,7 @@ export class ProjectResourceService {
       userId,
       projectResourceData,
       resourceData,
+      fiscalYear,
       transaction,
       existingProjectResource
     );
