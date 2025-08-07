@@ -200,45 +200,41 @@ export class ProjectTaskSchemaService {
   }
 
   async getExistingEffortInProjectTask(
-    accountNumber: string,
-    projectTaskData: ICreateProjectTask,
-    resourceId: string
-  ): Promise<ProjectTask[]> {
+  accountNumber: string,
+  projectTaskData: ICreateProjectTask,
+  resourceId: string
+): Promise<ProjectTask[]> {
 
-    const { ProjectTask } = await this.getModels(accountNumber);
+  const { ProjectTask } = await this.getModels(accountNumber);
 
-    const startDate = projectTaskData.start_date
-      ? moment.utc(projectTaskData.start_date)
-      : null;
-    const endDate = projectTaskData.end_date
-      ? moment.utc(projectTaskData.end_date)
-      : null;
+  const startDate = projectTaskData.start_date
+    ? moment.utc(projectTaskData.start_date)
+    : null;
+  const endDate = projectTaskData.end_date
+    ? moment.utc(projectTaskData.end_date)
+    : null;
 
-    const whereClause: any = {
-      project_fiscal_rid: projectTaskData.project_fiscal_rid,
-      account_rid: projectTaskData.account_rid,
-      resource_rid: resourceId,
-      [Op.and]: [
-        { start_date: { [Op.gte]: startDate?.toDate() } }, 
-        Sequelize.where(
-          Sequelize.cast(Sequelize.col("end_date"), "date"),
-          {
-            [Op.lte]: endDate?.toDate(),
-          }
-        ),
-      ],
-    };
+  const whereClause: any = {
+    project_fiscal_rid: projectTaskData.project_fiscal_rid,
+    account_rid: projectTaskData.account_rid,
+    resource_rid: resourceId,
+    [Op.and]: [
+      {
+        start_date: { [Op.lte]: endDate?.toDate() }, // Overlap condition
+      },
+      {
+        end_date: { [Op.gte]: startDate?.toDate() }, // Overlap condition
+      },
+    ],
+  };
 
-    // if (startDate) whereClause.start_date = { [Op.gte]: startDate?.toDate() };
-    // if (endDate) whereClause.end_date = { [Op.lte]: endDate?.toDate() };
+  const existingTasks = await ProjectTask.findAll({
+    where: whereClause,
+  });
 
-    const existingTasks = await ProjectTask.findAll({
-      where: {
-        ...whereClause
-      }
-    });
-    return existingTasks;
-  }
+  return existingTasks;
+}
+
 
   async addProjectTask(
     accountNumber: string,

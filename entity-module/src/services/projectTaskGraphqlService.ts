@@ -110,20 +110,18 @@ export default class ProjectTaskGraphqlServies {
             (task) => task.rid !== data.rid 
           );
 
-          const totalExistingEffort = filteredTasks.reduce(
-            (sum: Decimal, task: ProjectTask) => {
-              const effort = new Decimal(task.total_hours_pro_task || "0");
-              return sum.plus(effort);
-            },
-            new Decimal(0)
+          const validation = this.validatePerDayEffortLimit(
+            filteredTasks,
+            newEffort,
+            start,
+            end
           );
 
-          const totalEffort = totalExistingEffort.plus(newEffort);
-          if (totalEffort.gt(maxAllowedEffort)) {
+          if (!validation.success) {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
-              statusMessage: STATUS_MESSAGE.effortExceeded,
-              data: null
+              statusMessage : validation.errorMessage,
+              data : null
             };
           }
         } else if (startDate && !endDate) {
@@ -227,5 +225,52 @@ export default class ProjectTaskGraphqlServies {
         }
       }
     }
+  }
+    private validatePerDayEffortLimit(
+    existingTasks: ProjectTask[],
+    newEffort: Decimal,
+    start: Date,
+    end: Date
+  ): { success: boolean; errorMessage?: string } {
+    const diffDays =
+      Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const newTaskStart = start.getTime();
+  
+    const perDayEffort: Record<string, Decimal> = {};
+  
+    // Existing tasks
+    for (const task of existingTasks) {
+      if (task.start_date && task.end_date && task.total_hours_pro_task) {
+        const taskStart = new Date(task.start_date).getTime();
+        const taskEnd = new Date(task.end_date).getTime();
+        const taskEffort = new Decimal(task.total_hours_pro_task || "0");
+        const taskDays =
+          Math.floor((taskEnd - taskStart) / (1000 * 60 * 60 * 24)) + 1;
+        const perDay = taskEffort.div(taskDays);
+  
+        for (let d = 0; d < taskDays; d++) {
+          const day = new Date(taskStart + d * 24 * 60 * 60 * 1000);
+          const dayStr = day.toISOString().slice(0, 10);
+          perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(perDay);
+        }
+      }
+    }
+  
+    // New task
+    const newPerDay = newEffort.div(diffDays);
+    for (let d = 0; d < diffDays; d++) {
+      const day = new Date(newTaskStart + d * 24 * 60 * 60 * 1000);
+      const dayStr = day.toISOString().slice(0, 10);
+      perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(newPerDay);
+  
+      if (perDayEffort[dayStr].gt(24)) {
+        return {
+          success: false,
+          errorMessage: `Effort exceeds 24 hours on ${dayStr} for the resource`,
+        };
+      }
+    }
+  
+    return { success: true };
   }
 }
