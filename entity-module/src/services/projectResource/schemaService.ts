@@ -4284,10 +4284,12 @@ export class ProjectResourceSchemaService {
 
     const oldGroupKey = {
       resource_rid: existingProjectResource.resource_rid,
+      fiscal_year: fiscalYear
     };
 
     const newGroupKey = {
       resource_rid: resourceData.rid,
+      fiscal_year: fiscalYear
     };
 
     const isGroupChanged =
@@ -4453,6 +4455,7 @@ export class ProjectResourceSchemaService {
             resource_code: projectResourceData.resource_code,
             account_rid: accountId,
             resource_rid: resource?.rid ?? "",
+            fiscal_year: fiscalYear,
             total_effort_for_year_project_resource_level:
               projectResourceData.total_hours_pro_res ?? null,
             total_cost_for_year_project_resource_level:
