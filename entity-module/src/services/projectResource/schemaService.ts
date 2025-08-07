@@ -507,6 +507,7 @@ export class ProjectResourceSchemaService {
     const isExists = await ResourcesFiscal.findOne({
       where: {
         account_rid: accountId,
+        fiscal_year: fiscalYear,
         [Op.and]: [
           Sequelize.where(
             Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -691,6 +692,7 @@ export class ProjectResourceSchemaService {
     accountId: string,
     resourceCode: string,
     regionId: string,
+    fiscalYear: number,
     transaction: Transaction
   ) {
     const { ResourceFiscalRegion } = await this.getModels(accountNumber);
@@ -699,6 +701,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         country_region_rid: regionId,
+        fiscal_year: fiscalYear,
         [Op.and]: [
           Sequelize.where(
             Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -796,6 +799,7 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         country_rid: projectResourceData.country_rid || null,
         country_region_rid: projectResourceData.region_rid || null,
+        fiscal_year: fiscal_year,
         total_cost_for_year_project_resource_level:
           projectResourceData.total_cost_pro_res || null,
         total_effort_for_year_project_resource_level:
@@ -857,6 +861,7 @@ export class ProjectResourceSchemaService {
         account_rid: accountId,
         country_rid: projectResourceData.country_rid || null,
         country_region_rid: projectResourceData.region_rid || null,
+        fiscal_year: fiscalYear,
         total_cost_for_year_project_resource_level:
           projectResourceData.total_cost_pro_res || null,
         total_effort_for_year_project_resource_level:
@@ -878,6 +883,7 @@ export class ProjectResourceSchemaService {
     userId: string,
     projectResourceData: IUpdateProjectResource,
     resourceData: any,
+    fiscalYear: number,
     transaction: Transaction,
     existingProjectResource: any = {}
   ) {
@@ -887,20 +893,24 @@ export class ProjectResourceSchemaService {
     const oldGroupKey = {
       resource_rid: existingProjectResource.resource_rid,
       region_rid: existingProjectResource.region_rid,
+      fiscal_year: fiscalYear
     };
   
     const newGroupKey = {
       resource_rid: resourceData.rid,
       region_rid: projectResourceData.region_rid,
+      fiscal_year: fiscalYear
     };
   
     const isGroupChanged =
       oldGroupKey.resource_rid?.toLowerCase() !== newGroupKey.resource_rid?.toLowerCase() ||
-      oldGroupKey.region_rid !== newGroupKey.region_rid;
+      oldGroupKey.region_rid !== newGroupKey.region_rid || 
+      oldGroupKey.fiscal_year !== newGroupKey.fiscal_year;
   
     const buildGroupWhere = (groupKey: any) => ({
       account_rid: accountId,
       country_region_rid: groupKey.region_rid,
+      fiscal_year: fiscalYear,
       [Op.and]: [
         Sequelize.where(
           Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -929,6 +939,7 @@ export class ProjectResourceSchemaService {
           account_rid: projectResourceData.account_rid,
           region_rid: oldGroupKey.region_rid,
           resource_rid: existingProjectResource.resource_rid,
+          fiscal_year: fiscalYear,
           // [Op.and]: [
           //   Sequelize.where(
           //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -989,6 +1000,7 @@ export class ProjectResourceSchemaService {
         account_rid: projectResourceData.account_rid,
         region_rid: newGroupKey.region_rid,
         resource_rid: resourceData.rid,
+        fiscal_year: fiscalYear,
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -1004,6 +1016,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         country_region_rid: newGroupKey.region_rid,
+        fiscal_year: fiscalYear,
         [Op.and]: [
           Sequelize.where(
             Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -1057,6 +1070,7 @@ export class ProjectResourceSchemaService {
             account_rid: accountId,
             country_rid: projectResourceData.country_rid || null,
             country_region_rid: projectResourceData.region_rid || null,
+            fiscal_year: fiscalYear,
             total_cost_for_year_project_resource_level: newAggregates?.total_cost ?? 0,
             total_effort_for_year_project_resource_level: newAggregates?.total_effort ?? 0,
             effective_date: startDate,
@@ -3063,12 +3077,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         resource_rid: resourceData.rid,
-        // [Op.and]: [
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
-        //     Sequelize.fn("LOWER", resourceCode)
-        //   ),
-        // ],
+        fiscal_year: fiscalYear,
       },
       group: ["account_rid", "fiscal_year", "resource_rid"],
       raw: true,
@@ -3085,6 +3094,7 @@ export class ProjectResourceSchemaService {
       {
         where: {
           account_rid: accountId,
+          fiscal_year: fiscalYear,
           [Op.and]: [
             Sequelize.where(
               Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -3127,6 +3137,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: accountId,
         resource_rid: resourceData.rid,
+        fiscal_year: fiscalYear
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -3155,6 +3166,7 @@ export class ProjectResourceSchemaService {
         where: {
           account_rid: accountId,
           country_region_rid: aggregates.region_rid,
+          fiscal_year: fiscalYear,
           [Op.and]: [
             Sequelize.where(
               Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -4263,6 +4275,7 @@ export class ProjectResourceSchemaService {
     userId: string,
     projectResourceData: IUpdateProjectResource,
     resourceData: any,
+    fiscalYear: number,
     transaction: Transaction,
     existingProjectResource: any = {}
   ) {
@@ -4271,10 +4284,12 @@ export class ProjectResourceSchemaService {
 
     const oldGroupKey = {
       resource_rid: existingProjectResource.resource_rid,
+      fiscal_year: fiscalYear
     };
 
     const newGroupKey = {
       resource_rid: resourceData.rid,
+      fiscal_year: fiscalYear
     };
 
     const isGroupChanged =
@@ -4283,7 +4298,8 @@ export class ProjectResourceSchemaService {
 
     const buildGroupWhere = (groupKey: any) => ({
       account_rid: accountId,
-      resource_rid: groupKey.resource_rid
+      resource_rid: groupKey.resource_rid,
+      fiscal_year: fiscalYear
       // [Op.and]: [
       //   Sequelize.where(
       //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -4311,6 +4327,7 @@ export class ProjectResourceSchemaService {
         where: {
           account_rid: projectResourceData.account_rid,
           resource_rid: existingProjectResource.resource_rid,
+          fiscal_year: fiscalYear,
           // [Op.and]: [
           //   Sequelize.where(
           //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -4367,6 +4384,7 @@ export class ProjectResourceSchemaService {
       where: {
         account_rid: projectResourceData.account_rid,
         resource_rid: resourceData.rid,
+        fiscal_year: fiscalYear
         // [Op.and]: [
         //   Sequelize.where(
         //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
@@ -4424,6 +4442,7 @@ export class ProjectResourceSchemaService {
               newAggregates.total_effort ?? null,
             total_cost_for_year_project_resource_level:
               newAggregates.total_cost ?? null,
+            fiscal_year: fiscalYear,
             created_by: userId,
             resource_type_rid: resource?.resource_type_rid || "", // need to add resource fiscal
             created_datetime: new Date(),
@@ -4436,6 +4455,7 @@ export class ProjectResourceSchemaService {
             resource_code: projectResourceData.resource_code,
             account_rid: accountId,
             resource_rid: resource?.rid ?? "",
+            fiscal_year: fiscalYear,
             total_effort_for_year_project_resource_level:
               projectResourceData.total_hours_pro_res ?? null,
             total_cost_for_year_project_resource_level:
