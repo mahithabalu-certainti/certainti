@@ -244,7 +244,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
-          <Summary fiscalYear={fiscalYear} />
+          <Summary fiscalYear={fiscalYear} accountDetails={accountDetails} />
         )}
         {tabParam === 'state_wise_summary' && isStatewiseSummaryViewEnable && (
           <StateWiseSummary

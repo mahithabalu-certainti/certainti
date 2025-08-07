@@ -1,8 +1,10 @@
+import { costDisplay } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { ProjectFinancialResourceCostList } from '../../../../../../types';
 
 export const getFinancialResourceCostColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  currencySymbol?: string
 ): ListTableColumn<ProjectFinancialResourceCostList>[] => [
   {
     id: 'project_code',
@@ -106,6 +108,10 @@ export const getFinancialResourceCostColumns = (
     hide:
       !permissionMap?.['total_cost_pro_res']?.edit &&
       !permissionMap?.['total_cost_pro_res']?.read,
+    render: (row: ProjectFinancialResourceCostList) =>
+      row.total_cost_pro_res
+        ? costDisplay(row.total_cost_pro_res, currencySymbol)
+        : '-',
   },
   {
     id: 'rd_percent_final',

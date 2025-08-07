@@ -39,6 +39,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const fiscalYear = projectDetails?.fiscal_year;
+  const currencySymbol = projectDetails?.currency_symbol;
 
   const [resourceCostList, setResourceCostList] = useState<
     ProjectFinancialResourceCostList[]
@@ -140,8 +141,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   };
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
-  const financialResourceCostColumns =
-    getFinancialResourceCostColumns(permissionMap);
+  const financialResourceCostColumns = getFinancialResourceCostColumns(
+    permissionMap,
+    currencySymbol
+  );
 
   return (
     <ListTable
