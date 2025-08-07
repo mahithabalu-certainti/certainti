@@ -76,7 +76,7 @@ export const ProjectTask = ({
   setExportType,
   setProjectTaskParams,
   projectCode,
-  accountOrProjectInActive
+  accountOrProjectInActive,
 }: {
   projectID?: string;
   accountID?: string;
@@ -86,7 +86,7 @@ export const ProjectTask = ({
     React.SetStateAction<ProjectTaskListExportParams>
   >;
   projectCode?: string;
-  accountOrProjectInActive?: boolean
+  accountOrProjectInActive?: boolean;
 }) => {
   const { errorToast, successToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -238,7 +238,7 @@ export const ProjectTask = ({
       label: 'Edit',
       onClick: (row: ProjectTaskListType) => handleEditProjectTask(row),
       hide: !isProjectTaskFieldsEditable,
-      disabled: accountOrProjectInActive
+      disabled: accountOrProjectInActive,
     },
   ];
 
@@ -259,7 +259,7 @@ export const ProjectTask = ({
           : handleCreateProjectResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: viewDetails ? !isProjectTaskFieldsEditable : !isTaskCreateEnable,
-      disabled: accountOrProjectInActive
+      disabled: accountOrProjectInActive,
     },
   ];
   const PFY = projectFiscalDate;

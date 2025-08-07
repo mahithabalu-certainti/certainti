@@ -34,7 +34,7 @@ export const getResourceCostColumns = (
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
-  fiscalDate?: FormFiscalDateType,
+  fiscalDate?: FormFiscalDateType
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -61,7 +61,8 @@ export const getResourceCostColumns = (
     },
     editable:
       permissionMap?.['fiscal_year']?.edit &&
-      permissionMap?.['fiscal_year']?.read && !accountInActive,
+      permissionMap?.['fiscal_year']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['fiscal_year']?.edit &&
       !permissionMap?.['fiscal_year']?.read,
@@ -92,7 +93,8 @@ export const getResourceCostColumns = (
     ),
     editable:
       permissionMap?.['effective_from']?.edit &&
-      permissionMap?.['effective_from']?.read && !accountInActive,
+      permissionMap?.['effective_from']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['effective_from']?.edit &&
       !permissionMap?.['effective_from']?.read,
@@ -138,7 +140,9 @@ export const getResourceCostColumns = (
       <span>{dateFormatToYYYYMMDD(row.end_date as string) || '-'}</span>
     ),
     editable:
-      permissionMap?.['end_date']?.edit && permissionMap?.['end_date']?.read && !accountInActive,
+      permissionMap?.['end_date']?.edit &&
+      permissionMap?.['end_date']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['end_date']?.edit && !permissionMap?.['end_date']?.read,
     field: {
@@ -177,7 +181,8 @@ export const getResourceCostColumns = (
     sortable: true,
     editable:
       permissionMap?.['currency_rid']?.edit &&
-      permissionMap?.['currency_rid']?.read && !accountInActive,
+      permissionMap?.['currency_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['currency_rid']?.edit &&
       !permissionMap?.['currency_rid']?.read,
@@ -203,7 +208,8 @@ export const getResourceCostColumns = (
     ),
     editable:
       permissionMap?.['effort_in_hrs']?.edit &&
-      permissionMap?.['effort_in_hrs']?.read && !accountInActive,
+      permissionMap?.['effort_in_hrs']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['effort_in_hrs']?.edit &&
       !permissionMap?.['effort_in_hrs']?.read,
@@ -236,7 +242,8 @@ export const getResourceCostColumns = (
     editable:
       permissionMap?.['salary']?.edit &&
       permissionMap?.['salary']?.read &&
-      isFullTime && !accountInActive,
+      isFullTime &&
+      !accountInActive,
     hide: !permissionMap?.['salary']?.edit && !permissionMap?.['salary']?.read,
     field: {
       type: 'number',
@@ -274,7 +281,8 @@ export const getResourceCostColumns = (
     ),
     editable:
       permissionMap?.['resource_cost']?.edit &&
-      permissionMap?.['resource_cost']?.read && !accountInActive,
+      permissionMap?.['resource_cost']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['resource_cost']?.edit &&
       !permissionMap?.['resource_cost']?.read,
@@ -315,7 +323,8 @@ export const getResourceCostColumns = (
     editable:
       permissionMap?.['bonus']?.edit &&
       permissionMap?.['bonus']?.read &&
-      isFullTime && !accountInActive,
+      isFullTime &&
+      !accountInActive,
     hide: !permissionMap?.['bonus']?.edit && !permissionMap?.['bonus']?.read,
     field: {
       type: 'number',
@@ -346,7 +355,8 @@ export const getResourceCostColumns = (
     editable:
       permissionMap?.['insurance']?.edit &&
       permissionMap?.['insurance']?.read &&
-      isFullTime && !accountInActive,
+      isFullTime &&
+      !accountInActive,
     hide:
       !permissionMap?.['insurance']?.edit &&
       !permissionMap?.['insurance']?.read,
@@ -378,7 +388,8 @@ export const getResourceCostColumns = (
     ),
     editable:
       permissionMap?.['deductions']?.edit &&
-      permissionMap?.['deductions']?.read && !accountInActive,
+      permissionMap?.['deductions']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['deductions']?.edit &&
       !permissionMap?.['deductions']?.read,
@@ -403,7 +414,9 @@ export const getResourceCostColumns = (
     width: 130,
     sortable: true,
     editable:
-      permissionMap?.['comments']?.edit && permissionMap?.['comments']?.read && !accountInActive,
+      permissionMap?.['comments']?.edit &&
+      permissionMap?.['comments']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['comments']?.edit && !permissionMap?.['comments']?.read,
     field: {
