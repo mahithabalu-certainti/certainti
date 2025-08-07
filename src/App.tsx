@@ -46,12 +46,14 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  CASES,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
 // import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
+import { Cases } from './consultant/pages/cases';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -177,6 +179,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<ProjectResourceForm />}
                 />
                 <Route path={ATTACHMENTS} element={<Attachments />} />
+                <Route path={CASES} element={<Cases />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>

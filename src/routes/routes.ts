@@ -69,5 +69,9 @@ export const PROJECT_RESOURCE_CREATE = `${PROJECT_RESOURCE}/create`;
 export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
+
+//CASES ROUTES
+export const CASES = '/cases';
+
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

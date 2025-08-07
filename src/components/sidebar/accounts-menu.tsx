@@ -15,6 +15,7 @@ import { INavItem } from '../../consultant/types';
 import {
   ACCOUNT,
   ATTACHMENTS,
+  CASES,
   MAIN_ROUTE,
   NOT_FOUND,
   PROJECT,
@@ -58,9 +59,9 @@ export const accountNavItems: INavItem[] = [
     id: MenuOption.CASES,
     icon: CaseIcon,
     name: 'Cases',
-    link: NOT_FOUND,
+    link: CASES,
     type: 'link',
-    matchLink: '',
+    matchLink: CASES,
   },
   {
     id: MenuOption.SURVEY,
