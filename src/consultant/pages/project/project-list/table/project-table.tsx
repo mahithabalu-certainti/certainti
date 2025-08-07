@@ -102,7 +102,19 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   useEffect(() => {
     if (data) {
       setTotalCount(data?.count || 0);
-      setAllProjectList(data.projects || []);
+      // Add account_status_name to each ProjectFiscal item
+      if (data.projects) {
+        setAllProjectList(
+          data.projects.map((project) => ({
+            ...project,
+            ProjectFiscal:
+              project.ProjectFiscal?.map((fiscal) => ({
+                ...fiscal,
+                account_status_name: project.account_status_name,
+              })) || [],
+          }))
+        );
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);

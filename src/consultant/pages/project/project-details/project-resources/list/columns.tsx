@@ -30,7 +30,8 @@ export const getProjectResourcesColumns = (
   memoizedState: SelectOption[],
   handleCountry: (country: string) => void,
   regionLoading: boolean,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountOrProjectInActive?: boolean
 ): ListTableColumn<ProjectResourcesListType>[] => [
   {
     id: 'resource_code',
@@ -42,7 +43,8 @@ export const getProjectResourcesColumns = (
     sticky: true,
     editable:
       permissionMap?.['resource_code']?.read &&
-      permissionMap?.['resource_code']?.edit,
+      permissionMap?.['resource_code']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['resource_code']?.read &&
       !permissionMap?.['resource_code']?.edit,
@@ -103,7 +105,8 @@ export const getProjectResourcesColumns = (
     width: '150px',
     editable:
       permissionMap?.['country_rid']?.read &&
-      permissionMap?.['country_rid']?.edit,
+      permissionMap?.['country_rid']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['country_rid']?.read &&
       !permissionMap?.['country_rid']?.edit,
@@ -137,7 +140,8 @@ export const getProjectResourcesColumns = (
     width: '150px',
     editable:
       permissionMap?.['region_rid']?.read &&
-      permissionMap?.['region_rid']?.edit,
+      permissionMap?.['region_rid']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['region_rid']?.read &&
       !permissionMap?.['region_rid']?.edit,
@@ -225,7 +229,8 @@ export const getProjectResourcesColumns = (
       row.total_hours_pro_res ? valueDisplay(row.total_hours_pro_res) : '-',
     editable:
       permissionMap?.['total_hours_pro_res']?.read &&
-      permissionMap?.['total_hours_pro_res']?.edit,
+      permissionMap?.['total_hours_pro_res']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['total_hours_pro_res']?.read &&
       !permissionMap?.['total_hours_pro_res']?.edit,
@@ -258,7 +263,8 @@ export const getProjectResourcesColumns = (
 
     editable:
       permissionMap?.['total_cost_pro_res']?.read &&
-      permissionMap?.['total_cost_pro_res']?.edit,
+      permissionMap?.['total_cost_pro_res']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['total_cost_pro_res']?.read &&
       !permissionMap?.['total_cost_pro_res']?.edit,
@@ -302,7 +308,8 @@ export const getProjectResourcesColumns = (
     width: '150px',
     editable:
       permissionMap?.['description']?.read &&
-      permissionMap?.['description']?.edit,
+      permissionMap?.['description']?.edit &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['description']?.read &&
       !permissionMap?.['description']?.edit,

@@ -302,7 +302,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     resourceInActive,
     attachmentCreateEnable,
     handleGetFiscalYear,
-    fiscalDate
+    fiscalDate,
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {

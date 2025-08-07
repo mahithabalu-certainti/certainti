@@ -1123,6 +1123,7 @@ const ListTable = <T extends RowData>({
                               column.conditionallyEdit.matchValue &&
                             column.editable
                           : column.editable;
+
                         const isFirstDataColumn =
                           column.id === visibleColumns[0].id && expandable;
                         const isChildRows = isFirstDataColumn && rowLevel !== 0;
@@ -1130,7 +1131,6 @@ const ListTable = <T extends RowData>({
                           conditionallyEdit &&
                           !isEditingAnyCell &&
                           !editDisableLevel?.includes(row._level);
-
                         return (
                           <TableCell
                             key={`${rowId}-${column.id}`}
@@ -1411,7 +1411,8 @@ const ListTable = <T extends RowData>({
                                       ...item,
                                       disabled:
                                         component === 'global-project'
-                                          ? row.account_status === 'inactive'
+                                          ? row.account_status_name ===
+                                            'In-Active'
                                           : item.disabled,
                                       onClick: () => item.onClick(row),
                                     }))}
