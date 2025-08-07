@@ -307,6 +307,10 @@ const ProjectResourceForm: React.FC = () => {
         return updated;
       });
     }
+    if (data.fieldName === 'salary') {
+      const salaryValue = (data.fieldValue as string).trim();
+      setIsSalaryRequired(salaryValue === '');
+    }
   };
   useEffect(() => {
     if (projectResourceData?.country_rid) {

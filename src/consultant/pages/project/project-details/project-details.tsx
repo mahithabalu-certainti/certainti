@@ -61,7 +61,7 @@ export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  const defaultTab = searchParams.get('list');
+  const defaultTab = searchParams.get('list') ?? 'projectDetails';
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
   // const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
@@ -130,6 +130,8 @@ export const ProjectDetails = () => {
     const list = searchParams.get('list');
     if (list) {
       setActiveKey(list);
+    } else {
+      setActiveKey('projectDetails');
     }
   }, [searchParams]);
 
