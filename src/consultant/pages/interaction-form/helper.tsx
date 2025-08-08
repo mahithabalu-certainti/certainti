@@ -1,9 +1,18 @@
 import { REGEX_PATTERNS } from '../../../common-utils';
-import { InteractionData, InteractionTableColumn } from './types';
+import {
+  InteractionDetails,
+  InteractionFormData,
+  InteractionFormErrors,
+  InteractionFormQuestion,
+  InteractionFormTableColumn,
+  InteractionQuestion,
+  InteractionQuestionErrors,
+  QuestionUpdate,
+} from '../../types';
 
 export const getQuestionTableColumns = (
   isEditView: boolean
-): InteractionTableColumn[] => [
+): InteractionFormTableColumn[] => [
   {
     name: 'questionNo',
     label: 'Question No.',
@@ -32,65 +41,133 @@ export const getQuestionTableColumns = (
   },
 ];
 
-interface FormErrors {
-  projectCode?: string;
-  projectName?: string;
-  fiscalYear?: string;
-}
-
 export const validateInteractionForm = (
-  formData: InteractionData,
-  source: string | null
-): { isValid: boolean; updatedData: InteractionData } => {
+  formData: InteractionFormData,
+  source: string | null,
+  isEditView: boolean
+): { isValid: boolean; errors: InteractionFormErrors } => {
   let isValid = true;
-  const errors: FormErrors = {};
+  const newErrors: InteractionFormErrors = {};
+  const questionErrors: InteractionQuestionErrors[] = [];
 
   // Validate project fields when source is account
   if (source === 'account') {
     if (!formData.projectCode) {
-      errors.projectCode = 'Project Code is required';
-      isValid = false;
-    }
-    if (!formData.projectName) {
-      errors.projectName = 'Project Name is required';
+      newErrors.projectCode = 'Project Code is required';
       isValid = false;
     }
     if (!formData.fiscalYear) {
-      errors.fiscalYear = 'Fiscal Year is required';
+      newErrors.fiscalYear = 'Fiscal Year is required';
       isValid = false;
     }
   }
 
+  if (!formData.status && isEditView) {
+    newErrors.status = 'Status is required';
+    isValid = false;
+  }
+
   // Validate questions
-  const updatedQuestions = formData.questions.map((question) => {
-    const questionErrors: {
-      question?: string;
-      mandatory?: string;
-      notes?: string;
-    } = {};
+  formData.questions.forEach((question) => {
+    const currentQuestionErrors: InteractionQuestionErrors = {};
 
     if (!question.question.trim()) {
-      questionErrors.question = 'Interaction Questions is required';
+      currentQuestionErrors.question = 'Interaction Questions is required';
       isValid = false;
     }
 
     if (!REGEX_PATTERNS.MAX_2000.test(question.notes)) {
-      questionErrors.notes = 'Max length exceeded';
+      currentQuestionErrors.notes = 'Max length exceeded';
       isValid = false;
     }
 
-    return {
-      ...question,
-      errors:
-        Object.keys(questionErrors).length > 0 ? questionErrors : undefined,
-    };
+    questionErrors.push(currentQuestionErrors);
   });
 
-  const updatedData: InteractionData = {
-    ...formData,
-    questions: updatedQuestions,
-    errors: Object.keys(errors).length > 0 ? errors : undefined,
+  newErrors.questions = questionErrors;
+
+  return { isValid, errors: newErrors };
+};
+
+export const questionsTransformPayload = (
+  formQuestions: InteractionFormQuestion[],
+  isEdit: boolean = false,
+  existingQuestions: InteractionQuestion[] = []
+): InteractionFormQuestion[] => {
+  const transformedQuestions: InteractionFormQuestion[] = [];
+  const retainedRids = new Set<string>();
+  const seenQuestionNos = new Set<string>();
+
+  // Process form questions first
+  formQuestions.forEach((question) => {
+    if (seenQuestionNos.has(question.questionNo)) {
+      return;
+    }
+    seenQuestionNos.add(question.questionNo);
+
+    if (isEdit && question.rid) {
+      retainedRids.add(question.rid);
+      transformedQuestions.push({
+        ...question,
+        action_type: QuestionUpdate.Edit,
+      });
+    } else if (!question.rid) {
+      transformedQuestions.push({
+        ...question,
+        action_type: QuestionUpdate.Add,
+      });
+    }
+  });
+
+  if (isEdit) {
+    existingQuestions.forEach((existingQuestion) => {
+      if (
+        existingQuestion.rid &&
+        !retainedRids.has(existingQuestion.rid) &&
+        !seenQuestionNos.has(existingQuestion.question_id)
+      ) {
+        transformedQuestions.push({
+          questionNo: existingQuestion.question_id,
+          question: existingQuestion.question || '',
+          mandatory: existingQuestion.mandatory ?? false,
+          notes: existingQuestion.notes || '',
+          rid: existingQuestion.rid,
+          action_type: QuestionUpdate.Delete,
+        });
+        seenQuestionNos.add(existingQuestion.question_id);
+      }
+    });
+  }
+
+  return transformedQuestions;
+};
+
+export const transFormPayload = (
+  formData: Partial<InteractionFormData>,
+  isEditView: boolean,
+  interactionData?: InteractionDetails
+): InteractionFormData => {
+  const transformedQuestions = questionsTransformPayload(
+    formData.questions || [],
+    isEditView,
+    interactionData?.questions || []
+  );
+
+  const basePayload: InteractionFormData = {
+    projectCode: formData.projectCode || '',
+    projectName: formData.projectName || '',
+    fiscalYear: formData.fiscalYear || 0,
+    questions: transformedQuestions,
+    accountName: formData.accountName || '',
   };
 
-  return { isValid, updatedData };
+  if (isEditView && interactionData) {
+    return {
+      ...basePayload,
+      rid: interactionData.rid,
+      status: formData.status,
+    };
+  }
+
+  return basePayload;
 };

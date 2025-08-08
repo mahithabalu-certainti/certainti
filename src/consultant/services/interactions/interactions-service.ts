@@ -1,6 +1,7 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   InteractionDetails,
+  InteractionFormData,
   //   InteractionDetailsResponse,
   InteractionList,
   InteractionListURLParams,
@@ -9,7 +10,8 @@ import {
   mockInteractionDetailsMap,
   mockInteractionList,
 } from '../../pages/project/project-details/interactions/mock-response';
-// import { resourceServiceApi } from '../../../api/api';
+import { resourceServiceApi } from '../../../api/api';
+import { CommonApiResponse } from '../../../common-service';
 
 // const getInteractionDetailsURL = (projectid: string, interactionId: string) => {
 //   return `/api/interaction/list/${projectid}/${interactionId}`;
@@ -73,5 +75,56 @@ export const useInteractionDetails = (
     retry: 0,
     gcTime: 0,
     enabled: !!interactionId && !!projectid,
+  });
+};
+
+// Create & Edit
+export const getCreateInteractionUrl = (): string => {
+  return `/api/interaction/create`;
+};
+
+export const createInteraction = async (
+  body: Partial<InteractionFormData>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await resourceServiceApi.post<CommonApiResponse>(
+      getCreateInteractionUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error create interaction:', error);
+    throw error;
+  }
+};
+
+export const useCreateInteraction = () => {
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormData>>({
+    mutationFn: (body) => createInteraction({ ...body }),
+  });
+};
+
+export const getUpdateInteractionUrl = (): string => {
+  return `/api/interaction/update`;
+};
+
+export const updateInteractionDetails = async (
+  body: Partial<InteractionFormData>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await resourceServiceApi.put<CommonApiResponse>(
+      getUpdateInteractionUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating interaction details:', error);
+    throw error;
+  }
+};
+
+export const useUpdateInteractionDetails = () => {
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormData>>({
+    mutationFn: (body) => updateInteractionDetails({ ...body }),
   });
 };

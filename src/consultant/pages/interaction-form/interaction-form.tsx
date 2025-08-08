@@ -19,43 +19,62 @@ import {
   KeyContactRemoveIcon,
 } from '../../../assets';
 import TextButton from '../../../components/button/text-button';
-import { getQuestionTableColumns, validateInteractionForm } from './helper';
-import { useInteractionDetails } from '../../services/interactions/interactions-service';
+import {
+  getQuestionTableColumns,
+  transFormPayload,
+  validateInteractionForm,
+} from './helper';
+import {
+  useCreateInteraction,
+  useInteractionDetails,
+  useUpdateInteractionDetails,
+} from '../../services/interactions/interactions-service';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import { useAccountProjects } from '../../services/project';
 import { Project } from '../../types/project';
-import { SelectOption } from '../../types';
 import {
-  InteractionData,
-  InteractionQuestion,
-  InteractionTableColumn,
-  ProjectDetails,
-} from './types';
+  InteractionFormData,
+  InteractionFormErrors,
+  InteractionFormQuestion,
+  InteractionFormTableColumn,
+  InteractionQuestionErrors,
+  SelectOption,
+} from '../../types';
 import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
-import { TruncateWithTooltip } from '../../../components';
+import { useToast } from '../../../hooks';
+
+interface ProjectDetails {
+  project_code: string;
+  project_name: string;
+  fiscal_year: number;
+  account_name: string;
+}
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
-  const [focusedField, setFocusedField] = useState<{
-    index: number;
-    field: string;
-  } | null>(null);
+  const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
-  const [formData, setFormData] = useState<InteractionData>({
+  const [formData, setFormData] = useState<InteractionFormData>({
     accountName: '',
     projectCode: '',
     projectName: '',
     fiscalYear: 0,
+    status: '',
     questions: [
       {
-        questionNo: '-',
+        questionNo: '1',
         question: '',
         mandatory: false,
         notes: '',
       },
     ],
+    rid: '',
+    interaction_id: '',
+    created_on: '',
+    created_by: '',
   });
+  const [errors, setErrors] = useState<InteractionFormErrors>({});
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const projectDetails = searchParams.get('projectDetails');
@@ -89,7 +108,14 @@ const InteractionForm = () => {
     }
   }, [accountName, projectDetails, searchParams, source]);
 
-  const { data, isLoading } = useInteractionDetails(projectId, interactionId);
+  const { data: interactionData, isLoading } = useInteractionDetails(
+    projectId,
+    interactionId
+  );
+  const createInteraction = useCreateInteraction();
+  const updateInteraction = useUpdateInteractionDetails();
+  const commonSuccess =
+    createInteraction.isSuccess || updateInteraction.isSuccess;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
     {
@@ -103,25 +129,26 @@ const InteractionForm = () => {
   );
 
   useEffect(() => {
-    if (data && isEditView) {
+    if (interactionData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        created_by: data.created_by,
-        created_on: data.created_on,
-        rid: data.rid,
-        interaction_id: data.r_number,
-        status: data.status,
+        created_by: interactionData.created_by,
+        created_on: interactionData.created_on,
+        rid: interactionData.rid,
+        interaction_id: interactionData.r_number,
+        status: interactionData.status,
         questions:
-          data.questions.length > 0
-            ? data.questions.map((q) => ({
+          interactionData.questions.length > 0
+            ? interactionData.questions.map((q) => ({
                 questionNo: q.question_id,
                 question: q.question || '',
                 mandatory: q.mandatory ?? false,
                 notes: q.notes || '',
+                rid: q.rid,
               }))
             : [
                 {
-                  questionNo: '-',
+                  questionNo: '1',
                   question: '',
                   mandatory: false,
                   notes: '',
@@ -129,13 +156,25 @@ const InteractionForm = () => {
               ],
       }));
     }
-  }, [data, isEditView]);
+  }, [interactionData, isEditView]);
 
   useEffect(() => {
     if (projectsData) {
       setProjectList(projectsData.projects);
     }
   }, [projectsData]);
+
+  useEffect(() => {
+    if (commonSuccess) {
+      successToast(
+        isEditView
+          ? 'Interaction updated successfully'
+          : 'Interaction created successfully'
+      );
+      goBack();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonSuccess, isEditView]);
 
   const projectCodeList: SelectOption[] = useMemo(() => {
     return (
@@ -171,12 +210,14 @@ const InteractionForm = () => {
         projectCode: matchingFiscal?.project_code || '',
         projectName: matchingFiscal?.project_name || '',
         fiscalYear: matchingFiscal?.fiscal_year || 0,
-        errors: {
-          ...prev.errors,
-          projectCode: undefined,
-          projectName: undefined,
-          fiscalYear: undefined,
-        },
+      }));
+
+      // Clear errors when project changes
+      setErrors((prev) => ({
+        ...prev,
+        projectCode: undefined,
+        projectName: undefined,
+        fiscalYear: undefined,
       }));
     }
   };
@@ -187,8 +228,7 @@ const InteractionForm = () => {
       questions: [
         ...prev.questions,
         {
-          // questionNo: `${prev.questions.length + 1}`,
-          questionNo: '-',
+          questionNo: `${prev.questions.length + 1}`,
           question: '',
           mandatory: false,
           notes: '',
@@ -203,7 +243,7 @@ const InteractionForm = () => {
 
       if (updatedQuestions.length === 0) {
         updatedQuestions.push({
-          questionNo: '-',
+          questionNo: '1',
           question: '',
           mandatory: false,
           notes: '',
@@ -219,7 +259,7 @@ const InteractionForm = () => {
 
   const handleQuestionChange = (
     index: number,
-    field: keyof InteractionQuestion,
+    field: keyof InteractionFormQuestion,
     value: string | boolean
   ) => {
     setFormData((prev) => {
@@ -227,36 +267,52 @@ const InteractionForm = () => {
       updatedQuestions[index] = {
         ...updatedQuestions[index],
         [field]: value,
-        errors: {
-          ...updatedQuestions[index].errors,
-          [field]: undefined,
-        },
       };
       return {
         ...prev,
         questions: updatedQuestions,
       };
     });
+
+    // Clear error when field changes
+    setErrors((prev) => {
+      const newQuestionErrors = [...(prev.questions || [])];
+      if (newQuestionErrors[index]) {
+        newQuestionErrors[index] = {
+          ...newQuestionErrors[index],
+          [field]: undefined,
+        };
+      }
+      return {
+        ...prev,
+        questions: newQuestionErrors,
+      };
+    });
   };
 
   const validateForm = (): boolean => {
-    const { isValid, updatedData } = validateInteractionForm(
+    const { isValid, errors: validationErrors } = validateInteractionForm(
       formData,
-      searchParams.get('source')
+      searchParams.get('source'),
+      isEditView
     );
-    setFormData(updatedData);
+    setErrors(validationErrors);
     return isValid;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!validateForm()) {
       return;
     }
     console.log(formData);
-  };
+    const payload = transFormPayload(formData, isEditView, interactionData);
+    console.log(payload);
 
-  const handleExternalSubmit = () => {
-    handleSubmit();
+    if (isEditView && interactionData) {
+      updateInteraction.mutate(payload);
+    } else {
+      createInteraction.mutate(payload);
+    }
   };
 
   const statusOptions = [
@@ -292,8 +348,8 @@ const InteractionForm = () => {
                 ) : (
                   <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                     {isProjectFields
-                      ? `Project > ${formData.projectCode} > ${data?.r_number}`
-                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${data?.r_number}`}
+                      ? `Project > ${formData.projectCode} > ${interactionData?.r_number}`
+                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.r_number}`}
                   </div>
                 )}
               </>
@@ -307,7 +363,7 @@ const InteractionForm = () => {
           <TextButton
             label='Save'
             // loading={createAccount.isPending || updateAccount.isPending}
-            onClick={handleExternalSubmit}
+            onClick={handleSubmit}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -375,7 +431,7 @@ const InteractionForm = () => {
                   <Select
                     name='project_code'
                     className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
-                      ${formData.projectCode === '' ? 'text-[#7D98B6] ' : ''} ${formData.errors?.projectCode && 'border-red-500 bg-[#FEF2F2]'}
+                      ${formData.projectCode === '' ? 'text-[#7D98B6] ' : ''} ${errors?.projectCode && 'border-red-500 bg-[#FEF2F2]'}
                     `}
                     onChange={handleProjectChange}
                     value={formData.projectCode}
@@ -420,13 +476,13 @@ const InteractionForm = () => {
                         backgroundColor: '#f3f4f6',
                       },
                       '& .MuiOutlinedInput-notchedOutline': {
-                        border: formData?.errors?.projectCode
+                        border: errors?.projectCode
                           ? '1px solid #ef4444'
                           : '1px solid #CBD6E2',
                         borderRadius: '2px',
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: formData?.errors?.projectCode
+                        border: errors?.projectCode
                           ? '1px solid #ef4444'
                           : '1px solid #CBD6E2',
                       },
@@ -460,9 +516,9 @@ const InteractionForm = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  {formData.errors?.projectCode && (
+                  {errors?.projectCode && (
                     <span className='text-[12px] text-red-400 col-span-full'>
-                      {formData.errors.projectCode}
+                      {errors.projectCode}
                     </span>
                   )}
                 </div>
@@ -479,10 +535,15 @@ const InteractionForm = () => {
                     name='project_code'
                     placeholder='Enter Project Code'
                     autoComplete='off'
-                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                    className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.projectCode && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
                     disabled={true}
                     value={formData.projectCode}
                   />
+                  {errors?.projectCode && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {errors.projectCode}
+                    </span>
+                  )}
                 </div>
               )}
               <div>
@@ -515,10 +576,15 @@ const InteractionForm = () => {
                   name='fiscal_year'
                   placeholder='Enter Fiscal Year'
                   autoComplete='off'
-                  className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                  className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.fiscalYear && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
                   disabled={true}
                   value={formData.fiscalYear}
                 />
+                {errors?.fiscalYear && (
+                  <span className='text-[12px] text-red-400 col-span-full'>
+                    {errors.fiscalYear}
+                  </span>
+                )}
               </div>
 
               <div className={`${isEditView ? 'block' : 'hidden'}`}>
@@ -530,10 +596,9 @@ const InteractionForm = () => {
                 </label>
                 <Select
                   name='status'
-                  className={
-                    'custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]  ' +
-                    (formData.status === '' ? 'text-[#7D98B6] ' : '')
-                  }
+                  className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
+                    ${formData.status === '' ? 'text-[#7D98B6] ' : ''} ${errors?.status && 'border-red-500 bg-[#FEF2F2]'}
+                  `}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -580,19 +645,16 @@ const InteractionForm = () => {
                       backgroundColor: '#f3f4f6',
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
-                      // border: field.error
-                      //   ? '1px solid #ef4444'
-                      //   : '1px solid #CBD6E2',
+                      border: errors?.status
+                        ? '1px solid #ef4444'
+                        : '1px solid #CBD6E2',
                       borderRadius: '2px',
                     },
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      // border: field.error
-                      //   ? '1px solid #ef4444'
-                      //   : '1px solid #CBD6E2',
+                      border: errors?.status
+                        ? '1px solid #ef4444'
+                        : '1px solid #CBD6E2',
                     },
-                    // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    //   borderColor: field.error ? '#ef4444' : 'black',
-                    // },
                     '& svg': {
                       color: '#7D98B6',
                     },
@@ -613,6 +675,11 @@ const InteractionForm = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {errors.status && (
+                  <span className='text-[12px] text-red-400 col-span-full'>
+                    {errors.status}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -640,7 +707,7 @@ const InteractionForm = () => {
                       <TableRow sx={{ height: 29 }}>
                         {questionTableColumns
                           .filter((col) => !col.hide)
-                          .map((col: InteractionTableColumn) => (
+                          .map((col: InteractionFormTableColumn) => (
                             <TableCell
                               key={col.name}
                               style={{
@@ -695,14 +762,12 @@ const InteractionForm = () => {
                         >
                           {questionTableColumns
                             .filter((col) => !col.hide)
-                            .map((col: InteractionTableColumn) => {
+                            .map((col: InteractionFormTableColumn) => {
                               const isDisabled = col.disabled;
-                              const isBtnDisabled =
-                                col.disabled ||
-                                (formData.questions.length <= 1 && !isEditView);
+                              const isBtnDisabled = col.disabled;
                               const error =
-                                question.errors?.[
-                                  col.name as keyof typeof question.errors
+                                errors.questions?.[index]?.[
+                                  col.name as keyof InteractionQuestionErrors
                                 ];
 
                               return (
@@ -725,61 +790,38 @@ const InteractionForm = () => {
                                   )}
 
                                   {col.name === 'question' && (
-                                    <div>
-                                      {focusedField?.index === index &&
-                                      focusedField?.field === 'question' ? (
-                                        <textarea
-                                          name='interaction_question'
-                                          placeholder='Enter Interaction Question'
-                                          autoComplete='off'
-                                          className='absolute top-0 z-10 outline-none w-full sm:text-sm py-2 px-3 resize-none border-2 border-blue-400 bg-white shadow-lg'
-                                          onChange={(e) =>
-                                            handleQuestionChange(
-                                              index,
-                                              'question',
-                                              e.target.value
-                                            )
-                                          }
-                                          value={question.question}
-                                          onBlur={() => setFocusedField(null)}
-                                          autoFocus
-                                          rows={2}
-                                          style={{
-                                            top: 0,
-                                            left: 0,
-                                            minHeight: '40px',
-                                          }}
-                                        />
-                                      ) : (
-                                        <TruncateWithTooltip
-                                          text={
-                                            question.question ||
-                                            'Enter Interaction Question'
-                                          }
-                                          maxWidth={col.width}
-                                        >
-                                          <span
-                                            className='px-3'
-                                            onClick={() =>
-                                              setFocusedField({
-                                                index,
-                                                field: 'question',
-                                              })
-                                            }
-                                          >
-                                            {question.question || (
-                                              <span className='text-[#7D98B6]'>
-                                                Enter Interaction Question
-                                              </span>
-                                            )}
-                                          </span>
-                                        </TruncateWithTooltip>
-                                      )}
+                                    <div
+                                      className={`relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                    >
+                                      <textarea
+                                        name='interaction_question'
+                                        placeholder='Enter Interaction Question'
+                                        autoComplete='off'
+                                        className='outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400'
+                                        onChange={(e) =>
+                                          handleQuestionChange(
+                                            index,
+                                            'question',
+                                            e.target.value
+                                          )
+                                        }
+                                        value={question.question}
+                                        // rows={1}
+                                        disabled={isDisabled}
+                                      />
                                       {error && (
                                         <Tooltip
                                           title={error}
                                           arrow
                                           placement='top'
+                                          slotProps={{
+                                            tooltip: {
+                                              sx: {
+                                                backgroundColor: '#FEF2F2',
+                                                mr: 1,
+                                              },
+                                            },
+                                          }}
                                         >
                                           <span className='h-[32px] w-5 flex items-center justify-center absolute top-0 bg-[#FEF2F2] right-0 pt-1 pr-1 cursor-pointer'>
                                             <ErrorInfoIcon
@@ -811,58 +853,38 @@ const InteractionForm = () => {
                                   )}
 
                                   {col.name === 'notes' && (
-                                    <div>
-                                      {focusedField?.index === index &&
-                                      focusedField?.field === 'notes' ? (
-                                        <textarea
-                                          name='notes'
-                                          placeholder='Enter Notes'
-                                          autoComplete='off'
-                                          className='absolute z-10 outline-none w-full sm:text-sm py-2 px-3 resize-none border-2 border-blue-400 bg-white shadow-lg'
-                                          value={question.notes}
-                                          onChange={(e) =>
-                                            handleQuestionChange(
-                                              index,
-                                              'notes',
-                                              e.target.value
-                                            )
-                                          }
-                                          onBlur={() => setFocusedField(null)}
-                                          autoFocus
-                                          rows={2}
-                                          style={{
-                                            top: 0,
-                                            left: 0,
-                                            minHeight: '40px',
-                                          }}
-                                        />
-                                      ) : (
-                                        <TruncateWithTooltip
-                                          text={question.notes || 'Enter Notes'}
-                                          maxWidth={col.width}
-                                        >
-                                          <span
-                                            className='px-3'
-                                            onClick={() =>
-                                              setFocusedField({
-                                                index,
-                                                field: 'notes',
-                                              })
-                                            }
-                                          >
-                                            {question.notes || (
-                                              <span className='text-[#7D98B6]'>
-                                                Enter Notes
-                                              </span>
-                                            )}
-                                          </span>
-                                        </TruncateWithTooltip>
-                                      )}
+                                    <div
+                                      className={`box-border relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                    >
+                                      <textarea
+                                        name='notes'
+                                        placeholder='Enter Notes'
+                                        autoComplete='off'
+                                        className='outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400'
+                                        value={question.notes}
+                                        onChange={(e) =>
+                                          handleQuestionChange(
+                                            index,
+                                            'notes',
+                                            e.target.value
+                                          )
+                                        }
+                                        // rows={1}
+                                        disabled={isDisabled}
+                                      />
                                       {error && (
                                         <Tooltip
                                           title={error}
                                           arrow
                                           placement='top'
+                                          slotProps={{
+                                            tooltip: {
+                                              sx: {
+                                                backgroundColor: '#FEF2F2',
+                                                mr: 1,
+                                              },
+                                            },
+                                          }}
                                         >
                                           <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
                                             <ErrorInfoIcon

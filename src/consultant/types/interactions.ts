@@ -1,3 +1,65 @@
+// Form Types
+export enum QuestionUpdate {
+  Add = 'add',
+  Edit = 'edit',
+  Delete = 'delete',
+  NoChange = 'no_change',
+}
+export interface InteractionFormTableColumn {
+  name: string;
+  label: string;
+  width?: string;
+  align?: 'left' | 'right' | 'center';
+  required?: boolean;
+  disabled?: boolean;
+  hide?: boolean;
+}
+
+export interface ProjectDetails {
+  project_code: string;
+  project_name: string;
+  fiscal_year: number;
+  account_name: string;
+}
+
+export interface InteractionFormQuestion {
+  questionNo: string;
+  question: string;
+  mandatory: boolean;
+  notes: string;
+  rid?: string;
+  action_type?: QuestionUpdate;
+}
+
+export interface InteractionFormData {
+  id?: string;
+  accountName: string;
+  projectCode: string;
+  projectName: string;
+  fiscalYear: number;
+  questions: InteractionFormQuestion[];
+  status?: string;
+  rid?: string;
+  interaction_id?: string;
+  created_on?: string;
+  created_by?: string;
+}
+
+export interface InteractionQuestionErrors {
+  question?: string;
+  mandatory?: string;
+  notes?: string;
+}
+
+export interface InteractionFormErrors {
+  projectCode?: string;
+  projectName?: string;
+  fiscalYear?: string;
+  status?: string;
+  questions?: InteractionQuestionErrors[];
+}
+
+// List and Details Types
 export type InteractionList = {
   rid: string;
   r_number: string;
