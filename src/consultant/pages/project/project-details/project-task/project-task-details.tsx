@@ -3,8 +3,8 @@ import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import {
   applyHidePermission,
   costDisplay,
+  formatDateToYYYYMMDDWithTime,
   getDateFormat,
-  getDateTimeFormat,
 } from '../../../../../common-utils';
 import DetailsTable from '../../../../../components/details-section/details-table';
 import { useMemo } from 'react';
@@ -160,7 +160,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     {
       key: 'created_datetime',
       label: 'Created On',
-      value: getDateTimeFormat(projectTaskData.created_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(projectTaskData.created_datetime ?? undefined),
     },
     {
       key: 'created_by',
@@ -170,7 +170,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     {
       key: 'modified_datetime',
       label: 'Updated On',
-      value: getDateTimeFormat(projectTaskData.modified_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(projectTaskData.modified_datetime ?? undefined),
     },
     {
       key: 'modified_by',
