@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
 import { InteractionQuestion } from '../../../../../types';
@@ -21,16 +21,85 @@ interface Props {
 }
 
 const InteractionQuestions: React.FC<Props> = ({ questions }) => {
-  const buttons: SectionHeaderButton[] = [
-    {
-      label: 'Response History',
-      variant: 'outlined' as const,
-      // disabled: accountInActive,
-      onClick: () => console.log('Response History clicked'),
-      sx: { width: '130px', minWidth: '130px' },
-      hide: false,
-    },
-  ];
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
+    questions.reduce(
+      (acc, q) => {
+        acc[q.question_id] = q.answer || '';
+        return acc;
+      },
+      {} as Record<string, string>
+    )
+  );
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setEditedAnswers(
+      questions.reduce(
+        (acc, q) => {
+          acc[q.question_id] = q.answer || '';
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    );
+  };
+
+  const handleSave = () => {
+    console.log('Saving all answers:', editedAnswers);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    // Revert to original answers
+    setEditedAnswers(
+      questions.reduce(
+        (acc, q) => {
+          acc[q.question_id] = q.answer || '';
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    );
+  };
+
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setEditedAnswers((prev) => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  };
+
+  const buttons: SectionHeaderButton[] = isEditing
+    ? [
+        {
+          label: 'Save',
+          variant: 'contained' as const,
+          onClick: handleSave,
+          sx: { width: '64px', minWidth: '64px' },
+        },
+        {
+          label: 'Cancel',
+          variant: 'outlined' as const,
+          onClick: handleCancel,
+          sx: { width: '75px', minWidth: '75px' },
+        },
+      ]
+    : [
+        {
+          label: 'Edit Response',
+          variant: 'outlined' as const,
+          onClick: handleEditClick,
+          sx: { width: '110px', minWidth: '110px' },
+        },
+        {
+          label: 'Response History',
+          variant: 'outlined' as const,
+          onClick: () => console.log('Response History clicked'),
+          sx: { width: '130px', minWidth: '130px' },
+        },
+      ];
 
   return (
     <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
@@ -39,19 +108,17 @@ const InteractionQuestions: React.FC<Props> = ({ questions }) => {
           Interaction Question
         </div>
         <div className='flex items-center gap-2'>
-          {buttons.map((button, index) =>
-            button.hide ? null : (
-              <TextButton
-                key={`section-header-btn-${index}`}
-                label={button.label}
-                onClick={button.onClick}
-                loading={button.loading}
-                aria-label={button.label}
-                sx={button.sx}
-                disabled={button.disabled}
-              />
-            )
-          )}
+          {buttons.map((button, index) => (
+            <TextButton
+              key={`section-header-btn-${index}`}
+              label={button.label}
+              onClick={button.onClick}
+              loading={button.loading}
+              aria-label={button.label}
+              sx={button.sx}
+              disabled={button.disabled}
+            />
+          ))}
         </div>
       </div>
       <div>
@@ -61,11 +128,23 @@ const InteractionQuestions: React.FC<Props> = ({ questions }) => {
               <span className='font-bold'>{q.question_id}</span> - {q.question}
             </div>
 
-            <div
-              className={`mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20 text-[14px] text-[#425A76] font-normal ${q.answer ? 'bg-[#FFFBFA]' : 'bg-[#FCFCFC]'}`}
-            >
-              {q.answer}
-            </div>
+            {isEditing ? (
+              <div className='mt-2'>
+                <textarea
+                  value={editedAnswers[q.question_id]}
+                  onChange={(e) =>
+                    handleAnswerChange(q.question_id, e.target.value)
+                  }
+                  className='outline-none placeholder-custom-color rounded-[2px] min-h-20 border border-[#CBD6E2] w-full text-[14px] text-[#425A76] font-normal bg-white py-2 px-3 resize-none focus:border-1 focus:border-blue-400'
+                />
+              </div>
+            ) : (
+              <div
+                className={`mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20 text-[14px] text-[#425A76] font-normal ${q.answer ? 'bg-[#FFFBFA]' : 'bg-[#FCFCFC]'}`}
+              >
+                {q.answer}
+              </div>
+            )}
 
             {q.attachments.length > 0 && (
               <div
