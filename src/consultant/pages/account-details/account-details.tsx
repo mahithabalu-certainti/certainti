@@ -20,6 +20,7 @@ import {
   SettingIcon,
   TimeSheetIcon,
   ConfigIcon,
+  InteractionsIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -37,6 +38,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Interactions,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -460,6 +462,13 @@ export const AccountDetails = () => {
             setToggleEnabled={setToggleEnabled}
           />
         );
+      case 'interactions':
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'cases':
         return <Cases />;
       case 'activities':
@@ -524,6 +533,13 @@ export const AccountDetails = () => {
         id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
       },
       {
         name: 'Cases',
