@@ -12,6 +12,7 @@ import { PermissionObjectMapping } from "../models/permissionObjectMappingModel"
 import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
+import { updateAzureUser } from "./manageUser";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -339,6 +340,21 @@ class UserService {
       }
 
       fieldsToUpdate.modified_by = loggedInUser;
+
+      // Remove status_rid if it is undefined to satisfy UpdateUser type
+      const azureUserUpdate: any = { ...fieldsToUpdate };
+      if (azureUserUpdate.status_rid === undefined) {
+        delete azureUserUpdate.status_rid;
+      }
+
+      const azureUser = await updateAzureUser(azureUserUpdate);
+      if (!azureUser) {
+        return {
+          statusCode: constants.FAILED,
+          message: constants.FAILED_MESSAGE,
+          errorMessage: "Azure AD B2C user update failed",
+        };
+      }
 
       const updatedData = await repository.update(
         {
