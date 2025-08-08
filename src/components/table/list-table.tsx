@@ -1228,12 +1228,15 @@ const ListTable = <T extends RowData>({
                                 {expandable &&
                                   isFirstDataColumn &&
                                   renderExpandIcon(row, rowId)}
+
                                 {isChildRows && (
                                   <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px] shrink-0'>
-                                    <ChildAccountIcon
-                                      alt='childAccountIcon'
-                                      className='w-[9px] h-[10px]'
-                                    />
+                                    <React.Suspense fallback={null}>
+                                      <ChildAccountIcon
+                                        alt='childAccountIcon'
+                                        className='w-[9px] h-[10px]'
+                                      />
+                                    </React.Suspense>
                                   </div>
                                 )}
                                 <TruncateWithTooltip
@@ -1262,6 +1265,7 @@ const ListTable = <T extends RowData>({
                                 >
                                   {displayValue as React.ReactNode}
                                 </TruncateWithTooltip>
+
                                 {isEditableCell && (
                                   <button
                                     className='edit-pencil-icon absolute -right-1.5 top-1/2 cursor-pointer transform -translate-y-1/2 w-6 h-[28px] flex items-center justify-center bg-[#f5f7fa]'
@@ -1276,13 +1280,15 @@ const ListTable = <T extends RowData>({
                                       );
                                     }}
                                   >
-                                    <EditIcon
-                                      className='w-3.5 h-3.5'
-                                      style={{
-                                        filter:
-                                          'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
-                                      }}
-                                    />
+                                    <React.Suspense fallback={null}>
+                                      <EditIcon
+                                        className='w-3.5 h-3.5'
+                                        style={{
+                                          filter:
+                                            'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
+                                        }}
+                                      />
+                                    </React.Suspense>
                                   </button>
                                 )}
                               </div>
@@ -1536,7 +1542,6 @@ const ListTable = <T extends RowData>({
           </TableBody>
         </MuiTable>
       </TableContainer>
-
       {/* Modal Dialog */}
       <ModalDialog
         open={modalState.open}

@@ -10,7 +10,7 @@ import {
   ProfilePermissionForm,
 } from '../../manage-profile';
 import { Skeleton } from '@mui/material';
-import React, { Suspense, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { ProfileResponse } from '../../../../common-service';
@@ -101,14 +101,12 @@ export const ExtendedPermission: React.FC = () => {
               ))}
             </div>
           ) : (
-            <Suspense fallback={null}>
-              <ProfilePermissionForm
-                formData={data?.data.permissions || []}
-                loading={isPending}
-                formRef={formRef}
-                outData={outData}
-              />
-            </Suspense>
+            <ProfilePermissionForm
+              formData={data?.data.permissions || []}
+              loading={isPending}
+              formRef={formRef}
+              outData={outData}
+            />
           )}
         </div>
       </div>

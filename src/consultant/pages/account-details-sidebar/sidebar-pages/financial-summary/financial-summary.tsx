@@ -33,12 +33,12 @@ const FinancialTabs = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 interface ProjectFinancialProps {
   countryId?: string | null;
