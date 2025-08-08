@@ -47,15 +47,15 @@ export const useInteractionList = (
 };
 
 const fetchInteractionDetails = async (
-  projectid: string,
+  accountId: string,
   interactionId: string
 ): Promise<InteractionDetails> => {
   //   const response = await resourceServiceApi.get<InteractionDetailsResponse>(
-  //     getInteractionDetailsURL(projectid, interactionId)
+  //     getInteractionDetailsURL(accountId, interactionId)
   //   );
 
   //   return response.data.data.interactions;
-  console.log('projectid', projectid);
+  console.log('accountId', accountId);
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -66,15 +66,15 @@ const fetchInteractionDetails = async (
 };
 
 export const useInteractionDetails = (
-  projectid?: string,
+  accountId?: string,
   interactionId?: string
 ): UseQueryResult<InteractionDetails | undefined, Error> => {
   return useQuery<InteractionDetails | undefined, Error>({
-    queryKey: ['interaction-details', projectid, interactionId],
-    queryFn: () => fetchInteractionDetails(projectid!, interactionId!),
+    queryKey: ['interaction-details', accountId, interactionId],
+    queryFn: () => fetchInteractionDetails(accountId!, interactionId!),
     retry: 0,
     gcTime: 0,
-    enabled: !!interactionId && !!projectid,
+    enabled: !!interactionId && !!accountId,
   });
 };
 

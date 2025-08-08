@@ -6,7 +6,7 @@ import DetailsSection, {
 } from '../../../../../../components/details-section/details';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import InteractionQuestions from './interaction-qus';
@@ -25,18 +25,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   projectDetails,
 }) => {
   const navigate = useNavigate();
-  const { projectid } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
 
   const { data, isLoading, error } = useInteractionDetails(
-    projectid,
+    accountId,
     interactionId
   );
 
   const handleEdit = () => {
-    const projectId = projectid ?? '';
     const projectData = {
       project_code: projectDetails?.project_code || '',
       project_name: projectDetails?.program_name || '',
@@ -45,7 +43,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     };
     const queryParams = new URLSearchParams({
       accountId,
-      projectId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
     });

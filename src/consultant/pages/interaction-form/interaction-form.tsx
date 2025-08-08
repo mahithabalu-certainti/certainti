@@ -78,7 +78,6 @@ const InteractionForm = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const projectDetails = searchParams.get('projectDetails');
-  const projectId = searchParams.get('projectId') || '';
   const accountId = searchParams.get('accountId') || '';
   const source = searchParams.get('source');
   const accountName = searchParams.get('account_name');
@@ -109,7 +108,7 @@ const InteractionForm = () => {
   }, [accountName, projectDetails, searchParams, source]);
 
   const { data: interactionData, isLoading } = useInteractionDetails(
-    projectId,
+    accountId,
     interactionId
   );
   const createInteraction = useCreateInteraction();

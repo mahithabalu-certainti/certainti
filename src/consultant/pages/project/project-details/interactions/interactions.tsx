@@ -116,10 +116,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const handleCreate = () => {
-    const projectId = projectid ?? '';
     const queryParams = new URLSearchParams({
       accountId,
-      projectId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
     });
@@ -127,10 +125,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const handleEdit = (row: InteractionList) => {
-    const projectId = projectid ?? '';
     const queryParams = new URLSearchParams({
       accountId,
-      projectId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
     });
