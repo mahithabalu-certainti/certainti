@@ -1,37 +1,43 @@
 import React from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Task } from './types';
 
-interface TaskCardProps {
+interface SortableTaskCardProps {
   task: Task;
   boardId: string;
   disabled?: boolean;
   onTaskUpdate?: (taskId: string, updates: Partial<Task>) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({
+const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
   task,
   boardId,
   disabled = false,
   onTaskUpdate,
 }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: `task-${task.id}`,
-      data: {
-        type: 'task',
-        task,
-        boardId,
-      },
-      disabled: disabled || task.disabled,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `task-${task.id}`,
+    data: {
+      type: 'task',
+      task,
+      boardId,
+    },
+    disabled: disabled || task.disabled,
+  });
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        zIndex: isDragging ? 1000 : 'auto',
-      }
-    : undefined;
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
 
   if (task.hidden) return null;
 
@@ -85,4 +91,4 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
-export default TaskCard;
+export default SortableTaskCard;

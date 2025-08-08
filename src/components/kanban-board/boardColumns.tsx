@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import SortableTaskCard from './sortable-task-card';
 import { Board, DropdownOption, Task } from './types';
 import { AddIcon, DeleteIcon } from '../../assets';
 import DropdownMenu from './dropdownMenu';
-import TaskCard from './taskCard';
 
 interface BoardColumnProps {
   board: Board;
@@ -37,9 +41,13 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
-  const { setNodeRef: setDroppableNodeRef } = useDroppable({
+  const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
     id: board.id,
-    data: { board, boardIndex },
+    data: {
+      type: 'board',
+      board,
+      boardIndex,
+    },
   });
 
   const {
@@ -50,7 +58,11 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     isDragging,
   } = useDraggable({
     id: `board-${board.id}`,
-    data: { board, boardIndex, type: 'board' },
+    data: {
+      type: 'board',
+      board,
+      boardIndex,
+    },
     disabled: !allowBoardSwap,
   });
 
@@ -92,7 +104,6 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
           {
             id: 'duplicate',
             label: 'Duplicate Board',
-            // icon: <Copy size={16} />,
             action: () => onBoardDuplicate(board.id),
           },
         ]
@@ -116,9 +127,10 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
       style={style}
       className={`
         flex-shrink-0 w-80 bg-gray-50 rounded-lg overflow-hidden shadow-sm
-        transition-all duration-200
+        transition-all duration-200 flex flex-col
         ${isDragging ? 'opacity-90' : ''}
         ${board.disabled ? 'opacity-60' : ''}
+        ${isOver ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}
       `}
       {...(allowBoardSwap ? attributes : {})}
       {...(allowBoardSwap ? listeners : {})}
@@ -133,7 +145,12 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
       </div>
 
       {/* Content Area */}
-      <div ref={setDroppableNodeRef} className='p-4 space-y-3 min-h-32 flex-1'>
+      <div
+        ref={setDroppableNodeRef}
+        className={`p-4 space-y-3 min-h-32 flex-1 transition-colors duration-200 ${
+          isOver ? 'bg-blue-50' : ''
+        }`}
+      >
         {/* Create Task Button */}
         {canAddTask && !isCreatingTask && (
           <div className='group'>
@@ -192,20 +209,25 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
           </div>
         )}
 
-        {/* Tasks */}
-        {visibleTasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            boardId={board.id}
-            disabled={
-              !allowTaskInteraction || board.allowTaskInteraction === false
-            }
-            onTaskUpdate={(taskId, updates) =>
-              onTaskUpdate?.(board.id, taskId, updates)
-            }
-          />
-        ))}
+        {/* Tasks with Sortable Context */}
+        <SortableContext
+          items={visibleTasks.map((task) => `task-${task.id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          {visibleTasks.map((task) => (
+            <SortableTaskCard
+              key={task.id}
+              task={task}
+              boardId={board.id}
+              disabled={
+                !allowTaskInteraction || board.allowTaskInteraction === false
+              }
+              onTaskUpdate={(taskId, updates) =>
+                onTaskUpdate?.(board.id, taskId, updates)
+              }
+            />
+          ))}
+        </SortableContext>
 
         {/* Max Items Warning */}
         {board.maxItems && visibleTasks.length >= board.maxItems && (

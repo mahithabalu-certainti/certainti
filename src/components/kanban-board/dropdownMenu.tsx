@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-// import { MoreHorizontal } from 'lucide-react';
 import { DropdownOption } from './types';
+import { AddIcon } from '../../assets';
 
 interface DropdownMenuProps {
   options: DropdownOption[];
@@ -39,7 +39,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
         className='p-1 rounded-md hover:bg-white/20 transition-colors duration-200'
         aria-label='More options'
       >
-        {/* <MoreHorizontal size={18} className='text-white' /> */}
+        <AddIcon size={18} className='text-white' />
       </button>
 
       {isOpen && (

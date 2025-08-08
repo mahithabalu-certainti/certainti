@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import {
   DndContext,
@@ -5,13 +7,17 @@ import {
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
-  closestCorners,
+  closestCenter,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { ActiveItem, Board, KanbanProps, Task } from './types';
 import BoardColumn from './boardColumns';
 import TaskCard from './taskCard';
@@ -59,17 +65,17 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     const { active } = event;
     const data = active.data.current;
 
-    if (data?.task) {
+    if (data?.type === 'task') {
       setActiveItem({
+        type: 'task',
         task: data.task,
         boardId: data.boardId,
-        type: 'task',
       });
-    } else if (data?.board) {
+    } else if (data?.type === 'board') {
       setActiveItem({
+        type: 'board',
         board: data.board,
         boardId: data.board.id,
-        type: 'board',
       });
     }
   };
@@ -81,19 +87,21 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    if (
-      activeData?.task &&
-      overData?.board &&
-      activeData.boardId !== overData.board.id
-    ) {
-      const sourceBoard = boards.find((b) => b.id === activeData.boardId);
-      const targetBoard = overData.board;
+    // Handle task movement between boards
+    if (activeData?.type === 'task' && overData?.type === 'board') {
+      const activeTaskId = activeData.task.id;
+      const sourceBoardId = activeData.boardId;
+      const targetBoardId = overData.board.id;
+
+      if (sourceBoardId === targetBoardId) return;
+
+      const sourceBoard = boards.find((b) => b.id === sourceBoardId);
+      const targetBoard = boards.find((b) => b.id === targetBoardId);
 
       if (!sourceBoard || !targetBoard) return;
 
-      const targetVisibleTasks = targetBoard.tasks.filter(
-        (t: Task) => !t.hidden
-      );
+      // Check if target board has space
+      const targetVisibleTasks = targetBoard.tasks.filter((t) => !t.hidden);
       if (
         targetBoard.maxItems &&
         targetVisibleTasks.length >= targetBoard.maxItems
@@ -102,13 +110,13 @@ const KanbanBoard: React.FC<KanbanProps> = ({
       }
 
       const updatedBoards = boards.map((board) => {
-        if (board.id === activeData.boardId) {
+        if (board.id === sourceBoardId) {
           return {
             ...board,
-            tasks: board.tasks.filter((task) => task.id !== activeData.task.id),
+            tasks: board.tasks.filter((task) => task.id !== activeTaskId),
           };
         }
-        if (board.id === targetBoard.id) {
+        if (board.id === targetBoardId) {
           return {
             ...board,
             tasks: [...board.tasks, activeData.task],
@@ -130,6 +138,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     const activeData = active.data.current;
     const overData = over.data.current;
 
+    // Handle board reordering
     if (
       activeData?.type === 'board' &&
       overData?.type === 'board' &&
@@ -141,6 +150,113 @@ const KanbanBoard: React.FC<KanbanProps> = ({
       if (activeIndex !== overIndex) {
         onBoardsChange(arrayMove(boards, activeIndex, overIndex));
       }
+      return;
+    }
+
+    // Handle task reordering within the same board
+    if (activeData?.type === 'task' && overData?.type === 'task') {
+      const activeTaskId = activeData.task.id;
+      const overTaskId = overData.task.id;
+      const activeBoardId = activeData.boardId;
+      const overBoardId = overData.boardId;
+
+      // Same board reordering
+      if (activeBoardId === overBoardId) {
+        const board = boards.find((b) => b.id === activeBoardId);
+        if (!board) return;
+
+        const activeIndex = board.tasks.findIndex((t) => t.id === activeTaskId);
+        const overIndex = board.tasks.findIndex((t) => t.id === overTaskId);
+
+        if (activeIndex !== overIndex) {
+          const updatedBoards = boards.map((b) => {
+            if (b.id === activeBoardId) {
+              return {
+                ...b,
+                tasks: arrayMove(b.tasks, activeIndex, overIndex),
+              };
+            }
+            return b;
+          });
+          onBoardsChange(updatedBoards);
+        }
+      } else {
+        // Cross-board movement with specific positioning
+        const sourceBoard = boards.find((b) => b.id === activeBoardId);
+        const targetBoard = boards.find((b) => b.id === overBoardId);
+
+        if (!sourceBoard || !targetBoard) return;
+
+        const targetVisibleTasks = targetBoard.tasks.filter((t) => !t.hidden);
+        if (
+          targetBoard.maxItems &&
+          targetVisibleTasks.length >= targetBoard.maxItems
+        ) {
+          return;
+        }
+
+        const overIndex = targetBoard.tasks.findIndex(
+          (t) => t.id === overTaskId
+        );
+
+        const updatedBoards = boards.map((board) => {
+          if (board.id === activeBoardId) {
+            return {
+              ...board,
+              tasks: board.tasks.filter((task) => task.id !== activeTaskId),
+            };
+          }
+          if (board.id === overBoardId) {
+            const newTasks = [...board.tasks];
+            newTasks.splice(overIndex, 0, activeData.task);
+            return {
+              ...board,
+              tasks: newTasks,
+            };
+          }
+          return board;
+        });
+
+        onBoardsChange(updatedBoards);
+      }
+    }
+
+    // Handle task dropped on board (at the end)
+    if (activeData?.type === 'task' && overData?.type === 'board') {
+      const activeTaskId = activeData.task.id;
+      const sourceBoardId = activeData.boardId;
+      const targetBoardId = overData.board.id;
+
+      if (sourceBoardId === targetBoardId) return;
+
+      const targetBoard = boards.find((b) => b.id === targetBoardId);
+      if (!targetBoard) return;
+
+      const targetVisibleTasks = targetBoard.tasks.filter((t) => !t.hidden);
+      if (
+        targetBoard.maxItems &&
+        targetVisibleTasks.length >= targetBoard.maxItems
+      ) {
+        return;
+      }
+
+      const updatedBoards = boards.map((board) => {
+        if (board.id === sourceBoardId) {
+          return {
+            ...board,
+            tasks: board.tasks.filter((task) => task.id !== activeTaskId),
+          };
+        }
+        if (board.id === targetBoardId) {
+          return {
+            ...board,
+            tasks: [...board.tasks, activeData.task],
+          };
+        }
+        return board;
+      });
+
+      onBoardsChange(updatedBoards);
     }
   };
 
@@ -238,7 +354,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     <div className={`p-6 bg-gray-100 min-h-screen ${className}`}>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -248,21 +364,26 @@ const KanbanBoard: React.FC<KanbanProps> = ({
           role='region'
           aria-label='Kanban Board'
         >
-          {visibleBoards.map((board, index) => (
-            <BoardColumn
-              key={board.id}
-              board={board}
-              boardIndex={index}
-              onTaskCreate={allowCreateTask ? handleTaskCreate : undefined}
-              onTaskUpdate={handleTaskUpdate}
-              onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
-              onBoardDuplicate={handleBoardDuplicate}
-              customDropdownOptions={customDropdownOptions}
-              allowCreateTask={allowCreateTask}
-              allowTaskInteraction={allowTaskMovement}
-              allowBoardSwap={allowSwapBoards}
-            />
-          ))}
+          <SortableContext
+            items={visibleBoards.map((board) => `board-${board.id}`)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {visibleBoards.map((board, index) => (
+              <BoardColumn
+                key={board.id}
+                board={board}
+                boardIndex={index}
+                onTaskCreate={allowCreateTask ? handleTaskCreate : undefined}
+                onTaskUpdate={handleTaskUpdate}
+                onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
+                onBoardDuplicate={handleBoardDuplicate}
+                customDropdownOptions={customDropdownOptions}
+                allowCreateTask={allowCreateTask}
+                allowTaskInteraction={allowTaskMovement}
+                allowBoardSwap={allowSwapBoards}
+              />
+            ))}
+          </SortableContext>
 
           {canCreateBoard && (
             <div className='flex-shrink-0 w-80'>
