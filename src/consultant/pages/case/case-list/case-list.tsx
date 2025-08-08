@@ -43,11 +43,6 @@ export const CaseList: React.FC<ICaseTableProps> = ({
     return row.case_id;
   };
 
-  const handleEdit = (caseItem: Case) => {
-    console.log('Edit case:', caseItem);
-    // Navigation logic would go here
-  };
-
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
@@ -90,8 +85,17 @@ export const CaseList: React.FC<ICaseTableProps> = ({
 
   const actionButtons: ActionItem<Case>[] = [
     {
+      label: 'View',
+      onClick: () => console.log('View Clicked'),
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+      hide: false,
+    },
+    {
       label: 'Edit',
-      onClick: (row: Case) => handleEdit(row),
+      onClick: () => console.log('Edit Clicked'),
       icon: EditIcon,
       iconStyle: {
         filter:

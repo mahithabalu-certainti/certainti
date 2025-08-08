@@ -7,11 +7,7 @@ import {
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
-import {
-  AllMenus,
-  AllModules,
-  AllPermissions,
-} from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -65,11 +61,7 @@ const Configuration: React.FC = () => {
     permission,
     AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
   );
-  const projectSettingsEnable = checkPermission(
-    modules,
-    AllMenus.PROJECT_SETTINGS
-  );
-  console.log('projectSettingsEnable', projectSettingsEnable);
+
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
   };
