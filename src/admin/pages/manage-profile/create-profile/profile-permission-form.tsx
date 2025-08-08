@@ -584,7 +584,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     } else if (selectType === 'rightReadAll') {
       allFields
         ?.slice(Math.ceil(partialData))
-        .filter((item) => (isEnabled ? item : !item.is_edit_only)) //ignore is_edit_only when is deselect 
+        .filter((item) => (isEnabled ? item : !item.is_edit_only)) //ignore is_edit_only when is deselect
         .filter(
           (item) => !(item.hasReadExtendedPermsission === false && item.read) // ignore Extended permission data
         )
