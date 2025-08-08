@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // FilterControls.tsx
 import {
   Checkbox,
   FormControl,
   MenuItem,
-  MenuProps,
   Select,
   SelectChangeEvent,
   TextField,
@@ -16,6 +14,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import { MENU_PROPS, OPERATOR_STYLE, SELECT_STYLES } from './styles';
 
 function formatString(str: string | undefined): string {
   if (!str) return '';
@@ -25,75 +24,13 @@ function formatString(str: string | undefined): string {
     .join(' ');
 }
 
-export const SELECT_STYLES = {
-  fontWeight: 600,
-  fontSize: '12px',
-  lineHeight: '30px',
-  borderRadius: '2px',
-  '& .MuiSelect-select': {
-    fontWeight: 600,
-    fontSize: '12px',
-    lineHeight: '30px',
-    color: '#425A76',
-    py: 0,
-    maxWidth: '100%',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#CBD6E2',
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#CBD6E2',
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#CBD6E2',
-  },
-  '& .MuiSelect-icon': {
-    top: '40%',
-  },
-};
-export const OPERATOR_STYLE = {
-  maxWidth: '112px',
-  minWidth: '112px',
-  '& .MuiSelect-select': {
-    display: 'flex',
-    fontWeight: 600,
-    fontSize: '12px',
-    lineHeight: '30px',
-    color: '#425A76',
-    py: 0,
-  },
-};
-export const MENU_PROPS: Partial<MenuProps> = {
-  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-  transformOrigin: { vertical: 'top', horizontal: 'left' },
-  PaperProps: {
-    style: {
-      borderRadius: '0px 0px 8px 8px',
-      border: '1px solid #CBD6E2',
-      borderTop: 'none',
-      marginTop: '1px',
-      boxShadow: 'none',
-      maxHeight: '200px',
-      cursor: 'pointer',
-    },
-  },
-  MenuListProps: {
-    sx: {
-      paddingTop: 0,
-      paddingBottom: 0,
-    },
-  },
-};
-
 export const NewDateFilterControl: React.FC<{
   filterStates: Record<string, FilterState>;
   menuOption: { label: string; value: string }[];
   fieldName: string;
   state: FilterState;
   mode?: 'year' | 'date';
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     type: 'from' | 'to',
     fieldName: string,
@@ -393,6 +330,7 @@ export const NewMultiSelectFilterControl: React.FC<{
   const menuItems = useMemo(() => {
     return options.map((option) => (
       <MenuItem
+        title={option}
         key={option}
         value={option}
         dense
@@ -629,6 +567,7 @@ export const NewStatusFilterControl: React.FC<{
     >
       {options?.map((option) => (
         <MenuItem
+          title={option.label}
           key={option.label}
           value={option.value}
           sx={{
@@ -907,7 +846,7 @@ export const EnumSelectFilterControl: React.FC<{
   valueOptions: { label: string; value: string }[];
   fieldName: string;
   state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onChange: (fieldName: string, values: string[]) => void;
 }> = ({
   filterStates,
@@ -992,6 +931,7 @@ export const EnumSelectFilterControl: React.FC<{
           >
             {valueOptions.map((item) => (
               <MenuItem
+                title={item.label}
                 key={item.label}
                 value={item.value}
                 dense

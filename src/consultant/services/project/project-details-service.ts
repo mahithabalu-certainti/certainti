@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from '@tanstack/react-query';
 import { ProjectDetailUrl } from '../urls';
 import { resourceServiceApi } from '../../../api/api';
@@ -29,9 +30,13 @@ export const fetchProjectDetail = async (
  * @param accountId - The account ID
  * @returns React Query result containing the project detail and query status
  */
-export const useProjectDetail = (projectId: string, accountId: string) => {
+export const useProjectDetail = (
+  projectId: string,
+  accountId: string,
+  refreshTrigger?: number
+) => {
   return useQuery<any, Error>({
-    queryKey: ['projectDetail', projectId, accountId],
+    queryKey: ['projectDetail', projectId, accountId, refreshTrigger],
     queryFn: () => fetchProjectDetail(projectId, accountId),
     enabled: !!projectId && !!accountId,
     gcTime: 0,

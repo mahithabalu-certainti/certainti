@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
 import {
+  AllModules,
+  AllPermissions,
   Layout,
   OnChange,
   useGetAllCountries,
@@ -32,10 +33,14 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useGetProjectType, useProjectDetail } from '../../services/project';
-import { getDateFormat } from '../../../common-utils';
+import { checkPermission, getDateFormat } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
+import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
@@ -60,7 +65,10 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
   },
   { name: 'button', label: '', width: '35px' },
 ];
-
+export interface Breadcrumb {
+  label: string;
+  path?: string;
+}
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
@@ -70,13 +78,42 @@ const ProjectForm: React.FC = () => {
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
-  const { accountID, projectID, settings } = location.state || {};
-  const breadcrumbs = location.state.breadcrumbs || [];
-  const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
+  const [searchParams] = useSearchParams();
+  const { projectid: projectID } = useParams();
+  const accountID = searchParams.get('accountID') || '';
+  const settings = JSON.parse(searchParams.get('settings') || '{}');
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  const getProjectData = useProjectDetail(accountID, projectID);
+  const getProjectData = useProjectDetail(accountID, projectID || '');
   const account = getProjectData.data?.data?.project;
 
+  const accountName = account?.account_name;
+  const projectCode = account?.project_code;
+  const highlight = {
+    field: location.state?.field,
+    section: location.state?.section,
+  };
+
+  const source = searchParams.get('source');
+  const AccountNameValue = searchParams.get('AccountName');
+  let breadcrumbLabel = '';
+
+  switch (source) {
+    case 'createAccount':
+      breadcrumbLabel = `Account > ${AccountNameValue || ''}`;
+      break;
+
+    case 'account':
+      breadcrumbLabel = `Account > ${accountName || ''} > ${projectCode || ''}`;
+      break;
+
+    case 'project':
+      breadcrumbLabel = `Project > ${projectCode || ''}`;
+      break;
+
+    default:
+      breadcrumbLabel = '';
+      break;
+  }
   const statusOptions = useGetStatus();
   const projectTypeOptions = useGetProjectType();
   const allCountries = useGetAllCountries();
@@ -88,6 +125,25 @@ const ProjectForm: React.FC = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
 
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
@@ -97,7 +153,11 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
-
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const accountViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNTS_VIEW_EDIT
+  );
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
       (option) => option.label.toLowerCase() === 'active'
@@ -212,7 +272,11 @@ const ProjectForm: React.FC = () => {
   );
   useEffect(() => {
     const existingContacts = account?.keyContact || [];
-    const newKeyData = newKeyContactFields(memoizedRole);
+    const disabled =
+      isEditView &&
+      permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit;
+    const newKeyData = newKeyContactFields(memoizedRole, disabled);
 
     let fields: FieldType[] = [];
 
@@ -235,6 +299,7 @@ const ProjectForm: React.FC = () => {
     memoizedRole,
     account?.keyContact,
     isEditView,
+    permissionMap,
   ]);
 
   const removeKeyContactInfo = (fieldIndex: number) => {
@@ -259,7 +324,7 @@ const ProjectForm: React.FC = () => {
       {
         ...formValues,
         account_id: accountID,
-        project_id: projectID,
+        project_id: isEditView ? account?.project_rid : projectID,
       },
       isEditView,
       memoizedStatus,
@@ -349,7 +414,8 @@ const ProjectForm: React.FC = () => {
     isEditView,
     showOthersField,
     showClassifyOthersField,
-    states.isLoading
+    states.isLoading,
+    permissionMap
   );
 
   const formLoading =
@@ -361,6 +427,7 @@ const ProjectForm: React.FC = () => {
     projectTypeOptions.isLoading ||
     keyContactRoles.isLoading;
 
+  if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
@@ -378,9 +445,16 @@ const ProjectForm: React.FC = () => {
           )}
 
           <div className='w-[90%]'>
-            <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
-              {firstLine}
-            </div>
+            {isEditView && getProjectData?.isPending ? (
+              <div className='ml-2'>
+                <SingleSkeleton width={150} height={12} />
+              </div>
+            ) : (
+              <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
+                {breadcrumbLabel}
+              </div>
+            )}
+
             <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
               {isEditView ? 'Edit Project' : 'Create Project'}
             </h4>
@@ -439,6 +513,7 @@ const ProjectForm: React.FC = () => {
             keyEnd='project_enddate'
             layout={Layout.TYPE_1}
             keyContactHeaders={defaultKeyContactHeaders}
+            highlight={highlight}
           />
         )}
       </div>

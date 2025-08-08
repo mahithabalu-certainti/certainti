@@ -2,7 +2,7 @@ import { CommonApiResponse } from '../../common-service';
 
 export interface ParentAccountApiResponse extends CommonApiResponse {
   data: {
-    gloablAcconunt: GloablAcconunts[];
+    globalAccount: GloablAcconunts[];
   };
 }
 
@@ -36,17 +36,64 @@ export interface StatesApiResponse extends CommonApiResponse {
   };
 }
 
+export interface FinancialStatesApiResponse extends CommonApiResponse {
+  data: States[];
+}
+
 export interface CitysApiResponse extends CommonApiResponse {
   data: {
     cities: Cities[];
   };
 }
 
+export interface AccountDetailsResponse {
+  accountById: AccountById;
+  accountDetails: AccountFieldsTypes;
+}
+
 export interface AccountFieldsApiResponse extends CommonApiResponse {
-  data: {
-    accountById: AccountById;
-    accountDetails: AccountFieldsTypes;
-  };
+  data: AccountDetailsResponse;
+}
+
+export interface FinancialSummaryApiResponse extends CommonApiResponse {
+  data: FinancialSummaryDetails;
+}
+
+interface ResourceMetric {
+  rid: string;
+  metric: string;
+  fte: number;
+  subcon: number;
+  nonlabor: number;
+}
+
+interface DetailedMetric {
+  rid: string;
+  metric_name: string;
+  project_level: number;
+  project_resource_level: number;
+  project_task_level?: number; // Optional as one item lacks it
+  permission: string;
+}
+
+export type ClaimJurisdiction = {
+  rid: string;
+  name: string;
+  rd_credits_fte: number;
+  rd_credits_subcon: number;
+  rd_credits_nonlabor: number;
+  rd_credits_total: number;
+  permission: string;
+};
+
+export interface FinancialSummaryDetails {
+  account_rid: string;
+  fiscal_year: number;
+  rd_eligible_projects: number | null;
+  resource_metrics: ResourceMetric[];
+  detailed_metrics: DetailedMetric[];
+  claim_jurisdiction: ClaimJurisdiction[];
+  permission: string;
 }
 
 export interface States {
@@ -116,15 +163,6 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
-export interface AccountColumn {
-  id: string;
-  label: string;
-  width: string;
-  sortId: string;
-  sortable?: boolean;
-  sx?: React.CSSProperties;
-}
-
 export enum Storagetype {
   SeperateDB = 'separate_db',
   StoredDB = 'store_in_parent',
@@ -135,6 +173,10 @@ export enum Status {
   InActive = 'inactive',
 }
 
+type NewStatus = {
+  status_name: string;
+};
+
 export enum YesNo {
   Yes = 'yes',
   No = 'no',
@@ -143,6 +185,10 @@ export enum YesNo {
 export enum OthersEnum {
   Other = 'other',
   Others = 'others',
+}
+
+export enum ResourceType {
+  full_time = 'full-time',
 }
 
 export enum enumValue {
@@ -162,10 +208,11 @@ export interface AccountById {
   account_name: string;
   industry: string;
   industry_rid: string;
+  industry_rid_name: string;
   business_details: string;
   country_rid: string | null;
   currency_rid: string | null;
-  status: Status;
+  status: NewStatus;
   primary_contact_name: string;
   status_rid: string;
   is_parent: boolean;
@@ -176,6 +223,15 @@ export interface AccountById {
   created_datetime: string;
   modified_datetime: string;
   logo_url: string;
+  parent_account: {
+    account_name: string;
+  };
+  country: { country_name: string; country_code: string };
+  currency: {
+    currency_code: string;
+    currency_symbol: string;
+  };
+  region_rid?: string | null;
 }
 
 export interface KeyContacts {
@@ -214,6 +270,7 @@ export interface AccountFieldsTypes {
   keyContacts: KeyContacts[];
   modified_by: string;
   created_by: string;
+  account_rid: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -362,6 +419,8 @@ export type AccountList = {
   professional_services_consultant: string;
   finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
+  color?: string;
+  bgColor?: string;
 };
 
 export interface ConvertedAccount {
@@ -401,4 +460,72 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
   data: {
     keyContactRoles: keyContactRoles[];
   };
+}
+
+export interface FormField {
+  id: string;
+  label: string;
+  type:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'select'
+    | 'textarea'
+    | 'checkbox'
+    | 'date';
+  required?: boolean;
+  editable?: boolean;
+  hide?: boolean;
+  options?: { value: string; label: string }[];
+  placeholder?: string;
+  rows?: number;
+  fullWidth?: boolean;
+  resetDependsFields?: string[];
+  validation?: Array<{
+    regex: RegExp;
+    errorMessage: string;
+  }>;
+}
+
+export type ExportType =
+  | 'resource'
+  | 'cost'
+  | 'skill'
+  | 'project'
+  | 'attachments'
+  | 'imports'
+  | 'financial'
+  | 'financial_resource_cost'
+  | 'financial_project_cost'
+  | 'resource_attachments'
+  | 'resource_attachments'
+  | 'projectTask'
+  | 'project_resource';
+
+export type FinancialSummaryFlag = 'all' | 'rd_qualified';
+
+export interface FinancialSummaryBody {
+  account_rid: string;
+  fiscal_year: number;
+  flag: FinancialSummaryFlag;
+  summaryType: string;
+  region_rid: string;
+}
+
+export type FormFiscalDateType = {
+  year: number;
+  startMin?: Date;
+  startMax?: Date;
+  endMax?: Date;
+};
+
+export type FiscalDates = {
+  startDate: string;
+  endDate: string;
+};
+
+export interface FinancialStateProps {
+  accountId: string;
+  countryId: string;
+  fiscalYear: string;
 }

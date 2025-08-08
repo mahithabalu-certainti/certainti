@@ -32,6 +32,7 @@ import {
   SelectOption,
   YesNo,
 } from '../../types';
+
 import { AccFormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
@@ -78,27 +79,49 @@ export const AccountForm: React.FC = () => {
   const [logo, setLogo] = useState<File | null>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
-  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
+  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
   const dispatch = useAppDispatch();
+  const highlight = {
+    field: location.state?.field,
+    section: location.state?.section,
+  };
 
   // Permission Management
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
-  const isAccountCreateEnable = checkPermission(
+  const accountViewEnable = checkPermission(
     permission,
-    AllPermissions.ACCOUNT_CREATE
+    AllPermissions.ACCOUNTS_VIEW_EDIT
   );
-  const isAccountEditEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_EDIT
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
   );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
+
+  // const isAccountCreateEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNTS_CREATE
+  // );
+  // const isAccountEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_EDIT
+  // );
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
@@ -145,16 +168,16 @@ export const AccountForm: React.FC = () => {
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-        desc: status.status_description,
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
       })) || [],
     [statusOptions?.data?.data?.status]
   );
 
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
-      (option) => option.label.toLowerCase() === 'active'
+      (option) => option?.label?.toLowerCase() === 'active'
     );
     return activeOption?.value || '';
   }, [memoizedStatus]);
@@ -226,11 +249,11 @@ export const AccountForm: React.FC = () => {
 
   const memoizedParentAccounts: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunt.map((account) => ({
-        label: account.account_name,
-        value: account.rid,
+      parentAccount.data?.data?.globalAccount.map((account) => ({
+        label: account?.account_name,
+        value: account?.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunt]
+    [parentAccount.data?.data.globalAccount]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
@@ -281,7 +304,11 @@ export const AccountForm: React.FC = () => {
 
   useEffect(() => {
     const existingContacts = account?.accountDetails?.keyContacts || [];
-    const newKeyData = newKeyContactFields(memoizedRole);
+    const disabled =
+      isEditView &&
+      permissionMap?.['keyContacts']?.read &&
+      !permissionMap?.['keyContacts']?.edit;
+    const newKeyData = newKeyContactFields(memoizedRole, disabled);
 
     let fields: FieldType[] = [];
 
@@ -375,8 +402,8 @@ export const AccountForm: React.FC = () => {
         );
         setIsParentAccountRequired(false);
       } else {
-        setIsParentAccountRequired(true);
         setDataResidency(DATA_STORAGE_OPTIONS);
+        setIsParentAccountRequired(true);
       }
     }
     // show others field if industry is selected as Others
@@ -417,7 +444,8 @@ export const AccountForm: React.FC = () => {
     removeKeyContactInfo,
     isEditView,
     states.isLoading,
-    showOthersField
+    showOthersField,
+    permissionMap
   );
 
   const formLoading =
@@ -428,11 +456,7 @@ export const AccountForm: React.FC = () => {
     statusOptions.isLoading ||
     keyContactRoles.isLoading;
 
-  if (
-    !accountIsEnable ||
-    (isEditView ? !isAccountEditEnable : !isAccountCreateEnable)
-  )
-    return <AccessRestricted />;
+  if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
 
   return (
     <>
@@ -506,6 +530,7 @@ export const AccountForm: React.FC = () => {
             logo={logo}
             keyContactHeaders={defaultKeyContactHeaders}
             newContactLength={9}
+            highlight={highlight}
           />
         )}
       </div>

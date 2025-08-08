@@ -14,19 +14,29 @@ import {
   ADMIN_CREATE_USER,
   ADMIN_EDIT_USER,
   ADMIN_MANAGE_USER,
+  // MANAGE_USER_ACCESS,
+  MANAGE_ACCOUNT_ACCESS,
   ADMIN_MANAGE_USER_DETAILS,
+  ATTACHMENTS,
   LOGIN,
   MAIN_ROUTE,
   MANAGE_PROFILE,
   MANAGE_PROFILE_CREATE,
   MANAGE_PROFILE_EDIT,
-  MANAGE_PROFILE_VIEW,
+  MANAGE_USER_GROUP,
+  MANAGE_USER_GROUP_CREATE,
+  MANAGE_USER_GROUP_EDIT,
   NOT_MATCH,
   PROFILE,
   PROJECT,
   PROJECT_CREATE,
   PROJECT_DETAILS,
   PROJECT_EDIT,
+  // PROJECT_TASK,
+  PROJECT_TASK_CREATE,
+  PROJECT_TASK_EDIT,
+  PROJECT_RESOURCE_CREATE,
+  PROJECT_RESOURCE_EDIT,
   ProtectedRoute,
   RESOURCE,
   RESOURCE_CREATE,
@@ -38,6 +48,10 @@ import {
   USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState } from './store/store';
+import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
+// import { ProjectTask } from './consultant/pages/project/project-details/project-task';
+import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
+import { Attachments } from './consultant/pages';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -52,9 +66,6 @@ const Resource = lazy(
 );
 const Login = lazy(() => import('./pages/login/login'));
 const Profile = lazy(() => import('./pages/profile/profile'));
-const ViewProfile = lazy(
-  () => import('./admin/pages/manage-profile/view-profile/view-profile')
-);
 const HomePage = lazy(() => import('./consultant/pages/home/Home'));
 const NotFound = lazy(() => import('./pages/not-found/NotFound'));
 const Accounts = lazy(() => import('./consultant/pages/account-list/accounts'));
@@ -90,6 +101,19 @@ const ProfileList = lazy(
 );
 const CreateProfile = lazy(
   () => import('./admin/pages/manage-profile/create-profile/create-profile')
+);
+const UserGroupList = lazy(
+  () =>
+    import('./admin/pages/manage-user-group/user-group-list/user-group-list')
+);
+const CreateUserGroup = lazy(
+  () =>
+    import(
+      './admin/pages/manage-user-group/create-user-group/create-user-group'
+    )
+);
+const ManageAccountAccess = lazy(
+  () => import('./admin/pages/manage-account-acccess/account-list/account-list')
 );
 
 // Loading component for Suspense fallback
@@ -139,6 +163,20 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                 <Route path={RESOURCE} element={<Resource />} />
                 <Route path={PROFILE} element={<Profile />} />
+                <Route
+                  path={PROJECT_TASK_CREATE}
+                  element={<ProjectTaskForm />}
+                />
+                <Route path={PROJECT_TASK_EDIT} element={<ProjectTaskForm />} />
+                <Route
+                  path={PROJECT_RESOURCE_CREATE}
+                  element={<ProjectResourceForm />}
+                />
+                <Route
+                  path={PROJECT_RESOURCE_EDIT}
+                  element={<ProjectResourceForm />}
+                />
+                <Route path={ATTACHMENTS} element={<Attachments />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>
@@ -148,6 +186,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route element={<AppLayout />}>
                 <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
+                <Route
+                  path={MANAGE_ACCOUNT_ACCESS}
+                  element={<ManageAccountAccess />}
+                />
                 <Route
                   path={ADMIN_MANAGE_USER_DETAILS}
                   element={<ManageUserDetails />}
@@ -164,7 +206,15 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<CreateProfile />}
                 />
                 <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
-                <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
+                <Route path={MANAGE_USER_GROUP} element={<UserGroupList />} />
+                <Route
+                  path={MANAGE_USER_GROUP_CREATE}
+                  element={<CreateUserGroup />}
+                />
+                <Route
+                  path={MANAGE_USER_GROUP_EDIT}
+                  element={<CreateUserGroup />}
+                />
               </Route>
               {/* Page not found */}
               <Route path={NOT_MATCH} element={<NotFound />} />

@@ -6,6 +6,7 @@ dayjs.extend(timezone);
 
 import { UserDetail } from '../admin/types/manage-user';
 import {
+  AllMenus,
   AllModules,
   AllPermissions,
   AxiosErrorMsg,
@@ -20,11 +21,14 @@ import {
   enumValue,
   ErrorHandling,
   FieldType,
+  FiscalDates,
+  FormFiscalDateType,
   InputType,
   SelectOption,
   YesNo,
 } from '../consultant/types';
 import { PermissionState } from '../store/type';
+import { DetailItem } from '../components/details-section/details';
 
 export const createTextField = (
   name: string,
@@ -80,6 +84,7 @@ export const createPhoneInputField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
+    hide?: boolean;
   } = {}
 ): FieldType => ({
   type: 'phone',
@@ -89,6 +94,7 @@ export const createPhoneInputField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
+  hide: options.hide,
 });
 
 export const createTextAreaField = (
@@ -100,6 +106,7 @@ export const createTextAreaField = (
     regexErrorMessage?: string;
     placeholder?: string;
     disabled?: boolean;
+    hide?: boolean;
   } = {}
 ): FieldType => ({
   type: 'textarea',
@@ -110,6 +117,7 @@ export const createTextAreaField = (
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
   disabled: options.disabled,
+  hide: options.hide,
 });
 
 export const createCheckboxField = (
@@ -139,6 +147,7 @@ export const createRadioField = (
     defaultValue?: string;
     disabled?: boolean;
     onChange?: boolean;
+    hide?: boolean;
     resetDependsFields?: string[];
     dependantLabel?: string;
     clearValue?: Record<string, string>;
@@ -160,6 +169,7 @@ export const createRadioField = (
   onChange: options.onChange,
   defaultSelect: options.defaultSelect,
   defaultValue: options.defaultValue,
+  hide: options.hide,
   resetDependsFields: options.resetDependsFields,
   dependantLabel: options.dependantLabel,
   clearValue: options.clearValue,
@@ -182,9 +192,48 @@ export const createSelectField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     dependantLabel?: string;
+    isFiscalYear?: boolean;
   }
 ): FieldType => ({
   type: 'select',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+  isFiscalYear: others.isFiscalYear,
+});
+
+export const createAutoCompleteField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'autocomplete',
   name,
   label,
   required: others.required,
@@ -208,6 +257,7 @@ export const createButton = (
   others: {
     iconUrl?: React.ElementType | string;
     onClick?: () => void;
+    disabled?: boolean;
   }
 ): FieldType => ({
   type: 'button',
@@ -216,6 +266,7 @@ export const createButton = (
   required: false,
   iconUrl: others.iconUrl,
   onClick: others.onClick,
+  disabled: others.disabled,
 });
 export const createEmptyField = (
   name: string,
@@ -234,6 +285,7 @@ export const createImgButton = (
   others?: {
     width?: string;
     onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
+    disabled?: boolean;
   }
 ): FieldType => ({
   type: 'iconButton',
@@ -242,6 +294,7 @@ export const createImgButton = (
   label: '',
   required: false,
   width: others?.width,
+  disabled: others?.disabled,
   onClick: (e?: React.MouseEvent<HTMLElement>) => {
     others?.onClick?.(e);
   },
@@ -253,6 +306,7 @@ export const createDateField = (
   others: {
     required: boolean;
     disabled?: boolean;
+    hide?: boolean;
     disableFutureDates?: boolean;
     minDate?: Date;
     maxDate?: Date;
@@ -273,6 +327,7 @@ export const createDateField = (
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
+  hide: others.hide,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
@@ -291,6 +346,7 @@ export const createFiscalDateField = (
     disabled?: boolean;
     greaterThan?: Record<string, string>;
     toBeNotSame?: Record<string, string>;
+    hide?: boolean;
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -300,6 +356,7 @@ export const createFiscalDateField = (
   disabled: others.disabled,
   greaterThan: others.greaterThan,
   toBeNotSame: others.toBeNotSame,
+  hide: others.hide,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [
@@ -415,7 +472,85 @@ export const REGEX_PATTERNS = {
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
 };
+export const PROJECT_RESOURCE_REGEX = {
+  // UUID VALIDATION STANDARD FORMAT
+  UUID: /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
 
+  //RESOURCE CODE REGEX WHICH ACCEPTS ONLY ALPHANUMERIC AND HYPHEN
+  RESOURCE_CODE: /^[A-Za-z][A-Za-z0-9_-]{2,49}$/,
+  // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
+  FULL_NAME:
+    /^(?![ '\\-])(?=[A-Za-z '\\-]{2,100}$)(?!.*[ '\\-]$)[A-Za-z '\\-]+$/,
+  // Resource Ref Id: Alphanumeric with hyphen/apostrophe, 1-20 chars
+  RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,20}$/,
+  //Resource Name:
+  RESOURCE_NAME: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{2,64}[A-Za-z]$/,
+
+  // Organization Name: Extended chars for org names, 4-100 chars
+  ORG_NAME: /^(?![ .,&'\\-])(?!.*[ .,&'\\-]$)[A-Za-z0-9 .,&'\\-]{3,100}$/,
+
+  ROLE: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{3,64}[A-Za-z]$/,
+
+  // Designation: Job titles with special chars, 4-100 chars
+  DESIGNATION: /^(?!.*([ '-])\1)(?![ '-])[A-Za-z][A-Za-z '-]{1,62}[A-Za-z]$/,
+
+  // Project resource cost regex
+  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
+
+  // NON NEGATIVE POSTIVE INTEGER
+  EFFORT: /^[1-9][0-9]*$/,
+
+  // Description: Multiline text, 0-2000 chars
+  DESCRIPTION: /^[\s\S]{0,2000}$/,
+
+  // Status/Type: For enum validation
+  ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
+
+  // Country: Standard name validation
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+
+  // Date Validation (format only)
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+};
+export const PROJECT_TASK_REGEX = {
+  // UUID VALIDATION STANDARD FORMAT
+  UUID: /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
+
+  //RESOURCE CODE REGEX WHICH ACCEPTS ONLY ALPHANUMERIC AND HYPHEN
+  RESOURCE_CODE: /^[A-Za-z][A-Za-z0-9_-]{2,49}$/,
+  // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
+  FULL_NAME:
+    /^(?![ '\\-])(?=[A-Za-z '\\-]{2,100}$)(?!.*[ '\\-]$)[A-Za-z '\\-]+$/,
+  // Resource Ref Id: Alphanumeric with hyphen/apostrophe, 1-20 chars
+  RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,20}$/,
+  // Organization Name: Extended chars for org names, 4-100 chars
+  ORG_NAME: /^(?![ .,&'\\-])(?!.*[ .,&'\\-]$)[A-Za-z0-9 .,&'\\-]{3,100}$/,
+
+  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,50}$/,
+
+  // Designation: Job titles with special chars, 4-100 chars
+  DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
+
+  // Project resource cost regex
+  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,18}(\.\d{1,2})?$/,
+
+  // NON NEGATIVE POSTIVE INTEGER
+  EFFORT: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+
+  // Description: Multiline text, 0-2000 chars
+  DESCRIPTION: /^[\s\S]{0,2000}$/,
+
+  // Status/Type: For enum validation
+  ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
+
+  // Country: Standard name validation
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+
+  // Date Validation (format only)
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+};
 /**
  * Resource Form Field Regex Patterns
  *
@@ -530,7 +665,7 @@ export const reShapePermissionData = (all: Permissions[]): PermissionState => {
 
 export const checkPermission = (
   data: Permissions[],
-  condition: AllPermissions | MenuOption | AllModules | AllModules[]
+  condition: AllPermissions | MenuOption | AllMenus | AllModules | AllModules[]
 ) => {
   if (Array.isArray(condition)) {
     return condition.some(
@@ -538,6 +673,21 @@ export const checkPermission = (
     );
   }
   return data?.find((item) => item?.name === condition)?.is_enabled;
+};
+
+export const applyHidePermission = (
+  items: DetailItem[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): DetailItem[] => {
+  return items.map((item) => {
+    const permission = item.key
+      ? permissionMap[item.key]
+      : { read: true, edit: true };
+    return {
+      ...item,
+      hide: !(permission?.read || permission?.edit),
+    };
+  });
 };
 
 export const DONT_HAVE_ACCESS =
@@ -602,4 +752,76 @@ export const valueDisplay = (
     decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
 
   return formattedValue;
+};
+
+export const getFiscalYears = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `FY-${year}`, value: String(year) };
+  });
+};
+
+export const getFiscalParseDateFromMMDD = (mmdd: string, year: number) => {
+  if (!mmdd) return undefined;
+  const [monthStr, dayStr] = mmdd.split('/');
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  return new Date(
+    `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  );
+};
+
+export const getFiscalDateBounds = (
+  year: string,
+  accountFiscalDates: FiscalDates
+): FormFiscalDateType => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const fiscalYear = Number(year);
+
+  const [startMonthStr, startDayStr] = accountFiscalDates.startDate.split('/');
+  const [endMonthStr, endDayStr] = accountFiscalDates.endDate.split('/');
+
+  const startMonth = Number(startMonthStr);
+  const startDay = Number(startDayStr);
+  const endMonth = Number(endMonthStr);
+  const endDay = Number(endDayStr);
+
+  const isYearSpanning =
+    endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
+
+  const endDateYear = isYearSpanning ? fiscalYear + 1 : fiscalYear;
+
+  const startDateMin = getFiscalParseDateFromMMDD(
+    accountFiscalDates.startDate,
+    fiscalYear
+  );
+  const accountEndDate = getFiscalParseDateFromMMDD(
+    accountFiscalDates.endDate,
+    endDateYear
+  );
+
+  let endDateMax: Date;
+  if (!startDateMin || !accountEndDate) {
+    endDateMax = today;
+  } else {
+    if (fiscalYear === currentYear) {
+      endDateMax = today > accountEndDate ? accountEndDate : accountEndDate;
+    } else if (fiscalYear < currentYear) {
+      endDateMax = accountEndDate;
+    } else {
+      endDateMax = accountEndDate;
+    }
+  }
+
+  const startDateMax = new Date(endDateMax);
+  startDateMax.setDate(endDateMax.getDate() - 1);
+
+  return {
+    year: fiscalYear,
+    startMin: startDateMin,
+    startMax: startDateMax,
+    endMax: endDateMax,
+  };
 };

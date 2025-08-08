@@ -43,7 +43,7 @@ interface HeaderProps {
   onActionsClick?: () => void;
   onSettingsClick?: () => void;
   variant?: 'main' | 'sub'; // To distinguish between main page and sub-page headers
-  goBack?: () => void
+  goBack?: () => void;
 }
 
 export const PageHeader: React.FC<HeaderProps> = ({

@@ -1,4 +1,4 @@
-import { AccountFieldsApiResponse, Status, Storagetype } from '../types';
+import { AccountFieldsApiResponse, Storagetype } from '../types';
 
 export const mockAccountDetails: AccountFieldsApiResponse = {
   statusCode: 200,
@@ -6,11 +6,22 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
   statusMessage: '',
   data: {
     accountById: {
+      industry_rid_name: 'Technology Industry',
+      parent_account: {
+        account_name: 'Parent Account Name',
+      },
+      country: { country_name: 'United States', country_code: '' },
+      currency: {
+        currency_code: 'USD',
+        currency_symbol: '$',
+      },
       logo_url: 'https://example.com/logo.png',
       r_number: 'ACC0010',
       account_name: 'Wipro-Global',
       comments: 'This is a description of the account.',
-      status: Status.Active,
+      status: {
+        status_name: '',
+      },
       is_parent: true,
       annual_revenue: 10000,
       region: '75ebb6e9-8c12-4ff8-91e0-f9ba19e819e8',
@@ -27,6 +38,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       status_rid: '',
     },
     accountDetails: {
+      account_rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
       rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
       status_rid: '9dcfda7e-32a7-490a-aa18-e6e6f8fdfdbce9',
       modified_by: 'user123',

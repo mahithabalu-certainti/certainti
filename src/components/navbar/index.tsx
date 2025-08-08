@@ -34,9 +34,9 @@ import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
 import { checkPermission, fiscalYears } from '../../common-utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PROFILE } from '../../routes';
-import { FiscalYearDropdown } from '../fiscal-dropdown';
+import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 import { useMsal } from '@azure/msal-react';
 import { msalResetPasswordConfig } from '../../config/msalConfig';
@@ -79,8 +79,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
+  const isViewAccountsEnable = useMemo(
+    () => checkPermission(permission, AllPermissions.ACCOUNTS_VIEW_EDIT),
+    [permission]
+  );
+  const isAccountsNameEnabled = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields?.find((it) => it.name === 'account_name')?.read ?? false,
+    [permission]
+  );
   const isViewProfileEnable = useMemo(
-    () => checkPermission(permission, AllPermissions.PROFILE_VIEW),
+    () => checkPermission(permission, AllPermissions.PROFILE_VIEW_EDIT),
     [permission]
   );
   const { orgName, logoUrl } = useSelector(
@@ -211,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passwordResetInstanceRef]);
-
+  const [searchparams] = useSearchParams();
   const handleLogout = useCallback(async () => {
     handleMenuClose();
     logout();
@@ -222,10 +233,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [instance]);
 
   const goToProfile = useCallback(() => {
-    navigate(PROFILE);
+    const params = new URLSearchParams(searchparams); // Clone current search params
+    params.set('userView', 'profile');
+    navigate({
+      pathname: PROFILE,
+      search: params.toString(),
+    });
     handleMenuClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate, searchparams, handleMenuClose]);
 
   const renderMenu = useMemo(
     () => (
@@ -413,37 +428,45 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}
           >
-            {!showAdminSidebar && (
+            {!showAdminSidebar && isViewAccountsEnable && (
               <>
-                <div className='relative'>
-                  <button
-                    aria-describedby={globalFilterId}
-                    onClick={handleGlobalFilterModal}
-                    className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
-                  >
+                {isAccountsNameEnabled && (
+                  <>
                     <div className='relative'>
-                      <GlobeIcon alt='global' className='h-[16px] w-[16px]' />
-                      {isFilterApplied && (
-                        <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
-                          <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                      <button
+                        aria-describedby={globalFilterId}
+                        onClick={handleGlobalFilterModal}
+                        className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+                      >
+                        <div className='relative'>
+                          <GlobeIcon
+                            alt='global'
+                            className='h-[16px] w-[16px]'
+                          />
+                          {isFilterApplied && (
+                            <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
+                              <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <span className='text-[13px] font-normal text-white'>
+                          Global
+                        </span>
+                      </button>
+                      <GlobalFilterModal
+                        isOpen={isGlobalModalOpen}
+                        filterAnchorEl={globalAnchorEl}
+                        filterId={globalFilterId}
+                        handleClose={handleCloseGlobalFilter}
+                      />
                     </div>
-                    <span className='text-[13px] font-normal text-white'>
-                      Global
-                    </span>
-                  </button>
-                  <GlobalFilterModal
-                    isOpen={isGlobalModalOpen}
-                    filterAnchorEl={globalAnchorEl}
-                    filterId={globalFilterId}
-                    handleClose={handleCloseGlobalFilter}
-                  />
-                </div>
-                <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
-                <FiscalYearDropdown
+                    <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
+                  </>
+                )}
+                <GlobalFiscalYearDropdown
                   fiscalYear={fiscalYear}
-                  fiscalYearsDropDown={fiscalYearsDropDown}
+                  fiscalYearsOptions={fiscalYearsDropDown}
+                  isGlobal={true}
                   onChange={(e) => dispatch(setFiscalYear(e.target.value))}
                 />
                 <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />

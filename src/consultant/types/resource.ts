@@ -13,6 +13,7 @@ export interface ResourceListURLParams {
 }
 
 export type ResourceList = {
+  resource_type_name: string;
   rid: string;
   r_number: string;
   resource_code: string;

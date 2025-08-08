@@ -17,6 +17,7 @@ export interface AdminNavItem {
   openStatus: boolean;
   hide?: boolean;
   subItemTitle: SubItemTitle[];
+  noRedirect?: boolean;
 }
 
 export interface SubItemTitle {
@@ -26,6 +27,7 @@ export interface SubItemTitle {
   link: string;
   matchLink: string;
   hide?: boolean;
+  noRedirect?: boolean;
 }
 
 export interface SideBarProps {

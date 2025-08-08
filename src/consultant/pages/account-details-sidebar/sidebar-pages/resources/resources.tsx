@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   useLocation,
@@ -10,9 +10,14 @@ import {
 import { ResourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
-import { useResourceList } from '../../../../services/resource-list';
+import {
+  useGetResourceType,
+  useResourceList,
+} from '../../../../services/resource-list';
 import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
+import { useMutation } from '@apollo/client';
+import { UPDATE_RESOURCE } from '../../../../../api/graphql/queries/resource-query';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
@@ -22,11 +27,30 @@ import {
   ResourceSkillList,
 } from '../../../../types/resource-skill';
 import { ResourceList } from '../../../../types/resource';
-import { AllPermissions, Permissions } from '../../../../../common-service';
-import { checkPermission } from '../../../../../common-utils';
+import {
+  AllMenus,
+  AllPermissions,
+  Permissions,
+  useGetAllCountries,
+  useGetAllDocumentInfo,
+  useGetDocumentCategoryType,
+  useGetStatus,
+} from '../../../../../common-service';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import {
+  CellEditData,
+  FieldChangeEvent,
+  FieldChangeValue,
+} from '../../../../../components/table/types';
+import { useFetchState } from '../../../../services/account';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
+import Uploads from '../../../../../components/Attachments/upload';
+import { ExportType, SelectOption } from '../../../../types';
+import { FilterValue } from '../../components/filter/filterType';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -40,11 +64,11 @@ interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
-  setExportType?: (type: 'resource' | 'cost' | 'skill') => void;
+  setExportType?: (type: ExportType) => void;
 }
 
 export interface ResourceTabs {
-  id: AllPermissions;
+  id: AllPermissions | AllMenus;
   name: string;
   hide: boolean;
   disable?: boolean;
@@ -58,9 +82,9 @@ export interface TabMenus {
 }
 
 const resourceTabs: ResourceTabs[] = [
-  { id: AllPermissions.RESOURCES_OVERVIEW, name: 'Overview', hide: false },
+  { id: AllPermissions.ACCOUNTS_VIEW_EDIT, name: 'Overview', hide: false },
   {
-    id: AllPermissions.RESOURCE_VIEW_TIMELINE,
+    id: AllMenus.TIMESHEETS,
     name: 'Timeline',
     hide: false,
     disable: true,
@@ -72,19 +96,25 @@ const tabs: TabMenus[] = [
     label: 'Details',
     value: 'details',
     hide: false,
-    id: AllPermissions.RESOURCE_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT,
   },
   {
     label: 'Resource Cost',
     value: 'cost',
     hide: false,
-    id: AllPermissions.RESOURCE_COST_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW,
   },
   {
     label: 'Resource Skills',
     value: 'skill',
     hide: false,
-    id: AllPermissions.RESOURCE_SKILL_VIEW,
+    id: AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT,
+  },
+  {
+    label: 'Attachments',
+    value: 'attachments',
+    hide: false,
+    id: AllPermissions.ATTACHMENT_VIEW_EDIT,
   },
 ];
 
@@ -97,6 +127,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
+  const [resourceInActive, setResourceInActive] = useState<boolean>(false);
   // const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
@@ -130,49 +161,91 @@ const Resource: React.FC<ResourceProps> = ({
   const [refreshSkillTrigger, setRefreshSkillTrigger] = useState<number>(
     Date.now()
   );
+  const [refreshAttachments, setRefreshAttachments] = useState<number>(
+    Date.now()
+  );
+  const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
+    'ASC'
+  );
+  const [attachmentsOrderBy, setAttachmentsOrderBy] =
+    useState<string>('document_name');
+  const [currentCategory, setCurrentCategory] = useState<string>('');
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
+  const [updateResource] = useMutation(UPDATE_RESOURCE, {
+    client: resourceClient,
+  });
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
+  const resId = searchParams.get('res_id');
 
   // Permission Mangement
+  const isAccountResourceFieldsEditable = useMemo(
+    () =>
+      permission
+        ?.find(
+          (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const isResourceDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCES_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
   const isResourceCostDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_COST_EXPORT
   );
   const isResourceSkillDownloadEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_DOWNLOAD
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_EXPORT
   );
   const isResourceViewAllEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_VIEW_ALL
+    AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
   );
   const isResourceCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_CREATE
   );
   const isResourceDeleteEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_DELETE
+    AllPermissions.ACCOUNT_RESOURCES_DELETE
   );
-  const isResourceEditEnable = checkPermission(
-    permission || [],
-    AllPermissions.RESOURCE_EDIT
-  );
+  // const isResourceEditEnable = checkPermission(
+  //   permission || [],
+  //   AllPermissions.RESOURCE_EDIT
+  // );
   const isResourceCostCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_COST_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_COST_CREATE
   );
   const isResourceSkillCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.RESOURCE_SKILL_CREATE
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_CREATE
   );
+
+  //permissions
+  const resourceViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceViewEditFields]);
 
   const {
     data: ResourceList,
@@ -192,6 +265,46 @@ const Resource: React.FC<ResourceProps> = ({
   );
 
   const isResoureceOverviewHide = resourceTab[0].hide;
+  const statusOptions = useGetStatus();
+  const resourceTypeOptions = useGetResourceType();
+  const countriesList = useGetAllCountries();
+  const region = useFetchState(currentCountry);
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const countryOptions = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const regionOptions = useMemo(
+    () =>
+      region.data?.data.states.map((region) => ({
+        label: region.state_name,
+        value: region.rid,
+      })) || [],
+    [region.data?.data.states]
+  );
 
   useEffect(() => {
     const isHide = (tab: ResourceTabs | TabMenus) => {
@@ -230,6 +343,12 @@ const Resource: React.FC<ResourceProps> = ({
       setCount(ResourceList?.count || 0);
     }
   }, [ResourceList, setCount]);
+
+  useEffect(() => {
+    if (ResourceList?.resource) {
+      setResourcesList(ResourceList.resource);
+    }
+  }, [ResourceList]);
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -243,6 +362,7 @@ const Resource: React.FC<ResourceProps> = ({
     clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
+    searchParams.delete('attachment_entity');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
@@ -260,10 +380,13 @@ const Resource: React.FC<ResourceProps> = ({
     const activeTab = tabMenus.find((tab) => !tab.hide)?.value;
     setValue(activeTab as string);
   };
-
   useEffect(() => {
     // update the URL when open a resource sub tab
-    if (!viewResourceList && resourceData.rid) {
+    if (
+      !viewResourceList &&
+      resourceData.rid &&
+      searchParams.get('list') === 'resources'
+    ) {
       searchParams.set('res_id', resourceData.rid);
       searchParams.set('tab', value);
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -278,7 +401,7 @@ const Resource: React.FC<ResourceProps> = ({
   useEffect(() => {
     // update sub tab when refereshing the page
     const tab = searchParams.get('tab');
-    if (tab) {
+    if (tab && searchParams.get('list') === 'resources') {
       setValue(tab);
       setViewResourceList(false);
       setShowBackArrow(true);
@@ -291,13 +414,21 @@ const Resource: React.FC<ResourceProps> = ({
       state: { resource, accountDetails, resources: true },
     });
   };
-
+  const handleOpen = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'resource');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+  };
+  const showUploads = searchParams.get('attachment_entity') === 'resource';
   const actionMenuItems = [
     {
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
-      hide: !isResourceEditEnable,
+      hide: !isAccountResourceFieldsEditable,
     },
     {
       label: 'Delete',
@@ -330,6 +461,8 @@ const Resource: React.FC<ResourceProps> = ({
       return !isResourceCostCreateEnable;
     } else if (value === 'skill') {
       return !isResourceSkillCreateEnable;
+    } else if (value === 'attachments') {
+      return true;
     }
     return accountInActive;
   };
@@ -345,7 +478,20 @@ const Resource: React.FC<ResourceProps> = ({
     return false;
   };
 
+  const attachmentCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.ATTACHMENT_CREATE
+  );
+
   const headerButtons = [
+    {
+      label: 'Add Attachment',
+      variant: 'outlined' as const,
+      onClick: () => handleOpen(),
+      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
+      hide: value !== 'details' || !attachmentCreateEnable,
+      disabled: accountInActive ? accountInActive : resourceInActive,
+    },
     {
       label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
@@ -355,7 +501,10 @@ const Resource: React.FC<ResourceProps> = ({
           ? () => handleEditResource()
           : () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
-      hide: handleCreateButtonEnable(),
+      hide:
+        value === 'details'
+          ? !isAccountResourceFieldsEditable
+          : handleCreateButtonEnable(),
     },
     {
       label: 'Download',
@@ -396,6 +545,7 @@ const Resource: React.FC<ResourceProps> = ({
     setCount(ResourceList?.count || 0);
     // clear query params
     searchParams.delete('res_id');
+    searchParams.delete('attachment_entity');
     searchParams.delete('tab');
     navigate(
       {
@@ -463,6 +613,10 @@ const Resource: React.FC<ResourceProps> = ({
       updatedParams.sortBy = skillOrderBy;
       updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
       setExportType?.('skill');
+    } else if (value === 'attachments') {
+      updatedParams.sortBy = attachmentsOrderBy;
+      updatedParams.sortOrder = attachmentsOrder;
+      setExportType?.('resource_attachments');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;
@@ -486,6 +640,8 @@ const Resource: React.FC<ResourceProps> = ({
     setTableParams,
     setExportType,
     accountDetails?.data?.accountById?.r_number,
+    attachmentsOrderBy,
+    attachmentsOrder,
   ]);
 
   const handlePageChange = (newPage: number) => {
@@ -503,15 +659,37 @@ const Resource: React.FC<ResourceProps> = ({
     setSortField(property);
   };
 
+  const handleFieldChange = async (event: FieldChangeEvent) => {
+    if (event.columnId === 'country_name' && event.value) {
+      setCurrentCountry(String(event.value));
+    }
+  };
+
   const getRowId = (row: ResourceList) => row.rid;
 
-  const resourceColumns = getResourceColumns(handleResourceClick);
+  const handleCountry = (country: string) => {
+    setCurrentCountry(country);
+  };
+
+  const resourceColumns = getResourceColumns(
+    memoizedStatus,
+    memoizedResourceType,
+    countryOptions,
+    regionOptions,
+    handleCountry,
+    region.isPending,
+    permissionMap,
+    handleResourceClick,
+    accountInActive
+  );
 
   const onRefreshClick = () => {
     if (value === 'cost') {
       setRefreshCostTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     } else if (value === 'skill') {
       setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else if (value === 'attachments') {
+      setRefreshAttachments(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -536,11 +714,98 @@ const Resource: React.FC<ResourceProps> = ({
     } else if (value === 'cost') {
       setCostOrder(isSortByEmpty ? 'asc' : sortOrder);
       setCostOrderBy(apiSortBy as keyof ResourceCostList);
+    } else if (value === 'attachments') {
+      setAttachmentsOrder(
+        isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
+      );
+      setAttachmentsOrderBy(apiSortBy);
     } else {
       setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
       setSortField(apiSortBy);
     }
   };
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousResourceList = [...resourcesList];
+    let hasCountry = false;
+    let hasRegion = false;
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (res, item) => {
+        const key = item.editId || item.columnId;
+        res[key] = item.value;
+        if (item.columnId === 'country_name') hasCountry = true;
+        if (item.columnId === 'region_name') hasRegion = true;
+        return res;
+      },
+      {
+        resource_rid: rowId,
+        account_rid: accountDetails?.data?.accountById?.rid,
+      }
+    );
+
+    if (hasCountry && !hasRegion) {
+      updateData['region_rid'] = '';
+    }
+
+    if (hasCountry) {
+      updateData['city_rid'] = '';
+    }
+
+    try {
+      const res = await updateResource({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateResourceInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedResource = result.data;
+        setResourcesList((prevList) =>
+          prevList.map((resource) =>
+            resource.rid === updatedResource.rid ? updatedResource : resource
+          )
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setResourcesList(previousResourceList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setResourcesList(previousResourceList);
+    }
+  };
+
+  const fiscalYears = getFiscalYears(20);
+  const allDocumentInfo = useGetAllDocumentInfo();
+  const categoryTypes = useGetDocumentCategoryType(currentCategory);
+
+  const memoizedDocumentTypes: SelectOption[] = useMemo(
+    () =>
+      categoryTypes.data?.data.documentTypes.map((type) => ({
+        label: type.type_name,
+        value: type.rid,
+      })) || [],
+    [categoryTypes.data?.data.documentTypes]
+  );
+
+  const memoizedDocumentCategories: SelectOption[] = useMemo(
+    () =>
+      allDocumentInfo.data?.data.documentCategories.map((category) => ({
+        label: category.category_name,
+        value: category.rid,
+      })) || [],
+    [allDocumentInfo.data?.data.documentCategories]
+  );
+
+  const handleCategory = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'document_category_rid' && value) {
+      setCurrentCategory(String(value));
+    }
+  };
+
+  const fieldOptions = {
+    fiscalYears: fiscalYears,
+    docCategories: memoizedDocumentCategories,
+    docTypes: memoizedDocumentTypes,
+  };
+
   return (
     <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
@@ -555,91 +820,110 @@ const Resource: React.FC<ResourceProps> = ({
           isResoureceOverviewHide
             ? false
             : isResourceViewAllEnable
-              ? filterVisibility
+              ? showUploads
+                ? false
+                : filterVisibility
               : false
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        showRefresh={true}
+        showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
+        fieldOptions={fieldOptions}
+        handleFilterChange={handleCategory}
       />
-      {!isResoureceOverviewHide && isResourceViewAllEnable && (
-        <>
-          <ResourceTableHeader
-            value={value}
-            title='Resources'
-            count={count}
-            resourceNumber={resourceData?.r_number ?? resourceNumber}
-            titleIcon={<ResourceProfileIcon alt='resource header icon' />}
-            headerButtons={headerButtons}
-            showBackArrow={showBackArrow}
-            onBackClick={handleBackClick}
-          />
-          {!viewResourceList && value && (
-            <ResourceSubComponents
-              permission={permission}
-              tabMenus={tabMenus}
-              setFilterVisibility={setFilterVisibility}
-              handleTabChange={handleTabChange}
+      {showUploads ? (
+        <Uploads accountId={accountid} attachID={resId} />
+      ) : (
+        !isResoureceOverviewHide &&
+        isResourceViewAllEnable && (
+          <>
+            <ResourceTableHeader
               value={value}
-              resourceId={searchParams.get('res_id') as string}
-              accountId={accountDetails?.data?.accountById?.r_number}
-              appliedFilters={appliedFilters || {}}
-              fiscalYearValue={convertedFiscalYear}
-              accountDetails={accountDetails as AccountData}
-              setShowFilter={setShowFilter}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              costOrder={costOrder}
-              setCostOrder={setCostOrder}
-              costorderBy={costorderBy}
-              setCostorderBy={setCostOrderBy}
-              skillOrder={skillOrder}
-              setSkillOrder={setSkillOrder}
-              skillOrderBy={skillOrderBy}
-              setSkillOrderBy={setSkillOrderBy}
-              refreshCostTrigger={refreshCostTrigger}
-              refreshSkillTrigger={refreshSkillTrigger}
-              setCount={setCount}
+              title='Resources'
+              count={count}
+              resourceNumber={resourceData?.r_number ?? resourceNumber}
+              titleIcon={<ResourceProfileIcon alt='resource header icon' />}
+              headerButtons={headerButtons}
+              showBackArrow={showBackArrow}
+              onBackClick={handleBackClick}
             />
-          )}
-          {viewResourceList && !value && (
-            <div className='border border-[#CBD6E2]'>
-              <ListTable
-                data={ResourceList?.resource as any}
-                columns={resourceColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  borderBottom: '1px solid #CBD6E2',
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={false}
-                stickyColumnsCount={1}
-                selectable={false}
-                actionWidth={80}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionMenuItems}
-                loading={isLoading}
-                error={error ? 'Failed to load resource data' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
+
+            {!viewResourceList && value && (
+              <ResourceSubComponents
+                permission={permission}
+                tabMenus={tabMenus}
+                setFilterVisibility={setFilterVisibility}
+                handleTabChange={handleTabChange}
+                value={value}
+                resourceId={searchParams.get('res_id') as string}
+                accountId={accountDetails?.data?.accountById?.r_number}
+                appliedFilters={appliedFilters || {}}
+                fiscalYearValue={convertedFiscalYear}
+                accountDetails={accountDetails as AccountData}
+                setShowFilter={setShowFilter}
                 currentPage={currentPage}
-                totalItems={ResourceList?.count || 0}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortBy={sortField}
-                sortOrder={sortOrder}
-                onSort={handleSortRequest}
+                setCurrentPage={setCurrentPage}
+                costOrder={costOrder}
+                setCostOrder={setCostOrder}
+                costorderBy={costorderBy}
+                setCostorderBy={setCostOrderBy}
+                skillOrder={skillOrder}
+                setSkillOrder={setSkillOrder}
+                skillOrderBy={skillOrderBy}
+                setSkillOrderBy={setSkillOrderBy}
+                refreshCostTrigger={refreshCostTrigger}
+                refreshSkillTrigger={refreshSkillTrigger}
+                attachmentsOrder={attachmentsOrder}
+                setAttachmentsOrder={setAttachmentsOrder}
+                attachmentsOrderBy={attachmentsOrderBy}
+                setAttachmentsOrderBy={setAttachmentsOrderBy}
+                refreshAttachments={refreshAttachments}
+                setCount={setCount}
+                resourceInActive={resourceInActive}
+                setResourceInActive={setResourceInActive}
               />
-            </div>
-          )}
-        </>
+            )}
+            {viewResourceList && !value && (
+              <div className='border border-[#CBD6E2]'>
+                <ListTable
+                  data={resourcesList}
+                  columns={resourceColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionMenuItems}
+                  loading={isLoading}
+                  error={error ? 'Failed to load resource data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={ResourceList?.count || 0}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSortRequest}
+                  onCellEdit={handleCellEdit}
+                  onFieldChange={handleFieldChange}
+                />
+              </div>
+            )}
+          </>
+        )
       )}
       {!isResourceViewAllEnable && <AccessRestricted />}
     </div>

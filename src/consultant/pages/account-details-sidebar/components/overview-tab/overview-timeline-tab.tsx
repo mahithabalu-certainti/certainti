@@ -1,7 +1,7 @@
 import { Box, Tab, Tabs } from '@mui/material';
-import ActionImportDropdown from '../../sidebar-pages/imports/importdropdown';
 import { DetailsTabs } from '../../sidebar-pages/details/details';
 import { useEffect, useState } from 'react';
+import ActionImportDropdown from '../../../../../components/actions-dropdown/import-dropdown';
 
 interface TabProps {
   tabValue: string;

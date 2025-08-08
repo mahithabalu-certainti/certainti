@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
 import {
-  AllModules,
   AllPermissions,
   Layout,
   OnChange,
@@ -21,8 +20,8 @@ import { ADMIN_MANAGE_USER } from '../../../../routes';
 import {
   useCreateUserDetails,
   useFetchOrgNames,
+  useGetUserProfileList,
   useManageUserDetail,
-  useManageUserProfile,
   useManageUserRole,
   useUpdateUserDetails,
 } from '../../../service/manage-user/manage-user-service';
@@ -30,10 +29,9 @@ import { UserDetail } from '../../../types/manage-user';
 import { FormData } from './form-data';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { checkPermission } from '../../../../common-utils';
-import { AccessRestricted } from '../../../../components/account-restricted';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { transFormPayload } from './utils';
+import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -51,6 +49,13 @@ export const CreateUser: React.FC = () => {
     isConsultantFirm: '',
     org_id: '',
   });
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [userUpdateSuccess, setUserUpdateSuccess] = useState<boolean>(false);
+
   const { successToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
@@ -62,7 +67,7 @@ export const CreateUser: React.FC = () => {
     `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim();
 
   const statusOptions = useGetStatus();
-  const userProfiles = useManageUserProfile();
+  const userProfiles = useGetUserProfileList();
   const allCountries = useGetAllCountries();
   const userRoles = useManageUserRole();
   const states = useFetchState(currentCountry.country);
@@ -72,29 +77,30 @@ export const CreateUser: React.FC = () => {
   const createUser = useCreateUserDetails();
 
   // Permission Mangement
-  const { modules, permission } = useSelector(
-    (state: RootState) => state.permission
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const userViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
   );
-  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
-  const isUserCreateEnable = checkPermission(
-    permission,
-    AllPermissions.USER_CREATE
-  );
-  const isUserEditEnable = checkPermission(
-    permission,
-    AllPermissions.USER_EDIT_UPDATE
-  );
-  const isUserActivateEnable = checkPermission(
-    permission,
-    AllPermissions.USER_ACTIVATE
-  );
+
+  // const isUserEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_EDIT_UPDATE
+  // );
+  // const isUserActivateEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_ACTIVATE
+  // );
   // const isUserDeleteEnable = checkPermission(
   //   permission,
   //   AllPermissions.USER_DELETE
   // );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  const commonSuccess = updateUser.isSuccess || createUser.isSuccess;
+  const commonSuccess = userUpdateSuccess || createUser.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -125,6 +131,15 @@ export const CreateUser: React.FC = () => {
     }
   }, [userData?.country_rid, userData?.region_rid]);
 
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    userViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [userViewEditFields]);
+
+  // Memoized Options
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
@@ -213,7 +228,41 @@ export const CreateUser: React.FC = () => {
     );
 
     if (isEditView && userData) {
-      updateUser.mutate(payload);
+      updateUser.mutate(payload, {
+        onSuccess: (response) => {
+          if (
+            response?.statusCode === 210 &&
+            response.data.requiresConfirmation
+          ) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ?? 'Are you sure you want to proceed?',
+              onConfirm: () => {
+                const updatedPayload = {
+                  ...payload,
+                  remove_group_memberships: true,
+                };
+                updateUser.mutate(updatedPayload, {
+                  onSuccess: () => {
+                    setUserUpdateSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setUserUpdateSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
     } else {
       createUser.mutate(payload);
     }
@@ -259,9 +308,10 @@ export const CreateUser: React.FC = () => {
     isEditView,
     states.isLoading,
     city.isLoading,
-    isEditView ? !isUserActivateEnable : false,
+    // isEditView ? !isUserActivateEnable : false,
     isConsultantFirm.isConsultantFirm,
-    isConsultantFirm.org_id
+    isConsultantFirm.org_id,
+    permissionMap
   );
 
   const formLoading =
@@ -270,9 +320,6 @@ export const CreateUser: React.FC = () => {
     allCountries.isLoading ||
     statusOptions.isLoading ||
     userRoles.isLoading;
-
-  if (!userIsEnable || (isEditView ? !isUserEditEnable : !isUserCreateEnable))
-    return <AccessRestricted />;
 
   return (
     <>
@@ -343,6 +390,25 @@ export const CreateUser: React.FC = () => {
           />
         )}
       </div>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

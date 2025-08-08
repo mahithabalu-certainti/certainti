@@ -2,10 +2,11 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Navbar, Sidebar } from '../';
-import { ADMIN_MANAGE_USER, MAIN_ROUTE } from '../../routes';
+import { MAIN_ROUTE } from '../../routes';
 import { accountNavItems } from '../sidebar/accounts-menu';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
+import { sideNavAdminItems } from '../sidebar/admin-menus';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export const AppLayout: React.FC = () => {
     localStorage.setItem('showAdminSidebar', JSON.stringify(!showAdminSidebar));
     const intendedRoute = showAdminSidebar
       ? checkConsultantRoute()?.link
-      : ADMIN_MANAGE_USER;
+      : checkDefaultAdminRoute();
     navigate(intendedRoute || MAIN_ROUTE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAdminSidebar]);
@@ -54,6 +55,18 @@ export const AppLayout: React.FC = () => {
         !menu.noRedirect &&
         menus.find((item) => item.name === menu.id)?.is_enabled
     );
+  };
+
+  const checkDefaultAdminRoute = () => {
+    for (const section of sideNavAdminItems) {
+      for (const item of section.subItemTitle) {
+        const menuStatus = menus.find((menu) => menu.name === item.id);
+        if (menuStatus?.is_enabled && !item.noRedirect) {
+          return item.link;
+        }
+      }
+    }
+    return null;
   };
 
   const handleSidebarToggle = React.useCallback(() => {
