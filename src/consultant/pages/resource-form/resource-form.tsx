@@ -435,12 +435,14 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         currency: costAndSKillAccountInfo?.currency_rid || null,
         resource_type: formValues?.resource_type_rid,
+        comments: '',
       };
       setFormValues(values);
     } else if (formValues && !isEditView && state?.skill) {
       const values = {
         ...formValues,
         resource_type: formValues?.resource_type_rid,
+        comments: '',
       };
       setFormValues(values);
     } else if (formValues && !isEditView) {

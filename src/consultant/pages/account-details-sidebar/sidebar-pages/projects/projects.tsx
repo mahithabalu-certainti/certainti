@@ -383,7 +383,8 @@ const Projects: React.FC<ProjectsProps> = ({
     memoizedProjectTypes,
     memoizedClassification,
     handleEdit,
-    permissionMap
+    permissionMap,
+    accountInActive
   );
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {

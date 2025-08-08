@@ -41,6 +41,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
 }) => {
   const { accountid } = useParams();
   const accountNumber = accountDetails?.accountById?.r_number;
+  const currencySymbol = accountDetails?.accountById?.currency?.currency_symbol;
 
   const [resourceCostList, setResourceCostList] = useState<
     ProjectFinancialResourceCostList[]
@@ -143,8 +144,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
 
-  const financialResourceCostColumns =
-    getFinancialResourceCostColumns(permissionMap);
+  const financialResourceCostColumns = getFinancialResourceCostColumns(
+    permissionMap,
+    currencySymbol
+  );
 
   return (
     <ListTable

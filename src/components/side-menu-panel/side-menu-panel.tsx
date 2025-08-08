@@ -206,7 +206,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     const isExpanded = expandedItems.has(item.key);
     const isActive = localActiveKey === item.key;
     const hasActiveSubmenu = hasSubmenus && isSubmenuActive(item.subMenu || []);
-    const paddingLeft = isCollapsed ? 'pl-[19px]' : 'pl-6';
+    const paddingLeft = isCollapsed ? 'pl-[15px]' : 'pl-[15px]';
 
     return (
       <React.Fragment key={item.key}>
@@ -313,7 +313,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
         text-left hover:bg-[#0BBFB726] ${
           submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-        } ${isCollapsed ? 'pl-[19px]' : 'pl-11'} py-1.5 pr-3 justify-start`}
+        } ${isCollapsed ? 'pl-[15px]' : 'pl-9'} py-1.5 pr-3 justify-start`}
                   style={{
                     transition: `background-color 0.3s ease-in-out, padding-left ${
                       isCollapsed ? '300ms' : '500ms'
@@ -381,7 +381,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
 
   return (
     <div
-      className='w-full h-full bg-white border-r border-[#CBD6E2] py-2 overflow-hidden'
+      className='w-full h-full bg-white border-r border-[#CBD6E2] overflow-hidden'
       style={{
         transition: 'width 500ms cubic-bezier(0.4, 0, 0.2, 1)',
         transitionDuration: isCollapsed ? '300ms' : '500ms',
@@ -391,7 +391,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       <div
         className={`flex items-center h-[30px] mb-1 ${
           isCollapsed ? 'justify-center' : ''
-        } ${isCollapsed ? 'px-3 ml-4' : 'px-7 pr-3'}`}
+        } ${isCollapsed ? 'px-3 ml-2' : 'px-[18px]'}`}
       >
         <div
           className={`flex items-center ${
@@ -440,7 +440,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         </div>
       </div>
 
-      <ul className='space-y-2 overflow-y-auto'>
+      <ul className='overflow-y-auto'>
         {accountMenus.map((item) => renderMenuItem(item))}
       </ul>
     </div>

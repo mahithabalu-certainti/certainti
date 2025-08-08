@@ -148,7 +148,7 @@ export const AccountDetails = () => {
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const defaultTab = searchParams.get('list');
+  const defaultTab = searchParams.get('list') ?? 'details';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [toggleEnabled, setToggleEnabled] = useState(false);
   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
@@ -306,6 +306,8 @@ export const AccountDetails = () => {
     const list = searchParams.get('list');
     if (list) {
       setActiveKey(list);
+    } else {
+      setActiveKey('details');
     }
   }, [searchParams]);
 

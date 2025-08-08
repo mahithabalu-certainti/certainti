@@ -62,7 +62,7 @@ export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  const defaultTab = searchParams.get('list');
+  const defaultTab = searchParams.get('list') ?? 'projectDetails';
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
   // const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
@@ -131,6 +131,8 @@ export const ProjectDetails = () => {
     const list = searchParams.get('list');
     if (list) {
       setActiveKey(list);
+    } else {
+      setActiveKey('projectDetails');
     }
   }, [searchParams]);
 
@@ -149,6 +151,7 @@ export const ProjectDetails = () => {
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
+  const projectInActive = data?.data?.project.status_name === 'In-Active';
 
   useEffect(() => {
     if (data?.data) {
@@ -351,6 +354,7 @@ export const ProjectDetails = () => {
       case 'projectResources':
         return (
           <ProjectResources
+            accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
             accountID={accountID}
             projectFiscalDate={fiscalDate}
@@ -362,6 +366,7 @@ export const ProjectDetails = () => {
       case 'projectsTask':
         return (
           <ProjectTask
+            accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
             accountID={accountID}
             projectFiscalDate={fiscalDate}
@@ -389,7 +394,7 @@ export const ProjectDetails = () => {
       case 'attachments':
         return (
           <Attachments
-            accountInActive={accountInActive}
+            accountOrProjectInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={onRefreshClick}

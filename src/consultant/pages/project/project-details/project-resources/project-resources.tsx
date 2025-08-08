@@ -74,6 +74,7 @@ export const ProjectResources = ({
   setExportType,
   setAttachmentParams,
   projectCode,
+  accountOrProjectInActive,
 }: {
   projectID?: string;
   accountID?: string;
@@ -83,6 +84,7 @@ export const ProjectResources = ({
     React.SetStateAction<AttachmentsListExportParams>
   >;
   projectCode?: string;
+  accountOrProjectInActive?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -309,6 +311,7 @@ export const ProjectResources = ({
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
       hide: !isProjectResourceFieldsEditable,
+      disabled: accountOrProjectInActive,
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -360,6 +363,7 @@ export const ProjectResources = ({
       hide: viewDetails
         ? !isProjectResourceFieldsEditable
         : !isResourceCreateViewEnable,
+      disabled: accountOrProjectInActive,
     },
   ];
   const handleFilter = () => {
@@ -398,7 +402,7 @@ export const ProjectResources = ({
   const handleProjectResourceClick = (row: ProjectResourcesListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_res_id', row?.rid ?? '');
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     setProjectResData(row);
     setShowProjectResourceDetails(true);
     setShowFilter(false);
@@ -423,7 +427,8 @@ export const ProjectResources = ({
     memoizedState,
     handleCountry,
     region.isPending,
-    permissionMap
+    permissionMap,
+    accountOrProjectInActive
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());

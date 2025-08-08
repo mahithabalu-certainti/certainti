@@ -10,6 +10,7 @@ import {
   applyHidePermission,
   checkPermission,
   costDisplay,
+  formatDateToYYYYMMDDWithTime,
   getDateFormat,
 } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
@@ -256,7 +257,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     {
       key: 'created_datetime',
       label: 'Created On',
-      value: projectDetails?.created_datetime,
+      value: formatDateToYYYYMMDDWithTime(projectDetails?.created_datetime),
     },
     {
       key: 'created_by',
@@ -266,7 +267,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     {
       key: 'modified_datetime',
       label: 'Updated On',
-      value: projectDetails?.modified_datetime,
+      value: formatDateToYYYYMMDDWithTime(projectDetails?.modified_datetime),
     },
     {
       key: 'modified_by',
