@@ -9,7 +9,7 @@ export interface IAccountService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    fiscalYear: number | "FY-All"
+    fiscalYear: number | "FY-All",userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -23,7 +23,8 @@ export interface IAccountService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    fiscalYear: number | "FY-All"
+    fiscalYear: number | "FY-All",
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -37,7 +38,13 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { account: any };
   }>;
-  listAllAccounts(): Promise<{
+  listAllAccounts(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    filters?: Record<string, any>;
+  }): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -54,7 +61,7 @@ export interface IAccountService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { gloablAcconunt: any; count: number };
+    data?: { globalAccount: any; count: number };
   }>;
 
   accountById(account_id: string): Promise<{
@@ -64,7 +71,15 @@ export interface IAccountService {
     data?: { accountById: any; accountDetails: any };
   }>;
 
-  listGlobalAccounts(): Promise<{
+  listGlobalAccounts(
+    userId:string,
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: string,
+    filters?: Record<string, any>
+  
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -167,6 +182,11 @@ export interface IGeoDataService {
     count: number;
   }>
   >;
-  
-  
+  importEntityTypes():Promise<any>
+}
+
+export interface IAccountGraphQlServices {
+  inlineEditAccount(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string} | undefined>
 }

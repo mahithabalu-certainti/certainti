@@ -500,6 +500,25 @@ async function resourceStatus(req: Request, res: Response): Promise<void> {
   }
 }
 
+const fetchImportEntityTypes = async (req : Request, res : Response) => {
+  const methodName = "fetchImportEntityTypes"
+  try {
+    const result = await services.geoDataServices.importEntityTypes()
+    handleSuccessResponse(res, result)
+    return;
+  } catch (err : any) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Update the export to include the cities function
 export default {
   country,
@@ -513,6 +532,6 @@ export default {
   resourceType,
   projectType,
   skillLevel,
-  resourceStatus
-
+  resourceStatus,
+  fetchImportEntityTypes
 };

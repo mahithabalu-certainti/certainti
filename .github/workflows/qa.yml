@@ -342,6 +342,7 @@ jobs:
           NODE_ENV=QA
 
           NODE_ENV_DB_PREFIX="U001-"
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
           EOF
           
           echo "$ENV_FILE file created successfully!"

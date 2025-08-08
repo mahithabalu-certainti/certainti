@@ -1,5 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import AccountDetails from "./accountDetails";
 
 export interface AccountFiscalAttributes {
   rid: string;
@@ -43,6 +44,24 @@ export interface AccountFiscalAttributes {
   qualifying_project_rd_credits_fte_fed?: number | null;
   qualifying_project_rd_credits_subcon_fed?: number | null;
   qualifying_project_rd_credits_fed?: number | null;
+
+  total_project_res_hours?: number | null;
+  total_project_res_hours_fte?: number | null;
+  total_project_res_hours_subcon?: number | null;
+
+  total_project_res_cost?: number | null;
+  total_project_res_cost_fte?: number | null;
+  total_project_res_cost_subcon?: number | null;
+  total_project_res_cost_nonlabor?: number | null;
+
+  total_project_task_hours?: number | null;
+  total_project_task_hours_fte?: number | null;
+  total_project_task_hours_subcon?: number | null;
+
+  total_project_task_cost?: number | null;
+  total_project_task_cost_fte?: number | null;
+  total_project_task_cost_subcon?: number | null;
+
   created_datetime: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -108,6 +127,23 @@ export class AccountFiscal
   public qualifying_project_rd_credits_fte_fed?: number | null;
   public qualifying_project_rd_credits_subcon_fed?: number | null;
   public qualifying_project_rd_credits_fed?: number | null;
+
+  public total_project_res_hours?: number | null;
+  public total_project_res_hours_fte?: number | null;
+  public total_project_res_hours_subcon?: number | null;
+
+  public total_project_res_cost?: number | null;
+  public total_project_res_cost_fte?: number | null;
+  public total_project_res_cost_subcon?: number | null;
+  public total_project_res_cost_nonlabor?: number | null;
+
+  public total_project_task_hours?: number | null;
+  public total_project_task_hours_fte?: number | null;
+  public total_project_task_hours_subcon?: number | null;
+
+  public total_project_task_cost?: number | null;
+  public total_project_task_cost_fte?: number | null;
+  public total_project_task_cost_subcon?: number | null;
 
   public created_datetime!: Date;
   public modified_datetime?: Date;
@@ -286,8 +322,22 @@ export class AccountFiscal
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-       
-       
+        total_project_res_hours: DataTypes.DECIMAL(18, 2),
+        total_project_res_hours_fte: DataTypes.DECIMAL(18, 2),
+        total_project_res_hours_subcon: DataTypes.DECIMAL(18, 2),
+
+        total_project_res_cost: DataTypes.DECIMAL(18, 2),
+        total_project_res_cost_fte: DataTypes.DECIMAL(18, 2),
+        total_project_res_cost_subcon: DataTypes.DECIMAL(18, 2),
+        total_project_res_cost_nonlabor: DataTypes.DECIMAL(18, 2),
+
+        total_project_task_hours: DataTypes.DECIMAL(18, 2),
+        total_project_task_hours_fte: DataTypes.DECIMAL(18, 2),
+        total_project_task_hours_subcon: DataTypes.DECIMAL(18, 2),
+
+        total_project_task_cost: DataTypes.DECIMAL(18, 2),
+        total_project_task_cost_fte: DataTypes.DECIMAL(18, 2),
+        total_project_task_cost_subcon: DataTypes.DECIMAL(18, 2),
       },
       {
         sequelize,
@@ -297,7 +347,16 @@ export class AccountFiscal
         underscored: true,
       }
     );
+    
     return model;
+  }
+
+  static associate(models: any) {
+    AccountFiscal.belongsTo(models.AccountDetails, {
+      foreignKey: "account_rid",
+      targetKey: "account_rid",
+      as: "account_fiscal_account",
+    });
   }
 }
 
@@ -311,7 +370,7 @@ export async function setupAccountFiscalSequence(
     );
 
     await sequelize.query(`ALTER TABLE "${schemaName}".account_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT}-' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT_FISCAL}-' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
 
     console.log("Project sequence setup complete");
   } catch (error) {

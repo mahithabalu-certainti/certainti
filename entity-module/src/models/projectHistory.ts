@@ -102,7 +102,7 @@ export class ProjectHistory
     ProjectHistory.belongsTo(ProjectFiscal, {
       foreignKey: 'project_rid',
       targetKey: 'rid',
-      as: 'project',
+      as: 'project_history_project_fiscal',
     });
 
     ProjectFiscal.hasMany(ProjectHistory, {
@@ -110,7 +110,6 @@ export class ProjectHistory
       sourceKey: 'rid',
       as: 'ProjectHistory',
     });
-
     return ProjectHistory;
   }
 }

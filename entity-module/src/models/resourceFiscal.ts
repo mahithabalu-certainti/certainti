@@ -1,5 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import AccountDetails from "./accountDetails";
+import { Resources } from "./resource";
 
 interface ResourceFiscalAttributes {
   rid?: string;
@@ -8,6 +10,7 @@ interface ResourceFiscalAttributes {
   r_number?: string;
   resource_rid: string;
   resource_type_rid: string;
+  resource_code?: string | null;
   fiscal_year?: number;
   country_rid?: string | null;
   country_region_rid?: string | null;
@@ -28,10 +31,10 @@ interface ResourceFiscalAttributes {
   hourly_cost?: number;
   bi_weekly_cost?: number;
   total_cost_for_year_project?: number;
-  total_cost_for_year_project_resource_level?: number;
+  total_cost_for_year_project_resource_level?: number | null;
   total_cost_for_year_project_task_level?: number;
   total_effort_for_year_project?: number;
-  total_effort_for_year_project_resource_level?: number;
+  total_effort_for_year_project_resource_level?: number | null;
   total_effort_for_year_project_task_level?: number;
   estimated_rd_hours?: number;
   effective_date?: Date | null;
@@ -55,6 +58,7 @@ export class ResourceFiscal
   public r_number?: string;
   public resource_rid!: string;
   public resource_type_rid!: string;
+  public resource_code?: string | null;
   public fiscal_year?: number;
   public country_rid?: string | null;
   public country_region_rid?: string | null;
@@ -75,10 +79,10 @@ export class ResourceFiscal
   public hourly_cost?: number;
   public bi_weekly_cost?: number;
   public total_cost_for_year_project?: number;
-  public total_cost_for_year_project_resource_level?: number;
+  public total_cost_for_year_project_resource_level?: number | null;
   public total_cost_for_year_project_task_level?: number;
   public total_effort_for_year_project?: number;
-  public total_effort_for_year_project_resource_level?: number;
+  public total_effort_for_year_project_resource_level?: number | null;
   public total_effort_for_year_project_task_level?: number;
   public estimated_rd_hours?: number;
   public effective_date?: Date | null;
@@ -133,6 +137,10 @@ export class ResourceFiscal
           allowNull: false,
         },
         resource_type_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        resource_code: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },
@@ -327,6 +335,7 @@ export class ResourceFiscal
         },
       }
     );
+
     return model;
   }
 }

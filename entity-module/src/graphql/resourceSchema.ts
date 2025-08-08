@@ -1,6 +1,7 @@
 import { gql } from "graphql-tag";
+import {mergeTypeDefs} from "@graphql-tools/merge"
 
-const typeDefs = gql`
+const resourceDefs = gql`
   type Resource {
     rid: ID!
     r_number: String
@@ -159,5 +160,65 @@ const typeDefs = gql`
     updateResource(input: UpdateResourceInput!): Int
   }
 `;
+
+const resourceInlineDefs = gql`
+type resourceResponse {
+  rid : String, 
+  r_number : String,
+  resource_code : String,
+  resource_name : String,
+  resource_firstname : String,
+  resource_lastname : String,
+  resource_type_rid : String,
+  status_rid : String,
+  resource_role : String,
+  resource_designation : String,
+  resource_orgname : String,
+  comments : String,
+  resource_total_experience : String,
+  country_rid : String,
+  region_rid : String,
+  city_rid : String,
+  account_name : String,
+  total_project_hours : String,
+  estimated_rd_hours : String,
+  country_name : String,
+  region_name : String,
+  city_name : String,
+  resource_type_name : String,
+  status_name : String
+}
+
+type updateInlineResourceResponse {
+  statusCode : Int,
+  statusCodeValue : String,
+  statusMessage : String,
+  data : resourceResponse
+}
+
+input updateInlineResource {
+  resource_rid : String!,
+  account_rid : String!,
+  resource_name : String,
+  resource_firstname : String,
+  resource_lastname : String,
+  resource_type_rid : String,
+  resource_orgname : String,
+  resource_designation : String,
+  resource_role : String,
+  region_rid : String,
+  country_rid : String,
+  status_rid : String,
+  city_rid : String,
+  comments : String,
+  resource_code : String
+}
+
+type Mutation {
+  updateResourceInline(data : updateInlineResource) : updateInlineResourceResponse
+}
+`
+
+const typeDefs = mergeTypeDefs([resourceDefs, resourceInlineDefs])
 
 export default typeDefs;

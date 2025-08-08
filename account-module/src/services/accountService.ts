@@ -1,6 +1,6 @@
 import { Op, Sequelize,UniqueConstraintError,where,fn,col  } from "sequelize";
-import { HttpStatus } from "../utils/constant";
-import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS, STATUS_MESSAGE, rawQueries } from "../utils/constant";
+import { IAccount, IUpdateAccount,IKeyContactDetail, AccountAttributes } from "../utils/types";
 import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
@@ -8,6 +8,11 @@ import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
+import { Account as AccountModel } from "../models/accountModel";
+import AccountDetails from "../models/accountDetailsModel";
+import { KeyContact } from "../models/keyContactDetails";
+import { initOrgSequelize } from "../config/orgdbDataSource";
+import { initSequelize } from "../config/maindbDataSource";
 
 const { Account, Country, Currency,Industry } = models;
 
@@ -50,7 +55,8 @@ async accountList(
   sortBy: string = "created_datetime", 
   sortOrder: string = "ASC",
   globalFilters: Record<string, string[]> = {},
-  fiscalYear: number | "FY-All"
+  fiscalYear: number | "FY-All",
+  userId:string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -59,6 +65,54 @@ async accountList(
 }> {
   try {
     const repository = this.getAccountRepository();
+    const userGroupType = await this.schemaService.getUserGroupType(userId);
+    const isCustomGlobal = userGroupType === 'DEFAULT';
+    let parentWhereClauseBase = {};
+    let childWhereClauseBase = {};
+    let parentIdsOnlyThroughChildren: (string | null)[] = []; // If you actually need nulls
+    if(!isCustomGlobal)
+    {
+      const accessibleAccountsInfo  = await this.schemaService.getAccessibleAccountInfo(userId);
+      const accessibleAccountIds = accessibleAccountsInfo.map(acc => acc.id);
+      if (accessibleAccountIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: "No accessible accounts found",
+            data: { account: [], count: 0 }
+          };
+        }
+        // Separate child and parent accounts
+      const childAccountsInfo = accessibleAccountsInfo.filter(acc => acc.isChild);
+      const childAccountIds = childAccountsInfo.map(acc => acc.id);
+       // Get parent accounts we have direct access to
+      const directParentIds = accessibleAccountsInfo
+      .filter(acc => !acc.isChild)
+      .map(acc => acc.id);
+
+      // Get parent accounts we only have access through their children
+       parentIdsOnlyThroughChildren = childAccountsInfo
+      .filter(acc => acc.parentId && !accessibleAccountIds.includes(acc.parentId))
+      .map(acc => acc.parentId);
+
+      // Combine all parent IDs we need to include
+      const allParentIds = [...new Set([...directParentIds, ...parentIdsOnlyThroughChildren])];
+      // First build your base where clauses
+      parentWhereClauseBase = {
+        [Op.or]: [
+          { rid: { [Op.in]: accessibleAccountIds } },
+          { 
+            rid: { [Op.in]: allParentIds },
+            parent_account_rid: null
+          }
+        ]
+      };
+
+      childWhereClauseBase = {
+        rid: { [Op.in]: childAccountIds }
+      };
+
+    }
+    
     
     // Get USD currency_rid - cache this if possible
     const usdCurrency = await this.getUSDCurrency();
@@ -68,8 +122,12 @@ async accountList(
       (filters === '{}' ? {} : JSON.parse(filters)) : filters;
           
     const { whereClause } = this.buildWhereClause(parsedFilters, search);
-    
-    const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause);
+    const { parentWhereClause, childWhereClause } = this.applyAccountIDFilter(
+    globalFilters,
+    {
+      parentWhereClause: {  ...parentWhereClauseBase },
+      childWhereClause: { ...whereClause, ...childWhereClauseBase }
+    });
     
     const offset = (page - 1) * limit;
 
@@ -77,6 +135,30 @@ async accountList(
       sortBy,
       sortOrder
     );
+     const restrictedFields: Array<keyof AccountAttributes> = [
+      'total_project_hours',
+      'total_projects',
+      'r_number',
+      'total_project_cost',
+      'total_projects_rd_credits',
+      'qualifying_project_hours_fed',
+      'qualifying_project_qre_fed',
+      'qualifying_project_rd_credits_fed',
+      'industry_name_other',
+      'professional_services_consultant', 
+      'finance_lead', 
+      'finance_executive'
+    ];
+       const baseFields = [
+      'rid', 
+      'account_name', 
+      'currency_rid',
+      'r_number',
+      'storage_type',
+      'professional_services_consultant', 
+      'finance_lead', 
+      'finance_executive'
+    ];
 
     // Optimized order clause construction
     const order = this.buildOrderClause(
@@ -95,7 +177,7 @@ async accountList(
       where: parentWhereClause,
       order: [["account_name", "ASC"]],
       include: this.buildBaseIncludes(),
-      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','professional_services_consultant', 'finance_lead', 'finance_executive'] // Only select needed fields initially
+      attributes:baseFields
     };
 
     // Only apply pagination if key_contact filter is NOT present
@@ -106,6 +188,8 @@ async accountList(
 
     // Get parent accounts with minimal data first
     let parentAccounts = await repository.findAll(queryOptions);
+     // Set restricted fields to null for parents we only access through children
+    
 
     // Set USD currency for accounts with no currency
     this.setDefaultCurrency(parentAccounts, usdCurrency);
@@ -126,7 +210,7 @@ async accountList(
         order,
         attributes: ['rid', 
           'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-          'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive'
+          'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'
         ] // Only select needed fields
       });
 
@@ -162,7 +246,7 @@ async accountList(
     });
 
     // Get full account data only for the needed records
-    const updatedAccount = await this.schemaService.insertFiscalInfoOnly(
+    let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
       parentAccounts,
       filters,
       limit,
@@ -172,6 +256,23 @@ async accountList(
       'create',
       fiscalYear
     );
+
+    if (!isCustomGlobal) {
+      updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
+          restrictedFields.forEach(field => {
+            parent[field] = null;
+          });
+        }
+        parent.hasAccountAccess = !parentIdsOnlyThroughChildren.includes(parent.rid);
+        return parent;
+      });
+    } else {
+      updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        parent.hasAccountAccess = true;
+        return parent;
+      });
+    }
 
     // Optimize count query
     const totalCount = await this.getOptimizedCount(repository, parentWhereClause);
@@ -364,7 +465,8 @@ private async getOptimizedCount(repository: any, whereClause: any) {
       sortBy: string = "created_datetime",
       sortOrder: string = "ASC",
       globalFilters: Record<string, string[]> = {},
-      fiscalYear: number | "FY-All"
+      fiscalYear: number | "FY-All",
+      userId:string
     ): Promise<{
       statusCode: number;
       message: string;
@@ -373,18 +475,91 @@ private async getOptimizedCount(repository: any, whereClause: any) {
     }> {
       try {
         const repository = this.getAccountRepository();
+        const userGroupType = await this.schemaService.getUserGroupType(userId);
+        const isCustomGlobal = userGroupType === 'DEFAULT';
+        let parentWhereClauseBase = {};
+        let childWhereClauseBase = {};
+        let parentIdsOnlyThroughChildren: (string | null)[] = []; // If you actually need nulls
+        if(!isCustomGlobal)
+        {
+          const accessibleAccountsInfo  = await this.schemaService.getAccessibleAccountInfo(userId);
+          const accessibleAccountIds = accessibleAccountsInfo.map(acc => acc.id);
+          if (accessibleAccountIds.length === 0) {
+              return {
+                statusCode: HttpStatus.SUCCESS,
+                message: "No accessible accounts found",
+                data: { account: [] }
+              };
+            }
+            // Separate child and parent accounts
+          const childAccountsInfo = accessibleAccountsInfo.filter(acc => acc.isChild);
+          const childAccountIds = childAccountsInfo.map(acc => acc.id);
+          // Get parent accounts we have direct access to
+          const directParentIds = accessibleAccountsInfo
+          .filter(acc => !acc.isChild)
+          .map(acc => acc.id);
+
+          // Get parent accounts we only have access through their children
+          parentIdsOnlyThroughChildren = childAccountsInfo
+          .filter(acc => acc.parentId && !accessibleAccountIds.includes(acc.parentId))
+          .map(acc => acc.parentId);
+
+          // Combine all parent IDs we need to include
+          const allParentIds = [...new Set([...directParentIds, ...parentIdsOnlyThroughChildren])];
+          // First build your base where clauses
+          parentWhereClauseBase = {
+            [Op.or]: [
+              { rid: { [Op.in]: accessibleAccountIds } },
+              { 
+                rid: { [Op.in]: allParentIds },
+                parent_account_rid: null
+              }
+            ]
+          };
+
+          childWhereClauseBase = {
+            rid: { [Op.in]: childAccountIds }
+          };
+
+        }
         const usdCurrency = await this.getUSDCurrency();
         // Parse filters if it's a string
         const parsedFilters = typeof filters === 'string' ? 
           (filters === '{}' ? {} : JSON.parse(filters)) : filters;
               
         const { whereClause } = this.buildWhereClause(parsedFilters, search);
+        const { parentWhereClause, childWhereClause } = this.applyAccountIDFilter(
+        globalFilters,
+        {
+            parentWhereClause: {  ...parentWhereClauseBase },
+            childWhereClause: { ...whereClause, ...childWhereClauseBase }
+        });
         
-        const {parentWhereClause, childWhereClause} = this.applyAccountIDFilter(globalFilters, whereClause); 
         const [finalSortBy, finalSortOrder] = this.getSortParameters(
           sortBy,
           sortOrder
         );
+         const restrictedFields: Array<keyof AccountAttributes> = [
+          'total_project_hours',
+          'total_projects',
+          'r_number',
+          'total_project_cost',
+          'total_projects_rd_credits',
+          'qualifying_project_hours_fed',
+          'qualifying_project_qre_fed',
+          'qualifying_project_rd_credits_fed',
+          'industry_name_other'
+        ];
+       const baseFields = [
+        'rid', 
+        'account_name', 
+        'currency_rid',
+        'r_number',
+        'storage_type',
+        'professional_services_consultant', 
+        'finance_lead', 
+        'finance_executive'
+      ];
 
     // Optimized order clause construction
         const order = this.buildOrderClause(
@@ -403,13 +578,14 @@ private async getOptimizedCount(repository: any, whereClause: any) {
       where: parentWhereClause,
       order: [["account_name", "ASC"]],
       include: this.buildBaseIncludes(),
-      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','professional_services_consultant', 'finance_lead', 'finance_executive'] // Only select needed fields initially
+      attributes:baseFields
     };
 
    
 
     // Get parent accounts with minimal data first
     let parentAccounts = await repository.findAll(queryOptions);
+    
 
     // Set USD currency for accounts with no currency
     this.setDefaultCurrency(parentAccounts, usdCurrency);
@@ -430,7 +606,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
             order,
             attributes: ['rid', 
               'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-              'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive'
+              'total_projects','total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid','professional_services_consultant', 'finance_lead', 'finance_executive', 'industry_name_other'
             ] // Only select needed fields
           });
 
@@ -471,14 +647,59 @@ private async getOptimizedCount(repository: any, whereClause: any) {
           account.setDataValue('child_accounts', childAccountsByParent.get(account.rid) || []);
         });
         // Get full account data only for the needed records
-        const updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
+        let updatedAccount = await this.schemaService.insertFiscalInfoOnly(parentAccounts,filters,0,0,
           finalSortBy,
           finalSortOrder,
           'download',
           fiscalYear
         );
+         if (!isCustomGlobal) {
+          updatedAccount.data = updatedAccount.data.map((parent: any) => {
+            if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
+              restrictedFields.forEach(field => {
+                parent[field] = null;
+              });
+            }
+            parent.hasAccountAccess = !parentIdsOnlyThroughChildren.includes(parent.rid);
+            return parent;
+          });
+        } else {
+          updatedAccount.data = updatedAccount.data.map((parent: any) => {
+            parent.hasAccountAccess = true;
+            return parent;
+          });
+        }
+
+        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"accounts_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
         const rawResult = updatedAccount?.data || [];
         const cleanedUsers = rawResult;
+        const filteredEmptyRow: Record<string, string> = {};
+        const labelMap: Record<string, string> = {
+          "Account Name": "Name",
+          "Industry": "Industry",
+          "Annual Revenue": "Annual Revenue",
+          "Country": "Country",
+          "Region": "Region",
+          "Currency": "Currency",
+          "Finance Executive": "Key Contact List",
+          "Finance Lead": "Key Contact List",
+          "Professional Services Consultant": "Key Contact List",
+          "Comments": "Comments",
+          "Account ID": "Account ID",
+          "Total Projects": "Total Projects",
+          "Total Project Hours": "Total Project Hours",
+          "Estimated R&D Hours": "Estimated R&D Hours",
+          "QRE": "QRE",
+          "Actual R&D Credits": "Actual R&D Credits",
+          "Estimated R&D Credits": "Estimated R&D Credits",
+          "Total Cost": "Total Cost",
+        };
         const emptyRow = {
           "Account Name": "",
           "Industry": "",
@@ -498,11 +719,17 @@ private async getOptimizedCount(repository: any, whereClause: any) {
 
     // If no data found, return the empty row
     if (cleanedUsers.length === 0) {
+      for (const [label, value] of Object.entries(emptyRow)) {
+        const mappedLabel = labelMap[label] || label;
+        if (allowedFieldSet.has(mappedLabel)) {
+          filteredEmptyRow[label] = value; // Keep original label for export
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: [emptyRow]
+          account: [filteredEmptyRow]
         },
       };
     }
@@ -535,74 +762,97 @@ private async getOptimizedCount(repository: any, whereClause: any) {
         return '-';
       }
     };
-        let exportDetails: any[] = [];
-        cleanedUsers.forEach((account: any) => {
-          const currency_symbol = account?.currency?.currency_symbol;
+       const exportDetails: Record<string, string>[] = [];
 
-          const baseRow = {
-            "Account Name": account?.account_name || "-",
-            "Industry": account?.industry?.industry_name || "-",
-            "Country": account?.country?.country_name || "-",
-            "Total Projects": account?.total_projects || '-',
-            "Total Project Hours": account?.total_project_hours || "-",
-            "Total Cost": formatNumberForExport(account?.total_project_cost, currency_symbol) ||  "-",
-            "Estimated R&D Hours": account?.qualifying_project_hours_fed || "-",
-            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed, currency_symbol) || "-",
-            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed, currency_symbol) || "-",
-            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, currency_symbol) || "-",
-            "Finance Executive":account?.finance_executive || '-',
-            "Finance Lead":account?.finance_lead || '-',
-            "Professional Services Consultant":account?.professional_services_consultant || '-',
-            "Account ID": account?.r_number || "-"
+    cleanedUsers.forEach((account: any) => {
+    const currency_symbol = account?.currency?.currency_symbol;
+    const baseRow = {
+      "Account Name": account?.account_name || "-",
+      "Industry": account?.industry?.industry_name || "-",
+      "Country": account?.country?.country_name || "-",
+      "Total Projects": account?.total_projects || "-",
+      "Total Project Hours": account?.total_project_hours || "-",
+      "Total Cost": formatNumberForExport(account?.total_project_cost, currency_symbol) || "-",
+      "Estimated R&D Hours": account?.qualifying_project_hours_fed || "-",
+      "QRE": formatNumberForExport(account?.qualifying_project_qre_fed, currency_symbol) || "-",
+      "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed, currency_symbol) || "-",
+      "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, currency_symbol) || "-",
+      "Finance Executive": account?.finance_executive || "-",
+      "Finance Lead": account?.finance_lead || "-",
+      "Professional Services Consultant": account?.professional_services_consultant || "-",
+      "Account ID": account?.r_number || "-"
+    };
+
+    const filteredBaseRow: Record<string, string> = {};
+    for (const [label, value] of Object.entries(baseRow)) {
+      const mappedLabel = labelMap[label] || label;
+      if (allowedFieldSet.has(mappedLabel)) {
+        filteredBaseRow[label] = value; // Keep original label for export
+      }
+    }
+    exportDetails.push(filteredBaseRow);
+    if (Array.isArray(account.child_accounts)) {
+      account.child_accounts.forEach((child: any) => {
+      const child_currency_symbol = child?.currency?.currency_symbol;
+      const childRow = {
+        "Account Name": child?.account_name || "-",
+        "Industry": child?.industry?.industry_name || "-",
+        "Country": child?.country?.country_name || "-",
+        "Total Projects": child?.total_projects || "-",
+        "Total Project Hours": child?.total_project_hours || "-",
+        "Total Cost": formatNumberForExport(child?.total_project_cost, child_currency_symbol) || "-",
+        "Estimated R&D Hours": child?.qualifying_project_hours_fed || "-",
+        "QRE": formatNumberForExport(child?.qualifying_project_qre_fed, child_currency_symbol) || "-",
+        "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
+        "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, child_currency_symbol) || "-",
+        "Finance Executive": child?.finance_executive || "-",
+        "Finance Lead": child?.finance_lead || "-",
+        "Professional Services Consultant": child?.professional_services_consultant || "-",
+        "Account ID": child?.r_number || "-"
+      };
+
+      const filteredChildRow: Record<string, string> = {};
+       for (const [label, value] of Object.entries(childRow)) {
+        const mappedLabel = labelMap[label] || label;
+        if (allowedFieldSet.has(mappedLabel)) {
+          filteredChildRow[label] = value; // Keep original label for export
+        }
+      }
+      exportDetails.push(filteredChildRow);
+
+      if (Array.isArray(child?.projects_by_fiscal_year)) {
+        child.projects_by_fiscal_year.forEach((fiscalData: any) => {
+          const fiscalRow = {
+            "Account Name": fiscalData?.fiscal_year || "-",
+            "Industry": "-",
+            "Country": "-",
+            "Total Projects": fiscalData?.total_projects || "-",
+            "Total Project Hours": fiscalData?.total_project_hours || "-",
+            "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
+            "Estimated R&D Hours": fiscalData?.qualifying_project_hours_fed || "-",
+            "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, child_currency_symbol) || "-",
+            "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
+            "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
+            "Finance Executive": "-",
+            "Finance Lead": "-",
+            "Professional Services Consultant": "-",
+            "Account ID": "-"
           };
-          exportDetails.push(baseRow);
-          if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
-            account.child_accounts.forEach((child: any) => {
-              const child_currency_symbol = child?.currency?.currency_symbol;
 
-              exportDetails.push({
-                "Account Name": child?.account_name || "-",
-                "Industry": child?.industry?.industry_name || "-",
-                "Country": child?.country?.country_name || "-",
-                "Total Projects": child?.total_projects || '-',
-                "Total Project Hours": child?.total_project_hours || "-",
-                "Total Cost": formatNumberForExport(child?.total_project_cost, child_currency_symbol) || "-",
-                "Estimated R&D Hours": child?.qualifying_project_hours_fed || "-",
-                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed, child_currency_symbol) || "-",
-                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
-                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, child_currency_symbol) || "-",
-                "Finance Executive":child?.finance_executive || '-',
-                "Finance Lead":child?.finance_lead || '-',
-                "Professional Services Consultant":child?.professional_services_consultant || '-',
-                "Account ID": child?.r_number || "-"
-              });
-                if(child?.projects_by_fiscal_year.length >0)
-                { 
-                   child.projects_by_fiscal_year.forEach((fiscalData: any) => {
-                  exportDetails.push({
-                      "Account Name": fiscalData?.fiscal_year || "-",
-                      "Industry": "-",
-                      "Country":  "-",
-                      "Total Projects": fiscalData?.total_projects || '-',
-                      "Total Project Hours": fiscalData?.total_project_hours || "-",
-                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
-                      "Estimated R&D Hours": fiscalData?.qualifying_project_hours_fed || "-",
-                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, child_currency_symbol) || "-",
-                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
-                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
-                      "Finance Executive": '-',
-                      "Finance Lead": '-',
-                      "Professional Services Consultant": '-',
-                      "Account ID": '-'        
-                     });  
-                  });
-                }
-            });
-          
-         
+          const filteredFiscalRow: Record<string, string> = {};
+            for (const [label, value] of Object.entries(fiscalRow)) {
+              const mappedLabel = labelMap[label] || label;
+              if (allowedFieldSet.has(mappedLabel)) {
+                filteredFiscalRow[label] = value; // Keep original label for export
+              }
           }
-          
+          exportDetails.push(filteredFiscalRow);
         });
+      }
+    });
+  }
+});
+
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
@@ -743,6 +993,7 @@ private async getOptimizedCount(repository: any, whereClause: any) {
               })
             }
       }
+      await this.schemaService.createUserGroup(accountData,userId,account.is_parent,account.rid,account?.parent_account_rid);
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number || '',
@@ -802,8 +1053,7 @@ async insertClientTemplateDetails(
   account_number: string,
   account_rid: string,
 ) {
-  const entityTypes = ['resource','resource_cost','resource_skill','project','project_resource'];
-  
+  const entityTypes = ['resource','resource_cost','resource_skill','project','project_resource','project_task'];
   // Loop through each entity type
   for (const entity of entityTypes) {
     try {
@@ -876,6 +1126,11 @@ async insertClientTemplateDetails(
         }
       });
 
+      const existingAcc = await repository.findOne({
+        where: {
+          rid: { [Op.eq]: account_rid } // Exclude current account
+        }
+      });
 
 
       if (existingAccount) {
@@ -1001,6 +1256,19 @@ async insertClientTemplateDetails(
           default_r_number || '',
         );
       }
+     
+      if(existingAcc)
+      {
+         const existingAccName = existingAcc?.account_name
+         const updatedAccount = affectedRows[0];
+        if (updatedAccount.account_name !== existingAccName) {
+        if(existingAccName)
+        { 
+           await this.schemaService.updateGroupNameForAccount(affectedRows[0].rid,userId,affectedRows[0].is_parent,account_name);
+        }
+      }  
+      }
+     
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1029,11 +1297,11 @@ async insertClientTemplateDetails(
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { gloablAcconunt: any; count: number };
+    data?: { globalAccount: any; count: number };
   }> {
     try {
       const repository = await this.getAccountRepository();
-      const gloablAcconunt = await repository.findAll({
+      const globalAccount = await repository.findAll({
         where: {
           parent_account_rid: {
             [Op.is]: null,
@@ -1046,8 +1314,8 @@ async insertClientTemplateDetails(
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          gloablAcconunt,
-          count: gloablAcconunt.length,
+          globalAccount,
+          count: globalAccount.length,
         },
       };
     } catch (err) {
@@ -1055,18 +1323,16 @@ async insertClientTemplateDetails(
     }
   }
 
-  async accountById(account_id: string): Promise<{
+async accountById(account_id: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { accountById: any; accountDetails: any };
   }> {
     try {
-      const repository = await this.getAccountRepository();
+      const repository = this.getAccountRepository();
       let accountById = await repository.findOne({
-        where: {
-          rid: account_id,
-        },
+        where: { rid: account_id },
         include: [
           {
             model: Account,
@@ -1075,8 +1341,8 @@ async insertClientTemplateDetails(
           },
           {
             model: Country,
-            as: "country",
-            attributes: ["country_name","country_code"],
+            as: "country", 
+            attributes: ["country_name", "country_code"],
             required: false,
           },
           {
@@ -1094,7 +1360,7 @@ async insertClientTemplateDetails(
           {
             model: Industry,
             as: "industry",
-            attributes: ["industry_name"],
+            attributes: ["rid", "industry_name"],
             required: false,
           },
           {
@@ -1104,71 +1370,95 @@ async insertClientTemplateDetails(
             required: false,
           },
           {
-            model: Industry,
-            as: "industry",
-            attributes: ["rid", "industry_name"],
-            required: false,
-          },
-          {
             model: Status,
             as: 'status',
             attributes: [['status_description','status_name']],
             required: false,
-        }
+          }
         ],
       });
 
-      // Get USD currency_rid
+      // Handle USD currency assignment
       const usdCurrency = await this.getUSDCurrency();
-
-      // If currency_rid is null or empty, assign USD currency
-      if (!accountById?.currency_rid || accountById.currency_rid === '') {
-        if (accountById) {
-          accountById.currency_rid = usdCurrency?.rid;
-          (accountById as any).setDataValue('currency', usdCurrency);
-        }
+      if (accountById && (!accountById.currency_rid || accountById.currency_rid === '')) {
+        accountById.currency_rid = usdCurrency?.rid;
+        (accountById as any).setDataValue('currency', usdCurrency);
       }
 
-      let acconuntNumber = accountById?.r_number || "";
-      if(accountById?.storage_type === "store_in_parent"){
+      // Get account number
+      let accountNumber = accountById?.r_number || "";
+      if (accountById?.storage_type === "store_in_parent") {
         const parentAccount = await repository.findOne({
-          where: {
-            rid: accountById.parent_account_rid || ""
-          }
-        })
-        acconuntNumber = parentAccount?.r_number || "";
+          where: { rid: accountById.parent_account_rid || "" }
+        });
+        accountNumber = parentAccount?.r_number || "";
       }
 
-      const accountDetails = await this.schemaService.fetchAccountDetails(
-        acconuntNumber,
-        accountById?.rid || "",
-      );
-      // Fetch key contacts for the account
-      const keyContacts = await this.schemaService.fetchKeyContacts(
-        accountById?.rid || "",
-        acconuntNumber
-      );
-      let userNames;
-      if(accountById)
-      {
-         userNames = await this.fetchUserNames({
-            created_by: accountById?.created_by || "",
-            modified_by: accountById?.modified_by || "",
-          });
+      // Fetch related data in parallel
+      const [accountDetails, keyContacts, attachments, userNames] = await Promise.all([
+        this.schemaService.fetchAccountDetails(accountNumber, accountById?.rid || ""),
+        this.schemaService.fetchKeyContacts(accountById?.rid || "", accountNumber),
+        this.schemaService.fetchAttachments(account_id),
+        accountById ? this.fetchUserNames({
+          created_by: accountById.created_by || "",
+          modified_by: accountById.modified_by || "",
+        }) : null
+      ]);
+
+      // Update account user names
+      if (accountById && userNames) {
         (accountById as any).dataValues.created_by = userNames.created_by_name;
         (accountById as any).dataValues.modified_by = userNames.modified_by_name;
       }
-    
 
       accountById = await this.schemaService.insertIndustyName(accountById);
 
-      // Add key contacts to account details
+      // Process attachments
+      const sequelize = await initSequelize();
+      const documentTypeIds = attachments.map(a => a.document_type_rid);
+      const documentCategoryIds = attachments.map(a => a.document_category_rid);
+      const userIds = attachments.map(a => a.created_by);
+
+      // Fetch attachment related data in parallel
+      const [documentTypes, documentCategories, users] = await Promise.all([
+        documentTypeIds.length > 0 ? 
+          sequelize.query(rawQueries.GET_DOCUMENT_TYPES, { 
+            replacements: { documentTypeIds }, 
+            type: 'SELECT' 
+          }) : [],
+        documentCategoryIds.length>0 ?
+          sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, { 
+          replacements: { documentCategoryIds }, 
+          type: 'SELECT' 
+        }) : [],
+        userIds.length>0 ?
+          sequelize.query(rawQueries.GET_USERS, { 
+          replacements: { userIds }, 
+          type: 'SELECT' 
+        }) : []
+      ]);
+
+      // Map attachments with related data
+      const mappedAttachments = attachments.map(attachment => ({
+        ...attachment,
+        document_type: (documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid) as any)?.type_name || '',
+        document_category: (documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid) as any)?.category_name || '',
+        uploaded_by: (users.find((u: any) => u.rid === attachment.created_by) as any)?.full_name || '',
+        attached_to: accountById?.account_name,
+        size_in_mb: attachment.size_in_mb
+            ? `${attachment.size_in_mb} mb`
+            : "0 mb"
+      }));
+
+      // Construct final account data
       const accountData = {
-        ...accountDetails.length > 0 ? accountDetails[0] : {},
-        keyContacts: keyContacts.length > 0 ? keyContacts : [],
+        ...(accountDetails[0] || {}),
+        keyContacts: keyContacts || [],
+        attachments: mappedAttachments || [],
         created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1239,34 +1529,35 @@ async insertClientTemplateDetails(
     
     return result;
   }
-  async listAllAccounts(): Promise<{
+ async listAllAccounts(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { accountData: any; orgData: any };
-  }> {
-    try {
-      const repository = await this.getAccountRepository();
-      const accountData = await repository.findAll({
-        where: {
-          organisation_name: {
-            [Op.ne]: '',
-          },
+    data?: { accountData: any; orgData: any; count?: number };
+}> {
+  try {
+    const repository = await this.getAccountRepository();
+  
+    const queryOptions: any = {
+      where: {
+              organisation_name: { [Op.ne]: null }},
+      include: [
+        {
+          model: Status,
+          as: 'status',
+          where: { status_description: 'active' },
+          attributes: [],
+          required: true,
         },
-        include: [
-          {
-            model: Status,
-            as: 'status',
-            where: {
-              status_description: 'active',
-            },
-            attributes: [],
-            required: true,
-          },
-        ],
-        attributes: ['rid', 'account_name', 'organisation_name'],
-        order: [['organisation_name', 'ASC']],
-      });
+      ],
+      attributes: ['rid', 'account_name', 'organisation_name', 'r_number'],
+      order: [['organisation_name', 'ASC']],
+    };
+    
+
+    const [accountData] = await Promise.all([
+      repository.findAll(queryOptions)
+    ]);
 
       const orgData = await this.schemaService.getOrgInfo();
       return {
@@ -1282,45 +1573,135 @@ async insertClientTemplateDetails(
     }
   }
   
-  async listGlobalAccounts(): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { gloablAcconunt: any; count: number };
-  }> {
-    try {
-      const repository = await this.getAccountRepository();
-      const gloablAcconunt = await repository.findAll({
-        where: {
-          parent_account_rid: {
-            [Op.is]: null,
-          } as any,
-        },
-        attributes: ["rid", "account_name"],
+async listGlobalAccounts(
+ userId:string,
+  page: number | undefined,
+  limit: number | undefined,
+  sortBy: string = "account_name", 
+  sortOrder: string = "ASC",
+  globalFilters: Record<string, string[]> = {},
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { gloablAcconunt: any[]; count: number };
+}> {
+  try {
+    const userGroupType = await this.schemaService.getUserGroupType(userId);
+    const isCustomGlobal = userGroupType === 'DEFAULT';
+    if(!userId)
+    {
+       return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "User Id is required in headers",
+          data: { gloablAcconunt: [], count: 0 }
+        };;
+    }
+    const repository = await this.getAccountRepository();
+    const paginationOptions: any = {};
+    if (limit !== undefined && page !== undefined) {
+      paginationOptions.limit = limit;
+      paginationOptions.offset = (page - 1) * limit;
+    }
+
+    if (!isCustomGlobal) {
+      const accessibleAccountsInfo = await this.schemaService.getAccessibleAccountInfo(userId);
+      const accessibleAccountIds = accessibleAccountsInfo.map(acc => acc.id);
+
+      if (accessibleAccountIds.length === 0) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "No accessible accounts found",
+          data: { gloablAcconunt: [], count: 0 }
+        };
+      }
+
+      // Separate child and parent accounts
+      const childAccountsInfo = accessibleAccountsInfo.filter(acc => acc.isChild);
+      const childAccountIds = childAccountsInfo.map(acc => acc.id);
+
+      const directParentIds = accessibleAccountsInfo
+        .filter(acc => !acc.isChild)
+        .map(acc => acc.id);
+
+      const parentIdsOnlyThroughChildren = childAccountsInfo
+        .filter(acc => acc.parentId && !accessibleAccountIds.includes(acc.parentId))
+        .map(acc => acc.parentId);
+
+      const allParentIds = [...new Set([...directParentIds, ...parentIdsOnlyThroughChildren])];
+
+      const parentWhereClauseBase = {
+        rid: { [Op.in]: allParentIds },
+        parent_account_rid: { [Op.is]: null }  // ✅ Enforce top-level parents only
+      };
+
+      const childWhereClauseBase = {
+        rid: { [Op.in]: childAccountIds }
+      };
+
+      const globalAccount = await repository.findAll({
+        where: parentWhereClauseBase,
+        attributes: ['rid', 'account_name'],
         include: [
           {
             model: Account,
-            as: "child_accounts",
-            attributes: ["rid", "account_name"],
+            as: 'child_accounts',
+            attributes: ['rid', 'account_name'],
             required: false,
-            separate: true,  // Ensures child ordering works
-            order: [["account_name", "ASC"]]
+            where: childWhereClauseBase,
+            separate: true,
+            order: [[sortBy, sortOrder]],
           }
         ],
-        order: [["account_name", "ASC"]]
+        order: [[sortBy, sortOrder]],
+        ...paginationOptions
       });
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          gloablAcconunt,
-          count: gloablAcconunt.length,
-        },
+          gloablAcconunt:globalAccount,
+          count: globalAccount.length
+        }
       };
-    } catch (err) {
-      return this.throwServiceError(err as Error);
     }
+
+    // DEFAULT: Return all top-level (parent) accounts with their children
+    const globalAccount = await repository.findAll({
+      where: {
+        parent_account_rid: {
+          [Op.is]: null
+        }
+      },
+      attributes: ['rid', 'account_name'],
+      include: [
+        {
+          model: Account,
+          as: 'child_accounts',
+          attributes: ['rid', 'account_name'],
+          required: false,
+          separate: true,
+          order: [[sortBy, sortOrder]],
+        }
+      ],
+      order: [[sortBy, sortOrder]],
+      ...paginationOptions
+    });
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        gloablAcconunt:globalAccount,
+        count: globalAccount.length
+      }
+    };
+  } catch (err) {
+    return this.throwServiceError(err as Error);
   }
+}
+
 
   buildWhereClause(
     filters: Record<string, any>,
@@ -1670,37 +2051,88 @@ if (is_empty !== undefined) {
     }
     return whereClause;
   }
- 
-  private applyAccountIDFilter(
-    globalFilters: Record<string, string[]>,
-    whereClause: Record<string, any>
-  ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
-    // Parent: only get global filter and must have no parent_account
-    let parentWhereClause: Record<string, any> = {
-      parent_account_rid: { [Op.is]: null }
-    };
-  
-    // Child: inherit original filters
-    let childWhereClause: Record<string, any> = { ...whereClause };
-  
-    if (globalFilters && Object.keys(globalFilters).length > 0) {
-      const parentIds = Object.keys(globalFilters);
-      const childIds: string[] = Object.values(globalFilters).flat();
-  
-      // Parent account filtering
+ private applyAccountIDFilter(
+  globalFilters: Record<string, string[]>,
+  whereClauses: {
+    parentWhereClause: Record<string, any>;
+    childWhereClause: Record<string, any>;
+  }
+): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+  // Start with the original where clauses
+  let parentWhereClause = { ...whereClauses.parentWhereClause };
+  let childWhereClause = { ...whereClauses.childWhereClause };
+
+  // Ensure parent accounts have no parent_account_rid
+  parentWhereClause.parent_account_rid = { [Op.is]: null };
+
+  if (globalFilters && Object.keys(globalFilters).length > 0) {
+    const parentIds = Object.keys(globalFilters);
+    const childIds: string[] = Object.values(globalFilters).flat();
+
+    // Apply parent account filtering
+    if (parentWhereClause.rid) {
+      // If rid condition already exists, combine with AND
+      parentWhereClause.rid = {
+        [Op.and]: [
+          parentWhereClause.rid,
+          { [Op.in]: parentIds }
+        ]
+      };
+    } else {
       parentWhereClause.rid = { [Op.in]: parentIds };
-  
-      // Child account filtering (on account_rid)
-      if (childIds.length > 0) {
+    }
+
+    // Apply child account filtering
+    if (childIds.length > 0) {
+      if (childWhereClause.rid) {
+        childWhereClause.rid = {
+          [Op.and]: [
+            childWhereClause.rid,
+            { [Op.in]: childIds }
+          ]
+        };
+      } else {
         childWhereClause.rid = { [Op.in]: childIds };
       }
     }
+  }
+  console.log(parentWhereClause);
+  console.log(childWhereClause)
+  return {
+    parentWhereClause,
+    childWhereClause
+  };
+}
+  // private applyAccountIDFilter(
+  //   globalFilters: Record<string, string[]>,
+  //   whereClause: Record<string, any>
+  // ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+  //   // Parent: only get global filter and must have no parent_account
+  //   let parentWhereClause: Record<string, any> = {
+  //     parent_account_rid: { [Op.is]: null }
+  //   };
   
-    return {
-      parentWhereClause,
-      childWhereClause
-    };
-  }  
+  //   // Child: inherit original filters
+  //   let childWhereClause: Record<string, any> = { ...whereClause };
+  
+  //   if (globalFilters && Object.keys(globalFilters).length > 0) {
+  //     const parentIds = Object.keys(globalFilters);
+  //     const childIds: string[] = Object.values(globalFilters).flat();
+  
+  //     // Parent account filtering
+  //     parentWhereClause.rid = { [Op.in]: parentIds };
+  
+  //     // Child account filtering (on account_rid)
+  //     if (childIds.length > 0) {
+  //       childWhereClause.rid = { [Op.in]: childIds };
+  //     }
+  //   }
+  
+  //   return {
+  //     parentWhereClause,
+  //     childWhereClause
+  //   };
+  // }  
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
@@ -1773,7 +2205,7 @@ private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean
   private async getUSDCurrency() {
     return Currency.findOne({ where: { currency_code: 'USD' } });
   }
-    
 }
+
 
 export default AccountService;

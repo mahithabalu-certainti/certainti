@@ -5,6 +5,190 @@ const userReqSchema = Joi.object({
   organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
 })
 
+const createUserGroupSchema = Joi.object({
+  group_name: Joi.string().min(3).max(64).required().label("Group Name"),
+  users: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .required()
+    .label("Users"),
+  group_type_rid: Joi.string().required().label("Group Type"),
+  accounts: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("Account RID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .min(1)
+    .optional()
+    .label("Accounts"),
+  status_rid: Joi.string().optional().label("Status"),
+  is_consultant_only_group: Joi.boolean().required(),
+  projects: Joi.object()
+    .pattern(
+      Joi.string(), // project_rid
+      Joi.boolean() // has_access_enabled
+    )
+    .optional()
+    .label("Projects"),
+});
+
+
+const updateUserGroupSchema = Joi.object({
+  group_name: Joi.string().min(3).max(64).required().label("Group Name"),
+  group_rid: Joi.string().required().label("Group Id"),
+  users: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .optional()
+    .label("Users"),
+  accounts: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("Account RID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .min(1)
+    .optional()
+    .label("Accounts"),
+    projects: Joi.object()
+    .pattern(
+      Joi.string(), // project_rid
+      Joi.boolean()        // has_access_enabled
+    )
+    .optional()
+    .label("Projects"),
+  status_rid: Joi.string().optional().label("Status"),
+  is_consultant_only_group:Joi.boolean().optional()
+});
+
+const assignUserToAccountSchema = Joi.object({
+  users: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .optional()
+    .label("Users"),
+  groups: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().required().label("User ID"),
+        is_enabled: Joi.boolean().required(),
+        is_modified: Joi.boolean().required(),
+      })
+    )
+    .optional()
+    .label("Users"),
+  access_type:Joi.string().required().label("Access type"),
+  account_rid: Joi.string().required().label("Account Name"),
+  entity_type:Joi.string().required().label("Entity type"),
+  project_rid: Joi.string().optional().label("Project rid"),
+
+});
+
+const listUserGroupTypeSchema = Joi.object({
+  type: Joi.string().optional().label("Type"),
+  
+});
+const listProjectUserGroupSchema = Joi.object({
+  account_rid: Joi.string().required().label("Account Id"),
+  entity_rid: Joi.string().required().label("User Id/Project Id"),
+  access_type: Joi.string().required().label("Type"),
+  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+const listProjectOfAccountSchema = Joi.object({
+  account_rid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
+  group_rid: Joi.string().optional().label("Group Id"),
+  group_type_rid: Joi.string().optional().label("Group Type Id"),
+   page: Joi.number().integer().default(1),
+  limit: Joi.number().integer().default(1000),
+  filters: Joi.object().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const assignUserToProjectSchema = Joi.object({
+  group_rid: Joi.string().optional().label("Group Id"),
+  user_rid: Joi.string().optional().label("User Id"),
+  account_rid: Joi.string().required().label("Account Name"),
+  projects: Joi.object()
+    .pattern(
+      Joi.string(), // key: project_rid
+      Joi.boolean() // value: has_access_enabled
+    )
+    .required()
+    .min(1)
+    .label("Projects Access Map"),
+});
+
+const listActiveUserGroupSchema = Joi.object({
+ 
+  is_consultant_only_group:Joi.boolean().optional().allow('',null),
+  group_rid:Joi.string().optional().allow('',null),
+  group_type_rid: Joi.string().optional().label("Group Type Id"),
+  page: Joi.number().integer().default(1),
+  limit: Joi.number().integer().default(1000),
+  filters: Joi.object().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  account_rid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional()
+});
+
+const listAccountUserSchema = Joi.object({
+  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  entity_type:Joi.string().required(),
+  project_rid:Joi.string().optional(),
+});
+
+const listUserGroupSchema = Joi.object({
+  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+  search: Joi.string().max(255).optional().allow(""),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC")
+});
+
+const exportUserGroupSchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
+  timezone: Joi.string().optional()
+});
+
 const createUserSchema = Joi.object({
   organization: Joi.string().valid(constants.ENV_TRD365, constants.ENV_EA).max(255).required(),
   first_name: Joi.string().min(3).max(64).required().label("First Name"),
@@ -76,7 +260,8 @@ const updateUserSchema = Joi.object({
   phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().allow('', null).label("Phone"),
   modified_by: Joi.string().max(255).allow('', null).optional(),
   is_consultant_firm:Joi.boolean().required(),
-  org_id:Joi.string().required()
+  org_id:Joi.string().required(),
+  remove_group_memberships: Joi.boolean().optional().default(false),
 });
 
 const userDetailsUpdateSchema = Joi.object({
@@ -291,4 +476,12 @@ const editProfilePermissionsSchema = Joi.object({
   })
 });
 
-export { createUserSchema, updateUserSchema, enterpriseUserSchema, userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, exportUserSchema, userPermissionByIdSchema, createProfileSchema, getProfilePermissionsSchema, updateProfilePermissionsSchema, editProfilePermissionsSchema, listProfileSchema,updateUserExtendedPermissionsSchema };
+export { createUserSchema, updateUserSchema, enterpriseUserSchema,
+   userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, 
+   exportUserSchema, userPermissionByIdSchema, createProfileSchema, 
+   getProfilePermissionsSchema, updateProfilePermissionsSchema,
+    editProfilePermissionsSchema, listProfileSchema,updateUserExtendedPermissionsSchema,
+  createUserGroupSchema,updateUserGroupSchema,listUserGroupSchema,
+listActiveUserGroupSchema,assignUserToAccountSchema,assignUserToProjectSchema,
+listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,
+listProjectOfAccountSchema,listUserGroupTypeSchema};

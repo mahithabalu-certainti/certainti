@@ -1,6 +1,7 @@
 import { gql } from "graphql-tag";
+import {mergeTypeDefs} from "@graphql-tools/merge"
 
-const typeDefs = gql`
+const listCostDefs = gql`
   enum SortOrder {
     ASC
     DESC
@@ -106,6 +107,78 @@ const typeDefs = gql`
 
   # Add scalar type for JSON
   scalar JSON
-`;
+`
 
-export default typeDefs;
+const inLineCostDefs = gql`
+
+type resourceCostResponse {
+  rid: String
+  r_number: String
+  eid: String
+  created_by: String
+  modified_by: String
+  created_datetime: Date
+  modified_datetime: Date
+  account_rid: String
+  resource_rid: String
+  resource_code: String
+  resource_number: String
+  fiscal_year: Int
+  effective_from: String 
+  end_date: String 
+  effort_in_hrs: String
+  currency_rid: String
+  comments: String
+  deductions: String 
+  insurance: String 
+  bonus: String
+  resource_cost: String
+  salary: String 
+  net_resource_cost: String
+  status_rid: String
+  resource_type_rid: String
+  resource_name: String
+  resource_orgname: String 
+  resource_designation: String 
+  resource_role: String 
+  account_name: String
+  status_name: String
+  resource_type_name: String
+  currency_code: String
+  currency_name: String
+  currency_symbol: String
+}
+
+type resourceCostInlineResponse {
+  statusCode : Int,
+  statusCodeValue : String,
+  statusMessage : String,
+  data : resourceCostResponse
+}
+
+input resourceCostInlineInput {
+  resource_cost_rid : String!,
+  account_rid : String!,
+  resource_rid : String!,
+  fiscal_year : Int,
+  currency_rid : String,
+  effective_from : String,
+  end_date : String,
+  effort_in_hrs : String,
+  salary : String,
+  bonus : String,
+  insurance : String,
+  deductions : String,
+  resource_cost : String,
+  comments : String
+  user_preference : String
+}
+
+type Mutation {
+  updateResourceCostInline (data : resourceCostInlineInput) : resourceCostInlineResponse
+}
+`
+
+const typeDefs = mergeTypeDefs([inLineCostDefs, listCostDefs])
+
+export default typeDefs

@@ -695,7 +695,8 @@ class ResourceSkillService {
         limit,
         offset,
         search,
-        accountId
+        accountId,
+        {}
       );
 
       if (results?.data?.resourceSkill?.length) {
@@ -745,7 +746,8 @@ class ResourceSkillService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    resourceRid: string
+    resourceRid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -790,7 +792,8 @@ class ResourceSkillService {
         finalSortOrder,
         resourceRid,
         search,
-        accountId
+        accountId,
+        userId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -1059,6 +1062,43 @@ class ResourceSkillService {
       return this.throwServiceError(err as Error);
     }
   }
+
+    /**
+ * Fetches resource skills for multiple resource IDs using a single SQL query
+ * 
+ * @param {string} accountNumber - Account number to determine schema
+ * @param {string[]} resourceIds - Array of resource IDs
+ * @returns {Promise<any[]>} - Resource skills data
+ */
+async getResourceSkillsByResourceIds(accountNumber: string, resourceIds: string[]): Promise<any[]> {
+  try {
+    if (resourceIds.length === 0) return [];
+
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+    const query = `
+      SELECT 
+        rs.rid,
+        rs.resource_rid
+      FROM "${schemaName}".resource_skill rs
+      WHERE rs.resource_rid IN (:resourceIds)
+      ORDER BY rs.created_datetime DESC
+    `;
+
+    const sequelize = await initOrgSequelize();
+    const results = await sequelize.query(query, {
+      replacements: { resourceIds },
+      type: 'SELECT'
+    });
+
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching resource skills (bulk):', error);
+    throw error;
+  }
+}
+
 }
 
 export default ResourceSkillService;

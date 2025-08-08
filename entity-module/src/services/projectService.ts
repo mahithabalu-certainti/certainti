@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE,rawQueries } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -30,6 +30,9 @@ import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import Decimal from "decimal.js";
+import { ProjectSummary } from "../models/projectSummary";
+import { setupProjectFiscalRegion } from "../models/projectFiscalRegion";
+import { AccountFiscalRegion, setupAccountFiscalRegionSequence } from "../models/accountFiscalRegion";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -125,11 +128,13 @@ export class ProjectService {
         schemaName
       );
 
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         orgDbSequlize,
         schemaName
       );
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectTimelineModel = await ProjectTimeline.initialize(
         orgDbSequlize,
         schemaName
@@ -142,6 +147,10 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
+      const AccountFiscalRegionModel = await AccountFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await ProjectModel.sync({ force: false });
       await ProjectFiscalModel.sync({ force: false });
@@ -150,12 +159,16 @@ export class ProjectService {
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
       await AccountFiscalModel.sync({ force: false });
+      await AccountFiscalRegionModel.sync({ force: false });
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
+      await setupProjectFiscalRegion(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       return this.throwServiceError(err as Error);
     }
@@ -198,6 +211,16 @@ export class ProjectService {
               userId
             );
 
+            if(projectData.region_rid){
+              await this.projectIngestion.addProjectFiscalRegion(
+                accountNumber,
+                projectData,
+                createdProjectFiscal,
+                existingProject.rid,
+                userId
+              );
+            }
+
           if (createdProjectFiscal && createdProjectFiscal.rid) {
             createdProjectId = createdProjectFiscal.rid;
             await this.projectIngestion.addProjectFiscalSummary(
@@ -225,6 +248,13 @@ export class ProjectService {
               accountNumber,
               projectData
             );
+
+            if(projectData.region_rid){
+              await this.projectIngestion.addAccountFiscalRegion(
+                accountNumber,
+                projectData
+              );
+            }
 
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
               accountNumber,
@@ -263,6 +293,16 @@ export class ProjectService {
               userId
             );
 
+          if(projectData.region_rid){
+            await this.projectIngestion.addProjectFiscalRegion(
+              accountNumber,
+              projectData,
+              createdProjectFiscal,
+              createdProjectFiscal.project_rid,
+              userId
+            );
+          }
+
           const startDate = projectData.project_startdate
           ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
           : null;
@@ -293,6 +333,19 @@ export class ProjectService {
             accountNumber,
             projectData
           );
+
+          await this.projectIngestion.autoAssignToDefaultUserGroup(
+            createdProject.rid,
+            accountData.rid,
+            userId
+          );
+
+          if(projectData.region_rid){
+            await this.projectIngestion.addAccountFiscalRegion(
+              accountNumber,
+              projectData
+            );
+          }
 
           await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
             accountNumber,
@@ -431,6 +484,12 @@ export class ProjectService {
       existingFiscalData?.project_code || ""
     );
 
+    await this.projectIngestion.updateProjectFiscalRegion(
+      accountNumber,
+      projectData,
+      existingFiscalData?.project_code || ""
+    );
+
     if (projectData.key_contacts) {
       await this.projectIngestion.manageKeyContacts(
         projectData.key_contacts,
@@ -465,10 +524,18 @@ export class ProjectService {
     );
 
     await this.projectIngestion.addAccountFiscal(accountNumber, projectData);
+    await this.projectIngestion.addAccountFiscalRegion(accountNumber, projectData);
 
     await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
       accountNumber,
       accountData.rid
+    );
+
+    await this.projectIngestion.updateProjectResources(
+      accountNumber,
+      projectData,
+      existingFiscalData?.rid || "",
+      existingFiscalData?.fiscal_year || null
     );
   }
 
@@ -479,7 +546,7 @@ export class ProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any, attachment: any };
   }> {
     try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
@@ -513,10 +580,12 @@ export class ProjectService {
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
             project: [],
+            attachment: [],
           },
         };
       }
 
+      const accountDetails = await this.projectIngestion.fetchAccountDetailsById(accountRNumber, accountId);
       let projectData = await this.projectIngestion.fetchProjectById(accountRNumber, projectId);
 
       if (projectData) {
@@ -542,21 +611,70 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+
         projectData = await this.schemaService.projectClassificationData(
           projectData,
           mainDbInit
         );
 
-        projectData = this.insertAccount(projectData, accountData);
+        projectData = this.insertAccount(projectData, accountData, accountDetails);
 
         projectData = await this.schemaService.insertUserDetails(projectData);
-      }
+        }
+
+        // Fetch attachments for the project
+        const attachments = await this.schemaService.fetchAttachmentsByProjectId(
+          projectId
+        );
+        let mappedAttachments = [];
+        if(attachments.length>0){
+        const sequelize = await initMainDbSequelize();
+      // Get document types, categories, users in parallel
+      const documentTypeIds = attachments.map(attachment => attachment.document_type_rid);
+      const documentCategoryIds = attachments.map(attachment => attachment.document_category_rid);
+      const userIds = attachments.map(attachment => attachment.created_by);
+
+      const [documentTypes, documentCategories, users] = await Promise.all([
+        documentTypeIds.length > 0 
+          ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, 
+              { replacements: { documentTypeIds }, type: 'SELECT' })
+          : [],
+        documentCategoryIds.length > 0
+          ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES,
+              { replacements: { documentCategoryIds }, type: 'SELECT' })
+          : [],
+        userIds.length > 0
+          ? sequelize.query(rawQueries.GET_USERS,
+              { replacements: { userIds }, type: 'SELECT' })
+          : []
+      ]);
+
+      // Enhance attachments with related data
+        mappedAttachments = attachments.map(attachment => {
+        const documentType = documentTypes.find((dt: any) => dt.rid === attachment.document_type_rid);
+        const documentCategory = documentCategories.find((dc: any) => dc.rid === attachment.document_category_rid);
+        const uploadedBy = users.find((u: any) => u.rid === attachment.created_by);
+        const attachedTo = projectData?.project_code;
+
+        return {
+          ...attachment,
+          document_type: (documentType as any)?.type_name || '',
+          document_category: (documentCategory as any)?.category_name || '',
+          uploaded_by: (uploadedBy as any)?.full_name || '',
+          attached_to: attachedTo,
+          size_in_mb: attachment.size_in_mb
+            ? `${attachment.size_in_mb} mb`
+            : "0 mb",
+        };
+      });
+    }
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           project: projectData,
+          attachment: mappedAttachments
         },
       };
     } catch (err) {
@@ -566,11 +684,16 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, account: any,){
+  insertAccount(project: any, account: any, accountDetails: any){
+    const fiscalStartDate = accountDetails?.[0]?.fiscal_start_date || null;
+    const fiscalEndDate = accountDetails?.[0]?.fiscal_end_date || null;
     return {
       ...(project),
       account_name: account.account_name,
-      account_status:account.status
+      account_number: account.r_number,
+      account_status:account.status,
+      fiscal_start_date: fiscalStartDate,
+      fiscal_end_date: fiscalEndDate,
     }
   }
 
@@ -583,7 +706,8 @@ export class ProjectService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    bothParentAndChild: boolean = false
+    bothParentAndChild: boolean = false,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -603,6 +727,52 @@ export class ProjectService {
         accountData.parent_account_rid === ""
       ) {
         throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      
+      if (!isCustomGlobal ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
       let accountRNumber = accountData.r_number;
@@ -652,7 +822,9 @@ export class ProjectService {
         bothParentAndChild,
         filters,
         finalMetaDataSortBy,
-        finalMetaDataSortOrder
+        finalMetaDataSortOrder,
+        {},
+        accessibleIds
       );
 
       return {
@@ -676,7 +848,8 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
-    timezone: string
+    timezone: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -696,6 +869,52 @@ export class ProjectService {
         accountData.parent_account_rid === ""
       ) {
         throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      
+      if (!isCustomGlobal ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
       let accountRNumber = accountData.r_number;
@@ -742,7 +961,9 @@ export class ProjectService {
         filters,
         finalMetaDataSortBy,
         finalMetaDataSortOrder,
-        timezone
+        timezone,
+        userId,
+        accessibleIds
       );
 
       return {
@@ -756,6 +977,60 @@ export class ProjectService {
     } catch (err) {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
+  }
+  async getAccessibleProjectIds(
+  userId: string,
+  isdefaultparent: boolean,
+  isPOC: boolean = false,
+  userEmail?: string,
+  isCustomGlobal: boolean = false
+): Promise<string[]> {
+  const mainDbSequelize = await initMainDbSequelize();
+  const MAIN_SCHEMA_NAME = "trd365";
+
+  const replacements: any[] = [];
+
+  let accessControlWhere = "WHERE 1=1";
+
+  if (isCustomGlobal) {
+    // If isPOC is also true, restrict to POC email
+    if (isPOC && userEmail) {
+      accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+      replacements.push(userEmail, userEmail);
+    }
+    // Else allow all projects (no extra access checks)
+  } else {
+    // Non-global user – apply account/project access checks
+   const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+   replacements.push(userId, userId, userId, userId);
+   accessControlWhere += ` AND ${accountAccessSubquery}`;
+
+    if (!isdefaultparent) {
+      // Add project-level access checks if not a parent group
+      accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+      replacements.push(userId, userId, userId, userId);
+    }
+
+    // Only non-global users can be further filtered by POC
+    if (isPOC && userEmail) {
+      accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+      replacements.push(userEmail, userEmail);
+    }
+    }
+
+  const query = `
+    SELECT DISTINCT ps.project_rid
+    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
+    ${accessControlWhere}
+  `;
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_rid);
   }
 
   async allProjectList(
@@ -777,6 +1052,51 @@ export class ProjectService {
   }> {
     try {
       const offset = (page - 1) * limit;
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
 
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
@@ -805,7 +1125,8 @@ export class ProjectService {
           userId,
           search,
           accountDataSort,
-          bothParentAndChild
+          bothParentAndChild,
+          accessibleIds
         );
 
       return {
@@ -850,6 +1171,52 @@ export class ProjectService {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(userId);
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile = userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile ) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
  
       const appliedAccountNumber =
         await this.schemaService.computeGlobalAccountFilter(
@@ -865,8 +1232,16 @@ export class ProjectService {
           userId,
           search,
           accountDataSort,
-          bothParentAndChild
+          bothParentAndChild,
+          accessibleIds
         );
+        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"projects_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of allowedFieldsForExport) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_desc);
+          }
+        }
  
         const formatNumberForExport = (value: any, currency_symbol: string): string => {
           if (value == null || value === '') return '-';
@@ -900,10 +1275,33 @@ export class ProjectService {
           
       const rawResult = allProjectList || [];
       let exportData: any[] = [];
- 
+      const labelMap: Record<string, string> = {
+        "Project Code": "Project Code",
+        "Project Name": "Name",
+        "Project Type": "Project Type",
+        "Account Name": "Name",
+        "Fiscal Year": "Fiscal Year",
+        "Project Classification": "Classification",
+        "Customer Group": "Client Group",
+        "Project Group": "Project Group",
+        "Project Effort (Hours)": "Total Effort In Hrs",
+        "Project Cost": "Total Cost",
+        "FTE Cost": "Total FTE Cost",
+        "SubCon Cost": "Total Sub Con Cost",
+        "Non-Labor Cost": "Total Non Labor Cost",
+        "Assessment Status": "Assessment Status",
+        "QRE%": "QRE %",
+        "QRE": "QRE",
+        "Project Point of Contact": "Key Contacts List",
+        "Technical Point of Contact": "Key Contacts List",
+        "Comments": "Comments",
+        "Last Modified": "Updated On",
+        "Project ID": "Project ID",
+      };
+
       rawResult.forEach((project: any) => {
         // Always add base project data row first
-        exportData.push({
+        const projectInfo = {
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type_name || "-",
@@ -929,13 +1327,20 @@ export class ProjectService {
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
           "Project ID": project.r_number || "-",
-        });
- 
+        }
+        const filteredProjectRow: Record<string, string> = {};
+        for (const [label, value] of Object.entries(projectInfo)) {
+          const mappedLabel = labelMap[label] || label;
+          if (allowedFieldSet.has(mappedLabel)) {
+            filteredProjectRow[label] = value; // Keep original label for export
+          }
+        }
+        exportData.push(filteredProjectRow);
         // Add fiscal summary rows if they exist
         const fiscalSummaries = project.ProjectFiscal || [];
         if (fiscalSummaries.length > 0) {
           fiscalSummaries.forEach((fiscal: any) => {
-            exportData.push({
+            const fiscalInfo ={
               "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
@@ -961,7 +1366,15 @@ export class ProjectService {
               : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
               : '-',
               "Project ID": fiscal.r_number || "-",
-            });
+            }
+            const filteredFiscalRow: Record<string, string> = {};
+            for (const [label, value] of Object.entries(fiscalInfo)) {
+              const mappedLabel = labelMap[label] || label;
+              if (allowedFieldSet.has(mappedLabel)) {
+                filteredFiscalRow[label] = value; // Keep original label for export
+              }
+            }
+            exportData.push(filteredFiscalRow);
           });
         }
       });
@@ -1018,6 +1431,7 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(sequilzeInstance, schemaName);
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName
@@ -1076,6 +1490,7 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(sequilzeInstance, schemaName);
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName
@@ -1832,3 +2247,5 @@ export class ProjectService {
     }
   }
 }
+
+
