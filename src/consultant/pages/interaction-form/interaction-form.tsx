@@ -42,6 +42,7 @@ import {
 } from '../../types';
 import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
 import { useToast } from '../../../hooks';
+import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
 
 interface ProjectDetails {
   project_code: string;
@@ -73,6 +74,8 @@ const InteractionForm = () => {
     interaction_id: '',
     created_on: '',
     created_by: '',
+    updated_on: '',
+    updated_by: '',
   });
   const [errors, setErrors] = useState<InteractionFormErrors>({});
 
@@ -132,7 +135,9 @@ const InteractionForm = () => {
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
-        created_on: interactionData.created_on,
+        created_on: formatDateToYYYYMMDDWithTime(interactionData.created_on),
+        updated_by: interactionData.updated_by,
+        updated_on: formatDateToYYYYMMDDWithTime(interactionData.updated_on),
         rid: interactionData.rid,
         interaction_id: interactionData.r_number,
         status: interactionData.status,
@@ -961,80 +966,24 @@ const InteractionForm = () => {
               >
                 Audit Information
               </div>
-
-              <div
-                className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-4`}
-              >
-                <div>
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='rid'
-                  >
-                    Record ID
-                  </label>
-                  <input
-                    type='text'
-                    name='rid'
-                    placeholder='-'
-                    autoComplete='off'
-                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                    disabled={true}
-                    value={formData.rid}
-                  />
-                </div>
-                <div className='bg-white'></div>
-                <div>
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='interaction_id'
-                  >
-                    Interaction ID
-                  </label>
-                  <input
-                    type='text'
-                    name='interaction_id'
-                    placeholder='-'
-                    autoComplete='off'
-                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                    disabled={true}
-                    value={formData.interaction_id}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='created_on'
-                  >
-                    Created On
-                  </label>
-                  <input
-                    type='text'
-                    name='created_on'
-                    placeholder='-'
-                    autoComplete='off'
-                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                    disabled={true}
-                    value={formData.created_on}
-                  />
-                </div>
-                <div className='bg-white'></div>
-                <div>
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='created_by'
-                  >
-                    Created By
-                  </label>
-                  <input
-                    type='text'
-                    name='created_by'
-                    placeholder='-'
-                    autoComplete='off'
-                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                    disabled={true}
-                    value={formData.created_by}
-                  />
-                </div>
+              <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-4'>
+                {[
+                  { label: 'Record ID', value: formData.rid },
+                  { label: 'Created On', value: formData.created_on },
+                  { label: 'Created By', value: formData.created_by },
+                  { label: 'Interaction ID', value: formData.interaction_id },
+                  { label: 'Updated On', value: formData.updated_on },
+                  { label: 'Updated By', value: formData.updated_by },
+                ].map((field, idx) => (
+                  <div key={idx}>
+                    <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
+                      {field.label}
+                    </label>
+                    <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none'>
+                      {field.value || '-'}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </form>

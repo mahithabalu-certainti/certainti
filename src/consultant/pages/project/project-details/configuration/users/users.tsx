@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { AssignGroups, AssignUsers } from './tabs';
 import { SectionHeaderTab } from '../../../../../../components';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ConfigAssignGroupsListParms,
   ConfigAssignUserListParms,
@@ -25,7 +25,8 @@ const Users: React.FC<UserProps> = ({
   setCount,
   filterParams,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const tabParam = searchParams.get('tab') || 'assign_users';
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
@@ -41,11 +42,12 @@ const Users: React.FC<UserProps> = ({
   );
 
   useEffect(() => {
-    if (!searchParams.get('tab')) {
+    if (!searchParams.get('tab') && searchParams.get('list') === 'configuration' && searchParams.get('subMenu') === 'users') {
       searchParams.set('tab', 'assign_users');
-      setSearchParams(searchParams);
+      navigate(`?${searchParams.toString()}`, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const tabs = [
     { label: 'Assign Users', value: 'assign_users' },
@@ -55,7 +57,7 @@ const Users: React.FC<UserProps> = ({
   const handleTabChange = (value: string) => {
     handleReset();
     searchParams.set('tab', value);
-    setSearchParams(searchParams);
+    navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
   if (!accessPageIsEnable || !accessPageViewEnable) return <AccessRestricted />;

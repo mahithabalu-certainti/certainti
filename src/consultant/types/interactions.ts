@@ -43,6 +43,8 @@ export interface InteractionFormData {
   interaction_id?: string;
   created_on?: string;
   created_by?: string;
+  updated_on?: string;
+  updated_by?: string;
 }
 
 export interface InteractionQuestionErrors {
