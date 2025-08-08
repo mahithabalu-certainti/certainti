@@ -4,7 +4,10 @@ import configurations from "../config/config";
 import { Logger } from "winston";
 import { Status } from "../models/statusModel";
 
-const logger: Logger = configurations.getInstance().getLogger();
+
+function getLogger() {
+  return configurations.getInstance().getLogger();
+}
 
 interface User {
   first_name: string;
@@ -82,7 +85,7 @@ const createAzureB2CUser = async (users: User, password: string) => {
 
     const user = await client.api("/users").post(userPayload);
     if (!user) {
-      logger.error("Failed log: ", {
+      getLogger().error("Failed log: ", {
         timestamp: new Date().toString(),
         method: "create user",
         message: "Azure AD B2C user creation failed",
@@ -130,19 +133,25 @@ const updateAzureUser = async (users: UpdateUser) => {
     if (!existingUser.id) {
       throw new Error(`User does not exist`);
     }
-    const statusRecord = await Status.findOne({
-      where: { rid: users.status_rid },
-    });
 
-    const userPayload = {
-      displayName: `${users.first_name} ${users.last_name}`,
-      givenName: users.first_name,
-      surname: users.last_name,
-      accountEnabled: true
-    };
-    if(statusRecord?.status_description === 'inactive')
-    {
+    // Only check status if status_rid is provided
+    let statusRecord = null;
+    if (users.status_rid) {
+      statusRecord = await Status.findOne({
+      where: { rid: users.status_rid },
+      });
+    }
+    // Build userPayload dynamically based on provided fields
+    const userPayload: any = {};
+    if (users.first_name !== undefined) userPayload.givenName = users.first_name;
+    if (users.last_name !== undefined) userPayload.surname = users.last_name;
+    if (users.first_name !== undefined || users.last_name !== undefined) {
+      userPayload.displayName = `${users.first_name ?? existingUser.givenName} ${users.last_name ?? existingUser.surname}`;
+    }
+    if (users.status_rid && statusRecord?.status_description === 'inactive') {
       userPayload.accountEnabled = false;
+    } else if (users.status_rid) {
+      userPayload.accountEnabled = true;
     }
     await client.api(`/users/${users.azure_id}`).patch(userPayload);
 
