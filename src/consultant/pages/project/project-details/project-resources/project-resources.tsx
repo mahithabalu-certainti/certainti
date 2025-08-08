@@ -59,12 +59,12 @@ const projectTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 export const ProjectResources = ({

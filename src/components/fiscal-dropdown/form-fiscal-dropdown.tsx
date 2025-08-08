@@ -16,6 +16,7 @@ interface FiscalYearOption {
 interface Props {
   fiscalYear: string;
   fiscalYearsOptions: FiscalYearOption[];
+  isError?: boolean;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
@@ -23,6 +24,7 @@ const FormFiscalYearDropdown = ({
   fiscalYear,
   fiscalYearsOptions,
   onChange,
+  isError,
 }: Props) => {
   const currentYear = new Date().getFullYear();
   const years = fiscalYearsOptions.map((fy) => Number(fy.value));
@@ -98,7 +100,11 @@ const FormFiscalYearDropdown = ({
       <button
         type='button'
         onClick={() => setOpen((prev) => !prev)}
-        className='bg-white text-[#2D3E4F] text-[13px] font-normal w-full px-3 h-[32px] flex justify-between items-center cursor-pointer focus:border-[2px] focus:border-[#60A5FA] focus:bg-white rounded-[2px] border border-[#CBD6E2]'
+        className={`text-[#2D3E4F] text-[13px] font-normal focus:border-[#60A5FA] w-full px-3 h-[32px] flex justify-between items-center cursor-pointer rounded-[2px] border ${
+          isError
+            ? ' border-red-500 bg-[#FEF2F2]'
+            : 'border-[#CBD6E2] bg-white '
+        } focus:bg-white`}
         aria-haspopup='true'
         aria-expanded={open}
       >

@@ -26,12 +26,12 @@ const ConfigTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 const Configuration: React.FC = () => {

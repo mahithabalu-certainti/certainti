@@ -24,12 +24,12 @@ const ImportsTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_IMPORTS_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_IMPORTS_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 interface AccountDetailsProps extends AccountDetailsResponse {
   activeKey: string;
