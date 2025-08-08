@@ -136,6 +136,10 @@ const InteractionForm = () => {
         rid: interactionData.rid,
         interaction_id: interactionData.r_number,
         status: interactionData.status,
+        projectCode: interactionData.project_code,
+        projectName: interactionData.project_name || '',
+        accountName: interactionData.account_name || '',
+        fiscalYear: Number(interactionData.fiscal_year),
         questions:
           interactionData.questions.length > 0
             ? interactionData.questions.map((q) => ({

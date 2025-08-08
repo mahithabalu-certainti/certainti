@@ -37,7 +37,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const handleEdit = () => {
     const projectData = {
       project_code: projectDetails?.project_code || '',
-      project_name: projectDetails?.program_name || '',
+      project_name: projectDetails?.project_name || '',
       fiscal_year: projectDetails?.fiscal_year || '',
       account_name: projectDetails?.account_name || '',
     };

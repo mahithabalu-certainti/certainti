@@ -125,7 +125,9 @@ export interface InteractionDetails {
   rid: string;
   r_number: string;
   project_code: string;
-  fiscal_year: string;
+  project_name: string | null;
+  account_name: string | null;
+  fiscal_year: string | number;
   interaction_type: string;
   status: string;
   response_updated_by: string;
