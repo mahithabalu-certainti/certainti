@@ -1661,7 +1661,7 @@ class SchemaService {
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-      ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resource_skill(rid) ON UPDATE CASCADE;
     `)
    }
 
@@ -1691,7 +1691,7 @@ class SchemaService {
     `);
     
     await sequelize.query(`
-      ALTER TABLE "${schemaName}".resource_skill_history ADD CONSTRAINT resource_skill_history_resource_skill_rid_fkey FOREIGN KEY (resource_skill_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;  
+      ALTER TABLE "${schemaName}".resource_skill_history ADD CONSTRAINT resource_skill_history_resource_skill_rid_fkey FOREIGN KEY (resource_skill_rid) REFERENCES "${schemaName}".resource_skill(rid) ON UPDATE CASCADE;  
     `)
   }
 
