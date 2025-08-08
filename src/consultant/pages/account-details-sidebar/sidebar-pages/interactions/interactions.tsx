@@ -5,11 +5,7 @@ import { InteractionList } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import { INTERACTIONS, INTERACTIONS_CREATE } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
-import {
-  EditIcon,
-  EyeIcon,
-  InteractionDetailIcon,
-} from '../../../../../assets';
+import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
 import { SectionTabPanel } from '../../../../../components';
@@ -178,11 +174,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const actionButtons: ActionItem<InteractionList>[] = [
-    {
-      label: 'View',
-      onClick: (row: InteractionList) => handleViewInteraction(row.rid),
-      icon: EyeIcon,
-    },
     {
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),

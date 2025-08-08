@@ -55,17 +55,25 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
   ];
 
-  const InteractionInfo: DetailItem[] = [
+  const basicInfo: DetailItem[] = [
     {
       label: 'Project Code',
       value: data?.project_code,
       key: 'project_code',
     },
     {
+      label: 'Project Name',
+      value: data?.project_name,
+      key: 'project_name',
+    },
+    {
       label: 'Fiscal Year',
       value: data?.fiscal_year,
       key: 'fiscal_year',
     },
+  ];
+
+  const InteractionInfo: DetailItem[] = [
     {
       label: 'Interaction Type',
       value: data?.interaction_type,
@@ -171,21 +179,30 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         ) : (
           <>
             <DetailsSection
-              title='Interaction Information'
-              data={InteractionInfo}
+              title='Basic Information'
+              data={basicInfo}
               customStyle='pt-0 mt-0'
             />
             <DetailsSection
-              title='Audit Information'
-              data={auditInfo}
+              title='Interaction Information'
+              data={InteractionInfo}
               customStyle='pt-0 mt-0'
-              isAudit={true}
             />
           </>
         )}
       </div>
       {data?.questions && data?.questions.length > 0 && (
         <InteractionQuestions questions={data?.questions} />
+      )}
+      {!isLoading && !error && (
+        <div className='border border-t-0 border-[#CBD6E2] mb-4'>
+          <DetailsSection
+            title='Audit Information'
+            data={auditInfo}
+            customStyle='pt-0 mt-0'
+            isAudit={true}
+          />
+        </div>
       )}
     </>
   );
