@@ -6,6 +6,7 @@ import { ListTable } from '../../../../components/table';
 import { ActionItem, CellEditData } from '../../../../components/table/types';
 import { getAllCaseListColumns } from './columns';
 import { useAllCases } from '../MockData';
+import { useNavigate } from 'react-router-dom';
 
 interface ICaseTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -24,6 +25,7 @@ export const CaseList: React.FC<ICaseTableProps> = ({
   refreshCasesTrigger,
 }) => {
   const { errorToast } = useToast();
+  const navigate = useNavigate();
   const [allCaseList, setAllCaseList] = useState<Case[]>([]);
 
   const { data, isLoading, isError } = useAllCases(
@@ -83,19 +85,14 @@ export const CaseList: React.FC<ICaseTableProps> = ({
     }
   };
 
+  const handleEdit = () => {
+    navigate(`/case/edit`);
+  };
+
   const actionButtons: ActionItem<Case>[] = [
     {
-      label: 'View',
-      onClick: () => console.log('View Clicked'),
-      iconStyle: {
-        filter:
-          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
-      },
-      hide: false,
-    },
-    {
       label: 'Edit',
-      onClick: () => console.log('Edit Clicked'),
+      onClick: () => handleEdit,
       icon: EditIcon,
       iconStyle: {
         filter:

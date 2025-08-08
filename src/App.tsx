@@ -47,6 +47,7 @@ import {
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
   CASE,
+  CASE_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -54,6 +55,7 @@ import ProjectTaskForm from './consultant/pages/project/project-details/project-
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
 import Case from './consultant/pages/case/case';
+import EditCase from './consultant/pages/case/case-details';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -157,6 +159,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
                 <Route path={PROJECT_CREATE} element={<ProjectForm />} />
                 <Route path={PROJECT_EDIT} element={<ProjectForm />} />
+                <Route path={CASE_EDIT} element={<EditCase />} />
                 <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
                 <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
                 <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
