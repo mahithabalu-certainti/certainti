@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
-import {
-  EditIcon,
-  EyeIcon,
-  InteractionDetailIcon,
-} from '../../../../../assets';
+import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { SectionTabPanel } from '../../../../../components';
 import { ListTable } from '../../../../../components/table';
@@ -184,11 +180,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const actionButtons: ActionItem<InteractionList>[] = [
-    {
-      label: 'View',
-      onClick: (row: InteractionList) => handleViewInteraction(row.rid),
-      icon: EyeIcon,
-    },
     {
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),

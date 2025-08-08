@@ -162,9 +162,24 @@ export const mockInteractionDetailsMap: Record<string, InteractionDetails> = {
         mandatory: true,
         attachments: [
           {
+            file_id: 'f001',
+            file_name: 'status_report.pdf',
+            file_url: 'https://example.com/files/status_report.pdf',
+          },
+          {
+            file_id: 'f002',
+            file_name: 'summary.docx',
+            file_url: 'https://example.com/files/summary.docx',
+          },
+          {
             file_id: 'f003',
             file_name: 'compliance.pdf',
             file_url: 'https://example.com/files/compliance.pdf',
+          },
+          {
+            file_id: 'f004',
+            file_name: 'test.pdf',
+            file_url: 'https://example.com/files/test.pdf',
           },
         ],
       },
