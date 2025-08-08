@@ -41,7 +41,11 @@ const Users: React.FC<UserProps> = ({
   );
 
   useEffect(() => {
-    if (!searchParams.get('tab') && searchParams.get('list') === 'configuration' && searchParams.get('subMenu') === 'users') {
+    if (
+      !searchParams.get('tab') &&
+      searchParams.get('list') === 'configuration' &&
+      searchParams.get('subMenu') === 'users'
+    ) {
       searchParams.set('tab', 'assign_users');
       navigate(`?${searchParams.toString()}`, { replace: true });
     }

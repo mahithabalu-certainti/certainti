@@ -2420,88 +2420,90 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                 : 'transparent',
                             }}
                           >
-                            {field.type === 'iconButton' && isLastColumn ? (
-                              <Tooltip
-                                title={'Remove contact'}
-                                disableHoverListener={field.disabled}
-                                arrow
-                                placement='top'
-                              >
-                                <button
-                                  type='button'
-                                  disabled={field.disabled}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    field.onClick?.(e);
-                                    handleRemoveKeyContactRow(rowIndex);
-                                  }}
-                                  style={{
-                                    cursor: field.disabled
-                                      ? 'default'
-                                      : 'pointer',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    padding: 0,
-                                    marginTop: '6px',
-                                  }}
-                                  aria-label='Remove contact'
+                            <React.Suspense fallback={null}>
+                              {field.type === 'iconButton' && isLastColumn ? (
+                                <Tooltip
+                                  title={'Remove contact'}
+                                  disableHoverListener={field.disabled}
+                                  arrow
+                                  placement='top'
                                 >
-                                  {field.iconUrl ? (
-                                    <field.iconUrl
-                                      alt='Icon'
-                                      style={{ width: 20, height: 20 }}
-                                    />
-                                  ) : (
-                                    <KeyContactRemoveIcon
-                                      alt='Remove'
-                                      style={{ width: 20, height: 20 }}
-                                    />
-                                  )}
-                                </button>
-                              </Tooltip>
-                            ) : field.type === 'text' ? (
-                              <div
-                                className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
-                              >
-                                {getFields(field)}
-                                {field.error && (
-                                  <Tooltip
-                                    title={field.error}
-                                    arrow
-                                    placement='top'
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          backgroundColor: '#FEF2F2',
-                                          mr: 1,
-                                        },
-                                      },
+                                  <button
+                                    type='button'
+                                    disabled={field.disabled}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      field.onClick?.(e);
+                                      handleRemoveKeyContactRow(rowIndex);
                                     }}
+                                    style={{
+                                      cursor: field.disabled
+                                        ? 'default'
+                                        : 'pointer',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      padding: 0,
+                                      marginTop: '6px',
+                                    }}
+                                    aria-label='Remove contact'
                                   >
-                                    <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                      <ErrorInfoIcon
-                                        alt='error'
-                                        className='w-5 h-3.5'
+                                    {field.iconUrl ? (
+                                      <field.iconUrl
+                                        alt='Icon'
+                                        style={{ width: 20, height: 20 }}
                                       />
+                                    ) : (
+                                      <KeyContactRemoveIcon
+                                        alt='Remove'
+                                        style={{ width: 20, height: 20 }}
+                                      />
+                                    )}
+                                  </button>
+                                </Tooltip>
+                              ) : field.type === 'text' ? (
+                                <div
+                                  className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                                >
+                                  {getFields(field)}
+                                  {field.error && (
+                                    <Tooltip
+                                      title={field.error}
+                                      arrow
+                                      placement='top'
+                                      slotProps={{
+                                        tooltip: {
+                                          sx: {
+                                            backgroundColor: '#FEF2F2',
+                                            mr: 1,
+                                          },
+                                        },
+                                      }}
+                                    >
+                                      <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                        <ErrorInfoIcon
+                                          alt='error'
+                                          className='w-5 h-3.5'
+                                        />
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                  {isRequired && !field.error && (
+                                    <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                      *
                                     </span>
-                                  </Tooltip>
-                                )}
-                                {isRequired && !field.error && (
-                                  <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                    *
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <>
-                                {getFields(field)}
-                                {isRequired && (
-                                  <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                    *
-                                  </span>
-                                )}
-                              </>
-                            )}
+                                  )}
+                                </div>
+                              ) : (
+                                <>
+                                  {getFields(field)}
+                                  {isRequired && (
+                                    <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                      *
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </React.Suspense>
                           </TableCell>
                         );
                       })}

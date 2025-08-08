@@ -160,7 +160,9 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     {
       key: 'created_datetime',
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(projectTaskData.created_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(
+        projectTaskData.created_datetime ?? undefined
+      ),
     },
     {
       key: 'created_by',
@@ -170,7 +172,9 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     {
       key: 'modified_datetime',
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(projectTaskData.modified_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(
+        projectTaskData.modified_datetime ?? undefined
+      ),
     },
     {
       key: 'modified_by',
