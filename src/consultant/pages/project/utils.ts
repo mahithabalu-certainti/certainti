@@ -171,8 +171,8 @@ export const transformProjectData = (
         //   className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         // },
         {
-          label: 'Project Code',
-          value: project?.project_code || '-',
+          label: 'Project Name',
+          value: project?.project_name || '-',
         },
       ],
     },

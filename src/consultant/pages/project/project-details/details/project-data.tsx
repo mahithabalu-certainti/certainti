@@ -43,12 +43,12 @@ const detailsTabs: DetailsTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllMenus.TIMESHEETS,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllMenus.TIMESHEETS,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 const ProjectDetailsData: React.FC<ProjectsDataProps> = ({

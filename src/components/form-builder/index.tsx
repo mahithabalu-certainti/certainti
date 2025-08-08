@@ -1039,6 +1039,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fiscalYear={String(fieldValue)}
                 fiscalYearsOptions={field.options || []}
                 onChange={(e) => handleChange(e.target.value)}
+                isError={!!field.error}
               />
             </div>
           );
