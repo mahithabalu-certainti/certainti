@@ -141,15 +141,17 @@ const updateAzureUser = async (users: UpdateUser) => {
       where: { rid: users.status_rid },
       });
     }
-
-    const userPayload = {
-      displayName: `${users.first_name} ${users.last_name}`,
-      givenName: users.first_name,
-      surname: users.last_name,
-      accountEnabled: true
-    };
+    // Build userPayload dynamically based on provided fields
+    const userPayload: any = {};
+    if (users.first_name !== undefined) userPayload.givenName = users.first_name;
+    if (users.last_name !== undefined) userPayload.surname = users.last_name;
+    if (users.first_name !== undefined || users.last_name !== undefined) {
+      userPayload.displayName = `${users.first_name ?? existingUser.givenName} ${users.last_name ?? existingUser.surname}`;
+    }
     if (users.status_rid && statusRecord?.status_description === 'inactive') {
       userPayload.accountEnabled = false;
+    } else if (users.status_rid) {
+      userPayload.accountEnabled = true;
     }
     await client.api(`/users/${users.azure_id}`).patch(userPayload);
 
