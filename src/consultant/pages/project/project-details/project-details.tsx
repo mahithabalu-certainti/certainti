@@ -525,14 +525,14 @@ export const ProjectDetails = () => {
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder='Name'
+          placeholder='Project Code'
           icon={
             <ProjectDetailsIcon
               className='h-6 w-6 rounded p-[4px]'
               style={{ backgroundColor: '#AF78FF' }}
             />
           }
-          title={data?.data?.project?.project_name || 'Project Title'}
+          title={data?.data?.project?.project_code}
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={
