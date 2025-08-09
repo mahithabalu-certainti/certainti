@@ -3,10 +3,10 @@
 import React from 'react';
 import {
   DndContext,
-  DragEndEvent,
-  DragOverEvent,
+  type DragEndEvent,
+  type DragOverEvent,
   DragOverlay,
-  DragStartEvent,
+  type DragStartEvent,
   closestCenter,
   MouseSensor,
   TouchSensor,
@@ -18,19 +18,17 @@ import {
   arrayMove,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { ActiveItem, Board, KanbanProps, Task } from './types';
+import type { ActiveItem, Board, KanbanProps, Task } from './types';
 import BoardColumn from './boardColumns';
-import TaskCard from './taskCard';
+import Card from './card';
 import { AddIcon } from '../../assets';
 
 const KanbanBoard: React.FC<KanbanProps> = ({
-  boards,
+  boards = [],
   onBoardsChange,
   config = {},
   className = '',
 }) => {
-  const [activeItem, setActiveItem] = React.useState<ActiveItem | null>(null);
-
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -45,6 +43,18 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     })
   );
 
+  const [activeItem, setActiveItem] = React.useState<ActiveItem | null>(null);
+
+  if (!boards || !Array.isArray(boards)) {
+    return (
+      <div className={`p-6 bg-gray-100 min-h-screen ${className}`}>
+        <div className='text-center text-gray-500' style={{ fontSize: '13px' }}>
+          No boards available
+        </div>
+      </div>
+    );
+  }
+
   const {
     allowCreateBoard = true,
     allowDeleteBoard = true,
@@ -55,7 +65,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     customDropdownOptions = [],
   } = config;
 
-  const visibleBoards = boards.filter((board) => !board.hidden);
+  const visibleBoards = (boards || []).filter((board) => !board.hidden);
 
   const generateId = () => {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -82,12 +92,12 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    if (!over || !allowTaskMovement) return;
+    if (!over || !allowTaskMovement || !boards || !Array.isArray(boards))
+      return;
 
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // Handle task movement between boards
     if (activeData?.type === 'task' && overData?.type === 'board') {
       const activeTaskId = activeData.task.id;
       const sourceBoardId = activeData.boardId;
@@ -100,7 +110,6 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
       if (!sourceBoard || !targetBoard) return;
 
-      // Check if target board has space
       const targetVisibleTasks = targetBoard.tasks.filter((t) => !t.hidden);
       if (
         targetBoard.maxItems &&
@@ -119,7 +128,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
         if (board.id === targetBoardId) {
           return {
             ...board,
-            tasks: [...board.tasks, activeData.task],
+            tasks: [activeData.task, ...board.tasks],
           };
         }
         return board;
@@ -133,12 +142,11 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     const { active, over } = event;
     setActiveItem(null);
 
-    if (!over) return;
+    if (!over || !boards || !Array.isArray(boards)) return;
 
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // Handle board reordering
     if (
       activeData?.type === 'board' &&
       overData?.type === 'board' &&
@@ -153,14 +161,12 @@ const KanbanBoard: React.FC<KanbanProps> = ({
       return;
     }
 
-    // Handle task reordering within the same board
     if (activeData?.type === 'task' && overData?.type === 'task') {
       const activeTaskId = activeData.task.id;
       const overTaskId = overData.task.id;
       const activeBoardId = activeData.boardId;
       const overBoardId = overData.boardId;
 
-      // Same board reordering
       if (activeBoardId === overBoardId) {
         const board = boards.find((b) => b.id === activeBoardId);
         if (!board) return;
@@ -181,7 +187,6 @@ const KanbanBoard: React.FC<KanbanProps> = ({
           onBoardsChange(updatedBoards);
         }
       } else {
-        // Cross-board movement with specific positioning
         const sourceBoard = boards.find((b) => b.id === activeBoardId);
         const targetBoard = boards.find((b) => b.id === overBoardId);
 
@@ -221,7 +226,6 @@ const KanbanBoard: React.FC<KanbanProps> = ({
       }
     }
 
-    // Handle task dropped on board (at the end)
     if (activeData?.type === 'task' && overData?.type === 'board') {
       const activeTaskId = activeData.task.id;
       const sourceBoardId = activeData.boardId;
@@ -250,7 +254,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
         if (board.id === targetBoardId) {
           return {
             ...board,
-            tasks: [...board.tasks, activeData.task],
+            tasks: [activeData.task, ...board.tasks],
           };
         }
         return board;
@@ -272,7 +276,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
       if (board.id === boardId) {
         return {
           ...board,
-          tasks: [...board.tasks, newTask],
+          tasks: [newTask, ...board.tasks],
         };
       }
       return board;
@@ -331,20 +335,14 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     }
   };
 
-  const handleBoardDuplicate = (boardId: string) => {
-    const boardToDuplicate = boards.find((board) => board.id === boardId);
-    if (boardToDuplicate) {
-      const duplicatedBoard: Board = {
-        ...boardToDuplicate,
-        id: generateId(),
-        title: `${boardToDuplicate.title} (Copy)`,
-        tasks: boardToDuplicate.tasks.map((task) => ({
-          ...task,
-          id: generateId(),
-        })),
-      };
-      onBoardsChange([...boards, duplicatedBoard]);
-    }
+  const handleBoardRename = (boardId: string, newTitle: string) => {
+    const updatedBoards = boards.map((board) => {
+      if (board.id === boardId) {
+        return { ...board, title: newTitle };
+      }
+      return board;
+    });
+    onBoardsChange(updatedBoards);
   };
 
   const canCreateBoard =
@@ -376,7 +374,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
                 onTaskCreate={allowCreateTask ? handleTaskCreate : undefined}
                 onTaskUpdate={handleTaskUpdate}
                 onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
-                onBoardDuplicate={handleBoardDuplicate}
+                onBoardRename={handleBoardRename}
                 customDropdownOptions={customDropdownOptions}
                 allowCreateTask={allowCreateTask}
                 allowTaskInteraction={allowTaskMovement}
@@ -390,18 +388,18 @@ const KanbanBoard: React.FC<KanbanProps> = ({
               <button
                 onClick={handleBoardCreate}
                 className='
-                  w-full h-32 border-2 border-dashed border-gray-300 rounded-lg
+                  w-full h-32 border-2 border-dashed border-gray-300
                   flex items-center justify-center text-gray-500 hover:border-gray-400 
                   hover:text-gray-600 transition-all duration-200 group bg-white/50
                 '
+                style={{ borderRadius: '2px' }}
                 title='Create New Board'
               >
                 <div className='text-center'>
-                  <AddIcon
-                    size={24}
-                    className='mx-auto mb-2 transition-transform group-hover:scale-110'
-                  />
-                  <span className='text-sm font-medium'>Add Board</span>
+                  <AddIcon className='w-3 p-[1px]' />
+                  <span className='font-medium' style={{ fontSize: '13px' }}>
+                    Add Board
+                  </span>
                 </div>
               </button>
             </div>
@@ -410,21 +408,19 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
         <DragOverlay>
           {activeItem?.type === 'task' ? (
-            <div className='transform scale-105 opacity-90 shadow-xl'>
-              <TaskCard
-                task={activeItem.task}
-                boardId={activeItem.boardId}
-                disabled={false}
-              />
-            </div>
+            <Card
+              task={activeItem.task}
+              boardId={activeItem.boardId}
+              disabled={false}
+            />
           ) : activeItem?.type === 'board' ? (
-            <div className='w-80 opacity-95 shadow-xl transform scale-105'>
+            <div className='flex-shrink-0 w-80'>
               <BoardColumn
                 board={activeItem.board}
                 boardIndex={0}
-                allowBoardSwap={false}
-                allowCreateTask={false}
-                allowTaskInteraction={false}
+                allowBoardSwap={true}
+                allowCreateTask={true}
+                allowTaskInteraction={true}
               />
             </div>
           ) : null}

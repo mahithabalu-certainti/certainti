@@ -1,16 +1,18 @@
-import React from 'react';
+'use client';
+
+import type React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Task } from './types';
+import type { Task } from './types';
 
-interface SortableTaskCardProps {
+interface CardProps {
   task: Task;
   boardId: string;
   disabled?: boolean;
   onTaskUpdate?: (taskId: string, updates: Partial<Task>) => void;
 }
 
-const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
+const Card: React.FC<CardProps> = ({
   task,
   boardId,
   disabled = false,
@@ -36,12 +38,12 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 1000 : 'auto',
+    borderRadius: '2px',
   };
 
   if (task.hidden) return null;
 
-  const handleCheckboxChange = (e: React.MouseEvent) => {
+  const handleRadioChange = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onTaskUpdate && !task.disabled) {
       onTaskUpdate(task.id, { completed: !task.completed });
@@ -53,9 +55,9 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
       ref={setNodeRef}
       style={style}
       className={`
-        bg-white rounded-lg p-4 border border-gray-200 
-        transition-all duration-200 cursor-move shadow-sm
-        ${isDragging ? 'opacity-50 shadow-lg scale-105' : 'hover:shadow-md'}
+        bg-white p-3 border border-gray-200 shadow-sm
+        cursor-move
+        ${isDragging ? 'opacity-50' : ''}
         ${task.disabled ? 'opacity-60 cursor-not-allowed' : ''}
         ${task.completed ? 'bg-gray-50' : ''}
       `}
@@ -66,23 +68,27 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
       aria-disabled={disabled || task.disabled}
     >
       <div className='flex items-start gap-3'>
+        {/* Multi-select radio button - allows multiple selections */}
         <input
-          type='checkbox'
+          type='radio'
+          name={`multiselect-${task.id}`}
           checked={task.completed || false}
           onChange={() => {}}
-          onClick={handleCheckboxChange}
+          onClick={handleRadioChange}
           disabled={task.disabled}
-          className='mt-1 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 pointer-events-auto'
+          className='mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 pointer-events-auto'
           aria-label={
             task.completed ? 'Mark task incomplete' : 'Mark task complete'
           }
         />
+
+        {/* Task text - no strikethrough */}
         <span
           className={`
-            text-sm text-gray-700 flex-1
-            ${task.completed ? 'line-through text-gray-500' : ''}
+            text-gray-700 flex-1
             ${task.disabled ? 'text-gray-400' : ''}
           `}
+          style={{ fontSize: '13px' }}
         >
           {task.title}
         </span>
@@ -91,4 +97,4 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
   );
 };
 
-export default SortableTaskCard;
+export default Card;

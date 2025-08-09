@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+'use client';
+
+import type React from 'react';
+import { useState } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import SortableTaskCard from './sortable-task-card';
-import { Board, DropdownOption, Task } from './types';
-import { AddIcon, DeleteIcon } from '../../assets';
+import Card from './card';
+import type { Board, DropdownOption, Task } from './types';
 import DropdownMenu from './dropdownMenu';
+import { AddIcon, EditIcon } from '../../assets';
 
 interface BoardColumnProps {
   board: Board;
@@ -19,7 +22,7 @@ interface BoardColumnProps {
     updates: Partial<Task>
   ) => void;
   onBoardDelete?: (boardId: string) => void;
-  onBoardDuplicate?: (boardId: string) => void;
+  onBoardRename?: (boardId: string, newTitle: string) => void;
   customDropdownOptions?: DropdownOption[];
   allowCreateTask?: boolean;
   allowTaskInteraction?: boolean;
@@ -31,8 +34,8 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   boardIndex,
   onTaskCreate,
   onTaskUpdate,
-  onBoardDelete,
-  onBoardDuplicate,
+  // onBoardDelete,
+  onBoardRename,
   customDropdownOptions = [],
   allowCreateTask = true,
   allowTaskInteraction = true,
@@ -40,6 +43,8 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
 }) => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newBoardTitle, setNewBoardTitle] = useState(board.title);
 
   const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
     id: board.id,
@@ -55,7 +60,6 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     listeners,
     setNodeRef: setDraggableNodeRef,
     transform,
-    isDragging,
   } = useDraggable({
     id: `board-${board.id}`,
     data: {
@@ -88,34 +92,40 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     }
   };
 
+  const handleRename = () => {
+    if (newBoardTitle.trim() && onBoardRename) {
+      onBoardRename(board.id, newBoardTitle.trim());
+      setIsRenaming(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleCreateTask();
+      if (isRenaming) {
+        handleRename();
+      } else {
+        handleCreateTask();
+      }
     } else if (e.key === 'Escape') {
-      setIsCreatingTask(false);
-      setNewTaskTitle('');
+      if (isRenaming) {
+        setIsRenaming(false);
+        setNewBoardTitle(board.title);
+      } else {
+        setIsCreatingTask(false);
+        setNewTaskTitle('');
+      }
     }
   };
 
   const dropdownOptions: DropdownOption[] = [
     ...customDropdownOptions,
-    ...(onBoardDuplicate
+    ...(onBoardRename
       ? [
           {
-            id: 'duplicate',
-            label: 'Duplicate Board',
-            action: () => onBoardDuplicate(board.id),
-          },
-        ]
-      : []),
-    ...(onBoardDelete
-      ? [
-          {
-            id: 'delete',
-            label: 'Delete Board',
-            icon: <DeleteIcon size={16} />,
-            action: () => onBoardDelete(board.id),
-            variant: 'danger' as const,
+            id: 'rename',
+            label: 'Rename Board',
+            icon: <EditIcon />,
+            action: () => setIsRenaming(true),
           },
         ]
       : []),
@@ -124,47 +134,65 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   return (
     <div
       ref={allowBoardSwap ? setDraggableNodeRef : undefined}
-      style={style}
       className={`
-        flex-shrink-0 w-80 bg-gray-50 rounded-lg overflow-hidden shadow-sm
-        transition-all duration-200 flex flex-col
-        ${isDragging ? 'opacity-90' : ''}
+        flex-shrink-0 w-80 bg-gray-50 overflow-hidden
+        flex flex-col
         ${board.disabled ? 'opacity-60' : ''}
         ${isOver ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}
       `}
+      style={{
+        ...style,
+        borderRadius: '2px',
+      }}
       {...(allowBoardSwap ? attributes : {})}
       {...(allowBoardSwap ? listeners : {})}
     >
       {/* Header */}
       <div
-        className='px-4 py-3 text-white font-medium text-sm flex items-center justify-between'
-        style={{ backgroundColor: board.color }}
+        className='px-3 py-2 text-white font-medium flex items-center justify-between'
+        style={{
+          backgroundColor: board.color,
+          fontSize: '13px',
+        }}
       >
-        <h3 className='font-semibold truncate'>{board.title}</h3>
+        {isRenaming ? (
+          <input
+            type='text'
+            value={newBoardTitle}
+            onChange={(e) => setNewBoardTitle(e.target.value)}
+            onKeyDown={handleKeyPress}
+            onBlur={handleRename}
+            className='bg-transparent border-none outline-none text-white placeholder-white/70 font-semibold flex-1'
+            style={{ fontSize: '13px' }}
+            autoFocus
+          />
+        ) : (
+          <h3 className='font-semibold truncate' style={{ fontSize: '13px' }}>
+            {board.title}
+          </h3>
+        )}
         <DropdownMenu options={dropdownOptions} />
       </div>
 
       {/* Content Area */}
       <div
         ref={setDroppableNodeRef}
-        className={`p-4 space-y-3 min-h-32 flex-1 transition-colors duration-200 ${
-          isOver ? 'bg-blue-50' : ''
-        }`}
+        className={`p-4 min-h-32 flex-1 transition-colors duration-200 ${isOver ? 'bg-blue-50' : ''}`}
       >
         {/* Create Task Button */}
         {canAddTask && !isCreatingTask && (
-          <div className='group'>
+          <div className='flex justify-center mb-4'>
             <button
               onClick={() => setIsCreatingTask(true)}
               className='
-                w-full p-3 border-2 border-dashed border-gray-300 rounded-lg
-                flex items-center justify-center text-gray-500 hover:border-gray-400 
-                hover:text-gray-600 transition-all duration-200 group
+                w-7 h-7 bg-white border border-gray-300 rounded-full
+                flex items-center justify-center text-gray-400 hover:text-gray-600 
+                hover:border-gray-400 transition-all duration-200 group
               '
-              title='Create Task'
+              title='Add Task'
             >
               <AddIcon
-                size={20}
+                size={14}
                 className='transition-transform group-hover:scale-110'
               />
             </button>
@@ -173,7 +201,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
 
         {/* Create Task Input */}
         {isCreatingTask && (
-          <div className='space-y-2'>
+          <div className='space-y-2 mb-4'>
             <input
               type='text'
               value={newTaskTitle}
@@ -185,14 +213,22 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                 }
               }}
               placeholder='Enter task title...'
-              className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              className='w-full p-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              style={{
+                borderRadius: '2px',
+                fontSize: '13px',
+              }}
               autoFocus
             />
             <div className='flex gap-2'>
               <button
                 onClick={handleCreateTask}
                 disabled={!newTaskTitle.trim()}
-                className='px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50'
+                className='px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                style={{
+                  borderRadius: '2px',
+                  fontSize: '13px',
+                }}
               >
                 Add
               </button>
@@ -201,7 +237,11 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                   setIsCreatingTask(false);
                   setNewTaskTitle('');
                 }}
-                className='px-3 py-1 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50'
+                className='px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50'
+                style={{
+                  borderRadius: '2px',
+                  fontSize: '13px',
+                }}
               >
                 Cancel
               </button>
@@ -214,24 +254,32 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
           items={visibleTasks.map((task) => `task-${task.id}`)}
           strategy={verticalListSortingStrategy}
         >
-          {visibleTasks.map((task) => (
-            <SortableTaskCard
-              key={task.id}
-              task={task}
-              boardId={board.id}
-              disabled={
-                !allowTaskInteraction || board.allowTaskInteraction === false
-              }
-              onTaskUpdate={(taskId, updates) =>
-                onTaskUpdate?.(board.id, taskId, updates)
-              }
-            />
-          ))}
+          <div className='space-y-3'>
+            {visibleTasks.map((task) => (
+              <Card
+                key={task.id}
+                task={task}
+                boardId={board.id}
+                disabled={
+                  !allowTaskInteraction || board.allowTaskInteraction === false
+                }
+                onTaskUpdate={(taskId, updates) =>
+                  onTaskUpdate?.(board.id, taskId, updates)
+                }
+              />
+            ))}
+          </div>
         </SortableContext>
 
         {/* Max Items Warning */}
         {board.maxItems && visibleTasks.length >= board.maxItems && (
-          <div className='text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200'>
+          <div
+            className='text-amber-600 bg-amber-50 p-2 border border-amber-200 mt-4'
+            style={{
+              borderRadius: '2px',
+              fontSize: '13px',
+            }}
+          >
             Maximum items reached ({board.maxItems})
           </div>
         )}

@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { DropdownOption } from './types';
-import { AddIcon } from '../../assets';
+'use client';
+
+import type React from 'react';
+import { useState, useRef, useEffect } from 'react';
+import type { DropdownOption } from './types';
 
 interface DropdownMenuProps {
   options: DropdownOption[];
@@ -39,7 +41,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
         className='p-1 rounded-md hover:bg-white/20 transition-colors duration-200'
         aria-label='More options'
       >
-        <AddIcon size={18} className='text-white' />
+        :
       </button>
 
       {isOpen && (
@@ -55,7 +57,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
               }}
               disabled={option.disabled}
               className={`
-                w-full px-4 py-2 text-left text-sm transition-colors duration-150 flex items-center gap-2
+                w-full px-4 py-2 text-left transition-colors duration-150 flex items-center gap-2
                 ${
                   option.disabled
                     ? 'text-gray-400 cursor-not-allowed'
@@ -64,6 +66,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
                       : 'text-gray-700 hover:bg-gray-50'
                 }
               `}
+              style={{ fontSize: '13px' }}
             >
               {option.icon}
               {option.label}
