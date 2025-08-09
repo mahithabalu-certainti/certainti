@@ -2,11 +2,13 @@
 
 import type React from 'react';
 import { useState } from 'react';
-import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
+  useSortable, // 1. Import useSortable
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities'; // 2. Import CSS utility
 import Card from './card';
 import type { Board, DropdownOption, Task } from './types';
 import DropdownMenu from './dropdownMenu';
@@ -55,12 +57,15 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     },
   });
 
+  // 3. Replace useDraggable with useSortable
   const {
     attributes,
     listeners,
-    setNodeRef: setDraggableNodeRef,
+    setNodeRef,
     transform,
-  } = useDraggable({
+    transition,
+    isDragging, // Get the isDragging state
+  } = useSortable({
     id: `board-${board.id}`,
     data: {
       type: 'board',
@@ -70,11 +75,11 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     disabled: !allowBoardSwap,
   });
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      }
-    : undefined;
+  // 4. Use CSS.Transform for safer style generation
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   if (board.hidden) return null;
 
@@ -133,12 +138,13 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
 
   return (
     <div
-      ref={allowBoardSwap ? setDraggableNodeRef : undefined}
+      ref={allowBoardSwap ? setNodeRef : undefined} // Use the ref from useSortable
       className={`
         flex-shrink-0 w-80 bg-gray-50 overflow-hidden
         flex flex-col
         ${board.disabled ? 'opacity-60' : ''}
         ${isOver ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}
+        ${isDragging ? 'opacity-50 shadow-2xl' : 'shadow-md'} // 5. Add ghosting effect
       `}
       style={{
         ...style,
@@ -186,7 +192,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
               onClick={() => setIsCreatingTask(true)}
               className='
                 w-7 h-7 bg-white border border-gray-300 rounded-full
-                flex items-center justify-center text-gray-400 hover:text-gray-600 
+                flex items-center justify-center text-gray-400 hover:text-gray-600
                 hover:border-gray-400 transition-all duration-200 group
               '
               title='Add Task'

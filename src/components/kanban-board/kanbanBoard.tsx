@@ -67,6 +67,19 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
   const visibleBoards = (boards || []).filter((board) => !board.hidden);
 
+  // --- START: MODIFICATION ---
+  // Find the full board object and its index for the DragOverlay
+  const draggedBoard =
+    activeItem?.type === 'board'
+      ? boards.find((b) => b.id === activeItem.board.id)
+      : null;
+
+  const draggedBoardIndex =
+    activeItem?.type === 'board' && draggedBoard
+      ? boards.findIndex((b) => b.id === draggedBoard.id)
+      : -1;
+  // --- END: MODIFICATION ---
+
   const generateId = () => {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
@@ -126,15 +139,22 @@ const KanbanBoard: React.FC<KanbanProps> = ({
           };
         }
         if (board.id === targetBoardId) {
+          const newTasks = [...board.tasks];
+          if (!newTasks.find((t) => t.id === activeData.task.id)) {
+            newTasks.unshift(activeData.task);
+          }
           return {
             ...board,
-            tasks: [activeData.task, ...board.tasks],
+            tasks: newTasks,
           };
         }
         return board;
       });
 
       onBoardsChange(updatedBoards);
+      if (active.data.current) {
+        active.data.current.boardId = targetBoardId;
+      }
     }
   };
 
@@ -200,26 +220,20 @@ const KanbanBoard: React.FC<KanbanProps> = ({
           return;
         }
 
-        const overIndex = targetBoard.tasks.findIndex(
+        const activeTaskIndex = sourceBoard.tasks.findIndex(
+          (t) => t.id === activeTaskId
+        );
+        const [movedTask] = sourceBoard.tasks.splice(activeTaskIndex, 1);
+
+        const overTaskIndex = targetBoard.tasks.findIndex(
           (t) => t.id === overTaskId
         );
+        targetBoard.tasks.splice(overTaskIndex, 0, movedTask);
 
-        const updatedBoards = boards.map((board) => {
-          if (board.id === activeBoardId) {
-            return {
-              ...board,
-              tasks: board.tasks.filter((task) => task.id !== activeTaskId),
-            };
-          }
-          if (board.id === overBoardId) {
-            const newTasks = [...board.tasks];
-            newTasks.splice(overIndex, 0, activeData.task);
-            return {
-              ...board,
-              tasks: newTasks,
-            };
-          }
-          return board;
+        const updatedBoards = boards.map((b) => {
+          if (b.id === sourceBoard.id) return sourceBoard;
+          if (b.id === targetBoard.id) return targetBoard;
+          return b;
         });
 
         onBoardsChange(updatedBoards);
@@ -233,8 +247,10 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
       if (sourceBoardId === targetBoardId) return;
 
+      const sourceBoard = boards.find((b) => b.id === sourceBoardId);
       const targetBoard = boards.find((b) => b.id === targetBoardId);
-      if (!targetBoard) return;
+
+      if (!sourceBoard || !targetBoard) return;
 
       const targetVisibleTasks = targetBoard.tasks.filter((t) => !t.hidden);
       if (
@@ -244,20 +260,16 @@ const KanbanBoard: React.FC<KanbanProps> = ({
         return;
       }
 
-      const updatedBoards = boards.map((board) => {
-        if (board.id === sourceBoardId) {
-          return {
-            ...board,
-            tasks: board.tasks.filter((task) => task.id !== activeTaskId),
-          };
-        }
-        if (board.id === targetBoardId) {
-          return {
-            ...board,
-            tasks: [activeData.task, ...board.tasks],
-          };
-        }
-        return board;
+      const activeTaskIndex = sourceBoard.tasks.findIndex(
+        (t) => t.id === activeTaskId
+      );
+      const [movedTask] = sourceBoard.tasks.splice(activeTaskIndex, 1);
+      targetBoard.tasks.push(movedTask);
+
+      const updatedBoards = boards.map((b) => {
+        if (b.id === sourceBoard.id) return sourceBoard;
+        if (b.id === targetBoard.id) return targetBoard;
+        return b;
       });
 
       onBoardsChange(updatedBoards);
@@ -389,7 +401,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
                 onClick={handleBoardCreate}
                 className='
                   w-full h-32 border-2 border-dashed border-gray-300
-                  flex items-center justify-center text-gray-500 hover:border-gray-400 
+                  flex items-center justify-center text-gray-500 hover:border-gray-400
                   hover:text-gray-600 transition-all duration-200 group bg-white/50
                 '
                 style={{ borderRadius: '2px' }}
@@ -413,17 +425,26 @@ const KanbanBoard: React.FC<KanbanProps> = ({
               boardId={activeItem.boardId}
               disabled={false}
             />
-          ) : activeItem?.type === 'board' ? (
+          ) : // --- START: MODIFICATION ---
+          activeItem?.type === 'board' && draggedBoard ? (
             <div className='flex-shrink-0 w-80'>
               <BoardColumn
-                board={activeItem.board}
-                boardIndex={0}
-                allowBoardSwap={true}
-                allowCreateTask={true}
-                allowTaskInteraction={true}
+                board={draggedBoard}
+                boardIndex={draggedBoardIndex}
+                // Pass props from the main config to ensure visual consistency
+                customDropdownOptions={customDropdownOptions}
+                allowCreateTask={allowCreateTask}
+                allowTaskInteraction={allowTaskMovement}
+                allowBoardSwap={allowSwapBoards}
+                // Event handlers are not needed for the visual clone
+                onTaskCreate={undefined}
+                onTaskUpdate={undefined}
+                onBoardDelete={undefined}
+                onBoardRename={undefined}
               />
             </div>
           ) : null}
+          {/* --- END: MODIFICATION --- */}
         </DragOverlay>
       </DndContext>
     </div>
