@@ -7,7 +7,7 @@ import {
   checkPermission,
   costDisplay,
   getDateFormat,
-  getDateTimeFormat,
+  formatDateToYYYYMMDDWithTime,
 } from '../../../../../../common-utils';
 import { AllPermissions, Permissions } from '../../../../../../common-service';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
@@ -184,7 +184,9 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       label: 'Created On',
-      value: getDateTimeFormat(resourceData.created_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(
+        resourceData.created_datetime ?? undefined
+      ),
       key: 'created_datetime',
     },
     {
@@ -194,7 +196,9 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       label: 'Updated On',
-      value: getDateTimeFormat(resourceData.modified_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(
+        resourceData.modified_datetime ?? undefined
+      ),
       key: 'modified_datetime',
     },
     {

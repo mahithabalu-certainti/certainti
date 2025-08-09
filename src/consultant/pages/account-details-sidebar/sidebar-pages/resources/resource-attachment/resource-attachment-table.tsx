@@ -42,6 +42,7 @@ interface ResourceSkillTableProps {
   refreshAttachments?: number;
   setCount?: (count: number) => void;
   resourceInActive?: boolean;
+  accountDetails?: Record<string, any>;
 }
 const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -53,6 +54,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   orderBy,
   setOrderBy,
   refreshAttachments,
+  accountDetails,
   setCount,
 }) => {
   const { errorToast } = useToast();
@@ -103,6 +105,9 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const fiscalYears = getFiscalYears(20);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
+  const accountInActive =
+    accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
+    'active';
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
@@ -171,7 +176,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     memoizedDocumentTypes,
     handleDocumentCategory,
     permissionMap,
-    categoryTypes.isLoading
+    categoryTypes.isLoading,
+    accountInActive
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {

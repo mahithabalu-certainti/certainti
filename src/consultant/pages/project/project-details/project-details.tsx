@@ -150,6 +150,7 @@ export const ProjectDetails = () => {
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
+  const projectInActive = data?.data?.project.status_name === 'In-Active';
 
   useEffect(() => {
     if (data?.data) {
@@ -352,6 +353,7 @@ export const ProjectDetails = () => {
       case 'projectResources':
         return (
           <ProjectResources
+            accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
             accountID={accountID}
             projectFiscalDate={fiscalDate}
@@ -363,6 +365,7 @@ export const ProjectDetails = () => {
       case 'projectsTask':
         return (
           <ProjectTask
+            accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
             accountID={accountID}
             projectFiscalDate={fiscalDate}
@@ -385,7 +388,7 @@ export const ProjectDetails = () => {
       case 'attachments':
         return (
           <Attachments
-            accountInActive={accountInActive}
+            accountOrProjectInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={onRefreshClick}
@@ -522,14 +525,14 @@ export const ProjectDetails = () => {
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder='Name'
+          placeholder='Project Code'
           icon={
             <ProjectDetailsIcon
               className='h-6 w-6 rounded p-[4px]'
               style={{ backgroundColor: '#AF78FF' }}
             />
           }
-          title={data?.data?.project?.project_name || 'Project Title'}
+          title={data?.data?.project?.project_code}
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={

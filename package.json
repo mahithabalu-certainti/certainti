@@ -38,7 +38,7 @@
     "@reduxjs/toolkit": "^2.5.1",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-query": "^5.0.0",
-    "axios": "^1.8.3",
+    "axios": "^1.11.0",
     "dayjs": "^1.11.13",
     "graphql": "^16.11.0",
     "i18next": "^24.2.2",

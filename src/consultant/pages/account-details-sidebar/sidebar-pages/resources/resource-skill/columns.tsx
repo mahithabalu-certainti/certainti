@@ -43,7 +43,8 @@ export const getResourceSkillColumns = (
     },
     editable:
       permissionMap?.['start_date']?.edit &&
-      permissionMap?.['start_date']?.read,
+      permissionMap?.['start_date']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['start_date']?.edit &&
       !permissionMap?.['start_date']?.read,
@@ -66,7 +67,8 @@ export const getResourceSkillColumns = (
     sortable: true,
     editable:
       permissionMap?.['skill_type_rid']?.edit &&
-      permissionMap?.['skill_type_rid']?.read,
+      permissionMap?.['skill_type_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['skill_type_rid']?.edit &&
       !permissionMap?.['skill_type_rid']?.read,
@@ -199,7 +201,8 @@ export const getResourceSkillColumns = (
     sortable: true,
     editable:
       permissionMap?.['skill_subtype_rid']?.edit &&
-      permissionMap?.['skill_subtype_rid']?.read,
+      permissionMap?.['skill_subtype_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['skill_subtype_rid']?.edit &&
       !permissionMap?.['skill_subtype_rid']?.read,
@@ -329,7 +332,8 @@ export const getResourceSkillColumns = (
     sortable: true,
     editable:
       permissionMap?.['skill_level_rid']?.edit &&
-      permissionMap?.['skill_level_rid']?.read,
+      permissionMap?.['skill_level_rid']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['skill_level_rid']?.edit &&
       !permissionMap?.['skill_level_rid']?.read,
@@ -349,7 +353,8 @@ export const getResourceSkillColumns = (
     sortable: true,
     editable:
       permissionMap?.['skill_details']?.edit &&
-      permissionMap?.['skill_details']?.read,
+      permissionMap?.['skill_details']?.read &&
+      !accountInActive,
     hide:
       !permissionMap?.['skill_details']?.edit &&
       !permissionMap?.['skill_details']?.read,

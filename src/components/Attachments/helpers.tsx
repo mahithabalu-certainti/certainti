@@ -180,7 +180,8 @@ export const getAttachmentTableColumns = (
   docTypes: SelectOption[],
   handleDocumentCategory: (rid: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  typeLoading?: boolean
+  typeLoading?: boolean,
+  accountOrProjectInActive?: boolean
 ): ListTableColumn<AttachmentList>[] => [
   {
     id: 'document_name',
@@ -228,7 +229,8 @@ export const getAttachmentTableColumns = (
     sortable: true,
     editable:
       permissionMap?.['fiscal_year']?.edit &&
-      permissionMap?.['fiscal_year']?.read,
+      permissionMap?.['fiscal_year']?.read &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['fiscal_year']?.edit &&
       !permissionMap?.['fiscal_year']?.read,
@@ -249,7 +251,8 @@ export const getAttachmentTableColumns = (
     sortable: true,
     editable:
       permissionMap?.['document_category_rid']?.edit &&
-      permissionMap?.['document_category_rid']?.read,
+      permissionMap?.['document_category_rid']?.read &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['document_category_rid']?.edit &&
       !permissionMap?.['document_category_rid']?.read,
@@ -364,7 +367,8 @@ export const getAttachmentTableColumns = (
     sortable: true,
     editable:
       permissionMap?.['document_type_rid']?.edit &&
-      permissionMap?.['document_type_rid']?.read,
+      permissionMap?.['document_type_rid']?.read &&
+      !accountOrProjectInActive,
     hide:
       !permissionMap?.['document_type_rid']?.edit &&
       !permissionMap?.['document_type_rid']?.read,

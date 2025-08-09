@@ -35,7 +35,8 @@ export const getProjectColumns = (
   memoizedProjectTypes: ListOption[],
   memoizedClassification: ListOption[],
   handleEdit: (row: Project, field?: string | null, section?: string) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountInActive?: boolean
 ): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
@@ -47,7 +48,8 @@ export const getProjectColumns = (
     sticky: true,
     editable:
       permissionMap?.['project_code']?.read &&
-      permissionMap?.['project_code']?.edit,
+      permissionMap?.['project_code']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['project_code']?.read &&
       !permissionMap?.['project_code']?.edit,
@@ -63,8 +65,8 @@ export const getProjectColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-
-      return onClick ? (
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
         <span
           onClick={() => onClick(row)}
           className={
@@ -109,7 +111,8 @@ export const getProjectColumns = (
     width: 160,
     editable:
       permissionMap?.['project_name']?.read &&
-      permissionMap?.['project_name']?.edit,
+      permissionMap?.['project_name']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['project_name']?.read &&
       !permissionMap?.['project_name']?.edit,
@@ -143,7 +146,8 @@ export const getProjectColumns = (
     width: 160,
     editable:
       permissionMap?.['project_type_rid']?.read &&
-      permissionMap?.['project_type_rid']?.edit,
+      permissionMap?.['project_type_rid']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
@@ -161,7 +165,8 @@ export const getProjectColumns = (
     sortable: true,
     editable:
       permissionMap?.['fiscal_year']?.read &&
-      permissionMap?.['fiscal_year']?.edit,
+      permissionMap?.['fiscal_year']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['fiscal_year']?.read &&
       !permissionMap?.['fiscal_year']?.edit,
@@ -189,7 +194,8 @@ export const getProjectColumns = (
     sortId: 'classification_name',
     editable:
       permissionMap?.['project_classification_rid']?.read &&
-      permissionMap?.['project_classification_rid']?.edit,
+      permissionMap?.['project_classification_rid']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
@@ -254,7 +260,8 @@ export const getProjectColumns = (
     width: 160,
     editable:
       permissionMap?.['project_client_group']?.read &&
-      permissionMap?.['project_client_group']?.edit,
+      permissionMap?.['project_client_group']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['project_client_group']?.read &&
       !permissionMap?.['project_client_group']?.edit,
@@ -287,7 +294,8 @@ export const getProjectColumns = (
     sortId: 'project_group',
     editable:
       permissionMap?.['project_group']?.read &&
-      permissionMap?.['project_group']?.edit,
+      permissionMap?.['project_group']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['project_group']?.read &&
       !permissionMap?.['project_group']?.edit,
@@ -322,7 +330,8 @@ export const getProjectColumns = (
     width: 170,
     editable:
       permissionMap?.['total_effort']?.read &&
-      permissionMap?.['total_effort']?.edit,
+      permissionMap?.['total_effort']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
@@ -353,7 +362,8 @@ export const getProjectColumns = (
     width: 130,
     editable:
       permissionMap?.['total_cost']?.read &&
-      permissionMap?.['total_cost']?.edit,
+      permissionMap?.['total_cost']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['total_cost']?.read &&
       !permissionMap?.['total_cost']?.edit,
@@ -384,7 +394,8 @@ export const getProjectColumns = (
     width: 140,
     editable:
       permissionMap?.['total_cost_fte']?.read &&
-      permissionMap?.['total_cost_fte']?.edit,
+      permissionMap?.['total_cost_fte']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['total_cost_fte']?.read &&
       !permissionMap?.['total_cost_fte']?.edit,
@@ -417,7 +428,8 @@ export const getProjectColumns = (
     width: 140,
     editable:
       permissionMap?.['total_cost_subcon']?.read &&
-      permissionMap?.['total_cost_subcon']?.edit,
+      permissionMap?.['total_cost_subcon']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['total_cost_subcon']?.read &&
       !permissionMap?.['total_cost_subcon']?.edit,
@@ -449,7 +461,8 @@ export const getProjectColumns = (
     sortId: 'total_cost_nonlabor',
     editable:
       permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit,
+      permissionMap?.['total_cost_nonlabor']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['total_cost_nonlabor']?.read &&
       !permissionMap?.['total_cost_nonlabor']?.edit,
@@ -577,7 +590,9 @@ export const getProjectColumns = (
     sortId: 'comments',
     width: 200,
     editable:
-      permissionMap?.['comments']?.read && permissionMap?.['comments']?.edit,
+      permissionMap?.['comments']?.read &&
+      permissionMap?.['comments']?.edit &&
+      !accountInActive,
     hide:
       !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
     field: {

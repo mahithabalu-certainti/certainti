@@ -48,7 +48,6 @@ export const getDateConstraints = (yearsBack: number) => {
 };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
-const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
@@ -472,7 +471,7 @@ export const ResourceFormData = (
         hide: !disableCost,
         fields: [
           createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYearsCost,
+            options: fiscalYears,
             isFiscalYear: true,
             placeholder: 'Choose Fiscal Year',
             required: true,
