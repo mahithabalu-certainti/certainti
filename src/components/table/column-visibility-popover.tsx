@@ -136,16 +136,16 @@ const SortableItem: React.FC<SortableItemProps> = ({
               size='small'
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: canHide ? '#1976d2' : '#9e9e9e',
+                  color: canHide ? '#2e7d32' : '#9e9e9e',
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: canHide ? '#1976d2' : '#9e9e9e',
+                  backgroundColor: canHide ? '#2e7d32' : '#9e9e9e',
                 },
                 '& .MuiSwitch-switchBase.Mui-disabled': {
                   color: '#bdbdbd',
                 },
                 '& .MuiSwitch-switchBase.Mui-disabled + .MuiSwitch-track': {
-                  backgroundColor: '#e0e0e0',
+                  backgroundColor: '#212121',
                 },
               }}
             />
@@ -332,6 +332,11 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
     (col) => restrictionMap.get(col.id)?.canDrag !== false
   );
 
+  const handleSelectAll = () => {
+    const newColumns = columnConfigs.map((col) => ({ ...col, visible: true }));
+    updateColumnConfigs(newColumns);
+  };
+
   return (
     <Popover
       open={open}
@@ -343,9 +348,9 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
     >
       <Box className='p-4'>
         <div className='flex items-center justify-between mb-3'>
-          <Typography variant='h6' className='text-gray-800 font-semibold'>
+          <h2 className='text-[16px] font-bold text-[#2D3E4F]'>
             Show/Hide Fields
-          </Typography>
+          </h2>
           <div
             onClick={onClose}
             className='border text-gray-500 rounded-full p-1 cursor-pointer transition-colors group'
@@ -358,6 +363,29 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
               className='text-gray-500 group-hover:text-gray-700 h-2 w-2'
             />
           </div>
+        </div>
+        <div className='flex items-center gap-1 mb-3'>
+          <h2 className='text-[13px] font-semibold text-[#2D3E4F]'>Show All</h2>
+          <Switch
+            checked={columnConfigs.every((col) => col.visible)}
+            // disabled={columnConfigs.every((col) => col.visible)}
+            onChange={(e) => {
+              if (!columnConfigs.every((col) => col.visible)) {
+                if (e.target.checked) {
+                  handleSelectAll();
+                }
+              }
+            }}
+            size='small'
+            sx={{
+              '& .MuiSwitch-switchBase.Mui-checked': {
+                color: '#2e7d32',
+              },
+              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                backgroundColor: '#2e7d32',
+              },
+            }}
+          />
         </div>
 
         <Divider className='mb-3' />
