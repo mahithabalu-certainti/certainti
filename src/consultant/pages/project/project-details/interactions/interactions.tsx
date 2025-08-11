@@ -6,12 +6,17 @@ import { SectionTabPanel } from '../../../../../components';
 import { ListTable } from '../../../../../components/table';
 import { InteractionList } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
 import InteractionDetails from './interaction-details/interaction-details';
 import { ActionItem } from '../../../../../components/table/types';
-import { INTERACTIONS, INTERACTIONS_CREATE } from '../../../../../routes';
+import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
 
 const InteractionsTabs: OverviewTabs[] = [
@@ -64,6 +69,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     fiscal_year: projectDetails?.fiscal_year || '',
     account_name: projectDetails?.account_name || '',
   };
+  const fiscalYear = Number(projectDetails?.fiscal_year);
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -72,8 +78,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       sort: sortField,
       sort_by: sortBy,
       filters: appliedFilters,
-      projectRid: projectid || '',
-      accountRid: accountId,
+      project_rid: projectid || '',
+      project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+      fiscal_year: fiscalYear,
+      account_rid: accountId,
     },
     !viewDetails,
     refreshInteractions
@@ -112,21 +120,28 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const handleCreate = () => {
+    const path = generatePath(INTERACTIONS_CREATE, {
+      module: 'project',
+    });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
     });
-    navigate(`${INTERACTIONS_CREATE}?${queryParams.toString()}`);
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: InteractionList) => {
+    const path = generatePath(INTERACTIONS_EDIT, {
+      module: 'project',
+      interactionId: row.rid,
+    });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
     });
-    navigate(`${INTERACTIONS}/edit/${row.rid}?${queryParams.toString()}`);
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const headerButtons = [
@@ -254,7 +269,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               actionWidth={80}
               actionDisplayMode='dropdown'
               actionMenuItems={actionButtons}
-              loading={isLoading}
+              loading={isLoading || !fiscalYear}
               error={isError ? 'Failed to load data' : undefined}
               rowsPerPageOptions={[25, 50, 100]}
               rowsPerPage={rowsPerPage}

@@ -25,7 +25,7 @@ export const fetchInteractionList = async (
 
   return {
     interactions: mockInteractionList.data.interactions,
-    count: mockInteractionList.data.count,
+    count: mockInteractionList.data.totalRecords,
   };
 };
 
@@ -38,11 +38,27 @@ export const useInteractionList = (
   Error
 > => {
   return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
-    queryKey: ['interactionList', params, refreshInteractions],
+    queryKey: ['interaction-list', params, refreshInteractions],
     queryFn: () => fetchInteractionList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.accountRid && !!shouldFetchList,
+    enabled: !!params.account_rid && !!params.fiscal_year && !!shouldFetchList,
+  });
+};
+
+export const useGetAllInteractionList = (
+  params: InteractionListURLParams,
+  refreshTrigger?: number
+): UseQueryResult<
+  { interactions: InteractionList[]; count: number },
+  Error
+> => {
+  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+    queryKey: ['all-interaction-list', params, refreshTrigger],
+    queryFn: () => fetchInteractionList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.isGlobal,
   });
 };
 

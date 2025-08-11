@@ -66,24 +66,42 @@ export type InteractionList = {
   rid: string;
   r_number: string;
   iteration: number;
-  age_days: number;
-  status: string;
-  recipient_name: string;
-  recipient_email: string;
-  last_sent_date: string;
-  last_reminder_date: string;
-  response_date: string;
-  last_response_update: string;
-  attachments: string;
+  interaction_age: number;
+  status: {
+    rid: string;
+    status_name: string;
+  };
+  recipient_details: {
+    rid: string;
+    recipient_name: string;
+    recipient_email: string;
+  };
+  last_sent_on: string;
+  last_reminder_on: string;
+  response_submitted_on: string;
+  response_updated_on: string;
+  attachments: number;
+  interaction_url: string;
   interaction_history: string;
-  interaction_link: string;
-  parent_interaction_id: string;
-  type: string;
+  parent_interaction_rid: string;
+  interaction_type: {
+    rid: string;
+    type_name: string;
+  };
   response_source: string;
-  created_by: string;
-  created_date: string;
-  last_updated_by: string;
-  last_updated_date: string;
+  created_by: {
+    rid: string;
+    created_by_user_name: string;
+  };
+  created_datetime: string;
+  modified_by: {
+    rid: string;
+    modified_by_user_name: string;
+  };
+  modified_datetime: string;
+  account_rid: string;
+  project_fiscal_rid: string;
+  fiscal_year: number;
 };
 
 export interface InteractionListURLParams {
@@ -92,17 +110,23 @@ export interface InteractionListURLParams {
   sort: string;
   sort_by: 'ASC' | 'DESC';
   filters?: object;
-  accountRid?: string;
-  projectRid?: string;
+  account_rid?: string;
+  project_rid?: string;
+  project_fiscal_rid?: string;
+  fiscal_year?: number;
+  isGlobal?: boolean;
 }
 
 export interface InteractionListResponse {
   statusCode: number;
   statusMessage: string;
-  statusCodeValue: string;
+  statusCodeValue?: string;
   data: {
+    page: number;
+    limit: number;
+    totalRecords: number;
     interactions: InteractionList[];
-    count: number;
+    count?: number;
   };
 }
 

@@ -12,26 +12,7 @@ import {
   Tooltip,
   SelectChangeEvent,
 } from '@mui/material';
-import {
-  ErrorInfoIcon,
-  InteractionDetailIcon,
-  KeyContactAddIcon,
-  KeyContactRemoveIcon,
-} from '../../../assets';
-import TextButton from '../../../components/button/text-button';
-import {
-  getQuestionTableColumns,
-  transFormPayload,
-  validateInteractionForm,
-} from './helper';
-import {
-  useCreateInteraction,
-  useInteractionDetails,
-  useUpdateInteractionDetails,
-} from '../../services/interactions/interactions-service';
-import SkeletonForm from '../../../components/form-builder/skeleton-form';
-import { useAccountProjects } from '../../services/project';
-import { Project } from '../../types/project';
+import { Project } from '../../../types/project';
 import {
   InteractionFormData,
   InteractionFormErrors,
@@ -39,10 +20,29 @@ import {
   InteractionFormTableColumn,
   InteractionQuestionErrors,
   SelectOption,
-} from '../../types';
-import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
-import { useToast } from '../../../hooks';
-import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
+} from '../../../types';
+import { useToast } from '../../../../hooks';
+import {
+  useCreateInteraction,
+  useInteractionDetails,
+  useUpdateInteractionDetails,
+} from '../../../services/interactions/interactions-service';
+import { useAccountProjects } from '../../../services/project';
+import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  getQuestionTableColumns,
+  transFormPayload,
+  validateInteractionForm,
+} from './helper';
+import {
+  ErrorInfoIcon,
+  InteractionDetailIcon,
+  KeyContactAddIcon,
+  KeyContactRemoveIcon,
+} from '../../../../assets';
+import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
+import TextButton from '../../../../components/button/text-button';
+import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 
 interface ProjectDetails {
   project_code: string;
