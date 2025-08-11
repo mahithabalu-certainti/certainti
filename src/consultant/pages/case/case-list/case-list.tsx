@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
 import { Case, CaseListParams } from '../../../types';
@@ -70,12 +71,23 @@ export const CaseList: React.FC<ICaseTableProps> = ({
     }));
   };
 
-  const handleCaseIDClick = (caseItem: Case) => {
-    console.log('Case clicked:', caseItem);
+  // const handleCaseIDClick = (caseItem: Case) => {
+  //   console.log('Case clicked:', caseItem);
+  //   const path = generatePath(CASE_DETAILS, {
+  //     caseid: caseItem.case_id,
+  //   });
+  //   navigate(path);
+  // };
+  const handleCaseIDClick = (project: any) => {
     const path = generatePath(CASE_DETAILS, {
-      caseid: caseItem.case_id,
+      caseid: 'DO98335VDBRFU53001',
     });
-    navigate(path);
+    // Create query parameter
+    const queryParams = new URLSearchParams({
+      accountID: project?.account_rid ?? '',
+    });
+
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const caseColumns = getAllCaseListColumns(handleCaseIDClick);

@@ -9,6 +9,8 @@ import {
 import { ActionsDropdown } from '../../../components';
 import Filter from '../account-details-sidebar/components/filter/filter';
 import { CaseList } from './case-list/case-list';
+import TextButton from '../../../components/button/text-button';
+import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 
 export const Case: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<
@@ -63,8 +65,15 @@ export const Case: React.FC = () => {
       }));
     }
   };
-
+  const handleCreateCase = () => {
+    console.log('clicked');
+  };
   const menuItems = [
+    {
+      label: 'Manage User',
+      hide: false,
+      onClick: () => console.log('clicked'),
+    },
     {
       label: 'Export',
       hide: false,
@@ -91,6 +100,16 @@ export const Case: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
+          <TextButton
+            label='New Case'
+            onClick={handleCreateCase}
+            sx={{
+              ...BUTTON_STYLES,
+              width: '114px',
+              minWidth: '114px',
+              maxWidth: '114px',
+            }}
+          />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
             onClick={onRefreshClick}
