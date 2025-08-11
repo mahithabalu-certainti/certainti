@@ -61,12 +61,12 @@ const projectTabs: ProjectsTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllMenus.TIMESHEETS,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllMenus.TIMESHEETS,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 export const ProjectTask = ({

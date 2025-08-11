@@ -636,7 +636,7 @@ export const AccountDetails = () => {
               style={{ backgroundColor: '#4B9BFF' }}
             />
           }
-          title={data?.data?.accountById?.account_name || 'Account Title'}
+          title={data?.data?.accountById?.account_name ?? ''}
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={

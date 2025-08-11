@@ -368,7 +368,9 @@ export const getInitialStateForField = (
     case 'textCostAndSkill':
       return { textCostAndSkill: { option: 'equals', value: '' } };
     case 'number':
-      return { number: { option: 'equals', value: { from: '', to: '' } } };
+      return {
+        number: { option: 'greater_than', value: { from: '', to: '' } },
+      };
     case 'date':
       return { date: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':

@@ -7,8 +7,7 @@ import {
 } from '../../../../../../types';
 
 export const getResourceMetricColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  currencySymbol?: string
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<SummaryResourceMetric>[] => [
   {
     id: 'metric',
@@ -37,8 +36,6 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['fte']?.read,
-    render: (row: SummaryResourceMetric) =>
-      row.fte ? costDisplay(row.fte, currencySymbol) : '-',
   },
   {
     id: 'subcon',
@@ -50,8 +47,6 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['subcon']?.read,
-    render: (row: SummaryResourceMetric) =>
-      row.subcon ? costDisplay(row.subcon, currencySymbol) : '-',
   },
   {
     id: 'nonlabor',
@@ -63,8 +58,6 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['nonlabor']?.read,
-    render: (row: SummaryResourceMetric) =>
-      row.nonlabor ? costDisplay(row.nonlabor, currencySymbol) : '-',
   },
 ];
 
@@ -103,7 +96,7 @@ export const getDetailedMetricColumns = (
         row.metric_name === 'Sub Con Cost' ||
         row.metric_name === 'Non Labor Cost')
         ? costDisplay(row.project_level, currencySymbol)
-        : '-',
+        : row.project_level || '-',
   },
   {
     id: 'project_resource_level',

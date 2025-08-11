@@ -16,11 +16,7 @@ import { Project, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
-import {
-  AllMenus,
-  AllModules,
-  AllPermissions,
-} from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import {
   CellEditData,
@@ -57,12 +53,12 @@ const projectTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllMenus.TIMESHEETS,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllMenus.TIMESHEETS,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 const Projects: React.FC<ProjectsProps> = ({
