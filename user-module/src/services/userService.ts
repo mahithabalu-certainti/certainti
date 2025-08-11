@@ -2348,8 +2348,20 @@ if (includeDependencies) {
         );
 
         // Add dynamic headers
-        const headers = fieldsToExport.map(field => labelMap[field]);
-        headerSheet.addRow(headers);
+        const rowData: any[] = [];
+        for (const field of fieldsToExport) {
+          if (field === "profile_name") {
+            rowData.push(profile.profile_name || "");
+          } else if (field === "profile_description") {
+            rowData.push(profile.profile_description || "");
+          } else if (field === "created_datetime") {
+            rowData.push(createdDate);
+          } else if (field === "created_by") {
+            rowData.push(createdByName);
+          }
+        }
+        headerSheet.addRow(rowData); 
+       
       }
       const sheet = workbook.addWorksheet("Menu");
 
