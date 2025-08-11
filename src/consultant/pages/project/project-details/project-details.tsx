@@ -55,6 +55,7 @@ import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
+import { Interactions } from './interactions';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 
 export const ProjectDetails = () => {
@@ -376,7 +377,12 @@ export const ProjectDetails = () => {
         );
 
       case 'interactions':
-        return <NotFound />;
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            projectDetails={projectData}
+          />
+        );
       case 'technicalSummary':
         return <NotFound />;
       case 'cases':

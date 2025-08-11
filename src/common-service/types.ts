@@ -214,6 +214,8 @@ export enum AllPermissions {
   ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
   ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
   ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
+  INTERACTIONS_OVERVIEW = 'interactions_overview',
+  INTERACTIONS_TIMELINE = 'interactions_timeline',
 }
 
 export interface Country {
@@ -247,6 +249,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',
   LOGOUT = 'logout',
@@ -263,6 +266,13 @@ export enum MenuOption {
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
+}
+
+export interface OverviewTabs {
+  id: AllPermissions | AllMenus;
+  name: string;
+  hide: boolean;
+  disable?: boolean;
 }
 
 export type FailedQueueItem = {
