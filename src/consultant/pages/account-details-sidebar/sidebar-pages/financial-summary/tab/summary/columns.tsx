@@ -96,7 +96,7 @@ export const getDetailedMetricColumns = (
         row.metric_name === 'Sub Con Cost' ||
         row.metric_name === 'Non Labor Cost')
         ? costDisplay(row.project_level, currencySymbol)
-        : '-',
+        : row.project_level || '-',
   },
   {
     id: 'project_resource_level',
@@ -114,7 +114,7 @@ export const getDetailedMetricColumns = (
         row.metric_name === 'Sub Con Cost' ||
         row.metric_name === 'Non Labor Cost')
         ? costDisplay(row.project_resource_level, currencySymbol)
-        : '-',
+        : row.project_resource_level || '-',
   },
   {
     id: 'project_task_level',
@@ -132,7 +132,7 @@ export const getDetailedMetricColumns = (
         row.metric_name === 'Sub Con Cost' ||
         row.metric_name === 'Non Labor Cost')
         ? costDisplay(row.project_task_level, currencySymbol)
-        : '-',
+        : row.project_task_level || '-',
   },
 ];
 

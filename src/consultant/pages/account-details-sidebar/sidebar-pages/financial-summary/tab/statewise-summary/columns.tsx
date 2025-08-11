@@ -96,7 +96,7 @@ export const getDetailedMetricColumns = (
         row.metric_name === 'Sub Con Cost' ||
         row.metric_name === 'Non Labor Cost')
         ? costDisplay(row.project_level, currencySymbol)
-        : '-',
+        : row.project_level || '-',
   },
   {
     id: 'project_resource_level',
