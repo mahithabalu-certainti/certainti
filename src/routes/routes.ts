@@ -2,6 +2,7 @@ export const MAIN_ROUTE = '/';
 
 export const LOGIN = '/login';
 export const PROFILE = '/profile';
+export const EMAIL_INTERACTION = '/email-interaction';
 
 export const MANAGE_USER = '/manage-user';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
