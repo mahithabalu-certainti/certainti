@@ -40,10 +40,22 @@ class SchemaService {
       const sequelize = await initOrgSequelize();
 
       const InteractionModel = Interaction.initialize(sequelize, schemaName);
-      const InteractionItemModel = InteractionItem.initialize(sequelize, schemaName);
-      const InteractionHistoryModel = InteractionHistory.initialize(sequelize, schemaName);
-      const InteractionTimelineModel = InteractionTimeline.initialize(sequelize, schemaName);
-      const InteractionTypeModel = InteractionType.initialize(sequelize, schemaName);
+      const InteractionItemModel = InteractionItem.initialize(
+        sequelize,
+        schemaName
+      );
+      const InteractionHistoryModel = InteractionHistory.initialize(
+        sequelize,
+        schemaName
+      );
+      const InteractionTimelineModel = InteractionTimeline.initialize(
+        sequelize,
+        schemaName
+      );
+      const InteractionTypeModel = InteractionType.initialize(
+        sequelize,
+        schemaName
+      );
 
       // Add associations if needed
       // Example: InteractionModel.hasMany(InteractionItemModel, { foreignKey: 'interaction_rid', as: 'items' });
@@ -54,14 +66,19 @@ class SchemaService {
       await InteractionTimelineModel.sync({ force: false });
       await InteractionTypeModel.sync({ force: false });
     } catch (err) {
-      throw new Error("Error creating interaction tables: " + (err as Error).message);
+      throw new Error(
+        "Error creating interaction tables: " + (err as Error).message
+      );
     }
   }
 
   /**
    * Checks if an interaction exists by ID in a given schema.
    */
-  async checkIfInteractionExists(accountNumber: string, interactionId: string): Promise<boolean> {
+  async checkIfInteractionExists(
+    accountNumber: string,
+    interactionId: string
+  ): Promise<boolean> {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
@@ -71,7 +88,9 @@ class SchemaService {
       });
       return interaction !== null;
     } catch (err) {
-      throw new Error("Error checking interaction existence: " + (err as Error).message);
+      throw new Error(
+        "Error checking interaction existence: " + (err as Error).message
+      );
     }
   }
 
@@ -92,7 +111,12 @@ class SchemaService {
   /**
    * Fetches a list of interactions for an account.
    */
-  async fetchInteractions(accountNumber: string, whereClause: Record<string, any> = {}, limit = 25, offset = 0) {
+  async fetchInteractions(
+    accountNumber: string,
+    whereClause: Record<string, any> = {},
+    limit = 25,
+    offset = 0
+  ) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
@@ -115,10 +139,17 @@ class SchemaService {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
-      const InteractionItemModel = InteractionItem.initialize(sequelize, schemaName);
-      return await InteractionItemModel.findAll({ where: { interaction_rid: interactionRid } });
+      const InteractionItemModel = InteractionItem.initialize(
+        sequelize,
+        schemaName
+      );
+      return await InteractionItemModel.findAll({
+        where: { interaction_rid: interactionRid },
+      });
     } catch (err) {
-      throw new Error("Error fetching interaction items: " + (err as Error).message);
+      throw new Error(
+        "Error fetching interaction items: " + (err as Error).message
+      );
     }
   }
 
@@ -129,10 +160,17 @@ class SchemaService {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
-      const InteractionHistoryModel = InteractionHistory.initialize(sequelize, schemaName);
-      return await InteractionHistoryModel.findAll({ where: { resource_rid: interactionRid } });
+      const InteractionHistoryModel = InteractionHistory.initialize(
+        sequelize,
+        schemaName
+      );
+      return await InteractionHistoryModel.findAll({
+        where: { resource_rid: interactionRid },
+      });
     } catch (err) {
-      throw new Error("Error fetching interaction history: " + (err as Error).message);
+      throw new Error(
+        "Error fetching interaction history: " + (err as Error).message
+      );
     }
   }
 
@@ -143,10 +181,17 @@ class SchemaService {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
-      const InteractionTimelineModel = InteractionTimeline.initialize(sequelize, schemaName);
-      return await InteractionTimelineModel.findAll({ where: { entity_rid: entityRid } });
+      const InteractionTimelineModel = InteractionTimeline.initialize(
+        sequelize,
+        schemaName
+      );
+      return await InteractionTimelineModel.findAll({
+        where: { entity_rid: entityRid },
+      });
     } catch (err) {
-      throw new Error("Error fetching interaction timeline: " + (err as Error).message);
+      throw new Error(
+        "Error fetching interaction timeline: " + (err as Error).message
+      );
     }
   }
 }

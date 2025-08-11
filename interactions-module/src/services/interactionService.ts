@@ -17,5 +17,4 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  
 }
