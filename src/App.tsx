@@ -48,6 +48,8 @@ import {
   USER_EXTENDED_PERMISSION,
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
+  INTERACTIONS,
+  INTERACTIONS_DETAILS,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -119,7 +121,19 @@ const ManageAccountAccess = lazy(
 );
 
 const InteractionForm = lazy(
-  () => import('./consultant/pages/interaction-form/interaction-form')
+  () =>
+    import('./consultant/pages/interaction/interaction-form/interaction-form')
+);
+
+const Interaction = lazy(
+  () => import('./consultant/pages/interaction/interaction-list/interaction')
+);
+
+const InteractionDetails = lazy(
+  () =>
+    import(
+      './consultant/pages/interaction/interaction-details/interaction-details'
+    )
 );
 
 // Loading component for Suspense fallback
@@ -181,6 +195,11 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route
                   path={PROJECT_RESOURCE_EDIT}
                   element={<ProjectResourceForm />}
+                />
+                <Route path={INTERACTIONS} element={<Interaction />} />
+                <Route
+                  path={INTERACTIONS_DETAILS}
+                  element={<InteractionDetails />}
                 />
                 <Route
                   path={INTERACTIONS_CREATE}

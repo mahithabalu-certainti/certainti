@@ -1,4 +1,4 @@
-import { REGEX_PATTERNS } from '../../../common-utils';
+import { REGEX_PATTERNS } from '../../../../common-utils';
 import {
   InteractionDetails,
   InteractionFormData,
@@ -8,7 +8,7 @@ import {
   InteractionQuestion,
   InteractionQuestionErrors,
   QuestionUpdate,
-} from '../../types';
+} from '../../../types';
 
 export const getQuestionTableColumns = (
   isEditView: boolean

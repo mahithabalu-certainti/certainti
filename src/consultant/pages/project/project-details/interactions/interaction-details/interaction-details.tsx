@@ -6,11 +6,11 @@ import DetailsSection, {
 } from '../../../../../../components/details-section/details';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import InteractionQuestions from './interaction-qus';
-import { INTERACTIONS } from '../../../../../../routes';
+import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import { NewProjectData } from '../../../../../types/project';
 
 interface InteractionDetailsProps {
@@ -41,12 +41,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       fiscal_year: projectDetails?.fiscal_year || '',
       account_name: projectDetails?.account_name || '',
     };
+    const path = generatePath(INTERACTIONS_EDIT, {
+      module: 'project',
+      interactionId: data?.rid || '',
+    });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
     });
-    navigate(`${INTERACTIONS}/edit/${data?.rid}?${queryParams.toString()}`);
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const headerButtons = [
