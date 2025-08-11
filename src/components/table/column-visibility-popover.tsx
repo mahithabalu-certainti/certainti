@@ -358,10 +358,12 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
             tabIndex={0}
             aria-label='Close'
           >
-            <CloseIcon
-              size='small'
-              className='text-gray-500 group-hover:text-gray-700 h-2 w-2'
-            />
+            <React.Suspense fallback={null}>
+              <CloseIcon
+                size='small'
+                className='text-gray-500 group-hover:text-gray-700 h-2 w-2'
+              />
+            </React.Suspense>
           </div>
         </div>
         <div className='flex items-center gap-1 mb-3'>
