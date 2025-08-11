@@ -16,6 +16,9 @@ export const HttpStatus = {
   SUCCESS_NOTIFICATION: "Operation completed successfully!",
 };
 
+export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
+export const MAIN_SCHEMA_NAME = "trd365"
+
 export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
