@@ -258,6 +258,33 @@ async function exportStagingFailureList (req : Request, res : Response) {
                 }));
                 break;
 
+            case "project_task":
+                failureType = "Import - Load Failures - Project Task";
+                finalPaginatedData = results.map((data) => ({
+                    "Project Id": data.project_id,
+                    "Project Type": data.project_type,
+                    "Project Name": data.project_name,
+                    "Project Description": data.project_description,
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Resource Designation": data.resource_designation,
+                    "Resource Role": data.resource_role,
+                    "Total Experience": data.total_experience,
+                    "Task Start Date": data.task_start_date,
+                    "Task End Date": data.task_end_date,
+                    "Total Hours": data.total_hours,
+                    "Total Cost": data.total_cost,
+                    "Resource Task Description": data.resource_task_description,
+                    "Resource City": data.resource_city,
+                    "Resource State/Province": data.resource_state_province,
+                    "Resource Country": data.resource_country,
+                    "Currency": data.currency,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
             default:
                 return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "Invalid entity type.");
         }
@@ -394,6 +421,33 @@ async function exportLoadFailureList(req: Request, res: Response) {
                     "Skill Details": data.skill_details,
                     "Skill Level": data.skill_level,
                     "Comments": data.comments,
+                    "Status": data.status,
+                    "Error Description": data.error_descriptions
+                }));
+                break;
+
+            case "project_task":
+                failureType = "Import - Load Failures - Project Task";
+                finalPaginatedData = results.map((data) => ({
+                    "Project Id": data.project_id,
+                    "Project Type": data.project_type,
+                    "Project Name": data.project_name,
+                    "Project Description": data.project_description,
+                    "Resource Id": data.resource_id,
+                    "Resource Name": data.resource_name,
+                    "Resource Type": data.resource_type,
+                    "Resource Designation": data.resource_designation,
+                    "Resource Role": data.resource_role,
+                    "Total Experience": data.total_experience,
+                    "Task Start Date": data.task_start_date,
+                    "Task End Date": data.task_end_date,
+                    "Total Hours": data.total_hours,
+                    "Total Cost": data.total_cost,
+                    "Resource Task Description": data.resource_task_description,
+                    "Resource City": data.resource_city,
+                    "Resource State/Province": data.resource_state_province,
+                    "Resource Country": data.resource_country,
+                    "Currency": data.currency,
                     "Status": data.status,
                     "Error Description": data.error_descriptions
                 }));
