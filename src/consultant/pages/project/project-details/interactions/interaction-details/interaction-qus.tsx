@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
+import ReactQuill from 'react-quill';
 import { InteractionQuestion } from '../../../../../types';
 import { DownloadIcon, PdfIcon } from '../../../../../../assets';
 import TextButton from '../../../../../../components/button/text-button';
@@ -130,20 +131,35 @@ const InteractionQuestions: React.FC<Props> = ({ questions }) => {
 
             {isEditing ? (
               <div className='mt-2'>
-                <textarea
+                <ReactQuill
                   value={editedAnswers[q.question_id]}
-                  onChange={(e) =>
-                    handleAnswerChange(q.question_id, e.target.value)
-                  }
-                  className='outline-none placeholder-custom-color rounded-[2px] min-h-20 border border-[#CBD6E2] w-full text-[14px] text-[#425A76] font-normal bg-white py-2 px-3 resize-none focus:border-1 focus:border-blue-400'
+                  onChange={(value) => handleAnswerChange(q.question_id, value)}
+                  theme='snow'
+                  className='rounded-[2px] bg-white'
+                  modules={{
+                    toolbar: [
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ list: 'ordered' }, { list: 'bullet' }],
+                      ['link'],
+                      ['clean'],
+                    ],
+                  }}
+                  formats={[
+                    'bold',
+                    'italic',
+                    'underline',
+                    'strike',
+                    'list',
+                    'bullet',
+                    'link',
+                  ]}
                 />
               </div>
             ) : (
               <div
                 className={`mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20 text-[14px] text-[#425A76] font-normal ${q.answer ? 'bg-[#FFFBFA]' : 'bg-[#FCFCFC]'}`}
-              >
-                {q.answer}
-              </div>
+                dangerouslySetInnerHTML={{ __html: q.answer || '' }}
+              />
             )}
 
             {q.attachments.length > 0 && (
