@@ -277,7 +277,6 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
           </div>
         </SortableContext>
 
-        {/* Max Items Warning */}
         {board.maxItems && visibleTasks.length >= board.maxItems && (
           <div
             className='text-amber-600 bg-amber-50 p-2 border border-amber-200 mt-4'

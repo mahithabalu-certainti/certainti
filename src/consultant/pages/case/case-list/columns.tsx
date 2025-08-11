@@ -2,7 +2,7 @@ import { ListTableColumn } from '../../../../components/table/types';
 import { Case } from '../../../types';
 
 export const getAllCaseListColumns = (
-  handleCaseClick: (caseItem: Case) => void
+  onClick: (caseItem: Case) => void
 ): ListTableColumn<Case>[] => {
   return [
     {
@@ -23,7 +23,7 @@ export const getAllCaseListColumns = (
       render: (row: Case) => (
         <span
           className='cursor-pointer no-underline hover:underline hover:text-[#1755E7] font-medium'
-          onClick={() => handleCaseClick(row)}
+          onClick={() => onClick(row)}
         >
           {row.case_id}
         </span>

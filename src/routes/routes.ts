@@ -72,7 +72,7 @@ export const ATTACHMENTS = '/attachments';
 
 //CASES ROUTES
 export const CASE = '/case';
-export const CASE_EDIT = `${CASE}/edit`;
+export const CASE_DETAILS = `${CASE}/details/:caseid`;
 
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

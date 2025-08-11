@@ -57,8 +57,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
   const {
     allowCreateBoard = true,
-    allowDeleteBoard = true,
-    allowSwapBoards = true,
+    allowSwapBoards = false,
     allowCreateTask = true,
     allowTaskMovement = true,
     maxBoardsLimit,
@@ -337,16 +336,6 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     onBoardsChange([...boards, newBoard]);
   };
 
-  const handleBoardDelete = (boardId: string) => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete this board? All tasks will be lost.'
-      )
-    ) {
-      onBoardsChange(boards.filter((board) => board.id !== boardId));
-    }
-  };
-
   const handleBoardRename = (boardId: string, newTitle: string) => {
     const updatedBoards = boards.map((board) => {
       if (board.id === boardId) {
@@ -361,7 +350,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     allowCreateBoard && (!maxBoardsLimit || boards.length < maxBoardsLimit);
 
   return (
-    <div className={`p-6 bg-gray-100 min-h-screen ${className}`}>
+    <div className={`p-6 min-h-screen ${className}`}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -385,7 +374,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
                 boardIndex={index}
                 onTaskCreate={allowCreateTask ? handleTaskCreate : undefined}
                 onTaskUpdate={handleTaskUpdate}
-                onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
+                // onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
                 onBoardRename={handleBoardRename}
                 customDropdownOptions={customDropdownOptions}
                 allowCreateTask={allowCreateTask}
@@ -425,8 +414,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
               boardId={activeItem.boardId}
               disabled={false}
             />
-          ) : // --- START: MODIFICATION ---
-          activeItem?.type === 'board' && draggedBoard ? (
+          ) : activeItem?.type === 'board' && draggedBoard ? (
             <div className='flex-shrink-0 w-80'>
               <BoardColumn
                 board={draggedBoard}
@@ -444,7 +432,6 @@ const KanbanBoard: React.FC<KanbanProps> = ({
               />
             </div>
           ) : null}
-          {/* --- END: MODIFICATION --- */}
         </DragOverlay>
       </DndContext>
     </div>

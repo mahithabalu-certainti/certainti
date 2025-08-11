@@ -47,7 +47,7 @@ import {
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
   CASE,
-  CASE_EDIT,
+  CASE_DETAILS,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -55,7 +55,7 @@ import ProjectTaskForm from './consultant/pages/project/project-details/project-
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
 import Case from './consultant/pages/case/case';
-import EditCase from './consultant/pages/case/case-details';
+import { CaseDetails } from './consultant/pages/case/case-details';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -159,7 +159,6 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
                 <Route path={PROJECT_CREATE} element={<ProjectForm />} />
                 <Route path={PROJECT_EDIT} element={<ProjectForm />} />
-                <Route path={CASE_EDIT} element={<EditCase />} />
                 <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
                 <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
                 <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
@@ -168,6 +167,8 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                 <Route path={RESOURCE} element={<Resource />} />
                 <Route path={PROFILE} element={<Profile />} />
+                <Route path={CASE} element={<Case />} />
+                <Route path={CASE_DETAILS} element={<CaseDetails />} />
                 <Route
                   path={PROJECT_TASK_CREATE}
                   element={<ProjectTaskForm />}
@@ -182,7 +183,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<ProjectResourceForm />}
                 />
                 <Route path={ATTACHMENTS} element={<Attachments />} />
-                <Route path={CASE} element={<Case />} />
+
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>

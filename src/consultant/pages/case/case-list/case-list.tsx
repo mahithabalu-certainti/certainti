@@ -6,7 +6,8 @@ import { ListTable } from '../../../../components/table';
 import { ActionItem, CellEditData } from '../../../../components/table/types';
 import { getAllCaseListColumns } from './columns';
 import { useAllCases } from '../MockData';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { CASE_DETAILS } from '../../../../routes';
 
 interface ICaseTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -69,11 +70,15 @@ export const CaseList: React.FC<ICaseTableProps> = ({
     }));
   };
 
-  const handleCaseClick = (caseItem: Case) => {
+  const handleCaseIDClick = (caseItem: Case) => {
     console.log('Case clicked:', caseItem);
+    const path = generatePath(CASE_DETAILS, {
+      caseid: caseItem.case_id,
+    });
+    navigate(path);
   };
 
-  const caseColumns = getAllCaseListColumns(handleCaseClick);
+  const caseColumns = getAllCaseListColumns(handleCaseIDClick);
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     console.log('Cell edit:', rowId, updates);
