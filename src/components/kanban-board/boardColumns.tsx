@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities'; // 2. Import CSS utility
 import Card from './card';
 import type { Board, DropdownOption, Task } from './types';
 import DropdownMenu from './dropdownMenu';
-import { AddIcon, EditIcon } from '../../assets';
+import { AddIcon, NotesIcon } from '../../assets';
 
 interface BoardColumnProps {
   board: Board;
@@ -129,7 +129,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
           {
             id: 'rename',
             label: 'Rename Board',
-            icon: <EditIcon />,
+            icon: <NotesIcon />,
             action: () => setIsRenaming(true),
           },
         ]

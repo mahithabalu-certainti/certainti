@@ -120,6 +120,7 @@ const icons = {
   arrowDownDisabledIcon: () => import('./arrow-down-icon.svg?react'),
   cases: () => import('./cases.svg?react'),
   actionItems: () => import('./action-items.svg?react'),
+  dropdownmenuIcon: () => import('./dropdown-menu.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -249,3 +250,4 @@ export const ImportDetailsIcon = createLazySvgIcon('importDetailsIcon');
 export const ManageGroup = createLazySvgIcon('ManageGroupIcon');
 export const GlobalCasesIcon = createLazySvgIcon('cases');
 export const ActionItemsIcon = createLazySvgIcon('actionItems');
+export const DropDownMenuIcon = createLazySvgIcon('dropdownmenuIcon');

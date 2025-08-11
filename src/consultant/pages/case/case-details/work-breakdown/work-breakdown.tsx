@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import {
-  Board,
-  DropdownOption,
-} from '../../../../../components/kanban-board/types';
+import { Board } from '../../../../../components/kanban-board/types';
 import KanbanBoard from '../../../../../components/kanban-board/kanbanBoard';
-import { ActionItemsIcon, DownloadIcon } from '../../../../../assets';
+import { ActionItemsIcon } from '../../../../../assets';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -93,17 +90,6 @@ const WorkBreakDown = () => {
   ];
   const [boards, setBoards] = useState<Board[]>(initialBoards);
 
-  const customDropdownOptions: DropdownOption[] = [
-    {
-      id: 'export',
-      label: 'Export Board',
-      icon: <DownloadIcon size={16} />,
-      action: () => {
-        console.log('Export functionality would be implemented here');
-      },
-    },
-  ];
-
   const headerButtons = [
     {
       label: 'Edit',
@@ -146,13 +132,7 @@ const WorkBreakDown = () => {
         showItemCount={false}
         hideSection={false}
       />
-      <KanbanBoard
-        boards={boards}
-        onBoardsChange={setBoards}
-        config={{
-          customDropdownOptions,
-        }}
-      />
+      <KanbanBoard boards={boards} onBoardsChange={setBoards} />
     </>
   );
 };

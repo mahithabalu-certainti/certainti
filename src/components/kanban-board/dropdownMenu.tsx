@@ -3,6 +3,7 @@
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import type { DropdownOption } from './types';
+import { DropDownMenuIcon } from '../../assets';
 
 interface DropdownMenuProps {
   options: DropdownOption[];
@@ -41,7 +42,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
         className='p-1 rounded-md hover:bg-white/20 transition-colors duration-200'
         aria-label='More options'
       >
-        :
+        <DropDownMenuIcon />
       </button>
 
       {isOpen && (
