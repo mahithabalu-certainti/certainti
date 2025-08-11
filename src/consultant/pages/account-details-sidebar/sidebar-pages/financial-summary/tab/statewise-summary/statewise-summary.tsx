@@ -321,7 +321,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         </div>
         <ListTable
           data={resourceMetric}
-          columns={getResourceMetricColumns(permissionMap, currencySymbol)}
+          columns={getResourceMetricColumns(permissionMap)}
           getRowId={getResourceMetricRowId}
           hoverHighlight={false}
           tableStyle={{
