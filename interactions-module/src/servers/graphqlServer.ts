@@ -1,7 +1,7 @@
 import { ApolloServer } from "@apollo/server";
 import { Application } from "express";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import configurations from "../config/confg";
+import configurations from "../config/config";
 import { expressMiddleware } from "@apollo/server/express4";
 import initRequestContext from "../graphql/context";
 import interactionDefs from "../graphql/interactionSchema";

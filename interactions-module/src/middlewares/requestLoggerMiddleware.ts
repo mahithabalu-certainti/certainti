@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import configurations from "../config/confg";
+import configurations from "../config/config";
 
 const requestLogger = (
   req: Request,

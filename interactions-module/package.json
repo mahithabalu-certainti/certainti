@@ -12,6 +12,7 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^24.2.0",
+    "@types/uuid": "^10.0.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {

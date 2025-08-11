@@ -2,7 +2,7 @@ import Joi from "joi";
 import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
 import { HttpStatus } from "./constants";
-import configurations from "../config/confg";
+import configurations from "../config/config";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
