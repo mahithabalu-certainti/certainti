@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { InteractionList } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
-import { INTERACTIONS, INTERACTIONS_CREATE } from '../../../../../routes';
+import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
@@ -13,6 +18,8 @@ import InteractionDetails from './interaction-details/interaction-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ListTable } from '../../../../../components/table';
 import { accountDetailsProps } from '../../../account-details/utils';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -55,6 +62,12 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
   const [count, setCount] = useState<number>(0);
 
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
   const interactionId = searchParams.get('interaction_id');
   const viewDetails = !!interactionId;
 
@@ -65,7 +78,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       sort: sortField,
       sort_by: sortBy,
       filters: appliedFilters,
-      accountRid: accountid || '',
+      account_rid: accountid || '',
+      fiscal_year: newFiscalYear,
     },
     !viewDetails,
     refreshInteractions
@@ -105,22 +119,29 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const handleCreate = () => {
     const accountId = accountid ?? '';
+    const path = generatePath(INTERACTIONS_CREATE, {
+      module: 'account',
+    });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
     });
-    navigate(`${INTERACTIONS_CREATE}?${queryParams.toString()}`);
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: InteractionList) => {
     const accountId = accountid ?? '';
+    const path = generatePath(INTERACTIONS_EDIT, {
+      module: 'account',
+      interactionId: row.rid,
+    });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
     });
-    navigate(`${INTERACTIONS}/edit/${row.rid}?${queryParams.toString()}`);
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const headerButtons = [

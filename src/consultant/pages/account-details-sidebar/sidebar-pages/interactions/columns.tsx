@@ -44,21 +44,22 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['iteration']?.read,
   },
   {
-    id: 'age_days',
-    sortId: 'age_days',
+    id: 'interaction_age',
+    sortId: 'interaction_age',
     label: 'Age (Days)',
     width: 120,
     sortable: true,
     // hide:
-    //   !permissionMap?.['age_days']?.edit && !permissionMap?.['age_days']?.read,
+    //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,
   },
   {
     id: 'status',
-    sortId: 'status',
+    sortId: 'status_rid',
     label: 'Status',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    // hide: !permissionMap?.['status_rid']?.edit && !permissionMap?.['status_rid']?.read,
+    render: (row: InteractionList) => row.status.status_name || '-',
   },
   {
     id: 'recipient_name',
@@ -69,6 +70,8 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['recipient_name']?.edit &&
     //   !permissionMap?.['recipient_name']?.read,
+    render: (row: InteractionList) =>
+      row.recipient_details.recipient_name || '-',
   },
   {
     id: 'recipient_email',
@@ -79,56 +82,59 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['recipient_email']?.edit &&
     //   !permissionMap?.['recipient_email']?.read,
+    render: (row: InteractionList) =>
+      row.recipient_details.recipient_email || '-',
   },
   {
-    id: 'last_sent_date',
-    sortId: 'last_sent_date',
+    id: 'last_sent_on',
+    sortId: 'last_sent_on',
     label: 'Last Sent Date',
     width: 180,
     sortable: true,
     // hide:
-    //   !permissionMap?.['last_sent_date']?.edit &&
-    //   !permissionMap?.['last_sent_date']?.read,
+    //   !permissionMap?.['last_sent_on']?.edit &&
+    //   !permissionMap?.['last_sent_on']?.read,
     render: (row: InteractionList) =>
-      row.last_sent_date && formatDateToYYYYMMDDWithTime(row.last_sent_date),
+      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_sent_on),
   },
   {
-    id: 'last_reminder_date',
-    sortId: 'last_reminder_date',
+    id: 'last_reminder_on',
+    sortId: 'last_reminder_on',
     label: 'Last Reminder Date',
     width: 200,
     sortable: true,
     // hide:
-    //   !permissionMap?.['last_reminder_date']?.edit &&
-    //   !permissionMap?.['last_reminder_date']?.read,
+    //   !permissionMap?.['last_reminder_on']?.edit &&
+    //   !permissionMap?.['last_reminder_on']?.read,
     render: (row: InteractionList) =>
-      row.last_reminder_date &&
-      formatDateToYYYYMMDDWithTime(row.last_reminder_date),
+      row.last_reminder_on &&
+      formatDateToYYYYMMDDWithTime(row.last_reminder_on),
   },
   {
-    id: 'response_date',
-    sortId: 'response_date',
+    id: 'response_submitted_on',
+    sortId: 'response_submitted_on',
     label: 'Response Date',
     width: 180,
     sortable: true,
     // hide:
-    //   !permissionMap?.['response_date']?.edit &&
-    //   !permissionMap?.['response_date']?.read,
+    //   !permissionMap?.['response_submitted_on']?.edit &&
+    //   !permissionMap?.['response_submitted_on']?.read,
     render: (row: InteractionList) =>
-      row.response_date && formatDateToYYYYMMDDWithTime(row.response_date),
+      row.response_submitted_on &&
+      formatDateToYYYYMMDDWithTime(row.response_submitted_on),
   },
   {
-    id: 'last_response_update',
-    sortId: 'last_response_update',
+    id: 'response_updated_on',
+    sortId: 'response_updated_on',
     label: 'Last Response Update',
     width: 200,
     sortable: true,
     // hide:
-    //   !permissionMap?.['last_response_update']?.edit &&
-    //   !permissionMap?.['last_response_update']?.read,
+    //   !permissionMap?.['response_updated_on']?.edit &&
+    //   !permissionMap?.['response_updated_on']?.read,
     render: (row: InteractionList) =>
-      row.last_response_update &&
-      formatDateToYYYYMMDDWithTime(row.last_response_update),
+      row.response_updated_on &&
+      formatDateToYYYYMMDDWithTime(row.response_updated_on),
   },
   {
     id: 'attachments',
@@ -151,18 +157,18 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['interaction_history']?.read,
   },
   {
-    id: 'interaction_link',
-    sortId: 'interaction_link',
+    id: 'interaction_url',
+    sortId: 'interaction_url',
     label: 'Interaction Link',
     width: 140,
     sortable: false,
     // hide:
-    //   !permissionMap?.['interaction_link']?.edit &&
-    //   !permissionMap?.['interaction_link']?.read,
+    //   !permissionMap?.['interaction_url']?.edit &&
+    //   !permissionMap?.['interaction_url']?.read,
     render: (row: InteractionList) =>
-      row.interaction_link ? (
+      row.interaction_url ? (
         <a
-          href={row.interaction_link}
+          href={row.interaction_url}
           target='_blank'
           rel='noopener noreferrer'
           className='text-[#1755E7] hover:underline'
@@ -174,22 +180,23 @@ export const getInteractionListColumns = (
       ),
   },
   {
-    id: 'parent_interaction_id',
-    sortId: 'parent_interaction_id',
+    id: 'parent_interaction_rid',
+    sortId: 'parent_interaction_rid',
     label: 'Parent Interaction ID',
     width: 200,
     sortable: true,
     // hide:
-    //   !permissionMap?.['parent_interaction_id']?.edit &&
-    //   !permissionMap?.['parent_interaction_id']?.read,
+    //   !permissionMap?.['parent_interaction_rid']?.edit &&
+    //   !permissionMap?.['parent_interaction_rid']?.read,
   },
   {
-    id: 'type',
-    sortId: 'type',
+    id: 'interaction_type',
+    sortId: 'interaction_type',
     label: 'Type',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
+    // hide: !permissionMap?.['interaction_type']?.edit && !permissionMap?.['interaction_type']?.read,
+    render: (row: InteractionList) => row.interaction_type.type_name || '-',
   },
   {
     id: 'response_source',
@@ -210,39 +217,43 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['created_by']?.edit &&
     //   !permissionMap?.['created_by']?.read,
+    render: (row: InteractionList) =>
+      row.created_by.created_by_user_name || '-',
   },
   {
-    id: 'created_date',
-    sortId: 'created_date',
+    id: 'created_datetime',
+    sortId: 'created_datetime',
     label: 'Created Date',
     width: 200,
     sortable: true,
     // hide:
-    //   !permissionMap?.['created_date']?.edit &&
-    //   !permissionMap?.['created_date']?.read,
+    //   !permissionMap?.['created_datetime']?.edit &&
+    //   !permissionMap?.['created_datetime']?.read,
     render: (row: InteractionList) =>
-      formatDateToYYYYMMDDWithTime(row.created_date),
+      formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
-    id: 'last_updated_by',
-    sortId: 'last_updated_by',
+    id: 'modified_by',
+    sortId: 'modified_by',
     label: 'Last Updated By',
     width: 180,
     sortable: true,
     // hide:
-    //   !permissionMap?.['last_updated_by']?.edit &&
-    //   !permissionMap?.['last_updated_by']?.read,
+    //   !permissionMap?.['modified_by']?.edit &&
+    //   !permissionMap?.['modified_by']?.read,
+    render: (row: InteractionList) =>
+      row.modified_by.modified_by_user_name || '-',
   },
   {
-    id: 'last_updated_date',
-    sortId: 'last_updated_date',
+    id: 'modified_datetime',
+    sortId: 'modified_datetime',
     label: 'Last Updated Date',
     width: 200,
     sortable: true,
     // hide:
-    //   !permissionMap?.['last_updated_date']?.edit &&
-    //   !permissionMap?.['last_updated_date']?.read,
+    //   !permissionMap?.['modified_datetime']?.edit &&
+    //   !permissionMap?.['modified_datetime']?.read,
     render: (row: InteractionList) =>
-      formatDateToYYYYMMDDWithTime(row.last_updated_date),
+      formatDateToYYYYMMDDWithTime(row.modified_datetime),
   },
 ];

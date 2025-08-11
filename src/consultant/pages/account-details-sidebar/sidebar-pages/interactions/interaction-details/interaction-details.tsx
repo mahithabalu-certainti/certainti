@@ -1,6 +1,11 @@
 import React from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { INTERACTIONS } from '../../../../../../routes';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
@@ -36,12 +41,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
 
   const handleEdit = () => {
     const accountId = accountid ?? '';
+    const path = generatePath(INTERACTIONS_EDIT, {
+      module: 'account',
+      interactionId: data?.rid || '',
+    });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
     });
-    navigate(`${INTERACTIONS}/edit/${data?.rid}?${queryParams.toString()}`);
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const headerButtons = [
