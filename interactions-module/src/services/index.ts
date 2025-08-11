@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import { IInteractionService } from "./interfaces/interface";
-import { InteractionService } from "./interactionService";
+import { InteractionService } from "./interactions/interactionService";
 class Services {
   private logger: Logger;
   interactionService: IInteractionService;
