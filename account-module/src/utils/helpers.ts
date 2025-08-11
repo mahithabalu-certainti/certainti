@@ -203,8 +203,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'resource_designation', data_type: 'String',required:false },
         { column_name: 'resource_role', data_type: 'String',required:false },
         { column_name: 'total_experience', data_type: 'Integer',required:false },
-        { column_name: 'resource_startdate', data_type: 'Date' ,required:false},
-        { column_name: 'resource_enddate', data_type: 'Date',required:false },
+        { column_name: 'resource_start_date', data_type: 'Date' ,required:false},
+        { column_name: 'resource_end_date', data_type: 'Date',required:false },
         { column_name: 'resource_country', data_type: 'String' ,required:false},
         { column_name: 'resource_state_province', data_type: 'String',required:false },
         { column_name: 'resource_city', data_type: 'String',required:false},
@@ -287,7 +287,6 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'project_lead', data_type: 'String',required:false },
         { column_name: 'project_tech_poc_name', data_type: 'String',required:false },
         { column_name: 'project_tech_poc_email', data_type: 'email',required:false },
-        { column_name: 'project_tech_poc_mobile', data_type: 'String',required:false },
         { column_name: 'project_type', data_type: 'String' ,required:true},
         { column_name: 'project_classification', data_type: 'String',required:false },
         { column_name: 'project_client_group', data_type: 'String',required:false },
@@ -298,7 +297,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_fte_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_effort_in_hrs', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_cost', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'total_non_labor_cost_cost', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false },
       ];
 
     case 'project_resource':
@@ -318,8 +317,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'project_resource_description', data_type: 'String',required:false },
         { column_name: 'resource_city', data_type: 'String' ,required:false},
-        { column_name: 'resource_state', data_type: 'String' ,required:false},
-        { column_name: 'province', data_type: 'String' ,required:false},
+        { column_name: 'resource_state_province', data_type: 'String' ,required:false},
         { column_name: 'resource_country', data_type: 'String',required:false },
         { column_name: 'currency', data_type: 'String',required:false },
       ];
