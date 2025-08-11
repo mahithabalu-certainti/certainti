@@ -1,3 +1,4 @@
+import type React from 'react';
 export interface Task {
   id: string;
   title: string;
@@ -35,6 +36,7 @@ export interface KanbanConfig {
   allowSwapBoards?: boolean;
   allowCreateTask?: boolean;
   allowTaskMovement?: boolean;
+  allowTaskDelete?: boolean;
   maxBoardsLimit?: number;
   customDropdownOptions?: DropdownOption[];
 }

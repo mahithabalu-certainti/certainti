@@ -19,9 +19,27 @@ import {
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import type { ActiveItem, Board, KanbanProps, Task } from './types';
-import BoardColumn from './boardColumns';
+
 import Card from './card';
-import { AddIcon } from '../../assets';
+import BoardColumn from './boardColumns';
+
+const AddIcon = ({ className = '' }: { className?: string }) => (
+  <svg
+    width='16'
+    height='16'
+    viewBox='0 0 24 24'
+    fill='none'
+    className={className}
+  >
+    <path
+      d='M12 5v14M5 12h14'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+  </svg>
+);
 
 const KanbanBoard: React.FC<KanbanProps> = ({
   boards = [],
@@ -57,16 +75,17 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
   const {
     allowCreateBoard = true,
-    allowSwapBoards = false,
+    allowDeleteBoard = true,
+    allowSwapBoards = true,
     allowCreateTask = true,
     allowTaskMovement = true,
+    allowTaskDelete = true,
     maxBoardsLimit,
     customDropdownOptions = [],
   } = config;
 
   const visibleBoards = (boards || []).filter((board) => !board.hidden);
 
-  // --- START: MODIFICATION ---
   // Find the full board object and its index for the DragOverlay
   const draggedBoard =
     activeItem?.type === 'board'
@@ -77,15 +96,30 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     activeItem?.type === 'board' && draggedBoard
       ? boards.findIndex((b) => b.id === draggedBoard.id)
       : -1;
-  // --- END: MODIFICATION ---
 
   const generateId = () => {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
+  // Direct swap function for boards
+  const swapBoards = (
+    boards: Board[],
+    fromIndex: number,
+    toIndex: number
+  ): Board[] => {
+    const newBoards = [...boards];
+    [newBoards[fromIndex], newBoards[toIndex]] = [
+      newBoards[toIndex],
+      newBoards[fromIndex],
+    ];
+    return newBoards;
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const data = active.data.current;
+
+    console.log('Drag start:', data); // Debug log
 
     if (data?.type === 'task') {
       setActiveItem({
@@ -104,13 +138,17 @@ const KanbanBoard: React.FC<KanbanProps> = ({
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    if (!over || !allowTaskMovement || !boards || !Array.isArray(boards))
-      return;
+    if (!over || !boards || !Array.isArray(boards)) return;
 
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    if (activeData?.type === 'task' && overData?.type === 'board') {
+    // Only handle task movement in dragOver, not board swapping
+    if (
+      activeData?.type === 'task' &&
+      overData?.type === 'board' &&
+      allowTaskMovement
+    ) {
       const activeTaskId = activeData.task.id;
       const sourceBoardId = activeData.boardId;
       const targetBoardId = overData.board.id;
@@ -166,26 +204,37 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     const activeData = active.data.current;
     const overData = over.data.current;
 
+    console.log('Drag end:', { activeData, overData, allowSwapBoards }); // Debug log
+
+    // Handle board swapping - direct swap only
     if (
       activeData?.type === 'board' &&
       overData?.type === 'board' &&
       allowSwapBoards
     ) {
+      console.log('Board swap detected'); // Debug log
+
       const activeIndex = boards.findIndex((b) => b.id === activeData.board.id);
       const overIndex = boards.findIndex((b) => b.id === overData.board.id);
 
-      if (activeIndex !== overIndex) {
-        onBoardsChange(arrayMove(boards, activeIndex, overIndex));
+      console.log('Board indices:', { activeIndex, overIndex }); // Debug log
+
+      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+        console.log('Performing board swap'); // Debug log
+        const swappedBoards = swapBoards(boards, activeIndex, overIndex);
+        onBoardsChange(swappedBoards);
       }
       return;
     }
 
+    // Handle task to task sorting within the same board or between boards
     if (activeData?.type === 'task' && overData?.type === 'task') {
       const activeTaskId = activeData.task.id;
       const overTaskId = overData.task.id;
       const activeBoardId = activeData.boardId;
       const overBoardId = overData.boardId;
 
+      // Same board reordering
       if (activeBoardId === overBoardId) {
         const board = boards.find((b) => b.id === activeBoardId);
         if (!board) return;
@@ -206,6 +255,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
           onBoardsChange(updatedBoards);
         }
       } else {
+        // Cross-board task movement
         const sourceBoard = boards.find((b) => b.id === activeBoardId);
         const targetBoard = boards.find((b) => b.id === overBoardId);
 
@@ -239,6 +289,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
       }
     }
 
+    // Handle task to board drop (when not already handled in dragOver)
     if (activeData?.type === 'task' && overData?.type === 'board') {
       const activeTaskId = activeData.task.id;
       const sourceBoardId = activeData.boardId;
@@ -316,6 +367,20 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     onBoardsChange(updatedBoards);
   };
 
+  const handleTaskDelete = (boardId: string, taskId: string) => {
+    const updatedBoards = boards.map((board) => {
+      if (board.id === boardId) {
+        return {
+          ...board,
+          tasks: board.tasks.filter((task) => task.id !== taskId),
+        };
+      }
+      return board;
+    });
+
+    onBoardsChange(updatedBoards);
+  };
+
   const handleBoardCreate = () => {
     const colors = [
       '#8B5CF6',
@@ -334,6 +399,11 @@ const KanbanBoard: React.FC<KanbanProps> = ({
     };
 
     onBoardsChange([...boards, newBoard]);
+  };
+
+  const handleBoardDelete = (boardId: string) => {
+    const updatedBoards = boards.filter((board) => board.id !== boardId);
+    onBoardsChange(updatedBoards);
   };
 
   const handleBoardRename = (boardId: string, newTitle: string) => {
@@ -359,7 +429,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
         onDragEnd={handleDragEnd}
       >
         <div
-          className='flex gap-6 overflow-x-auto pb-6'
+          className='flex gap-6 overflow-x-auto pb-6 items-start'
           role='region'
           aria-label='Kanban Board'
         >
@@ -374,11 +444,13 @@ const KanbanBoard: React.FC<KanbanProps> = ({
                 boardIndex={index}
                 onTaskCreate={allowCreateTask ? handleTaskCreate : undefined}
                 onTaskUpdate={handleTaskUpdate}
-                // onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
+                onTaskDelete={allowTaskDelete ? handleTaskDelete : undefined}
+                onBoardDelete={allowDeleteBoard ? handleBoardDelete : undefined}
                 onBoardRename={handleBoardRename}
                 customDropdownOptions={customDropdownOptions}
                 allowCreateTask={allowCreateTask}
                 allowTaskInteraction={allowTaskMovement}
+                allowTaskDelete={allowTaskDelete}
                 allowBoardSwap={allowSwapBoards}
               />
             ))}
@@ -392,6 +464,7 @@ const KanbanBoard: React.FC<KanbanProps> = ({
                   w-full h-32 border-2 border-dashed border-gray-300
                   flex items-center justify-center text-gray-500 hover:border-gray-400
                   hover:text-gray-600 transition-all duration-200 group bg-white/50
+                  focus:outline-none focus:ring-0
                 '
                 style={{ borderRadius: '2px' }}
                 title='Create New Board'
@@ -413,20 +486,21 @@ const KanbanBoard: React.FC<KanbanProps> = ({
               task={activeItem.task}
               boardId={activeItem.boardId}
               disabled={false}
+              allowDelete={allowTaskDelete}
             />
           ) : activeItem?.type === 'board' && draggedBoard ? (
             <div className='flex-shrink-0 w-80'>
               <BoardColumn
                 board={draggedBoard}
                 boardIndex={draggedBoardIndex}
-                // Pass props from the main config to ensure visual consistency
                 customDropdownOptions={customDropdownOptions}
                 allowCreateTask={allowCreateTask}
                 allowTaskInteraction={allowTaskMovement}
+                allowTaskDelete={allowTaskDelete}
                 allowBoardSwap={allowSwapBoards}
-                // Event handlers are not needed for the visual clone
                 onTaskCreate={undefined}
                 onTaskUpdate={undefined}
+                onTaskDelete={undefined}
                 onBoardDelete={undefined}
                 onBoardRename={undefined}
               />

@@ -105,9 +105,15 @@ export const CaseDetails = () => {
     if (list) {
       setActiveKey(list);
     } else {
-      setActiveKey('details');
+      setActiveKey('workBreakdown');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (location.state?.activeKey) {
+      setActiveKey(location.state.activeKey);
+    }
+  }, [location.state]);
 
   const menuItems: ActionsDropdownItem[] = [
     {

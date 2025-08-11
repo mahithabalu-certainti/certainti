@@ -6,13 +6,88 @@ import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
-  useSortable, // 1. Import useSortable
+  useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities'; // 2. Import CSS utility
+import { CSS } from '@dnd-kit/utilities';
 import Card from './card';
 import type { Board, DropdownOption, Task } from './types';
 import DropdownMenu from './dropdownMenu';
-import { AddIcon, NotesIcon } from '../../assets';
+
+// Inline icon components
+const AddIcon = ({
+  size = 16,
+  className = '',
+}: {
+  size?: number;
+  className?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox='0 0 24 24'
+    fill='none'
+    className={className}
+  >
+    <path
+      d='M12 5v14M5 12h14'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+  </svg>
+);
+
+const NotesIcon = () => (
+  <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+    <path
+      d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+    <polyline
+      points='14,2 14,8 20,8'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+    <line
+      x1='16'
+      y1='13'
+      x2='8'
+      y2='13'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+    <line
+      x1='16'
+      y1='17'
+      x2='8'
+      y2='17'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+    <path
+      d='M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+  </svg>
+);
 
 interface BoardColumnProps {
   board: Board;
@@ -23,11 +98,13 @@ interface BoardColumnProps {
     taskId: string,
     updates: Partial<Task>
   ) => void;
+  onTaskDelete?: (boardId: string, taskId: string) => void;
   onBoardDelete?: (boardId: string) => void;
   onBoardRename?: (boardId: string, newTitle: string) => void;
   customDropdownOptions?: DropdownOption[];
   allowCreateTask?: boolean;
   allowTaskInteraction?: boolean;
+  allowTaskDelete?: boolean;
   allowBoardSwap?: boolean;
 }
 
@@ -36,11 +113,13 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   boardIndex,
   onTaskCreate,
   onTaskUpdate,
-  // onBoardDelete,
+  onTaskDelete,
+  onBoardDelete,
   onBoardRename,
   customDropdownOptions = [],
   allowCreateTask = true,
   allowTaskInteraction = true,
+  allowTaskDelete = true,
   allowBoardSwap = false,
 }) => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -57,25 +136,17 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     },
   });
 
-  // 3. Replace useDraggable with useSortable
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging, // Get the isDragging state
-  } = useSortable({
-    id: `board-${board.id}`,
-    data: {
-      type: 'board',
-      board,
-      boardIndex,
-    },
-    disabled: !allowBoardSwap,
-  });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: `board-${board.id}`,
+      data: {
+        type: 'board',
+        board,
+        boardIndex,
+      },
+      disabled: !allowBoardSwap,
+    });
 
-  // 4. Use CSS.Transform for safer style generation
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -101,6 +172,23 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     if (newBoardTitle.trim() && onBoardRename) {
       onBoardRename(board.id, newBoardTitle.trim());
       setIsRenaming(false);
+    }
+  };
+
+  const handleTaskDelete = (taskId: string) => {
+    if (onTaskDelete) {
+      onTaskDelete(board.id, taskId);
+    }
+  };
+
+  const handleBoardDelete = () => {
+    if (
+      onBoardDelete &&
+      window.confirm(
+        `Are you sure you want to delete "${board.title}"? This action cannot be undone.`
+      )
+    ) {
+      onBoardDelete(board.id);
     }
   };
 
@@ -134,18 +222,23 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
           },
         ]
       : []),
+    ...(onBoardDelete
+      ? [
+          {
+            id: 'delete',
+            label: 'Delete Board',
+            icon: <TrashIcon />,
+            action: handleBoardDelete,
+            variant: 'danger' as const,
+          },
+        ]
+      : []),
   ];
 
   return (
     <div
-      ref={allowBoardSwap ? setNodeRef : undefined} // Use the ref from useSortable
-      className={`
-        flex-shrink-0 w-80 bg-gray-50 overflow-hidden
-        flex flex-col
-        ${board.disabled ? 'opacity-60' : ''}
-        ${isOver ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}
-        ${isDragging ? 'opacity-50 shadow-2xl' : 'shadow-md'} // 5. Add ghosting effect
-      `}
+      ref={allowBoardSwap ? setNodeRef : undefined}
+      className='flex-shrink-0 w-80 bg-gray-50 overflow-hidden flex flex-col shadow-md'
       style={{
         ...style,
         borderRadius: '2px',
@@ -153,9 +246,11 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
       {...(allowBoardSwap ? attributes : {})}
       {...(allowBoardSwap ? listeners : {})}
     >
-      {/* Header */}
+      {/* Header - Make it draggable for board swapping */}
       <div
-        className='px-3 py-2 text-white font-medium flex items-center justify-between'
+        className={`px-3 py-2 text-white font-medium flex items-center justify-between ${
+          allowBoardSwap ? 'cursor-move' : ''
+        }`}
         style={{
           backgroundColor: board.color,
           fontSize: '13px',
@@ -180,10 +275,9 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
         <DropdownMenu options={dropdownOptions} />
       </div>
 
-      {/* Content Area */}
       <div
         ref={setDroppableNodeRef}
-        className={`p-4 min-h-32 flex-1 transition-colors duration-200 ${isOver ? 'bg-blue-50' : ''}`}
+        className={`p-4 transition-colors duration-200 ${isOver ? 'bg-blue-50' : ''}`}
       >
         {/* Create Task Button */}
         {canAddTask && !isCreatingTask && (
@@ -194,6 +288,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                 w-7 h-7 bg-white border border-gray-300 rounded-full
                 flex items-center justify-center text-gray-400 hover:text-gray-600
                 hover:border-gray-400 transition-all duration-200 group
+                focus:outline-none focus:ring-0
               '
               title='Add Task'
             >
@@ -219,7 +314,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                 }
               }}
               placeholder='Enter task title...'
-              className='w-full p-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              className='w-full p-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none'
               style={{
                 borderRadius: '2px',
                 fontSize: '13px',
@@ -230,7 +325,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
               <button
                 onClick={handleCreateTask}
                 disabled={!newTaskTitle.trim()}
-                className='px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                className='px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-0'
                 style={{
                   borderRadius: '2px',
                   fontSize: '13px',
@@ -243,7 +338,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                   setIsCreatingTask(false);
                   setNewTaskTitle('');
                 }}
-                className='px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50'
+                className='px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-0'
                 style={{
                   borderRadius: '2px',
                   fontSize: '13px',
@@ -269,13 +364,25 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                 disabled={
                   !allowTaskInteraction || board.allowTaskInteraction === false
                 }
+                allowDelete={allowTaskDelete}
                 onTaskUpdate={(taskId, updates) =>
                   onTaskUpdate?.(board.id, taskId, updates)
                 }
+                onTaskDelete={handleTaskDelete}
               />
             ))}
           </div>
         </SortableContext>
+
+        {/* Empty state when no tasks and can't add tasks */}
+        {visibleTasks.length === 0 && !canAddTask && !isCreatingTask && (
+          <div
+            className='text-center text-gray-400 py-4'
+            style={{ fontSize: '13px' }}
+          >
+            No tasks
+          </div>
+        )}
 
         {board.maxItems && visibleTasks.length >= board.maxItems && (
           <div
