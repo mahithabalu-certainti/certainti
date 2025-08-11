@@ -1308,7 +1308,6 @@ class SchemaService {
         fiscal_year integer NULL,
         country_rid varchar(50) NULL,
         country_region_rid varchar(50) NULL,
-        cost_type "${schemaName}"."enum_resource_fiscal_region_cost_type" NULL,
         annual_cost numeric(18, 2) NULL,
         monthly_cost numeric(18, 2) NULL,
         weekly_cost numeric(18, 2) NULL,
