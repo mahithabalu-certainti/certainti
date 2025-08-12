@@ -266,7 +266,7 @@ export default class ProjectTaskGraphqlServies {
       if (perDayEffort[dayStr].gt(24)) {
         return {
           success: false,
-          errorMessage: `Effort exceeds 24 hours on ${dayStr} for the resource`,
+          errorMessage: `Effort cannot exceed the total hours in the duration`,
         };
       }
     }
