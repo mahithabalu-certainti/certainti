@@ -3048,6 +3048,44 @@ async getProjectTasksByProjectIds(
   }
 }
 
+async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_year: any) {
+        const{AccountFiscal, ProjectFiscal}=await this.getModels(r_number);
+        const existingProjectFiscal = await ProjectFiscal.findOne({
+          where: {
+            account_rid,
+            fiscal_year,
+          },
+        });
+
+        if(!existingProjectFiscal) {
+           await AccountFiscal.destroy({
+             where: {
+               account_rid,
+               fiscal_year,
+             }
+           })
+        }
+    }
+
+async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fiscal_year: any) {
+        const{AccountFiscalRegion, ProjectFiscalRegion}=await this.getModels(r_number);
+        const existingProjectFiscalRegion = await ProjectFiscalRegion.findOne({
+          where: {
+            account_rid,
+            fiscal_year
+          },
+        });
+
+        if(!existingProjectFiscalRegion) {
+           await AccountFiscalRegion.destroy({
+             where: {
+               account_rid,
+               fiscal_year,
+             }
+           })
+        }
+    }    
+
 }
 
 export default ProjectIngestionService;

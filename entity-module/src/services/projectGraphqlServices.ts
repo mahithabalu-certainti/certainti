@@ -30,6 +30,7 @@ class ProjectGraphQlServices {
         else {
             let schemaName = `"${MAIN_SCHEMA_NAME}_${checkAccountExists[0][0].r_number.replace('ACC-', '')}"`
             let findProjectFiscal : any = await orgSequelize.query(rawQueries.findProjectFiscal(schemaName,data.project_rid, data.account_rid, data.project_fiscal_rid))
+            let findProjectFiscalRegion : any = await orgSequelize.query(rawQueries.findProjectFiscalRegion(schemaName, data.project_rid, data.account_rid, data.project_fiscal_rid))
             let findProjectSummary : any = await mainSequelize.query(rawQueries.findProjectSummary(data))
             let findProjectFisSummary : any = await mainSequelize.query(rawQueries.findProjectFiscalSummary(data))
             if(findProjectFiscal[0].length > 0 && findProjectFisSummary[0].length > 0) {
@@ -82,7 +83,13 @@ class ProjectGraphQlServices {
             await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProject[0][0].project_code, data.account_rid)
             updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid
             await this.projectIngestion.addAccountFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
+            if(findProjectFiscal[0][0].fiscal_year !== data.fiscal_year) {
+             await this.projectIngestion.deleteAccountFiscalForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year);
+            }
             await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
+            if(findProjectFiscalRegion[0][0].fiscal_year !== data.fiscal_year) {
+              await this.projectIngestion.deleteAccountFiscalRegionForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscalRegion[0][0].account_rid, findProjectFiscalRegion[0][0].fiscal_year);  
+            }    
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
                 checkAccountExists[0][0].r_number,
                 data.account_rid

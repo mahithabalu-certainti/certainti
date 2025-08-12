@@ -184,6 +184,16 @@ export const rawQueries = {
             SELECT * FROM ${schemaName}.project_fiscal p WHERE project_rid = '${projectRid}' AND account_rid = '${accountRid}' AND rid = '${projectFiscalRid}'
             `;
   },
+  findProjectFiscalRegion(
+    schemaName: string,
+    projectRid: string,
+    accountRid: string,
+    projectFiscalRid: string
+  ) {
+    return `
+            SELECT * FROM ${schemaName}.project_fiscal_region p WHERE project_rid = '${projectRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid = '${projectFiscalRid}'
+            `;
+  },
   findProjectSummary(data: any) {
     return `
             SELECT * FROM ${MAIN_SCHEMA_NAME}.project_summary p WHERE project_rid = '${data.project_rid}' AND account_rid = '${data.account_rid}'
