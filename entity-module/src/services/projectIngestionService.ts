@@ -761,6 +761,7 @@ class ProjectIngestionService {
     });
 
     if (!existingFiscal) {
+      if(projectData.region_rid) {
       await AccountFiscalRegion.create({
         ...accountFiscalData,
         region_rid: projectData.region_rid,
@@ -769,6 +770,7 @@ class ProjectIngestionService {
         fiscal_year,
         created_datetime: new Date(),
       });
+    }
     } else {
       await this.updateAccountFiscalRegionAggregatesFromFiscal(
         accountNumber,
@@ -3047,6 +3049,51 @@ async getProjectTasksByProjectIds(
     throw error;
   }
 }
+
+async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
+        const{AccountFiscal, ProjectFiscal}=await this.getModels(r_number);
+        const existingProjectFiscal = await ProjectFiscal.findOne({
+          where: {
+            account_rid,
+            fiscal_year,
+          },
+        });
+
+        if(!existingProjectFiscal) {
+           await AccountFiscal.destroy({
+             where: {
+               account_rid,
+               fiscal_year,
+             }
+           })
+        }
+        else {
+        await this.updateAccountFiscalAggregatesFromFiscal(r_number, projectData)
+        }
+    }
+
+async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
+        const{AccountFiscalRegion, ProjectFiscalRegion}=await this.getModels(r_number);
+        const existingProjectFiscalRegion = await ProjectFiscalRegion.findOne({
+          where: {
+            account_rid,
+            fiscal_year,
+
+          },
+        });
+
+        if(!existingProjectFiscalRegion) {
+           await AccountFiscalRegion.destroy({
+             where: {
+               account_rid,
+               fiscal_year,
+             }
+           })
+        }
+        else {
+        await this.updateAccountFiscalRegionAggregatesFromFiscal(r_number, projectData);
+        }
+    }    
 
 }
 
