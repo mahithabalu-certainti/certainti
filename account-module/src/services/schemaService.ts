@@ -857,7 +857,7 @@ class SchemaService {
 
     await sequelize.query(`
      ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+    ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
     `);
   }
 
