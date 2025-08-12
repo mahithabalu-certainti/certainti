@@ -73,7 +73,7 @@ class ProjectGraphQlServices {
                 data.project_type_rid = findProjectFiscal[0][0].project_type_rid;
                 data.created_by = findProjectFiscal[0][0].created_by;
                 data.status_rid = findProjectFiscal[0][0].status_rid;
-                data.fiscal_year = data.fiscal_year ? data.fiscal_year : findProjectFiscal[0][0].fiscal_year;
+                data.fiscal_year=data.fiscal_year? data.fiscal_year:findProjectFiscal[0][0].fiscal_year;
                 await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, data, findProjectFiscal[0][0].project_code)
             }
             if(setProjectFiscalSummary.length > 0) {
@@ -104,7 +104,8 @@ class ProjectGraphQlServices {
                 );
             
             await this.projectIngestion.updateProjectResources(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0], findProjectFiscal[0][0].rid, findProjectFiscal[0][0].fiscal_year);
-            await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, data))
+        
+            // await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, updatedProjectFiscal[0][0]))
             let attributeName;
             let newValue;
             let oldValue;
