@@ -761,6 +761,7 @@ class ProjectIngestionService {
     });
 
     if (!existingFiscal) {
+      if(projectData.region_rid) {
       await AccountFiscalRegion.create({
         ...accountFiscalData,
         region_rid: projectData.region_rid,
@@ -769,6 +770,7 @@ class ProjectIngestionService {
         fiscal_year,
         created_datetime: new Date(),
       });
+    }
     } else {
       await this.updateAccountFiscalRegionAggregatesFromFiscal(
         accountNumber,
@@ -1272,6 +1274,7 @@ class ProjectIngestionService {
     });
 
     if (existingRecord) {
+      console.log("Updating existing record with aggregates:", aggregateValues);
       // Aggregate values
       await existingRecord.update(aggregateValues);
     } else {
@@ -3048,7 +3051,7 @@ async getProjectTasksByProjectIds(
   }
 }
 
-async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_year: any) {
+async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
         const{AccountFiscal, ProjectFiscal}=await this.getModels(r_number);
         const existingProjectFiscal = await ProjectFiscal.findOne({
           where: {
@@ -3065,14 +3068,18 @@ async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_y
              }
            })
         }
+        else {
+        await this.updateAccountFiscalAggregatesFromFiscal(r_number, projectData)
+        }
     }
 
-async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fiscal_year: any) {
+async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
         const{AccountFiscalRegion, ProjectFiscalRegion}=await this.getModels(r_number);
         const existingProjectFiscalRegion = await ProjectFiscalRegion.findOne({
           where: {
             account_rid,
-            fiscal_year
+            fiscal_year,
+
           },
         });
 
@@ -3083,6 +3090,9 @@ async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fi
                fiscal_year,
              }
            })
+        }
+        else {
+        await this.updateAccountFiscalRegionAggregatesFromFiscal(r_number, projectData);
         }
     }    
 
