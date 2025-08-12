@@ -1274,7 +1274,6 @@ class ProjectIngestionService {
     });
 
     if (existingRecord) {
-      console.log("Updating existing record with aggregates:", aggregateValues);
       // Aggregate values
       await existingRecord.update(aggregateValues);
     } else {
