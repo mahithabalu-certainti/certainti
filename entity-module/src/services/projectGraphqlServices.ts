@@ -5,6 +5,7 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
+import { IUpdateProject } from "../utils/types";
 
 const services = Configurations.getInstance().getServices();
 const projectService = services.projectServices;
@@ -65,7 +66,14 @@ class ProjectGraphQlServices {
                 findProjectFiscal[0][0].project_fiscal_id = findProjectFiscal[0][0].rid
                 findProjectFiscal[0][0].account_id = findProjectFiscal[0][0].account_rid
                 findProjectFiscal[0][0].project_id = findProjectFiscal[0][0].project_rid
-                await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, findProjectFiscal[0][0], findProjectFiscal[0][0].project_code)
+                data.account_id = findProjectFiscal[0][0].account_rid;
+                data.project_code = findProjectFiscal[0][0].project_code;
+                data.project_fiscal_id = findProjectFiscal[0][0].project_fiscal_id;
+                data.project_id = findProjectFiscal[0][0].project_id;
+                data.project_type_rid = findProjectFiscal[0][0].project_type_rid;
+                data.created_by = findProjectFiscal[0][0].created_by;
+                data.status_rid = findProjectFiscal[0][0].status_rid;
+                await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, data, findProjectFiscal[0][0].project_code)
             }
             if(setProjectFiscalSummary.length > 0) {
                 if(data.project_code) {
@@ -82,7 +90,13 @@ class ProjectGraphQlServices {
             await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProject[0][0].project_code, data.account_rid)
             updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid
             await this.projectIngestion.addAccountFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
+            if(findProjectFiscal[0][0].fiscal_year !== data.fiscal_year) {
+             await this.projectIngestion.deleteAccountFiscalForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year, findProjectFiscal[0][0]);
+            }
             await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
+            if(findProjectFiscal[0][0].fiscal_year !== data.fiscal_year) {
+              await this.projectIngestion.deleteAccountFiscalRegionForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year, findProjectFiscal[0][0]);  
+            }    
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
                 checkAccountExists[0][0].r_number,
                 data.account_rid
