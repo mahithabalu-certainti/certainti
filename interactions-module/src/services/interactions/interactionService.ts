@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import SchemaService from "./schemaService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, rawQueries } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -165,6 +165,15 @@ export class InteractionService {
       }
       if(statusConditions != undefined && statusConditions != null) {
         finalData = applyFilters(finalData, statusConditions, statusFilter, "status_name")
+      }
+      if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'asc') {
+        finalData = finalData.sort((a : any, b : any) => {
+          return a[data.sort].localeCompare(b[data.sort])
+        })
+      } else {
+        finalData = finalData.sort((a : any, b : any) => {
+          return b[data.sort].localeCompare(a[data.sort])
+        })
       }
       totalResults = disablePagination ? finalData.length : finalData[0].total_records
       let finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData

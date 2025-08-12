@@ -78,7 +78,7 @@ export const interactionFlag = {
   project : "project"
 }
 
-export const mainTableFilters = {
+export const mainTableFilters : Record<any, any> = {
   created_user_name : "created_user_name",
   updated_user_name : "updated_user_name",
   interaction_type_name : "interaction_type_name",
