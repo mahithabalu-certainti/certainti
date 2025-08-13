@@ -7,6 +7,8 @@ const routes: Router = Router();
 
 routes.post('/list', controller.interactionsController.listAllInteractionPrjAcc)
 routes.post('/export', controller.interactionsController.exportAllInteractions)
+routes.post('/globalList', controller.interactionsController.listOutAllInteractionSummary)
+routes.post('/globalList/export', controller.interactionsController.exportAllInteractionSummary)
 
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);
 export default routes;

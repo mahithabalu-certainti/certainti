@@ -156,7 +156,8 @@ export const STATUS_MESSAGE = {
   accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
-  interactionFetchedSuccess : "Interactions fetched successfully"
+  interactionFetchedSuccess : "Interactions fetched successfully",
+  dataNotFound : "Data not found"
 };
 
 export const rawQueries = {
@@ -204,3 +205,47 @@ export const rawQueries = {
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
   }
 };
+
+export const filterTypesForSummaryInteractions : Record<string, any> = 
+  {
+    r_number : "string",
+    iteration : "number",
+    interaction_age : "number",
+    recipient_name : "string",
+    recipient_email : "string",
+    last_resent_on : "datetime",
+    last_reminder_on : "datetime",
+    response_submitted_on : "datetime",
+    response_updated_on : "datetime",
+    attachments : "number",
+    response_source : "string",
+    created_datetime : "datetime",
+    modified_datetime : "datetime",
+    status_name : "string",
+    interaction_type_name : "string",
+    interaction_source_name : "string",
+    created_user_name : "string",
+    updated_user_name : "string"
+  }
+
+  export const filtersColumnsForInteractionSummary : Record<string, string> =
+  {
+    r_number : "r_number",
+    iteration : "interaction_iteration",
+    interaction_age : "interaction_age",
+    recipient_name : "recipient_name",
+    recipient_email : "recipient_email",
+    last_resent_on : "last_resent_on",
+    last_reminder_on : "last_reminder_on",
+    response_submitted_on : "response_submitted_on",
+    response_updated_on : "response_updated_on",
+    attachments : "attachments",
+    response_source : "response_source",
+    created_datetime : "created_datetime",
+    modified_datetime : "modified_datetime",
+    status_name : "string_name",
+    interaction_type_name : "interaction_type_name",
+    interaction_source_name : "interaction_source_name",
+    created_user_name : "created_user_name",
+    updated_user_name : "updated_user_name"
+  }

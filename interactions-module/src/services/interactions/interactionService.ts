@@ -4,7 +4,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries } fro
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery } from "../../utils/rawQueries";
+import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary } from "../../utils/rawQueries";
 
 // Assuming there is an interface named IInteractionService to implement
 export class InteractionService {
@@ -68,11 +68,8 @@ export class InteractionService {
       modifiedByConditions = detectConditions(modifiedByFilter)
     }
     if(data.filters?.interaction_type_name) {
-      console.log("Inside interaction Type Name ===== >")
       typeFilter = data.filters.interaction_type_name
       typeCondition = detectConditions(typeFilter)
-      console.log("TypeFilter ==> ", typeFilter)
-      console.log("typeCondition ==> ", typeCondition)
     }
     if(data.filters?.interaction_source_name) {
       sourceFilter = data.filters.interaction_source_name
@@ -143,11 +140,11 @@ export class InteractionService {
         const val = value[conditions]
         switch(conditions) {
           case ALPHANUMERIC_CONDITIONS.equals : 
-            return data.filter((d : any) => d[field].toLowerCase() === val.toLowerCase())
+            return data.filter((d : any) => d[field]?.toLowerCase() === val?.toLowerCase())
           case ALPHANUMERIC_CONDITIONS.notEquals :
-            return data.filter((d : any) => d[field].toLowerCase() != val.toLowerCase())
+            return data.filter((d : any) => d[field]?.toLowerCase() != val?.toLowerCase())
           case ALPHANUMERIC_CONDITIONS.contains : 
-            return data.filter((d : any) => d[field]?.toLowerCase().includes(val.toLowerCase()))
+            return data.filter((d : any) => d[field]?.toLowerCase().includes(val?.toLowerCase()))
           case ALPHANUMERIC_CONDITIONS.isEmpty :
             return data.filter((d : any) => d[field] == null)
           default :
@@ -198,6 +195,23 @@ export class InteractionService {
       return {
         status : HttpStatus.NOT_FOUND,
         data : organizedData
+      }
+    }
+  }
+  async fetchInteractionSummary (data : any) {
+    const mainDb = await this.getMainDb()
+    const result : any = await mainDb.query(listAllInteractionSummary(data.page, data.limit, 
+      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by
+    ))
+    if(result[0][0].interactions != null) {
+      return {
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result[0][0].interactions
+      }
+    } else {
+      return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
       }
     }
   }
