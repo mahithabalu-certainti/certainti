@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME } from "./constants"
+import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys } from "./constants"
 
 type filterType = {
         [key : string] : {
@@ -348,5 +348,46 @@ const globalFiltersForInteractionSummary = (globalFilters : Record<string, strin
         }
     }
     return arrayOfIds;
+}
+
+export const listResponseHistory = (interaction_rid : string, schemaName : string, page : number, limit : number, sort : string, sortBy : string) => {
+    let offset = (page - 1 ) * limit
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    let sortQuery : string = ``
+
+    if(responseSortKeys.includes(sort.toLowerCase())) sortQuery = `ORDER BY i.${sort} ${sortBy}`
+    else sortQuery = `ORDER BY i.r_number ASC`
+    
+    let query = 
+    `
+    WITH fetch_interaction_response AS (
+    SELECT i.rid, i.r_number, r.response_by, r.response_on, r.response_email,
+    r.interaction_response, i.interaction_source_rid, COUNT(i.rid) OVER() AS total_records,
+    r.response_source
+    FROM 
+    ${schemaName}.interaction_response_history r
+    LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
+    WHERE
+    i.rid = '${interaction_rid}'
+    ),
+    paginated_data AS (
+    SELECT * FROM fetch_interaction_response ${pagination}
+    )
+    
+    SELECT 
+    array_agg(jsonb_build_object(
+    'rid', i.rid,
+    'r_number', i.r_number,
+    'response_by_rid', i.response_by,
+    'response_on', i.response_on,
+    'response_email', i.response_email,
+    'interaction_response', i.interaction_response,
+    'interaction_source_rid', i.interaction_source_rid,
+    'total_records', i.total_records,
+    'response_source', i.response_source
+    )${sortQuery}) AS response_history
+    FROM
+    paginated_data i`
+    return query
 }
 

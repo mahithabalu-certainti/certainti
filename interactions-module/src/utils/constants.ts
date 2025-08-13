@@ -157,7 +157,8 @@ export const STATUS_MESSAGE = {
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   interactionFetchedSuccess : "Interactions fetched successfully",
-  dataNotFound : "Data not found"
+  dataNotFound : "Data not found",
+  historyResponseFetched : "Interaction Response history fetched successfully"
 };
 
 export const rawQueries = {
@@ -249,3 +250,5 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     created_user_name : "created_user_name",
     updated_user_name : "updated_user_name"
   }
+
+  export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response"]

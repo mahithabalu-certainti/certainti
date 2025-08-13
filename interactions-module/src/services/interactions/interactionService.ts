@@ -4,7 +4,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries } fro
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary } from "../../utils/rawQueries";
+import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listResponseHistory } from "../../utils/rawQueries";
 
 // Assuming there is an interface named IInteractionService to implement
 export class InteractionService {
@@ -211,6 +211,49 @@ export class InteractionService {
     } else {
       return {
         statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+    }
+  }
+
+  async listInteractionResponseHistory (data : any) {
+    const mainDb = await this.getMainDb()
+    const orgDb = await this.getOrgDb()
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
+    const responseHistoryresult : any = await orgDb.query(listResponseHistory(data.interaction_rid, schemaName, data.page, data.limit, data.sort, data.sort_by))
+    if(responseHistoryresult[0][0].response_history !== null) {
+      let finalData = responseHistoryresult[0][0].response_history
+      let fetchSourceIds : any = [...new Set(finalData.map((d : any) => d.interaction_source_rid))]
+      let fetchUserIds : any = [...new Set(finalData.map((d : any) => d.response_by_rid))]
+      let fetchUserDetails : any = await mainDb.query(rawQueries.fetchUser(fetchUserIds))
+      let fetchInteractionSource : any = await mainDb.query(rawQueries.fetchInteractionSource(fetchSourceIds))
+      let mapSources = new Map(fetchInteractionSource[0].map((source : any) => [source.rid, source.interaction_source_name]))
+      let userMap = new Map(fetchUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
+      let updatedFinalData = finalData.map((d : any) => {
+        return {
+          ...d,
+          interaction_source_name : mapSources.get(d.interaction_source_rid),
+          response_by : userMap.get(d.response_by_rid)
+        }
+      })
+      
+      if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'asc') {
+        updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
+          return a.interaction_source_name.localeCompare(b.interaction_source_name)
+        })
+      } else if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'desc'){
+         updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
+          return b.interaction_source_name.localeCompare(a.interaction_source_name)
+        })
+      }
+      return {
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : updatedFinalData
+      }
+    } else {
+      return {
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         data : []
       }
     }

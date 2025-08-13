@@ -147,6 +147,80 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
     return; 
     } else {
       handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.dataNotFound)
+      return;
+    }
+  } catch (error : any) {
+    return res.status(HttpStatus.FAILED).json({
+        statusCode : HttpStatus.FAILED,
+        statusCodeValue : HttpStatus.FAILED_MESSAGE,
+        statusMessage : error.message,
+        data : []
+      })
+  }
+}
+
+async function listResponseHistory (req : Request, res : Response) {
+  try {
+    const data = req.body;
+    const result = await interactionService.listInteractionResponseHistory(data)
+    if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+      let responseData = {
+        page : data.page,
+        limit : data.limit,
+        totalCount : result.data[0].total_records,
+        response_history : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.historyResponseFetched,
+        data : responseData
+      })
+    } else {
+      let responseData = {
+        page : data.page,
+        limit : data.limit,
+        totalCount : 0,
+        response_history : result.data
+      }
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : responseData
+      })
+    }
+  } catch (error : any) {
+    return res.status(HttpStatus.FAILED).json({
+        statusCode : HttpStatus.FAILED,
+        statusCodeValue : HttpStatus.FAILED_MESSAGE,
+        statusMessage : error.message,
+        data : []
+      })
+  }
+}
+
+async function exportResponseHistory (req : Request, res : Response) {
+  try {
+    const data = req.body;
+    const result = await interactionService.listInteractionResponseHistory(data);
+    if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+      let structuredData = result.data.map((d : any) => {
+        return {
+          "Interaction ID" : d.r_number,
+          "Interaction Type" : d.interaction_source_name,
+          "Response Via" : d.interaction_response,
+          "Response On" : d.response_on == null ? '' : new Date(d.response_on).toISOString().split('T')[0],
+          "Response Email-ID" : d.response_email,
+          "Response By" : d.response_by
+        }
+      }) 
+    const base64Response = await generateExcelBase64(structuredData, "Interactions")
+    handleSuccessResponse(res, base64Response);
+    return;
+    } else {
+      handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.dataNotFound)
+      return;
     }
   } catch (error : any) {
     return res.status(HttpStatus.FAILED).json({
@@ -162,5 +236,7 @@ export default {
   listAllInteractionPrjAcc,
   exportAllInteractions,
   listOutAllInteractionSummary,
-  exportAllInteractionSummary
+  exportAllInteractionSummary,
+  listResponseHistory,
+  exportResponseHistory
 };
