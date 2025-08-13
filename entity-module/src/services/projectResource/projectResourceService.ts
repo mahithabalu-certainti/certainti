@@ -498,7 +498,7 @@ export class ProjectResourceService {
           validAccountNumber,
           projectResourceData,
           projectData.fiscal_year,
-          projectData.project_code,
+          projectData.project_code,          
           resourceData
         );
 
@@ -923,11 +923,12 @@ export class ProjectResourceService {
         }
 
       const isDuplicate =
-        await this.projectResourceSchema.validateProjectResource(
+        await this.projectResourceSchema.validateProjectResourceInlineEdit(
           validAccountNumber,
           projectResourceData,
           projectData.fiscal_year,
           projectData.project_code,
+          existingProjectResource,
           resourceData
         );
 
