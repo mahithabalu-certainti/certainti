@@ -89,13 +89,24 @@ class ProjectGraphQlServices {
             await orgSequelize.query(rawQueries.updateProjectFiscalEffectiveDatas(schemaName, updatedProjectFiscal[0][0]))
             await this.projectIngestion.updateProjectAggregatesFromFiscal(checkAccountExists[0][0].r_number, data.account_rid, findProject[0][0].project_code)
             await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(checkAccountExists[0][0].r_number, findProject[0][0].project_code, data.account_rid)
-            updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid
+            // Only set the required fields in updatedProjectFiscal[0][0]
+            updatedProjectFiscal[0][0].account_id = updatedProjectFiscal[0][0].account_rid;        
+            updatedProjectFiscal[0][0].total_effort = updatedProjectFiscal[0][0].total_effort_prj ?? null;
+            updatedProjectFiscal[0][0].total_cost = updatedProjectFiscal[0][0].total_cost_prj ?? null;
+            updatedProjectFiscal[0][0].total_fte = updatedProjectFiscal[0][0].total_fte_prj ?? null;
+            updatedProjectFiscal[0][0].total_subcon = updatedProjectFiscal[0][0].total_subcon_prj ?? null;
+            updatedProjectFiscal[0][0].total_cost_nonlabor = updatedProjectFiscal[0][0].total_cost_nonlabor_prj ?? null;
+            updatedProjectFiscal[0][0].total_effort_fte = updatedProjectFiscal[0][0].total_effort_fte_prj ?? null;
+            updatedProjectFiscal[0][0].total_effort_subcon = updatedProjectFiscal[0][0].total_effort_subcon_prj ?? null;
+            updatedProjectFiscal[0][0].total_cost_fte = updatedProjectFiscal[0][0].total_cost_fte_prj ?? null;
+            updatedProjectFiscal[0][0].total_cost_subcon = updatedProjectFiscal[0][0].total_cost_subcon_prj ?? null;
+
             await this.projectIngestion.addAccountFiscal(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
-            if(findProjectFiscal[0][0].fiscal_year !== data.fiscal_year) {
+            if(findProjectFiscal[0][0].fiscal_year !== updatedProjectFiscal[0][0].fiscal_year) {
              await this.projectIngestion.deleteAccountFiscalForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year, findProjectFiscal[0][0]);
             }
             await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
-            if(findProjectFiscal[0][0].fiscal_year !== data.fiscal_year) {
+            if(findProjectFiscal[0][0].fiscal_year !== updatedProjectFiscal[0][0].fiscal_year) {
               await this.projectIngestion.deleteAccountFiscalRegionForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year, findProjectFiscal[0][0]);  
             }    
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
@@ -105,7 +116,7 @@ class ProjectGraphQlServices {
             
             await this.projectIngestion.updateProjectResources(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0], findProjectFiscal[0][0].rid, findProjectFiscal[0][0].fiscal_year);
         
-            // await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName, updatedProjectFiscal[0][0]))
+            await orgSequelize.query(rawQueries.insertProjectTimeline(schemaName,data));
             let attributeName;
             let newValue;
             let oldValue;
