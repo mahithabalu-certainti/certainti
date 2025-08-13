@@ -377,7 +377,7 @@ export class ProjectService {
             accountNumber,
             projectData.account_id,
             "create",
-            createdProject.rid,
+            createdProjectFiscal.rid,
             projectData
           );
         }
