@@ -46,7 +46,6 @@ async function exportAllInteractions (req : Request, res : Response) {
     const data = req.body
     const result = await interactionService.listInteractionPrjAccount(data)
     if(result.status == HttpStatus.SUCCESS) {
-      console.log(result.data.interactions)
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map(( d : any) => {
        return {
           "Interaction ID": d.r_number,
@@ -123,7 +122,6 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
     const data = req.body;
     const result = await interactionService.fetchInteractionSummary(data);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
-      console.log(result)
       let structuredData = result.data.length < 1 ? [] : result.data.map(( d : any) => {
         return {
           "Interaction ID": d.r_number,
