@@ -19,6 +19,11 @@ routes.get(
   checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.getProjectTaskById
 );
+routes.get(
+  "/assignedcodes/:accountId/:projectFiscalId",
+  checkUserStatusMiddleware("NA"),
+  controller.projectTaskController.assignedResourceCodes
+);
 routes.post(
   "/new",
   checkUserStatusMiddleware("projects_task_create"),
