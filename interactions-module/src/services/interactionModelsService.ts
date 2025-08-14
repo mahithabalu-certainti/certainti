@@ -6,6 +6,9 @@ import { InteractionItem } from "../models/interactionItem";
 import { InteractionHistory } from "../models/interactionHistory";
 import { InteractionTimeline } from "../models/interactionTimeline";
 import { InteractionType } from "../models/interactionType";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { InteractionSummary } from "../models/interactionSummary";
+import { InteractionResponseHistory } from "../models/interactionResponseHistory";
 
 export class InteractionModelService {
   private orgDbSequelize: Sequelize | null = null;
@@ -17,12 +20,7 @@ export class InteractionModelService {
       Interaction: ReturnType<typeof Interaction.initialize>;
       InteractionItem: ReturnType<typeof InteractionItem.initialize>;
       InteractionHistory: ReturnType<typeof InteractionHistory.initialize>;
-      InteractionTimeline: ReturnType<
-        typeof InteractionTimeline.initialize
-      >;
-      InteractionType: ReturnType<
-        typeof InteractionType.initialize
-      >;
+      InteractionTimeline: ReturnType<typeof InteractionTimeline.initialize>;
     }
   > = new Map();
 
@@ -35,7 +33,7 @@ export class InteractionModelService {
     return this.orgDbSequelize;
   }
 
-  private async getMainSequelize(): Promise<Sequelize> {
+  async getMainSequelize(): Promise<Sequelize> {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
     }
@@ -46,6 +44,7 @@ export class InteractionModelService {
     const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await initOrgSequelize();
+    const mainDbSequelize = await this.getMainSequelize();
 
     const InteractionModel = Interaction.initialize(sequelize, schemaName);
     const InteractionItemModel = InteractionItem.initialize(
@@ -64,21 +63,28 @@ export class InteractionModelService {
       sequelize,
       schemaName
     );
+    const InteractionSummaryModel = InteractionSummary.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const InteractionResponseHistoryModel =
+      InteractionResponseHistory.initialize(sequelize, schemaName);
 
     const models = {
       Interaction: InteractionModel,
       InteractionItem: InteractionItemModel,
       InteractionHistory: InteractionHistoryModel,
+      InteractionResponseHistory: InteractionResponseHistoryModel,
       InteractionTimeline: InteractionTimelineModel,
       InteractionType: InteractionTypeModel,
+      InteractionSummary: InteractionSummaryModel,
     };
 
     this.modelCache.set(schemaName, models);
     return models;
   }
-  
-  async hello(){
-    const { Interaction } = await this.getModels("acc");
 
+  async hello() {
+    const { Interaction } = await this.getModels("acc");
   }
 }
