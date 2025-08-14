@@ -1,4 +1,3 @@
-
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
@@ -39,14 +38,14 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   recipient_email?: string | null;
   recipient_name?: string | null;
 }
-type InteractionCreationAttributes = Optional<
-  InteractionAttributes,
-  "rid"
->;
 
+export interface InteractionCreationAttributes
+  extends Optional<InteractionAttributes, "rid"> {}
 
-export class Interaction extends Model<InteractionAttributes, InteractionCreationAttributes> 
-implements InteractionAttributes {
+export class Interaction
+  extends Model<InteractionAttributes, InteractionCreationAttributes>
+  implements InteractionAttributes
+{
   public rid!: string;
   public r_number?: string;
   public eid?: string;
@@ -83,12 +82,17 @@ implements InteractionAttributes {
   public recipient_email?: string | null;
   public recipient_name?: string | null;
 
-  static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
+  static initialize(
+    sequelize: Sequelize,
+    schemaName: string = MAIN_SCHEMA_NAME
+  ) {
     return Interaction.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
          r_number: {

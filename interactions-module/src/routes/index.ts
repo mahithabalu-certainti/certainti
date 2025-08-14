@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { errorLog, successLog } from "../utils/helpers";
-// Import interactionRoutes from its module
 import interactionRoutes from "./interactionRoutes";
+import otpRoutes from "./otpRoutes";
+
 const routes: Router = Router();
 
 routes.get("/health", async (req, res) => {
@@ -24,8 +25,8 @@ routes.get("/health", async (req, res) => {
 });
 
 
-
 // Initialize interaction module endpoints here
 routes.use("/interactions", interactionRoutes);
+routes.use("/otp", otpRoutes);
 
 export default routes;

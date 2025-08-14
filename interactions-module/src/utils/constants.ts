@@ -50,6 +50,9 @@ export const NODE_ENV = {
   PROD: "PRODUCTION",
 };
 
+export const OTP_EXPIRY_MINUTES = 10;
+export const MAX_RESEND_ATTEMPTS = 3;
+
 export const filtersColumns : Record<string, string> =
   {
     r_number : "r_number",

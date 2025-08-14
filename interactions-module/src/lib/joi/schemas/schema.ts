@@ -1,4 +1,5 @@
 import Joi from "joi";
+
 const uuidRegex =
   /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -64,8 +65,14 @@ const updateInteractionResponseSchema = Joi.object({
     .required(),
 });
 
+const createOtpSchema = Joi.object({
+  interaction_rid: Joi.string().max(50).required(),
+  account_rid: Joi.string().max(50).required(),
+});
+
 export {
   createInteractionSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
+  createOtpSchema,
 };

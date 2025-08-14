@@ -4,11 +4,25 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 
+import { IGenerateOtp } from "../../utils/types";
+export interface IOtpServices {
+  generateOtp(data: IGenerateOtp): Promise<{
+    statusCode: number;
+    statusMessage: string;
+    errorMessage?: string;
+    data?: { otp: any };
+  }>;
+}
+
 export interface IInteractionService {
-    listInteractionPrjAccount(data : any) : Promise<any>
-    fetchInteractionSummary(data : any) : Promise<{ statusCodeValue : string,data : any}>
-    listInteractionResponseHistory(data : any) : Promise<{statusCodeValue : string,data : any}> 
-    createInteraction(
+  listInteractionPrjAccount(data: any): Promise<any>;
+  fetchInteractionSummary(
+    data: any
+  ): Promise<{ statusCodeValue: string; data: any }>;
+  listInteractionResponseHistory(
+    data: any
+  ): Promise<{ statusCodeValue: string; data: any }>;
+  createInteraction(
     interactionData: ICreateInteraction,
     userId: string
   ): Promise<{

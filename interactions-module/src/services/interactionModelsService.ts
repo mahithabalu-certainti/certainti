@@ -10,9 +10,11 @@ import { MAIN_SCHEMA_NAME } from "../utils/constants";
 import { InteractionSummary } from "../models/interactionSummary";
 import { InteractionResponseHistory } from "../models/interactionResponseHistory";
 
+import { Otp } from "../models/otp";
+import { OtpHistory } from "../models/otpHistory";
 export class InteractionModelService {
-  private orgDbSequelize: Sequelize | null = null;
-  private mainDbSequelize: Sequelize | null = null;
+  orgDbSequelize: Sequelize | null = null;
+  mainDbSequelize: Sequelize | null = null;
 
   modelCache: Map<
     string,
@@ -20,7 +22,18 @@ export class InteractionModelService {
       Interaction: ReturnType<typeof Interaction.initialize>;
       InteractionItem: ReturnType<typeof InteractionItem.initialize>;
       InteractionHistory: ReturnType<typeof InteractionHistory.initialize>;
-      InteractionTimeline: ReturnType<typeof InteractionTimeline.initialize>;
+      InteractionTimeline: ReturnType<
+        typeof InteractionTimeline.initialize
+      >;
+      InteractionType: ReturnType<
+        typeof InteractionType.initialize
+      >;
+      Otp: ReturnType<
+        typeof Otp.initialize
+      >;
+      OtpHistory: ReturnType<
+      typeof OtpHistory.initialize
+    >;
     }
   > = new Map();
 
@@ -69,6 +82,14 @@ export class InteractionModelService {
     );
     const InteractionResponseHistoryModel =
       InteractionResponseHistory.initialize(sequelize, schemaName);
+    const OtpModel = Otp.initialize(
+      sequelize,
+      schemaName
+    );
+    const OtpHistoryModel = OtpHistory.initialize(
+      sequelize,
+      schemaName
+    )
 
     const models = {
       Interaction: InteractionModel,
@@ -78,13 +99,11 @@ export class InteractionModelService {
       InteractionTimeline: InteractionTimelineModel,
       InteractionType: InteractionTypeModel,
       InteractionSummary: InteractionSummaryModel,
+      Otp: OtpModel,
+      OtpHistory: OtpHistoryModel
     };
 
     this.modelCache.set(schemaName, models);
     return models;
-  }
-
-  async hello() {
-    const { Interaction } = await this.getModels("acc");
   }
 }
