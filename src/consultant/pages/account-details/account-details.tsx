@@ -469,7 +469,17 @@ export const AccountDetails = () => {
       case 'checklist':
         return <Checklist />;
       case 'timesheet':
-        return <Timesheet />;
+        return (
+          <Timesheet
+            accountDetails={{
+              ...(data?.data as AccountDetailsResponse),
+              activeKey: 'timesheet',
+            }}
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setImportsParams={setImportsParams}
+          />
+        );
       case 'imports':
         return (
           <Import
