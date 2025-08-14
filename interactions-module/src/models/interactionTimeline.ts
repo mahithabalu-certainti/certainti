@@ -17,9 +17,16 @@ export interface InteractionTimelineAttributes {
   event_datetime?: Date;
 }
 
-export interface InteractionTimelineCreationAttributes extends Optional<InteractionTimelineAttributes, "rid"> {}
+export interface InteractionTimelineCreationAttributes
+  extends Optional<InteractionTimelineAttributes, "rid"> {}
 
-export class InteractionTimeline extends Model<InteractionTimelineAttributes, InteractionTimelineCreationAttributes> implements InteractionTimelineAttributes {
+export class InteractionTimeline
+  extends Model<
+    InteractionTimelineAttributes,
+    InteractionTimelineCreationAttributes
+  >
+  implements InteractionTimelineAttributes
+{
   public rid?: string;
   public r_number?: string;
   public created_by!: string;
@@ -39,7 +46,9 @@ export class InteractionTimeline extends Model<InteractionTimelineAttributes, In
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
         r_number: {
@@ -57,6 +66,7 @@ export class InteractionTimeline extends Model<InteractionTimelineAttributes, In
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
+          defaultValue: DataTypes.NOW,
         },
         modified_datetime: {
           type: DataTypes.DATE,

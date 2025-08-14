@@ -8,22 +8,31 @@ export interface InteractionHistoryAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  resource_rid: string;
+  interaction_rid: string;
+  interaction_item_rid: string;
   attribute_name: string;
   old_value?: string;
   new_value?: string;
 }
 
-export interface InteractionHistoryCreationAttributes extends Optional<InteractionHistoryAttributes, "rid"> {}
+export interface InteractionHistoryCreationAttributes
+  extends Optional<InteractionHistoryAttributes, "rid"> {}
 
-export class InteractionHistory extends Model<InteractionHistoryAttributes, InteractionHistoryCreationAttributes> implements InteractionHistoryAttributes {
+export class InteractionHistory
+  extends Model<
+    InteractionHistoryAttributes,
+    InteractionHistoryCreationAttributes
+  >
+  implements InteractionHistoryAttributes
+{
   public rid?: string;
   public r_number?: string;
   public created_by!: string;
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public resource_rid!: string;
+  public interaction_rid!: string;
+  public interaction_item_rid!: string;
   public attribute_name!: string;
   public old_value?: string;
   public new_value?: string;
@@ -33,7 +42,9 @@ export class InteractionHistory extends Model<InteractionHistoryAttributes, Inte
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
         r_number: {
@@ -51,12 +62,17 @@ export class InteractionHistory extends Model<InteractionHistoryAttributes, Inte
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
+          defaultValue: DataTypes.NOW,
         },
         modified_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
         },
-        resource_rid: {
+        interaction_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        interaction_item_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },
