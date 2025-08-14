@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
-  downloadImportFailureData,
-  useImportDetails,
+  downloadTimesheetFailureData,
+  useTimesheetDetails,
 } from '../../../../services/import';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { Tab, Tabs, Typography } from '@mui/material';
@@ -63,13 +63,13 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
 
   const [value, setValue] = useState('details'); // Resource inner tab value
 
-  const { data, isLoading, error } = useImportDetails(accountid, fileId);
+  const { data, isLoading, error } = useTimesheetDetails(accountid, fileId);
 
   const handleExportFailureData = (
     type: FailureType,
     entity: ImportEntityType
   ) => {
-    downloadImportFailureData(accountid || '', fileId || '', type, entity);
+    downloadTimesheetFailureData(accountid || '', fileId || '', type, entity);
   };
 
   const importsViewEditFields = useMemo(

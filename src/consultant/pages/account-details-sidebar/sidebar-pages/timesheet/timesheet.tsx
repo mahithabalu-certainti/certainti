@@ -3,7 +3,6 @@ import { AllPermissions } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
-  AccountDetailsResponse,
   ExportType,
   TimeSheetList,
 } from '../../../../types';
@@ -13,23 +12,17 @@ import { getTimesheetFilterFields } from './helpers';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import ImportFile from './import-file';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { useImportListList } from '../../../../services/import';
+import { useTimesheetList } from '../../../../services/import';
 import { TimeSheetIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { getTimesheetListColumns } from './columns';
 import TimesheetDetails from './timesheet-details';
 
-interface AccountDetailsProps extends AccountDetailsResponse {
-  activeKey: string;
-}
 
 interface TimeSheetProps {
-  accountDetails?: AccountDetailsProps;
   setExportType?: (type: ExportType) => void;
   setImportsParams: React.Dispatch<React.SetStateAction<ImportsListURLParams>>;
-  accountInActive: boolean;
 }
 
 const ImportsTabs: ResourceTabs[] = [
@@ -43,8 +36,6 @@ const ImportsTabs: ResourceTabs[] = [
 const Timesheet: React.FC<TimeSheetProps> = ({
   setExportType,
   setImportsParams,
-  accountInActive,
-  accountDetails,
 }) => {
   // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
@@ -93,7 +84,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const fileId = searchParams.get('file_id');
   const viewDetails = !!fileId;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-  const { data, isLoading, isError } = useImportListList(
+  const { data, isLoading, isError } = useTimesheetList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -157,14 +148,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const onRefreshClick = () => {
     setRefreshImports(Date.now());
   };
-  const handleImport = (value: boolean) => {
-    if (value) {
-      searchParams.set('upload', 'true');
-    } else {
-      searchParams.delete('upload');
-    }
-    navigate({ search: searchParams.toString() }, { replace: true });
-  };
   const handleBackClick = () => {
     searchParams.delete('file_id');
     searchParams.delete('tab');
@@ -205,18 +188,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     fiscalYears,
     permissionMap
   );
-  const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
-  const headerButtons = [
-    {
-      label: 'Import file',
-      variant: 'outlined' as const,
-      disabled: accountInActive,
-      onClick: () => handleImport(true),
-      sx: { width: '90px', minWidth: '90px' },
-      hide: false,
-    },
-  ];
   const timesheetColumns = getTimesheetListColumns(
     handleDocument,
     handleDownload,
@@ -230,7 +202,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       <SectionTabPanel
         tabs={ImportsTabs}
         filterMenu={timesheetFilterFields}
-        filterVisibility={showUploads || viewDetails ? false : true}
+        filterVisibility={viewDetails ? false : true}
         showFilter={showFilter}
         contextKey='imports'
         appliedFilters={appliedFilters}
@@ -240,18 +212,10 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={showUploads || viewDetails ? false : true}
+        showRefresh={viewDetails ? false : true}
         onRefreshClick={onRefreshClick}
       />
-      {showUploads ? (
-        <ImportFile
-          accountNo={accountDetails?.accountById?.r_number}
-          accountId={accountid}
-          accountInActive={accountInActive}
-          onUploadSuccess={onRefreshClick}
-          handleShowUpload={() => handleImport(false)}
-        />
-      ) : viewDetails ? (
+      {viewDetails ? (
         <TimesheetDetails handleBackClick={handleBackClick} />
       ) : (
         <>
@@ -265,7 +229,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
                 alt='Timesheet-header-icon'
               />
             }
-            buttons={headerButtons}
             iconBg='#34CFCA'
             bgType='circle'
           />

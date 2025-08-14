@@ -63,7 +63,7 @@ import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
-import { exportImportsData } from '../../services/import';
+import { exportImportsData, exportTimesheetData } from '../../services/import';
 import { ImportsListURLParams } from '../../types/imports';
 import {
   exportFinancialProjectCost,
@@ -211,7 +211,8 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'imports' &&
-      searchParams.get('list') !== 'financial'
+      searchParams.get('list') !== 'financial' &&
+      searchParams.get('list') !== 'timesheet'
     ) {
       return;
     }
@@ -268,6 +269,14 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'timesheet') {
+      exportTimesheetData({
+        ...importsParams,
+        filters: {
+          ...importsParams.filters,
+          entity: { equals: 'project_task' },
+        },
+      });
     } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
@@ -366,6 +375,8 @@ export const AccountDetails = () => {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
       return !isFinancialProjectCostExportEnable;
+    } else if (list === 'timesheet') {
+      return false;
     } else {
       // return !isAccountExportEnable;
       return true;
@@ -471,11 +482,6 @@ export const AccountDetails = () => {
       case 'timesheet':
         return (
           <Timesheet
-            accountDetails={{
-              ...(data?.data as AccountDetailsResponse),
-              activeKey: 'timesheet',
-            }}
-            accountInActive={accountInActive}
             setExportType={setExportType}
             setImportsParams={setImportsParams}
           />
