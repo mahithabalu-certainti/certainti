@@ -20,6 +20,7 @@ import { ListTable } from '../../../../../components/table';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
+import { InteractionHistory } from './interaction-history';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -69,7 +70,9 @@ const Interactions: React.FC<InteractionsProps> = ({
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const interactionId = searchParams.get('interaction_id');
+  const interactionHistoryId = searchParams.get('interaction_history_id');
   const viewDetails = !!interactionId;
+  const viewInteractionHistory = !!interactionHistoryId;
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -191,6 +194,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const handleBackClick = () => {
     searchParams.delete('interaction_id');
+    searchParams.delete('interaction_history_id');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -207,8 +211,18 @@ const Interactions: React.FC<InteractionsProps> = ({
     },
   ];
 
+  const handleViewInteractionHistory = (interactionHistoryId: string) => {
+    if (interactionHistoryId) {
+      searchParams.set('interaction_history_id', interactionHistoryId);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+  };
+
   const getRowId = (row: InteractionList) => row.rid;
-  const interactionColumns = getInteractionListColumns(handleViewInteraction);
+  const interactionColumns = getInteractionListColumns(
+    handleViewInteraction,
+    handleViewInteractionHistory
+  );
 
   const filterFields = getInteractionFilterFields();
 
@@ -235,6 +249,11 @@ const Interactions: React.FC<InteractionsProps> = ({
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
           accountDetails={accountDetails}
+        />
+      ) : viewInteractionHistory ? (
+        <InteractionHistory
+          handleBackClick={handleBackClick}
+          accountInActive={accountInActive}
         />
       ) : (
         <>
