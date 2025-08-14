@@ -72,19 +72,19 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
     downloadTimesheetFailureData(accountid || '', fileId || '', type, entity);
   };
 
-  const importsViewEditFields = useMemo(
+  const timesheetViewEditFields = useMemo(
     () =>
-      permission.find((item) => item.name === AllPermissions.IMPORTS_VIEW_EDIT)
+      permission.find((item) => item.name === AllPermissions.TIMESHEET_VIEW_EDIT)
         ?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    importsViewEditFields.forEach((item) => {
+    timesheetViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [importsViewEditFields]);
+  }, [timesheetViewEditFields]);
 
   const basicInfo: DetailItem[] = [
     {

@@ -100,7 +100,7 @@ export enum AllMenus {
   DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
-  TIMESHEETS = 'timeline',
+  TIMESHEETS = 'timesheet',
   CASES = 'cases',
   SURVEY = 'survey',
   NOTES = 'notes',
@@ -204,6 +204,7 @@ export enum AllPermissions {
   ACCOUNT_SETTINGS_VIEW_EDIT = 'account_settings_view_edit',
   PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
   IMPORTS_VIEW_EDIT = 'imports_view_edit',
+  TIMESHEET_VIEW_EDIT = 'timesheet_view_edit',
   IMPORTS_EXPORT = 'imports_export',
   MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
   PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
@@ -219,6 +220,7 @@ export enum AllPermissions {
   ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
   ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
   ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
+  ACCOUNT_TIMESHEET_EXPORT = 'timesheet_export',
 }
 
 export interface Country {

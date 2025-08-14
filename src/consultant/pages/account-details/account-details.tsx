@@ -99,15 +99,6 @@ export const AccountDetails = () => {
     menus,
     AllMenus.FINANCIAL_HIGHLIGHTS
   );
-
-  // const isAccountDetailsDownloadEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
-  // );
-  // const isAccountExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.ACCOUNT_EXPORT
-  // );
   const isResourcesExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_RESOURCES_EXPORT
@@ -135,6 +126,11 @@ export const AccountDetails = () => {
   const isFinancialProjectCostExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
+  );
+
+  const isTimesheetExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
 
   const isAccountFieldsEditable = useMemo(
@@ -376,9 +372,8 @@ export const AccountDetails = () => {
     } else if (list === 'financial' && tab === 'project_cost') {
       return !isFinancialProjectCostExportEnable;
     } else if (list === 'timesheet') {
-      return false;
+      return !isTimesheetExportEnable;
     } else {
-      // return !isAccountExportEnable;
       return true;
     }
   };

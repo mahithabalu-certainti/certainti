@@ -2,10 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AllPermissions } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
-import {
-  ExportType,
-  TimeSheetList,
-} from '../../../../types';
+import { ExportType, TimeSheetList } from '../../../../types';
 import { ImportsListURLParams } from '../../../../types/imports';
 import { ResourceTabs } from '../resources/resources';
 import { getTimesheetFilterFields } from './helpers';
@@ -18,7 +15,6 @@ import { TimeSheetIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { getTimesheetListColumns } from './columns';
 import TimesheetDetails from './timesheet-details';
-
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
@@ -60,11 +56,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
-  // TODO: Have to update view & edit permissions
   const timesheetViewEditFields = useMemo(
     () =>
-      permission?.find((item) => item.name === AllPermissions.IMPORTS_VIEW_EDIT)
-        ?.fields ?? [],
+      permission?.find(
+        (item) => item.name === AllPermissions.TIMESHEET_VIEW_EDIT
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -74,10 +70,9 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     });
     return map;
   }, [timesheetViewEditFields]);
-  // TODO: Have to update export permissions
   const isTimesheetExportEnable = checkPermission(
     permission,
-    AllPermissions.IMPORTS_EXPORT
+    AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
 
   // API Hooks
