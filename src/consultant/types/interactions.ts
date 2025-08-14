@@ -45,6 +45,7 @@ export interface InteractionFormData {
   created_by?: string;
   updated_on?: string;
   updated_by?: string;
+  flag?: 'submit' | 'draft';
 }
 
 export interface InteractionQuestionErrors {
@@ -137,32 +138,38 @@ export interface Attachment {
 }
 
 export interface InteractionQuestion {
-  question_id: string;
   rid: string;
+  question_seq_num: string;
   question: string;
-  answer: string;
-  response_received_on: string;
-  attachments: Attachment[];
-  mandatory: boolean;
   notes: string;
+  is_mandatory: boolean;
+  response_on_datetime: string | null;
+  response: string | null;
+  attachments: Attachment[];
 }
 
 export interface InteractionDetails {
   rid: string;
-  r_number: string;
+  account_rid: string;
+  project_rid: string;
+  fiscal_year: number;
+  project_fiscal_rid: string;
+  interaction_number: string;
+  interaction_type: string;
+  interaction_type_name: string;
+  status: string;
+  status_name: string;
+  modified_by: string;
+  created_by: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+  questions: InteractionQuestion[];
+  global_attachments: Attachment[];
   project_code: string;
   project_name: string | null;
   account_name: string | null;
-  fiscal_year: string | number;
-  interaction_type: string;
-  status: string;
   response_updated_by: string;
   response_received_on: string;
-  created_on: string;
-  created_by: string;
-  updated_on: string;
-  updated_by: string;
-  questions: InteractionQuestion[];
 }
 
 export interface InteractionDetailsResponse {

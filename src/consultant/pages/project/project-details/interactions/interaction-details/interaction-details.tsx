@@ -9,9 +9,9 @@ import SectionHeader from '../../../../../../components/details-section/section-
 import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
-import InteractionQuestions from './interaction-qus';
 import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import { NewProjectData } from '../../../../../types/project';
+import { InteractionQuestions } from '../../../../../../components/interaction';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -40,6 +40,9 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       project_name: projectDetails?.project_name || '',
       fiscal_year: projectDetails?.fiscal_year || '',
       account_name: projectDetails?.account_name || '',
+      account_rid: projectDetails?.account_rid || '',
+      project_rid: projectDetails?.project_rid || '',
+      project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
     };
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'project',
@@ -135,13 +138,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Interaction ID',
-      value: data?.r_number,
-      key: 'r_number',
+      value: data?.interaction_number,
+      key: 'interaction_number',
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(data?.created_on),
-      key: 'created_on',
+      value: formatDateToYYYYMMDDWithTime(data?.created_datetime),
+      key: 'created_datetime',
     },
     {
       label: 'Created By',
@@ -150,13 +153,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.updated_on),
-      key: 'updated_on',
+      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+      key: 'modified_datetime',
     },
     {
       label: 'Updated By',
-      value: data?.updated_by,
-      key: 'updated_by',
+      value: data?.modified_by,
+      key: 'modified_by',
     },
   ];
 
@@ -165,7 +168,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction'
-          subValue={data?.r_number || ''}
+          subValue={data?.interaction_number || ''}
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'
@@ -201,7 +204,11 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         )}
       </div>
       {data?.questions && data?.questions.length > 0 && (
-        <InteractionQuestions questions={data?.questions} />
+        <InteractionQuestions
+          questions={data?.questions}
+          globalAttachments={data?.global_attachments}
+          isEditEnable={true}
+        />
       )}
       {!isLoading && !error && (
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>
