@@ -108,7 +108,7 @@ class ProjectGraphQlServices {
             await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
             if(findProjectFiscal[0][0].fiscal_year !== updatedProjectFiscal[0][0].fiscal_year) {
               await this.projectIngestion.deleteAccountFiscalRegionForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year, findProjectFiscal[0][0]);  
-            }    
+            }
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
                 checkAccountExists[0][0].r_number,
                 data.account_rid
