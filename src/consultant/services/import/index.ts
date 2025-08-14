@@ -269,6 +269,11 @@ export const downloadTimesheetFailureData = async (
   failureType: FailureType,
   entityType: ImportEntityType
 ) => {
-  const url = getTimesheetFailureURL(accountId, fileId, failureType, entityType);
+  const url = getTimesheetFailureURL(
+    accountId,
+    fileId,
+    failureType,
+    entityType
+  );
   await downloadBase64File(url, `${failureType}_failures.xlsx`);
 };

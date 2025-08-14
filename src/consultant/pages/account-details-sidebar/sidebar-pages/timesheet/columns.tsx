@@ -1,14 +1,14 @@
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import TextButton from '../../../../../components/button/text-button';
 import { ListTableColumn } from '../../../../../components/table/types';
-import { ImportsList } from '../../../../types/imports';
+import { TimeSheetList } from '../../../../types';
 
 export const getTimesheetListColumns = (
   handleDocument: (rowId: string) => void,
   handleDownload: (documentUrl: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  isImportExportEnable?: boolean
-): ListTableColumn<ImportsList>[] => [
+  isTimesheetExportEnable?: boolean
+): ListTableColumn<TimeSheetList>[] => [
   {
     id: 'r_number',
     sortId: 'r_number',
@@ -26,7 +26,7 @@ export const getTimesheetListColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ImportsList) => (
+    render: (row: TimeSheetList) => (
       <span
         onClick={() => handleDocument(row.rid)}
         className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
@@ -69,7 +69,7 @@ export const getTimesheetListColumns = (
     width: 140,
     sortable: true,
     hide: !permissionMap?.['fiscal']?.edit && !permissionMap?.['fiscal']?.read,
-    render: (row: ImportsList) => row.fiscal && `FY-${row.fiscal}`,
+    render: (row: TimeSheetList) => row.fiscal && `FY-${row.fiscal}`,
   },
   {
     id: 'total_records',
@@ -141,13 +141,6 @@ export const getTimesheetListColumns = (
       !permissionMap?.['status_descriptions']?.edit &&
       !permissionMap?.['status_descriptions']?.read,
   },
-  // {
-  //   id: 'import_type',
-  //   sortId: 'import_type',
-  //   label: 'Import Type',
-  //   width: 160,
-  //   sortable: true,
-  // },
   {
     id: 'imported_by',
     sortId: 'imported_by',
@@ -167,15 +160,16 @@ export const getTimesheetListColumns = (
     hide:
       !permissionMap?.['imported_on']?.edit &&
       !permissionMap?.['imported_on']?.read,
-    render: (row: ImportsList) => formatDateToYYYYMMDDWithTime(row.imported_on),
+    render: (row: TimeSheetList) =>
+      formatDateToYYYYMMDDWithTime(row.imported_on),
   },
   {
     id: 'download',
     sortId: 'download',
     label: 'Download',
     width: 110,
-    hide: !isImportExportEnable,
-    render: (row: ImportsList) => (
+    hide: !isTimesheetExportEnable,
+    render: (row: TimeSheetList) => (
       <TextButton
         label='Download'
         sx={{ width: '80px', minWidth: '80px', maxWidth: '80px', ml: 1 }}

@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { AllPermissions } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
-import { ExportType, TimeSheetList } from '../../../../types';
-import { ImportsListURLParams } from '../../../../types/imports';
+import {
+  ExportType,
+  TimeSheetList,
+  TimeSheetListURLParams,
+} from '../../../../types';
 import { ResourceTabs } from '../resources/resources';
 import { getTimesheetFilterFields } from './helpers';
 import { useSelector } from 'react-redux';
@@ -18,10 +21,12 @@ import TimesheetDetails from './timesheet-details';
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
-  setImportsParams: React.Dispatch<React.SetStateAction<ImportsListURLParams>>;
+  setTimesheetParams: React.Dispatch<
+    React.SetStateAction<TimeSheetListURLParams>
+  >;
 }
 
-const ImportsTabs: ResourceTabs[] = [
+const TimesheetTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_TIMESHEET_OVERVIEW,
     name: 'Overview',
@@ -31,7 +36,7 @@ const ImportsTabs: ResourceTabs[] = [
 
 const Timesheet: React.FC<TimeSheetProps> = ({
   setExportType,
-  setImportsParams,
+  setTimesheetParams,
 }) => {
   // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
@@ -42,7 +47,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [sortField, setSortField] = useState<string>('r_number');
-  const [refreshImports, setRefreshImports] = useState<number>(Date.now());
+  const [refreshTimesheet, setRefreshTimesheet] = useState<number>(Date.now());
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [timesheetList, setTimesheetList] = useState<TimeSheetList[]>([]);
 
@@ -90,7 +95,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       fiscal_year: convertedFiscalYear,
     },
     !viewDetails,
-    refreshImports
+    refreshTimesheet
   );
 
   // UseEffects
@@ -103,7 +108,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     if (setExportType) {
       setExportType('timesheet');
     }
-    setImportsParams({
+    setTimesheetParams({
       page: currentPage + 1,
       limit: rowsPerPage,
       sort: sortField,
@@ -141,7 +146,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     }
   };
   const onRefreshClick = () => {
-    setRefreshImports(Date.now());
+    setRefreshTimesheet(Date.now());
   };
   const handleBackClick = () => {
     searchParams.delete('file_id');
@@ -195,11 +200,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
-        tabs={ImportsTabs}
+        tabs={TimesheetTabs}
         filterMenu={timesheetFilterFields}
         filterVisibility={viewDetails ? false : true}
         showFilter={showFilter}
-        contextKey='imports'
+        contextKey='timesheet'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}

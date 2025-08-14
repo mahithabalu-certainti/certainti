@@ -74,8 +74,9 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
 
   const timesheetViewEditFields = useMemo(
     () =>
-      permission.find((item) => item.name === AllPermissions.TIMESHEET_VIEW_EDIT)
-        ?.fields ?? [],
+      permission.find(
+        (item) => item.name === AllPermissions.TIMESHEET_VIEW_EDIT
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -137,11 +138,6 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
       value: data?.entity,
       key: 'entity',
     },
-    // {
-    //   label: 'Import Type',
-    //   value: data?.import_type,
-    //   key: 'import_type',
-    // },
     {
       label: 'Status',
       value: (

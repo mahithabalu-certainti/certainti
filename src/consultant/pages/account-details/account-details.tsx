@@ -478,7 +478,7 @@ export const AccountDetails = () => {
         return (
           <Timesheet
             setExportType={setExportType}
-            setImportsParams={setImportsParams}
+            setTimesheetParams={setImportsParams}
           />
         );
       case 'imports':
