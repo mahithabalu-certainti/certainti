@@ -360,3 +360,37 @@ export interface EntityTypes {
 export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
   data: EntityTypes[];
 }
+
+//Interactions
+export interface InteractionStatusItem {
+  rid: string;
+  status_name: string;
+}
+
+export interface GetInteractionStatusApiResponse extends CommonApiResponse {
+  data: {
+    interactionStatus: InteractionStatusItem[];
+  };
+}
+
+export interface InteractionTypeItem {
+  rid: string;
+  interaction_type_name: string;
+}
+
+export interface GetInteractionTypesApiResponse extends CommonApiResponse {
+  data: {
+    interactionTypes: InteractionTypeItem[];
+  };
+}
+
+export interface InteractionSourceItem {
+  rid: string;
+  interaction_source_name: string;
+}
+
+export interface GetInteractionSourcesApiResponse extends CommonApiResponse {
+  data: {
+    interactionSource: InteractionSourceItem[];
+  };
+}

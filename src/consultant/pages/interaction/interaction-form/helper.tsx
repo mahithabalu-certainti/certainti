@@ -124,17 +124,17 @@ export const questionsTransformPayload = (
       if (
         existingQuestion.rid &&
         !retainedRids.has(existingQuestion.rid) &&
-        !seenQuestionNos.has(existingQuestion.question_id)
+        !seenQuestionNos.has(existingQuestion.question_seq_num)
       ) {
         transformedQuestions.push({
-          questionNo: existingQuestion.question_id,
+          questionNo: existingQuestion.question_seq_num,
           question: existingQuestion.question || '',
-          mandatory: existingQuestion.mandatory ?? false,
+          mandatory: existingQuestion.is_mandatory ?? false,
           notes: existingQuestion.notes || '',
           rid: existingQuestion.rid,
           action_type: QuestionUpdate.Delete,
         });
-        seenQuestionNos.add(existingQuestion.question_id);
+        seenQuestionNos.add(existingQuestion.question_seq_num);
       }
     });
   }
@@ -145,7 +145,8 @@ export const questionsTransformPayload = (
 export const transFormPayload = (
   formData: Partial<InteractionFormData>,
   isEditView: boolean,
-  interactionData?: InteractionDetails
+  interactionData?: InteractionDetails,
+  saveFlag?: 'submit' | 'draft'
 ): InteractionFormData => {
   const transformedQuestions = questionsTransformPayload(
     formData.questions || [],
@@ -159,6 +160,7 @@ export const transFormPayload = (
     fiscalYear: formData.fiscalYear || 0,
     questions: transformedQuestions,
     accountName: formData.accountName || '',
+    flag: saveFlag,
   };
 
   if (isEditView && interactionData) {
