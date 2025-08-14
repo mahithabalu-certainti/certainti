@@ -1,7 +1,7 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
@@ -40,6 +40,190 @@ class ResourceCostService {
       this.mainDbSequelize = await initMainDbSequelize();
     }
     return this.mainDbSequelize;
+  }
+
+/**
+   * Retrieves a paginated list of resource costs for a specific account and fiscal year.
+   * Supports filtering, sorting, and searching functionality.
+   *
+   * @param page - Page number for pagination
+   * @param limit - Number of records per page
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource cost data or error message
+   */
+  async resourceCostsForFinancialHighlights(
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    project_rid: string,
+    account_rid:string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResourceFiscal: any; count: number };
+  }> {
+    try {
+      const offset = (page - 1) * limit;
+      const [finalSortBy, finalSortOrder] =
+        resourceCostSchemaService.getSortParametersForFinancialHighlights(sortBy, sortOrder);
+
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      // Check if account-specific schema exists
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const tableName = "project_resource_fiscal";
+      const schemaAndTableValidation =
+        await resourceCostSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+      const sequelize = await this.getOrgSequelize();
+      if (!sequelize) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Database connection not available"
+        );
+      }
+
+      // Process currency filters if present
+      if (filters && filters.country !== undefined) {
+        const currencyFilterResult =
+          await resourceCostSchemaService.processCountryFilter(filters);
+        if (currencyFilterResult) {
+          return currencyFilterResult;
+        }
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(search);
+      let filterConditions = resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results
+      return await resourceCostSchemaService.executeQueriesForFinancialHighlights(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        limit,
+        offset,
+        search,
+        account_rid,
+        project_rid
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+ /**
+   * Retrieves a  list of resource costs for a specific account and fiscal year for downloadind  as excel.
+   * Supports filtering, sorting, and searching functionality.
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource cost data or error message
+   */
+  async exportResourceCostsForFinancialHighlights(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    project_rid:string,
+    account_rid:string,
+    userId:string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { financialHighlights: any };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        resourceCostSchemaService.getSortParametersForFinancialHighlights(sortBy, sortOrder);
+
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      // Check if account-specific schema exists
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const tableName = "project_resource_fiscal";
+      const schemaAndTableValidation =
+        await resourceCostSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+      const sequelize = await this.getOrgSequelize();
+      if (!sequelize) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Database connection not available"
+        );
+      }
+
+      // Process currency filters if present
+      if (filters && filters.country) {
+        const currencyFilterResult =
+          await resourceCostSchemaService.processCountryFilter(filters);
+        if (currencyFilterResult) {
+          return currencyFilterResult;
+        }
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(search);
+      let filterConditions = resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results
+      return await resourceCostSchemaService.exportresourceCostDetailsForFinancialHighlights(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        search,
+        userId,
+        account_rid,
+        project_rid
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
   }
 
   /**
@@ -128,7 +312,8 @@ class ResourceCostService {
         limit,
         offset,
         search,
-        accountId
+        accountId,
+        {}
       );
     } catch (err) {
       console.log("Error ", err);
@@ -154,7 +339,8 @@ class ResourceCostService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    resourceRid: string
+    resourceRid: string,
+    userId:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -214,7 +400,8 @@ class ResourceCostService {
         finalSortOrder,
         resourceRid,
         search,
-        accountId
+        accountId,
+        userId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -1315,9 +1502,45 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
 
     return date.toDate();
   }
+
+  /**
+ * Fetches resource costs for multiple resource IDs using a single SQL query
+ * 
+ * @param {string} accountNumber - Account number to determine schema
+ * @param {string[]} resourceIds - Array of resource IDs
+ * @returns {Promise<any[]>} - Resource costs data
+ */
+async getResourceCostsByResourceIds(accountNumber: string, resourceIds: string[]): Promise<any[]> {
+  try {
+    if (resourceIds.length === 0) return [];
+
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+
+    const query = `
+      SELECT 
+        rc.rid,
+        rc.resource_rid
+      FROM "${schemaName}".resource_cost rc
+      WHERE rc.resource_rid IN (:resourceIds)
+      ORDER BY rc.created_datetime DESC
+    `;
+
+    const sequelize = await initOrgSequelize();
+    const results = await sequelize.query(query, {
+      replacements: { resourceIds },
+      type: 'SELECT'
+    });
+
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching resource costs (bulk):', error);
+    throw error;
+  }
+}
 }
 
-async function getResourceStatuses(
+export async function getResourceStatuses(
   mainDbSequelize: Sequelize,
 ): Promise<Map<string, string> | null> {
   try {
@@ -1350,7 +1573,7 @@ async function getResourceStatuses(
  * @param currency_rid - Optional currency RID to lookup.
  * @returns currency_threshold value or null if not found.
  */
-async function getCurrencyThreshold(
+export async function getCurrencyThreshold(
   mainDbSequelize: Sequelize,
   currency_rid?: string
 ): Promise<number | null> {

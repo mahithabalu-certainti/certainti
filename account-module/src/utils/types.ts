@@ -109,3 +109,24 @@ export interface IUpdateKeyContactDetail {
 }
 
 export type IColorCodeType = 'Active' | 'Inactive' | 'All';
+
+// In your account model file
+export interface AccountAttributes {
+  rid: string;
+  account_name: string;
+  currency_rid: string;
+  total_project_hours: number | null;
+  total_projects: number | null;
+  total_project_cost: number | null;
+  total_projects_rd_credits: number | null;
+  qualifying_project_hours_fed: number | null;
+  qualifying_project_qre_fed: number | null;
+  qualifying_project_rd_credits_fed: number | null;
+  industry_name_other: string | null;
+  r_number: string | null;
+  storage_type: string | null;
+  professional_services_consultant: string | null;
+  finance_lead: string | null;
+  finance_executive: string | null;
+  parent_account_rid: string | null;
+}

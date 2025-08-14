@@ -6,6 +6,7 @@ interface RequestContext {
   res: Express.Response;
   connection?: any;
   token?: string;
+  userId: string;
   services?: Services;
 }
 
@@ -21,8 +22,17 @@ const initRequestContext = async (
   ctx: ExpressContextFunctionArgument,
   appContext: Services
 ): Promise<RequestContext> => {
+  const req = ctx.req;
+
+  const userId = req.headers["x-user-id"];
+
+  if (!userId || typeof userId !== "string") {
+    throw new Error("Missing required header: x-user-id");
+  }
+
   return {
     ...ctx,
+    userId,
     services: appContext,
     token: ctx.req.headers.authorization,
   };

@@ -1,13 +1,4 @@
-process.env.KEY_VAULT_URI = "https://mock-keyvault.vault.azure.net";
-process.env.ORGDB_NAME = "rdcredits_orgdb";
-process.env.ORGDB_PASSWORD = "myuser";
-process.env.ORGDB_USERNAME = "mysecretpassword";
-process.env.ORGDB_ENDPOINT = "localhost";
 
-process.env.MAINDB_NAME = "certainty_local";
-process.env.MAINDB_USERNAME = "Sumi@2271";
-process.env.MAINDB_PASSWORD = "postgres";
-process.env.MAINDB_ENDPOINT = "localhost";
 
 jest.mock("../../src/config/config", () => ({
     __esModule: true,

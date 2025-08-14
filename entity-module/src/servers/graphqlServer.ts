@@ -10,6 +10,16 @@ import resourceResolver from "../resolvers/resourceResolver";
 import initRequestContext from "../graphql/context";
 import configurations from "../config/config";
 import { Application } from "express";
+import { projectSchema } from "../graphql/projectSchema";
+import { projectResolver } from "../resolvers/projectResolver";
+import attachmentSchema from '../graphql/attachmentSchema'
+import { attachmentResolver } from "../resolvers/attachmentResolver";
+import { projectResourceSchema } from "../graphql/projectResourceSchema";
+import { projectResourceResolver } from "../resolvers/projectResourceResolver";
+import { importResolver } from "../resolvers/importListResolver";
+import importListSchema from "../graphql/importListSchema";
+import { projectTaskSchema } from "../graphql/projectTaskSchema";
+import { projectTaskResolver } from "../resolvers/projectTaskResolver";
 
 const GRAPHQL_PATH = "/graphql";
 
@@ -24,16 +34,27 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
       resourceCostGraphQlSchema,
       resourceSkillGraphQlSchema,
       resourceSchema,
+      projectSchema,
+      attachmentSchema,
+      projectResourceSchema,
+      importListSchema,
+      projectTaskSchema
     ],
     resolvers: [
       resourceCostResolvers,
       resourceSkillResolvers,
       resourceResolver,
+      projectResolver,
+      attachmentResolver,
+      projectResourceResolver,
+      importResolver,
+      projectTaskResolver
     ],
   });
 
   const server = new ApolloServer({
     schema,
+    introspection : true
   });
 
   await server.start();

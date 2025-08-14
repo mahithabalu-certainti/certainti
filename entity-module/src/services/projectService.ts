@@ -1,8 +1,13 @@
 import moment, { Moment } from "moment";
-import "moment-timezone";  
+import "moment-timezone";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import {
+  HttpStatus,
+  MAIN_SCHEMA_NAME,
+  STATUS_MESSAGE,
+  rawQueries,
+} from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -30,6 +35,12 @@ import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import Decimal from "decimal.js";
+import { ProjectSummary } from "../models/projectSummary";
+import { setupProjectFiscalRegion } from "../models/projectFiscalRegion";
+import {
+  AccountFiscalRegion,
+  setupAccountFiscalRegionSequence,
+} from "../models/accountFiscalRegion";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -117,19 +128,20 @@ export class ProjectService {
     try {
       const orgDbSequlize = await initOrgSequelize();
       const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
-      
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
 
       const KeyContactModel = await KeyContact.initialize(
         orgDbSequlize,
         schemaName
       );
 
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         orgDbSequlize,
         schemaName
       );
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
       const ProjectTimelineModel = await ProjectTimeline.initialize(
         orgDbSequlize,
         schemaName
@@ -142,6 +154,10 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
+      const AccountFiscalRegionModel = await AccountFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await ProjectModel.sync({ force: false });
       await ProjectFiscalModel.sync({ force: false });
@@ -150,12 +166,16 @@ export class ProjectService {
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
       await AccountFiscalModel.sync({ force: false });
+      await AccountFiscalRegionModel.sync({ force: false });
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
+      await setupProjectFiscalRegion(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
+      await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       return this.throwServiceError(err as Error);
     }
@@ -198,6 +218,16 @@ export class ProjectService {
               userId
             );
 
+          if (projectData.region_rid) {
+            await this.projectIngestion.addProjectFiscalRegion(
+              accountNumber,
+              projectData,
+              createdProjectFiscal,
+              existingProject.rid,
+              userId
+            );
+          }
+
           if (createdProjectFiscal && createdProjectFiscal.rid) {
             createdProjectId = createdProjectFiscal.rid;
             await this.projectIngestion.addProjectFiscalSummary(
@@ -226,6 +256,13 @@ export class ProjectService {
               projectData
             );
 
+            if (projectData.region_rid) {
+              await this.projectIngestion.addAccountFiscalRegion(
+                accountNumber,
+                projectData
+              );
+            }
+
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
               accountNumber,
               projectData.account_id
@@ -243,7 +280,7 @@ export class ProjectService {
         }
 
         return {
-          rid: createdProjectId
+          rid: createdProjectId,
         };
       } else {
         const createdProject =
@@ -263,9 +300,19 @@ export class ProjectService {
               userId
             );
 
+          if (projectData.region_rid) {
+            await this.projectIngestion.addProjectFiscalRegion(
+              accountNumber,
+              projectData,
+              createdProjectFiscal,
+              createdProjectFiscal.project_rid,
+              userId
+            );
+          }
+
           const startDate = projectData.project_startdate
-          ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
-          : null;
+            ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
+            : null;
           const endDate = projectData.project_enddate
             ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
             : null;
@@ -285,14 +332,26 @@ export class ProjectService {
             createdProjectFiscal,
             createdProject.rid,
             projectData.key_contacts,
-            createdProjectFiscal.rid || "",
-
+            createdProjectFiscal.rid || ""
           );
 
           await this.projectIngestion.addAccountFiscal(
             accountNumber,
             projectData
           );
+
+          await this.projectIngestion.autoAssignToDefaultUserGroup(
+            createdProject.rid,
+            accountData.rid,
+            userId
+          );
+
+          if (projectData.region_rid) {
+            await this.projectIngestion.addAccountFiscalRegion(
+              accountNumber,
+              projectData
+            );
+          }
 
           await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
             accountNumber,
@@ -318,7 +377,7 @@ export class ProjectService {
             accountNumber,
             projectData.account_id,
             "create",
-            createdProject.rid,
+            createdProjectFiscal.rid,
             projectData
           );
         }
@@ -431,6 +490,12 @@ export class ProjectService {
       existingFiscalData?.project_code || ""
     );
 
+    await this.projectIngestion.updateProjectFiscalRegion(
+      accountNumber,
+      projectData,
+      existingFiscalData?.project_code || ""
+    );
+
     if (projectData.key_contacts) {
       await this.projectIngestion.manageKeyContacts(
         projectData.key_contacts,
@@ -465,10 +530,21 @@ export class ProjectService {
     );
 
     await this.projectIngestion.addAccountFiscal(accountNumber, projectData);
+    await this.projectIngestion.addAccountFiscalRegion(
+      accountNumber,
+      projectData
+    );
 
     await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
       accountNumber,
       accountData.rid
+    );
+
+    await this.projectIngestion.updateProjectResources(
+      accountNumber,
+      projectData,
+      existingFiscalData?.rid || "",
+      existingFiscalData?.fiscal_year || null
     );
   }
 
@@ -479,7 +555,7 @@ export class ProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { project: any };
+    data?: { project: any; attachment: any };
   }> {
     try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
@@ -513,18 +589,30 @@ export class ProjectService {
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
             project: [],
+            attachment: [],
           },
         };
       }
 
-      let projectData = await this.projectIngestion.fetchProjectById(accountRNumber, projectId);
+      const accountDetails =
+        await this.projectIngestion.fetchAccountDetailsById(
+          accountRNumber,
+          accountId
+        );
+      let projectData = await this.projectIngestion.fetchProjectById(
+        accountRNumber,
+        projectId
+      );
 
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
-        projectData = await this.projectIngestion.enrichKeyContactsByProjectId(projectData, accountRNumber);
+        projectData = await this.projectIngestion.enrichKeyContactsByProjectId(
+          projectData,
+          accountRNumber
+        );
 
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
@@ -542,14 +630,82 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+
         projectData = await this.schemaService.projectClassificationData(
           projectData,
           mainDbInit
         );
 
-        projectData = this.insertAccount(projectData, accountData);
+        projectData = this.insertAccount(
+          projectData,
+          accountData,
+          accountDetails
+        );
 
         projectData = await this.schemaService.insertUserDetails(projectData);
+      }
+
+      // Fetch attachments for the project
+      const attachments = await this.schemaService.fetchAttachmentsByProjectId(
+        projectId
+      );
+      let mappedAttachments = [];
+      if (attachments.length > 0) {
+        const sequelize = await initMainDbSequelize();
+        // Get document types, categories, users in parallel
+        const documentTypeIds = attachments.map(
+          (attachment) => attachment.document_type_rid
+        );
+        const documentCategoryIds = attachments.map(
+          (attachment) => attachment.document_category_rid
+        );
+        const userIds = attachments.map((attachment) => attachment.created_by);
+
+        const [documentTypes, documentCategories, users] = await Promise.all([
+          documentTypeIds.length > 0
+            ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, {
+                replacements: { documentTypeIds },
+                type: "SELECT",
+              })
+            : [],
+          documentCategoryIds.length > 0
+            ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
+                replacements: { documentCategoryIds },
+                type: "SELECT",
+              })
+            : [],
+          userIds.length > 0
+            ? sequelize.query(rawQueries.GET_USERS, {
+                replacements: { userIds },
+                type: "SELECT",
+              })
+            : [],
+        ]);
+
+        // Enhance attachments with related data
+        mappedAttachments = attachments.map((attachment) => {
+          const documentType = documentTypes.find(
+            (dt: any) => dt.rid === attachment.document_type_rid
+          );
+          const documentCategory = documentCategories.find(
+            (dc: any) => dc.rid === attachment.document_category_rid
+          );
+          const uploadedBy = users.find(
+            (u: any) => u.rid === attachment.created_by
+          );
+          const attachedTo = projectData?.project_code;
+
+          return {
+            ...attachment,
+            document_type: (documentType as any)?.type_name || "",
+            document_category: (documentCategory as any)?.category_name || "",
+            uploaded_by: (uploadedBy as any)?.full_name || "",
+            attached_to: attachedTo,
+            size_in_mb: attachment.size_in_mb
+              ? `${attachment.size_in_mb} mb`
+              : "0 mb",
+          };
+        });
       }
 
       return {
@@ -557,6 +713,7 @@ export class ProjectService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           project: projectData,
+          attachment: mappedAttachments,
         },
       };
     } catch (err) {
@@ -566,12 +723,17 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, account: any,){
+  insertAccount(project: any, account: any, accountDetails: any) {
+    const fiscalStartDate = accountDetails?.[0]?.fiscal_start_date || null;
+    const fiscalEndDate = accountDetails?.[0]?.fiscal_end_date || null;
     return {
-      ...(project),
+      ...project,
       account_name: account.account_name,
-      account_status:account.status
-    }
+      account_number: account.r_number,
+      account_status: account.status,
+      fiscal_start_date: fiscalStartDate,
+      fiscal_end_date: fiscalEndDate,
+    };
   }
 
   async projectList(
@@ -583,7 +745,8 @@ export class ProjectService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    bothParentAndChild: boolean = false
+    bothParentAndChild: boolean = false,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -591,7 +754,6 @@ export class ProjectService {
     data?: { projects: any; totalCount: number };
   }> {
     try {
-
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
@@ -603,6 +765,55 @@ export class ProjectService {
         accountData.parent_account_rid === ""
       ) {
         throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
       let accountRNumber = accountData.r_number;
@@ -635,7 +846,12 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(filters, search, false, bothParentAndChild);
+      const { whereClause } = this.buildWhereClause(
+        filters,
+        search,
+        false,
+        bothParentAndChild
+      );
 
       const offset = (page - 1) * limit;
 
@@ -652,7 +868,9 @@ export class ProjectService {
         bothParentAndChild,
         filters,
         finalMetaDataSortBy,
-        finalMetaDataSortOrder
+        finalMetaDataSortOrder,
+        {},
+        accessibleIds
       );
 
       return {
@@ -676,7 +894,8 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
-    timezone: string
+    timezone: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -684,7 +903,6 @@ export class ProjectService {
     data?: { projects: any; totalCount: number };
   }> {
     try {
-
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
@@ -696,6 +914,55 @@ export class ProjectService {
         accountData.parent_account_rid === ""
       ) {
         throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
       let accountRNumber = accountData.r_number;
@@ -728,22 +995,30 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(filters, search, false, bothParentAndChild);
+      const { whereClause } = this.buildWhereClause(
+        filters,
+        search,
+        false,
+        bothParentAndChild
+      );
 
       const order = [[finalSortBy, finalSortOrder]];
 
-      const { exportData, count } = await this.projectIngestion.fetchProjectListExport(
-        accountRNumber,
-        accountData,
-        whereClause,
-        fiscalYear,
-        order,
-        bothParentAndChild,
-        filters,
-        finalMetaDataSortBy,
-        finalMetaDataSortOrder,
-        timezone
-      );
+      const { exportData, count } =
+        await this.projectIngestion.fetchProjectListExport(
+          accountRNumber,
+          accountData,
+          whereClause,
+          fiscalYear,
+          order,
+          bothParentAndChild,
+          filters,
+          finalMetaDataSortBy,
+          finalMetaDataSortOrder,
+          timezone,
+          userId,
+          accessibleIds
+        );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -757,6 +1032,60 @@ export class ProjectService {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
+  async getAccessibleProjectIds(
+    userId: string,
+    isdefaultparent: boolean,
+    isPOC: boolean = false,
+    userEmail?: string,
+    isCustomGlobal: boolean = false
+  ): Promise<string[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const MAIN_SCHEMA_NAME = "trd365";
+
+    const replacements: any[] = [];
+
+    let accessControlWhere = "WHERE 1=1";
+
+    if (isCustomGlobal) {
+      // If isPOC is also true, restrict to POC email
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+      // Else allow all projects (no extra access checks)
+    } else {
+      // Non-global user – apply account/project access checks
+      const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+      replacements.push(userId, userId, userId, userId);
+      accessControlWhere += ` AND ${accountAccessSubquery}`;
+
+      if (!isdefaultparent) {
+        // Add project-level access checks if not a parent group
+        accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+      }
+
+      // Only non-global users can be further filtered by POC
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+    }
+
+    const query = `
+    SELECT DISTINCT ps.project_rid
+    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
+    ${accessControlWhere}
+  `;
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_rid);
+  }
 
   async allProjectList(
     fiscalYear: number = 0,
@@ -768,7 +1097,7 @@ export class ProjectService {
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
     userId: string,
-    bothParentAndChild: boolean,
+    bothParentAndChild: boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -777,6 +1106,54 @@ export class ProjectService {
   }> {
     try {
       const offset = (page - 1) * limit;
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
 
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
@@ -805,7 +1182,8 @@ export class ProjectService {
           userId,
           search,
           accountDataSort,
-          bothParentAndChild
+          bothParentAndChild,
+          accessibleIds
         );
 
       return {
@@ -840,70 +1218,155 @@ export class ProjectService {
     try {
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
- 
+
       const { accountDataSort } = this.processAccountDataSort(
         sortBy,
         sortOrder
       );
- 
+
       const sort = {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
- 
-      const appliedAccountNumber =
-        await this.schemaService.computeGlobalAccountFilter(
-          globalFilters,
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
         );
- 
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              count: 0,
+            },
+          };
+        }
+      }
+
+      const appliedAccountNumber =
+        await this.schemaService.computeGlobalAccountFilter(globalFilters);
+
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjectsForExport(
           sort,
           filters,
           fiscalYear,
-          appliedAccountNumber,             
+          appliedAccountNumber,
           userId,
           search,
           accountDataSort,
-          bothParentAndChild
+          bothParentAndChild,
+          accessibleIds
         );
- 
-        const formatNumberForExport = (value: any, currency_symbol: string): string => {
-          if (value == null || value === '') return '-';
-        
-          try {
-            const decimalValue = new Decimal(value.toString());
-            if (!decimalValue.isFinite()) return '-';
-        
-            // Extract just the formatted currency pattern using a dummy value
-            const pattern = currency(0, {
-              symbol: currency_symbol || '$',
-              precision: 2,
-              pattern: '! #',
-              separator: ',',
-              decimal: '.',
-            }).format(); // e.g., "$ 0.00"
-        
-            // Format actual value manually using Decimal
-            const [intPart, decPart] = decimalValue.toFixed().split('.');
-            const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        
-            const formattedNumber = decPart ? `${formattedInt}.${decPart}` : formattedInt;
-            // Replace "0.00" in pattern with our real number
-            return pattern.replace('0.00', formattedNumber);
-        
-          } catch (error) {
-            console.error('Error formatting number:', error);
-            return '-';
-          }
-        };
-          
+      const allowedFieldsForExport =
+        await this.schemaService.getAllowedExportFields(
+          userId,
+          "projects_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_desc);
+        }
+      }
+
+      const formatNumberForExport = (
+        value: any,
+        currency_symbol: string
+      ): string => {
+        if (value == null || value === "") return "-";
+
+        try {
+          const decimalValue = new Decimal(value.toString());
+          if (!decimalValue.isFinite()) return "-";
+
+          // Extract just the formatted currency pattern using a dummy value
+          const pattern = currency(0, {
+            symbol: currency_symbol || "$",
+            precision: 2,
+            pattern: "! #",
+            separator: ",",
+            decimal: ".",
+          }).format(); // e.g., "$ 0.00"
+
+          // Format actual value manually using Decimal
+          const [intPart, decPart] = decimalValue.toFixed().split(".");
+          const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+          const formattedNumber = decPart
+            ? `${formattedInt}.${decPart}`
+            : formattedInt;
+          // Replace "0.00" in pattern with our real number
+          return pattern.replace("0.00", formattedNumber);
+        } catch (error) {
+          console.error("Error formatting number:", error);
+          return "-";
+        }
+      };
+
       const rawResult = allProjectList || [];
       let exportData: any[] = [];
- 
+      const labelMap: Record<string, string> = {
+        "Project Code": "Project Code",
+        "Project Name": "Name",
+        "Project Type": "Project Type",
+        "Account Name": "Name",
+        "Fiscal Year": "Fiscal Year",
+        "Project Classification": "Classification",
+        "Customer Group": "Client Group",
+        "Project Group": "Project Group",
+        "Project Effort (Hours)": "Total Effort In Hrs",
+        "Project Cost": "Total Cost",
+        "FTE Cost": "Total FTE Cost",
+        "SubCon Cost": "Total Sub Con Cost",
+        "Non-Labor Cost": "Total Non Labor Cost",
+        "Assessment Status": "Assessment Status",
+        "QRE%": "QRE %",
+        QRE: "QRE",
+        "Project Point of Contact": "Key Contacts List",
+        "Technical Point of Contact": "Key Contacts List",
+        Comments: "Comments",
+        "Last Modified": "Updated On",
+        "Project ID": "Project ID",
+      };
+
       rawResult.forEach((project: any) => {
         // Always add base project data row first
-        exportData.push({
+        const projectInfo = {
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type_name || "-",
@@ -913,59 +1376,124 @@ export class ProjectService {
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
           "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
-          "FTE Cost": formatNumberForExport(project.total_cost_fte, project.currency_symbol) || "-",
-          "SubCon Cost": formatNumberForExport(project.total_cost_subcon, project.currency_symbol) || "-",
-          "Non-Labor Cost": formatNumberForExport(project.total_cost_nonlabor, project.currency_symbol) || "-",
+          "Project Cost":
+            formatNumberForExport(
+              project.total_cost,
+              project.currency_symbol
+            ) || "-",
+          "FTE Cost":
+            formatNumberForExport(
+              project.total_cost_fte,
+              project.currency_symbol
+            ) || "-",
+          "SubCon Cost":
+            formatNumberForExport(
+              project.total_cost_subcon,
+              project.currency_symbol
+            ) || "-",
+          "Non-Labor Cost":
+            formatNumberForExport(
+              project.total_cost_nonlabor,
+              project.currency_symbol
+            ) || "-",
           "Assessment Status": project.assessment_status || "-",
           "QRE%": project.qre || "-",
-          "QRE": "-",
+          QRE: "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
-          "Technical Point of Contact": project.technical_point_of_contact || "-",
-          "Comments": project.comments || "-",
+          "Technical Point of Contact":
+            project.technical_point_of_contact || "-",
+          Comments: project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? timezone && isValidTimezone(timezone)
-          ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
-          : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
-          : '-',
+            ? timezone && isValidTimezone(timezone)
+              ? moment(project.modified_datetime)
+                  .tz(timezone)
+                  .format("YYYY-MM-DD, hh:mm:ss A")
+              : moment(project.modified_datetime).format(
+                  "YYYY-MM-DD, hh:mm:ss A"
+                )
+            : "-",
           "Project ID": project.r_number || "-",
-        });
- 
+        };
+        const filteredProjectRow: Record<string, string> = {};
+        for (const [label, value] of Object.entries(projectInfo)) {
+          const mappedLabel = labelMap[label] || label;
+          if (allowedFieldSet.has(mappedLabel)) {
+            filteredProjectRow[label] = value; // Keep original label for export
+          }
+        }
+        exportData.push(filteredProjectRow);
         // Add fiscal summary rows if they exist
         const fiscalSummaries = project.ProjectFiscal || [];
         if (fiscalSummaries.length > 0) {
           fiscalSummaries.forEach((fiscal: any) => {
-            exportData.push({
-              "Project Code": (fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-") || "-",
+            const fiscalInfo = {
+              "Project Code":
+                (fiscal.project_code
+                  ? fiscal.project_code + " - FY" + fiscal.fiscal_year
+                  : "-") || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type_name || "-",
               "Account Name": fiscal.account_name || "-",
-              "Fiscal Year":  `FY-${fiscal.fiscal_year}` || "-",
+              "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
               "Project Group": fiscal?.project_group || "-",
-              "Project Effort (Hours)": fiscal.total_effort_prj || "-",
-              "Project Cost": formatNumberForExport(fiscal.total_cost_prj, project.currency_symbol) || "-",
-              "FTE Cost": formatNumberForExport(fiscal.total_cost_fte_prj, project.currency_symbol) || "-",
-              "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon_prj, project.currency_symbol) || "-",
-              "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor_prj, project.currency_symbol) || "-",
+              "Project Effort (Hours)": fiscal.total_effort || "-",
+              "Project Cost":
+                formatNumberForExport(
+                  fiscal.total_cost,
+                  project.currency_symbol
+                ) || "-",
+              "FTE Cost":
+                formatNumberForExport(
+                  fiscal.total_cost_fte,
+                  project.currency_symbol
+                ) || "-",
+              "SubCon Cost":
+                formatNumberForExport(
+                  fiscal.total_cost_subcon,
+                  project.currency_symbol
+                ) || "-",
+              "Non-Labor Cost":
+                formatNumberForExport(
+                  fiscal.total_cost_nonlabor,
+                  project.currency_symbol
+                ) || "-",
               "Assessment Status": fiscal.assessment_status || "-",
               "QRE%": "-",
-              "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
-              "Project Point of Contact": fiscal.project_point_of_contact || "-",
-              "Technical Point of Contact": fiscal.technical_point_of_contact || "-",
-              "Comments": fiscal.comments || "-",
+              QRE:
+                formatNumberForExport(
+                  fiscal.qre_final,
+                  project.currency_symbol
+                ) || "-",
+              "Project Point of Contact":
+                fiscal.project_point_of_contact || "-",
+              "Technical Point of Contact":
+                fiscal.technical_point_of_contact || "-",
+              Comments: fiscal.comments || "-",
               "Last Modified": fiscal.modified_datetime
-              ? timezone && isValidTimezone(timezone)
-              ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
-              : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
-              : '-',
+                ? timezone && isValidTimezone(timezone)
+                  ? moment(fiscal.modified_datetime)
+                      .tz(timezone)
+                      .format("YYYY-MM-DD, hh:mm:ss A")
+                  : moment(fiscal.modified_datetime).format(
+                      "YYYY-MM-DD, hh:mm:ss A"
+                    )
+                : "-",
               "Project ID": fiscal.r_number || "-",
-            });
+            };
+            const filteredFiscalRow: Record<string, string> = {};
+            for (const [label, value] of Object.entries(fiscalInfo)) {
+              const mappedLabel = labelMap[label] || label;
+              if (allowedFieldSet.has(mappedLabel)) {
+                filteredFiscalRow[label] = value; // Keep original label for export
+              }
+            }
+            exportData.push(filteredFiscalRow);
           });
         }
       });
- 
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -987,7 +1515,7 @@ export class ProjectService {
     projectData: ICreateProject
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const ProjectTimelineModel = await ProjectTimeline.initialize(
@@ -1018,6 +1546,10 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(
+        sequilzeInstance,
+        schemaName
+      );
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName
@@ -1076,6 +1608,10 @@ export class ProjectService {
     projectRid: string
   ) {
     try {
+      const ProjectModel = await Project.initialize(
+        sequilzeInstance,
+        schemaName
+      );
       const ProjectFiscalModel = await ProjectFiscal.initialize(
         sequilzeInstance,
         schemaName
@@ -1132,7 +1668,7 @@ export class ProjectService {
     existingProjectData: any
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const ProjectHistoryModel = await ProjectHistory.initialize(
         sequelize,
@@ -1187,7 +1723,6 @@ export class ProjectService {
     }
   }
 
-
   async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
     let technicalConsultant = "-";
     let financialConsultant = "-";
@@ -1221,7 +1756,8 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
+          e.role_name === "Client Project Technical Point of Contact" &&
+          e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
@@ -1229,7 +1765,8 @@ export class ProjectService {
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Point of Contact" && e.is_primary_contact
+          e.role_name === "Client Project Point of Contact" &&
+          e.is_primary_contact
       );
 
       technicalConsultant = technicalContact
@@ -1286,7 +1823,7 @@ export class ProjectService {
       "comments",
       "modified_datetime",
       "assessment_status",
-      "qre_final"
+      "qre_final",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1312,7 +1849,7 @@ export class ProjectService {
       "classification_name",
       "industry_name",
       "project_type_name",
-      "project_type_rid"
+      "project_type_rid",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1341,7 +1878,12 @@ export class ProjectService {
       );
     }
 
-    whereClause = this.applyFilters(filters, whereClause, isAllProject, isParent);
+    whereClause = this.applyFilters(
+      filters,
+      whereClause,
+      isAllProject,
+      isParent
+    );
 
     return { whereClause };
   }
@@ -1411,14 +1953,19 @@ export class ProjectService {
       "total_cost_nonlabor",
       "qualified_research_expenditure",
       "qre",
-      "qre_final"
+      "qre_final",
     ];
     const dateFields = [
       "project_startdate",
       "project_enddate",
       "modified_datetime",
     ];
-    const enumFields = ["status_rid", "project_type_rid", "fiscal_year", "ProjectFiscal.project_type_rid"];
+    const enumFields = [
+      "status_rid",
+      "project_type_rid",
+      "fiscal_year",
+      "ProjectFiscal.project_type_rid",
+    ];
     const booleanFields = ["is_rd_qualified"];
 
     const filterFields = this.getFilterFields(isAllProject, isParent);
@@ -1604,7 +2151,7 @@ export class ProjectService {
 
   getSortParametersForAllProjects(
     sortBy: string,
-    sortOrder: string,
+    sortOrder: string
   ): [string, string] {
     const validSortColumns = [
       "r_number",
@@ -1643,7 +2190,7 @@ export class ProjectService {
       "created_datetime",
       "assessment_status",
       "project_type_name",
-    ];   
+    ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
@@ -1687,7 +2234,7 @@ export class ProjectService {
       { clientField: "project_name", dbField: "project_name" },
       { clientField: "project_description", dbField: "project_description" },
       { clientField: "fiscal_year", dbField: "fiscal_year" },
-      { clientField: "total_effort", dbField: "total_effort"},
+      { clientField: "total_effort", dbField: "total_effort" },
       { clientField: "total_cost", dbField: "total_cost" },
       { clientField: "status_rid", dbField: "status_rid" },
       { clientField: "project_type_rid", dbField: "project_type_rid" },
@@ -1815,7 +2362,9 @@ export class ProjectService {
 
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
     if (!result.currency) {
-      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
+      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(
+        result.account_rid
+      );
       if (currencyRid) {
         result.currency = currencyRid;
       } else {

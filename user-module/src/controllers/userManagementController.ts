@@ -583,7 +583,8 @@ async function exportUserProfiles(req: Request, res: Response): Promise<void> {
     //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"ENV_TRD365", res, "GET");
     //   if (!validatedData) return;
     const profileId = req.params.profileId;
-    const profiles = await services.userServices.exportUserprofiles(profileId);
+    const userId = req.headers["x-user-id"] as string || "";
+    const profiles = await services.userServices.exportUserprofiles(profileId,userId);
 
     if (profiles.statusCode === constants.SUCCESS) {
       successLog(methodName)
