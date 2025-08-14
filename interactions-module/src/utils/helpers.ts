@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
 import { HttpStatus } from "./constants";
 import configurations from "../config/config";
+import ExcelJS from 'exceljs'
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -112,4 +113,25 @@ export function handlePromptResponse(
     statusMessage: statusMessage,
     data: data,
   });
+}
+
+export async function generateExcelBase64(
+  data: any,
+  sheetName: string
+) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
+  
+  // Get headers from the first object in data
+  const headers = Object.keys(data[0] || {});
+  worksheet.addRow(headers);
+  
+  // Add data rows
+  data.forEach((row: any) => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  // Generate buffer
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer).toString('base64');
 }

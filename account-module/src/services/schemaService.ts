@@ -2,7 +2,13 @@ import { QueryTypes, Sequelize } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
-import { ENV_PREFIX, DEFAULT_ACCOUNT_DETAILS, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX, rawQueries } from "../utils/constant";
+import {
+  ENV_PREFIX,
+  DEFAULT_ACCOUNT_DETAILS,
+  MAIN_SCHEMA_NAME,
+  R_NUMBER_PREFIX,
+  rawQueries,
+} from "../utils/constant";
 import { getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
@@ -13,28 +19,31 @@ import {
 import Decimal from "decimal.js";
 class SchemaService {
   async getKeyContactRoleById(key_contact_role: string): Promise<any> {
-  try {
-    const sequelize = await initSequelize();
-    const result = await sequelize.query(`
+    try {
+      const sequelize = await initSequelize();
+      const result = await sequelize.query(
+        `
       SELECT *
       FROM ${MAIN_SCHEMA_NAME}.key_contact_role 
       WHERE rid = :key_contact_role
       AND LOWER(role_status) = 'active'
-    `, {
-      replacements: { key_contact_role },
-      type: QueryTypes.SELECT
-    });
-    
-    return result[0];
-  } catch (error) {
-    console.error('Error fetching key contact role:', error);
-    throw new Error('Failed to fetch key contact role');
+    `,
+        {
+          replacements: { key_contact_role },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      return result[0];
+    } catch (error) {
+      console.error("Error fetching key contact role:", error);
+      throw new Error("Failed to fetch key contact role");
     }
   }
   async createNewSchema(account_number: string) {
     try {
       const sequelize = await initOrgSequelize();
-      const schema_name = `trd365_${account_number.replace(/\D/g, '')}`;
+      const schema_name = `trd365_${account_number.replace(/\D/g, "")}`;
       await sequelize.createSchema(schema_name, {});
       await this.createAccountTables(account_number);
     } catch (err) {
@@ -45,7 +54,7 @@ class SchemaService {
 
   async createAccountTables(account_number: string) {
     try {
-      const schemaName = `trd365_${account_number.replace(/\D/g, '')}`;
+      const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const transaction = await sequelize.transaction();
 
@@ -53,7 +62,7 @@ class SchemaService {
       await this.createAccountFiscalTable(schemaName, sequelize);
       await this.createAccountFiscalRegionTable(schemaName, sequelize);
 
-      await this.createProjectTable(schemaName, sequelize)
+      await this.createProjectTable(schemaName, sequelize);
       await this.createProjectFiscalTable(schemaName, sequelize);
       await this.createProjectHistoryTable(schemaName, sequelize);
       await this.createProjectFiscalRegionTable(schemaName, sequelize);
@@ -100,8 +109,10 @@ class SchemaService {
     }
   }
 
-  private async createAttachmentTimeline(schemaName: string, sequelize: Sequelize) {
-
+  private async createAttachmentTimeline(
+    schemaName: string,
+    sequelize: Sequelize
+  ) {
     await sequelize.query(`
      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_timeline_seq START 1;
    `);
@@ -127,16 +138,17 @@ class SchemaService {
     CONSTRAINT attachment_timeline_r_number_key UNIQUE (r_number)
 )
       `);
-  };
+  }
 
-
-  private async createAttachmentTable(schemaName: string, sequelize: Sequelize) {
-
-     await sequelize.query(`
+  private async createAttachmentTable(
+    schemaName: string,
+    sequelize: Sequelize
+  ) {
+    await sequelize.query(`
      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".attachment_seq START 1;
    `);
 
-     await sequelize.query(`
+    await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."attachments"
    (
     rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -160,35 +172,33 @@ class SchemaService {
     comments character varying(2000) COLLATE pg_catalog."default",
     CONSTRAINT attachments_pkey PRIMARY KEY (rid),
     CONSTRAINT attachments_r_number_key UNIQUE (r_number)
-   )`
-  );
+   )`);
 
-  const fieldsToIndex = [
-    'r_number',
-    'created_datetime', 
-    'created_by',
-    'account_rid',
-    'browse_file',
-    'document_name',
-    'attach_to',
-    'attachment_level',
-    'fiscal_year',
-    'format',
-    'size_in_mb',
-    'document_category_rid',
-    'document_type_rid',
-    'comments'
-  ];
+    const fieldsToIndex = [
+      "r_number",
+      "created_datetime",
+      "created_by",
+      "account_rid",
+      "browse_file",
+      "document_name",
+      "attach_to",
+      "attachment_level",
+      "fiscal_year",
+      "format",
+      "size_in_mb",
+      "document_category_rid",
+      "document_type_rid",
+      "comments",
+    ];
 
-  for (const field of fieldsToIndex) {
-    const indexName = `${schemaName}_attachments_${field}_idx`;
-    await sequelize.query(`
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_attachments_${field}_idx`;
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."attachments"("${field}");
     `);
+    }
   }
-
-  };
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
     await sequelize.query(`
@@ -217,23 +227,22 @@ class SchemaService {
       );
     `);
 
-  const fieldsToIndex = [
-    'account_name',
-    'fiscal_start_date', 
-    'fiscal_end_date',
-    'data_storage',
-    'business_details'
-  ];
+    const fieldsToIndex = [
+      "account_name",
+      "fiscal_start_date",
+      "fiscal_end_date",
+      "data_storage",
+      "business_details",
+    ];
 
-  for (const field of fieldsToIndex) {
-    const indexName = `${schemaName}_account_details_${field}_idx`;
-    await sequelize.query(`
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_account_details_${field}_idx`;
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."account_details"("${field}");
     `);
+    }
   }
-}
-
 
   async fetchKeyContactRoles(entity_type: string): Promise<any[]> {
     const sequelize = await initSequelize();
@@ -315,34 +324,38 @@ class SchemaService {
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".account_fiscal ADD CONSTRAINT account_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    `)
+    `);
 
-      // Fields to index (excluding rid and r_number)
-  const fieldsToIndex = [
-    'account_rid', 'fiscal_year',
-    'total_projects',
-    'total_project_hours',
-    'total_project_cost',
-    'total_projects_qre',
-    'total_projects_rd_credits',
-  ];
+    // Fields to index (excluding rid and r_number)
+    const fieldsToIndex = [
+      "account_rid",
+      "fiscal_year",
+      "total_projects",
+      "total_project_hours",
+      "total_project_cost",
+      "total_projects_qre",
+      "total_projects_rd_credits",
+    ];
 
-  // Create indexes conditionally
-  for (const field of fieldsToIndex) {
-    const indexName = `${schemaName}_account_fiscal_${field}_idx`;
-    await sequelize.query(`
+    // Create indexes conditionally
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_account_fiscal_${field}_idx`;
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."account_fiscal"("${field}");
     `);
-  }
+    }
   }
 
-  private async createAccountFiscalRegionTable(schemaName: string, sequelize: any){
+  private async createAccountFiscalRegionTable(
+    schemaName: string,
+    sequelize: any
+  ) {
     await sequelize.query(`
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_fiscal_region_seq START 1;
     `);
- 
-     await sequelize.query(`
+
+    await sequelize.query(`
       CREATE TABLE "${schemaName}".account_fiscal_region (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) DEFAULT 'ACFR ' || LPAD(nextval('"${schemaName}".account_fiscal_region_seq')::text, 10, '0'),        
@@ -405,7 +418,7 @@ class SchemaService {
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".account_fiscal_region ADD CONSTRAINT account_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createProjectTable(schemaName: string, sequelize: any) {
@@ -479,24 +492,35 @@ class SchemaService {
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".project ADD CONSTRAINT project_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    `)
+    `);
 
-      // Fields to index (excluding rid and r_number)
-  const fieldsToIndex = [
-    'project_code', 'industry_rid', 'account_rid', 'project_name',
-    'project_type_rid', 'project_classification_rid',
-    'project_client_group', 'project_group', 'status_rid',
-    'country_rid', 'region_rid', 'currency_rid', 'total_effort', 'total_cost', 'total_fte',
-  ];
+    // Fields to index (excluding rid and r_number)
+    const fieldsToIndex = [
+      "project_code",
+      "industry_rid",
+      "account_rid",
+      "project_name",
+      "project_type_rid",
+      "project_classification_rid",
+      "project_client_group",
+      "project_group",
+      "status_rid",
+      "country_rid",
+      "region_rid",
+      "currency_rid",
+      "total_effort",
+      "total_cost",
+      "total_fte",
+    ];
 
-  // Create indexes conditionally
-  for (const field of fieldsToIndex) {
-    const indexName = `${schemaName}_project_${field}_idx`;
-    await sequelize.query(`
+    // Create indexes conditionally
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_project_${field}_idx`;
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."project"("${field}");
     `);
-  }
+    }
   }
 
   private async createProjectHistoryTable(schemaName: string, sequelize: any) {
@@ -521,8 +545,7 @@ class SchemaService {
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".project_history ADD CONSTRAINT project_history_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
-    `)
-
+    `);
   }
 
   private async createProjectFiscalTable(schemaName: string, sequelize: any) {
@@ -659,27 +682,37 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".project_fiscal ADD CONSTRAINT project_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_fiscal ADD CONSTRAINT project_fiscal_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
-    `)
+    `);
 
-      // Fields to index (excluding rid and r_number)
-  const fieldsToIndex = [
-    'project_rid', 'project_code','fiscal_year',
-    'project_name','project_type_rid', 'project_classification_rid',
-    'project_client_group', 'project_group',
-    'account_rid', 'country_rid','status_rid'
-  ];
+    // Fields to index (excluding rid and r_number)
+    const fieldsToIndex = [
+      "project_rid",
+      "project_code",
+      "fiscal_year",
+      "project_name",
+      "project_type_rid",
+      "project_classification_rid",
+      "project_client_group",
+      "project_group",
+      "account_rid",
+      "country_rid",
+      "status_rid",
+    ];
 
-  // Create indexes conditionally
-  for (const field of fieldsToIndex) {
-    const indexName = `${schemaName}_project_fiscal_${field}_idx`;
-    await sequelize.query(`
+    // Create indexes conditionally
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_project_fiscal_${field}_idx`;
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."project_fiscal"("${field}");
     `);
-  }
+    }
   }
 
-  private async createProjectFiscalRegionTable(schemaName: string, sequelize: any){
+  private async createProjectFiscalRegionTable(
+    schemaName: string,
+    sequelize: any
+  ) {
     await sequelize.query(`
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_region_seq START 1;
     `);
@@ -795,7 +828,7 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_fiscal_region ADD CONSTRAINT project_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_fiscal_region ADD CONSTRAINT project_fiscal_region_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_fiscal_region ADD CONSTRAINT project_fiscal_region_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createProjectTimelineTable(schemaName: string, sequelize: any) {
@@ -824,8 +857,8 @@ class SchemaService {
 
     await sequelize.query(`
      ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
-    `)
+    ALTER TABLE "${schemaName}".project_timeline ADD CONSTRAINT project_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
   }
 
   private async createProjectResourcesTable(
@@ -905,7 +938,7 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_resource ADD CONSTRAINT project_resource_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createProjectResourcesTimelineTable(
@@ -938,7 +971,7 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".project_resource_timeline ADD CONSTRAINT project_resource_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_resource_timeline ADD CONSTRAINT project_resource_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project_resource(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createProjectResourcesHistoryTable(
@@ -966,7 +999,7 @@ class SchemaService {
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".project_resource_history ADD CONSTRAINT project_resource_history_project_resource_rid_fkey FOREIGN KEY (project_resource_rid) REFERENCES "${schemaName}".project_resource(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createDocumentTable(schemaName: string, sequelize: any) {
@@ -1154,34 +1187,34 @@ class SchemaService {
       CONSTRAINT resource_code_account_key_unique UNIQUE (resource_code,account_rid))
      `);
 
-     await sequelize.query(`
-      ALTER TABLE "${schemaName}".resources ADD CONSTRAINT resources_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    `)
-     // List of columns to index (excluding rid and comments)
-  const fieldsToIndex = [
-    'account_rid',
-    'resource_code',
-    'resource_name',
-    'resource_firstname',
-    'resource_lastname',
-    'resource_orgname',
-    'resource_role',
-    'country_rid',
-    'region_rid',
-    'status_rid'
-  ];
-
-  for (const field of fieldsToIndex) {
     await sequelize.query(`
+      ALTER TABLE "${schemaName}".resources ADD CONSTRAINT resources_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    `);
+    // List of columns to index (excluding rid and comments)
+    const fieldsToIndex = [
+      "account_rid",
+      "resource_code",
+      "resource_name",
+      "resource_firstname",
+      "resource_lastname",
+      "resource_orgname",
+      "resource_role",
+      "country_rid",
+      "region_rid",
+      "status_rid",
+    ];
+
+    for (const field of fieldsToIndex) {
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${schemaName}_resources_${field}_idx"
       ON "${schemaName}".resources (${field});
     `);
-  }
+    }
   }
 
   private async createResourceFiscalTable(schemaName: string, sequelize: any) {
     await sequelize.query(
-    `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_seq START 1`
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_seq START 1`
     );
 
     await sequelize.query(`
@@ -1229,33 +1262,36 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_fiscal ADD CONSTRAINT resource_fiscal_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".resource_fiscal ADD CONSTRAINT resource_fiscal_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
 
-       // Fields to index (excluding rid and r_number since it has a unique constraint)
-  const fieldsToIndex = [
-    'account_rid',
-    'resource_rid',
-    'fiscal_year',
-    'country_rid',
-    'country_region_rid',
-    'cost_type',
-    'total_cost_for_year_project',
-    'estimated_rd_hours'
-  ];
+    // Fields to index (excluding rid and r_number since it has a unique constraint)
+    const fieldsToIndex = [
+      "account_rid",
+      "resource_rid",
+      "fiscal_year",
+      "country_rid",
+      "country_region_rid",
+      "cost_type",
+      "total_cost_for_year_project",
+      "estimated_rd_hours",
+    ];
 
-  for (const field of fieldsToIndex) {
-    await sequelize.query(`
+    for (const field of fieldsToIndex) {
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_fiscal_${field}_idx"
       ON "${schemaName}".resource_fiscal (${field});
     `);
-  }
+    }
   }
 
-  private async createResourceFiscalRegionTable(schemaName: string, sequelize: any){
+  private async createResourceFiscalRegionTable(
+    schemaName: string,
+    sequelize: any
+  ) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_region_seq START 1`
     );
-  
+
     await sequelize.query(`
       CREATE TABLE "${schemaName}".resource_fiscal_region (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -1272,7 +1308,6 @@ class SchemaService {
         fiscal_year integer NULL,
         country_rid varchar(50) NULL,
         country_region_rid varchar(50) NULL,
-        cost_type trd365_00339."enum_resource_fiscal_region_cost_type" NULL,
         annual_cost numeric(18, 2) NULL,
         monthly_cost numeric(18, 2) NULL,
         weekly_cost numeric(18, 2) NULL,
@@ -1295,14 +1330,14 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_fiscal_region ADD CONSTRAINT resource_fiscal_region_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".resource_fiscal_region ADD CONSTRAINT resource_fiscal_region_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
-  private async createProjectTaskTable(schemaName: string, sequelize: any){
+  private async createProjectTaskTable(schemaName: string, sequelize: any) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_tasks_seq START 1`
     );
-  
+
     await sequelize.query(`
       CREATE TABLE "${schemaName}".project_task (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -1335,14 +1370,17 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
-  private async createProjectTaskTimeLineTable(schemaName: string, sequelize: any){
+  private async createProjectTaskTimeLineTable(
+    schemaName: string,
+    sequelize: any
+  ) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_task_timeline_seq START 1`
     );
-  
+
     await sequelize.query(`
       CREATE TABLE "${schemaName}".project_task_timeline (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -1365,14 +1403,17 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".project_task_timeline ADD CONSTRAINT project_task_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task_timeline ADD CONSTRAINT project_task_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".project_task(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
-  private async createProjectTaskHistoryTable(schemaName: string, sequelize: any){
+  private async createProjectTaskHistoryTable(
+    schemaName: string,
+    sequelize: any
+  ) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_task_history_seq START 1`
     );
-  
+
     await sequelize.query(`
       CREATE TABLE "${schemaName}".project_task_history (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -1391,7 +1432,7 @@ class SchemaService {
 
     await sequelize.query(`
      ALTER TABLE "${schemaName}".project_task_history ADD CONSTRAINT project_task_history_project_task_rid_fkey FOREIGN KEY (project_task_rid) REFERENCES "${schemaName}".project_task(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
@@ -1417,10 +1458,9 @@ class SchemaService {
       )
      `);
 
-
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resources_history ADD CONSTRAINT resources_history_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createResourceTimelineTable(
@@ -1452,7 +1492,7 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resources_timeline ADD CONSTRAINT resources_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".resources_timeline ADD CONSTRAINT resources_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   private async createResourceCostTable(schemaName: string, sequelize: any) {
@@ -1500,17 +1540,15 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_cost ADD CONSTRAINT resource_cost_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
     `);
-    
-  const fieldsToIndex = [
-    'resource_code'
-  ];
 
-  for (const field of fieldsToIndex) {
-    await sequelize.query(`
+    const fieldsToIndex = ["resource_code"];
+
+    for (const field of fieldsToIndex) {
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_cost_${field}_idx"
       ON "${schemaName}".resource_cost (${field});
     `);
-  }
+    }
   }
 
   private async createResourceCostTimelineTable(
@@ -1539,13 +1577,13 @@ class SchemaService {
         entity_rid varchar(50) NOT NULL,
         event_datetime timestamptz NOT NULL
         );
-    `)
+    `);
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_cost_timeline ADD CONSTRAINT resource_cost_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".resource_cost_timeline ADD CONSTRAINT resource_cost_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resource_cost(rid) ON UPDATE CASCADE;
-    `)
-   }
+    `);
+  }
 
   private async createResourceCostHistoryTable(
     schemaName: string,
@@ -1620,16 +1658,14 @@ class SchemaService {
       ALTER TABLE "${schemaName}".resource_skill ADD CONSTRAINT resource_skill_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
     `);
 
-      const fieldsToIndex = [
-    'resource_code'
-  ];
+    const fieldsToIndex = ["resource_code"];
 
-  for (const field of fieldsToIndex) {
-    await sequelize.query(`
+    for (const field of fieldsToIndex) {
+      await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${schemaName}_resource_skill_${field}_idx"
       ON "${schemaName}".resource_skill (${field});
     `);
-  }
+    }
   }
   private async createResourceSkillTimelineTable(
     schemaName: string,
@@ -1662,8 +1698,8 @@ class SchemaService {
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".resource_skill_timeline ADD CONSTRAINT resource_skill_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".resource_skill(rid) ON UPDATE CASCADE;
-    `)
-   }
+    `);
+  }
 
   private async createResourceSkillHistoryTable(
     schemaName: string,
@@ -1689,16 +1725,13 @@ class SchemaService {
           new_value varchar(255) NOT NULL
       );
     `);
-    
+
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resource_skill_history ADD CONSTRAINT resource_skill_history_resource_skill_rid_fkey FOREIGN KEY (resource_skill_rid) REFERENCES "${schemaName}".resource_skill(rid) ON UPDATE CASCADE;  
-    `)
+    `);
   }
 
-  async createProjectResourceFiscalTable(
-    schemaName: string,
-    sequelize: any
-  ){
+  async createProjectResourceFiscalTable(schemaName: string, sequelize: any) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_fiscal_seq START 1`
     );
@@ -1760,13 +1793,13 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_resource_fiscal ADD CONSTRAINT project_resource_fiscal_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   async createProjectResourceFiscalRegionTable(
     schemaName: string,
     sequelize: any
-  ){
+  ) {
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_resource_fiscal_region_seq START 1`
     );
@@ -1829,7 +1862,7 @@ class SchemaService {
         ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
-    `)
+    `);
   }
 
   async insertAccountDetails(
@@ -1838,7 +1871,7 @@ class SchemaService {
     account_rid: string,
     userId: string
   ) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, '')}`;
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
     await sequelize.query(
       `
@@ -1895,7 +1928,7 @@ class SchemaService {
     client_template_rid: string,
     account_rid: string
   ) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, '')}`;
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
     // Generate VALUES for each column in tableSchema
     const values = tableSchema
@@ -1947,7 +1980,7 @@ class SchemaService {
     entity_type: string,
     account_rid: string
   ): Promise<string> {
-    const schemaName = `trd365_${account_number.replace(/\D/g, '')}`;
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
     const [result] = await sequelize.query(
       `INSERT INTO "${schemaName}"."clientfirm_document_template" (
@@ -1983,7 +2016,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
 
       for (const contact of Object.values(key_contacts)) {
         if (contact.action_type === "edit") {
@@ -2001,11 +2034,7 @@ class SchemaService {
           }
         } else if (contact.action_type === "delete") {
           {
-            this.deleteKeyContactDetails(
-              account_rid,
-              contact.rid,
-              schemaName
-            );
+            this.deleteKeyContactDetails(account_rid, contact.rid, schemaName);
           }
         } else if (contact.action_type === "add") {
           if (
@@ -2032,7 +2061,7 @@ class SchemaService {
     account_number: string,
     userId: string
   ) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, '')}`;
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
 
     await sequelize.query(
@@ -2061,7 +2090,7 @@ class SchemaService {
   }
 
   async fetchAccountDetails(account_number: string, account_rid: string) {
-      const schemaName = `trd365_${account_number.replace(/\D/g, '')}`;
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
       const query = `
         SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
@@ -2094,7 +2123,7 @@ class SchemaService {
     try {
       const sequelize = await initOrgSequelize();
       const mainSequelize = await initSequelize();
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
       const keyContact: any = await sequelize.query(
         `SELECT * FROM "${schemaName}"."key_contact_details" WHERE entity_rid = :account_rid AND entity_type = 'Account'`,
         {
@@ -2207,7 +2236,8 @@ class SchemaService {
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
-            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient,
+            interaction_cc_recipient:
+              keyContactDetails.interaction_cc_recipient,
             modified_by: userId,
           },
         }
@@ -2226,7 +2256,6 @@ class SchemaService {
     const keyContactDetails = keyContacts;
     const sequelize = await initOrgSequelize();
     try {
-      
       await sequelize.query(
         `INSERT INTO "${schemaName}"."key_contact_details" (
          entity_rid, key_contact_name, 
@@ -2249,7 +2278,8 @@ class SchemaService {
             is_primary_contact: keyContactDetails.is_primary_contact,
             include_in_communication:
               keyContactDetails.include_in_communication,
-            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient,
+            interaction_cc_recipient:
+              keyContactDetails.interaction_cc_recipient,
             created_by: userId,
             modified_by: userId,
           },
@@ -2322,81 +2352,84 @@ class SchemaService {
     type?: string
   ) {
     try {
-    const sequelize = await initSequelize();
-    const orgDbSequelize = await initOrgSequelize();
-    const roleKeyMap: Record<string, string> = {};
-    const dbRoleMap = await sequelize.query(
-      `SELECT role_map, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_map IS NOT NULL`,
-      { type: "SELECT" }
-  );
-
-  dbRoleMap.forEach((row: any) => {
-      if (row.role_map && row.role_name) {
-          roleKeyMap[row.role_map] = row.role_name;
-      }
-  });
-    
-    // 2. Account processing
-    const parentRidToRNumber = new Map<string, string>();
-    const allAccounts: any[] = [];
-
-    accountData.forEach((account: { dataValues: any }) => {
-      const parent = account.dataValues;
-      parentRidToRNumber.set(parent.rid, parent.r_number);
-      allAccounts.push(
-        parent,
-        ...(parent.child_accounts?.map((c: any) => c.dataValues) || [])
+      const sequelize = await initSequelize();
+      const orgDbSequelize = await initOrgSequelize();
+      const roleKeyMap: Record<string, string> = {};
+      const dbRoleMap = await sequelize.query(
+        `SELECT role_map, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_map IS NOT NULL`,
+        { type: "SELECT" }
       );
-    });
 
-    // 3. Schema mapping with Map
-    const schemaToAccountRids = new Map<string, string[]>();
+      dbRoleMap.forEach((row: any) => {
+        if (row.role_map && row.role_name) {
+          roleKeyMap[row.role_map] = row.role_name;
+        }
+      });
 
-    for (const acc of allAccounts) {
-      const schema =
-        acc.storage_type === "store_in_parent"
-          ? parentRidToRNumber.get(acc.parent_account_rid)
-          : acc.r_number;
+      // 2. Account processing
+      const parentRidToRNumber = new Map<string, string>();
+      const allAccounts: any[] = [];
 
-      if (!schema) continue;
-
-      const accountRids = schemaToAccountRids.get(schema) || [];
-      accountRids.push(acc.rid);
-      schemaToAccountRids.set(schema, accountRids);
-    }
-
-    // 4. Parallelize database queries
-    const [keyContactsResults, fiscalResults] = await Promise.all([
-      // Key contacts query
-      (async () => {
-        const queries = Array.from(schemaToAccountRids).map(
-          async ([schema, accountRids]) => {
-            try {
-              return await orgDbSequelize.query(
-                `SELECT * FROM "trd365_${schema.replace(/^ACC-/, '')}".key_contact_details 
-             WHERE entity_rid IN (:accountRids) AND entity_type = 'Account'`,
-                { replacements: { accountRids }, type: "SELECT" }
-              );
-            } catch (error) {
-              console.error(
-                `Key contacts query failed for schema ${schema}:`,
-                error
-              );
-              return [];
-            }
-          }
+      accountData.forEach((account: { dataValues: any }) => {
+        const parent = account.dataValues;
+        parentRidToRNumber.set(parent.rid, parent.r_number);
+        allAccounts.push(
+          parent,
+          ...(parent.child_accounts?.map((c: any) => c.dataValues) || [])
         );
-        return (await Promise.all(queries)).flat();
-      })(),
+      });
 
-      // Fiscal data query
-      (async () => {
-        const queries = Array.from(schemaToAccountRids).map(
-          async ([schema, accountRids]) => {
-            try {
-                const schemaName = `trd365_${schema.replace(/\D/g, '')}`;
-              return await orgDbSequelize.query(
-                `SELECT  CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
+      // 3. Schema mapping with Map
+      const schemaToAccountRids = new Map<string, string[]>();
+
+      for (const acc of allAccounts) {
+        const schema =
+          acc.storage_type === "store_in_parent"
+            ? parentRidToRNumber.get(acc.parent_account_rid)
+            : acc.r_number;
+
+        if (!schema) continue;
+
+        const accountRids = schemaToAccountRids.get(schema) || [];
+        accountRids.push(acc.rid);
+        schemaToAccountRids.set(schema, accountRids);
+      }
+
+      // 4. Parallelize database queries
+      const [keyContactsResults, fiscalResults] = await Promise.all([
+        // Key contacts query
+        (async () => {
+          const queries = Array.from(schemaToAccountRids).map(
+            async ([schema, accountRids]) => {
+              try {
+                return await orgDbSequelize.query(
+                  `SELECT * FROM "trd365_${schema.replace(
+                    /^ACC-/,
+                    ""
+                  )}".key_contact_details 
+             WHERE entity_rid IN (:accountRids) AND entity_type = 'Account'`,
+                  { replacements: { accountRids }, type: "SELECT" }
+                );
+              } catch (error) {
+                console.error(
+                  `Key contacts query failed for schema ${schema}:`,
+                  error
+                );
+                return [];
+              }
+            }
+          );
+          return (await Promise.all(queries)).flat();
+        })(),
+
+        // Fiscal data query
+        (async () => {
+          const queries = Array.from(schemaToAccountRids).map(
+            async ([schema, accountRids]) => {
+              try {
+                const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
+                return await orgDbSequelize.query(
+                  `SELECT  CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
              SUM(total_projects::NUMERIC) AS total_projects,
              SUM(total_project_hours::NUMERIC) AS total_project_hours,
              SUM(total_project_cost::NUMERIC) AS total_project_cost,
@@ -2407,292 +2440,312 @@ class SchemaService {
              FROM "${schemaName}".account_fiscal
              WHERE account_rid IN (:accountRids)
              GROUP BY account_rid, fiscal_year`,
-                { replacements: { accountRids }, type: "SELECT" }
-              );
-            } catch (error) {
-              console.warn(`Fiscal data skipped for schema ${schema}:`, error);
-              return [];
+                  { replacements: { accountRids }, type: "SELECT" }
+                );
+              } catch (error) {
+                console.warn(
+                  `Fiscal data skipped for schema ${schema}:`,
+                  error
+                );
+                return [];
+              }
             }
-          }
-        );
-        return (await Promise.all(queries)).flat();
-      })(),
-    ]);
+          );
+          return (await Promise.all(queries)).flat();
+        })(),
+      ]);
 
-    // 5. Optimize role mapping
-    const roleRids = [
-      ...new Set(
-        keyContactsResults.map((kc: any) => kc.key_contact_role).filter(Boolean)
-      ),
-    ];
+      // 5. Optimize role mapping
+      const roleRids = [
+        ...new Set(
+          keyContactsResults
+            .map((kc: any) => kc.key_contact_role)
+            .filter(Boolean)
+        ),
+      ];
 
-    const keyContactRoleMap = new Map<string, string>(
-      roleRids.length
-        ? (
-            await sequelize.query(
-              `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
-              { replacements: { ids: roleRids }, type: "SELECT" }
-            )
-          ).map((r: any) => [r.rid, r.role_name])
-        : []
-    );
-
-    // 6. Efficient contact mapping
-    const accountKeyContactMap = new Map<string, any[]>();
-    const accountFiscalMap = new Map<string, any[]>();
-
-    keyContactsResults.forEach((kc: any) => {
-      const contacts = accountKeyContactMap.get(kc.entity_rid) || [];
-      contacts.push({
-        ...kc,
-        role_name: keyContactRoleMap.get(kc.key_contact_role) || null,
-      });
-      accountKeyContactMap.set(kc.entity_rid, contacts);
-    });
-
-    fiscalResults.forEach((f: any) => {
-      const fiscalData = accountFiscalMap.get(f.account_rid) || [];
-      fiscalData.push(f);
-      accountFiscalMap.set(f.account_rid, fiscalData);
-    });
-    const getPrimaryContact = (keyContacts: any[]) => {
-      const contact = keyContacts.find(kc => kc.is_primary_contact);
-      if (!contact) return { roleKey: null, name: null };
-
-      const roleKey = Object.entries(roleKeyMap).find(
-        ([_, value]) => value === contact.role_name
-      )?.[0] || null;
-
-      return {
-        roleKey,
-        name: contact.key_contact_name || null
-      };
-    };
-    // 7. Optimized account enrichment
-    const enrichAccount = (account: any, isChild: boolean) => {
-    const rawKeyContacts = accountKeyContactMap.get(account.rid) || [];
-    const { roleKey, name } = getPrimaryContact(rawKeyContacts);
-    // Prepare contacts with default values
-    const preparedKeyContacts = rawKeyContacts.map(kc => ({
-      ...kc,
-      role_name: kc.role_name || '',
-      key_contact_name: kc.key_contact_name || ''
-    }));
-    
-    // Apply filters only to parent accounts
-    let keyContacts = preparedKeyContacts;
-    const getPrimaryContactName = (roleName: string) => {
-    const contact = keyContacts.find(
-      kc => kc.role_name === roleName && kc.is_primary_contact
-    );
-    return contact?.key_contact_name || null;
-  };
-
-    return {
-      ...account,
-      key_contacts: keyContacts,
-      primary_contact_role: roleKey || "",
-      primary_contact_name: name || "",    // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
-      professional_services_consultant: getPrimaryContactName("Professional Services Consultant") || "-",
-      finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
-      finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
-      ...(isChild && { 
-        projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [] 
-      })
-    };
-  };
-
-    // 8. Process accounts with early filtering
-    let enrichedAccounts = accountData
-      .map((account: any) => {
-        const parent = enrichAccount(account.dataValues, false);
-        const children = (account.dataValues?.child_accounts || []).map(
-          (c: any) => enrichAccount(c.dataValues, true)
-        );
-
-        parent.child_accounts = children;
-
-        // Special handling for is_empty: true filter
-        return parent;
-      })
-      .filter(Boolean);
-  // 8. Optimized filtering logic
-    if (filters?.finance_lead || filters?.finance_executive || filters?.professional_services_consultant) {
-      const filterKeys = Object.keys(filters).filter(key => 
-        ['finance_lead', 'finance_executive', 'professional_services_consultant'].includes(key)
+      const keyContactRoleMap = new Map<string, string>(
+        roleRids.length
+          ? (
+              await sequelize.query(
+                `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+                { replacements: { ids: roleRids }, type: "SELECT" }
+              )
+            ).map((r: any) => [r.rid, r.role_name])
+          : []
       );
-      for (const filterKey of filterKeys) {
-        const filterValue = (filters as any)[filterKey];
-        if (typeof filterValue === 'string') {
-          if (filterValue === '-' || filterValue.toLowerCase() === 'empty') {
-        // Filter for empty values
-            enrichedAccounts = enrichedAccounts.filter((account: any) => {
-            const contactName = account[filterKey] || '';
-            return contactName.trim() === '';
-          });
-        } else {
-        // Filter for contains match
-          enrichedAccounts = enrichedAccounts.filter((account: any) => {
-          const contactName = (account[filterKey] || '').toLowerCase();
-          return contactName.includes(filterValue.toLowerCase());
-          });
-        }
-    }
-    else if (typeof filterValue === 'object' && filterValue !== null) {
-      const filterType = Object.keys(filterValue)[0];
-      const filterVal = filterValue[filterType];
-       const roleName = roleKeyMap[filterKey];
-      enrichedAccounts = enrichedAccounts.filter((account: any) => {
-        const contactName = account[filterKey] || '';
-         // Step 2: Find the primary contact for this specific role
-          const primaryContact = (account.key_contacts || []).find(
-            (kc: any) => 
-              kc.is_primary_contact && 
-              kc.role_name === roleName
+
+      // 6. Efficient contact mapping
+      const accountKeyContactMap = new Map<string, any[]>();
+      const accountFiscalMap = new Map<string, any[]>();
+
+      keyContactsResults.forEach((kc: any) => {
+        const contacts = accountKeyContactMap.get(kc.entity_rid) || [];
+        contacts.push({
+          ...kc,
+          role_name: keyContactRoleMap.get(kc.key_contact_role) || null,
+        });
+        accountKeyContactMap.set(kc.entity_rid, contacts);
+      });
+
+      fiscalResults.forEach((f: any) => {
+        const fiscalData = accountFiscalMap.get(f.account_rid) || [];
+        fiscalData.push(f);
+        accountFiscalMap.set(f.account_rid, fiscalData);
+      });
+      const getPrimaryContact = (keyContacts: any[]) => {
+        const contact = keyContacts.find((kc) => kc.is_primary_contact);
+        if (!contact) return { roleKey: null, name: null };
+
+        const roleKey =
+          Object.entries(roleKeyMap).find(
+            ([_, value]) => value === contact.role_name
+          )?.[0] || null;
+
+        return {
+          roleKey,
+          name: contact.key_contact_name || null,
+        };
+      };
+      // 7. Optimized account enrichment
+      const enrichAccount = (account: any, isChild: boolean) => {
+        const rawKeyContacts = accountKeyContactMap.get(account.rid) || [];
+        const { roleKey, name } = getPrimaryContact(rawKeyContacts);
+        // Prepare contacts with default values
+        const preparedKeyContacts = rawKeyContacts.map((kc) => ({
+          ...kc,
+          role_name: kc.role_name || "",
+          key_contact_name: kc.key_contact_name || "",
+        }));
+
+        // Apply filters only to parent accounts
+        let keyContacts = preparedKeyContacts;
+        const getPrimaryContactName = (roleName: string) => {
+          const contact = keyContacts.find(
+            (kc) => kc.role_name === roleName && kc.is_primary_contact
+          );
+          return contact?.key_contact_name || null;
+        };
+
+        return {
+          ...account,
+          key_contacts: keyContacts,
+          primary_contact_role: roleKey || "",
+          primary_contact_name: name || "", // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
+          professional_services_consultant:
+            getPrimaryContactName("Professional Services Consultant") || "-",
+          finance_executive:
+            getPrimaryContactName("Client Finance Executive") || "-",
+          finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
+          ...(isChild && {
+            projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [],
+          }),
+        };
+      };
+
+      // 8. Process accounts with early filtering
+      let enrichedAccounts = accountData
+        .map((account: any) => {
+          const parent = enrichAccount(account.dataValues, false);
+          const children = (account.dataValues?.child_accounts || []).map(
+            (c: any) => enrichAccount(c.dataValues, true)
           );
 
-        switch (filterType) {
-          case 'equals':
-            return contactName.toLowerCase() === String(filterVal).toLowerCase();
-            
-         case 'not_equals': 
-          if (!roleName) {
-              // Role mapping not found → exclude the account (filter key is invalid for this account)
-          return false;
+          parent.child_accounts = children;
+
+          // Special handling for is_empty: true filter
+          return parent;
+        })
+        .filter(Boolean);
+      // 8. Optimized filtering logic
+      if (
+        filters?.finance_lead ||
+        filters?.finance_executive ||
+        filters?.professional_services_consultant
+      ) {
+        const filterKeys = Object.keys(filters).filter((key) =>
+          [
+            "finance_lead",
+            "finance_executive",
+            "professional_services_consultant",
+          ].includes(key)
+        );
+        for (const filterKey of filterKeys) {
+          const filterValue = (filters as any)[filterKey];
+          if (typeof filterValue === "string") {
+            if (filterValue === "-" || filterValue.toLowerCase() === "empty") {
+              // Filter for empty values
+              enrichedAccounts = enrichedAccounts.filter((account: any) => {
+                const contactName = account[filterKey] || "";
+                return contactName.trim() === "";
+              });
+            } else {
+              // Filter for contains match
+              enrichedAccounts = enrichedAccounts.filter((account: any) => {
+                const contactName = (account[filterKey] || "").toLowerCase();
+                return contactName.includes(filterValue.toLowerCase());
+              });
+            }
+          } else if (typeof filterValue === "object" && filterValue !== null) {
+            const filterType = Object.keys(filterValue)[0];
+            const filterVal = filterValue[filterType];
+            const roleName = roleKeyMap[filterKey];
+            enrichedAccounts = enrichedAccounts.filter((account: any) => {
+              const contactName = account[filterKey] || "";
+              // Step 2: Find the primary contact for this specific role
+              const primaryContact = (account.key_contacts || []).find(
+                (kc: any) => kc.is_primary_contact && kc.role_name === roleName
+              );
+
+              switch (filterType) {
+                case "equals":
+                  return (
+                    contactName.toLowerCase() ===
+                    String(filterVal).toLowerCase()
+                  );
+
+                case "not_equals":
+                  if (!roleName) {
+                    // Role mapping not found → exclude the account (filter key is invalid for this account)
+                    return false;
+                  }
+
+                  // Step 3: If no primary contact exists for this role, exclude the account
+                  if (!primaryContact) {
+                    return false;
+                  }
+
+                  // Step 4: Check if the primary contact's name does NOT match the filter value
+                  const contactNamenot =
+                    primaryContact.key_contact_name?.toLowerCase() || "";
+                  const filterValueNormalized = String(filterVal).toLowerCase();
+                  return contactNamenot !== filterValueNormalized;
+                case "contains":
+                  return contactName
+                    .toLowerCase()
+                    .includes(String(filterVal).toLowerCase());
+
+                case "is_empty":
+                  if (!roleName) {
+                    return false; // Invalid role → exclude account
+                  }
+
+                  if (filterVal === true) {
+                    // Filter for empty: either no contact or empty name
+                    return (
+                      !primaryContact ||
+                      !primaryContact.key_contact_name ||
+                      primaryContact.key_contact_name.trim() === ""
+                    );
+                  }
+                default:
+                  return true;
+              }
+            });
           }
-        
-          // Step 3: If no primary contact exists for this role, exclude the account
-          if (!primaryContact) {
-            return false;
+        }
+      }
+      // 5. Apply sorting if needed
+      const SORTABLE_FIELDS = new Set([
+        "professional_services_consultant",
+        "finance_lead",
+        "finance_executive",
+      ]);
+
+      if (sortBy && SORTABLE_FIELDS.has(sortBy)) {
+        enrichedAccounts.sort(
+          (a: { [x: string]: string }, b: { [x: string]: string }) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+
+            if (valA === "-" && valB !== "-") {
+              return sortOrder === "DESC" ? -1 : 1;
+            }
+            if (valB === "-" && valA !== "-") {
+              return sortOrder === "DESC" ? 1 : -1;
+            }
+            if (valA === "-" && valB === "-") {
+              return 0; // Both empty → equal
+            }
+            // For non-empty values: sort alphabetically
+            return sortOrder === "DESC"
+              ? valB.localeCompare(valA, undefined, { sensitivity: "base" }) // Z → A
+              : valA.localeCompare(valB, undefined, { sensitivity: "base" }); // A → Z
           }
+        );
+      }
 
-          // Step 4: Check if the primary contact's name does NOT match the filter value
-          const contactNamenot = primaryContact.key_contact_name?.toLowerCase() || '';
-          const filterValueNormalized = String(filterVal).toLowerCase();
-          return contactNamenot !== filterValueNormalized;   
-          case 'contains':
-            return contactName.toLowerCase().includes(String(filterVal).toLowerCase());
-            
-         case 'is_empty':
-         
-          if (!roleName) {
-            return false; // Invalid role → exclude account
-          }
-      
+      // 6. Apply pagination
+      const total = enrichedAccounts.length;
+      const shouldPaginate =
+        filters?.finance_lead ||
+        filters?.finance_executive ||
+        filters?.professional_services_consultant ||
+        (sortBy && SORTABLE_FIELDS.has(sortBy));
 
-          if (filterVal === true) {
-            // Filter for empty: either no contact or empty name
-            return !primaryContact || 
-                  !primaryContact.key_contact_name || 
-                  primaryContact.key_contact_name.trim() === '';
-          }
-          default:
-            return true;
-        }
-      });
-    }
-  }
-}
-    // 5. Apply sorting if needed
-    const SORTABLE_FIELDS = new Set([
-      "professional_services_consultant",
-      "finance_lead",
-      "finance_executive",
-    ]);
-
-    if (sortBy && SORTABLE_FIELDS.has(sortBy)) {
-      enrichedAccounts.sort(
-        (a: { [x: string]: string }, b: { [x: string]: string }) => {
-          const valA = a[sortBy] || "";
-          const valB = b[sortBy] || "";
-
-        if (valA === "-" && valB !== "-") {
-          return sortOrder === "DESC" ? -1 : 1;
-        }
-        if (valB === "-" && valA !== "-") {
-          return sortOrder === "DESC" ? 1 : -1;
-        }
-        if (valA === "-" && valB === "-") {
-          return 0; // Both empty → equal
-        }
-      // For non-empty values: sort alphabetically
-      return sortOrder === "DESC"
-        ? valB.localeCompare(valA, undefined, { sensitivity: "base" }) // Z → A
-        : valA.localeCompare(valB, undefined, { sensitivity: "base" }); // A → Z
-    }
-  );
-}
-
-    // 6. Apply pagination
-    const total = enrichedAccounts.length;
-    const shouldPaginate =
-      (filters?.finance_lead || filters?.finance_executive || filters?.professional_services_consultant) || (sortBy && SORTABLE_FIELDS.has(sortBy));
-
-    if (
-      shouldPaginate &&
-      limit !== undefined &&
-      offset !== undefined &&
-      type != "download"
-    ) {
-      enrichedAccounts = enrichedAccounts.slice(offset, offset + limit);
-    }
-    return { data: enrichedAccounts, total };
-  }
-  catch(err)
-  {
+      if (
+        shouldPaginate &&
+        limit !== undefined &&
+        offset !== undefined &&
+        type != "download"
+      ) {
+        enrichedAccounts = enrichedAccounts.slice(offset, offset + limit);
+      }
+      return { data: enrichedAccounts, total };
+    } catch (err) {
       throw new Error("Error updating key contacts.");
-  }
-}
-async insertFiscalInfoOnly(
-  accountData: any,
-  filters?: any,
-  limit?: number,
-  offset?: number,
-  sortBy?: string,
-  sortOrder?: string,
-  type?: string,
-  fiscalYear?:any
-) {
-  try {
-    const orgDbSequelize = await initOrgSequelize();
-
-    // 1. Prepare schema mappings
-    const parentRidToRNumber = new Map<string, string>();
-    const allAccounts: any[] = [];
-
-    accountData.forEach((account: { dataValues: any }) => {
-      const parent = account.dataValues;
-      parentRidToRNumber.set(parent.rid, parent.r_number);
-      allAccounts.push(
-        parent,
-        ...(parent.child_accounts?.map((c: any) => c.dataValues) || [])
-      );
-    });
-
-    const schemaToAccountRids = new Map<string, string[]>();
-
-    for (const acc of allAccounts) {
-      const schema =
-        acc.storage_type === "store_in_parent"
-          ? parentRidToRNumber.get(acc.parent_account_rid)
-          : acc.r_number;
-
-      if (!schema) continue;
-
-      const accountRids = schemaToAccountRids.get(schema) || [];
-      accountRids.push(acc.rid);
-      schemaToAccountRids.set(schema, accountRids);
     }
+  }
+  async insertFiscalInfoOnly(
+    accountData: any,
+    filters?: any,
+    limit?: number,
+    offset?: number,
+    sortBy?: string,
+    sortOrder?: string,
+    type?: string,
+    fiscalYear?: any
+  ) {
+    try {
+      const orgDbSequelize = await initOrgSequelize();
 
-    // 2. Fetch fiscal data in parallel
-    const fiscalResults = await (async () => {
-      const queries = Array.from(schemaToAccountRids).map(
-        async ([schema, accountRids]) => {
-          try {
-            const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
-            
-            // Build the base query
-            let query = `
+      // 1. Prepare schema mappings
+      const parentRidToRNumber = new Map<string, string>();
+      const allAccounts: any[] = [];
+
+      accountData.forEach((account: { dataValues: any }) => {
+        const parent = account.dataValues;
+        parentRidToRNumber.set(parent.rid, parent.r_number);
+        allAccounts.push(
+          parent,
+          ...(parent.child_accounts?.map((c: any) => c.dataValues) || [])
+        );
+      });
+
+      const schemaToAccountRids = new Map<string, string[]>();
+
+      for (const acc of allAccounts) {
+        const schema =
+          acc.storage_type === "store_in_parent"
+            ? parentRidToRNumber.get(acc.parent_account_rid)
+            : acc.r_number;
+
+        if (!schema) continue;
+
+        const accountRids = schemaToAccountRids.get(schema) || [];
+        accountRids.push(acc.rid);
+        schemaToAccountRids.set(schema, accountRids);
+      }
+
+      // 2. Fetch fiscal data in parallel
+      const fiscalResults = await (async () => {
+        const queries = Array.from(schemaToAccountRids).map(
+          async ([schema, accountRids]) => {
+            try {
+              const schemaName = `trd365_${schema.replace(/\D/g, "")}`;
+
+              // Build the base query
+              let query = `
               SELECT CONCAT('FY-', fiscal_year) AS fiscal_year, account_rid,
                 SUM(total_projects::NUMERIC) AS total_projects,
                 SUM(total_project_hours::NUMERIC) AS total_project_hours,
@@ -2704,434 +2757,429 @@ async insertFiscalInfoOnly(
               FROM "${schemaName}".account_fiscal
               WHERE account_rid IN (:accountRids)
             `;
-            
-            // Add fiscal year condition only if it's provided
-            const replacements: any = { accountRids };
-            if (fiscalYear != null && fiscalYear != "FY-All") {
-              query += ` AND fiscal_year = :fiscal_year`;
-              replacements.fiscal_year = fiscalYear;
+
+              // Add fiscal year condition only if it's provided
+              const replacements: any = { accountRids };
+              if (fiscalYear != null && fiscalYear != "FY-All") {
+                query += ` AND fiscal_year = :fiscal_year`;
+                replacements.fiscal_year = fiscalYear;
+              }
+
+              query += ` GROUP BY account_rid, fiscal_year`;
+
+              return await orgDbSequelize.query(query, {
+                replacements,
+                type: "SELECT",
+              });
+            } catch (error) {
+              console.warn(`Fiscal data skipped for schema ${schema}:`, error);
+              return [];
             }
-            
-            query += ` GROUP BY account_rid, fiscal_year`;
-            
-            return await orgDbSequelize.query(query, {
-              replacements,
-              type: "SELECT"
-            });
-          } catch (error) {
-            console.warn(`Fiscal data skipped for schema ${schema}:`, error);
-            return [];
           }
-        }
-      );
-      return (await Promise.all(queries)).flat();
-    })();
+        );
+        return (await Promise.all(queries)).flat();
+      })();
 
-    // 3. Map fiscal data to account RID
-    const accountFiscalMap = new Map<string, any[]>();
-    fiscalResults.forEach((f: any) => {
-      const fiscalData = accountFiscalMap.get(f.account_rid) || [];
-      fiscalData.push(f);
-      accountFiscalMap.set(f.account_rid, fiscalData);
-    });
+      // 3. Map fiscal data to account RID
+      const accountFiscalMap = new Map<string, any[]>();
+      fiscalResults.forEach((f: any) => {
+        const fiscalData = accountFiscalMap.get(f.account_rid) || [];
+        fiscalData.push(f);
+        accountFiscalMap.set(f.account_rid, fiscalData);
+      });
 
-    // 4. Enrich accounts with fiscal data
-    const enrichAccount = (account: any, isChild: boolean) => {
-      return {
-        ...account,
-        ...(isChild && {
-          projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [],
-        }),
+      // 4. Enrich accounts with fiscal data
+      const enrichAccount = (account: any, isChild: boolean) => {
+        return {
+          ...account,
+          ...(isChild && {
+            projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [],
+          }),
+        };
       };
-    };
 
-    let enrichedAccounts = accountData.map((account: any) => {
-      const parent = enrichAccount(account.dataValues, false);
-      const children = (account.dataValues?.child_accounts || []).map(
-        (c: any) => enrichAccount(c.dataValues, true)
-      );
+      let enrichedAccounts = accountData.map((account: any) => {
+        const parent = enrichAccount(account.dataValues, false);
+        const children = (account.dataValues?.child_accounts || []).map(
+          (c: any) => enrichAccount(c.dataValues, true)
+        );
 
-      parent.child_accounts = children;
-      return parent;
-    });
-    // After enriching accounts with fiscal data, apply filtering
-    let filteredAccounts = enrichedAccounts;
-    if (fiscalYear != null && fiscalYear != "FY-All") {
-      filteredAccounts = filteredAccounts
-        .map((parent: any) => {
-          // Filter child accounts - keep only those with fiscal data
-          const filteredChildren = parent.child_accounts?.filter(
-          (child: any) => child.projects_by_fiscal_year?.length > 0
-          ) || [];
-          // Return a copy of parent with filtered children
-          return {
-            ...parent,
-            child_accounts: filteredChildren
-          };
-        })
-        // Filter out parents that have no children left after filtering
-        .filter((parent: any) => parent.child_accounts?.length > 0);
+        parent.child_accounts = children;
+        return parent;
+      });
+      // After enriching accounts with fiscal data, apply filtering
+      let filteredAccounts = enrichedAccounts;
+      if (fiscalYear != null && fiscalYear != "FY-All") {
+        filteredAccounts = filteredAccounts
+          .map((parent: any) => {
+            // Filter child accounts - keep only those with fiscal data
+            const filteredChildren =
+              parent.child_accounts?.filter(
+                (child: any) => child.projects_by_fiscal_year?.length > 0
+              ) || [];
+            // Return a copy of parent with filtered children
+            return {
+              ...parent,
+              child_accounts: filteredChildren,
+            };
+          })
+          // Filter out parents that have no children left after filtering
+          .filter((parent: any) => parent.child_accounts?.length > 0);
       }
 
-    return {
-      data: filteredAccounts,
-      total: filteredAccounts.length
-  };
-  } catch (err) {
-    throw new Error("Error fetching fiscal data.");
+      return {
+        data: filteredAccounts,
+        total: filteredAccounts.length,
+      };
+    } catch (err) {
+      throw new Error("Error fetching fiscal data.");
+    }
   }
-}
 
   async getOrgInfo() {
     try {
       const mainDdSequilze = await initSequelize();
 
       const result: any = await mainDdSequilze.query(
-          `SELECT logo_url,firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
-          {
-            type: "SELECT",
-          }
-        );
+        `SELECT logo_url,firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
+        {
+          type: "SELECT",
+        }
+      );
 
-        const orgLicenseInfo = result[0]
-      
-      console.log("orgLicenseInfo",orgLicenseInfo)
+      const orgLicenseInfo = result[0];
+
+      console.log("orgLicenseInfo", orgLicenseInfo);
       return orgLicenseInfo;
     } catch (err) {
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
 
-async fetchAttachments(account_rid: string): Promise<any[]> {
-  try {
-    const sequelize = await initSequelize();
-    
-    const result = await sequelize.query(`
+  async fetchAttachments(account_rid: string): Promise<any[]> {
+    try {
+      const sequelize = await initSequelize();
+
+      const result = await sequelize.query(
+        `
       SELECT 
         a.*
       FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
       WHERE a.attach_to = :account_rid
       ORDER BY a.created_datetime DESC
-    `, {
-      replacements: { account_rid },
-      type: QueryTypes.SELECT
-    });
-
-    return result;
-  } catch (error) {
-    console.error('Error fetching attachments:', error);
-    throw new Error('Failed to fetch attachments');
-  }
-}
-
-async createUserGroup(
-  accountData: IAccount,
-  userId: string,
-  is_parent: boolean,
-  account_rid: string,
-  parent_account_rid?: string | null
-) {
-  const sequelize = await initSequelize();
-  const transaction = await sequelize.transaction();
-
-  try {
-    const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
-
-    const groupTypeResult = await sequelize.query<{ rid: string }>(rawQueries.SQL_GET_GROUP_TYPE,
-      {
-        replacements: { group_type_name: groupTypeName },
-        type: QueryTypes.SELECT,
-        transaction,
-      }
-    );
-
-    const group_type_rid = groupTypeResult?.[0]?.rid;
-    if (!group_type_rid) {
-      throw new Error(`Group type '${groupTypeName}' not found.`);
-    }
-
-
-    const newGroupResult = await sequelize.query<{ rid: string }>(rawQueries.CREATE_AUTO_ASSIGNED_GROUP,
-      {
-        replacements: {
-          group_name: 'G-' + accountData.account_name,
-          group_type_rid,
-          created_by: userId,
-        },
-        type: QueryTypes.SELECT,
-        transaction,
-      }
-    );
-
-    const groupRid = newGroupResult?.[0]?.rid;
-    if (!groupRid) throw new Error("Failed to create new user group.");
-
-    // 4. If it's a child, map it to AUTO_ASSIGNED_PARENT group of parent
-    if (!is_parent && parent_account_rid) {
-      const autoAssignedParentGroup = await sequelize.query<{ group_rid: string }>(
-       rawQueries.GET_PARENT_USER_GROUP_TYPE,
+    `,
         {
-          replacements: { parent_account_rid },
+          replacements: { account_rid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      throw new Error("Failed to fetch attachments");
+    }
+  }
+
+  async createUserGroup(
+    accountData: IAccount,
+    userId: string,
+    is_parent: boolean,
+    account_rid: string,
+    parent_account_rid?: string | null
+  ) {
+    const sequelize = await initSequelize();
+    const transaction = await sequelize.transaction();
+
+    try {
+      const groupTypeName = is_parent
+        ? "AUTO_ASSIGNED_PARENT"
+        : "AUTO_ASSIGNED_CHILD";
+
+      const groupTypeResult = await sequelize.query<{ rid: string }>(
+        rawQueries.SQL_GET_GROUP_TYPE,
+        {
+          replacements: { group_type_name: groupTypeName },
           type: QueryTypes.SELECT,
           transaction,
         }
       );
 
-      const parentGroupRid = autoAssignedParentGroup?.[0]?.group_rid;
-      if (parentGroupRid) {
-        await sequelize.query(
-         rawQueries.CREATE_ENTITY_ACCESS,
-          {
+      const group_type_rid = groupTypeResult?.[0]?.rid;
+      if (!group_type_rid) {
+        throw new Error(`Group type '${groupTypeName}' not found.`);
+      }
+
+      const newGroupResult = await sequelize.query<{ rid: string }>(
+        rawQueries.CREATE_AUTO_ASSIGNED_GROUP,
+        {
+          replacements: {
+            group_name: "G-" + accountData.account_name,
+            group_type_rid,
+            created_by: userId,
+          },
+          type: QueryTypes.SELECT,
+          transaction,
+        }
+      );
+
+      const groupRid = newGroupResult?.[0]?.rid;
+      if (!groupRid) throw new Error("Failed to create new user group.");
+
+      // 4. If it's a child, map it to AUTO_ASSIGNED_PARENT group of parent
+      if (!is_parent && parent_account_rid) {
+        const autoAssignedParentGroup = await sequelize.query<{
+          group_rid: string;
+        }>(rawQueries.GET_PARENT_USER_GROUP_TYPE, {
+          replacements: { parent_account_rid },
+          type: QueryTypes.SELECT,
+          transaction,
+        });
+
+        const parentGroupRid = autoAssignedParentGroup?.[0]?.group_rid;
+        if (parentGroupRid) {
+          await sequelize.query(rawQueries.CREATE_ENTITY_ACCESS, {
             replacements: {
               group_rid: parentGroupRid,
               entity_rid: account_rid,
               created_by: userId,
             },
             transaction,
-          }
-        );
-        // 5. Insert into user_group_account_mapping for parent
-        await sequelize.query(rawQueries.CREATE_ACCOUNT_MAPPING,
-        {
-          replacements: {
-            group_rid: parentGroupRid,
-            account_rid,
-            created_by: userId,
-          },
-          transaction,
+          });
+          // 5. Insert into user_group_account_mapping for parent
+          await sequelize.query(rawQueries.CREATE_ACCOUNT_MAPPING, {
+            replacements: {
+              group_rid: parentGroupRid,
+              account_rid,
+              created_by: userId,
+            },
+            transaction,
+          });
         }
-       ); 
       }
-    }
-    // 5. Insert into user_group_account_mapping
-    await sequelize.query(rawQueries.CREATE_ACCOUNT_MAPPING,
-      {
+      // 5. Insert into user_group_account_mapping
+      await sequelize.query(rawQueries.CREATE_ACCOUNT_MAPPING, {
         replacements: {
           group_rid: groupRid,
           account_rid,
           created_by: userId,
         },
         transaction,
-      }
-    );
+      });
 
-    // 6. Insert into user_group_entity_access
-    await sequelize.query(
-     rawQueries.CREATE_ENTITY_ACCESS,
-      {
+      // 6. Insert into user_group_entity_access
+      await sequelize.query(rawQueries.CREATE_ENTITY_ACCESS, {
         replacements: {
           group_rid: groupRid,
           entity_rid: account_rid,
           created_by: userId,
         },
         transaction,
-      }
-    );
+      });
 
-    await transaction.commit();
-  } catch (err) {
-    await transaction.rollback();
-    console.error("Error creating user group with account mapping:", err);
-    throw err;
-  }
-}
-
-async getUserGroupType(userRid: string): Promise<string | null>   {
-  const mainDbSequelize = await initSequelize();
-  
-  try {
-    const results = await mainDbSequelize.query<{ group_type: string }>(rawQueries.GET_USER_GROUP_TYPE,  // Important if user can only have one group type
-    {
-      replacements: { userRid },
-      type: QueryTypes.SELECT
-    });
-
-    if (!results || results.length === 0) {
-     return null;
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      console.error("Error creating user group with account mapping:", err);
+      throw err;
     }
-
-    return results[0]?.group_type;
-  } catch (error) {
-    // Log the error for debugging
-    console.error('Error fetching user group type:', error);
-    throw new Error('Failed to get user group type');
   }
-}
-async getAccessibleAccountInfo(userRid: string): Promise<Array<{
-  id: string;
-  isChild: boolean;
-  parentId: string | null;
-}>> {
-  const mainDbSequelize = await initSequelize();
 
-  try {
-    // 1. Direct access with account info
-    const directAccess = await mainDbSequelize.query<{
-      entity_rid: string;
-      parent_account_rid: string | null;
-      is_child: boolean;
-    }>(
-      rawQueries.GET_ACCOUNT_DIRECT_ACCESS_USER_IDS,
-      {
-        replacements: { userRid },
-        type: QueryTypes.SELECT
+  async getUserGroupType(userRid: string): Promise<string | null> {
+    const mainDbSequelize = await initSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{ group_type: string }>(
+        rawQueries.GET_USER_GROUP_TYPE, // Important if user can only have one group type
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
       }
-    );
 
-    // 2. Direct EXCLUDE access — normalize and store in a Set
-    const directExclude = await mainDbSequelize.query<{ entity_rid: string }>(
-     rawQueries.GET_ACCOUNT_DIRECT_EXCLUDE_ACCESS_USER_IDS,
-      {
-        replacements: { userRid },
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    const excludedEntityRids = new Set(
-      directExclude.map(e => e.entity_rid?.trim().toLowerCase())
-    );
-
-    // 3. Group INCLUDE access
-    const groupAccess = await mainDbSequelize.query<{
-      entity_rid: string;
-      parent_account_rid: string | null;
-      is_child: boolean;
-    }>(
-    rawQueries.GET_GROUP_ACCESS,
-      {
-        replacements: { userRid },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    // 3. Combine and deduplicate
-    const allAccess = [...directAccess, ...groupAccess];
-    const uniqueAccess = new Map<string, {
+      return results[0]?.group_type;
+    } catch (error) {
+      // Log the error for debugging
+      console.error("Error fetching user group type:", error);
+      throw new Error("Failed to get user group type");
+    }
+  }
+  async getAccessibleAccountInfo(userRid: string): Promise<
+    Array<{
       id: string;
       isChild: boolean;
       parentId: string | null;
-    }>();
+    }>
+  > {
+    const mainDbSequelize = await initSequelize();
 
-    allAccess.forEach(access => {
-      const normalizedEntityId = access.entity_rid?.trim().toLowerCase();
-      if (!excludedEntityRids.has(normalizedEntityId) && !uniqueAccess.has(normalizedEntityId)) {
-        uniqueAccess.set(normalizedEntityId, {
-          id: access.entity_rid,
-          isChild: access.is_child,
-          parentId: access.parent_account_rid
-        });
-      }
-    });
+    try {
+      // 1. Direct access with account info
+      const directAccess = await mainDbSequelize.query<{
+        entity_rid: string;
+        parent_account_rid: string | null;
+        is_child: boolean;
+      }>(rawQueries.GET_ACCOUNT_DIRECT_ACCESS_USER_IDS, {
+        replacements: { userRid },
+        type: QueryTypes.SELECT,
+      });
 
-    return Array.from(uniqueAccess.values());
-  } catch (err) {
-    console.error("Error in getAccessibleAccountInfo:", err);
-    return [];
+      // 2. Direct EXCLUDE access — normalize and store in a Set
+      const directExclude = await mainDbSequelize.query<{ entity_rid: string }>(
+        rawQueries.GET_ACCOUNT_DIRECT_EXCLUDE_ACCESS_USER_IDS,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      const excludedEntityRids = new Set(
+        directExclude.map((e) => e.entity_rid?.trim().toLowerCase())
+      );
+
+      // 3. Group INCLUDE access
+      const groupAccess = await mainDbSequelize.query<{
+        entity_rid: string;
+        parent_account_rid: string | null;
+        is_child: boolean;
+      }>(rawQueries.GET_GROUP_ACCESS, {
+        replacements: { userRid },
+        type: QueryTypes.SELECT,
+      });
+
+      // 3. Combine and deduplicate
+      const allAccess = [...directAccess, ...groupAccess];
+      const uniqueAccess = new Map<
+        string,
+        {
+          id: string;
+          isChild: boolean;
+          parentId: string | null;
+        }
+      >();
+
+      allAccess.forEach((access) => {
+        const normalizedEntityId = access.entity_rid?.trim().toLowerCase();
+        if (
+          !excludedEntityRids.has(normalizedEntityId) &&
+          !uniqueAccess.has(normalizedEntityId)
+        ) {
+          uniqueAccess.set(normalizedEntityId, {
+            id: access.entity_rid,
+            isChild: access.is_child,
+            parentId: access.parent_account_rid,
+          });
+        }
+      });
+
+      return Array.from(uniqueAccess.values());
+    } catch (err) {
+      console.error("Error in getAccessibleAccountInfo:", err);
+      return [];
+    }
   }
-}
 
- async getAllowedExportFields(userId: string, permission_name: string): Promise<any[]> {
-  const mainDbSequelize = await initSequelize();
-  const [userInfo] = await mainDbSequelize.query(
-  rawQueries.GET_USER_PROFILE,
-  {
-    replacements: { userId },
-    type: QueryTypes.SELECT,
-  }
-) as [{ profile_rid: string }] | [];
-
-  if (!userInfo?.profile_rid) {
-    return [];
-  }
-
-  const sequelize = await initSequelize();
-  const [profileFields, userFields] = await Promise.all([
-    sequelize.query(
-     rawQueries.GET_PROFILE_PERMISSION,
+  async getAllowedExportFields(
+    userId: string,
+    permission_name: string
+  ): Promise<any[]> {
+    const mainDbSequelize = await initSequelize();
+    const [userInfo] = (await mainDbSequelize.query(
+      rawQueries.GET_USER_PROFILE,
       {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    )) as [{ profile_rid: string }] | [];
+
+    if (!userInfo?.profile_rid) {
+      return [];
+    }
+
+    const sequelize = await initSequelize();
+    const [profileFields, userFields] = await Promise.all([
+      sequelize.query(rawQueries.GET_PROFILE_PERMISSION, {
         replacements: {
           permissionName: permission_name,
           profileId: userInfo?.profile_rid,
         },
         type: "SELECT",
-      }
-    ),
-    sequelize.query(
-      rawQueries.GET_USER_EXTENDED_PERMISSION,
-      {
+      }),
+      sequelize.query(rawQueries.GET_USER_EXTENDED_PERMISSION, {
         replacements: {
           permissionName: permission_name,
           userId,
         },
         type: QueryTypes.SELECT,
+      }),
+    ]);
+
+    // Merge: user overrides profile
+    const userFieldMap = new Map<string, any>();
+    for (const field of userFields as any[]) {
+      userFieldMap.set(field.field_name, field);
+    }
+
+    const merged = (profileFields as any[]).map((pf) => {
+      const userPerm = userFieldMap.get(pf.field_name);
+      if (userPerm) {
+        userFieldMap.delete(pf.field_name);
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read ? true : userPerm?.read === true,
+        };
       }
-    ),
-  ]);
-
-  // Merge: user overrides profile
-  const userFieldMap = new Map<string, any>();
-  for (const field of userFields as any[]) {
-    userFieldMap.set(field.field_name, field);
-  }
-
-  const merged = (profileFields as any[]).map((pf) => {
-    const userPerm = userFieldMap.get(pf.field_name);
-    if (userPerm) {
-      userFieldMap.delete(pf.field_name);
       return {
         field_desc: pf.field_desc,
         field_name: pf.field_name,
-        read:pf.read ? true : userPerm?.read === true,
+        read: pf.read,
       };
-    }
-    return {
-      field_desc: pf.field_desc,
-      field_name: pf.field_name,
-      read: pf.read,
-    };
-  });
+    });
 
-  const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
-    field_desc: uf.field_desc,
-    field_name: uf.field_name,
-    read: uf.read,
-  }));
+    const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+      field_desc: uf.field_desc,
+      field_name: uf.field_name,
+      read: uf.read,
+    }));
 
-  const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
-  return exportableFields;
-}
- async  updateGroupNameForAccount(
-  accountRid: string,
-   userId: string,
-   is_parent:boolean,
-  accountName: string
-): Promise<void> {
-  const sequelize: Sequelize = await initSequelize(); 
-  const groupTypeName = is_parent ? 'AUTO_ASSIGNED_PARENT' : 'AUTO_ASSIGNED_CHILD';
-  const result = await sequelize.query<{ rid: string; group_name: string }>(rawQueries.SQL_GET_EX_GROUP_DATA,
-  {
-    replacements: {
-      account_rid: accountRid,
-      group_type_name: groupTypeName
-    },
-    type: QueryTypes.SELECT,
+    const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+    return exportableFields;
   }
-  );
-  const groupRid = result?.[0]?.rid;
-  await sequelize.query(
-   rawQueries.UPDATE_GROUP_NAME,
-    {
-      replacements: {
-        group_name: 'G-'+accountName,
-        group_rid: groupRid
+  async updateGroupNameForAccount(
+    accountRid: string,
+    userId: string,
+    is_parent: boolean,
+    accountName: string
+  ): Promise<void> {
+    const sequelize: Sequelize = await initSequelize();
+    const groupTypeName = is_parent
+      ? "AUTO_ASSIGNED_PARENT"
+      : "AUTO_ASSIGNED_CHILD";
+    const result = await sequelize.query<{ rid: string; group_name: string }>(
+      rawQueries.SQL_GET_EX_GROUP_DATA,
+      {
+        replacements: {
+          account_rid: accountRid,
+          group_type_name: groupTypeName,
+        },
+        type: QueryTypes.SELECT,
       }
-    }
-  );
-}
+    );
+    const groupRid = result?.[0]?.rid;
+    await sequelize.query(rawQueries.UPDATE_GROUP_NAME, {
+      replacements: {
+        group_name: "G-" + accountName,
+        group_rid: groupRid,
+      },
+    });
+  }
 }
 export default SchemaService;
-
-
 
 /*
 1. project resource

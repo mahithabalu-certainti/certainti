@@ -615,7 +615,7 @@ class InteractionSchemaService {
       rid: string;
       status_name: string;
     }>;
-    return statusArr.length > 0 ? statusArr[0].rid : null;
+    return statusArr.length > 0 ? statusArr[0]?.rid : null;
   }
   async getInteractionSourceByType(type: string) {
     if (!this.mainDbSequelize) {
@@ -635,7 +635,7 @@ class InteractionSchemaService {
       rid: string;
       interaction_source_name: string;
     }>;
-    return sourceArr.length > 0 ? sourceArr[0].rid : null;
+    return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
   }
 
   async getInteractionTypes() {
