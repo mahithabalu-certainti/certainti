@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
-  ActivitiesIcon,
+  // ActivitiesIcon,
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
@@ -14,163 +19,267 @@ import {
   ProjectDetailsIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TechSummaryIcon,
+  ConfigIcon,
 } from '../../../../assets';
-import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { NewProjectData } from '../../../types/project';
-import { MenuItem } from '../../../types';
-import { AllModules, AllPermissions } from '../../../../common-service';
+import {
+  ExportType,
+  FiscalDates,
+  FormFiscalDateType,
+  MenuItem,
+  ProjectFinancialResourceExportParams,
+} from '../../../types';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { checkPermission } from '../../../../common-utils';
+import { checkPermission, getFiscalDateBounds } from '../../../../common-utils';
 import { NotFound } from '../../../../pages';
-
-const sideMenuItems: MenuItem[] = [
-  {
-    name: 'Project Details',
-    key: 'projectDetails',
-    id: AllModules.PROJECT_DETAILS,
-    disabled: false,
-    icon: DetailsIcon,
-  },
-  {
-    name: 'Project Resources',
-    key: 'projectResources',
-    id: AllModules.PROJECT_RESOURCES,
-    disabled: false,
-    icon: ResourcesIcon,
-  },
-  {
-    name: 'Projects Task',
-    key: 'projectsTask',
-    id: AllModules.PROJECT_TASK,
-    disabled: false,
-    icon: ProjectsSideIcon,
-  },
-  {
-    name: 'Financial Highlights',
-    key: 'financial',
-    id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
-    disabled: false,
-    icon: FinancialIcon,
-  },
-  {
-    name: 'Interactions',
-    key: 'interactions',
-    id: AllModules.PROJECT_INTERACTIONS,
-    disabled: false,
-    icon: InteractionsIcon,
-  },
-  {
-    name: 'Technical Summary',
-    key: 'technicalSummary',
-    id: AllModules.PROJECT_TECHNICAL_SUMMARY,
-    disabled: false,
-    icon: TechSummaryIcon,
-  },
-  {
-    name: 'Cases',
-    key: 'cases',
-    id: AllModules.PROJECT_CASES,
-    disabled: false,
-    icon: CasesIcon,
-  },
-  {
-    name: 'Activities',
-    key: 'activities',
-    id: AllModules.PROJECT_ACTIVITIES,
-    disabled: false,
-    icon: ActivitiesIcon,
-  },
-  {
-    name: 'Notes',
-    key: 'notes',
-    id: AllModules.PROJECT_NOTES,
-    disabled: false,
-    icon: NotesSideIcon,
-  },
-  {
-    name: 'Attachments',
-    key: 'attachments',
-    id: AllModules.PROJECT_ATTACHMENTS,
-    disabled: false,
-    icon: AttachmentsSideIcon,
-  },
-  {
-    name: 'Checklists',
-    key: 'checklists',
-    id: AllModules.PROJECT_CHECKLISTS,
-    disabled: false,
-    icon: ChecklistIcon,
-  },
-];
+import { ProjectResources } from './project-resources/project-resources';
+import { Attachments } from './attachments';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { AttachmentsListExportParams } from '../../../types/attachment';
+import { ProjectTask } from './project-task/project-task';
+import { ProjectTaskListExportParams } from '../../../types/project-task';
+import { exportProjectTaskData } from '../../../services/project/project-task-service';
+import { Configuration } from './configuration';
+import { Financial } from './financial-highlights';
+import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
+import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
+import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  // const { accountID, projectID } = location.state || {};
-  const defaultTab = searchParams.get('list');
+  const defaultTab = searchParams.get('list') ?? 'projectDetails';
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+  // const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [exportType, setExportType] = useState<ExportType>('attachments');
+  const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
+    Date.now()
+  );
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectTaskListExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [projectResourceParams, setProjectResourceParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
+    year: 0,
+  });
+
   const navigate = useNavigate();
   // Permission Mangement
-  const { modules, permission } = useSelector(
+  const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
   const projectDownloadIsEnable = checkPermission(
     permission,
-    AllPermissions.PROJECT_PROJECTS_DOWNLOAD
+    AllPermissions.PROJECTS_EXPORT
   );
   // Functionality will be implement later
   // const projectExportIsEnable = checkPermission(
   //   permission,
   //   AllPermissions.PROJECT_PROJECTS_EXPORT
   // );
-  const projectEditIsEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECT_PROJECTS_EDIT
-  );
+  // const projectEditIsEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECT_PROJECTS_EDIT
+  // );
 
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
       setActiveKey(list);
+    } else {
+      setActiveKey('projectDetails');
     }
   }, [searchParams]);
-  const initialAccountID =
-    location.state?.accountID || localStorage.getItem('accountID');
-  const initialProjectID =
-    location.state?.projectID || localStorage.getItem('projectID');
 
-  const [accountID, setAccountID] = useState(initialAccountID);
-  const [projectID, setProjectID] = useState(initialProjectID);
+  const onRefreshClick = () => {
+    setRefreshProjectDetails(Date.now());
+  };
 
-  useEffect(() => {
-    if (location.state?.accountID && location.state?.projectID) {
-      localStorage.setItem('accountID', location.state.accountID);
-      localStorage.setItem('projectID', location.state.projectID);
-      setAccountID(location.state.accountID);
-      setProjectID(location.state.projectID);
-    }
-  }, [location.state]);
+  const { projectid: projectID } = useParams();
+  const accountID = searchParams.get('accountID') || '';
+  const parent = searchParams.get('source');
+  const { data, isLoading, isError } = useProjectDetail(
+    accountID,
+    projectID || '',
+    refreshProjectDetails
+  );
 
-  const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
+  const projectInActive = data?.data?.project.status_name === 'In-Active';
 
   useEffect(() => {
     if (data?.data) {
+      const project = data.data.project;
       setProjectDetails(transformProjectData(data.data));
-      setProjectData(data.data.project);
+      setProjectData(project);
+      handleGetFiscalYear(project?.fiscal_year, {
+        startDate: project?.fiscal_start_date || '',
+        endDate: project?.fiscal_end_date || '',
+      });
     }
   }, [data]);
+
+  const handleGetFiscalYear = (
+    year: string,
+    accountFiscalDates: FiscalDates
+  ) => {
+    const bounds = getFiscalDateBounds(year, accountFiscalDates);
+    setFiscalDate(bounds);
+  };
+
+  const isAttachmentViewEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_VIEW_EDIT
+  );
+  const isFinancialHighlightsEnable = checkPermission(
+    menus,
+    AllMenus.FINANCIAL_HIGHLIGHTS
+  );
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+  const isResourceExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
+  const isTaskExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_EXPORT
+  );
+  const checkExport = () => {
+    const list = searchParams.get('list');
+    const tab = searchParams.get('tab');
+
+    const page = searchParams.get('page');
+    if (page === 'details') {
+      return true;
+    }
+
+    if (list === 'attachments') {
+      return !isAttachmentViewEnable;
+    } else if (list === 'projectsTask') {
+      return !isTaskExportViewEnable;
+    } else if (list === 'financial' && tab === 'resource_cost') {
+      return !isFinancialResourceCostExportEnable;
+    } else if (list === 'projectResources') {
+      return !isResourceExportViewEnable;
+    } else {
+      return true;
+    }
+  };
+
+  const handleExport = (exportType: ExportType) => {
+    const list = searchParams.get('list');
+
+    const financialPayload = {
+      accountNumber: projectData?.account_number,
+      fiscalYear: projectData?.fiscal_year,
+      projectRid: projectID,
+      accountRid: accountID,
+    };
+    const projectResourcePayload = {
+      projectRid: projectID,
+      accountRid: accountID,
+    };
+
+    if (
+      list !== 'attachments' &&
+      list !== 'financial' &&
+      list !== 'projectResources' &&
+      list !== 'projectsTask'
+    ) {
+      return;
+    }
+
+    if (list === 'attachments' && exportType === 'attachments') {
+      const attachmentPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
+      return;
+    }
+
+    if (list === 'financial' && exportType === 'financial') {
+      exportFinancialResourceCost({
+        ...financialResCostParams,
+        ...financialPayload,
+      });
+      return;
+    }
+    if (list === 'projectResources' && exportType === 'project_resource') {
+      exportProjectResoure({
+        ...projectResourceParams,
+        ...projectResourcePayload,
+      });
+      return;
+    }
+
+    if (list === 'projectsTask' && exportType === 'projectTask') {
+      const projectTaskExportPayload = {
+        accountRid: accountID,
+        projectRid: projectID,
+      };
+      exportProjectTaskData({
+        ...projectTaskExportPayload,
+        ...projectTaskParams,
+      });
+      return;
+    }
+
+    return;
+  };
+
   const menuItems = [
     {
       label: 'Manage user',
@@ -179,23 +288,25 @@ export const ProjectDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('export clicked'),
+      onClick: () => handleExport(exportType),
       // hide: !projectExportIsEnable,
-      hide: true,
+      hide: accountInActive || checkExport(),
     },
   ];
 
   const handleEditAccount = () => {
-    navigate(`/project/edit/${projectData?.rid}`, {
-      state: {
-        accountID: projectData?.account_rid,
-        projectID: projectData?.rid,
-        breadcrumbs: [
-          { label: 'Project' },
-          { label: projectData?.project_code },
-        ],
-      },
+    const projectID = projectData?.rid ?? '';
+    const accountID = projectData?.account_rid ?? '';
+
+    const source = parent === 'account' ? 'account' : 'project';
+
+    const queryParams = new URLSearchParams({
+      accountID,
+      projectID,
+      source,
     });
+
+    navigate(`/project/edit/${projectID}?${queryParams.toString()}`);
   };
 
   const handleActionsClick = () => {
@@ -217,23 +328,53 @@ export const ProjectDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <NotFound />;
+        return (
+          <Financial
+            projectDetails={projectData}
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+          />
+        );
       case 'projectDetails':
         return (
           <ProjectDetailsData
             accountInActive={accountInActive}
-            projectDetails={projectData}
+            projectDetails={{
+              ...projectData!,
+              attachment: data?.data?.attachment || [],
+            }}
             isDetailsLoading={isLoading}
             detailsError={isError}
             projectDownloadIsEnable={projectDownloadIsEnable}
-            projectEditIsEnable={projectEditIsEnable}
+            projectEditIsEnable={isProjectFieldsEditable}
             permission={permission}
           />
         );
       case 'projectResources':
-        return <NotFound />;
+        return (
+          <ProjectResources
+            accountOrProjectInActive={accountInActive || projectInActive}
+            projectID={projectID}
+            accountID={accountID}
+            projectFiscalDate={fiscalDate}
+            setExportType={setExportType}
+            setAttachmentParams={setProjectResourceParams}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'projectsTask':
-        return <NotFound />;
+        return (
+          <ProjectTask
+            accountOrProjectInActive={accountInActive || projectInActive}
+            projectID={projectID}
+            accountID={accountID}
+            projectFiscalDate={fiscalDate}
+            setExportType={setExportType}
+            setProjectTaskParams={setProjectTaskParams}
+            projectCode={projectData?.project_code}
+          />
+        );
+
       case 'interactions':
         return <NotFound />;
       case 'technicalSummary':
@@ -245,13 +386,22 @@ export const ProjectDetails = () => {
       case 'notes':
         return <NotFound />;
       case 'attachments':
-        return <NotFound />;
+        return (
+          <Attachments
+            accountOrProjectInActive={accountInActive || projectInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+            refetchProjectDetails={onRefreshClick}
+          />
+        );
       case 'checklists':
         return <NotFound />;
+      case 'configuration':
+        return <Configuration />;
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            Page Not Found
+          <div className='pr-4 pl-2 py-2 w-full'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
@@ -261,25 +411,132 @@ export const ProjectDetails = () => {
     window.history.back();
   };
 
+  const sideMenuItems = useMemo<MenuItem[]>(() => {
+    const allMenus = [
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'Project Details',
+        key: 'projectDetails',
+        id: AllModules.PROJECTS,
+        disabled: false,
+        icon: DetailsIcon,
+      },
+      {
+        name: 'Project Resources',
+        key: 'projectResources',
+        id: AllModules.PROJECT_RESOURCES,
+        disabled: false,
+        icon: ResourcesIcon,
+      },
+      {
+        name: 'Projects Task',
+        key: 'projectsTask',
+        id: AllModules.PROJECT_TASK,
+        disabled: false,
+        icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
+      },
+      {
+        name: 'Technical Summary',
+        key: 'technicalSummary',
+        id: AllModules.PROJECT_TECHNICAL_SUMMARY,
+        disabled: false,
+        icon: TechSummaryIcon,
+      },
+      {
+        name: 'Cases',
+        key: 'cases',
+        id: AllMenus.CASES,
+        disabled: false,
+        icon: CasesIcon,
+      },
+      // {
+      //   name: 'Activities',
+      //   key: 'activities',
+      //   id: AllModules.ACTIVITIES,
+      //   disabled: false,
+      //   icon: ActivitiesIcon,
+      // },
+      {
+        name: 'Notes',
+        key: 'notes',
+        id: AllMenus.NOTES,
+        disabled: false,
+        icon: NotesSideIcon,
+      },
+      {
+        name: 'Attachments',
+        key: 'attachments',
+        id: AllMenus.ATTACHMENTS,
+        disabled: false,
+        icon: AttachmentsSideIcon,
+      },
+      {
+        name: 'Checklists',
+        key: 'checklists',
+        id: AllMenus.CHECKLISTS,
+        disabled: false,
+        icon: ChecklistIcon,
+      },
+      {
+        name: 'Configuration',
+        key: 'configuration',
+        id: AllMenus.CONFIGURATION,
+        disabled: false,
+        icon: ConfigIcon,
+        subMenu: [
+          {
+            name: 'Users',
+            key: 'users',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            icon: ResourcesIcon,
+          },
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.PROJECT_SETTINGS,
+            disabled: false,
+            icon: SettingIcon,
+          },
+        ],
+      },
+    ];
+    return isFinancialHighlightsEnable
+      ? allMenus
+      : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
+  }, [isFinancialHighlightsEnable]);
+
   if (!projectIsEnable) return <AccessRestricted />;
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder='Name'
+          placeholder='Project Code'
           icon={
             <ProjectDetailsIcon
               className='h-6 w-6 rounded p-[4px]'
               style={{ backgroundColor: '#AF78FF' }}
             />
           }
-          //   title={data?.data?.accountById?.account_name || 'Project Title'}
-          title={data?.data?.project?.project_name || 'Project Title'}
+          title={data?.data?.project?.project_code}
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={
-            projectEditIsEnable
+            isProjectFieldsEditable
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -322,13 +579,7 @@ export const ProjectDetails = () => {
           className='flex-1'
           style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
         >
-          {isLoading ? (
-            <div className='flex items-center justify-center w-full h-full'>
-              <CircularProgress />
-            </div>
-          ) : (
-            <Suspense fallback={null}>{renderContent()}</Suspense>
-          )}
+          <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
     </div>

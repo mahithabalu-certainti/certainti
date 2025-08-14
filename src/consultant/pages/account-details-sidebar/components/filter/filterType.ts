@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
-
 import { Dispatch, SetStateAction } from 'react';
+import { FilterType } from '../../../../../admin/types';
 
 export type TextFilterOption =
   | 'Equals'
@@ -188,6 +187,7 @@ export type FilterState = {
 export type FieldConfig = {
   name: string;
   value: string;
+  hide?: boolean;
   type:
     | 'text'
     | 'number'
@@ -203,11 +203,20 @@ export type FieldConfig = {
   options?: { option: string; value: string }[];
   required?: boolean;
   dependsOn?: string;
+  onChange?: boolean;
   minDate?: Date;
   maxDate?: Date;
   filterOptions?: { option: string; value: string }[];
   operatorOption?: { option: string; value: string }[];
 };
+
+export type FilterValue =
+  | string
+  | string[]
+  | number
+  | undefined
+  | undefined[]
+  | { from?: string; to?: string };
 
 export interface FilterComponentProps {
   value: string;
@@ -215,7 +224,7 @@ export interface FilterComponentProps {
   filterId: string | undefined;
   filterAnchorEl: HTMLButtonElement | null;
   filterMenu: FieldConfig[];
-  setAppliedFilters: (filters: Record<string, any>) => void;
+  setAppliedFilters: (filters: Record<string, FilterType>) => void;
   handleCloseFilter: () => void;
   setCurrentSkillType?: Dispatch<
     SetStateAction<{
@@ -227,4 +236,5 @@ export interface FilterComponentProps {
   setCurrentPage: (page: number) => void;
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  onFilterChange?: (fieldName: string, value: FilterValue) => void;
 }

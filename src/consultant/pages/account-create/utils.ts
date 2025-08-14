@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   AccountFormData,
   KeyContacts,
@@ -16,14 +15,14 @@ export const transformKeyContactsFromAPI = (
   keyContacts: KeyContacts[],
   memoizedStatus: SelectOption[]
 ) => {
-  const formData = {} as any;
+  const formData: Record<string, string> = {};
 
   // ID → Label
   const getStatusLabelById = (id: string): string => {
     return memoizedStatus.find((option) => option.value === id)?.desc || '';
   };
 
-  keyContacts.forEach((contact: any, index: number) => {
+  keyContacts.forEach((contact: KeyContacts, index: number) => {
     formData[`key_contact_name_${index}`] = contact.key_contact_name || '';
     formData[`key_contact_role_${index}`] = contact.key_contact_role || '';
     formData[`key_contact_email_${index}`] = contact.key_contact_email || '';
@@ -42,6 +41,7 @@ export const transformKeyContactsFromAPI = (
 };
 
 export const keyContactsTransformPayload = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formData: Partial<Record<string, any>>,
   isEdit: boolean = false,
   keyContactsList: KeyContacts[] = [],
@@ -122,6 +122,8 @@ export const keyContactsTransformPayload = (
   return keyContacts;
 };
 
+type logoAction = 'upload' | 'delete' | '';
+
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
@@ -129,26 +131,21 @@ export const transformFormData = (
   defaultActiveValue: string,
   account_rid?: string,
   keyContactsList?: KeyContacts[],
-  logoAction?: 'upload' | 'delete' | '',
+  logoAction?: logoAction,
   showOthersField?: boolean
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
     account_name: formData.account_name,
     comments: formData.comments || null,
-    status_rid: formData.status,
+    status_rid: formData.status?.toString(),
     is_parent: formData.is_parent === 'yes',
     parent_account_rid: formData.parent_account_rid || null,
     currency_rid: formData.currency_rid || null,
     country_rid: formData.country_rid || null,
     region_rid: formData.region_rid || null,
-    max_ai_interactions: Number(formData.max_ai_interactions),
-    autosend_interaction: formData.autosend_interaction === 'yes',
-    auto_access_rd: formData.auto_access_rd === 'yes',
     fiscal_start_date: formData.fiscal_start_date,
     fiscal_end_date: formData.fiscal_end_date,
-    blended_rate_fte: formData.blended_rate_fte || null,
-    blended_rate_subcon: formData.blended_rate_subcon || null,
     primary_contact_name: formData.primary_contact_name,
     primary_contact_email: formData.primary_contact_email,
     primary_contact_number: formData.primary_contact_number,
@@ -177,7 +174,7 @@ export const transformFormData = (
     data.r_number = account_rid;
   }
   if (isEdit && logoAction !== undefined) {
-    (data as any).logo_action = logoAction;
+    (data as { logo_action?: logoAction }).logo_action = logoAction;
   }
   return data;
 };

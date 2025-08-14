@@ -1,20 +1,33 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListTable } from '../../../../components/table';
-import { UserListParams } from '../../../types/manage-user';
-import { profileColumns } from './';
+import {
+  FilterCondition,
+  Profiles,
+  UserListParams,
+} from '../../../types/manage-user';
+import { getProfileColumns } from './columns';
 import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
 import { MANAGE_PROFILE } from '../../../../routes/routes';
-import { ActionItem } from '../../../../components/table/types';
+import {
+  ActionItem,
+  CellEditData,
+  FieldChangeValue,
+} from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
+import { useMutation } from '@apollo/client';
+import { UPDATE_USER_PROFILE } from '../../../../api/graphql/queries/profile-query';
+import { userClient } from '../../../../api/graphql/clients/client';
+import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { AllPermissions } from '../../../../common-service';
 
 interface IUserTableProps {
-  appliedFilters: Record<string, any>;
+  appliedFilters: Record<string, FilterCondition>;
   tableParams: UserListParams;
   isProfileViewEnable?: boolean;
-  isProfileEditEnable?: boolean;
   isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
@@ -25,13 +38,33 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
   // isProfileViewEnable,
-  isProfileEditEnable,
   // isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
   refreshProfileTrigger,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
+  const [profileList, setProfileList] = useState<Profiles[]>([]);
+  const [updateUserProfile] = useMutation(UPDATE_USER_PROFILE, {
+    client: userClient,
+  });
+
+  //permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const profileViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    profileViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [profileViewEditFields]);
 
   useEffect(() => {
     setTableParams((prev) => ({
@@ -41,11 +74,16 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters]);
 
-  const { data, isLoading, isError } = useManageProfileList(
-    tableParams,
-    refreshProfileTrigger
-  );
-  const totalItems = data?.data?.count || 0;
+  const {
+    data: ProfileList,
+    isLoading,
+    isError,
+  } = useManageProfileList(tableParams, refreshProfileTrigger);
+  const totalItems = ProfileList?.data?.count || 0;
+
+  useEffect(() => {
+    setProfileList(ProfileList?.data?.profiles ?? []);
+  }, [ProfileList]);
 
   const convertUserListData = (data: ManageProfileList): ManageProfile => {
     if (!data) return {} as ManageProfile;
@@ -116,7 +154,6 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
-      hide: !isProfileEditEnable,
     },
     {
       label: 'Delete',
@@ -127,9 +164,45 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     },
   ];
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousProfileList = [...profileList];
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (res, item) => {
+        const key = item.editId || item.columnId;
+        res[key] = item.value;
+        return res;
+      },
+      { rid: rowId }
+    );
+
+    try {
+      const res = await updateUserProfile({
+        variables: { input: updateData },
+      });
+
+      const result = res.data?.updateUserProfile;
+      if (result?.success === true && result.profile) {
+        const updatedProfile = result.profile;
+        setProfileList((prevProfiles) =>
+          prevProfiles.map((profile) =>
+            profile.rid === updatedProfile.rid ? updatedProfile : profile
+          )
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update filed');
+        setProfileList(previousProfileList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setProfileList(previousProfileList);
+    }
+  };
+
+  const profileColumns = getProfileColumns(permissionMap);
+
   return (
     <ListTable
-      data={data?.data?.profiles as any}
+      data={(profileList || []) as ManageProfileList[]}
       columns={profileColumns}
       getRowId={getRowId}
       hoverHighlight={false}
@@ -138,7 +211,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         maxHeight: 'calc(100vh - 195px)',
         overflow: 'auto',
       }}
-      stickyHeader={false}
+      stickyHeader={true}
       stickyColumnsCount={2}
       selectable={true}
       onSelectionChange={onSelectionChange}
@@ -156,6 +229,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
+      onCellEdit={handleCellEdit}
     />
   );
 };

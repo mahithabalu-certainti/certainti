@@ -32,7 +32,7 @@ export const ManageUserDetails: React.FC = () => {
   const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
   const isUserViewEnable = checkPermission(
     permission,
-    AllPermissions.USER_VIEW
+    AllPermissions.USER_VIEW_EDIT
   );
   const isUserCreateEnable = checkPermission(
     permission,
@@ -42,44 +42,35 @@ export const ManageUserDetails: React.FC = () => {
     permission,
     AllPermissions.USER_DELETE
   );
-  const isUserSuspendEnable = checkPermission(
+  const isProfileViewEditEnable = checkPermission(
     permission,
-    AllPermissions.USER_SUSPEND
+    AllPermissions.PROFILE_VIEW_EDIT
   );
-  const isUserViewPermissionEnable = checkPermission(
-    permission,
-    AllPermissions.USER_VIEW_PERMISSION
-  );
-  const isUserResetPasswordEnable = checkPermission(
-    permission,
-    AllPermissions.USER_RESET_PASSWORD
-  );
-  const isUserAssignPermissionEnable = checkPermission(
-    permission,
-    AllPermissions.USER_ASSIGN_PERMISSION
-  );
+  // const isUserSuspendEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_SUSPEND
+  // );
+  // const isUserResetPasswordEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_RESET_PASSWORD
+  // );
 
   const MENU_ITEMS = [
     {
       label: 'Assign Permission to User',
       onClick: () =>
         navigate(ADMIN_MANAGE_USER + '/extended-permission/' + userDetail?.rid),
-      hide: !isUserAssignPermissionEnable,
-    },
-    {
-      label: 'View Permissions',
-      onClick: () => console.log('View Permissions clicked'),
-      hide: !isUserViewPermissionEnable,
+      hide: !isProfileViewEditEnable,
     },
   ];
 
   const userActionButtons = [
-    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Suspend User', width: '104px', hide: false },
     { label: 'Reinstate User', width: '116px', hide: false },
     {
       label: 'Reset Password',
       width: '118px',
-      hide: !isUserResetPasswordEnable,
+      hide: false,
     },
     { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];

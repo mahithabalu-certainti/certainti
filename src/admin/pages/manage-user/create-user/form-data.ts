@@ -17,12 +17,13 @@ export const FormData = (
   states: SelectOption[],
   city: SelectOption[],
   orgNames: SelectOption[],
-  disableFields?: boolean,
+  isEditView?: boolean,
   stateLoading?: boolean,
   cityLoading?: boolean,
-  disabledStatus?: boolean,
+  // disabledStatus?: boolean,
   isConsultantFirm?: string,
-  org_id?: string
+  org_id?: string,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
     () => [
@@ -33,6 +34,14 @@ export const FormData = (
           createTextField('first_name', 'First Name', {
             required: true,
             placeholder: 'Enter First Name',
+            disabled:
+              isEditView &&
+              permissionMap?.['first_name']?.read &&
+              !permissionMap?.['first_name']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['first_name']?.read &&
+              !permissionMap?.['first_name']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -57,6 +66,14 @@ export const FormData = (
           createTextField('last_name', 'Last Name', {
             required: true,
             placeholder: 'Enter Last Name',
+            disabled:
+              isEditView &&
+              permissionMap?.['last_name']?.read &&
+              !permissionMap?.['last_name']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['last_name']?.read &&
+              !permissionMap?.['last_name']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -76,7 +93,11 @@ export const FormData = (
           createTextField('email', 'Email Address', {
             required: true,
             placeholder: 'Enter Email Address',
-            disabled: disableFields,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['email']?.read &&
+              !permissionMap?.['email']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
@@ -91,6 +112,14 @@ export const FormData = (
           createPhoneInputField('phone', 'Phone Number', {
             required: false,
             placeholder: 'Enter Phone Number',
+            hide:
+              isEditView &&
+              !permissionMap?.['phone']?.read &&
+              !permissionMap?.['phone']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['phone']?.read &&
+              !permissionMap?.['phone']?.edit,
           }),
           createRadioField('is_consultant_firm', 'Is Consultant Firm', {
             radioOptions: YES_NO_OPTIONS,
@@ -98,11 +127,23 @@ export const FormData = (
             onChange: true,
             resetDependsFields: ['org_id'],
             dependantLabel: 'org_id',
+            hide:
+              isEditView &&
+              !permissionMap?.['is_consultant_firm']?.read &&
+              !permissionMap?.['is_consultant_firm']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['is_consultant_firm']?.read &&
+              !permissionMap?.['is_consultant_firm']?.edit,
           }),
           createSelectField('org_id', 'Org Name', {
             required: true,
             options: orgNames,
             placeholder: 'Choose Org Name',
+            hide:
+              isEditView &&
+              !permissionMap?.['org_rid']?.read &&
+              !permissionMap?.['org_rid']?.edit,
             disabled: isConsultantFirm === YesNo.Yes,
             defaultValue:
               isConsultantFirm === YesNo.Yes ? orgNames[0]?.value : org_id,
@@ -123,17 +164,41 @@ export const FormData = (
             options: profile,
             required: true,
             placeholder: 'Choose Profile',
+            hide:
+              isEditView &&
+              !permissionMap?.['profile_rid']?.read &&
+              !permissionMap?.['profile_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['profile_rid']?.read &&
+              !permissionMap?.['profile_rid']?.edit,
           }),
           createSelectField('role_rid', 'Role', {
             options: role,
             placeholder: 'Choose Role',
             required: true,
+            hide:
+              isEditView &&
+              !permissionMap?.['business_teams']?.read &&
+              !permissionMap?.['business_teams']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['business_teams']?.read &&
+              !permissionMap?.['business_teams']?.edit,
           }),
           createSelectField('status', 'Status', {
             required: true,
             options: statusOptions,
             placeholder: 'Choose Status',
-            disabled: disabledStatus,
+            // disabled: disabledStatus,
+            hide:
+              isEditView &&
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
           }),
         ],
       },
@@ -147,6 +212,14 @@ export const FormData = (
             regexErrorMessage:
               'Street must contain only alphanumeric characters, spaces, commas, periods, hyphens and hash',
             placeholder: 'Enter Street',
+            hide:
+              isEditView &&
+              !permissionMap?.['street']?.read &&
+              !permissionMap?.['street']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['street']?.read &&
+              !permissionMap?.['street']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MAX_255,
@@ -160,6 +233,14 @@ export const FormData = (
             required: false,
             onChange: true,
             resetDependsFields: ['region_rid, city_rid'],
+            hide:
+              isEditView &&
+              !permissionMap?.['country_rid']?.read &&
+              !permissionMap?.['country_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['country_rid']?.read &&
+              !permissionMap?.['country_rid']?.edit,
           }),
           createSelectField('region_rid', 'Region', {
             options: states,
@@ -168,16 +249,40 @@ export const FormData = (
             onChange: true,
             isLoading: stateLoading,
             resetDependsFields: ['city_rid'],
+            hide:
+              isEditView &&
+              !permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
           }),
           createSelectField('city_rid', 'City', {
             options: city,
             placeholder: 'Choose City',
             required: false,
             isLoading: stateLoading || cityLoading,
+            hide:
+              isEditView &&
+              !permissionMap?.['city_rid']?.read &&
+              !permissionMap?.['city_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['city_rid']?.read &&
+              !permissionMap?.['city_rid']?.edit,
           }),
           createTextField('zip_code', 'Zip Code / Area Code', {
             required: false,
             placeholder: 'Enter Zip Code / Area Code',
+            hide:
+              isEditView &&
+              !permissionMap?.['zip_code']?.read &&
+              !permissionMap?.['zip_code']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['zip_code']?.read &&
+              !permissionMap?.['zip_code']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MAX_POSTAL_REGEX,
@@ -203,15 +308,16 @@ export const FormData = (
       country,
       profile,
       role,
-      disableFields,
+      isEditView,
       states,
       orgNames,
       stateLoading,
       city,
       cityLoading,
-      disabledStatus,
+      // disabledStatus,
       isConsultantFirm,
       org_id,
+      permissionMap,
     ]
   );
 };

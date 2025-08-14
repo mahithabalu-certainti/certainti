@@ -50,15 +50,103 @@ export interface ITablePaginationProps {
   rowsPerPageOptions?: number[];
 }
 
+export interface ListOption {
+  label: string;
+  value: string | number;
+}
+
+export interface FieldValidation {
+  regex: RegExp;
+  errorMessage: string;
+}
+
+// Define specific types for dependency condition values
+export type DependencyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | unknown;
+
+// Define row data type for dependency conditions
+export type DependencyRowData = Record<string, DependencyValue>;
+
+export interface DependencyRule {
+  dependsOn: string | string[];
+  condition: (value: DependencyValue, rowData: DependencyRowData) => boolean;
+  action: 'required' | 'disabled' | 'show_modal' | 'enable';
+  message?: string;
+  modalFields?: ModalField[];
+}
+
+export interface ModalField {
+  id: string;
+  editId?: string;
+  label: string;
+  type: ListFieldType;
+  required: boolean;
+  placeholder?: string;
+  validation?: FieldValidation[];
+}
+
+export interface DateFieldConfig {
+  disableFutureDates?: boolean;
+  minDate?: string | Date | null;
+  maxDate?: string | Date | null;
+  fiscalYearValidation?: boolean;
+}
+
+export interface TableField {
+  type: ListFieldType;
+  required: boolean;
+  renderValue?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  prefix?: string;
+  prefixRegex?: RegExp;
+  options?: ListOption[];
+  validation?: FieldValidation[];
+  dependencies?: DependencyRule[];
+  // Dynamic field reset configuration
+  resetDependentFields?: string[];
+  // Dynamic onChange callback
+  onChange?: boolean;
+  // Date field specific configuration
+  dateConfig?: DateFieldConfig;
+  getFieldData?: (
+    rowData: DependencyRowData,
+    columnId: string
+  ) => string | number;
+  // Loading state
+  loading?: boolean;
+}
+
+export type ListFieldType =
+  | 'text'
+  | 'select'
+  | 'radio'
+  | 'checkbox'
+  | 'date'
+  | 'number'
+  | 'textarea'
+  | 'autocomplete'
+  | 'phone';
+
 export type ListTableColumn<T> = {
   id: string;
   label: string;
   width?: string | number;
   sortId: string;
+  editId?: string;
   sortable?: boolean;
   sticky?: boolean;
   sx?: React.CSSProperties;
+  editable?: boolean;
+  hide?: boolean;
   render?: (row: T) => React.ReactNode;
+  field?: TableField;
+  conditionallyEdit?: { key: string; matchValue: string };
 };
 
 export interface ActionItem<T extends RowData> {
@@ -79,6 +167,36 @@ export interface ConditionMenuItem<T extends RowData> {
   disabled?: boolean;
 }
 
+export interface MultipleEditingCells {
+  [key: string]: {
+    rowId: string;
+    columnId: string;
+    originalValue: string | number;
+    value: string | number;
+    error?: string | null;
+    isDependent?: boolean;
+  };
+}
+
+// Define specific types for field change event values
+export type FieldChangeValue = string | number | boolean | null | undefined;
+
+export interface FieldChangeEvent {
+  rowId: string;
+  columnId: string;
+  value: FieldChangeValue;
+  oldValue: FieldChangeValue;
+  rowData: DependencyRowData;
+}
+
+// Enhanced cell edit data structure to support both regular edits and modal data
+export interface CellEditData {
+  columnId: string;
+  editId: string;
+  value: FieldChangeValue;
+  modalData?: Record<string, FieldChangeValue>; // Additional modal data if applicable
+}
+
 export interface ListTableProps<T extends RowData> {
   data: T[];
   columns: ListTableColumn<T>[];
@@ -88,16 +206,18 @@ export interface ListTableProps<T extends RowData> {
   stickyHeader?: boolean;
   stickyColumnsCount?: number;
   // Selection
+  hideHeaderSelect?: boolean;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;
   // Actions
   actionWidth: string | number;
-  actionDisplayMode?: 'dropdown' | 'icon';
+  actionDisplayMode?: 'dropdown' | 'icon' | 'toggle';
   actionMenuItems?: ActionItem<T>[];
   // condition
   conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];
   // State
   loading?: boolean;
+  loadindRowCount?: number;
   error?: string;
   // Pagination
   rowsPerPageOptions?: number[];
@@ -111,85 +231,85 @@ export interface ListTableProps<T extends RowData> {
   sortOrder?: SortDirection;
   onSort?: (sortBy: string, sortOrder: SortOrder) => void;
   component?: string;
+  onCellEdit?: (rowId: string, updates: CellEditData[]) => Promise<void> | void;
+  // Dynamic field change callback
+  onFieldChange?: (event: FieldChangeEvent) => Promise<void> | void;
+  // Nested configuration
+  expandAllParent?: boolean;
+  expandAllChild?: boolean;
+  parentBorder?: boolean;
+  expandable?: boolean;
+  childrenKey?: string;
+  grandchildrenKey?: string;
+  maxNestingLevel?: number;
+  editDisableLevel?: number[];
+  //skill
+  skillTypeIds?: {
+    othersSkillTypeId: string | null;
+    othersSkillSubTypeId: string | null;
+  };
+  actionColumnName?: string;
+  toggleData?: string[];
+  disabledToggle?: boolean;
+  checkedToggleTooltip?: string;
+  unCheckedToggleTooltip?: string;
+  toggleClick?: (rowId: string, value: boolean) => void;
+  showEmptyRow?: boolean;
 }
 
-//Project Accordion table data types
-export type ProjectAccordionResponse = {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data: {
-    projects: Project[];
-    count?: number;
-    totalCount?: number;
+export interface EditingCell {
+  rowId: string;
+  columnId: string;
+  originalValue: string | number;
+  value: string | number;
+  error?: string | null;
+}
+
+export interface RenderFieldsProps<T extends RowData> {
+  column: ListTableColumn<T>;
+  editingCell: EditingCell | null;
+  handleValueChange: (value: string | number) => void;
+  handleKeyDown: (e: React.KeyboardEvent) => void;
+  isSaving: boolean;
+  rowData?: T;
+  allEditingCells?: MultipleEditingCells;
+}
+
+// Modal state interface
+export interface ModalState {
+  open: boolean;
+  fields: ModalField[];
+  rowId: string;
+  columnId: string;
+  anchorEl: HTMLElement | null;
+  modalFieldValues?: ModalFormData;
+}
+
+// Modal dialog specific types
+export type ModalFormValue = string | number | boolean;
+
+export interface ModalFormData {
+  [fieldId: string]: ModalFormValue;
+}
+
+export interface ModalFormErrors {
+  [fieldId: string]: string;
+}
+
+export interface ModalDialogProps {
+  open: boolean;
+  fields: ModalField[];
+  anchorEl: HTMLElement | null;
+  onClose: () => void;
+  onSubmit: (data: ModalFormData) => void;
+  loading?: boolean;
+  initialValues?: ModalFormData;
+}
+
+export interface ExpandedState {
+  [key: string]: {
+    expanded: boolean;
+    level: number;
+    children?: ExpandedState;
   };
-};
-export type Project = {
-  project_code: string;
-  project_name: string | null;
-  account_name?: string;
-  account_id: string;
-  project_rid: string;
-  modified_datetime: string;
-  assessment_status: string | null;
-  qre: string | null;
-  qre_final?: string | null;
-  is_rd_qualified: boolean;
-  industry_name_other: string | null;
-  project_type: string;
-  project_client_group: string | null;
-  project_group: string | null;
-  project_classification_rid: string | null;
-  classification_name: string | null;
-  project_status: string;
-  project_point_of_contact: string | null;
-  technical_point_of_contact: string | null;
-  r_number: string;
-  program_name: string | null;
-  project_startdate: string | null;
-  project_enddate: string | null;
-  total_cost: number | null;
-  total_effort: number | null;
-  total_fte: number | null;
-  total_cost_fte: number | null;
-  total_subcon: number | null;
-  total_cost_subcon: number | null;
-  total_cost_nonlabor: number | null;
-  comments: string | null;
-  country_name: string | null;
-  currency_code: string;
-  currency_symbol: string;
-  region_name: string | null;
-  created_datetime: string;
-  rid?: string;
-  account_rid?: string;
-  fiscal_year?: number;
-  project_fiscal_rid?: string;
-  ProjectFiscal: ProjectFiscalSummary[];
-};
-export type ProjectFiscalSummary = {
-  project_code: string;
-  project_group: string | null;
-  project_name: string | null;
-  project_type: string;
-  fiscal_year: number;
-  project_client_group: string | null;
-  account_name: string;
-  qre: string | null;
-  classification_name: string | null;
-  total_effort: number | null;
-  total_cost: number | null;
-  total_cost_fte: number | null;
-  total_cost_subcon: number | null;
-  total_cost_nonlabor: number | null;
-  assessment_status: string | null;
-  qre_final: string | null;
-  project_point_of_contact: string | null;
-  technical_point_of_contact: string | null;
-  comments: string | null;
-  modified_datetime: string;
-  project_rid: string;
-  created_datetime: string;
-  project_fiscal_rid: string;
-  rid: string;
-};
+}

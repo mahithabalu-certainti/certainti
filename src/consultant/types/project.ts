@@ -1,80 +1,6 @@
 import { CommonApiResponse } from '../../common-service';
+import { AttachmentList } from './attachment';
 
-export type ProjectList = {
-  rid: string;
-  account_id?: string;
-  project_id?: string;
-  account_rid?: string;
-  account_number: string;
-  account_name: string;
-  r_number: string;
-  project_ref_id: string;
-  modified_datetime?: string;
-  industry: string;
-  currency_symbol: string;
-  project_startdate: string;
-  project_enddate: string;
-  project_type: string;
-  project_type_name: string;
-  project_classification: string;
-  project_client_group: string;
-  project_group: string;
-  project_status: string;
-  technical_consultant?: string;
-  financial_consultant?: string;
-  project_point_of_contact: string;
-  currency_code?: string;
-  region_name?: string;
-  country_name?: string;
-  description?: string;
-  status: string;
-  comments?: string;
-  total_effort?: string;
-  total_cost?: string;
-  total_fte?: number;
-  total_sub_con?: number;
-  total_cost_nonlabor?: string;
-  total_fte_effort?: string;
-  total_cost_subcon?: string;
-  total_cost_fte?: string;
-  qre?: string;
-  is_rd_qualified?: string;
-  qualified_research_expenditure?: string;
-  program_name?: string;
-  industry_name?: string;
-  fiscal_year: string;
-  name?: string;
-  project_code?: string;
-  project_fiscal_rid?: string;
-};
-
-export type Project = {
-  id: string;
-  accountNumber: string;
-  accountName: string;
-  projectNumber: string;
-  project_code: string;
-  industry: string;
-  project_startdate: string;
-  project_enddate: string;
-  projectType: string;
-  projectClassification: string;
-  projectClientGroup: string;
-  projectGroup: string;
-  project_status: string;
-  industry_name?: string;
-};
-
-export interface ProjectTableColumn<T> {
-  id: string;
-  sortId: string;
-  label: string;
-  sortable?: boolean;
-  width: string | number;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-}
 export interface globalFilters {
   [key: string]: string[];
 }
@@ -94,16 +20,6 @@ export enum Status {
   Active = 'active',
   InActive = 'inactive',
 }
-export type ProjectListResponse = {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data: {
-    projects: ProjectList[];
-    count?: number;
-    totalCount?: number;
-  };
-};
 export interface KeyContacts {
   key_contact_id?: string;
   account_rid?: string;
@@ -124,6 +40,7 @@ export interface NewProjectData {
   status_rid: string;
   name?: string;
   r_number?: string;
+  account_name: string;
   industry_rid_name?: string;
   start_date?: string | null;
   end_date?: string | null;
@@ -211,6 +128,8 @@ export interface NewProjectData {
   key_contact_status?: Status;
   project_fiscal_id?: string;
   project_fiscal_rid?: string;
+  attachment?: AttachmentList[];
+  project_rid?: string;
 }
 
 export interface ProjectTypeItem {
@@ -225,3 +144,96 @@ export interface GetProjectTypeApiResponse extends CommonApiResponse {
     projectType: ProjectTypeItem[];
   };
 }
+
+//Project Accordion table data types
+export type ProjectAccordionResponse = {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    projects: Project[];
+    count?: number;
+    totalCount?: number;
+  };
+};
+
+export type Project = {
+  project_classification_other: string | null;
+  project_code: string;
+  project_name: string | null;
+  account_name?: string;
+  account_status_name?: string;
+  account_id: string;
+  project_rid: string;
+  modified_datetime: string;
+  assessment_status: string | null;
+  qre: string | null;
+  qre_final?: string | null;
+  is_rd_qualified: boolean;
+  industry_name_other: string | null;
+  project_type: string;
+  project_client_group: string | null;
+  project_group: string | null;
+  project_classification_rid: string | null;
+  classification_name: string | null;
+  project_status: string;
+  project_point_of_contact: string | null;
+  technical_point_of_contact: string | null;
+  r_number: string;
+  program_name: string | null;
+  project_startdate: string | null;
+  project_enddate: string | null;
+  total_cost: number | null;
+  total_effort: number | null;
+  total_fte: number | null;
+  total_cost_fte: number | null;
+  total_subcon: number | null;
+  total_cost_subcon: number | null;
+  total_cost_nonlabor: number | null;
+  comments: string | null;
+  country_name: string | null;
+  currency_code: string;
+  currency_symbol: string;
+  region_name: string | null;
+  created_datetime: string;
+  rid?: string;
+  account_rid?: string;
+  fiscal_year?: number;
+  project_fiscal_rid?: string;
+  ProjectFiscal: ProjectFiscalSummary[];
+  _level?: number;
+  currency_rid?: string;
+};
+export type ProjectFiscalSummary = {
+  account_status_name?: string;
+  project_code: string;
+  project_group: string | null;
+  project_name: string | null;
+  project_type: string;
+  fiscal_year: number;
+  project_client_group: string | null;
+  account_name: string;
+  qre: string | null;
+  classification_name: string | null;
+  total_effort: number | null;
+  total_cost: number | null;
+  total_cost_fte: number | null;
+  total_cost_subcon: number | null;
+  total_cost_nonlabor: number | null;
+  assessment_status: string | null;
+  qre_final: string | null;
+  project_point_of_contact: string | null;
+  technical_point_of_contact: string | null;
+  comments: string | null;
+  modified_datetime: string;
+  project_rid: string;
+  created_datetime: string;
+  project_fiscal_rid: string;
+  rid: string;
+};
+
+export type FiscalYearType = {
+  year?: number;
+  startDate?: string;
+  endDate?: string;
+};

@@ -1,94 +1,288 @@
-// import { Box, Tab, Tabs, Typography } from '@mui/material';
-// import { useState } from 'react';
-// import { TabPanel } from './tab-panel';
-// import ProjectCostTab from './tab/project-cost';
-// import ResourceCostTab from './tab/resource';
-// import StateWiseTab from './tab/statewise';
-// import SummaryTab from './tab/summary';
-// import { a11yProps } from './utils';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../../../common-service';
+import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
+import { useEffect, useMemo, useState } from 'react';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { FinancialIcon } from '../../../../../assets';
+import { StateWiseSummary, Summary } from './tab';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
+import FinancialProjectCost from './tab/project-cost/project-cost';
+import FinancialResourceCost from './tab/resource-cost/resource-cost';
+import { accountDetailsProps } from '../../../account-details/utils';
+import {
+  getAccountFinancialProjectCostFields,
+  getAccountFinancialResCostFields,
+} from './helpers';
+import { useGetResourceType } from '../../../../services/resource-list';
+import { clearFilters } from '../../components/filter/utils';
+import {
+  ExportType,
+  ProjectFinancialProjectExportParams,
+  ProjectFinancialResourceExportParams,
+} from '../../../../types';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
-import { ComingSoon } from '../../../../../assets';
+const FinancialTabs = [
+  {
+    id: AllPermissions.ACCOUNT_FINANCIAL_OVERVIEW,
+    name: 'Overview',
+    hide: false,
+  },
+  // {
+  //   id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
+];
+interface ProjectFinancialProps {
+  countryId?: string | null;
+  stateId?: string | null;
+  accountDetails?: accountDetailsProps;
+  activeKey?: string;
+  setResCostExportParams: (
+    params: ProjectFinancialResourceExportParams
+  ) => void;
+  setFinancialProjectCostParams: (
+    params: ProjectFinancialProjectExportParams
+  ) => void;
+  setExportType: (type: ExportType) => void;
+}
 
-// const FinancialSummary = () => {
-//   // State for current tab
-//   const [currentTab, setCurrentTab] = useState(0);
+const FinancialSummary: React.FC<ProjectFinancialProps> = ({
+  accountDetails,
+  setResCostExportParams,
+  setFinancialProjectCostParams,
+  setExportType,
+  countryId,
+  stateId,
+}) => {
+  const navigate = useNavigate();
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean | string[]>
+  >({});
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const currentYear = new Date().getFullYear().toString();
+  const fiscalYearValue = fiscalYear === 'FY-All' ? currentYear : fiscalYear;
+  const [searchParams] = useSearchParams();
+  const [reFetchData, setReFetchData] = useState<number>(Date.now());
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [count, setCount] = useState<number>(0);
 
-//   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-//     setCurrentTab(newValue);
-//   };
-//   return (
-//     <div className='container mx-auto py-8'>
-//       <div className='flex flex-col bg-white border rounded-md shadow-sm'>
-//         {/* Header */}
-//         <div className='flex justify-between items-center p-4 border-b'>
-//           <Typography variant='h6' component='h2' className='font-bold'>
-//             RD Eligible No of Projects: 11
-//           </Typography>
-//           <Typography variant='subtitle1' className='text-blue-600 font-medium'>
-//             2024
-//           </Typography>
-//         </div>
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-//         {/* Navigation Tabs */}
-//         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-//           <Tabs
-//             value={currentTab}
-//             onChange={handleTabChange}
-//             aria-label='RD Dashboard tabs'
-//             className='px-4'
-//             TabIndicatorProps={{
-//               style: {
-//                 backgroundColor: '#1976d2',
-//                 height: '3px',
-//               },
-//             }}
-//           >
-//             <Tab label='Summary' {...a11yProps(0)} className='font-medium' />
-//             <Tab
-//               label='State wise Summary'
-//               {...a11yProps(1)}
-//               className='font-medium'
-//             />
-//             <Tab
-//               label='Project Cost'
-//               {...a11yProps(2)}
-//               className='font-medium'
-//             />
-//             <Tab
-//               label='Resource Cost'
-//               {...a11yProps(3)}
-//               className='font-medium'
-//             />
-//           </Tabs>
-//         </Box>
+  const isProjectCostViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_VIEW
+  );
 
-//         {/* Tab Contents */}
-//         <TabPanel value={currentTab} index={0}>
-//           <SummaryTab />
-//         </TabPanel>
+  const isResourceCostViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW
+  );
 
-//         <TabPanel value={currentTab} index={1}>
-//           <StateWiseTab />
-//         </TabPanel>
+  const isSummaryViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_SUMMARY_VIEW
+  );
 
-//         <TabPanel value={currentTab} index={2}>
-//           <ProjectCostTab />
-//         </TabPanel>
+  const isStatewiseSummaryViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_STATEWISE_SUMMARY_VIEW
+  );
 
-//         <TabPanel value={currentTab} index={3}>
-//           <ResourceCostTab />
-//         </TabPanel>
-//       </div>
-//     </div>
-//   );
-// };
+  const initialTab = useMemo(() => {
+    if (isSummaryViewEnable) return 'summary';
+    if (isStatewiseSummaryViewEnable) return 'state_wise_summary';
+    if (isProjectCostViewEnable) return 'project_cost';
+    if (isResourceCostViewEnable) return 'resource_cost';
+    return 'summary';
+  }, [
+    isSummaryViewEnable,
+    isStatewiseSummaryViewEnable,
+    isProjectCostViewEnable,
+    isResourceCostViewEnable,
+  ]);
 
-// export default FinancialSummary;
+  useEffect(() => {
+    if (searchParams.get('list') === 'financial' && !searchParams.get('tab')) {
+      searchParams.set('tab', initialTab);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, searchParams]);
 
-const FinancialSummary = () => {
+  const tabParam = searchParams.get('tab') || initialTab;
+
+  const fiscalYearOptions = getFiscalYears(26);
+  const countriesList = useGetAllCountries();
+  const resourceTypeOptions = useGetResourceType();
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedCountry = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        option: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const onRefreshClick = () => {
+    setReFetchData(Date.now());
+  };
+
+  const handleTabChange = (value: string) => {
+    searchParams.set('tab', value);
+    navigate({ search: searchParams.toString() }, { replace: true });
+    setCount(0);
+    setAppliedFilters({});
+    clearFilters(`account-financial-${tabParam}`);
+  };
+
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const tabs = [
+    { label: 'Summary', value: 'summary', hide: !isSummaryViewEnable },
+    {
+      label: 'State wise Summary',
+      value: 'state_wise_summary',
+      hide: !isStatewiseSummaryViewEnable,
+    },
+    {
+      label: 'Project Cost',
+      value: 'project_cost',
+      hide: !isProjectCostViewEnable,
+    },
+    {
+      label: 'Resource Cost',
+      value: 'resource_cost',
+      hide: !isResourceCostViewEnable,
+    },
+  ];
+
+  const filterFields =
+    tabParam === 'resource_cost'
+      ? getAccountFinancialResCostFields(memoizedCountry, memoizedResourceType)
+      : tabParam === 'project_cost'
+        ? getAccountFinancialProjectCostFields()
+        : [];
+
+  if (
+    !isSummaryViewEnable &&
+    !isStatewiseSummaryViewEnable &&
+    !isProjectCostViewEnable &&
+    !isResourceCostViewEnable
+  )
+    return <AccessRestricted />;
+
   return (
-    <div className='flex items-center justify-center h-full'>
-      <ComingSoon alt='comingSoon' />
+    <div className='w-full pt-2 pl-2 pr-4 mb-1'>
+      {' '}
+      <SectionTabPanel
+        tabs={FinancialTabs}
+        filterMenu={filterFields}
+        contextKey={`account-financial-${tabParam}`}
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        setCurrentPage={setCurrentPage}
+        handleFilter={handleFilter}
+        sortFilterCount={0}
+        setSortFilterCount={() => {}}
+        allYears={fiscalYearOptions}
+        fiscalYearValue={fiscalYearValue}
+        showRefresh={
+          tabParam === 'project_cost' || tabParam === 'resource_cost'
+        }
+        onRefreshClick={onRefreshClick}
+        filterVisibility={
+          tabParam === 'project_cost' || tabParam === 'resource_cost'
+        }
+        showFilter={showFilter}
+        // showFiscalYear={true}
+      />
+      <SectionHeader
+        title='Financial Summary'
+        titleIcon={
+          <FinancialIcon
+            alt='financial-header-icon'
+            className='w-7 h-7 p-1.5 bg-[#ffeae5] rounded-full [&>path]:stroke-[#f16840]'
+          />
+        }
+        buttons={[]}
+        count={count}
+        showItemCount={
+          tabParam === 'project_cost' || tabParam === 'resource_cost'
+        }
+      />
+      <SectionHeaderTab
+        tabs={tabs}
+        onTabChange={handleTabChange}
+        defaultValue={tabParam}
+      />
+      <div
+        className={`border border-t-0 border-[#CBD6E2] ${
+          tabParam === 'summary' || tabParam === 'state_wise_summary'
+            ? 'p-3'
+            : ''
+        }`}
+      >
+        {tabParam === 'summary' && isSummaryViewEnable && (
+          <Summary
+            fiscalYear={fiscalYearValue}
+            accountDetails={accountDetails}
+          />
+        )}
+        {tabParam === 'state_wise_summary' && isStatewiseSummaryViewEnable && (
+          <StateWiseSummary
+            fiscalYear={fiscalYearValue}
+            countryId={countryId}
+            stateId={stateId}
+            accountDetails={accountDetails}
+          />
+        )}
+        {tabParam === 'project_cost' && isProjectCostViewEnable && (
+          <FinancialProjectCost
+            fiscalyear={fiscalYearValue}
+            reFetchData={reFetchData}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            setExportType={setExportType}
+          />
+        )}
+        {tabParam === 'resource_cost' && isResourceCostViewEnable && (
+          <FinancialResourceCost
+            accountDetails={accountDetails}
+            fiscalyear={fiscalYearValue}
+            currentPage={currentPage}
+            refreshTrigger={reFetchData}
+            appliedFilters={appliedFilters}
+            setCount={setCount}
+            setResCostExportParams={setResCostExportParams}
+            setExportType={setExportType}
+          />
+        )}
+      </div>
     </div>
   );
 };

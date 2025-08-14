@@ -4,8 +4,8 @@ export const LOGIN = '/login';
 export const PROFILE = '/profile';
 
 export const MANAGE_USER = '/manage-user';
-export const MANAGE_USER_GROUP = '/manage-user-group';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
+export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
 export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
 export const IMPORT_TEMPLATES = '/import-templates';
@@ -27,6 +27,11 @@ export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
 export const MANAGE_PROFILE_EDIT = `${MANAGE_PROFILE}/edit/:profileId`;
 export const MANAGE_PROFILE_VIEW = `${MANAGE_PROFILE}/view/:profileId`;
+/** USER GROUP ROUTES */
+export const MANAGE_USER_GROUP = `${ADMIN}/manage-user-group`;
+export const MANAGE_USER_GROUP_CREATE = `${MANAGE_USER_GROUP}/create`;
+export const MANAGE_USER_GROUP_EDIT = `${MANAGE_USER_GROUP}/edit/:groupId`;
+
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
@@ -53,6 +58,16 @@ export const PROJECT = '/project';
 export const PROJECT_CREATE = `${PROJECT}/create`;
 export const PROJECT_EDIT = `${PROJECT}/edit/:projectid`;
 export const PROJECT_DETAILS = `${PROJECT}/details/:projectid`;
+//Project Task route
+export const PROJECT_TASK = '/project/task';
+export const PROJECT_TASK_CREATE = `${PROJECT_TASK}/create`;
+export const PROJECT_TASK_EDIT = `${PROJECT_TASK}/edit/:taskId`;
 
+//Project resources route
+export const PROJECT_RESOURCE = '/project/resource';
+export const PROJECT_RESOURCE_CREATE = `${PROJECT_RESOURCE}/create`;
+export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
+// ATTACHMENT ROUTES
+export const ATTACHMENTS = '/attachments';
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

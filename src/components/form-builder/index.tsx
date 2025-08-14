@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Autocomplete,
   Checkbox,
@@ -28,14 +27,13 @@ import {
   CloseIcon,
   KeyContactRemoveIcon,
   KeyContactAddIcon,
-  SearchBlackIcon,
+  // SearchBlackIcon, /* It may use in future, based on client confirmation */
   VerticalSeparatorIcon,
   ErrorInfoIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
-import { ALLOWED_COUNTRIES } from '../../common-utils';
 import {
   FormType,
   FormTypeFields,
@@ -45,6 +43,8 @@ import {
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
+import FormFiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -60,6 +60,7 @@ interface FormBuilderProps {
   admin?: boolean;
   logo?: File | null;
   keyContactHeaders?: KeyContactHeader[];
+  highlight?: { field: string; section: string };
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -76,6 +77,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   logo,
   keyContactHeaders = [],
   newContactLength,
+  highlight,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -307,7 +309,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     setConstructFormData((prevData) => {
       if (!prevData) return prevData;
 
-      const newData: Record<string, any> = {};
+      const newData: Record<string, FieldTypes> = {};
 
       Object.entries(prevData).forEach(([key, value]) => {
         const match = key.match(/_(\d+)$/);
@@ -357,9 +359,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const getFields = (field: FormTypeFields) => {
-    const isError = field.error
-      ? 'border-red-500 bg-[#FEF2F2]'
-      : 'bg-[#FFFFFF]';
+    const isError = field.error ? 'border-red-500 bg-[#FEF2F2]' : '';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
@@ -1002,6 +1002,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 fontWeight: '400',
               }}
+              disabled={field.disabled}
               onClick={() => {
                 const logoFileInput = document.getElementById(
                   'upload-logo'
@@ -1031,6 +1032,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'select': {
         const fieldValue =
           (constructFormData[field.name] || field.defaultValue) ?? '';
+        if (field.isFiscalYear) {
+          return (
+            <div className='w-full'>
+              <FormFiscalYearDropdown
+                fiscalYear={String(fieldValue)}
+                fiscalYearsOptions={field.options || []}
+                onChange={(e) => handleChange(e.target.value)}
+                isError={!!field.error}
+              />
+            </div>
+          );
+        }
+
         return (
           <div className='w-full'>
             <Select
@@ -1150,24 +1164,62 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
-            <SearchBlackIcon
+            {/* <SearchBlackIcon // It may use in future, based on client confirmation
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
-            />
+            /> */}
             <Autocomplete
               options={field.options || []}
               disableClearable
-              popupIcon={null}
+              popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue: SelectOption) => {
                 handleChange(newValue?.value || '');
               }}
+              disabled={field.disabled}
               value={
                 field.options?.find((opt) => opt.value === fieldValue) || {
                   label: '',
                   value: '',
                 }
               }
+              size='small'
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
+                  height: '32px',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
+                '.MuiSelect-select': {
+                  padding: '6px 6px',
+                  color: fieldValue === '' ? '#7D98B6' : 'black',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                  borderRadius: '2px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                },
+                '& svg': {
+                  color: '#7D98B6',
+                },
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -1243,36 +1295,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       }
       case 'date': {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const startDateValue: string | undefined | any = keyStart
+        const startDateValue: FieldTypes | undefined = keyStart
           ? constructFormData[keyStart]
           : undefined;
         const today: Dayjs = dayjs();
         const isEndDateField = field.name === keyEnd;
         const parsedStartDate = startDateValue
-          ? dayjs(startDateValue, 'YYYY-MM-DD')
+          ? dayjs(startDateValue as string, 'YYYY-MM-DD')
           : undefined;
 
-        // Get the selected fiscal year from form data
-        const selectedFiscalYear = constructFormData['fiscal_year'];
-        const isFinancialDateField =
-          field.name === 'financial_start_date' ||
-          field.name === 'financial_end_date';
-
         const customMinDate: Dayjs | undefined = (() => {
-          if (isFinancialDateField && selectedFiscalYear) {
-            const fiscalYearStart = dayjs(
-              `${selectedFiscalYear}-01-01`,
-              'YYYY-MM-DD'
-            );
-
-            if (isEndDateField && parsedStartDate) {
-              return parsedStartDate.add(1, 'day').isAfter(fiscalYearStart)
-                ? parsedStartDate.add(1, 'day')
-                : fiscalYearStart;
-            }
-            return fiscalYearStart;
-          }
           if (isEndDateField && parsedStartDate) {
             return parsedStartDate.add(1, 'day');
           }
@@ -1280,18 +1312,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         const customMaxDate: Dayjs | undefined = (() => {
-          if (isFinancialDateField && selectedFiscalYear) {
-            const fiscalYearEnd = dayjs(
-              `${selectedFiscalYear}-12-31`,
-              'YYYY-MM-DD'
-            );
-
-            if (field?.maxDate) {
-              const maxDate = dayjs(field.maxDate);
-              return fiscalYearEnd.isBefore(maxDate) ? fiscalYearEnd : maxDate;
-            }
-            return fiscalYearEnd;
-          }
           if (isEndDateField && startDateValue) {
             return field?.maxDate
               ? dayjs(field.maxDate).isBefore(today)
@@ -1493,14 +1513,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <PhoneInput
             country='us'
-            onlyCountries={ALLOWED_COUNTRIES}
             value={fieldValue}
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
             inputClass={`!outline-none placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : ''}${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
-            containerClass='!w-full focus-within:outline-none focus-within:!border-2 focus-within:!border-blue-400'
+            containerClass='!w-full focus-within:outline-none focus-within:!border-1 focus-within:!border-blue-400 !rounded-xs'
             inputProps={{
               name: field.name,
               disabled: field.disabled,
@@ -1511,8 +1530,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'button':
         return (
           <button
-            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
+            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:cursor-default'
             type='button'
+            disabled={field.disabled}
             onClick={(e) => {
               e.stopPropagation();
               field.onClick?.(e);
@@ -1689,17 +1709,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
               if (selectedFiscalYear) {
                 // Fiscal year bounds
-                const fiscalYearStart = dayjs(
-                  `${selectedFiscalYear}-01-01`,
-                  'YYYY-MM-DD'
-                );
-                const fiscalYearEnd = dayjs(
-                  `${selectedFiscalYear}-12-31`,
-                  'YYYY-MM-DD'
-                );
+                const fiscalYearStart = field.minDate
+                  ? dayjs(field.minDate, 'YYYY-MM-DD').startOf('day')
+                  : dayjs(`${selectedFiscalYear}-01-01`, 'YYYY-MM-DD').startOf(
+                      'day'
+                    );
+
+                const fiscalYearEnd = field.maxDate
+                  ? dayjs(field.maxDate, 'YYYY-MM-DD').endOf('day')
+                  : dayjs(`${selectedFiscalYear}-12-31`, 'YYYY-MM-DD').endOf(
+                      'day'
+                    );
 
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
+                  const startDateValue = constructFormData[
+                    'financial_start_date'
+                  ] as string;
 
                   // Check against fiscal year bounds
                   if (
@@ -1709,7 +1735,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
+                      error: `${field.name === 'financial_start_date' ? 'Effective' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
+                    };
+                  }
+
+                  if (
+                    field.minDate &&
+                    currentDate.isBefore(dayjs(field.minDate), 'day') &&
+                    startDateValue
+                  ) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `Effective date cannot be before ${dayjs(field.minDate).format('YYYY-MM-DD')}`,
                     };
                   }
 
@@ -1721,7 +1759,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
+                      error: `${field.name === 'financial_start_date' ? 'Effective' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
                     };
                   }
                 }
@@ -1741,7 +1779,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: 'End date cannot be the same as start date',
+                      error: 'End date cannot be the same as Effective date',
                     };
                   }
 
@@ -1749,7 +1787,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: 'End date must be after start date',
+                      error: 'End date must be after Effective date',
                     };
                   }
                 }
@@ -1771,7 +1809,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   hasError = true;
                   return {
                     ...field,
-                    error: 'Both start date and end date must be provided',
+                    error: 'Both Effective date and end date must be provided',
                   };
                 }
               }
@@ -1939,7 +1977,72 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
             }
+            // Handle project resource and task dates validation
+            if (field.name === 'start_date' || field.name === 'end_date') {
+              const startDate = constructFormData['start_date'] as string;
+              const endDate = constructFormData['end_date'] as string;
+              if (dateValue) {
+                const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
 
+                if (
+                  field.minDate &&
+                  currentDate.isBefore(dayjs(field.minDate), 'day') &&
+                  startDate
+                ) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: `Effective date cannot be before ${dayjs(field.minDate).format('YYYY-MM-DD')}`,
+                  };
+                }
+
+                if (
+                  field.maxDate &&
+                  currentDate.isAfter(dayjs(field.maxDate), 'day')
+                ) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: `${field.name === 'start_date' ? 'Effective' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
+                  };
+                }
+              }
+
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both Effective From and End Date must be be provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'start_date'
+                        ? 'Effective From cannot be the same as End Date'
+                        : 'End Date cannot be the same as Effective From',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'start_date'
+                        ? 'Effective From cannot be after End Date'
+                        : 'End Date cannot be before Effective From',
+                  };
+                }
+              }
+            }
             // Handle resource dates validation
             if (
               field.name === 'resource_startdate' ||
@@ -2243,147 +2346,170 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                 }}
               >
-                {fieldRows.map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {row.map((field, colIndex) => {
-                      const isLastColumn = colIndex === row.length - 1;
-                      const isRequired = field.required;
-                      return (
-                        <TableCell
-                          sx={{
-                            position: 'relative',
-                            height: '32px !important',
-                            width: `${field.width}`,
-                            minWidth: `${field.width}`,
-                            maxWidth: `${field.width}`,
-                            paddingLeft:
-                              `${field.type}` === 'iconButton' ||
-                              `${field.type}` === 'radio'
-                                ? '10px !important'
-                                : 'none',
-                            verticalAlign:
-                              `${field.type}` === 'iconButton'
-                                ? 'middle !important'
-                                : 'top',
-                            '& input': {
-                              border: field.error
-                                ? '1px solid #fb2c36 !important'
-                                : 'none',
-                              '&:focus': {
+                {fieldRows.map((row, rowIndex) => {
+                  const shouldHighlight = row.some(
+                    (field) =>
+                      field.name.startsWith('key_contact_name_') &&
+                      constructFormData[field.name] === highlight?.field
+                  );
+                  return (
+                    <TableRow
+                      key={rowIndex}
+                      className={
+                        shouldHighlight
+                          ? 'animate-[fade-bg-white_3s_forwards]'
+                          : ''
+                      }
+                    >
+                      {row.map((field, colIndex) => {
+                        const isLastColumn = colIndex === row.length - 1;
+                        const isRequired = field.required;
+                        return (
+                          <TableCell
+                            sx={{
+                              position: 'relative',
+                              height: '32px !important',
+                              width: `${field.width}`,
+                              minWidth: `${field.width}`,
+                              maxWidth: `${field.width}`,
+                              paddingLeft:
+                                `${field.type}` === 'iconButton' ||
+                                `${field.type}` === 'radio'
+                                  ? '10px !important'
+                                  : 'none',
+                              verticalAlign:
+                                `${field.type}` === 'iconButton'
+                                  ? 'middle !important'
+                                  : 'top',
+                              '& input': {
                                 border: field.error
-                                  ? '1px solid #fb2c36'
-                                  : '1px solid #60A5FA',
-                              },
-                            },
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              border: field.error
-                                ? '1px solid #ef4444'
-                                : 'none !important',
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: field.error
-                                ? '1px solid #ef4444'
-                                : 'none !important',
-                            },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
+                                  ? '1px solid #fb2c36 !important'
+                                  : 'none',
+                                backgroundColor: field?.disabled
+                                  ? '#f3f4f6 !important'
+                                  : 'inherit',
+                                '&:focus': {
+                                  border: field.error
+                                    ? '1px solid #fb2c36'
+                                    : '1px solid #60A5FA',
                                 },
-                            },
-                          }}
-                          key={colIndex}
-                          style={{
-                            verticalAlign: 'top',
-                            height: '32px !important',
-                            backgroundColor: field.error
-                              ? '#FEF2F2'
-                              : 'transparent',
-                          }}
-                        >
-                          {field.type === 'iconButton' && isLastColumn ? (
-                            <Tooltip
-                              title={'Remove contact'}
-                              arrow
-                              placement='top'
-                            >
-                              <button
-                                type='button'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  field.onClick?.(e);
-                                  handleRemoveKeyContactRow(rowIndex);
-                                }}
-                                style={{
-                                  cursor: 'pointer',
-                                  background: 'transparent',
-                                  border: 'none',
-                                  padding: 0,
-                                  marginTop: '6px',
-                                }}
-                                aria-label='Remove contact'
-                              >
-                                {field.iconUrl ? (
-                                  <field.iconUrl
-                                    alt='Icon'
-                                    style={{ width: 20, height: 20 }}
-                                  />
-                                ) : (
-                                  <KeyContactRemoveIcon
-                                    alt='Remove'
-                                    style={{ width: 20, height: 20 }}
-                                  />
-                                )}
-                              </button>
-                            </Tooltip>
-                          ) : field.type === 'text' ? (
-                            <div
-                              className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
-                            >
-                              {getFields(field)}
-                              {field.error && (
+                              },
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                border: field.error
+                                  ? '1px solid #ef4444'
+                                  : 'none !important',
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                border: field.error
+                                  ? '1px solid #ef4444'
+                                  : 'none !important',
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
+                              },
+                            }}
+                            key={colIndex}
+                            style={{
+                              verticalAlign: 'top',
+                              height: '32px !important',
+                              backgroundColor: field.error
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                          >
+                            <React.Suspense fallback={null}>
+                              {field.type === 'iconButton' && isLastColumn ? (
                                 <Tooltip
-                                  title={field.error}
+                                  title={'Remove contact'}
+                                  disableHoverListener={field.disabled}
                                   arrow
                                   placement='top'
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        backgroundColor: '#FEF2F2',
-                                        mr: 1,
-                                      },
-                                    },
-                                  }}
                                 >
-                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </span>
+                                  <button
+                                    type='button'
+                                    disabled={field.disabled}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      field.onClick?.(e);
+                                      handleRemoveKeyContactRow(rowIndex);
+                                    }}
+                                    style={{
+                                      cursor: field.disabled
+                                        ? 'default'
+                                        : 'pointer',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      padding: 0,
+                                      marginTop: '6px',
+                                    }}
+                                    aria-label='Remove contact'
+                                  >
+                                    {field.iconUrl ? (
+                                      <field.iconUrl
+                                        alt='Icon'
+                                        style={{ width: 20, height: 20 }}
+                                      />
+                                    ) : (
+                                      <KeyContactRemoveIcon
+                                        alt='Remove'
+                                        style={{ width: 20, height: 20 }}
+                                      />
+                                    )}
+                                  </button>
                                 </Tooltip>
+                              ) : field.type === 'text' ? (
+                                <div
+                                  className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                                >
+                                  {getFields(field)}
+                                  {field.error && (
+                                    <Tooltip
+                                      title={field.error}
+                                      arrow
+                                      placement='top'
+                                      slotProps={{
+                                        tooltip: {
+                                          sx: {
+                                            backgroundColor: '#FEF2F2',
+                                            mr: 1,
+                                          },
+                                        },
+                                      }}
+                                    >
+                                      <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                        <ErrorInfoIcon
+                                          alt='error'
+                                          className='w-5 h-3.5'
+                                        />
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                  {isRequired && !field.error && (
+                                    <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                      *
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <>
+                                  {getFields(field)}
+                                  {isRequired && (
+                                    <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                      *
+                                    </span>
+                                  )}
+                                </>
                               )}
-                              {isRequired && !field.error && (
-                                <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                  *
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <>
-                              {getFields(field)}
-                              {isRequired && (
-                                <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
-                                  *
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
+                            </React.Suspense>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             ) : (
               <TableBody>
@@ -2498,7 +2624,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <div key={i}>
               {section.sectionName && (
                 <h4
-                  className={`${i === 0 ? 'border-b' : 'border'} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                  className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
                   {section.sectionName.replace(/_/g, ' ')}
                 </h4>

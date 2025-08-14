@@ -5,12 +5,15 @@ import {
   useExtendedPermissionToUser,
   useUpdateExtendedPermission,
 } from '../../../service';
-import { ProfileHeaderDetail, ProfilePermissions } from '../../manage-profile';
+import {
+  ProfileHeaderDetail,
+  ProfilePermissionForm,
+} from '../../manage-profile';
 import { Skeleton } from '@mui/material';
-import { Privilege } from '../../../types';
-import { Suspense, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
+import { ProfileResponse } from '../../../../common-service';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -20,27 +23,12 @@ const HEADER_STYLES = {
 };
 
 export const ExtendedPermission: React.FC = () => {
-  const [privileges, setPrivileges] = useState<Privilege[]>([]);
+  const formRef = React.useRef<HTMLFormElement>(null);
   const { userid } = useParams();
   const { successToast } = useToast();
   const navigate = useNavigate();
   const { data, isPending } = useExtendedPermissionToUser(userid as string);
   const updateExtendedPermission = useUpdateExtendedPermission();
-
-  const goBack = () => {
-    window.history.back();
-  };
-  const handlePrivilegesChange = (updatedPrivileges: Privilege[]) => {
-    setPrivileges(updatedPrivileges);
-  };
-
-  const handleSaveProfile = () => {
-    const payload = {
-      user_id: data?.data.user_id,
-      privileges,
-    };
-    updateExtendedPermission.mutate(payload);
-  };
 
   useEffect(() => {
     if (updateExtendedPermission.isSuccess) {
@@ -49,6 +37,22 @@ export const ExtendedPermission: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateExtendedPermission.isSuccess]);
+
+  const goBack = () => {
+    window.history.back();
+  };
+
+  const handleSaveProfile = () => {
+    formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
+  };
+
+  const outData = (permissions: ProfileResponse[]) => {
+    const payload = {
+      user_id: data?.data.user_id,
+      privileges: permissions,
+    };
+    updateExtendedPermission.mutate(payload);
+  };
 
   return (
     <>
@@ -97,12 +101,12 @@ export const ExtendedPermission: React.FC = () => {
               ))}
             </div>
           ) : (
-            <Suspense fallback={null}>
-              <ProfilePermissions
-                createProfilePermissionsData={data?.data.permissions}
-                onPrivilegesChange={handlePrivilegesChange}
-              />
-            </Suspense>
+            <ProfilePermissionForm
+              formData={data?.data.permissions || []}
+              loading={isPending}
+              formRef={formRef}
+              outData={outData}
+            />
           )}
         </div>
       </div>

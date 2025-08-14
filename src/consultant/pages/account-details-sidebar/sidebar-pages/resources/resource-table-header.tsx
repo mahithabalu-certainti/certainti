@@ -4,11 +4,12 @@ import React from 'react';
 import { LeftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
+
 interface ResourceTableHeaderProps {
   title: string;
   titleIcon: React.ReactNode;
   count?: number;
-  headerButtons: {
+  headerButtons?: {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
@@ -21,6 +22,7 @@ interface ResourceTableHeaderProps {
   onBackClick?: () => void;
   value: string;
   resourceNumber?: string;
+  showCount?: boolean;
 }
 
 const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
@@ -33,6 +35,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   onBackClick,
   value,
   resourceNumber,
+  showCount = true,
 }) => {
   return (
     <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[40px] rounded-tr-[2px]'>
@@ -53,18 +56,22 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           )}
           <div>
             <div className='flex'>
-              <h1 className='text-[13px]  font-semibold text-[#2D3E4F]'>
+              <h1 className='text-[13px] font-semibold text-[#2D3E4F]'>
                 {title}
               </h1>
               <div className='text-[13px] font-semibold text-[#2D3E4F] pl-1.5'>
                 {(value === 'details' ||
                   value === 'cost' ||
-                  value === 'skill') &&
+                  value === 'skill' ||
+                  value === 'attachments') &&
                   resourceNumber}
               </div>
             </div>
-            {value !== 'details' && (
-              <h1 className='text-[12px] -mt-1.5 font-medium text-[#7D98B6] '>{`${(count ?? 0) > 0 ? count : 0} items`}</h1>
+
+            {showCount && value !== 'details' && (
+              <h1 className='text-[12px] -mt-1.5 font-medium text-[#7D98B6]'>
+                {`${(count ?? 0) > 0 ? count : 0} items`}
+              </h1>
             )}
           </div>
         </div>

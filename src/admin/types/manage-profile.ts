@@ -18,16 +18,6 @@ export type ManageProfileList = {
   created_by: string | null;
   modified_by: string | null;
 };
-export interface ProfileTableColumn<T> {
-  id: string;
-  label: string;
-  width?: string | number;
-  sortId: string;
-  sortable?: boolean;
-  sticky?: boolean;
-  sx?: React.CSSProperties;
-  render?: (row: T) => React.ReactNode;
-}
 
 export interface ProfileDetail {
   source_profile_id: string;
@@ -46,42 +36,9 @@ export interface UserPermissionsResponse {
   is_enabled: boolean;
 }
 
-export interface CommonProfileApiResponse {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data: {
-    source_profile_id: string;
-    rid: string;
-    user_role: string;
-    user_id: string;
-    profile_id: string;
-    permissions: UserPermissionsResponse[];
-  };
-}
-
-export interface ProfilePermission {
-  profile_id: string;
-  profile_name: string;
-  privileges: Privilege[];
-}
-export interface Privilege {
-  rid: string;
-  type: 'menu' | 'module' | 'permission' | 'field';
-  menu_id?: string;
-  module_id?: string;
-  permission_id?: string;
-  field_id?: string;
-  name: string;
-  desc: string;
-  is_enabled?: boolean;
-  is_modified?: boolean;
-  is_field_available?: boolean;
-  read?: boolean;
-  edit?: boolean;
-  has_extended_permission?: boolean;
-  hasReadExtendedPermsission?: boolean;
-  hasEditExtendedPermsission?: boolean;
+export interface Depends_on {
+  id: string;
+  type: string;
 }
 export interface ProfileHeaderData {
   profile_id: string;

@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 import { CreateResourceIcon, EditIcon } from '../../../assets';
 import {
+  AllPermissions,
   Layout,
   OnChange,
   useGetAllCountries,
@@ -38,7 +39,7 @@ import {
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
-import { OthersEnum, SelectOption } from '../../types';
+import { FormFiscalDateType, OthersEnum, SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
 import {
   ResourceTypeEnum,
@@ -54,6 +55,9 @@ import {
   useGetResourceType,
 } from '../../services/resource-list/resource-list-service.ts';
 import ConfirmationPopup from '../../../common-utils/confirmation-popup.tsx';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store.ts';
+import { getFiscalDateBounds } from '../../../common-utils/common-utils.ts';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -93,6 +97,9 @@ const ResourceForm: React.FC = () => {
     resource_firstname: '',
     resource_lastname: '',
   });
+  const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
+    year: 0,
+  });
   const [disableOrgname, setDisableOrgname] = useState<boolean>(false);
   const [, setResourceFinancials] = useState({
     salary: '',
@@ -115,6 +122,12 @@ const ResourceForm: React.FC = () => {
   const resourceName = isEditView
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
+
+  const account = location?.state?.data?.accountDetails;
+  const accountFiscalDates = {
+    startDate: account?.fiscal_start_date || '',
+    endDate: account?.fiscal_end_date || '',
+  };
 
   const costAndSKillAccountInfo = state?.data?.accountById;
   const skillCostResourceId =
@@ -155,6 +168,49 @@ const ResourceForm: React.FC = () => {
     const d = parseFloat(deductions) || 0;
     return s + b + i + r - d;
   };
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const viewResourceEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const viewResourceCostEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_COST_EDIT_VIEW
+      )?.fields ?? [],
+    [permission]
+  );
+  const viewResourceSkillEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCE_SKILL_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const resourcePermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    viewResourceEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [viewResourceEditFields]);
+  const resourceCostPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    viewResourceCostEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [viewResourceCostEditFields]);
+  const resourceSKillPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    viewResourceSkillEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [viewResourceSkillEditFields]);
 
   const currency = useFetchCurrency();
   const statusOptions = useGetStatus();
@@ -324,6 +380,9 @@ const ResourceForm: React.FC = () => {
             : '-',
       };
       setFormValues(costValues);
+      setFiscalDate({
+        year: Number(costInfo?.fiscal_year),
+      });
       setIsSalaryRequired(
         costInfo?.salary === null ||
           costInfo?.salary === undefined ||
@@ -376,18 +435,30 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         currency: costAndSKillAccountInfo?.currency_rid || null,
         resource_type: formValues?.resource_type_rid,
+        comments: '',
       };
       setFormValues(values);
     } else if (formValues && !isEditView && state?.skill) {
       const values = {
         ...formValues,
         resource_type: formValues?.resource_type_rid,
+        comments: '',
       };
       setFormValues(values);
     } else if (formValues && !isEditView) {
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
+
+  useEffect(() => {
+    if (fiscalDate.year !== 0 && accountFiscalDates) {
+      const bounds = getFiscalDateBounds(
+        String(fiscalDate.year),
+        accountFiscalDates
+      );
+      setFiscalDate(bounds);
+    }
+  }, [fiscalDate.year, isEditView]);
 
   const countryId = resource?.data?.resourceDetails.country_rid;
   const stateId = resource?.data?.resourceDetails.region_rid;
@@ -792,6 +863,9 @@ const ResourceForm: React.FC = () => {
         setIsSalaryRequired(salaryValue === '');
       }
     }
+    if (fieldName === 'fiscal_year') {
+      setFiscalDate({ year: Number(fieldValue) });
+    }
   };
 
   const isresourceType =
@@ -827,7 +901,11 @@ const ResourceForm: React.FC = () => {
     isEditView,
     currentResource,
     autoCalculatedValue,
-    accountName
+    accountName,
+    fiscalDate,
+    resourcePermissionMap,
+    resourceCostPermissionMap,
+    resourceSKillPermissionMap
   );
 
   return (

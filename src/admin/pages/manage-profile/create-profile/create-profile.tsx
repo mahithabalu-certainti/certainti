@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ProfileForm } from './profile-form';
 import { SelectOption } from '../../../../consultant/types';
@@ -10,18 +10,17 @@ import {
   useUpdateProfilePermission,
 } from '../../../service';
 import { useToast } from '../../../../hooks';
-import { Privilege, ProfileDetail } from '../../../types';
-import { ProfilePermissions } from './profile-permissions';
+import { ProfileDetail } from '../../../types';
 import { ProfileHeaderDetail } from './profile-header-details';
 import { MANAGE_PROFILE } from '../../../../routes';
-import { AccessRestricted } from '../../../../components/account-restricted';
-import { useSelector } from 'react-redux';
-import { checkPermission } from '../../../../common-utils';
-import { RootState } from '../../../../store/store';
-import { AllModules, AllPermissions } from '../../../../common-service';
+import {
+  ManageProfileResponse,
+  ProfileResponse,
+} from '../../../../common-service';
+import { ProfilePermissionForm } from './profile-permission-form';
 
 export const CreateProfile: React.FC = () => {
-  const [privileges, setPrivileges] = useState<Privilege[]>([]);
+  const formRef = React.useRef<HTMLFormElement>(null);
   const { profileId } = useParams();
   const { successToast, errorToast } = useToast();
   const navigate = useNavigate();
@@ -42,33 +41,6 @@ export const CreateProfile: React.FC = () => {
   const commonSuccess = createProfile.isSuccess;
   const ProfilePermissionSuccess = createProfilePermission.isSuccess;
   const editSuccess = updateProfilePermission.isSuccess;
-  const [initialPrivileges, setInitialPrivileges] = useState<Privilege[]>([]);
-
-  useEffect(() => {
-    if (isEditView && getProfileDetails?.data?.data?.privileges) {
-      setPrivileges(getProfileDetails.data.data.privileges);
-      setInitialPrivileges(getProfileDetails.data.data.privileges);
-    } else if (createProfile?.data?.data?.privileges) {
-      setPrivileges(createProfile.data.data.privileges);
-      setInitialPrivileges(createProfile.data.data.privileges);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getProfileDetails?.data?.data, createProfile?.data?.data]);
-  const { modules, permission } = useSelector(
-    (state: RootState) => state.permission
-  );
-  const isProfileEnable = checkPermission(
-    modules,
-    AllModules.PROFILE_MANAGEMENT
-  );
-  const isProfileCreateEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_CREATE
-  );
-  const isProfileEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_EDIT
-  );
 
   useEffect(() => {
     if (commonSuccess) {
@@ -110,39 +82,31 @@ export const CreateProfile: React.FC = () => {
     createProfile.mutate(constructData);
   };
 
-  const handlePrivilegesChange = (updatedPrivileges: Privilege[]) => {
-    setPrivileges(updatedPrivileges);
-  };
   const handleSaveProfile = () => {
-    const hasChanges =
-      JSON.stringify(privileges) !== JSON.stringify(initialPrivileges);
-
-    if (!hasChanges) {
-      errorToast('No modifications detected');
-      return;
-    }
-    if (isEditView) {
-      const payload = {
-        profile_id: getProfileDetails.data?.data?.profile_id,
-        profile_name: editProfileName,
-        privileges: privileges,
-      };
-      updateProfilePermission.mutate(payload);
-    } else {
-      const payload = {
-        profile_id: createProfile?.data?.data?.profile_id,
-        profile_name: createProfile?.data?.data?.profile_name,
-        privileges: privileges,
-      };
-      createProfilePermission.mutate(payload);
-    }
+    formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
   };
 
-  if (
-    !isProfileEnable ||
-    (isEditView ? !isProfileEditEnable : !isProfileCreateEnable)
-  )
-    return <AccessRestricted />;
+  const outData = (data: ProfileResponse[]) => {
+    if (data.length === 0) {
+      errorToast('No modifications detected');
+    } else {
+      if (isEditView) {
+        const payload = {
+          profile_id: getProfileDetails.data?.data?.profile_id,
+          profile_name: editProfileName,
+          privileges: data,
+        };
+        updateProfilePermission.mutate(payload as ManageProfileResponse);
+      } else {
+        const payload = {
+          profile_id: createProfile?.data?.data?.profile_id,
+          profile_name: createProfile?.data?.data?.profile_name,
+          privileges: data,
+        };
+        createProfilePermission.mutate(payload as ManageProfileResponse);
+      }
+    }
+  };
 
   return (
     <>
@@ -170,17 +134,16 @@ export const CreateProfile: React.FC = () => {
             isEditView={isEditView}
             profileLoading={getProfileDetails.isLoading}
           />
-          <Suspense fallback={null}>
-            <ProfilePermissions
-              createProfilePermissionsData={
-                isEditView
-                  ? getProfileDetails?.data?.data.privileges
-                  : createProfile?.data?.data.privileges
-              }
-              loading={getProfileDetails.isLoading}
-              onPrivilegesChange={handlePrivilegesChange}
-            />
-          </Suspense>
+          <ProfilePermissionForm
+            formData={
+              isEditView
+                ? getProfileDetails.data?.data.privileges || []
+                : createProfile.data?.data.privileges || []
+            }
+            loading={getProfileDetails.isLoading}
+            formRef={formRef}
+            outData={outData}
+          />
         </>
       )}
     </>

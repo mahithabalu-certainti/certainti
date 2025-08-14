@@ -1,4 +1,4 @@
-import { FilterState } from './filterType';
+import { FieldConfig, FilterState, FilterValue } from './filterType';
 import { ResetFilter } from '../../../../types/resource';
 
 function formatString(str: string | undefined): string {
@@ -138,4 +138,26 @@ export const validateFilters = (
   }
 
   return hasInvalid;
+};
+
+export const applyFilterOnChanges = (
+  savedFilters: Record<string, FilterState>,
+  filterMenu: FieldConfig[],
+  onFilterChange: (field: string, value: FilterValue) => void
+) => {
+  Object.entries(savedFilters).forEach(([fieldName, fieldState]) => {
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      const value =
+        fieldState.enum?.value ??
+        fieldState.select?.value ??
+        fieldState.text?.value ??
+        fieldState.number?.value ??
+        fieldState.date?.value;
+
+      if (value !== undefined) {
+        onFilterChange(fieldName, value);
+      }
+    }
+  });
 };
