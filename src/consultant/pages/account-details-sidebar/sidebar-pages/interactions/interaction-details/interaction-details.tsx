@@ -14,9 +14,9 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
-import InteractionQuestions from './interaction-qus';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { accountDetailsProps } from '../../../../account-details/utils';
+import { InteractionQuestions } from '../../../../../../components';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -135,13 +135,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Interaction ID',
-      value: data?.r_number,
-      key: 'r_number',
+      value: data?.interaction_number,
+      key: 'interaction_number',
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(data?.created_on),
-      key: 'created_on',
+      value: formatDateToYYYYMMDDWithTime(data?.created_datetime),
+      key: 'created_datetime',
     },
     {
       label: 'Created By',
@@ -150,13 +150,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.updated_on),
-      key: 'updated_on',
+      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+      key: 'modified_datetime',
     },
     {
       label: 'Updated By',
-      value: data?.updated_by,
-      key: 'updated_by',
+      value: data?.modified_by,
+      key: 'modified_by',
     },
   ];
 
@@ -165,7 +165,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction'
-          subValue={data?.r_number || ''}
+          subValue={data?.interaction_number || ''}
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'
@@ -201,7 +201,11 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         )}
       </div>
       {data?.questions && data?.questions.length > 0 && (
-        <InteractionQuestions questions={data?.questions} />
+        <InteractionQuestions
+          questions={data?.questions}
+          globalAttachments={data?.global_attachments}
+          isEditEnable={true}
+        />
       )}
       {!isLoading && !error && (
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>

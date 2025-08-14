@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { AllPermissions, OverviewTabs } from '../../../../../common-service';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AllPermissions,
+  OverviewTabs,
+  useGetInteractionSources,
+  useGetInteractionStatus,
+  useGetInteractionTypes,
+} from '../../../../../common-service';
 import {
   generatePath,
   useNavigate,
@@ -13,7 +19,10 @@ import { ActionItem } from '../../../../../components/table/types';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
-import { SectionTabPanel } from '../../../../../components';
+import {
+  SectionTabPanel,
+  SendInteractionModal,
+} from '../../../../../components';
 import InteractionDetails from './interaction-details/interaction-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ListTable } from '../../../../../components/table';
@@ -28,12 +37,12 @@ const InteractionsTabs: OverviewTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.INTERACTIONS_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.INTERACTIONS_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 interface InteractionsProps {
@@ -62,6 +71,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
   const [count, setCount] = useState<number>(0);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -88,6 +99,36 @@ const Interactions: React.FC<InteractionsProps> = ({
     refreshInteractions
   );
   const totalItems = data?.count || 0;
+  const interactionTypes = useGetInteractionTypes();
+  const interactionSources = useGetInteractionSources();
+  const interactionStatus = useGetInteractionStatus();
+
+  const memoizedInteractionStatus = useMemo(
+    () =>
+      interactionStatus.data?.data.interactionStatus.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [interactionStatus.data?.data.interactionStatus]
+  );
+
+  const memoizedInteractionTypes = useMemo(
+    () =>
+      interactionTypes.data?.data.interactionTypes.map((type) => ({
+        option: type.interaction_type_name,
+        value: type.rid,
+      })) || [],
+    [interactionTypes.data?.data.interactionTypes]
+  );
+
+  const memoizedInteractionSources = useMemo(
+    () =>
+      interactionSources.data?.data.interactionSource.map((source) => ({
+        option: source.interaction_source_name,
+        value: source.rid,
+      })) || [],
+    [interactionSources.data?.data.interactionSource]
+  );
 
   useEffect(() => {
     if (data) {
@@ -151,8 +192,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Send Interaction',
       variant: 'outlined' as const,
-      disabled: accountInActive,
-      onClick: () => console.log('Send Interaction clicked'),
+      disabled: selectedRows.length === 0 || accountInActive,
+      onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
       hide: false,
     },
@@ -182,7 +223,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const handleSelectionChange = (selectedIds: string[]) => {
-    console.log(selectedIds);
+    const selectedData = interactionList.filter((row) =>
+      selectedIds.includes(row.rid)
+    );
+    setSelectedRows(selectedData);
   };
 
   const handleViewInteraction = (rowId: string) => {
@@ -224,7 +268,11 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteractionHistory
   );
 
-  const filterFields = getInteractionFilterFields();
+  const filterFields = getInteractionFilterFields(
+    memoizedInteractionTypes,
+    memoizedInteractionSources,
+    memoizedInteractionStatus
+  );
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -301,6 +349,15 @@ const Interactions: React.FC<InteractionsProps> = ({
               onSort={handleSortRequest}
             />
           </div>
+          <SendInteractionModal
+            isOpen={sendModalOpen}
+            onClose={() => setSendModalOpen(false)}
+            selectedRows={selectedRows}
+            onSend={(emails) => {
+              console.log('Emails to send:', emails);
+              setSendModalOpen(false);
+            }}
+          />
         </>
       )}
     </div>
