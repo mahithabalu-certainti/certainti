@@ -83,12 +83,12 @@ export interface TabMenus {
 
 const resourceTabs: ResourceTabs[] = [
   { id: AllPermissions.ACCOUNTS_VIEW_EDIT, name: 'Overview', hide: false },
-  {
-    id: AllMenus.TIMESHEETS,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllMenus.TIMESHEETS,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 const tabs: TabMenus[] = [

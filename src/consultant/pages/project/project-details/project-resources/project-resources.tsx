@@ -36,7 +36,7 @@ import {
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
-import { useGetAppliedProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
   ExportType,
   FormFiscalDateType,
@@ -59,12 +59,12 @@ const projectTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 export const ProjectResources = ({
@@ -208,9 +208,8 @@ export const ProjectResources = ({
       filters: appliedFilters,
     });
   }, [sortField, sortOrder, appliedFilters]);
-  const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
-    accountID as string,
-    projectID as string
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    accountID as string
   );
   // const projectResourceTypeOptions = useGetResourceType();
   const countriesList = useGetAllCountries();

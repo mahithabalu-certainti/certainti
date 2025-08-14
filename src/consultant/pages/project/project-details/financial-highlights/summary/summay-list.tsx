@@ -102,10 +102,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   const getQRERowId = (row: SummaryQRE) => row.rid;
   const getRdCreditsRowId = (row: SummaryRdCredits) => row.rid;
 
-  const resourceMetricColumns = getResourceMetricColumns(
-    permissionMap,
-    currencySymbol
-  );
+  const resourceMetricColumns = getResourceMetricColumns(permissionMap);
   const claimJurisdictionColumns = getClaimJurisdictionColumns(
     permissionMap,
     currencySymbol

@@ -184,7 +184,9 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(resourceData.created_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(
+        resourceData.created_datetime ?? undefined
+      ),
       key: 'created_datetime',
     },
     {
@@ -194,7 +196,9 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(resourceData.modified_datetime ?? undefined),
+      value: formatDateToYYYYMMDDWithTime(
+        resourceData.modified_datetime ?? undefined
+      ),
       key: 'modified_datetime',
     },
     {

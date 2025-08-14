@@ -44,12 +44,12 @@ const AttachmentTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 interface AttachmentsProps {
   setExportType?: (type: ExportType) => void;
