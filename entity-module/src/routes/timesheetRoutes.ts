@@ -6,7 +6,7 @@ const router: Router = Router();
 router.post('/list',
      checkUserStatusMiddleware('timesheet_view_edit'),
       controller.importListController.fetchAllImportList)
-router.get('/list/:account_rid/:rid',
+router.get('/list/:accountRid/:rid',
      checkUserStatusMiddleware('timesheet_view_edit'),
       controller.importListController.importListByRid)
 router.post('/list/export',
