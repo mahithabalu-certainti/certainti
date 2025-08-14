@@ -15,6 +15,7 @@ import {
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
 import InteractionDetails from './interaction-details/interaction-details';
+import { InteractionHistory } from './interaction-history';
 import { ActionItem } from '../../../../../components/table/types';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
@@ -62,7 +63,9 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [count, setCount] = useState<number>(0);
 
   const interactionId = searchParams.get('interaction_id');
+  const interactionHistoryId = searchParams.get('interaction_history_id');
   const viewDetails = !!interactionId;
+  const viewInteractionHistory = !!interactionHistoryId;
   const projectData = {
     project_code: projectDetails?.project_code || '',
     project_name: projectDetails?.project_name || '',
@@ -189,8 +192,16 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const handleViewInteractionHistory = (interactionHistoryId: string) => {
+    if (interactionHistoryId) {
+      searchParams.set('interaction_history_id', interactionHistoryId);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+  };
+
   const handleBackClick = () => {
     searchParams.delete('interaction_id');
+    searchParams.delete('interaction_history_id');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -208,7 +219,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   ];
 
   const getRowId = (row: InteractionList) => row.rid;
-  const interactionColumns = getInteractionListColumns(handleViewInteraction);
+  const interactionColumns = getInteractionListColumns(
+    handleViewInteraction,
+    handleViewInteractionHistory
+  );
 
   const filterFields = getInteractionFilterFields();
 
@@ -235,6 +249,12 @@ const Interactions: React.FC<InteractionsProps> = ({
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
           projectDetails={projectDetails}
+        />
+      ) : viewInteractionHistory ? (
+        <InteractionHistory
+          handleBackClick={handleBackClick}
+          projectDetails={projectDetails}
+          accountInActive={accountInActive}
         />
       ) : (
         <>
