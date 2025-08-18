@@ -20,7 +20,7 @@ routes.get(
   controller.projectTaskController.getProjectTaskById
 );
 routes.get(
-  "/assignedcodes/:accountId/:projectFiscalId",
+  "/assignedCodes/:accountId/:projectFiscalId",
   checkUserStatusMiddleware("NA"),
   controller.projectTaskController.assignedResourceCodes
 );

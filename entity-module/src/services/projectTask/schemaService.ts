@@ -20,7 +20,7 @@ import {
   setupProjectTaskTimelineSeq,
 } from "../../models/projectTaskTimeline";
 import { ProjectResource } from "../../models/projectResource";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
@@ -2966,8 +2966,9 @@ export class ProjectTaskSchemaService {
     if (uniqueTypeIds.length === 0) return resourceCodes;
   
     // Step 2: Query resource_type table for names
+    const query = rawQueries.fetchResourceTypeById(MAIN_SCHEMA_NAME);
     const typeResult: any[] = await this.mainDbSequelize.query(
-      `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+      query,
       {
         replacements: { ids: uniqueTypeIds },
         type: "SELECT",

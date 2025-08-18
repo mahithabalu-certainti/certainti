@@ -828,6 +828,15 @@ export const rawQueries = {
       effective_metric_type IS NULL
     `;
   },
+  fetchResourceTypeById(schemaName: string){
+    return `
+      SELECT 
+        rid AS resource_type_rid, 
+        resource_type_name 
+      FROM ${schemaName}.resource_type 
+      WHERE rid IN (:ids)
+  `;
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
