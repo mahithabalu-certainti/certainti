@@ -11,13 +11,9 @@ import {
   ImportsListURLParams,
 } from '../../types/imports';
 import { uploadUrl } from '../urls';
-import {
-  TimesheetDetails,
-  TimesheetDetailsResponse,
-  TimeSheetList,
-  TImesheetListResponse,
-  TimeSheetListURLParams,
-} from '../../types';
+import { TimesheetProjectList, } from '../../types/timesheet-projects';
+import { ManageProjectsMockData } from '../../mockdata/project-mockdata';
+import { TimesheetDetails, TimesheetDetailsResponse, TimeSheetList, TImesheetListResponse, TimeSheetListURLParams } from '../../types';
 
 const getImportDetailsURL = (accountId: string, fileId: string) => {
   return `/api/import/list/${accountId}/${fileId}`;
@@ -277,3 +273,35 @@ export const downloadTimesheetFailureData = async (
   );
   await downloadBase64File(url, `${failureType}_failures.xlsx`);
 };
+
+
+// Timesheet view project tab table
+export const useTimesheetProjectTableList = (
+  params: ImportsListURLParams,
+  // shouldFetchList: boolean,
+  refreshImports?: number
+): UseQueryResult<{ timesheet_projects: TimesheetProjectList[]; count: number }, Error> => {
+  return useQuery<{ timesheet_projects: TimesheetProjectList[]; count: number }, Error>({
+    queryKey: ['importList', params, refreshImports],
+    queryFn: () => fetchTimesheetProjectTableList(params),
+    retry: 0,
+    gcTime: 0,
+    // enabled: !!params.account_rid && !!shouldFetchList,
+  });
+}; 
+
+export const fetchTimesheetProjectTableList = async (
+  params: ImportsListURLParams
+): Promise<{ timesheet_projects: TimesheetProjectList[]; count: number }> => {
+  console.log('params', params)
+  // const response = await resourceServiceApi.post<TimesheetProjectTableListResponse>(
+  //   '/api/import/list',
+  //   params
+  // );
+  return {
+    timesheet_projects: ManageProjectsMockData.data.projects || [],
+    count:  ManageProjectsMockData.data.count || 0,
+  };
+};
+
+

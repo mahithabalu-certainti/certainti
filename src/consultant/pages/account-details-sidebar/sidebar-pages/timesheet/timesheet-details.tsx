@@ -20,9 +20,17 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AllPermissions } from '../../../../../common-service';
 import { TabMenus } from '../resources/resources';
+import TimesheetProjectTab from './timesheet-details-tab/project-tab/project-tab';
+import { ExportType, TimeSheetListURLParams } from '../../../../types';
 
 interface TimesheetDetailsProps {
   handleBackClick: () => void;
+  setExportType?: (type: ExportType) => void;
+  setTimesheetParams?: React.Dispatch<
+    React.SetStateAction<TimeSheetListURLParams>
+  >;
+  onRefreshClick?: number;
+
 }
 
 const tabs: TabMenus[] = [
@@ -34,19 +42,19 @@ const tabs: TabMenus[] = [
   },
   {
     label: 'Project',
-    value: 'project',
+    value: 'timesheet_project',
     hide: false,
     id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_VIEW,
   },
   {
     label: 'Resource',
-    value: 'resource',
+    value: 'timesheet_projectResource',
     hide: false,
     id: AllPermissions.ACCOUNT_TIMESHEET_RESOURCE_VIEW,
   },
   {
     label: 'Project Task',
-    value: 'projectTask',
+    value: 'timesheet_projectTask',
     hide: false,
     id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_TASK_VIEW,
   },
@@ -54,11 +62,13 @@ const tabs: TabMenus[] = [
 
 const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   handleBackClick,
+  setExportType,
+  onRefreshClick,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
-  const fileId = searchParams.get('file_id') || undefined;
+  const fileId = searchParams.get('timesheet_id') || undefined;
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const [value, setValue] = useState('details'); // Resource inner tab value
@@ -306,6 +316,12 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
                 isAudit={true}
               />
             </>
+          )}
+          {value === 'timesheet_project' && (
+              <TimesheetProjectTab
+              setExportType={setExportType}
+              onRefreshClick={onRefreshClick}
+              /> 
           )}
         </>
       )}

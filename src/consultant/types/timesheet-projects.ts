@@ -1,0 +1,96 @@
+export interface TimesheetProjectTableListURLParams {
+
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'asc' | 'desc';
+  filters?: object;
+  fiscal_year?: number | string;
+  account_rid: string;
+}
+
+export interface TimesheetProjectTableListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue: string;
+  data: {
+    projects: TimesheetProjectList[];
+    count?: number;
+  };
+}
+
+export type TimesheetProjectList = {
+  project_classification_other: string | null;
+  project_code: string;
+  project_name: string | null;
+  account_name?: string;
+  account_status_name?: string;
+  account_id: string;
+  project_rid: string;
+  modified_datetime: string;
+  assessment_status: string | null;
+  qre: string | null;
+  qre_final?: string | null;
+  is_rd_qualified: boolean;
+  industry_name_other: string | null;
+  project_type_name: string;
+  project_client_group: string | null;
+  project_group: string | null;
+  project_classification_rid: string | null;
+  classification_name: string | null;
+  project_status: string;
+  project_point_of_contact: string | null;
+  technical_point_of_contact: string | null;
+  r_number: string;
+  program_name: string | null;
+  project_startdate: string | null;
+  project_enddate: string | null;
+  total_cost: number | null;
+  total_effort: number | null;
+  total_fte: number | null;
+  total_cost_fte: number | null;
+  total_subcon: number | null;
+  total_cost_subcon: number | null;
+  total_cost_nonlabor: number | null;
+  comments: string | null;
+  country_name: string | null;
+  currency_code: string;
+  currency_symbol: string;
+  region_name: string | null;
+  created_datetime: string;
+  rid?: string;
+  account_rid?: string;
+  fiscal_year?: number;
+  project_fiscal_rid?: string;
+  ProjectFiscal: ProjectFiscalSummary[];
+  _level?: number;
+  currency_rid?: string;
+};
+
+export type ProjectFiscalSummary = {
+  account_status_name?: string;
+  project_code: string;
+  project_group: string | null;
+  project_name: string | null;
+  project_type: string;
+  fiscal_year: number;
+  project_client_group: string | null;
+  account_name: string;
+  qre: string | null;
+  classification_name: string | null;
+  total_effort: number | null;
+  total_cost: number | null;
+  total_cost_fte: number | null;
+  total_cost_subcon: number | null;
+  total_cost_nonlabor: number | null;
+  assessment_status: string | null;
+  qre_final: string | null;
+  project_point_of_contact: string | null;
+  technical_point_of_contact: string | null;
+  comments: string | null;
+  modified_datetime: string;
+  project_rid: string;
+  created_datetime: string;
+  project_fiscal_rid: string;
+  rid: string;
+};

@@ -9,6 +9,7 @@ import {
 } from '../../../../types';
 import { ResourceTabs } from '../resources/resources';
 import { getTimesheetFilterFields } from './helpers';
+import { getTimesheetProjectTabFilterFields } from './timesheet-details-tab/project-tab/project-tab-filters';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -81,7 +82,10 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   );
 
   // API Hooks
-  const fileId = searchParams.get('file_id');
+  const fileId = searchParams.get('timesheet_id');
+  const tabName = searchParams.get('tab');
+  const isProjectTab = tabName === 'timesheet_project';
+
   const viewDetails = !!fileId;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const { data, isLoading, isError } = useTimesheetList(
@@ -149,13 +153,13 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     setRefreshTimesheet(Date.now());
   };
   const handleBackClick = () => {
-    searchParams.delete('file_id');
+    searchParams.delete('timesheet_id');
     searchParams.delete('tab');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
   const handleDocument = (rowId: string) => {
     if (rowId) {
-      searchParams.set('file_id', rowId);
+      searchParams.set('timesheet_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -188,6 +192,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     fiscalYears,
     permissionMap
   );
+  const timesheetProjectTabFilterFields = getTimesheetProjectTabFilterFields(
+    fiscalYears,
+    // permissionMap
+  );
+  const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
   const timesheetColumns = getTimesheetListColumns(
     handleDocument,
@@ -201,8 +210,8 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={TimesheetTabs}
-        filterMenu={timesheetFilterFields}
-        filterVisibility={viewDetails ? false : true}
+        filterMenu={isProjectTab ? timesheetProjectTabFilterFields : timesheetFilterFields}
+       filterVisibility={!viewDetails || isProjectTab}
         showFilter={showFilter}
         contextKey='timesheet'
         appliedFilters={appliedFilters}
@@ -212,11 +221,12 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={viewDetails ? false : true}
+        showRefresh={!showUploads || !viewDetails || isProjectTab}
         onRefreshClick={onRefreshClick}
       />
       {viewDetails ? (
-        <TimesheetDetails handleBackClick={handleBackClick} />
+        <TimesheetDetails handleBackClick={handleBackClick} setExportType={setExportType}  onRefreshClick={refreshTimesheet}/>
+
       ) : (
         <>
           <SectionHeader

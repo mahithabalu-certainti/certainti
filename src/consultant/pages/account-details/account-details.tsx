@@ -208,7 +208,9 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
-      searchParams.get('list') !== 'timesheet'
+      searchParams.get('list') !== 'timesheet' &&
+      searchParams.get('tab') !== 'timesheet_project' 
+
     ) {
       return;
     }
@@ -273,7 +275,10 @@ export const AccountDetails = () => {
           entity: { equals: 'project_task' },
         },
       });
-    } else if (exportType === 'financial_resource_cost') {
+    } else if (exportType === 'timesheet_project') {
+      console.log("Timesheet Prject export")
+    }
+    else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
@@ -371,8 +376,10 @@ export const AccountDetails = () => {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
       return !isFinancialProjectCostExportEnable;
-    } else if (list === 'timesheet') {
+    } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project') {
+      return false;
     } else {
       return true;
     }
