@@ -445,7 +445,7 @@ class InteractionSchemaService {
         created_by,
         created_datetime,
       } = interactionDetails.dataValues;
-      const metainfo = await this.insetAdditionalInfo(
+      const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
         accountNumber
       );
@@ -525,7 +525,7 @@ class InteractionSchemaService {
     }
   }
 
-  async insetAdditionalInfo(interactionDetails: any, accountNumber: string) {
+  async insertAdditionalInfo(interactionDetails: any, accountNumber: string) {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
@@ -564,7 +564,7 @@ class InteractionSchemaService {
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
       if (interactionDetails?.dataValues?.rid) {
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
         const result = await this.orgDbSequelize.query(
           `SELECT project_code, project_name FROM ${schemaName}.project WHERE rid = :id`,
           {
