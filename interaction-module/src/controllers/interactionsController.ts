@@ -927,6 +927,64 @@ async function listInteractionHistory (req : Request, res : Response) {
     return;
   }
 }
+async function fetchInteractionAttachments(req : Request, res : Response) {
+  const methodName = "fetchInteractionAttachments"
+  try {
+    console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    console.log(`[${methodName}] userId:`, userId);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.listInteractionAttachments(data);
+    if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+      let finalData = {
+        page : result.page,
+        limit : result.limit,
+        totalRecords : result.totalRecords,
+        data : result.attachments
+      }
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.interactionAttachmentFetched,
+        data : finalData
+      })
+    } else {
+      let finalData = {
+        page : result.page,
+        limit : result.limit,
+        totalRecords : result.totalRecords,
+        data : result.attachments
+      }
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : finalData
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
 
 
@@ -948,5 +1006,6 @@ export default {
   sendInteraction,
   uploadAttachmentToAzure,
   deleteAttachmentFromAzure,
-  listInteractionHistory
+  listInteractionHistory,
+  fetchInteractionAttachments
 };

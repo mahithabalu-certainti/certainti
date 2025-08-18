@@ -490,3 +490,57 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     return query;
 }
 
+export const listAttachments = (page : number, limit : number, interaction_rid : string, schemaName : string) => {
+    let offset = (page - 1) * limit
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+
+    let query =
+    `WITH fetch_latest_attachments AS (
+    SELECT iah.rid
+    FROM
+    ${schemaName}.interaction_response_history iah
+    WHERE
+    iah.interaction_rid = '${interaction_rid}'
+    ORDER BY iah.created_datetime DESC
+    ),
+    fetch_attachments AS (
+        SELECT 
+            ia.rid, ii.r_number, ia.attachment_name,
+            ia.attachment_type, ia.attachment_size,
+            ia.attachment_url, ia.created_datetime, 
+            ia.created_by, COUNT(*) OVER() AS total_records,
+            ia.interaction_version
+        FROM
+        ${schemaName}.interactions i
+        LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
+		LEFT JOIN ${schemaName}.interaction_attachments ia ON ia.interaction_item_rid = ii.rid
+        LEFT JOIN fetch_latest_attachments fla ON 
+        fla.rid = ia.interaction_response_rid
+        WHERE
+        ia.interaction_rid = '${interaction_rid}'
+        AND
+        ia.interaction_response_rid IN (fla.rid)
+    ),
+    paginated_data AS (
+    SELECT * FROM fetch_attachments ${pagination}
+    )
+    SELECT 
+    array_agg(jsonb_build_object(
+    'rid', i.rid,
+    'question_rnumber', i.r_number,
+    'name', i.attachment_name,
+    'type', i.attachment_type,
+    'size', i.attachment_size,
+    'created_by', i.created_by,
+    'uploaded_date', i.created_datetime,
+    'total_records', i.total_records,
+    'version', i.interaction_version,
+    'download_link', i.attachment_url
+    )) AS attachments
+    FROM
+    paginated_data i 
+    `
+
+    return query;
+}
+

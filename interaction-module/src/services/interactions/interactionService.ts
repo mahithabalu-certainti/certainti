@@ -11,7 +11,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,inter
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 
 type filterType = {
         [key : string] : {
@@ -848,6 +848,43 @@ export class InteractionService {
       statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
       data : response
     };
+    }
+  }
+  async listInteractionAttachments (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+    const result : any = await orgDb.query(listAttachments(data.page, data.limit, data.interaction_rid, schemaName))
+    if(result[0][0].attachments !== null) {
+      let responseData = result[0][0].attachments
+      const createdByIds = [...new Set(responseData.map((d : any) => d.created_by))]
+      const fetchUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
+      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name}, ${d.last_name}`]))
+
+      responseData = await Promise.all(responseData.map(async (d : any) => {
+        return {
+          ...d,
+          uploaded_by : mapUsers.get(d.created_by)
+        }
+      })
+    )
+      return {
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        page : data.page,
+        limit : data.limit,
+        totalRecords : responseData[0].total_records,
+        attachments : responseData
+      }
+    } else {
+      return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        page : data.page,
+        limit : data.limit,
+        totalRecords : 0,
+        attachments : []
+      }
     }
   }
 }

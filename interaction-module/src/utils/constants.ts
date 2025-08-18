@@ -186,7 +186,8 @@ export const STATUS_MESSAGE = {
   interactionFetchedSuccess : "Interactions fetched successfully",
   dataNotFound : "Data not found",
   historyResponseFetched : "Interaction Response history fetched successfully",
-  interactionHistoryFetched : "Interaction history fetched successfully"
+  interactionHistoryFetched : "Interaction history fetched successfully",
+  interactionAttachmentFetched : "Interaction attachments fetched successfully"
 };
 
 export const rawQueries = {

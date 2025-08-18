@@ -113,4 +113,11 @@ export interface IInteractionService {
     statusCodeValue : string,
     data : any
   }>
+  listInteractionAttachments(data : any) : Promise<{
+    statusCodeValue : string,
+    page : number,
+    limit : number,
+    totalRecords : number,
+    attachments : any
+  }>
 }
