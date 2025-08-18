@@ -676,6 +676,12 @@ export interface IProjectTaskIngestionService {
     errorMessage?: string;
     data?: { projectTask: any };
   }>;
+  getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }>;
 }
 export interface IProjectTaskService {
   listProjectTasks(
