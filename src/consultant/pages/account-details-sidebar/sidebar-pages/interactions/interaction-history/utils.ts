@@ -36,8 +36,8 @@ export const getValueOrDefault = (
 };
 
 export const transformInteractionHistoryData = (
-  interactionHistory: InteractionHistoryData,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  interactionHistory: InteractionHistoryData
+  // permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
   const interactionHistoryData = interactionHistory?.data;
 
@@ -47,16 +47,16 @@ export const transformInteractionHistoryData = (
         {
           label: 'Interaction ID',
           value: getValueOrDefault(interactionHistoryData?.interaction_rnumber),
-          hide:
-            !permissionMap?.['interaction_code']?.read &&
-            !permissionMap?.['interaction_code']?.edit,
+          // hide:
+          //   !permissionMap?.['interaction_code']?.read &&
+          //   !permissionMap?.['interaction_code']?.edit,
         },
         {
           label: 'Type',
           value: `${getValueOrDefault(interactionHistoryData?.response_source)} `,
-          hide:
-            !permissionMap?.['interaction_type']?.read &&
-            !permissionMap?.['interaction_type']?.edit,
+          // hide:
+          //   !permissionMap?.['interaction_type']?.read &&
+          //   !permissionMap?.['interaction_type']?.edit,
         },
       ],
     },
@@ -65,16 +65,16 @@ export const transformInteractionHistoryData = (
         {
           label: 'Project Code',
           value: getValueOrDefault(interactionHistoryData?.project_code),
-          hide:
-            !permissionMap?.['interaction_subject']?.read &&
-            !permissionMap?.['interaction_subject']?.edit,
+          // hide:
+          //   !permissionMap?.['interaction_subject']?.read &&
+          //   !permissionMap?.['interaction_subject']?.edit,
         },
         {
           label: 'Project Name',
           value: getValueOrDefault(interactionHistoryData?.project_name),
-          hide:
-            !permissionMap?.['interaction_priority']?.read &&
-            !permissionMap?.['interaction_priority']?.edit,
+          // hide:
+          //   !permissionMap?.['interaction_priority']?.read &&
+          //   !permissionMap?.['interaction_priority']?.edit,
         },
       ],
     },

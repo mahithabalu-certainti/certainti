@@ -9,14 +9,14 @@ import {
 import { getInteractionHistoryListColumns } from './columns';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { InteractionDetailIcon } from '../../../../../../assets';
-import { InfoSection } from '../../../../../../components';
 import { Box } from '@mui/material';
+import { InfoSection } from '../../../../../../components';
 import { ListTable } from '../../../../../../components/table';
 
 interface InteractionHistoryProps {
   accountInActive: boolean;
   handleBackClick: () => void;
-  projectDetails: NewProjectData | null;
+  projectDetails?: NewProjectData | null;
 }
 
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
@@ -81,7 +81,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     <>
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
-          title='Interaction'
+          title='Interaction History'
           subValue={interactionHistoryData?.data?.interaction_rnumber || ''}
           titleIcon={
             <InteractionDetailIcon

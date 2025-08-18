@@ -30,6 +30,7 @@ import { accountDetailsProps } from '../../../account-details/utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { InteractionHistory } from './interaction-history';
+import { InteractionAttachment } from './interaction-attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -82,8 +83,10 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionAttachmentId = searchParams.get('interaction_attachment_id');
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
+  const viewInteractionAttachment = !!interactionAttachmentId;
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -239,6 +242,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handleBackClick = () => {
     searchParams.delete('interaction_id');
     searchParams.delete('interaction_history_id');
+    searchParams.delete('interaction_attachment_id');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -262,10 +266,18 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const handleViewInteractionAttachment = (interactionAttachmentId: string) => {
+    if (interactionAttachmentId) {
+      searchParams.set('interaction_attachment_id', interactionAttachmentId);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+  };
+
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
-    handleViewInteractionHistory
+    handleViewInteractionHistory,
+    handleViewInteractionAttachment
   );
 
   const filterFields = getInteractionFilterFields(
@@ -303,6 +315,8 @@ const Interactions: React.FC<InteractionsProps> = ({
           handleBackClick={handleBackClick}
           accountInActive={accountInActive}
         />
+      ) : viewInteractionAttachment ? (
+        <InteractionAttachment handleBackClick={handleBackClick} />
       ) : (
         <>
           <SectionHeader
