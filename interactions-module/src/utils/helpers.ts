@@ -4,6 +4,8 @@ import { errorResponse, successResponse } from "./apiResponse";
 import { HttpStatus } from "./constants";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs'
+import { getSecret } from "./azureSecrets";
+import { BlobServiceClient } from "@azure/storage-blob";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -134,4 +136,67 @@ export async function generateExcelBase64(
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString('base64');
+}
+
+export async function uploadToAzureBlob
+(file: Express.Multer.File,account_id:string,project_id:string,interaction_id:string):Promise<{
+  url: string;
+  name: string;
+  extension: string;
+  size: number;
+}> {
+  //const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  const connectionString = 'DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net';
+  const containerName = 'account';
+  
+  const connString =  connectionString;
+  if (!connString) throw new Error('Azure storage connection string is required');
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  await containerClient.createIfNotExists({ access: 'blob' })
+  const blobName = `${account_id}/${project_id}/${interaction_id}/attachements/${file.originalname}`;
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  await blockBlobClient.uploadData(file.buffer, {
+    blobHTTPHeaders: { blobContentType: file.mimetype }
+  });
+  const sizeInMB = parseFloat((file.size / (1024 * 1024)).toFixed(2));
+  const originalExtension = file.originalname.includes('.') 
+      ? file.originalname.substring(file.originalname.lastIndexOf('.'))
+      : '';
+  const baseName = file.originalname.replace(/\.[^/.]+$/, ""); // Remove extension
+  const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ''); // More strict sanitization
+    
+
+   return {
+      url: blockBlobClient.url,
+      name: sanitizedBaseName,
+      extension: originalExtension,
+      size: sizeInMB
+    };
+}
+
+export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
+  if (!blobUrl) return;
+
+  //const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  const connectionString = 'DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net';
+  const containerName = 'account';
+
+  const url = new URL(blobUrl);
+  const blobName = decodeURIComponent(url.pathname.split('/').slice(2).join('/')); 
+  // slice(2) skips the container and empty slash
+  if (!connectionString) {
+    throw new Error('Azure storage connection string is required');
+  }
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+  const exists = await blockBlobClient.exists();
+  if (exists) {
+    await blockBlobClient.delete();
+    console.log(`Blob deleted: ${blobName}`);
+  } else {
+    console.log(`Blob not found: ${blobName}`);
+  }
 }

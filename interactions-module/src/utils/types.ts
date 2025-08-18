@@ -52,9 +52,11 @@ export interface IUpdateInteraction {
 export interface InteractionDetailsResponse {
   account_rid: string;
   project_rid: string;
+  project_name: string;
+  project_code: string;
   fiscal_year: number;
   project_fiscal_rid: string;
-  interaction_number: string;
+  r_number: string;
   interaction_type: string;
   interaction_type_name: string;
   status: string;
@@ -62,6 +64,7 @@ export interface InteractionDetailsResponse {
   modified_by: string;
   modified_datetime: Date | null;
   questions: any[];
+  global_attachments: any[];
   created_by: string;
   created_datetime: Date | null;
 }
@@ -73,12 +76,14 @@ export interface InteractionResponse {
   project_rid: string;
   fiscal_year: number;
   status_rid: string;
+   attachments:any;
   questions: {
     rid: string;
     notes: string;
     response: string;
     action_type: string;
     question_seq_num?: string;
+    attachments:any; // Assuming attachments are stored as an array of strings (URLs or IDs)
   }[];
   created_by: string;
   modified_by?: string;

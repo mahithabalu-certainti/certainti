@@ -423,6 +423,11 @@ class InteractionSchemaService {
       accountNumber,
       interactionRid
     );
+    console.log("Interaction items", interactionItems);
+    const globalAttachments = await this.fetchGlobalAttachmentsByInteractionRid(
+        accountNumber,
+        interactionRid
+      );
 
     if (interactionDetails && interactionDetails.dataValues) {
       // Attach interaction items (questions) to the response
@@ -450,11 +455,13 @@ class InteractionSchemaService {
       );
       console.log(metainfo);
       const response: InteractionDetailsResponse = {
+        project_name: metainfo?.project_name ?? "",
+        project_code: metainfo?.project_code ?? "",
         account_rid,
         project_rid,
         fiscal_year,
         project_fiscal_rid,
-        interaction_number: r_number ?? "",
+        r_number: r_number ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
@@ -465,6 +472,7 @@ class InteractionSchemaService {
         modified_datetime:
           interactionDetails.dataValues.modified_datetime ?? null,
         questions: interactionItems,
+        global_attachments: globalAttachments,
       };
 
       return response;
@@ -677,17 +685,30 @@ class InteractionSchemaService {
     transaction: Transaction
   ) {
     try {
-      const { InteractionResponseHistory } =
+      const { InteractionResponseHistory ,InteractionAttachment} =
         await this.interactionModelService.getModels(accountNumber);
 
       let responseCreated = false;
+       for(const attachment of responseData.attachments) {
+            await InteractionAttachment.create(
+              {
+                interaction_rid: responseData.interaction_rid,
+                interaction_response_rid:"",
+                attachment_url: attachment.fileUrl,
+                attachment_name: attachment.fileName,
+                attachment_size: attachment.fileSize,
+                attachment_type: attachment.fileType,
+              },
+              { transaction }
+            );
+          }
 
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
           const created = await InteractionResponseHistory.create(
             {
               interaction_rid: responseData.interaction_rid,
-              interaction_item_rid: question.rid,
+              interaction_item_rid:   question.rid,
               interaction_response: question.response,
               created_by: userId,
               response_by: userId,
@@ -696,6 +717,20 @@ class InteractionSchemaService {
             },
             { transaction }
           );
+          for(const attachment of question.attachments) {
+            await InteractionAttachment.create(
+              {
+                interaction_rid: responseData.interaction_rid,
+                interaction_response_rid: created.rid,
+                question: question.rid,
+                attachment_url: attachment.fileUrl,
+                attachment_name: attachment.fileName,
+                attachment_size: attachment.fileSize,
+                attachment_type: attachment.fileType,
+              },
+              { transaction }
+            );
+          }
           if (created) responseCreated = true;
         }
       }
@@ -793,14 +828,41 @@ class InteractionSchemaService {
     }
   }
 
+async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionRid: string) {
+  try {
+    const { InteractionAttachment } = await this.interactionModelService.getModels(accountNumber);
+
+    const attachments = await InteractionAttachment.findAll({
+      where: { interaction_rid: interactionRid, question: '' },
+      attributes: [
+        "attachment_url",
+        "attachment_name",
+        "attachment_size",
+        "attachment_type",
+      ],
+    });
+
+    return attachments.map(att => ({
+      fileUrl: att.attachment_url,
+      fileName: att.attachment_name,
+      fileSize: att.attachment_size,
+      fileType: att.attachment_type,
+    }));
+  } catch (err) {
+    throw new Error(
+      "Error fetching global attachments: " + (err as Error).message
+    );
+  }
+}
   /**
    * Fetches interaction items for a given interaction.
    */
   async fetchInteractionItems(accountNumber: string, interactionRid: string) {
     try {
-      const { InteractionItem, InteractionResponseHistory } =
+      const { InteractionItem, InteractionResponseHistory,InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
-
+        // Convert Sequelize instances to plain objects
+        
       const items = await InteractionItem.findAll({
         attributes: [
           "rid",
@@ -812,17 +874,49 @@ class InteractionSchemaService {
         ],
         where: { interaction_rid: interactionRid },
       });
+      const plainItems = items.map(item => item.get({ plain: true }));
+   //   const { InteractionAttachment, InteractionResponseHistory } = await this.interactionModelService.getModels(accountNumber);
 
-      for (const item of items) {
+      for (const item of plainItems) {
+        // Fetch attachments for each question
+        const attachments = await InteractionAttachment.findAll({
+          where: { question: item.rid },
+          attributes: [
+        "attachment_url",
+        "attachment_name",
+        "attachment_size",
+        "attachment_type",
+          ],
+        });
+        const attachmentsList = attachments.map(item => item.get({ plain: true }));
+        (item as any).attachments = Array.isArray(attachmentsList) ? attachmentsList.map((att: any) => ({
+          fileUrl:  att?.attachment_url ?? "",
+          fileName: att?.attachment_name ?? "",
+          fileSize: att?.attachment_size ?? "",
+          fileType: att?.attachment_type ?? "",
+        })) : [];
+
+       
+        // Fetch latest response history for each question
         const response = await InteractionResponseHistory.findOne({
-          where: { interaction_item_rid: item.dataValues.rid },
+          where: { interaction_item_rid: item.rid },
           order: [["response_on", "DESC"]],
         });
-        item.dataValues.response =
+        item.response =
           response && typeof response.interaction_response === "string"
-            ? response.interaction_response
-            : "";
+        ? response.interaction_response
+        : "";
       }
+      // for (const item of items) {
+      //   const response = await InteractionResponseHistory.findOne({
+      //     where: { interaction_item_rid: item.dataValues.rid },
+      //     order: [["response_on", "DESC"]],
+      //   });
+      //   item.dataValues.response =
+      //     response && typeof response.interaction_response === "string"
+      //       ? response.interaction_response
+      //       : "";
+      // }
       return items;
     } catch (err) {
       throw new Error(
@@ -831,12 +925,12 @@ class InteractionSchemaService {
     }
   }
 
-  async fetchInteractionQuestionsById(
+async fetchInteractionQuestionsById(
     accountNumber: string,
     interactionRid: string
   ) {
     try {
-      const { InteractionItem } = await this.interactionModelService.getModels(
+      const { InteractionItem,InteractionResponseHistory } = await this.interactionModelService.getModels(
         accountNumber
       );
 
@@ -851,9 +945,6 @@ class InteractionSchemaService {
         ],
         where: { interaction_rid: interactionRid },
       });
-
-      const { InteractionResponseHistory } =
-        await this.interactionModelService.getModels(accountNumber);
 
       for (const item of items) {
         // Check if there is at least one response for this item
