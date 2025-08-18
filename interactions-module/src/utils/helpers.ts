@@ -145,8 +145,7 @@ export async function uploadToAzureBlob
   extension: string;
   size: number;
 }> {
-  //const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  const connectionString = 'DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net';
+  const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
   const containerName = 'account';
   
   const connString =  connectionString;
@@ -178,8 +177,7 @@ export async function uploadToAzureBlob
 export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   if (!blobUrl) return;
 
-  //const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  const connectionString = 'DefaultEndpointsProtocol=https;AccountName=developmentthinkrd365sto;AccountKey=bA+y4AkC+tAFPmkvHmZP468ljeSGO/ZU4pzydMPqGbqUx5/DA/mhL37NZW/LE5ERO7CiIWmkfbYo+AStkr1jgg==;EndpointSuffix=core.windows.net';
+  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
   const containerName = 'account';
 
   const url = new URL(blobUrl);
