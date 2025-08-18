@@ -86,4 +86,14 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionQuestions: any };
   }>;
+  sendInteraction(
+    interactionRid: string[],
+    accountId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionResponse: any };
+  }>;
 }

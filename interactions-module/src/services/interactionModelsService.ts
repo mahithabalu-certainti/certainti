@@ -12,6 +12,7 @@ import { InteractionResponseHistory } from "../models/interactionResponseHistory
 
 import { Otp } from "../models/otp";
 import { OtpHistory } from "../models/otpHistory";
+import { InteractionAttachment } from "../models/interactionAttachment";
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
   mainDbSequelize: Sequelize | null = null;
@@ -90,6 +91,10 @@ export class InteractionModelService {
       sequelize,
       schemaName
     )
+    const InteractionAttachmentModel = InteractionAttachment.initialize(
+      sequelize,
+      schemaName
+    );
 
     const models = {
       Interaction: InteractionModel,
@@ -100,7 +105,8 @@ export class InteractionModelService {
       InteractionType: InteractionTypeModel,
       InteractionSummary: InteractionSummaryModel,
       Otp: OtpModel,
-      OtpHistory: OtpHistoryModel
+      OtpHistory: OtpHistoryModel,
+      InteractionAttachment: InteractionAttachmentModel
     };
 
     this.modelCache.set(schemaName, models);

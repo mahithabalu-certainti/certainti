@@ -381,6 +381,105 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+
+  async sendInteraction(
+    interactionRid: string[],
+    accountRid: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionResponse: any };
+  }> {
+    try {
+      const interactionResponse: any[] = [];
+       const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountRid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      // for (const rid of interactionRid) {
+      //   const interactionItems = await this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber,rid);
+      // }
+     /* for (const rid of interactionRid) {
+        const interactionItems = await this.interactionSchemaService.fetchInteractionItemsById(rid);
+        const latestResponses = await this.interactionSchemaService.fetchLatestResponsesByInteractionId(rid);
+
+        const csvRows: string[] = [];
+        csvRows.push("Item,Latest Response");
+
+        for (const item of interactionItems) {
+          const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
+          csvRows.push(`"${item.name}","${response ? response.value : ""}"`);
+        }
+
+        const csvContent = csvRows.join('\n');
+        const interactionDetails = await this.interactionSchemaService.fetchInteractionDetailsById(undefined, rid);
+        if (!interactionDetails) continue;
+
+        // Assuming sendEmailWithAttachment is a method to send email with attachment
+        await this.interactionSchemaService.sendEmailWithAttachment(
+          interactionDetails,
+          userId,
+          {
+            filename: `interaction_${rid}.csv`,
+            content: csvContent,
+            contentType: 'text/csv'
+          }
+        );
+
+        interactionResponse.push({
+          interactionRid: rid,
+          csvSent: true
+        });
+      }
+  //  const interactionResponse = [];
+  /*  for (const rid of interactionRid) {
+      const interactionResponse: any[] = [];
+      const interactionItems = await this.interactionSchemaService.fetchInteractionItemsById(rid);
+      const latestResponses = await this.interactionSchemaService.fetchLatestResponsesByInteractionId(rid);
+
+      const csvRows: string[] = [];
+      csvRows.push("Item,Latest Response");
+
+      for (const item of interactionItems) {
+        const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
+        csvRows.push(`"${item.name}","${response ? response.value : ""}"`);
+      }
+
+      // You can write csvRows.join('\n') to a file or return as needed
+      interactionResponse.push({
+        interactionRid: rid,
+        csv: csvRows.join('\n')
+      });
+      const interactionDetails = await this.interactionSchemaService.fetchInteractionDetailsById(undefined, rid);
+      if (!interactionDetails) continue;
+      // Assuming sendEmail is a method to send email for an interaction
+      // const emailResult = await this.interactionSchemaService.sendEmail(interactionDetails, userId);
+      // interactionResponse.push({
+      //   interactionRid: rid,
+      //   emailStatus: emailResult?.status || "sent",
+      //   message: emailResult?.message || "Email sent successfully"
+      // });
+    }
+    */  
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          interactionResponse:null,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   /**
    * Formats an error response to be returned from service methods.
    *

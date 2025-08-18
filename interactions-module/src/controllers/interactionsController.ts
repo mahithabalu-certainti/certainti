@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import {
+  deleteFromAzureBlob,
   errorLog,
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
+  uploadToAzureBlob,
   validateRequest,
 } from "../utils/helpers";
 import configurations from "../config/config";
@@ -659,6 +661,171 @@ async function exportResponseHistory (req : Request, res : Response) {
   }
 }
 
+async function sendInteraction(req: Request, res: Response): Promise<void> {
+  const methodName = "Send interaction";
+  try {
+    console.log(`[${methodName}] Request received`);
+  //  const value = await validateRequest(req, sendInteractionSchema, res);
+    const value = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    console.log(`[${methodName}] userId:`, userId);
+    console.log(`[${methodName}] request body:`, JSON.stringify(value));
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = {
+      statusCode: HttpStatus.SUCCESS,
+      data: { message: " interaction sent successfully" },
+      errorMessage: ""
+    };
+    // const interaction = await interactionService.sendInteraction(
+    //   value,
+    //   userId
+    // );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
+      handleSuccessResponse(res, interaction.data);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      console.log(`[${methodName}] Error:`, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function uploadAttachmentToAzure(req: Request, res: Response): Promise<void> {
+  const methodName = "Upload attachment to Azure";
+  try {
+    console.log(`[${methodName}] Request received`);
+  //  const value = await validateRequest(req, sendInteractionSchema, res)
+    const userId = req.headers["x-user-id"] as string;
+    let value = req.body;
+    console.log(`[${methodName}] userId:`, userId);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+   if( req.file)
+   {
+      let fileInfo = await uploadToAzureBlob(req.file, value?.account_rid,value?.project_rid,value?.interaction_rid);
+      handleSuccessResponse(res, {
+      fileName: fileInfo.name,
+      fileSize: fileInfo.size,
+      fileType: fileInfo.extension,
+      fileUrl: fileInfo.url
+    });
+    return;
+  } else {
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      "No file uploaded"
+    );
+    return;
+  }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<void> {
+  const methodName = "Delete attachment from Azure";
+  try {
+    console.log(`[${methodName}] Request received`);
+  //  const value = await validateRequest(req, sendInteractionSchema, res)
+    const userId = req.headers["x-user-id"] as string;
+    let value = req.body;
+    console.log(`[${methodName}] userId:`, userId);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+   if( req.file)
+   {
+      let deleted = await deleteFromAzureBlob(value.file_url);
+      handleSuccessResponse(res,deleted);
+    return;
+  } else {
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      "No file uploaded"
+    );
+    return;
+  }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
+
 export default {
   listAllInteractionPrjAcc,
   exportAllInteractions,
@@ -673,5 +840,8 @@ export default {
   getInteractionTypes,
   getInteractionSource,
   getInteractionDetailsById,
-  getInteractionQuestionsById
+  getInteractionQuestionsById,
+  sendInteraction,
+  uploadAttachmentToAzure,
+  deleteAttachmentFromAzure
 };

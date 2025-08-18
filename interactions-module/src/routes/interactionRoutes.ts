@@ -2,6 +2,7 @@ import { Router } from "express";
 import controller from "../controllers";
 
 import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
+import multer from "multer";
 
 const routes: Router = Router();
 
@@ -52,6 +53,18 @@ routes.post('/globalList', controller.interactionsController.listOutAllInteracti
 routes.post('/globalList/export', controller.interactionsController.exportAllInteractionSummary)
 routes.post('/responseHistory/list', controller.interactionsController.listResponseHistory)
 routes.post('/responseHistory/export', controller.interactionsController.exportResponseHistory)
+const upload = multer(); // You can configure storage if needed
 
+routes.post(
+  "/uploadAttachment",
+  checkUserStatusMiddleware("NA"),
+  upload.single("file"), // 'file' is the field name for the uploaded file
+  controller.interactionsController.uploadAttachmentToAzure
+);
+routes.delete(
+  "/deleteAttachment",
+  checkUserStatusMiddleware("NA"),
+  controller.interactionsController.deleteAttachmentFromAzure
+);
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);
 export default routes;

@@ -59,6 +59,14 @@ const updateInteractionResponseSchema = Joi.object({
         rid: Joi.string().pattern(uuidRegex).allow(null, ""),
         question: Joi.string().max(255).required(),
         response: Joi.string().max(1000).allow(""),
+        attachments: Joi.array().items(
+          Joi.object({
+            fileName: Joi.string().max(255).required(),
+            fileSize: Joi.number().required(),
+            fileType: Joi.string().max(20).required(),
+            fileUrl: Joi.string().uri().required(),
+          })
+        ).required(),
       })
     )
     .min(1)
