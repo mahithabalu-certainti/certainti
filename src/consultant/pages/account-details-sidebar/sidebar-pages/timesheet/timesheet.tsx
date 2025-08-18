@@ -225,7 +225,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
             showItemCount={true}
             titleIcon={
               <TimeSheetIcon
-                className='[&>path]:stroke-white'
+                className='[&>path]:stroke-white w-[14px] h-[14px]'
                 alt='Timesheet-header-icon'
               />
             }

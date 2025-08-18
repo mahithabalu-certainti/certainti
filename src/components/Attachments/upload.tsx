@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Attachment, UploadIcon } from '../../assets';
+import { AttachmentsSideIcon, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
@@ -186,7 +186,9 @@ const Uploads: React.FC<UploadsProps> = ({
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-1'>
-          <Attachment alt='Import Icon' className='w-6 h-6' />
+          <div className='w-[24px] h-[24px] flex items-center justify-center bg-[#D8E9FF] rounded-full'>
+            <AttachmentsSideIcon alt='Import Icon' className='[&>path]:stroke-[#4B9BFF]' />
+          </div>
           <span className='text-[13px] text-[#2D3E4F] font-semibold'>
             Attachments
           </span>

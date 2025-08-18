@@ -5,7 +5,7 @@ import {
   useGetImportEntityTypes,
 } from '../../../../../../common-service';
 import { uploadImportFile } from '../../../../../services/import';
-import { ImportIcon, UploadIcon } from '../../../../../../assets';
+import { ImportsIcon, UploadIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import {
   ButtonDropdown,
@@ -251,7 +251,14 @@ const ImportFile: React.FC<ImportFileProps> = ({
     <div className='h-auto border border-[#CBD6E2] flex flex-col rounded-tr-[2px] rounded-tl-[2px] '>
       <SectionHeader
         title='Imports'
-        titleIcon={<ImportIcon alt='Imports-upload-icon' />}
+        titleIcon={
+          <ImportsIcon
+            className='[&>path]:stroke-white'
+            alt='Imports-header-icon'
+          />
+        }
+        iconBg='#af78ff'
+        bgType='circle'
         className='border-b border-[#CBD6E2] h-[40px]'
         buttons={headerButtons}
       />
