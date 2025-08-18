@@ -722,7 +722,7 @@ class InteractionSchemaService {
               {
                 interaction_rid: responseData.interaction_rid,
                 interaction_response_rid: created.rid,
-                question: question.rid,
+                interaction_item_rid: question.rid,
                 attachment_url: attachment.fileUrl,
                 attachment_name: attachment.fileName,
                 attachment_size: attachment.fileSize,
@@ -833,7 +833,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
     const { InteractionAttachment } = await this.interactionModelService.getModels(accountNumber);
 
     const attachments = await InteractionAttachment.findAll({
-      where: { interaction_rid: interactionRid, question: '' },
+      where: { interaction_rid: interactionRid, interaction_item_rid: '' },
       attributes: [
         "attachment_url",
         "attachment_name",
@@ -880,7 +880,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
       for (const item of plainItems) {
         // Fetch attachments for each question
         const attachments = await InteractionAttachment.findAll({
-          where: { question: item.rid },
+          where: { interaction_item_rid: item.rid },
           attributes: [
         "attachment_url",
         "attachment_name",

@@ -9,7 +9,7 @@ interface InteractionAttachmentAttributes {
   modified_datetime?: Date;
   interaction_rid: string;
   interaction_response_rid:string;
-  question?: string;
+  interaction_item_rid?: string;
   attachment_name: string;
   attachment_type?: string;
   attachment_size?: number;
@@ -26,7 +26,7 @@ export class InteractionAttachment extends Model<InteractionAttachmentAttributes
   public modified_datetime?: Date;
   public interaction_rid!: string;
   public interaction_response_rid!: string;
-  public question?: string;
+  public interaction_item_rid?: string;
   public attachment_name!: string;
   public attachment_type?: string;
   public attachment_size?: number;
@@ -47,7 +47,7 @@ export class InteractionAttachment extends Model<InteractionAttachmentAttributes
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         interaction_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_response_rid: { type: DataTypes.STRING(50), allowNull: false },
-        question: { type: DataTypes.TEXT, allowNull: true },
+        interaction_item_rid: { type: DataTypes.TEXT, allowNull: true },
         attachment_url: { type: DataTypes.STRING(255), allowNull: false },
         attachment_name: { type: DataTypes.STRING(255), allowNull: false },
         attachment_type: { type: DataTypes.STRING(50), allowNull: true },
