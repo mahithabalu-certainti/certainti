@@ -14,6 +14,8 @@ export interface OtpAttributes {
   otp: string;
   is_verified: boolean;
   expires_at: Date;
+  otp_attempt_count: number;
+  otp_block_until?: Date | null;
 }
 
 export interface OtpCreationAttributes extends Optional<OtpAttributes, "rid"> {}
@@ -35,6 +37,9 @@ export class Otp
   public is_verified!: boolean;
   public expires_at!: Date;
 
+  public otp_attempt_count!: number;
+  public otp_block_until?: Date | null;;
+
   static initialize(sequelize: Sequelize, schemaName: string) {
     return Otp.init(
       {
@@ -52,13 +57,22 @@ export class Otp
         email: { type: DataTypes.STRING(120), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_rid: { type: DataTypes.STRING(100), allowNull: false },
-        otp: { type: DataTypes.STRING(50), allowNull: false },
+        otp: { type: DataTypes.STRING(100), allowNull: false },
         is_verified: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: false,
         },
         expires_at: { type: DataTypes.DATE, allowNull: false },
+        otp_attempt_count: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          defaultValue: 0,
+        },
+        otp_block_until: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
       },
       {
         sequelize,
