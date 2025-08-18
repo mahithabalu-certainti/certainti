@@ -5,11 +5,27 @@ import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../uti
 import { fetchImportListByRid, listAllImportedDatasQuery, listAllStageFailures,listAllLoadFailures } from "../utils/rawQueries";
 import { setInlineForImports } from "../utils/helpers";
 import { generateSasUrl } from "../utils/blob";
+import { ProjectService } from "./projectService";
+import { ResourceService } from "./resourceServices";
+import { ProjectTaskService } from "./projectTaskService";
+import { Logger } from "winston";
+import { raw } from "express";
 
 
 export default class ImportGraphqlServices {
       private orgSequelize: Sequelize | null = null;
       private mainDbSequelize: Sequelize | null = null;
+      private projectService: ProjectService;
+      private resourceService: ResourceService;
+      private projectTaskService: ProjectTaskService;
+      private logger: Logger;
+
+      constructor(logger: Logger) {
+        this.logger = logger;
+        this.projectService = new ProjectService(logger);
+        this.resourceService = new ResourceService();
+        this.projectTaskService = new ProjectTaskService(logger);
+      }
     
       private async getOrgSequelize(): Promise<Sequelize> {
         if (!this.orgSequelize) {
@@ -37,7 +53,7 @@ export default class ImportGraphqlServices {
           delete filters.imported_by;
         }
         const result = await orgSequelize.query(listAllImportedDatasQuery(page, limit, sort, sortBy, account_rid, filters, schemaName, disablePagination, fiscal_year))
-        if(result[0].length > 0) {
+       if(result[0].length > 0) {
             return {
                 statusCode : HttpStatus.SUCCESS,
                 data : result[0]
@@ -160,6 +176,224 @@ export default class ImportGraphqlServices {
           statusMessage : STATUS_MESSAGE.importUpdatedSuccess,
           data : latestUpdatedData.data
         }
+      }
+    }
+
+    async fetchAccountLevelImportedProjects(
+      accountId: string,
+      fiscalYear: number = 0,
+      page: number = 1,
+      limit: number = 10,
+      search: string,
+      filters: Record<string, any> = {},
+      sortBy: string = "created_datetime",
+      sortOrder: string = "ASC",
+      bothParentAndChild: boolean = false,
+      userId: string,
+      documentRid: string
+    ): Promise<{
+      statusCode: number;
+      message: string;
+      errorMessage?: string;
+      data?: { projects: any; totalCount: number };
+    }> {
+      try {
+      const mainDb = await this.getMainDbSequelize();
+      const orgDb = await this.getOrgSequelize();
+
+      const fetchAccountDetails: any = await mainDb.query(
+        await rawQueries.fetchParentAccount(accountId, mainDb)
+      );
+      let schemaName = rawQueries.fetchSchemaName(fetchAccountDetails[0][0].r_number);
+      let entityRids: string[] = [];
+      if (documentRid) {
+        const [timelineResult]: any = await orgDb.query(
+        rawQueries.fetchProjectTimelineByDocumentRid(schemaName),
+        { replacements: [documentRid] }
+        );
+        if (timelineResult.length > 0) {
+        entityRids = timelineResult.map((row: any) => row.entity_rid);
+        }
+      }
+
+      const fetchedProjects = await this.projectService.projectList(
+        accountId,
+        fiscalYear,
+        page,
+        limit,
+        search,
+        filters,
+        sortBy,
+        sortOrder,
+        bothParentAndChild,
+        userId
+      );
+      let projects =
+        fetchedProjects.statusCode === HttpStatus.SUCCESS &&
+        fetchedProjects.data &&
+        fetchedProjects.data.projects
+        ? fetchedProjects.data.projects
+        : [];
+
+        console.log("Entity RIDs:", entityRids);  // Log the entityRids for debugging 
+
+      if (entityRids.length > 0) {
+        console.log("Filtering projects based on ProjectFiscal.rid");
+        
+        projects = projects
+          .filter((project: any) => {
+            // Check if project has ProjectFiscal array
+            if (!project.ProjectFiscal || !Array.isArray(project.ProjectFiscal)) {
+              console.log(`Project ${project.rid} has no ProjectFiscal data`);
+              return false;
+            }
+            
+            // Check if any ProjectFiscal.rid matches entityRids
+            const hasMatch = project.ProjectFiscal.some((fiscal: any) => 
+              entityRids.includes(fiscal.rid)
+            );
+            
+            console.log(`Project ${project.rid} match: ${hasMatch}`);
+            return hasMatch;
+          })
+          .map((project: any) => {
+            console.log('Processing project:', project.rid);
+            return {  
+              ...project,
+              document_rid: documentRid
+            };
+          });
+
+        console.log(`Filtered projects count: ${projects.length}`);
+      }
+
+      if (projects.length > 0) {
+        return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Projects fetched successfully",
+        data: { projects, totalCount: projects.length }
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: "No projects found",
+        data: { projects: [], totalCount: 0 }
+      };
+      } catch (error) {
+      this.logger.error("Error in fetchAccountLevelImportedProjects:", error);
+      console.error("Error in fetchAccountLevelImportedProjects:", error);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Failed to fetch projects",
+        errorMessage: error instanceof Error ? error.message : String(error),
+        data: { projects: [], totalCount: 0 }
+      };
+      }
+    }
+
+    async fetchAccountLevelImportedResources(
+    accountId: string,  
+    page: number = 1,
+    limit: number = 10,
+    search: string,
+    filters: Record<string, string> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    documentRid: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any; count: number };
+  }> {
+      try {
+      const mainDb = await this.getMainDbSequelize();
+      const orgDb = await this.getOrgSequelize();
+
+      const fetchAccountDetails: any = await mainDb.query(
+        await rawQueries.fetchParentAccount(accountId, mainDb)
+      );
+      let schemaName = rawQueries.fetchSchemaName(fetchAccountDetails[0][0].r_number);
+      let entityRids: string[] = [];
+      if (documentRid) {
+        const [timelineResult]: any = await orgDb.query(
+        rawQueries.fetchResourceTimelineByDocumentRid(schemaName),
+        { replacements: [documentRid] }
+        );
+        if (timelineResult.length > 0) {
+        entityRids = timelineResult.map((row: any) => row.entity_rid);
+        }
+      }
+
+      const fetchGivenAccountDetails: any = await mainDb.query(
+        await rawQueries.fetchAccountDetailsByRid(accountId)
+      );
+
+      const fetchedResources = await this.resourceService.resourcesList(
+        fetchGivenAccountDetails[0][0].r_number,
+        page,
+        limit,
+        search,
+        filters,
+        sortBy,
+        sortOrder,
+      );
+      let resources =
+        fetchedResources.statusCode === HttpStatus.SUCCESS &&
+        fetchedResources.data &&
+        fetchedResources.data.resources
+        ? fetchedResources.data.resources
+        : [];
+
+        console.log("Entity RIDs:", entityRids);  // Log the entityRids for debugging 
+
+      if (entityRids.length > 0) {
+        console.log("Filtering resources based on resources.rid");
+        
+        resources = resources
+          .filter((resource: any) => {
+            
+            // Check if any resources.rid matches entityRids
+            const hasMatch = entityRids.includes(resource.rid);
+          
+            
+            console.log(`Resource ${resource.rid} match: ${hasMatch}`);
+            return hasMatch;
+          })
+          .map((resource: any) => {
+            console.log('Processing resource:', resource.rid);
+            return {  
+              ...resource,
+              document_rid: documentRid
+            };
+          });
+
+        console.log(`Filtered resources count: ${resources.length}`);
+      }
+
+      if (resources.length > 0) {
+        return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Resources fetched successfully",
+        data: { resources, count: resources.length }
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: "No resources found",
+        data: { resources: [], count: 0 }
+      };
+      } catch (error) {
+      this.logger.error("Error in fetchAccountLevelImportedResources:", error);
+      console.error("Error in fetchAccountLevelImportedResources:", error);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Failed to fetch resources",
+        errorMessage: error instanceof Error ? error.message : String(error),
+        data: { resources: [], count: 0 }
+      };
       }
     }
 }

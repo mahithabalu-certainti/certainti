@@ -169,6 +169,11 @@ export const rawQueries = {
       WHERE a.rid = ad.parent_account_rid`;
     }
   },
+  async fetchAccountDetailsByRid(
+    accountRid: string) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+  },
   findProject(schemaName: string, projectRid: string, accountRid: string) {
     return `
             SELECT * FROM ${schemaName}.project p WHERE rid = '${projectRid}' AND account_rid = '${accountRid}' 
@@ -644,6 +649,12 @@ export const rawQueries = {
   },
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
+  },
+  fetchProjectTimelineByDocumentRid(schemaName: string) {
+    return `SELECT entity_rid FROM ${schemaName}.project_timeline WHERE document_rid = ?`;
+  },
+  fetchResourceTimelineByDocumentRid(schemaName: string) {
+    return `SELECT entity_rid FROM ${schemaName}.resources_timeline WHERE document_rid = ?`;
   },
   GET_ACCOUNT_ACCESS: `
 (
