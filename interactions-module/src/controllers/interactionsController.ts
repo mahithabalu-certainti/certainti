@@ -425,7 +425,20 @@ async function getInteractionSource(
 
 async function listAllInteractionPrjAcc (req : Request, res : Response) {
   try {
+    const methodName = "listAllInteractionPrjAcc"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     let data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionPrjAccount(data)
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
@@ -451,7 +464,20 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
 
 async function exportAllInteractions (req : Request, res : Response) {
   try {
+    const methodName = "exportAllInteractions"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionPrjAccount(data)
     if(result.status == HttpStatus.SUCCESS) {
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map(( d : any) => {
@@ -486,7 +512,20 @@ async function exportAllInteractions (req : Request, res : Response) {
 
 async function listOutAllInteractionSummary (req : Request, res : Response) {
   try {
+    const methodName = "listOutAllInteractionSummary"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.fetchInteractionSummary(data)
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       const finalData = {
@@ -527,7 +566,20 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
 
 async function exportAllInteractionSummary (req : Request, res : Response) {
   try {
+    const methodName = "exportAllInteractionSummary"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.fetchInteractionSummary(data);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.length < 1 ? [] : result.data.map(( d : any) => {
@@ -569,7 +621,20 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
 
 async function listResponseHistory (req : Request, res : Response) {
   try {
+    const methodName = "listResponseHistory"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionResponseHistory(data)
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let responseData = {
@@ -610,7 +675,20 @@ async function listResponseHistory (req : Request, res : Response) {
 
 async function exportResponseHistory (req : Request, res : Response) {
   try {
+    const methodName = "exportResponseHistory"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionResponseHistory(data);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.map((d : any) => {
