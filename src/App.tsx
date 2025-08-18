@@ -49,7 +49,6 @@ import {
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
   INTERACTIONS,
-  INTERACTIONS_DETAILS,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -129,13 +128,6 @@ const Interaction = lazy(
   () => import('./consultant/pages/interaction/interaction-list/interaction')
 );
 
-const InteractionDetails = lazy(
-  () =>
-    import(
-      './consultant/pages/interaction/interaction-details/interaction-details'
-    )
-);
-
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -197,10 +189,6 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<ProjectResourceForm />}
                 />
                 <Route path={INTERACTIONS} element={<Interaction />} />
-                <Route
-                  path={INTERACTIONS_DETAILS}
-                  element={<InteractionDetails />}
-                />
                 <Route
                   path={INTERACTIONS_CREATE}
                   element={<InteractionForm />}

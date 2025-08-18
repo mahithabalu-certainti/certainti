@@ -4,7 +4,7 @@ import { useGetAllInteractionList } from '../../../../services/interactions/inte
 import { ListTable } from '../../../../../components/table';
 import { getGlobalInteractionListColumns } from './columns';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { INTERACTIONS_DETAILS, INTERACTIONS_EDIT } from '../../../../../routes';
+import { INTERACTIONS_EDIT } from '../../../../../routes';
 import { EditIcon } from '../../../../../assets';
 import { ActionItem } from '../../../../../components/table/types';
 
@@ -65,13 +65,10 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   };
 
   const handleViewInteraction = (row: InteractionList) => {
-    const path = generatePath(INTERACTIONS_DETAILS, {
-      interactionId: row.rid,
-    });
-    const queryParams = new URLSearchParams({
-      accountId: row.rid ?? '',
-    });
-    navigate(`${path}?${queryParams.toString()}`);
+    console.log(row);
+    navigate(
+      '/project/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_id=D001-0001'
+    );
   };
 
   const handleEdit = (row: InteractionList) => {
@@ -99,9 +96,14 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     },
   ];
 
+  const handleViewInteractionHistory = (interactionHistoryId: string) => {
+    console.log('interactionHistoryId', interactionHistoryId);
+  };
+
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getGlobalInteractionListColumns(
-    handleViewInteraction
+    handleViewInteraction,
+    handleViewInteractionHistory
   );
 
   return (

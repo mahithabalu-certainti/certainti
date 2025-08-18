@@ -3,7 +3,8 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
 
 export const getGlobalInteractionListColumns = (
-  handleViewInteraction: (row: InteractionList) => void
+  handleViewInteraction: (row: InteractionList) => void,
+  handleViewInteractionHistory: (interactionHistory: string) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
@@ -152,6 +153,17 @@ export const getGlobalInteractionListColumns = (
     label: 'Interaction History',
     width: 200,
     sortable: false,
+    render: (row: InteractionList) =>
+      row.interaction_history ? (
+        <span
+          onClick={() => handleViewInteractionHistory(row.interaction_history)}
+          className='text-[#1755E7] hover:underline'
+        >
+          {row.interaction_history}
+        </span>
+      ) : (
+        '-'
+      ),
     // hide:
     //   !permissionMap?.['interaction_history']?.edit &&
     //   !permissionMap?.['interaction_history']?.read,
