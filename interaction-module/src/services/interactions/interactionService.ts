@@ -803,7 +803,6 @@ export class InteractionService {
         }
       })
     finalResponseData = disablePagination ? applyFilters(responseData, actionFilter, actionConditionsFilter, "status_name") : responseData
-    // console.log("finalResponseData =====> ", finalResponseData)
     totalRecords = disablePagination ? finalResponseData.length : finalResponseData[0].total_records
     let paginatedData = disablePagination ? finalResponseData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalResponseData
     let finalSortedData = data.sort === 'status_name' ? paginatedData.sort((a : any, b : any) => {
@@ -822,7 +821,8 @@ export class InteractionService {
       interaction_history : finalSortedData.map((d : any) => {
         return {
           rid : d.interaction_history_rid,
-          status_name : d.status_name
+          status_name : d.status_name,
+          date : d.date
         }
       })
     }
