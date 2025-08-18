@@ -1,3 +1,4 @@
+import moment from "moment";
 import { Interaction } from "../../models/interaction";
 import {
   HttpStatus,
@@ -72,8 +73,9 @@ export class OtpSchemaService {
       interaction_rid: data.interaction_rid,
       is_verified: false,
       expires_at: expiresAt,
-      created_by: data.email,
+      created_by: email,
       created_datetime: now,
+      otp_attempt_count: 0,
     });
   }
 
@@ -134,6 +136,90 @@ export class OtpSchemaService {
     });
   }
 
+  async getOtpMeta(
+    accountNumber: string,
+    accountId: string,
+    interactionId: string,
+    email: string
+  ): Promise<{
+    otp_attempt_count: number;
+    otp_block_until: Date | null;
+  } | null> {
+    const { Otp } = await this.interactionModelService.getModels(accountNumber);
+
+    const otpEntry = await Otp.findOne({
+      where: { account_rid: accountId, interaction_rid: interactionId, email },
+      attributes: ["otp_attempt_count", "otp_block_until"],
+    });
+
+    if (!otpEntry) {
+      return null;
+    }
+
+    return {
+      otp_attempt_count: otpEntry.getDataValue("otp_attempt_count") || 0,
+      otp_block_until: otpEntry.getDataValue("otp_block_until") || null,
+    };
+  }
+
+  async updateOtpMeta(
+    accountNumber: string,
+    accountId: string,
+    interactionId: string,
+    email: string,
+    data: {
+      otp_attempt_count: number;
+      otp_block_until?: Date | null;
+    }
+  ): Promise<void> {
+    const { Otp } = await this.interactionModelService.getModels(accountNumber);
+
+    const updatePayload: any = {
+      otp_attempt_count: data.otp_attempt_count,
+      otp_block_until: data.otp_block_until ?? null,
+      modified_datetime: new Date(),
+      modified_by: "SYSTEM",
+    };
+
+    const [affectedRows] = await Otp.update(updatePayload, {
+      where: { account_rid: accountId, interaction_rid: interactionId, email },
+    });
+
+    if (affectedRows === 0) {
+      console.warn(
+        `[OTP] No OTP entry found for update (account_rid: ${accountId})`
+      );
+    }
+  }
+
+  async resendOtpAttempts(
+    accountNumber: string,
+    accountId: string,
+    interactionId: string,
+    email: string,
+    data: {
+      otp_attempt_count: number;
+    }
+  ){
+    const { Otp } = await this.interactionModelService.getModels(accountNumber);
+
+    const updatePayload: any = {
+      otp_attempt_count: data.otp_attempt_count,
+      modified_datetime: new Date(),
+      modified_by: "SYSTEM",
+    };
+
+    const [affectedRows] = await Otp.update(updatePayload, {
+      where: { account_rid: accountId, interaction_rid: interactionId, email },
+    });
+
+    if (affectedRows === 0) {
+      console.warn(
+        `[OTP] No OTP entry found for update (account_rid: ${accountId})`
+      );
+    }
+  }
+
   async countOtpAttempts(
     accountNumber: string,
     accountId: string,
@@ -175,6 +261,21 @@ export class OtpSchemaService {
         interaction_rid: data.interaction_rid,
         email,
         is_verified: false,
+      },
+    });
+  }
+
+  async removeOtp(
+    accountNumber: string,
+    account_rid: string,
+    interaction_rid: string
+  ) {
+    const { Otp } = await this.interactionModelService.getModels(accountNumber);
+
+    await Otp.destroy({
+      where: {
+        account_rid,
+        interaction_rid,
       },
     });
   }
@@ -250,7 +351,7 @@ export class OtpSchemaService {
       return {
         success: true,
         accountNumber,
-        email: interactionData.recipient_email ?? "",
+        email: interactionData?.dataValues?.recipient_email ?? "",
       };
     } catch (err) {
       return {

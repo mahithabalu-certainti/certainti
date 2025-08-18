@@ -13,7 +13,7 @@ function otpMailTemplate(otp: string, email: string): { message: IEmailMessage }
 
         <h2 style="color: #0073e6;">🔐 Your OTP: ${otp}</h2>
 
-        <p>This OTP is valid for <strong>3 minutes</strong>. Do not share this code with anyone.</p>
+        <p>This OTP is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
 
         <p><strong>🕒 What to do next:</strong></p>
         <ol>

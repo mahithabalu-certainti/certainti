@@ -112,6 +112,7 @@ export interface IEmailMessage {
 
 export type IOtpHistoryStatus =
   | "SENT"
+  | "RESENT"
   | "SEND_FAILED"
   | "VERIFIED"
   | "VERIFICATION_FAILED";
