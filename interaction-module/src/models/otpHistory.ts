@@ -7,7 +7,6 @@ export interface OtpHistoryAttributes {
   created_by: string;
   created_datetime: Date;
 
-  otp_entries_rid: string;
   email: string;
   account_rid: string;
   interaction_rid: string;
@@ -29,7 +28,6 @@ export class OtpHistory
   public created_by!: string;
   public created_datetime!: Date;
 
-  public otp_entries_rid!: string;
   public email!: string;
   public account_rid!: string;
   public interaction_rid!: string;
@@ -52,10 +50,6 @@ export class OtpHistory
         created_by: { type: DataTypes.STRING(50), allowNull: false },
         created_datetime: { type: DataTypes.DATE, allowNull: false },
 
-        otp_entries_rid: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
-        },
         email: { type: DataTypes.STRING(120), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_rid: { type: DataTypes.STRING(100), allowNull: false },
