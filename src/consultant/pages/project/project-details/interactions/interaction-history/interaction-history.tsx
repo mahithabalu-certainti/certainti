@@ -38,8 +38,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   } = useInteractionHistoryList(interactionHistoryId, !!interactionHistoryId);
 
   const actionData = useMemo(
-    () =>
-      interactionHistoryData?.data?.interaction_history || [],
+    () => interactionHistoryData?.data?.interaction_history || [],
     [interactionHistoryData]
   );
 
@@ -86,10 +85,8 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     <>
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
-          title='Interaction'
-          subValue={
-            interactionHistoryData?.data?.interaction_rnumber || ''
-          }
+          title='Interaction History'
+          subValue={interactionHistoryData?.data?.interaction_rnumber || ''}
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'

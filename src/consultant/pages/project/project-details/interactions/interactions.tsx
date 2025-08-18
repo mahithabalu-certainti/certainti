@@ -26,6 +26,7 @@ import { ActionItem } from '../../../../../components/table/types';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
 import { SendInteractionModal } from '../../../../../components/interaction';
+import { InteractionAttachment } from './interaction-attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -73,8 +74,11 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionAttachmentId = searchParams.get('interaction_attachment_id');
+
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
+  const viewInteractionAttachmentId = !!interactionAttachmentId;
   const projectData = {
     project_code: projectDetails?.project_code || '',
     project_name: projectDetails?.project_name || '',
@@ -244,9 +248,17 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const handleViewInteractionAttachment = (interactionAttachentId: string) => {
+    if (interactionAttachentId) {
+      searchParams.set('interaction_attachment_id', interactionAttachentId);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+  };
+
   const handleBackClick = () => {
     searchParams.delete('interaction_id');
     searchParams.delete('interaction_history_id');
+    searchParams.delete('interaction_attachment_id');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -266,7 +278,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
-    handleViewInteractionHistory
+    handleViewInteractionHistory,
+    handleViewInteractionAttachment
   );
 
   const filterFields = getInteractionFilterFields(
@@ -305,6 +318,8 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectDetails={projectDetails}
           accountInActive={accountInActive}
         />
+      ) : viewInteractionAttachmentId ? (
+        <InteractionAttachment handleBackClick={handleBackClick} />
       ) : (
         <>
           <SectionHeader
