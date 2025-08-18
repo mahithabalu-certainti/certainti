@@ -814,11 +814,24 @@ export class InteractionService {
       }
     }) : paginatedData
 
+    let finalStructuredData = {
+      interaction_rnumber : finalSortedData[0].interaction_rnumber,
+      project_code : finalSortedData[0].project_code,
+      project_name : finalSortedData[0].project_name,
+      response_source : finalSortedData[0].response_source,
+      interaction_history : finalSortedData.map((d : any) => {
+        return {
+          rid : d.interaction_history_rid,
+          status_name : d.status_name
+        }
+      })
+    }
+
     let response = {
       page : data.page,
       limit : data.limit,
       total_records : totalRecords,
-      interaction_history : finalSortedData
+      data : finalStructuredData
     }
     return {
       statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
