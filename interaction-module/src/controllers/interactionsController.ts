@@ -24,11 +24,9 @@ const interactionService = services.interactionService;
 async function createInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Create interaction";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const value = await validateRequest(req, createInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -53,12 +51,10 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
       handleSuccessResponse(res, interaction.data);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -70,7 +66,6 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
@@ -84,11 +79,9 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
 async function updateInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, updateInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -113,12 +106,10 @@ async function updateInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
       handleSuccessResponse(res, interaction.data);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -146,15 +137,13 @@ async function updateInteractionResponse(
 ): Promise<void> {
   const methodName = "Update interaction response";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(
       req,
       updateInteractionResponseSchema,
       res
     );
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -184,7 +173,6 @@ async function updateInteractionResponse(
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -212,13 +200,9 @@ async function getInteractionDetailsById(
 ): Promise<void> {
   const methodName = "Get interaction details";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
     const userId = req.headers["x-user-id"] as string;
-    console.log(
-      `[${methodName}] userId: ${userId}, interactionRid: ${interactionRid}, accountId: ${accountId}`
-    );
-
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -255,15 +239,10 @@ async function getInteractionDetailsById(
     );
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(
-        `[${methodName}] Success:`,
-        JSON.stringify(interactionDetails.data)
-      );
       handleSuccessResponse(res, interactionDetails.data);
       return;
     } else {
       errorLog(methodName, interactionDetails.errorMessage);
-      console.log(`[${methodName}] Error:`, interactionDetails.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -446,7 +425,20 @@ async function getInteractionSource(
 
 async function listAllInteractionPrjAcc (req : Request, res : Response) {
   try {
+    const methodName = "listAllInteractionPrjAcc"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     let data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionPrjAccount(data)
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
@@ -472,7 +464,20 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
 
 async function exportAllInteractions (req : Request, res : Response) {
   try {
+    const methodName = "exportAllInteractions"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionPrjAccount(data)
     if(result.status == HttpStatus.SUCCESS) {
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map(( d : any) => {
@@ -507,7 +512,20 @@ async function exportAllInteractions (req : Request, res : Response) {
 
 async function listOutAllInteractionSummary (req : Request, res : Response) {
   try {
+    const methodName = "listOutAllInteractionSummary"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.fetchInteractionSummary(data)
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       const finalData = {
@@ -548,7 +566,20 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
 
 async function exportAllInteractionSummary (req : Request, res : Response) {
   try {
+    const methodName = "exportAllInteractionSummary"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.fetchInteractionSummary(data);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.length < 1 ? [] : result.data.map(( d : any) => {
@@ -590,7 +621,20 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
 
 async function listResponseHistory (req : Request, res : Response) {
   try {
+    const methodName = "listResponseHistory"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionResponseHistory(data)
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let responseData = {
@@ -631,7 +675,20 @@ async function listResponseHistory (req : Request, res : Response) {
 
 async function exportResponseHistory (req : Request, res : Response) {
   try {
+    const methodName = "exportResponseHistory"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
     const result = await interactionService.listInteractionResponseHistory(data);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.map((d : any) => {

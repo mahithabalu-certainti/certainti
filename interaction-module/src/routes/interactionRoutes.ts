@@ -47,12 +47,12 @@ routes.get(
   controller.interactionsController.getInteractionSource
 );
 
-routes.post('/list', controller.interactionsController.listAllInteractionPrjAcc)
-routes.post('/export', controller.interactionsController.exportAllInteractions)
-routes.post('/globalList', controller.interactionsController.listOutAllInteractionSummary)
-routes.post('/globalList/export', controller.interactionsController.exportAllInteractionSummary)
-routes.post('/responseHistory/list', controller.interactionsController.listResponseHistory)
-routes.post('/responseHistory/export', controller.interactionsController.exportResponseHistory)
+routes.post('/list', checkUserStatusMiddleware("NA"), controller.interactionsController.listAllInteractionPrjAcc)
+routes.post('/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportAllInteractions)
+routes.post('/globalList', checkUserStatusMiddleware("NA"), controller.interactionsController.listOutAllInteractionSummary)
+routes.post('/globalList/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportAllInteractionSummary)
+routes.post('/responseHistory/list', checkUserStatusMiddleware("NA"), controller.interactionsController.listResponseHistory)
+routes.post('/responseHistory/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportResponseHistory)
 const upload = multer(); // You can configure storage if needed
 
 routes.post(

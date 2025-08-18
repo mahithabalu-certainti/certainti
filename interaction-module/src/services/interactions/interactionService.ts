@@ -258,7 +258,6 @@ export class InteractionService {
 
       if (!interactionDetails) {
         throw new Error("Invalid interaction ID");
-      } else {
       }
 
       return {

@@ -445,7 +445,7 @@ class InteractionSchemaService {
         created_by,
         created_datetime,
       } = interactionDetails.dataValues;
-      const metainfo = await this.insetAdditionalInfo(
+      const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
         accountNumber
       );
@@ -525,7 +525,7 @@ class InteractionSchemaService {
     }
   }
 
-  async insetAdditionalInfo(interactionDetails: any, accountNumber: string) {
+  async insertAdditionalInfo(interactionDetails: any, accountNumber: string) {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
@@ -564,7 +564,7 @@ class InteractionSchemaService {
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
       if (interactionDetails?.dataValues?.rid) {
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
         const result = await this.orgDbSequelize.query(
           `SELECT project_code, project_name FROM ${schemaName}.project WHERE rid = :id`,
           {
@@ -722,7 +722,7 @@ class InteractionSchemaService {
               {
                 interaction_rid: responseData.interaction_rid,
                 interaction_response_rid: created.rid,
-                question: question.rid,
+                interaction_item_rid: question.rid,
                 attachment_url: attachment.fileUrl,
                 attachment_name: attachment.fileName,
                 attachment_size: attachment.fileSize,
@@ -833,7 +833,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
     const { InteractionAttachment } = await this.interactionModelService.getModels(accountNumber);
 
     const attachments = await InteractionAttachment.findAll({
-      where: { interaction_rid: interactionRid, question: '' },
+      where: { interaction_rid: interactionRid, interaction_item_rid: '' },
       attributes: [
         "attachment_url",
         "attachment_name",
@@ -880,7 +880,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
       for (const item of plainItems) {
         // Fetch attachments for each question
         const attachments = await InteractionAttachment.findAll({
-          where: { question: item.rid },
+          where: { interaction_item_rid: item.rid },
           attributes: [
         "attachment_url",
         "attachment_name",
