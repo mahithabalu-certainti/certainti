@@ -187,7 +187,10 @@ const Uploads: React.FC<UploadsProps> = ({
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-1'>
           <div className='w-[24px] h-[24px] flex items-center justify-center bg-[#D8E9FF] rounded-full'>
-            <AttachmentsSideIcon alt='Import Icon' className='[&>path]:stroke-[#4B9BFF]' />
+            <AttachmentsSideIcon
+              alt='Import Icon'
+              className='[&>path]:stroke-[#4B9BFF]'
+            />
           </div>
           <span className='text-[13px] text-[#2D3E4F] font-semibold'>
             Attachments

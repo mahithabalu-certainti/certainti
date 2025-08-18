@@ -384,7 +384,12 @@ const Attachments: React.FC<AttachmentsProps> = ({
             value={'attachments'}
             title='Attachments'
             count={totalItems}
-            titleIcon={<AttachmentsSideIcon alt='attachment-header-icon' className='[&>path]:stroke-[#4B9BFF]' />}
+            titleIcon={
+              <AttachmentsSideIcon
+                alt='attachment-header-icon'
+                className='[&>path]:stroke-[#4B9BFF]'
+              />
+            }
             headerButtons={headerButtons}
             iconBg='#D8E9FF'
           />
