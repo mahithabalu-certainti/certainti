@@ -10,7 +10,9 @@ import {
   transformInteractionHistoryData,
   InteractionHistoryList,
 } from './utils';
-import { mockInteractionHistory, mockPermissionMap } from './mock-response';
+import { mockPermissionMap } from './mock-response';
+import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
+import { useSearchParams } from 'react-router-dom';
 
 interface InteractionHistoryProps {
   accountInActive: boolean;
@@ -21,15 +23,24 @@ interface InteractionHistoryProps {
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   handleBackClick,
 }) => {
+  const [searchParams] = useSearchParams();
+  const interactionHistoryId = searchParams.get('interaction_history_id') || '';
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('action');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [totalItems, setTotalItems] = useState<number>(0);
 
+  const {
+    data: interactionHistoryData,
+    isLoading,
+    isError,
+  } = useInteractionHistoryList(interactionHistoryId, !!interactionHistoryId);
+
   const actionData = useMemo(
-    () => mockInteractionHistory?.data?.interactionHistoryDetails?.action || [],
-    [mockInteractionHistory]
+    () =>
+      interactionHistoryData?.data?.interaction_history || [],
+    [interactionHistoryData]
   );
 
   useEffect(() => {
@@ -37,8 +48,8 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   }, [actionData]);
 
   const tableData: InteractionHistoryList[] = actionData.map((action) => ({
-    rid: action.id.toString(),
-    interaction_type: action.interaction_type,
+    rid: action.rid,
+    action: action.action,
     date: action.date,
   }));
 
@@ -60,9 +71,15 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     setSortField(property);
   };
 
-  const transformedInteractionHistoryColumns = transformInteractionHistoryData(
-    mockInteractionHistory,
-    mockPermissionMap
+  const transformedInteractionHistoryColumns = useMemo(
+    () =>
+      interactionHistoryData
+        ? transformInteractionHistoryData(
+            interactionHistoryData,
+            mockPermissionMap
+          )
+        : [],
+    [interactionHistoryData]
   );
 
   return (
@@ -70,7 +87,9 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction'
-          //   subValue={data?.r_number || ''}
+          subValue={
+            interactionHistoryData?.data?.interaction_rnumber || ''
+          }
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'
@@ -86,7 +105,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
         <Box className='max-w-[100%] border-t border border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
           <InfoSection
             columns={transformedInteractionHistoryColumns}
-            loading={false}
+            loading={isLoading}
             singleLineView={false}
             className='!border-b-0'
           />
@@ -108,8 +127,8 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             stickyColumnsCount={1}
             selectable={false}
             actionWidth={80}
-            loading={false}
-            error={undefined}
+            loading={isLoading}
+            error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
             currentPage={currentPage}

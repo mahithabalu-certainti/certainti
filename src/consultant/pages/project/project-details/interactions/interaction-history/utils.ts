@@ -2,32 +2,30 @@ import { DisplayColumn } from '../../../../account-details/utils';
 import { RowData } from '../../../../../../components/table/types';
 
 export interface InteractionHistoryAction extends RowData {
-  id: string;
-  interaction_type: string;
+  rid: string;
+  action: string;
   date: string;
 }
 
 export interface InteractionHistoryList extends RowData {
   rid: string;
-  interaction_type: string;
+  action: string;
   date: string;
 }
 
 export interface InteractionHistoryDetails {
-  interaction_code: string;
-  interaction_type: string;
-  interaction_subject: string;
-  interaction_priority: string;
-  interaction_category_name: string;
-  created_by_name: string;
-  status_name: string;
-  action: InteractionHistoryAction[];
+  project_code: string;
+  project_name: string;
+  response_source: string;
+  interaction_rnumber: string;
+  interaction_history: InteractionHistoryAction[];
 }
 
 export interface InteractionHistoryData {
-  data: {
-    interactionHistoryDetails: InteractionHistoryDetails;
-  };
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: InteractionHistoryDetails;
 }
 
 export const getValueOrDefault = (
@@ -41,24 +39,21 @@ export const transformInteractionHistoryData = (
   interactionHistory: InteractionHistoryData,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
-  const interactionHistoryData =
-    interactionHistory?.data?.interactionHistoryDetails;
-  const status = interactionHistoryData?.status_name;
+  const interactionHistoryData = interactionHistory?.data;
 
   return [
     {
       items: [
         {
           label: 'Interaction ID',
-          value: getValueOrDefault(interactionHistoryData?.interaction_code),
-          className: `${status === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          value: getValueOrDefault(interactionHistoryData?.interaction_rnumber),
           hide:
             !permissionMap?.['interaction_code']?.read &&
             !permissionMap?.['interaction_code']?.edit,
         },
         {
           label: 'Type',
-          value: `${getValueOrDefault(interactionHistoryData?.interaction_type)} `,
+          value: `${getValueOrDefault(interactionHistoryData?.response_source)} `,
           hide:
             !permissionMap?.['interaction_type']?.read &&
             !permissionMap?.['interaction_type']?.edit,
@@ -69,7 +64,7 @@ export const transformInteractionHistoryData = (
       items: [
         {
           label: 'Project Code',
-          value: getValueOrDefault(interactionHistoryData?.interaction_subject),
+          value: getValueOrDefault(interactionHistoryData?.project_code),
           hide:
             !permissionMap?.['interaction_subject']?.read &&
             !permissionMap?.['interaction_subject']?.edit,
@@ -77,7 +72,7 @@ export const transformInteractionHistoryData = (
         {
           label: 'Project Name',
           value: getValueOrDefault(
-            interactionHistoryData?.interaction_priority
+            interactionHistoryData?.project_name
           ),
           hide:
             !permissionMap?.['interaction_priority']?.read &&
