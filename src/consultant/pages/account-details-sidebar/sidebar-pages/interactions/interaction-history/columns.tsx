@@ -11,7 +11,7 @@ export const getInteractionHistoryListColumns =
       width: 160,
       sortable: true,
       sticky: true,
-      render: (row: InteractionHistoryList) => row.interaction_type || '-',
+      render: (row: InteractionHistoryList) => row.action || '-',
       // hide:
       //   !permissionMap?.['r_number']?.edit &&
       //   !permissionMap?.['r_number']?.read,
