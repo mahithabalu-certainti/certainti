@@ -11,8 +11,13 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,inter
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listResponseHistory } from "../../utils/rawQueries";
+import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 
+type filterType = {
+        [key : string] : {
+            [condition : string] : any
+        }
+}
 // Assuming there is an interface named IInteractionService to implement
 export class InteractionService {
   private interactionSchemaService: InteractionSchemaService;
@@ -734,6 +739,102 @@ export class InteractionService {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         data : []
       }
+    }
+  }
+  async fetchInteractionHistory (data : any) {
+    let actionFilter;
+    let actionConditionsFilter : string | undefined;
+    let disablePagination : boolean = false
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+    const detectConditions = (filters : any) => {
+      for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+        if(Object.keys(filters).includes(conditions)) {
+          return conditions
+        }
+      }
+    }
+    const applyFilters = (finalData : any, filters : filterType, conditions : any, values : any) => {
+        finalData = finalData.filter((d : any) => {
+          let statusName = d[values].toLowerCase()
+          let value : any =  filters[conditions]
+          
+          switch(conditions) {
+            case "equals" : {
+              return statusName === value.toLowerCase()
+            }
+            case "not_equals" : {
+              return statusName != value.toLowerCase()
+            }
+            case "contains" : {
+              return statusName.includes(value)
+            }
+            case "is_empty" : {
+              return !statusName
+            }
+          }
+        })
+      return finalData
+    }
+
+    if(Object.keys(data.filters).length > 0) {
+      if(data.filters.status_name != undefined) {
+        actionFilter = data.filters.status_name;
+        delete data.filters.status_name;
+        disablePagination = true
+        actionConditionsFilter = detectConditions(actionFilter)
+      }
+    }
+    const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName, disablePagination));
+    if(result[0][0].interaction_history !== null) {
+      let finalResponseData;
+      let totalRecords;
+      let responseData = result[0][0]
+      const statusIds = [...new Set(responseData.interaction_history.map((d : any) => d.new_status_rid))]
+      const fetchStatus : any = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
+      const mapStatus = new Map(fetchStatus[0].map((d : any) => [d.rid, d.status_name]))
+      responseData = responseData.interaction_history.map((d : any) => {
+        return {
+          ...d,
+          status_name : mapStatus.get(d.new_status_rid)
+        }
+      })
+    finalResponseData = disablePagination ? applyFilters(responseData, actionFilter, actionConditionsFilter, "status_name") : responseData
+    // console.log("finalResponseData =====> ", finalResponseData)
+    totalRecords = disablePagination ? finalResponseData.length : finalResponseData[0].total_records
+    let paginatedData = disablePagination ? finalResponseData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalResponseData
+    let finalSortedData = data.sort === 'status_name' ? paginatedData.sort((a : any, b : any) => {
+      if(data.sort_by.toLowerCase() === 'desc') {
+        return b.status_name.localeCompare(a.status_name)
+      } else {
+        return a.status_name.localeCompare(b.status_name)
+      }
+    }) : paginatedData
+
+    let response = {
+      page : data.page,
+      limit : data.limit,
+      total_records : totalRecords,
+      interaction_history : finalSortedData
+    }
+    return {
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      data : response
+    };
+    } else {
+      let response = {
+      page : data.page,
+      limit : data.limit,
+      total_records : 0,
+      interaction_history : []
+    }
+      return {
+      statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      data : response
+    };
     }
   }
 }
