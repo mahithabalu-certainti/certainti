@@ -103,7 +103,6 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             className='!border-b-0'
           />
         </Box>
-        <div className='p-1'></div>
         <div className='border-t border-[#CBD6E2]'>
           <ListTable
             data={tableData}
@@ -120,7 +119,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
-            loadindRowCount={5}
+            loadindRowCount={4}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
