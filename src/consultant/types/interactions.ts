@@ -35,6 +35,7 @@ export interface InteractionFormQuestion {
   notes: string;
   rid?: string;
   action_type?: QuestionUpdate;
+  is_editable?: boolean;
 }
 
 export interface InteractionFormData {
@@ -176,9 +177,10 @@ export interface ResponseInteractionListResponse {
 }
 
 export interface Attachment {
-  file_id: string;
-  file_name: string;
-  file_url: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: string;
 }
 
 export interface InteractionQuestion {
@@ -190,6 +192,7 @@ export interface InteractionQuestion {
   response_on_datetime: string | null;
   response: string | null;
   attachments: Attachment[];
+  is_editable?: boolean;
 }
 
 export interface InteractionDetails {

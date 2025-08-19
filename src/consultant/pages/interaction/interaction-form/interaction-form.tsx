@@ -72,6 +72,7 @@ const InteractionForm = () => {
         question_seq_num: 'SNO_1',
         question: '',
         is_mandatory: false,
+        is_editable: true,
         notes: '',
       },
     ],
@@ -170,6 +171,7 @@ const InteractionForm = () => {
                 question: qus.question || '',
                 is_mandatory: qus.is_mandatory ?? false,
                 notes: qus.notes || '',
+                is_editable: qus.is_editable ?? true,
                 rid: qus.rid,
               }))
             : [
@@ -177,6 +179,7 @@ const InteractionForm = () => {
                   question_seq_num: 'SNO_1',
                   question: '',
                   is_mandatory: false,
+                  is_editable: true,
                   notes: '',
                 },
               ],
@@ -274,6 +277,7 @@ const InteractionForm = () => {
           question_seq_num: `SNO_${prev.questions.length + 1}`,
           question: '',
           is_mandatory: false,
+          is_editable: true,
           notes: '',
         },
       ],
@@ -289,6 +293,7 @@ const InteractionForm = () => {
           question_seq_num: 'SNO_1',
           question: '',
           is_mandatory: false,
+          is_editable: true,
           notes: '',
         });
       }
@@ -825,12 +830,15 @@ const InteractionForm = () => {
                             position: 'relative',
                             height: '32px !important',
                           }}
+                          className={`${!question.is_editable ? 'bg-[#f3f4f6]' : ''}`}
                         >
                           {questionTableColumns
                             .filter((col) => !col.hide)
                             .map((col: InteractionFormTableColumn) => {
-                              const isDisabled = col.disabled;
-                              const isBtnDisabled = col.disabled;
+                              const isDisabled =
+                                !question.is_editable || col.disabled;
+                              const isBtnDisabled =
+                                !question.is_editable || col.disabled;
                               const error =
                                 errors.questions?.[index]?.[
                                   col.name as keyof InteractionQuestionErrors

@@ -57,8 +57,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     UploadedFile[]
   >(
     (globalAttachments || []).map((f) => ({
-      file: new File([], f.file_name), // placeholder so UI works
-      url: f.file_url,
+      file: new File([], f.fileName), // placeholder so UI works
+      url: f.fileUrl,
     }))
   );
   const [questionAttachments, setQuestionAttachments] = useState<
@@ -67,8 +67,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     questions.reduce(
       (acc, q) => {
         acc[q.question_seq_num] = (q.attachments || []).map((f) => ({
-          file: new File([], f.file_name), // placeholder for UI
-          url: f.file_url,
+          file: new File([], f.fileName), // placeholder for UI
+          url: f.fileUrl,
         }));
         return acc;
       },
@@ -102,8 +102,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     // revert global attachments
     setNewGlobalAttachments(
       (globalAttachments || []).map((f) => ({
-        file: new File([], f.file_name),
-        url: f.file_url,
+        file: new File([], f.fileName),
+        url: f.fileUrl,
       }))
     );
 
@@ -112,8 +112,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       questions.reduce(
         (acc, q) => {
           acc[q.question_seq_num] = (q.attachments || []).map((f) => ({
-            file: new File([], f.file_name),
-            url: f.file_url,
+            file: new File([], f.fileName),
+            url: f.fileUrl,
           }));
           return acc;
         },
@@ -272,7 +272,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   <div className='flex items-center gap-2'>
                     <PdfIcon />
                     <div className='text-[14px] text-[#425A76] font-normal'>
-                      {'file_name' in file ? file.file_name : file.file.name}
+                      {'fileName' in file ? file.fileName : file.file.name}
                     </div>
                   </div>
                   {isEditing ? (
@@ -287,8 +287,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   ) : (
                     <a
                       href={
-                        'file_url' in file
-                          ? file.file_url
+                        'fileUrl' in file
+                          ? file.fileUrl
                           : URL.createObjectURL(file.file)
                       }
                       download
@@ -311,11 +311,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
 
       {/* Questions */}
       <div>
-        {questions.map((q) => (
+        {questions.map((q, index) => (
           <div key={q.question_seq_num} className='p-3'>
             <div className='font-medium text-[14px] text-[#2D3E4F]'>
-              <span className='font-bold'>{q.question_seq_num}</span> -{' '}
-              {q.question}
+              <span className='font-bold'>
+                {q.question_seq_num || `Q00${index + 1}`}
+              </span>{' '}
+              - {q.question}
             </div>
 
             {isEditing ? (
@@ -424,7 +426,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     <div className='flex items-center gap-2'>
                       <PdfIcon />
                       <div className='text-[14px] text-[#425A76] font-normal'>
-                        {'file_name' in file ? file.file_name : file.file.name}
+                        {'fileName' in file ? file.fileName : file.file.name}
                       </div>
                     </div>
                     {isEditing ? (
@@ -441,8 +443,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     ) : (
                       <a
                         href={
-                          'file_url' in file
-                            ? file.file_url
+                          'fileUrl' in file
+                            ? file.fileUrl
                             : URL.createObjectURL(file.file)
                         }
                         download

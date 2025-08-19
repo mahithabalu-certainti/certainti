@@ -112,7 +112,8 @@ export const questionsTransformPayload = (
   const seenQuestionNos = new Set<string>();
 
   // Process form questions first
-  formQuestions.forEach(({ question_seq_num, ...question }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  formQuestions.forEach(({ question_seq_num, is_editable, ...question }) => {
     if (seenQuestionNos.has(question_seq_num)) {
       return;
     }
@@ -190,6 +191,5 @@ export const transFormPayload = (
     ...basePayload,
     fiscal_year: formData.fiscalYear,
     status_action: saveFlag,
-    interaction_type_rid: 'D001-d37a864c-8853-4441-a146-72cc6fa6ce78',
   };
 };
