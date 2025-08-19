@@ -468,7 +468,6 @@ export class InteractionService {
         data: { interactionResponse },
       };
     } catch (err) {
-      this.logger.error("Error sending interaction email", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -573,7 +572,6 @@ export class InteractionService {
       });
       return emailResponse;
     } catch (error) {
-      this.logger.error("Error sending email with attachment", error);
       return emailResponse;
     }
   }
