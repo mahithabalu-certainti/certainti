@@ -4,7 +4,8 @@ import { InteractionList } from '../../../../types';
 
 export const getGlobalInteractionListColumns = (
   handleViewInteraction: (row: InteractionList) => void,
-  handleViewInteractionHistory: (interactionHistory: string) => void
+  handleViewInteractionHistory: (interactionHistory: string) => void,
+  handleViewInteractionAttachment: (interactionAttachment: string) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
@@ -179,14 +180,12 @@ export const getGlobalInteractionListColumns = (
     //   !permissionMap?.['interaction_url']?.read,
     render: (row: InteractionList) =>
       row.interaction_url ? (
-        <a
-          href={row.interaction_url}
-          target='_blank'
-          rel='noopener noreferrer'
+        <span
+          onClick={() => handleViewInteractionAttachment(row.interaction_url)}
           className='text-[#1755E7] hover:underline'
         >
           Link
-        </a>
+        </span>
       ) : (
         '-'
       ),

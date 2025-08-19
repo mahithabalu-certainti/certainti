@@ -30,6 +30,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   const [localActiveKey, setLocalActiveKey] = useState(activeKey);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const mainSource = searchParams.get('main_source') || '';
+  const isGlobalInteractions = mainSource === 'interactions';
 
   // Initialize active key from URL parameters on mount
   useEffect(() => {
@@ -104,7 +106,9 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('tab');
     searchParams.delete('attachment_entity');
     searchParams.delete('file_id');
-    searchParams.delete('interaction_id');
+    if (!isGlobalInteractions) {
+      searchParams.delete('interaction_id');
+    }
     searchParams.delete('upload');
     //For project resource and task
     searchParams.delete('page');

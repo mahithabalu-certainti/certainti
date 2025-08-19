@@ -67,7 +67,7 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   const handleViewInteraction = (row: InteractionList) => {
     console.log(row);
     navigate(
-      '/project/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_id=D001-0001'
+      '/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_id=D001-0001&main_source=interactions'
     );
   };
 
@@ -97,13 +97,26 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   ];
 
   const handleViewInteractionHistory = (interactionHistoryId: string) => {
-    console.log('interactionHistoryId', interactionHistoryId);
+    console.log(interactionHistoryId);
+    navigate(
+      `/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_history_id=${interactionHistoryId}&main_source=interactions`
+    );
+  };
+
+  const handleViewInteractionAttachment = (
+    interactionAttachmentURL: string
+  ) => {
+    console.log(interactionAttachmentURL);
+    navigate(
+      `/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_attachment_id=${interactionAttachmentURL}&main_source=interactions`
+    );
   };
 
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getGlobalInteractionListColumns(
     handleViewInteraction,
-    handleViewInteractionHistory
+    handleViewInteractionHistory,
+    handleViewInteractionAttachment
   );
 
   return (

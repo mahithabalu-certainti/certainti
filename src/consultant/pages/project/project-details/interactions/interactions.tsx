@@ -25,8 +25,8 @@ import { InteractionHistory } from './interaction-history';
 import { ActionItem } from '../../../../../components/table/types';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
-import { SendInteractionModal } from '../../../../../components/interaction';
-import HistoryTable from './response-history/history-table';
+// import { SendInteractionModal } from '../../../../../components/interaction';
+// import HistoryTable from './response-history/history-table';
 import { InteractionAttachment } from './interaction-attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
@@ -96,6 +96,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
+  const mainSource = searchParams.get('main_source') || '';
+  const isGlobalInteractions = mainSource === 'interactions';
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -271,16 +273,16 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleBackFromResponse = () => {
-    if (interactionResponseId) {
-      searchParams.delete('interactionResponse_id');
-      navigate({ search: searchParams.toString() }, { replace: true });
-    } else {
-      searchParams.delete('history');
-      searchParams.delete('interaction_attachment_id');
-      navigate({ search: searchParams.toString() }, { replace: true });
-    }
-  };
+  // const handleBackFromResponse = () => {
+  //   if (interactionResponseId) {
+  //     searchParams.delete('interactionResponse_id');
+  //     navigate({ search: searchParams.toString() }, { replace: true });
+  //   } else {
+  //     searchParams.delete('history');
+  //     searchParams.delete('interaction_attachment_id');
+  //     navigate({ search: searchParams.toString() }, { replace: true });
+  //   }
+  // };
 
   const actionButtons: ActionItem<InteractionList>[] = [
     {
@@ -341,24 +343,21 @@ const Interactions: React.FC<InteractionsProps> = ({
       ) : viewInteractionAttachment ? (
         <InteractionAttachment handleBackClick={handleBackClick} />
       ) : (
-        <>
-          <SectionHeader
-            title='Interaction'
-            titleIcon={
-              <InteractionDetailIcon
-                alt='financial-header-icon'
-                className={`w-7 h-7 p-1 bg-[#E25A32] rounded-full`}
-              />
-            }
-            count={count}
-            showItemCount={true}
-            showBackArrow={viewHistory}
-            onBackClick={handleBackFromResponse}
-            buttons={headerButtons}
-          />
-
-          <div className='border border-[#CBD6E2]'>
-            {!viewHistory ? (
+        !isGlobalInteractions && (
+          <>
+            <SectionHeader
+              title='Interaction'
+              titleIcon={
+                <InteractionDetailIcon
+                  alt='financial-header-icon'
+                  className={`w-7 h-7 p-1 bg-[#E25A32] rounded-full`}
+                />
+              }
+              count={count}
+              showItemCount={true}
+              buttons={headerButtons}
+            />
+            <div className='border border-[#CBD6E2]'>
               <ListTable
                 data={interactionList}
                 columns={interactionColumns}
@@ -389,20 +388,9 @@ const Interactions: React.FC<InteractionsProps> = ({
                 sortOrder={sortBy}
                 onSort={handleSortRequest}
               />
-            ) : (
-              <HistoryTable />
-            )}
-            <SendInteractionModal
-              isOpen={sendModalOpen}
-              onClose={() => setSendModalOpen(false)}
-              selectedRows={selectedRows}
-              onSend={(emails) => {
-                console.log('Emails to send:', emails);
-                setSendModalOpen(false);
-              }}
-            />
-          </div>
-        </>
+            </div>
+          </>
+        )
       )}
     </div>
   );

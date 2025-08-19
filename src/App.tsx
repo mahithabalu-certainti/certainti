@@ -49,6 +49,7 @@ import {
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
   INTERACTIONS,
+  INTERACTIONS_DETAILS,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -189,6 +190,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<ProjectResourceForm />}
                 />
                 <Route path={INTERACTIONS} element={<Interaction />} />
+                <Route
+                  path={INTERACTIONS_DETAILS}
+                  element={<ProjectDetails />}
+                />
                 <Route
                   path={INTERACTIONS_CREATE}
                   element={<InteractionForm />}
