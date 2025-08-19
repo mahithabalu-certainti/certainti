@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Popover,
   Switch,
   FormControlLabel,
   Typography,
-  Box,
-  Divider,
   Tooltip,
+  TextField,
 } from '@mui/material';
 import {
   DndContext,
@@ -27,43 +25,21 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CloseIcon } from '../../assets';
+import {
+  ManageColumnsPopoverProps,
+  ShowHideColumnConfig,
+  ShowHideSortableItemProps,
+  ShowHideTableColumn,
+} from './types';
 
-// Generic column interface
-export interface ColumnConfig {
-  id: string;
-  label: string;
-  visible: boolean;
-  order: number;
-}
-
-export interface ColumnRestriction {
-  id: string;
-  canHide?: boolean;
-  canDrag?: boolean;
-  tooltip?: string;
-}
-
-interface BaseTableColumn {
-  id: string;
-  label: string;
-  hide?: boolean;
-  [key: string]: any;
-}
-
-interface SortableItemProps {
-  id: string;
-  column: ColumnConfig;
-  restriction?: ColumnRestriction;
-  onToggle: (id: string, visible: boolean) => void;
-}
-
-const SortableItem: React.FC<SortableItemProps> = ({
+const SortableItem: React.FC<ShowHideSortableItemProps> = ({
   id,
   column,
   restriction,
   onToggle,
+  disableDrag = false,
 }) => {
-  const canDrag = restriction?.canDrag !== false;
+  const canDrag = restriction?.canDrag !== false && !disableDrag;
   const canHide = restriction?.canHide !== false;
 
   const {
@@ -81,7 +57,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.7 : 1,
   };
 
   const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,20 +83,22 @@ const SortableItem: React.FC<SortableItemProps> = ({
       style={style}
       {...attributes}
       {...dragListeners}
-      className={`flex items-center justify-between p-2 bg-white border border-gray-200 rounded mb-1 ${
+      className={`flex items-center justify-between p-2 bg-white border border-[#CBD6E2] rounded mb-1 ${
         canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
       } ${isDragging ? 'shadow-lg' : 'hover:bg-gray-50'} ${
-        !canDrag || !canHide ? 'bg-gray-50 border-gray-300' : ''
+        !canDrag || !canHide ? 'bg-gray-50' : 'bg-white'
       }`}
     >
-      <div className='flex items-center flex-1'>
-        <div className={`mr-2 ${canDrag ? 'text-gray-400' : 'text-gray-300'}`}>
+      <div className='flex items-center flex-1 gap-2'>
+        <div className={`pl-1 ${canDrag ? 'text-[#425A76]' : 'text-gray-400'}`}>
           {'☰'}
         </div>
         <Typography
           variant='body2'
           className={`flex-1 text-sm ${
-            !canDrag || !canHide ? 'text-gray-500 font-medium' : 'text-gray-700'
+            !canDrag || !canHide
+              ? 'text-gray-400'
+              : 'text-[#425A76] font-medium'
           }`}
         >
           {column.label}
@@ -159,7 +137,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
 
   if ((!canDrag || !canHide) && restriction?.tooltip) {
     return (
-      <Tooltip title={restriction.tooltip} placement='left'>
+      <Tooltip title={restriction.tooltip} placement='left' arrow>
         {itemContent}
       </Tooltip>
     );
@@ -168,33 +146,28 @@ const SortableItem: React.FC<SortableItemProps> = ({
   return itemContent;
 };
 
-interface ColumnVisibilityPopoverProps<T extends BaseTableColumn> {
-  anchorEl: HTMLElement | null;
-  open: boolean;
-  onClose: () => void;
-  columns: T[];
-  onColumnsChange: (columns: T[]) => void;
-  initialConfigs?: ColumnConfig[];
-  columnRestrictions?: ColumnRestriction[];
-}
-
-export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
+const ManageColumnsPopover = <T extends ShowHideTableColumn>({
   anchorEl,
   open,
+  popoverId,
   onClose,
   columns,
   onColumnsChange,
   initialConfigs,
   columnRestrictions = [],
-}: ColumnVisibilityPopoverProps<T>) => {
-  const restrictionMap = new Map(
-    columnRestrictions.map((restriction) => [
-      String(restriction.id),
-      restriction,
-    ])
+}: ManageColumnsPopoverProps<T>) => {
+  const restrictionMap = useMemo(
+    () =>
+      new Map(
+        columnRestrictions.map((restriction) => [
+          String(restriction.id),
+          restriction,
+        ])
+      ),
+    [columnRestrictions]
   );
 
-  const initializeColumnConfigs = useCallback((): ColumnConfig[] => {
+  const initializeColumnConfigs = useCallback((): ShowHideColumnConfig[] => {
     if (initialConfigs && initialConfigs.length > 0) {
       const configMap = new Map(
         initialConfigs.map((config) => [String(config.id), config])
@@ -234,9 +207,18 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
     });
   }, [columns, initialConfigs, restrictionMap]);
 
-  const [columnConfigs, setColumnConfigs] = useState<ColumnConfig[]>(() =>
-    initializeColumnConfigs()
+  const [columnConfigs, setColumnConfigs] = useState<ShowHideColumnConfig[]>(
+    () => initializeColumnConfigs()
   );
+
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredColumns = useMemo(() => {
+    if (!searchTerm.trim()) return columnConfigs;
+    return columnConfigs.filter((col) =>
+      col.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, columnConfigs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -257,10 +239,11 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
       const newConfigs = initializeColumnConfigs();
       setColumnConfigs(newConfigs);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columns]);
 
   const updateColumnConfigs = useCallback(
-    (configs: ColumnConfig[]) => {
+    (configs: ShowHideColumnConfig[]) => {
       setColumnConfigs(configs);
 
       const configMap = new Map(configs.map((config) => [config.id, config]));
@@ -339,58 +322,98 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
 
   return (
     <Popover
+      id={popoverId}
       open={open}
       anchorEl={anchorEl}
       onClose={onClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-      PaperProps={{ sx: { width: 320, maxHeight: 500, overflow: 'hidden' } }}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      PaperProps={{
+        sx: {
+          boxShadow: '0px 4px 15px 11px #0000001A',
+          bgcolor: 'transparent',
+          mt: 0.5,
+          borderRadius: '8px',
+          border: '1px solid #CBD6E2',
+        },
+      }}
     >
-      <Box className='p-4'>
+      <div className='p-4 bg-white man-h-[500px] w-[320px] min-w-[320px] max-w-[320px] overflow-hidden'>
         <div className='flex items-center justify-between mb-3'>
-          <h2 className='text-[16px] font-bold text-[#2D3E4F]'>
-            Show/Hide Fields
-          </h2>
-          <div
-            onClick={onClose}
-            className='border text-gray-500 rounded-full p-1 cursor-pointer transition-colors group'
+          <h2 className='text-lg font-semibold'> Show/Hide Fields</h2>
+          <button
             role='button'
-            tabIndex={0}
-            aria-label='Close'
+            onClick={onClose}
+            className='cursor-pointer hover:bg-gray-200 p-2 rounded-full'
           >
             <React.Suspense fallback={null}>
-              <CloseIcon
-                size='small'
-                className='text-gray-500 group-hover:text-gray-700 h-2 w-2'
-              />
+              <CloseIcon />
             </React.Suspense>
-          </div>
+          </button>
         </div>
-        <div className='flex items-center gap-1 mb-3'>
-          <h2 className='text-[13px] font-semibold text-[#2D3E4F]'>Show All</h2>
-          <Switch
-            checked={columnConfigs.every((col) => col.visible)}
-            // disabled={columnConfigs.every((col) => col.visible)}
-            onChange={(e) => {
-              if (!columnConfigs.every((col) => col.visible)) {
-                if (e.target.checked) {
-                  handleSelectAll();
-                }
-              }
-            }}
+        <div className='flex items-center justify-between gap-3 pb-2 mb-2 border-b border-[#CBD6E2]'>
+          <TextField
             size='small'
+            placeholder='Search fields...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            fullWidth
             sx={{
-              '& .MuiSwitch-switchBase.Mui-checked': {
-                color: '#2e7d32',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '2px',
+                '& fieldset': {
+                  border: '1px solid #CBD6E2',
+                },
+                '&:hover fieldset': {
+                  border: '1px solid #CBD6E2',
+                },
+                '&.Mui-focused fieldset': {
+                  border: '1px solid #60A5FA',
+                },
               },
-              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                backgroundColor: '#2e7d32',
+              '& .MuiInputBase-input': {
+                fontSize: '12px',
+                color: '#425A76',
+                height: '11px',
+                width: '150px',
               },
             }}
           />
+          <div className='flex items-center w-[150px]'>
+            <h2 className='text-[13px] font-semibold text-[#2D3E4F]'>
+              Show All
+            </h2>
+            <Switch
+              checked={columnConfigs.every((col) => col.visible)}
+              // disabled={columnConfigs.every((col) => col.visible)}
+              onChange={(e) => {
+                if (!columnConfigs.every((col) => col.visible)) {
+                  if (e.target.checked) {
+                    handleSelectAll();
+                  }
+                }
+              }}
+              size='small'
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#2e7d32',
+                  cursor: columnConfigs.every((col) => col.visible)
+                    ? 'default'
+                    : 'pointer',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#2e7d32',
+                },
+              }}
+            />
+          </div>
         </div>
-
-        <Divider className='mb-3' />
 
         <div className='max-h-80 overflow-y-auto'>
           <DndContext
@@ -402,25 +425,36 @@ export const ColumnVisibilityPopover = <T extends BaseTableColumn>({
               items={sortableItems.map((col) => col.id)}
               strategy={verticalListSortingStrategy}
             >
-              {columnConfigs.map((column) => (
-                <SortableItem
-                  key={column.id}
-                  id={column.id}
-                  column={column}
-                  restriction={restrictionMap.get(column.id)}
-                  onToggle={handleToggle}
-                />
-              ))}
+              {filteredColumns.length > 0 ? (
+                filteredColumns.map((column) => (
+                  <SortableItem
+                    key={column.id}
+                    id={column.id}
+                    column={column}
+                    restriction={restrictionMap.get(column.id)}
+                    onToggle={handleToggle}
+                    disableDrag={!!searchTerm}
+                  />
+                ))
+              ) : (
+                <div className='flex items-center justify-center py-4'>
+                  <Typography variant='body2' className='text-gray-500'>
+                    No results found
+                  </Typography>
+                </div>
+              )}
             </SortableContext>
           </DndContext>
         </div>
 
-        <div className='mt-3 pt-3 border-t border-gray-200'>
+        <div className='mt-3 pt-3 border-t border-[#CBD6E2]'>
           <Typography variant='caption' className='text-gray-500'>
             Drag items to reorder columns • Toggle switches to show/hide
           </Typography>
         </div>
-      </Box>
+      </div>
     </Popover>
   );
 };
+
+export default ManageColumnsPopover;

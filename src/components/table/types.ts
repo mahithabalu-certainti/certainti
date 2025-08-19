@@ -313,3 +313,44 @@ export interface ExpandedState {
     children?: ExpandedState;
   };
 }
+
+// Column Show/Hide Types
+export interface ShowHideTableColumn {
+  id: string;
+  label: string;
+  hide?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ShowHideColumnConfig {
+  id: string;
+  label: string;
+  visible: boolean;
+  order: number;
+}
+
+export interface ShowHideColumnRestriction {
+  id: string;
+  canHide?: boolean;
+  canDrag?: boolean;
+  tooltip?: string;
+}
+
+export interface ShowHideSortableItemProps {
+  id: string;
+  column: ShowHideColumnConfig;
+  restriction?: ShowHideColumnRestriction;
+  onToggle: (id: string, visible: boolean) => void;
+  disableDrag?: boolean;
+}
+
+export interface ManageColumnsPopoverProps<T extends ShowHideTableColumn> {
+  anchorEl: HTMLElement | null;
+  open: boolean;
+  popoverId: string | undefined;
+  onClose: () => void;
+  columns: T[];
+  onColumnsChange: (columns: T[]) => void;
+  initialConfigs?: ShowHideColumnConfig[];
+  columnRestrictions?: ShowHideColumnRestriction[];
+}

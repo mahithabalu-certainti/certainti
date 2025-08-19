@@ -51,7 +51,7 @@ export const Accounts: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>();
-  const [columnVisibilityAnchor, setColumnVisibilityAnchor] =
+  const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
   const { fiscalYear, filters } = useSelector<
@@ -70,6 +70,9 @@ export const Accounts: React.FC = () => {
 
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'account-filter-popover' : undefined;
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
   useEffect(() => {
     const saved = getStoredFilters();
@@ -219,10 +222,10 @@ export const Accounts: React.FC = () => {
 
   if (!accountIsEnable || !isAccountViewAllEnable) return <AccessRestricted />;
 
-  const handleColumnVisibilityClick = (
+  const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
-    setColumnVisibilityAnchor(event.currentTarget);
+    setColumnAnchorEl(event.currentTarget);
   };
 
   return (
@@ -296,9 +299,9 @@ export const Accounts: React.FC = () => {
             ) : null}
           </button>
           <button
-            aria-describedby={filterId}
-            className='w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative'
-            onClick={handleColumnVisibilityClick}
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative ${isModalOpen ? 'bg-[#F3F3F3]' : ''}`}
+            onClick={handleColumnVisibility}
           >
             Show/Hide Fields
           </button>
@@ -332,8 +335,8 @@ export const Accounts: React.FC = () => {
           countryOptions={countryOptions}
           industryOptions={industryOptions}
           onRefreshClick={onRefreshClick}
-          setColumnVisibilityAnchor={setColumnVisibilityAnchor}
-          columnVisibilityAnchor={columnVisibilityAnchor}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
         />
       </div>
     </div>

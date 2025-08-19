@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts, useFetchColorCodes } from '../../../services/account';
@@ -17,20 +17,14 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
 import { UPDATE_ACCOUNT } from '../../../../api/graphql/queries/account-query';
 import { useToast } from '../../../../hooks';
 import { AllPermissions } from '../../../../common-service';
-import { ColumnVisibilityPopover } from '../../../../components/table/column-visibility-popover';
-
-interface BaseTableColumn {
-  id: string;
-  label: string;
-  hide?: boolean;
-  [key: string]: any;
-}
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -46,8 +40,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
   refreshAccountTrigger,
   countryOptions,
   industryOptions,
-  setColumnVisibilityAnchor,
-  columnVisibilityAnchor,
+  setColumnAnchorEl,
+  columnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -291,28 +285,20 @@ const AccountTable: React.FC<Record<string, any>> = ({
     }
   };
 
-  // Hook for easier usage (optional)
-  const useColumnVisibility = <T extends BaseTableColumn>(
-    columns: T[]
-    // storageKey?: string
-  ) => {
-    const [visibleColumns, setVisibleColumns] = useState<T[]>(columns);
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AccountList>[]
+  >(accountColumns.filter((col) => !col.hide));
 
-    const handleColumnsChange = useCallback((updatedColumns: T[]) => {
-      setVisibleColumns(updatedColumns.filter((col) => !col.hide));
-    }, []);
-
-    return {
-      visibleColumns,
-      handleColumnsChange,
-    };
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AccountList>[]
+    );
   };
 
-  const { visibleColumns, handleColumnsChange } =
-    useColumnVisibility(accountColumns);
-
-  const handleColumnVisibilityClose = () => {
-    setColumnVisibilityAnchor(null);
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
   };
 
   const RestrictedColumns = [
@@ -320,16 +306,21 @@ const AccountTable: React.FC<Record<string, any>> = ({
       id: 'account_name',
       canHide: false,
       canDrag: false,
+      // tooltip: 'Account name cannot be hidden or dragged',
     },
   ];
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
       {/* Column Visibility Popover */}
-      <ColumnVisibilityPopover
-        anchorEl={columnVisibilityAnchor}
-        open={Boolean(columnVisibilityAnchor)}
-        onClose={handleColumnVisibilityClose}
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
         columns={accountColumns}
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
