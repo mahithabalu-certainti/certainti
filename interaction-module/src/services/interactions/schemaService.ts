@@ -433,6 +433,7 @@ class InteractionSchemaService {
       //interactionDetails.dataValues.questions = interactionItems;
       // Optionally, pick only required fields for the response
       const {
+        rid,
         account_rid,
         project_rid,
         fiscal_year,
@@ -456,6 +457,7 @@ class InteractionSchemaService {
       );
       console.log(metainfo);
       const response: InteractionDetailsResponse = {
+        interaction_rid:rid,
         project_name: metainfo?.project_name ?? "",
         project_code: metainfo?.project_code ?? "",
         account_rid,
@@ -634,6 +636,10 @@ class InteractionSchemaService {
         account_name: accountInfo?.account_name ?? null,
         account_rid: accountInfo?.rid ?? null
       },
+      interactionInfo:{
+        interaction_id: interactionDetails?.r_number ?? null,
+       
+      }
     };
   }
 

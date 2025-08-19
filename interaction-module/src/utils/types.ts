@@ -54,6 +54,7 @@ export interface InteractionDetailsResponse {
   project_rid: string;
   project_name: string;
   project_code: string;
+  interaction_rid:string
   fiscal_year: number;
   project_fiscal_rid: string;
   r_number: string;

@@ -14,8 +14,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { surveyMailTemplate } from "../../utils/mailTemplate";
 import {  sendEmailWithAttachment } from "../emailService";
-import * as fs from 'fs';
-import * as path from 'path';
+import ExcelJS from 'exceljs';
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -106,17 +105,17 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
-  async getInteractionStatusAndSource(status_action: string) {
-    const status = statusAction[status_action as keyof typeof statusAction];
-    if (!status) {
-      throw new Error("Invalid status_action value");
+  async getInteractionStatusAndSource(status_action?: string) {
+    let interactionStatus = "";
+    if (status_action) {
+      const status = statusAction[status_action as keyof typeof statusAction];
+      if (status) {
+        interactionStatus = (await this.interactionSchemaService.getInteractionStatusByType(status)) ?? "";
+      }
     }
-    const [interactionStatus, intSource] = await Promise.all([
-      this.interactionSchemaService.getInteractionStatusByType(status),
-      this.interactionSchemaService.getInteractionSourceByType(
-        interactionSource.MANUAL
-      ),
-    ]);
+    const intSource = await this.interactionSchemaService.getInteractionSourceByType(
+      interactionSource.MANUAL
+    );
     return { interactionStatus, intSource };
   }
 
@@ -146,8 +145,8 @@ export class InteractionService {
           interactionData.interaction_rid
         );
       const { interactionStatus, intSource } =
-        await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.status_rid = interactionStatus || "";
+        await this.getInteractionStatusAndSource();
+      interactionData.status_rid = interactionData.status_rid || "";
       interactionData.interaction_source_rid = intSource || "";
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
@@ -406,38 +405,42 @@ export class InteractionService {
       const interactionResponse: any[] = [];
 
       for (const rid of interactionRid) {
-        const [interactionItems, interactionInfo, emailInfo] = await Promise.all([
-          this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber, rid),
-          this.interactionSchemaService.fetchInteractionInfo(rid, accountNumber),
-          this.interactionSchemaService.fetchPOCEmail(accountNumber, rid)
-        ]);
-        const interactionLink =await  this.generateInteractionLink(rid,interactionInfo.accountInfo.account_rid);
+        const [interactionItems, interactionInfo, emailInfo] =
+          await Promise.all([
+            this.interactionSchemaService.fetchInteractionQuestionsById(
+              accountNumber,
+              rid
+            ),
+            this.interactionSchemaService.fetchInteractionInfo(
+              rid,
+              accountNumber
+            ),
+            this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
+          ]);
+        const interactionLink = await this.generateInteractionLink(
+          rid,
+          interactionInfo.accountInfo.account_rid
+        );
 
-        const plainItems = interactionItems.map((item: any) => item.get({ plain: true }));
-        const csvRows: string[] = [
-          `Interaction ID,"${rid}"`,
-          `Project ID,"${interactionInfo.projectInfo?.project_id ?? ""}"`,
-          `Project Code,"${interactionInfo.projectInfo?.project_code ?? ""}"`,
-          `Project Name,"${interactionInfo.projectInfo?.project_name ?? ""}"`,
-          "",
-          "Questions,Answers",
-          ...plainItems.map((item: any) => `"${item.question}",""`),
-        ];
-        const csvContent = csvRows.join('\n');
-        const csvFolder = path.resolve(__dirname, '../../csv_exports');
-        if (!fs.existsSync(csvFolder)) fs.mkdirSync(csvFolder, { recursive: true });
-        const filePath = path.join(csvFolder, `interaction_${rid}.csv`);
-        fs.writeFileSync(filePath, csvContent, 'utf-8');
+        // Prepare Excel workbook
+        const excelBuffer = await this.generateExcelBuffer(
+          rid,
+          interactionItems,
+          interactionInfo
+        );
+        const excelAttachment = {
+          filename: `interaction_${rid}.xlsx`,
+          content: Buffer.from(excelBuffer).toString("base64"),
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        };
 
+        // Send email
         const emailResponse = await this.sendEmailWithAttachment(
           emailInfo,
           interactionInfo.projectInfo,
           interactionInfo.accountInfo,
-          {
-            filename: `interaction_${rid}.csv`,
-            content: Buffer.from(csvContent, 'utf-8').toString('base64'),
-            contentType: 'text/csv'
-          },
+          excelAttachment,
           interactionLink
         );
         if (emailResponse) {
@@ -448,8 +451,14 @@ export class InteractionService {
             userId,
             emailInfo
           );
+        } else {
+          //need to add logic for sending toPS team
         }
-        interactionResponse.push({ interactionRid: rid, csvSent: !!emailResponse });
+
+        interactionResponse.push({
+          interactionRid: rid,
+          csvSent: !!emailResponse,
+        });
       }
 
       return {
@@ -462,38 +471,111 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
-  async generateInteractionLink(interactionRid: string, accountRid: string)
-  {
+  async generateInteractionLink(interactionRid: string, accountRid: string) {
     return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
   }
+  async generateExcelBuffer(
+    rid: string,
+    interactionItems: any[],
+    interactionInfo: any
+  ): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Interaction");
+
+    // Header rows
+    const headerRows = [
+      ["Interaction ID", interactionInfo.interactionInfo?.interaction_id ?? ""],
+      ["Project ID", interactionInfo.projectInfo?.project_id ?? ""],
+      ["Project Name", interactionInfo.projectInfo?.project_name ?? ""],
+    ];
+
+    headerRows.forEach((row, idx) => {
+      worksheet.addRow(row);
+      worksheet.getRow(idx + 1).getCell(1).font = { bold: true };
+      worksheet.getRow(idx + 1).getCell(1).protection = { locked: true };
+      worksheet.getRow(idx + 1).getCell(2).protection = { locked: true };
+    });
+
+    // Column headers
+    worksheet.addRow(["Questions", "Answers", "Notes", "Is Mandatory"]);
+    worksheet.getRow(4).eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.protection = { locked: true };
+    });
+
+    worksheet.columns = [
+      { key: "question", width: 50 },
+      { key: "answer", width: 50 },
+      { key: "notes", width: 30 },
+      { key: "is_mandatory", width: 15 },
+    ];
+
+    // Add question rows
+    interactionItems.forEach((item: any) => {
+      const plain = item.get ? item.get({ plain: true }) : item;
+      const row = worksheet.addRow({
+        question: plain.question,
+        answer: "",
+        notes: "",
+        is_mandatory: plain.is_mandatory ? "Yes" : "No",
+      });
+
+      // Lock specific columns right away
+      row.getCell(1).protection = { locked: true };
+      row.getCell(2).protection = { locked: false};
+      row.getCell(3).protection = { locked: true };
+      row.getCell(4).protection = { locked: true };
+    });
+
+    // Now protect worksheet AFTER all protections are set
+    await worksheet.protect("interaction123", {
+      selectLockedCells: true,
+      selectUnlockedCells: true,
+    });
+
+    // Write Excel file to buffer (in-memory)
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(excelBuffer as ArrayBuffer);
+  }
+
   async sendEmailWithAttachment(
-    emailInfo: {name: string, email: string},
-    projectInfo:{project_id:string,project_name: string; project_code: string,fiscalYear: number},
-    accountInfo:{account_name:string},
-    attachment: { filename: string; content: string; contentType: string },
+    emailInfo: { name: string; email: string },
+
+    projectInfo: {
+      project_id: string;
+      project_name: string;
+      project_code: string;
+      fiscalYear: number;
+    },
+    accountInfo: { account_name: string },
+    excelAttachment: { filename: string; content: string; contentType: string },
     interactionLink: string
   ) {
     let emailResponse = false;
     try {
-      const emailContent = surveyMailTemplate(emailInfo, projectInfo, accountInfo, interactionLink);
+      const emailContent = surveyMailTemplate(
+        emailInfo,
+        projectInfo,
+        accountInfo,
+        interactionLink
+      );
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
-          attachments: [
-        {
-          '@odata.type': '#microsoft.graph.fileAttachment',
-          name: attachment.filename,
-          contentBytes: attachment.content,
-          contentType: attachment.contentType
-        }
-          ]
-        });
-        return emailResponse;
-      } catch (error) {
-        this.logger.error("Error sending email with attachment", error);
-        return emailResponse;
-      }
+        attachments: [
+          {
+            "@odata.type": "#microsoft.graph.fileAttachment",
+            name: excelAttachment.filename,
+            contentBytes: excelAttachment.content,
+            contentType: excelAttachment.contentType,
+          },
+        ],
+      });
+      return emailResponse;
+    } catch (error) {
+      this.logger.error("Error sending email with attachment", error);
+      return emailResponse;
+    }
   }
- 
 
   /**
    * Formats an error response to be returned from service methods.
