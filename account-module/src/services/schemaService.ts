@@ -1918,6 +1918,22 @@ private async createInteractionTable(
     );
   `);
 
+    const fieldsToIndex = [
+      "account_rid",
+      "project_rid",
+      "fiscal_year",
+      "project_fiscal_rid",
+      "interaction_rid",
+    ];
+
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_interaction_items_${field}_idx`;
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_items"("${field}");
+    `);
+    }
+
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_status_history (
       rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2049,6 +2065,21 @@ private async createInteractionTable(
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
     `);
+    const fieldsToIndex = [
+      "account_rid",
+      "project_rid",
+      "fiscal_year",
+      "project_fiscal_rid",
+      "interaction_rid",
+    ];
+
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_interaction_items_${field}_idx`;
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_items"("${field}");
+    `);
+    }
   }
 
   private async createInteractionResponseTable(schemaName: string, sequelize: any) {
@@ -2078,6 +2109,18 @@ private async createInteractionTable(
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
     `);
+    const fieldsToIndex = [
+      "interaction_rid",
+      "interaction_item_rid",
+    ];
+
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_interaction_response_history_${field}_idx`;
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_response_history"("${field}");
+    `);
+    }
   }
 
   private async createInteractionStatusHistoryTable(schemaName: string, sequelize: any)
@@ -2124,6 +2167,19 @@ private async createInteractionTable(
          ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_response_rid_fkey FOREIGN KEY (interaction_response_rid) REFERENCES "${schemaName}".interaction_response_history(rid) ON UPDATE CASCADE;
 
     `);
+      const fieldsToIndex = [
+      "interaction_rid",
+      "interaction_item_rid",
+    ];
+
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_interaction_attachments_${field}_idx`;
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_attachments"("${field}");
+    `);
+    }
+    
   }
 
   private async createInteractionTimeline(schemaName: string, sequelize: any) {
