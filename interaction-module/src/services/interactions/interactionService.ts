@@ -11,7 +11,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,inter
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { fetchInteractionForProjectLevelQuery, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { interactionMailTemplate } from "../../utils/mailTemplate";
 import {  sendEmailWithAttachment } from "../emailService";
@@ -666,6 +666,22 @@ export class InteractionService {
       }
       totalResults = disablePagination ? finalData.length : finalData[0].total_records
       let finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
+      finalPaginatedData = await Promise.all(finalPaginatedData.map(async (d : any) => {
+        let data = {
+          ...d,
+          url : d.interaction_url == '' || d.interaction_url == null ? null : await generateSasUrl(d.interaction_url)
+        }
+        delete data.interaction_url
+        return data;
+      }))
+      finalPaginatedData = finalPaginatedData.map((d : any) => {
+        const data = {
+          ...d,
+          interaction_url : d.url
+        }
+        delete data.url
+        return data;
+      })
       let organizedData = {
         page : data.page,
         limit : data.limit,
@@ -696,9 +712,25 @@ export class InteractionService {
       data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by
     ))
     if(result[0][0].interactions != null) {
+      let finalData = await Promise.all(result[0][0].interactions.map(async (d : any) => {
+        let data = {
+          ...d,
+          url : d.interaction_url == '' || d.interaction_url == null ? null : await generateSasUrl(d.interaction_url)
+        }
+        delete data.interaction_url
+        return data;
+      }))
+      finalData = finalData.map((d : any) => {
+        let data = {
+          ...d,
+          interaction_url : d.url
+        }
+        delete data.url
+        return data;
+      })
       return {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        data : result[0][0].interactions
+        data : finalData
       }
     } else {
       return {
@@ -745,7 +777,7 @@ export class InteractionService {
       }
     } else {
       return {
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
         data : []
       }
     }
@@ -905,6 +937,48 @@ export class InteractionService {
         limit : data.limit,
         totalRecords : 0,
         attachments : []
+      }
+    }
+  }
+  async listResponseHistoryDetails (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+    const result : any = await orgDb.query(interactionResponseHistoryByVersion(data.interaction_rid, data.version, schemaName));
+    if(result[0][0].responses_history_details !== null) {
+      let finalData = await Promise.all(result[0][0].responses_history_details.map(async (d : any) => {
+        let data = {
+          interaction_response_rid : d.interaction_response_rid,
+          interaction_item_rid : d.interaction_item_rid,
+          response_submitted_on : d.response_submitted_on,
+          question_id : d.question_id,
+          question : d.question,
+          response : d.response,
+          response_on : d.response_on,
+          attachments : await Promise.all(d.attachments.filter((f : any) => f !== null).map(async (da : any) => {
+            return {
+              interaction_url : da.interaction_url == null ? null : await generateSasUrl(da.interaction_url)
+            }
+          }))
+        }
+        return data
+      }))
+      let structuredData = {
+        interaction_rid : result[0][0].responses_history_details[0].interaction_rid,
+        interaction_r_number : result[0][0].responses_history_details[0].r_number,
+        project_name : result[0][0].responses_history_details[0].project_name,
+        history_details : finalData
+      }
+      return {
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : structuredData
+      }
+    } else {
+      return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
       }
     }
   }
