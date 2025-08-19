@@ -208,7 +208,7 @@ export const listAllInteractionSummary = (
     let query =
     `
     WITH fetch_all_interactions AS 
-    (SELECT i.rid, i.r_number, i.interaction_iteration, i.interaction_status_rid,
+    (SELECT i.rid, i.r_number, i.interaction_iteration, i.status_rid,
     s.status_name, i.recipient_name, i.recipient_email,
     i.last_resent_on, i.last_reminder_on, i.response_submitted_on,
     i.response_updated_on, i.attachment_count, i.rid AS interaction_history,
@@ -222,7 +222,7 @@ export const listAllInteractionSummary = (
     FROM
     ${MAIN_SCHEMA_NAME}.interactions_summary i
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s ON s.rid = i.interaction_status_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s ON s.rid = i.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = i.created_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = i.modified_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.rid = i.parent_interaction_rid
@@ -243,7 +243,7 @@ export const listAllInteractionSummary = (
             'r_number', i.r_number,
             'interaction_iteration', i.interaction_iteration,
             'interaction_age', i.interaction_age,
-            'interaction_status_rid', i.interaction_status_rid,
+            'status_rid', i.status_rid,
             'recipient_name', i.recipient_name,
             'recipient_email', i.recipient_email,
             'last_resent_on', i.last_resent_on,
