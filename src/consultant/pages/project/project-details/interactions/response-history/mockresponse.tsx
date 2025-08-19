@@ -1,6 +1,6 @@
-import { responseInteractionListResponse } from '../../../../../types';
+import { ResponseInteractionListResponse } from '../../../../../types';
 
-export const mockResponse: responseInteractionListResponse = {
+export const mockResponse: ResponseInteractionListResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: 'Interaction Response history fetched successfully',

@@ -1,11 +1,11 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
-import { InteractionListURLParams, responseInteractionList } from '../../types';
+import { InteractionListURLParams, ResponseInteractionList } from '../../types';
 import { mockResponse } from '../../pages/project/project-details/interactions/response-history/mockresponse';
 
 export const fetchInteractionList = async (
   params: InteractionListURLParams
-): Promise<{ interactions: responseInteractionList[]; count: number }> => {
+): Promise<{ interactions: ResponseInteractionList[]; count: number }> => {
   console.log('interaction-params', params);
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -19,11 +19,11 @@ export const useInteractionList = (
   shouldFetchList: boolean,
   refreshInteractions?: number
 ): UseQueryResult<
-  { interactions: responseInteractionList[]; count: number },
+  { interactions: ResponseInteractionList[]; count: number },
   Error
 > => {
   return useQuery<
-    { interactions: responseInteractionList[]; count: number },
+    { interactions: ResponseInteractionList[]; count: number },
     Error
   >({
     queryKey: ['interaction-list', params, refreshInteractions],

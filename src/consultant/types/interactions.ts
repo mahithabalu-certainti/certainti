@@ -106,7 +106,7 @@ export type InteractionList = {
   project_fiscal_rid: string;
   fiscal_year: number;
 };
-export type responseInteractionList = {
+export type ResponseInteractionList = {
   rid: string;
   r_number: string;
   response_on: string;
@@ -144,7 +144,7 @@ export interface InteractionListResponse {
     count?: number;
   };
 }
-export interface responseInteractionListResponse {
+export interface ResponseInteractionListResponse {
   statusCode: number;
   statusMessage: string;
   statusCodeValue?: string;
@@ -152,7 +152,7 @@ export interface responseInteractionListResponse {
     page: number;
     limit: number;
     totalCount: number;
-    response_history: responseInteractionList[];
+    response_history: ResponseInteractionList[];
     count?: number;
   };
 }

@@ -1,11 +1,11 @@
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
-import { responseInteractionList } from '../../../../../types';
+import { ResponseInteractionList } from '../../../../../types';
 
 export const getInteractionListColumns = (
   handleViewInteraction: (rid: string) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
-): ListTableColumn<responseInteractionList>[] => [
+): ListTableColumn<ResponseInteractionList>[] => [
   {
     id: 'response_source',
     sortId: 'response_source',
@@ -24,7 +24,7 @@ export const getInteractionListColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: responseInteractionList) => (
+    render: (row: ResponseInteractionList) => (
       <span
         onClick={() => handleViewInteraction(row.rid)}
         className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
@@ -42,7 +42,7 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['iteration']?.edit &&
     //   !permissionMap?.['iteration']?.read,
-    render: (row: responseInteractionList) => (
+    render: (row: ResponseInteractionList) => (
       <span>{formatDateToYYYYMMDDWithTime(row?.response_on)}</span>
     ),
   },

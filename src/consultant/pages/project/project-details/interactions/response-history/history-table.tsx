@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getInteractionListColumns } from './columns';
-import { responseInteractionList } from '../../../../../types';
+import { ResponseInteractionList } from '../../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ListTable } from '../../../../../../components/table';
 import { mockResponse } from './mockresponse';
@@ -57,7 +57,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ isError }) => {
   const handleSelectionChange = (selectedIds: string[]) => {
     console.log(selectedIds);
   };
-  const getRowId = (row: responseInteractionList) => row.rid;
+  const getRowId = (row: ResponseInteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(handleViewInteraction);
   return (
     <div className='border border-[#CBD6E2]'>
@@ -74,6 +74,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ isError }) => {
               questions={data?.questions}
               globalAttachments={data?.global_attachments}
               isEditEnable={false}
+              actionButtonENable={false}
               // handleResponseHistory={handleResponseHistory}
             />
           )}
