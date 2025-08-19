@@ -547,7 +547,7 @@ export class InteractionService {
     const detectConditions = (filters : any) => {
       if(!filters) return null
       for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
-        if(filters[conditions] !== undefined) return conditions
+        if(Object.keys(filters).includes(conditions)) return conditions
       }
       return null
     }
@@ -569,7 +569,7 @@ export class InteractionService {
     }
      if(data.filters?.status_name) {
       statusFilter = data.filters.status_name
-      statusConditions = detectConditions(sourceFilter)
+      statusConditions = detectConditions(statusFilter)
     }
 
     ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name", "status_name"].forEach(key => {
@@ -616,7 +616,7 @@ export class InteractionService {
         return {
           ...d,
           status_rid : d.status,
-          status_name : statusMap.get(d.status),
+          status_name : d.status == '' || d.status == null ? null :  statusMap.get(d.status),
           interaction_type_rid : d.interaction_type,
           interaction_type_name : typeMap.get(d.interaction_type),
           interaction_source_rid : d.interaction_source,
