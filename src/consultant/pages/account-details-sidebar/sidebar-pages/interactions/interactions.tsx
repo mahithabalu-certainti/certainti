@@ -101,6 +101,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: newFiscalYear,
+      flag: 'account',
     },
     !viewDetails,
     refreshInteractions
