@@ -12,7 +12,7 @@ import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
-import { interactionMailTemplate, otpMailTemplate } from "../../utils/mailTemplate";
+import { interactionMailTemplate } from "../../utils/mailTemplate";
 import {  sendEmailWithAttachment } from "../emailService";
 import * as fs from 'fs';
 import * as path from 'path';
