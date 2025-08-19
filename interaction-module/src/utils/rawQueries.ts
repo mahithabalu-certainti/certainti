@@ -361,9 +361,9 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     let query = 
     `
     WITH fetch_interaction_response AS (
-    SELECT i.rid, i.r_number, r.response_by, r.response_on, r.response_email,
+    SELECT r.rid, i.r_number, r.response_by, r.response_on, r.response_email,
     r.interaction_response, i.interaction_source_rid, COUNT(i.rid) OVER() AS total_records,
-    r.response_source, r.interaction_version
+    r.response_source, r.interaction_version, r.interaction_rid, r.interaction_item_rid
     FROM 
     ${schemaName}.interaction_response_history r
     LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
@@ -377,6 +377,8 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     SELECT 
     array_agg(jsonb_build_object(
     'rid', i.rid,
+    'interaction_rid', i.interaction_rid,
+    'interaction_item_rid', i.interaction_item_rid,
     'r_number', i.r_number,
     'response_by_rid', i.response_by,
     'response_on', i.response_on,
