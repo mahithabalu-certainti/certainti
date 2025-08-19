@@ -650,12 +650,8 @@ export class InteractionService {
       sourceFilter = data.filters.interaction_source_name
       sourceConditions = detectConditions(sourceFilter)
     }
-     if(data.filters?.status_name) {
-      statusFilter = data.filters.status_name
-      statusConditions = detectConditions(statusFilter)
-    }
 
-    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name", "status_name"].forEach(key => {
+    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name"].forEach(key => {
       if(data.filters[key]) {
         disablePagination = true
         delete data.filters[key]
@@ -734,9 +730,6 @@ export class InteractionService {
         finalData = applyFilters(finalData, sourceConditions, sourceFilter, "interaction_source_name")
       if(typeCondition != undefined && typeCondition != null) {
         finalData = applyFilters(finalData, typeCondition, typeFilter, "interaction_type_name")
-      }
-      if(statusConditions != undefined && statusConditions != null) {
-        finalData = applyFilters(finalData, statusConditions, statusFilter, "status_name")
       }
       if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'asc') {
         finalData = finalData.sort((a : any, b : any) => {
