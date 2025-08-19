@@ -132,6 +132,7 @@ export class Interaction
         interaction_hashcode: { type: DataTypes.STRING(255), allowNull: true },
         interaction_url: { type: DataTypes.STRING(255), allowNull: true },
         interaction_age: { type: DataTypes.INTEGER, allowNull: true },
+        recipient_email: { type: DataTypes.STRING(255), allowNull: true },
       },
       {
         sequelize,

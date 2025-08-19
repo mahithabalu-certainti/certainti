@@ -1,42 +1,44 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX } from "../utils/constants";
+import { IOtpHistoryStatus } from "../utils/types";
 
-export interface OtpAttributes {
+export interface OtpHistoryAttributes {
   rid: string;
   created_by: string;
-  modified_by?: string;
   created_datetime: Date;
-  modified_datetime?: Date;
 
   email: string;
   account_rid: string;
   interaction_rid: string;
   otp: string;
-  is_verified: boolean;
-  expires_at: Date;
+
+  status: IOtpHistoryStatus;
+  attempt_number: number;
+  error_message?: string | null;
 }
 
-export interface OtpCreationAttributes extends Optional<OtpAttributes, "rid"> {}
+export interface OtpHistoryCreationAttributes
+  extends Optional<OtpHistoryAttributes, "rid" | "error_message"> {}
 
-export class Otp
-  extends Model<OtpAttributes, OtpCreationAttributes>
-  implements OtpAttributes
+export class OtpHistory
+  extends Model<OtpHistoryAttributes, OtpHistoryCreationAttributes>
+  implements OtpHistoryAttributes
 {
   public rid!: string;
   public created_by!: string;
-  public modified_by?: string;
   public created_datetime!: Date;
-  public modified_datetime?: Date;
 
   public email!: string;
   public account_rid!: string;
   public interaction_rid!: string;
   public otp!: string;
-  public is_verified!: boolean;
-  public expires_at!: Date;
+
+  public status!: IOtpHistoryStatus;
+  public attempt_number!: number;
+  public error_message?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return Otp.init(
+    return OtpHistory.init(
       {
         rid: {
           type: DataTypes.STRING(50),
@@ -46,24 +48,30 @@ export class Otp
           primaryKey: true,
         },
         created_by: { type: DataTypes.STRING(50), allowNull: false },
-        modified_by: { type: DataTypes.STRING(50), allowNull: true },
         created_datetime: { type: DataTypes.DATE, allowNull: false },
-        modified_datetime: { type: DataTypes.DATE, allowNull: true },
+
         email: { type: DataTypes.STRING(120), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_rid: { type: DataTypes.STRING(100), allowNull: false },
-        otp: { type: DataTypes.STRING(50), allowNull: false },
-        is_verified: {
-          type: DataTypes.BOOLEAN,
+        otp: { type: DataTypes.STRING(100), allowNull: false },
+
+        status: {
+          type: DataTypes.ENUM(
+            "SENT",
+            "SEND_FAILED",
+            "VERIFIED",
+            "VERIFICATION_FAILED",
+            "RESENT"
+          ),
           allowNull: false,
-          defaultValue: false,
         },
-        expires_at: { type: DataTypes.DATE, allowNull: false },
+        attempt_number: { type: DataTypes.INTEGER, allowNull: false },
+        error_message: { type: DataTypes.TEXT, allowNull: true },
       },
       {
         sequelize,
         schema: schemaName,
-        tableName: "otp_entries",
+        tableName: "otp_entries_history",
         timestamps: false,
         underscored: true,
       }
