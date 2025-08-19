@@ -36,7 +36,7 @@ import {
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
-import { useGetAppliedProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
   ExportType,
   FormFiscalDateType,
@@ -59,12 +59,12 @@ const projectTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 
 export const ProjectResources = ({
@@ -74,6 +74,7 @@ export const ProjectResources = ({
   setExportType,
   setAttachmentParams,
   projectCode,
+  accountOrProjectInActive,
 }: {
   projectID?: string;
   accountID?: string;
@@ -83,6 +84,7 @@ export const ProjectResources = ({
     React.SetStateAction<AttachmentsListExportParams>
   >;
   projectCode?: string;
+  accountOrProjectInActive?: boolean;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -206,9 +208,8 @@ export const ProjectResources = ({
       filters: appliedFilters,
     });
   }, [sortField, sortOrder, appliedFilters]);
-  const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
-    accountID as string,
-    projectID as string
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    accountID as string
   );
   // const projectResourceTypeOptions = useGetResourceType();
   const countriesList = useGetAllCountries();
@@ -309,6 +310,7 @@ export const ProjectResources = ({
       onClick: (row: ProjectResourcesListType) =>
         handleEditProjectResource(row),
       hide: !isProjectResourceFieldsEditable,
+      disabled: accountOrProjectInActive,
     },
   ];
   const isResourceCreateViewEnable = checkPermission(
@@ -360,6 +362,7 @@ export const ProjectResources = ({
       hide: viewDetails
         ? !isProjectResourceFieldsEditable
         : !isResourceCreateViewEnable,
+      disabled: accountOrProjectInActive,
     },
   ];
   const handleFilter = () => {
@@ -398,7 +401,7 @@ export const ProjectResources = ({
   const handleProjectResourceClick = (row: ProjectResourcesListType) => {
     searchParams.set('page', 'details');
     searchParams.set('pro_res_id', row?.rid ?? '');
-    navigate({ search: searchParams.toString() });
+    navigate({ search: searchParams.toString() }, { replace: true });
     setProjectResData(row);
     setShowProjectResourceDetails(true);
     setShowFilter(false);
@@ -423,7 +426,8 @@ export const ProjectResources = ({
     memoizedState,
     handleCountry,
     region.isPending,
-    permissionMap
+    permissionMap,
+    accountOrProjectInActive
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());

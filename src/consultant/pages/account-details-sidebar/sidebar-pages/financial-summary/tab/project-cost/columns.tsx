@@ -1,3 +1,4 @@
+import { costDisplay } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { FinancialProjectCostList } from '../../../../../../types/account-financial';
 
@@ -62,9 +63,16 @@ export const getFinancialProjectCostColumns = (
       label: 'FTE Cost',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['total_cost_fte_prj']?.edit &&
         !permissionMap?.['total_cost_fte_prj']?.read,
+      render: (row: FinancialProjectCostList) =>
+        row.total_cost_fte_prj
+          ? costDisplay(row.total_cost_fte_prj, row.currency_symbol)
+          : '-',
     },
     {
       id: 'total_cost_subcon_prj',
@@ -72,9 +80,16 @@ export const getFinancialProjectCostColumns = (
       label: 'Sub Con Cost',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['total_cost_subcon_prj']?.edit &&
         !permissionMap?.['total_cost_subcon_prj']?.read,
+      render: (row: FinancialProjectCostList) =>
+        row.total_cost_subcon_prj
+          ? costDisplay(row.total_cost_subcon_prj, row.currency_symbol)
+          : '-',
     },
     {
       id: 'total_cost_nonlabor_prj',
@@ -82,9 +97,16 @@ export const getFinancialProjectCostColumns = (
       label: 'Non Labor Cost',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['total_cost_nonlabor_prj']?.edit &&
         !permissionMap?.['total_cost_nonlabor_prj']?.read,
+      render: (row: FinancialProjectCostList) =>
+        row.total_cost_nonlabor_prj
+          ? costDisplay(row.total_cost_nonlabor_prj, row.currency_symbol)
+          : '-',
     },
     {
       id: 'total_cost_prj',
@@ -92,9 +114,16 @@ export const getFinancialProjectCostColumns = (
       label: 'Project Cost',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['total_cost_prj']?.edit &&
         !permissionMap?.['total_cost_prj']?.read,
+      render: (row: FinancialProjectCostList) =>
+        row.total_cost_prj
+          ? costDisplay(row.total_cost_prj, row.currency_symbol)
+          : '-',
     },
     {
       id: 'rd_percent_final',
@@ -102,6 +131,9 @@ export const getFinancialProjectCostColumns = (
       label: 'RD %',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['rd_percent_final']?.edit &&
         !permissionMap?.['rd_percent_final']?.read,
@@ -112,6 +144,9 @@ export const getFinancialProjectCostColumns = (
       label: 'Project QRE',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['qre_final']?.edit &&
         !permissionMap?.['qre_final']?.read,
@@ -122,6 +157,9 @@ export const getFinancialProjectCostColumns = (
       label: 'RD Credit',
       width: 130,
       sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
       hide:
         !permissionMap?.['rd_credits_total']?.edit &&
         !permissionMap?.['rd_credits_total']?.read,

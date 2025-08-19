@@ -1,3 +1,4 @@
+import { costDisplay } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
 import {
   SummaryClaimJurisdiction,
@@ -64,55 +65,80 @@ export const getResourceMetricColumns = (
   },
 ];
 
-export const getDetailedMetricColumns =
-  (): ListTableColumn<SummaryDetailedMetric>[] => [
-    {
-      id: 'metric_name',
-      label: 'Metrics',
-      sortable: false,
-      sortId: 'metric_name',
-      width: '16%',
-      sticky: true,
-      sx: {
-        position: 'sticky',
-        left: 0,
-        background: '#fff',
-        zIndex: 10,
-        borderRight: '1px solid #CBD6E2 !important',
-        borderBottom: '1px solid #CBD6E2 !important',
-      },
+export const getDetailedMetricColumns = (
+  currencySymbol?: string
+): ListTableColumn<SummaryDetailedMetric>[] => [
+  {
+    id: 'metric_name',
+    label: 'Metrics',
+    sortable: false,
+    sortId: 'metric_name',
+    width: '16%',
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
     },
-    {
-      id: 'project_level',
-      label: 'Project Level',
-      sortable: false,
-      sortId: 'project_level',
-      width: '28%',
-      sx: {
-        textAlign: 'right',
-      },
+  },
+  {
+    id: 'project_level',
+    label: 'Project Level',
+    sortable: false,
+    sortId: 'project_level',
+    width: '28%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'project_resource_level',
-      label: 'Project Resource Level',
-      sortable: false,
-      sortId: 'project_resource_level',
-      width: '28%',
-      sx: {
-        textAlign: 'right',
-      },
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_level, currencySymbol)
+        : row.project_level || '-',
+  },
+  {
+    id: 'project_resource_level',
+    label: 'Project Resource Level',
+    sortable: false,
+    sortId: 'project_resource_level',
+    width: '28%',
+    sx: {
+      textAlign: 'right',
     },
-    {
-      id: 'project_task_level',
-      label: 'Project Task Level',
-      sortable: false,
-      sortId: 'project_task_level',
-      width: '28%',
-      sx: {
-        textAlign: 'right',
-      },
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_resource_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_resource_level, currencySymbol)
+        : row.project_resource_level || '-',
+  },
+  {
+    id: 'project_task_level',
+    label: 'Project Task Level',
+    sortable: false,
+    sortId: 'project_task_level',
+    width: '28%',
+    sx: {
+      textAlign: 'right',
     },
-  ];
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_task_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_task_level, currencySymbol)
+        : row.project_task_level || '-',
+  },
+];
 
 export const getRdPercentColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
@@ -166,7 +192,8 @@ export const getRdPercentColumns = (
 ];
 
 export const getQREColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  currencySymbol?: string
 ): ListTableColumn<SummaryQRE>[] => [
   {
     id: 'qre_fte',
@@ -186,6 +213,8 @@ export const getQREColumns = (
     },
     hide:
       !permissionMap?.['qre_fte']?.edit && !permissionMap?.['qre_fte']?.read,
+    render: (row: SummaryQRE) =>
+      row.qre_fte ? costDisplay(row.qre_fte, currencySymbol) : '-',
   },
   {
     id: 'qre_subcon',
@@ -199,6 +228,8 @@ export const getQREColumns = (
     hide:
       !permissionMap?.['qre_subcon']?.edit &&
       !permissionMap?.['qre_subcon']?.read,
+    render: (row: SummaryQRE) =>
+      row.qre_subcon ? costDisplay(row.qre_subcon, currencySymbol) : '-',
   },
   {
     id: 'qre_nonlabor',
@@ -212,6 +243,8 @@ export const getQREColumns = (
     hide:
       !permissionMap?.['qre_nonlabor']?.edit &&
       !permissionMap?.['qre_nonlabor']?.read,
+    render: (row: SummaryQRE) =>
+      row.qre_nonlabor ? costDisplay(row.qre_nonlabor, currencySymbol) : '-',
   },
   {
     id: 'qre_final',
@@ -225,11 +258,14 @@ export const getQREColumns = (
     hide:
       !permissionMap?.['qre_final']?.edit &&
       !permissionMap?.['qre_final']?.read,
+    render: (row: SummaryQRE) =>
+      row.qre_final ? costDisplay(row.qre_final, currencySymbol) : '-',
   },
 ];
 
 export const getRdCreditsColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  currencySymbol?: string
 ): ListTableColumn<SummaryRdCredits>[] => [
   {
     id: 'rd_credits_fte',
@@ -250,6 +286,10 @@ export const getRdCreditsColumns = (
     hide:
       !permissionMap?.['rd_credits_fte']?.edit &&
       !permissionMap?.['rd_credits_fte']?.read,
+    render: (row: SummaryRdCredits) =>
+      row.rd_credits_fte
+        ? costDisplay(row.rd_credits_fte, currencySymbol)
+        : '-',
   },
   {
     id: 'rd_credits_subcon',
@@ -263,6 +303,10 @@ export const getRdCreditsColumns = (
     hide:
       !permissionMap?.['rd_credits_subcon']?.edit &&
       !permissionMap?.['rd_credits_subcon']?.read,
+    render: (row: SummaryRdCredits) =>
+      row.rd_credits_subcon
+        ? costDisplay(row.rd_credits_subcon, currencySymbol)
+        : '-',
   },
   {
     id: 'rd_credits_nonlabor',
@@ -276,6 +320,10 @@ export const getRdCreditsColumns = (
     hide:
       !permissionMap?.['rd_credits_nonlabor']?.edit &&
       !permissionMap?.['rd_credits_nonlabor']?.read,
+    render: (row: SummaryRdCredits) =>
+      row.rd_credits_nonlabor
+        ? costDisplay(row.rd_credits_nonlabor, currencySymbol)
+        : '-',
   },
   {
     id: 'rd_credits_total',
@@ -289,11 +337,16 @@ export const getRdCreditsColumns = (
     hide:
       !permissionMap?.['rd_credits_total']?.edit &&
       !permissionMap?.['rd_credits_total']?.read,
+    render: (row: SummaryRdCredits) =>
+      row.rd_credits_total
+        ? costDisplay(row.rd_credits_total, currencySymbol)
+        : '-',
   },
 ];
 
 export const getClaimJurisdictionColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  currencySymbol?: string
 ): ListTableColumn<SummaryClaimJurisdiction>[] => [
   {
     id: 'name',
@@ -324,6 +377,10 @@ export const getClaimJurisdictionColumns = (
     hide:
       !permissionMap?.['claim_rd_credits_fte']?.edit &&
       !permissionMap?.['claim_rd_credits_fte']?.read,
+    render: (row: SummaryClaimJurisdiction) =>
+      row.claim_rd_credits_fte
+        ? costDisplay(row.claim_rd_credits_fte, currencySymbol)
+        : '-',
   },
   {
     id: 'claim_rd_credits_subcon',
@@ -337,6 +394,10 @@ export const getClaimJurisdictionColumns = (
     hide:
       !permissionMap?.['claim_rd_credits_subcon']?.edit &&
       !permissionMap?.['claim_rd_credits_subcon']?.read,
+    render: (row: SummaryClaimJurisdiction) =>
+      row.claim_rd_credits_subcon
+        ? costDisplay(row.claim_rd_credits_subcon, currencySymbol)
+        : '-',
   },
   {
     id: 'claim_rd_credits_nonlabor',
@@ -350,5 +411,9 @@ export const getClaimJurisdictionColumns = (
     hide:
       !permissionMap?.['claim_rd_credits_nonlabor']?.edit &&
       !permissionMap?.['claim_rd_credits_nonlabor']?.read,
+    render: (row: SummaryClaimJurisdiction) =>
+      row.claim_rd_credits_nonlabor
+        ? costDisplay(row.claim_rd_credits_nonlabor, currencySymbol)
+        : '-',
   },
 ];

@@ -19,12 +19,14 @@ import { useGetFinancialSummary } from '../../../../../../services/financial';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
+import { accountDetailsProps } from '../../../../../account-details/utils';
 
 interface Summary {
   fiscalYear: string;
+  accountDetails?: accountDetailsProps;
 }
 
-export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
+export const Summary: React.FC<Summary> = ({ fiscalYear, accountDetails }) => {
   // hooks
   const { accountid } = useParams();
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -41,6 +43,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
   >([]);
   const [type, setType] = useState('all');
   const [flag, setFlag] = useState<FinancialSummaryFlag>('all');
+  const currencySymbol = accountDetails?.accountById?.currency?.currency_symbol;
 
   // API Hooks
   const { mutate, isPending, isError, data } = useGetFinancialSummary();
@@ -218,7 +221,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
       </div>
       <ListTable
         data={detailedMetric}
-        columns={getDetailedMetricColumns()}
+        columns={getDetailedMetricColumns(currencySymbol)}
         getRowId={getDetailedMetricRowId}
         hoverHighlight={false}
         tableStyle={{
@@ -239,7 +242,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear }) => {
       />
       <ListTable
         data={claimJurisdiction}
-        columns={getClaimJurisdictionColumns(permissionMap)}
+        columns={getClaimJurisdictionColumns(permissionMap, currencySymbol)}
         getRowId={getClaimJurisdictionRowId}
         hoverHighlight={false}
         tableStyle={{

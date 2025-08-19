@@ -46,6 +46,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const fiscalYear = projectDetails?.fiscal_year;
+  const currencySymbol = projectDetails?.currency_symbol;
 
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -102,10 +103,13 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   const getRdCreditsRowId = (row: SummaryRdCredits) => row.rid;
 
   const resourceMetricColumns = getResourceMetricColumns(permissionMap);
-  const claimJurisdictionColumns = getClaimJurisdictionColumns(permissionMap);
+  const claimJurisdictionColumns = getClaimJurisdictionColumns(
+    permissionMap,
+    currencySymbol
+  );
   const rdPercentColumns = getRdPercentColumns(permissionMap);
-  const qreColumns = getQREColumns(permissionMap);
-  const rdCreditsColumns = getRdCreditsColumns(permissionMap);
+  const qreColumns = getQREColumns(permissionMap, currencySymbol);
+  const rdCreditsColumns = getRdCreditsColumns(permissionMap, currencySymbol);
 
   const hideMetricTable = resourceMetricColumns.every((col) => col.hide);
   const hideDetailedMetric = detailedMetric.every((item) => item.hide);
@@ -128,7 +132,9 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
               projectDetails?.project_code ||
               '-'}
           </span>
-          <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
+          {fiscalYear && (
+            <span className='text-[#0B5CAB]'>FY-{fiscalYear}</span>
+          )}
         </div>
         <ListTable
           data={resourceMetric}
@@ -154,7 +160,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
       <div className={hideDetailedMetric ? 'hidden' : 'block'}>
         <ListTable
           data={detailedMetric}
-          columns={getDetailedMetricColumns()}
+          columns={getDetailedMetricColumns(currencySymbol)}
           getRowId={getDetailedMetricRowId}
           hoverHighlight={false}
           tableStyle={{

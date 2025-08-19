@@ -33,12 +33,12 @@ const FinancialTabs = [
     name: 'Overview',
     hide: false,
   },
-  {
-    id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
-    name: 'Timeline',
-    hide: false,
-    disable: true,
-  },
+  // {
+  //   id: AllPermissions.ACCOUNT_FINANCIAL_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
 ];
 interface ProjectFinancialProps {
   countryId?: string | null;
@@ -66,7 +66,11 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
-  const [fiscalyear, setFiscalyear] = useState('2025');
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const currentYear = new Date().getFullYear().toString();
+  const fiscalYearValue = fiscalYear === 'FY-All' ? currentYear : fiscalYear;
   const [searchParams] = useSearchParams();
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [currentPage, setCurrentPage] = useState<number>(0);
@@ -204,8 +208,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         sortFilterCount={0}
         setSortFilterCount={() => {}}
         allYears={fiscalYearOptions}
-        fiscalYearValue={fiscalyear}
-        updatedYear={(e) => setFiscalyear(e.target.value)}
+        fiscalYearValue={fiscalYearValue}
         showRefresh={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
@@ -214,7 +217,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
         showFilter={showFilter}
-        showFiscalYear={true}
+        // showFiscalYear={true}
       />
       <SectionHeader
         title='Financial Summary'
@@ -243,11 +246,14 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
-          <Summary fiscalYear={fiscalyear} />
+          <Summary
+            fiscalYear={fiscalYearValue}
+            accountDetails={accountDetails}
+          />
         )}
         {tabParam === 'state_wise_summary' && isStatewiseSummaryViewEnable && (
           <StateWiseSummary
-            fiscalYear={fiscalyear}
+            fiscalYear={fiscalYearValue}
             countryId={countryId}
             stateId={stateId}
             accountDetails={accountDetails}
@@ -255,7 +261,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         )}
         {tabParam === 'project_cost' && isProjectCostViewEnable && (
           <FinancialProjectCost
-            fiscalyear={fiscalyear}
+            fiscalyear={fiscalYearValue}
             reFetchData={reFetchData}
             currentPage={currentPage}
             appliedFilters={appliedFilters}
@@ -267,7 +273,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
           <FinancialResourceCost
             accountDetails={accountDetails}
-            fiscalyear={fiscalyear}
+            fiscalyear={fiscalYearValue}
             currentPage={currentPage}
             refreshTrigger={reFetchData}
             appliedFilters={appliedFilters}

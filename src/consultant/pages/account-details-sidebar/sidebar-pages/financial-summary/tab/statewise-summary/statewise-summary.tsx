@@ -55,6 +55,8 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     region_rid: '',
   });
 
+  const currencySymbol = accountDetails?.accountById?.currency?.currency_symbol;
+
   // API Hooks
   const { mutate, isPending, isError, data } = useGetFinancialSummary(true);
   const financislStates = useFetchFinancialStates({
@@ -340,7 +342,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
       </div>
       <ListTable
         data={detailedMetric}
-        columns={getDetailedMetricColumns()}
+        columns={getDetailedMetricColumns(currencySymbol)}
         getRowId={getDetailedMetricRowId}
         hoverHighlight={false}
         tableStyle={{
@@ -368,7 +370,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         </div>
         <ListTable
           data={rdCredits}
-          columns={getRdCreditsColumns(permissionMap)}
+          columns={getRdCreditsColumns(permissionMap, currencySymbol)}
           getRowId={getRdCreditsRowId}
           hoverHighlight={false}
           tableStyle={{
