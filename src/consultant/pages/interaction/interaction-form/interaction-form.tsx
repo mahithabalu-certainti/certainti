@@ -52,6 +52,15 @@ const InteractionForm = () => {
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
+    account_name: '',
+    project_code: '',
+    project_name: '',
+    fiscal_year: 0,
+    project_fiscal_rid: '',
+    project_rid: '',
+    account_rid: '',
+  });
   const [formData, setFormData] = useState<InteractionFormData>({
     accountName: '',
     projectCode: '',
@@ -95,6 +104,7 @@ const InteractionForm = () => {
           projectName: details.project_name,
           fiscalYear: details.fiscal_year,
         }));
+        setSelectedProject(details);
       } catch (error) {
         console.error('Error parsing projectDetails', error);
       }
@@ -102,6 +112,10 @@ const InteractionForm = () => {
       setFormData((prev) => ({
         ...prev,
         accountName: accountName || '',
+      }));
+      setSelectedProject((prev) => ({
+        ...prev,
+        account_name: accountName || '',
       }));
     }
   }, [accountName, projectDetails, searchParams, source]);
@@ -228,6 +242,16 @@ const InteractionForm = () => {
         fiscalYear: matchingFiscal?.fiscal_year || 0,
       }));
 
+      setSelectedProject({
+        account_name: matchingFiscal?.account_name || '',
+        project_code: matchingFiscal?.project_code || '',
+        project_name: matchingFiscal?.project_name || '',
+        fiscal_year: matchingFiscal?.fiscal_year || 0,
+        project_fiscal_rid: matchingFiscal?.rid || '',
+        project_rid: matchingFiscal?.project_rid || '',
+        account_rid: selectedProject?.account_rid || '',
+      });
+
       // Clear errors when project changes
       setErrors((prev) => ({
         ...prev,
@@ -320,9 +344,6 @@ const InteractionForm = () => {
     if (!validateForm()) {
       return;
     }
-    const projectData: ProjectDetails = JSON.parse(
-      decodeURIComponent(projectDetails || '')
-    );
 
     const payload = transFormPayload(
       accountId,
@@ -330,9 +351,8 @@ const InteractionForm = () => {
       isEditView,
       saveFlag,
       interactionData,
-      projectData
+      selectedProject
     );
-    console.log(payload);
 
     if (isEditView && interactionData) {
       updateInteraction.mutate(payload);
