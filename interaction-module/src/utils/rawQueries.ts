@@ -57,7 +57,7 @@ export const fetchInteractionForProjectLevelQuery = (
     else if(sort === filtersColumns.last_reminder_on) sortValue = `ORDER BY i.last_reminder_on ${sortBy}`
     else if(sort === filtersColumns.response_submitted_on) sortValue = `ORDER BY i.response_submitted_on ${sortBy}`
     else if(sort === filtersColumns.response_updated_on) sortValue = `ORDER BY i.response_updated_on ${sortBy}`
-    else if(sort === filtersColumns.attachments) sortValue = `ORDER BY i.attachments ${sortBy}`
+    else if(sort === filtersColumns.attachment_count) sortValue = `ORDER BY i.attachment_count ${sortBy}`
     else if(sort === filtersColumns.response_source) sortValue = `ORDER BY i.response_source ${sortBy}`
     else if(sort === filtersColumns.created_datetime) sortValue = `ORDER BY i.created_datetime ${sortBy}`
     else if(sort === filtersColumns.modified_datetime) sortValue = `ORDER BY i.modified_datetime ${sortBy}`
@@ -81,7 +81,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
             i.interaction_url, i.fiscal_year, i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
-            i.interaction_source_rid, i.interaction_type_rid
+            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count
 
             FROM
             ${schemaName}.interactions i
@@ -122,7 +122,8 @@ export const fetchInteractionForProjectLevelQuery = (
         'fiscal_year', i.fiscal_year,
         'total_records', i.total_records,
         'interaction_type', i.interaction_type_rid,
-        'interaction_source', i.interaction_source_rid
+        'interaction_source', i.interaction_source_rid,
+        'attachment_count', i.attachment_count
         )${sortValue}) AS interactions
 
         FROM
@@ -190,7 +191,7 @@ export const listAllInteractionSummary = (
     else if(sort === filtersColumnsForInteractionSummary.last_reminder_on) sortValue = `ORDER BY i.last_reminder_on ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.response_submitted_on) sortValue = `ORDER BY i.response_submitted_on ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.response_updated_on) sortValue = `ORDER BY i.response_updated_on ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.attachments) sortValue = `ORDER BY i.attachments ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.attachment_count) sortValue = `ORDER BY i.attachment_count ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.response_source) sortValue = `ORDER BY i.response_source ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.created_datetime) sortValue = `ORDER BY i.created_datetime ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.modified_datetime) sortValue = `ORDER BY i.modified_datetime ${sortBy}`
@@ -266,7 +267,8 @@ export const listAllInteractionSummary = (
             'interaction_type_name', i.interaction_type_name,
             'interaction_source_name', i.interaction_source_name,
             'created_user_name', i.created_user_name,
-            'updated_user_name', i.updated_user_name
+            'updated_user_name', i.updated_user_name,
+            'attachment_count', i.attachment_count
         )${sortValue}) AS interactions
 
         FROM
@@ -281,7 +283,7 @@ const filterForInteractions = (
         let filteredColumns : string | undefined;
         if(Object.keys(filters).length > 0) {
         for(let [key, conditions] of Object.entries(filters)) {
-            if(Object.keys(filtersColumnsForInteractionSummary).includes(key)) {
+            if(Object.keys(filterTypes).includes(key)) {
                 filteredColumns = filtersColumns[key]
                 andConditions = ` AND `
             }
@@ -311,6 +313,8 @@ const filterForInteractions = (
                             filteredQueryArray.push(`i.${filteredColumns} < ${values}`)
                         if(condition == ALPHANUMERIC_CONDITIONS.between)
                             filteredQueryArray.push(`i.${filteredColumns} BETWEEN ${values.join(' AND ')}`)
+                        if(condition == ALPHANUMERIC_CONDITIONS.isEmpty) 
+                            filteredQueryArray.push(`i.${filteredColumns} IS NULL`)
                         break;
                     }
                     case "datetime" : {
@@ -508,7 +512,7 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
     ),
     fetch_attachments AS (
         SELECT 
-            ia.rid, ii.r_number, ia.attachment_name,
+            ia.rid, ii.question_seq_num AS r_number, ia.attachment_name,
             ia.attachment_type, ia.attachment_size,
             ia.attachment_url, ia.created_datetime, 
             ia.created_by, COUNT(*) OVER() AS total_records,
@@ -544,6 +548,92 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
     paginated_data i 
     `
 
+    return query;
+}
+
+export const interactionResponseHistoryByVersion = (interaction_rid : string, version : number, schemaName : string) => {
+    let query =
+    `WITH fetch_rid_response_history AS (
+        SELECT 
+            irh.rid
+        FROM 
+            ${schemaName}.interaction_response_history irh
+        WHERE
+            irh.interaction_rid = '${interaction_rid}'
+            AND
+            irh.interaction_version = ${version}
+        GROUP BY irh.rid
+    ),
+    fetch_attachments AS (
+        SELECT 
+            a.attachment_url, a.interaction_rid, a.interaction_item_rid
+        FROM
+        ${schemaName}.interaction_attachments a
+        LEFT JOIN fetch_rid_response_history irh ON irh.rid = a.interaction_response_rid
+        WHERE
+        a.interaction_version = ${version}
+        AND
+        a.interaction_response_rid IN (irh.rid)
+    ),
+    fetch_interaction_responses AS (
+        SELECT 
+            irh.rid, irh.interaction_item_rid, irh.interaction_response,
+            irh.response_on, irh.r_number, irh.interaction_version,
+            array_agg(jsonb_build_object(
+            'interaction_url', a.attachment_url
+            )) AS attachments
+        FROM
+        ${schemaName}.interaction_response_history irh
+        LEFT JOIN fetch_attachments a ON a.interaction_rid = irh.interaction_rid AND a.interaction_item_rid = irh.interaction_item_rid
+        WHERE
+            irh.interaction_rid = '${interaction_rid}'
+            AND
+            irh.interaction_version = ${version}
+        GROUP BY 
+            irh.interaction_item_rid, irh.interaction_response,
+            irh.response_on, irh.r_number, irh.rid, irh.interaction_version
+    ),
+    fetch_interaction_questions AS (
+        SELECT 
+            i.r_number AS response_rnumber, p.project_name,
+            ii.question_seq_num, ii.question, a.attachments,
+            a.interaction_response, a.response_on,
+            i.response_submitted_on, i.rid AS interaction_rid,
+            ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version
+        FROM
+        ${schemaName}.interactions i
+        LEFT JOIN ${schemaName}.project p ON p.rid = i.project_rid AND p.account_rid = i.account_rid
+        LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
+        LEFT JOIN fetch_interaction_responses a ON a.interaction_item_rid = ii.rid
+        WHERE
+            i.rid = '${interaction_rid}'
+            AND
+			a.interaction_version = ${version}
+        GROUP BY
+		    a.rid, a.r_number, p.project_name,
+            ii.question_seq_num, ii.question,
+            a.interaction_response, a.response_on,
+            i.response_submitted_on, i.rid,
+            ii.rid, a.rid, a.attachments, a.interaction_version
+    )
+    
+    SELECT 
+    array_agg(jsonb_build_object(
+    'interaction_rid', i.interaction_rid,
+    'interaction_item_rid', i.interaction_item_rid,
+    'interaction_response_rid', i.interaction_response_rid,
+    'response_id', i.response_rnumber,
+    'project_name', i.project_name,
+    'response_on', i.response_on,
+    'response_submitted_on', i.response_submitted_on,
+    'question_id', i.question_seq_num,
+    'question', i.question,
+    'response', i.interaction_response,
+    'attachments', i.attachments
+    )) AS responses_history_details
+    FROM
+    fetch_interaction_questions i
+    `
     return query;
 }
 

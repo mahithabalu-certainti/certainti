@@ -97,4 +97,8 @@ export interface IInteractionService {
     totalRecords : number,
     attachments : any
   }>
+  listResponseHistoryDetails(data : any) : Promise<{
+    statusCodeValue : string,
+    data : any
+  }>
 }
