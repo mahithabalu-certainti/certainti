@@ -415,6 +415,7 @@ export const ProjectTask = ({
         sortFilterCount={0}
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
+        projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
       />
       {showUploads ? (

@@ -500,7 +500,8 @@ export type ExportType =
   | 'resource_attachments'
   | 'resource_attachments'
   | 'projectTask'
-  | 'project_resource';
+  | 'project_resource'
+  | 'timesheet';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
