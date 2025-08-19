@@ -234,6 +234,14 @@ export const rawQueries = {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
   },
+  fetchProjectInfo(rid : string,schemaName : string) {
+    return `
+    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project WHERE rid = '${rid}'`
+  },
+  fetchAccountInfo(rid: string) {
+    return `
+    SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+  },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)
     return `
