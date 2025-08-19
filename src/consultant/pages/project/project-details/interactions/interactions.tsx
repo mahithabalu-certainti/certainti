@@ -82,7 +82,6 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
-  const viewInteractionAttachmentId = !!interactionAttachmentId;
   const viewHistory = !!responseHistory;
   // console.log('viewHistory', viewHistory);
   const viewInteractionAttachment = !!interactionAttachmentId;
@@ -339,8 +338,6 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectDetails={projectDetails}
           accountInActive={accountInActive}
         />
-      ) : viewInteractionAttachmentId ? (
-        <InteractionAttachment handleBackClick={handleBackClick} />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment handleBackClick={handleBackClick} />
       ) : (
