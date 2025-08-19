@@ -22,6 +22,7 @@ import { AllPermissions } from '../../../../../common-service';
 import { TabMenus } from '../resources/resources';
 import TimesheetProjectTab from './timesheet-details-tab/project-tab/project-tab';
 import { ExportType, TimeSheetListURLParams } from '../../../../types';
+import TimesheetProjectTask from './timesheet-details-tab/project-task/project-task';
 
 interface TimesheetDetailsProps {
   handleBackClick: () => void;
@@ -30,7 +31,6 @@ interface TimesheetDetailsProps {
     React.SetStateAction<TimeSheetListURLParams>
   >;
   onRefreshClick?: number;
-
 }
 
 const tabs: TabMenus[] = [
@@ -48,13 +48,13 @@ const tabs: TabMenus[] = [
   },
   {
     label: 'Resource',
-    value: 'timesheet_projectResource',
+    value: 'timesheet_project_resource',
     hide: false,
     id: AllPermissions.ACCOUNT_TIMESHEET_RESOURCE_VIEW,
   },
   {
     label: 'Project Task',
-    value: 'timesheet_projectTask',
+    value: 'timesheet_project_task',
     hide: false,
     id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_TASK_VIEW,
   },
@@ -318,10 +318,16 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
             </>
           )}
           {value === 'timesheet_project' && (
-              <TimesheetProjectTab
+            <TimesheetProjectTab
               setExportType={setExportType}
               onRefreshClick={onRefreshClick}
-              /> 
+            />
+          )}
+          {value === 'timesheet_project_task' && (
+            <TimesheetProjectTask
+              setExportType={setExportType}
+              onRefreshClick={onRefreshClick}
+            />
           )}
         </>
       )}

@@ -1,12 +1,15 @@
-import { costDisplay, formatDateToYYYYMMDDWithTime, valueDisplay } from '../../../../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+  valueDisplay,
+} from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { TimesheetProjectList } from '../../../../../../types/timesheet-projects';
 
 export const getProjectTabTableColumns = (
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
   // isImportExportEnable?: boolean
-): ListTableColumn<TimesheetProjectList>[] => 
- [
+): ListTableColumn<TimesheetProjectList>[] => [
   {
     id: 'project_code',
     label: 'Project Code',
@@ -29,7 +32,7 @@ export const getProjectTabTableColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-      return displayCode
+      return displayCode;
     },
   },
   {
@@ -45,14 +48,14 @@ export const getProjectTabTableColumns = (
   {
     id: 'project_type_name',
     label: 'Project Type',
-    sortable: true, 
+    sortable: true,
     // hide:
     //   !permissionMap?.['project_type_rid']?.read &&
     //   !permissionMap?.['project_type_rid']?.edit,
     sortId: 'project_type_name',
     width: 160,
-    render: (row: TimesheetProjectList) => { 
-      return row.project_type_name
+    render: (row: TimesheetProjectList) => {
+      return row.project_type_name;
     },
   },
   {
@@ -68,7 +71,7 @@ export const getProjectTabTableColumns = (
   {
     id: 'fiscal_year',
     label: 'Fiscal Year',
-    sortable: true, 
+    sortable: true,
     // hide:
     //   !permissionMap?.['fiscal_year']?.read &&
     //   !permissionMap?.['fiscal_year']?.edit,
@@ -130,7 +133,6 @@ export const getProjectTabTableColumns = (
     },
     render: (row: TimesheetProjectList) =>
       row.total_effort ? valueDisplay(row.total_effort) : '-',
-    
   },
   {
     id: 'total_cost',
@@ -245,7 +247,7 @@ export const getProjectTabTableColumns = (
     //   !permissionMap?.['key_contacts']?.read &&
     //   !permissionMap?.['key_contacts']?.edit,
     render: (row: TimesheetProjectList) => {
-      return  row.project_point_of_contact
+      return row.project_point_of_contact;
     },
   },
   {
@@ -258,7 +260,7 @@ export const getProjectTabTableColumns = (
     //   !permissionMap?.['key_contacts']?.read &&
     //   !permissionMap?.['key_contacts']?.edit,
     render: (row: TimesheetProjectList) => {
-      return  row.technical_point_of_contact 
+      return row.technical_point_of_contact;
     },
   },
   {

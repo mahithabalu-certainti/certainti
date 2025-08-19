@@ -19,6 +19,9 @@ import { TimeSheetIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { getTimesheetListColumns } from './columns';
 import TimesheetDetails from './timesheet-details';
+import { projectTaskFilterFields } from './timesheet-details-tab/project-task/filters';
+import { useGetAppliedProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import { useGetResourceType } from '../../../../services/resource-list';
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
@@ -76,6 +79,21 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     });
     return map;
   }, [timesheetViewEditFields]);
+  const projectTaskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.TIMESHEET_PROJECT_TASK_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMapTaskTableColumn = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectTaskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectTaskViewEditFields]);
+
   const isTimesheetExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_TIMESHEET_EXPORT
@@ -85,7 +103,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const fileId = searchParams.get('timesheet_id');
   const tabName = searchParams.get('tab');
   const isProjectTab = tabName === 'timesheet_project';
-
+  const isProjectTaskTab = tabName === 'timesheet_project_task';
   const viewDetails = !!fileId;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const { data, isLoading, isError } = useTimesheetList(
@@ -101,6 +119,12 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     !viewDetails,
     refreshTimesheet
   );
+  const { data: getProjectTaskResourceCode } = useGetAppliedProjectResourceCode(
+    accountid as string,
+    'D001-0f689f8c-b27d-404b-8205-7dcfb5516ead' as string,
+    'project_tasks'
+  );
+  const resourceTypeOptions = useGetResourceType();
 
   // UseEffects
   useEffect(() => {
@@ -192,10 +216,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     fiscalYears,
     permissionMap
   );
-  const timesheetProjectTabFilterFields = getTimesheetProjectTabFilterFields(
-    fiscalYears,
-    // permissionMap
-  );
   const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
   const timesheetColumns = getTimesheetListColumns(
@@ -205,13 +225,44 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     isTimesheetExportEnable
   );
   const getRowId = (row: TimeSheetList) => row.rid;
+  const memoizedResourceCode: { option: string; value: string }[] = useMemo(
+    () =>
+      getProjectTaskResourceCode?.data?.resourceCodes.map((item) => ({
+        option: item.resource_code,
+        value: item.resource_code,
+      })) || [],
+    [getProjectTaskResourceCode?.data?.resourceCodes]
+  );
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+  const getFiltersMenu = () => {
+    if (isProjectTab) {
+      return getTimesheetProjectTabFilterFields(
+        fiscalYears
+        // permissionMap
+      );
+    } else if (isProjectTaskTab) {
+      return projectTaskFilterFields(
+        memoizedResourceCode,
+        memoizedResourceType,
+        permissionMapTaskTableColumn
+      );
+    }
+    return timesheetFilterFields;
+  };
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={TimesheetTabs}
-        filterMenu={isProjectTab ? timesheetProjectTabFilterFields : timesheetFilterFields}
-       filterVisibility={!viewDetails || isProjectTab}
+        filterMenu={getFiltersMenu()}
+        filterVisibility={!viewDetails || isProjectTab || isProjectTaskTab}
         showFilter={showFilter}
         contextKey='timesheet'
         appliedFilters={appliedFilters}
@@ -225,8 +276,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         onRefreshClick={onRefreshClick}
       />
       {viewDetails ? (
-        <TimesheetDetails handleBackClick={handleBackClick} setExportType={setExportType}  onRefreshClick={refreshTimesheet}/>
-
+        <TimesheetDetails
+          handleBackClick={handleBackClick}
+          setExportType={setExportType}
+          onRefreshClick={refreshTimesheet}
+        />
       ) : (
         <>
           <SectionHeader

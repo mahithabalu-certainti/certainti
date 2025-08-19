@@ -209,8 +209,8 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
-      searchParams.get('tab') !== 'timesheet_project' 
-
+      searchParams.get('tab') !== 'timesheet_project' &&
+      searchParams.get('tab') !== 'timesheet_project_task'
     ) {
       return;
     }
@@ -276,9 +276,8 @@ export const AccountDetails = () => {
         },
       });
     } else if (exportType === 'timesheet_project') {
-      console.log("Timesheet Prject export")
-    }
-    else if (exportType === 'financial_resource_cost') {
+      console.log('Timesheet Prject export');
+    } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
@@ -379,6 +378,8 @@ export const AccountDetails = () => {
     } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
+      return false;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_task') {
       return false;
     } else {
       return true;

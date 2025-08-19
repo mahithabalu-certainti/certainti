@@ -1,5 +1,4 @@
 export interface TimesheetProjectTableListURLParams {
-
   page: number;
   limit: number;
   sort: string;

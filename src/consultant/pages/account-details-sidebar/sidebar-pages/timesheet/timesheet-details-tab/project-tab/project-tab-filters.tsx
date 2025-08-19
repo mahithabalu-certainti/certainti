@@ -1,8 +1,8 @@
 // import { SelectOption } from '../../../../types';
 // import { FieldConfig } from '../../components/filter/filterType';
 
-import { SelectOption } from "../../../../../../types";
-import { FieldConfig } from "../../../../components/filter/filterType";
+import { SelectOption } from '../../../../../../types';
+import { FieldConfig } from '../../../../components/filter/filterType';
 
 const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -40,8 +40,7 @@ const enumOptions: { option: string; value: string }[] = [
 // ];
 
 export const getTimesheetProjectTabFilterFields = (
-
-  fiscalYears: SelectOption[],
+  fiscalYears: SelectOption[]
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
@@ -185,7 +184,8 @@ export const getTimesheetProjectTabFilterFields = (
       // hide:
       //   !permissionMap?.['imported_on']?.edit &&
       //   !permissionMap?.['imported_on']?.read,
-    },{
+    },
+    {
       name: 'Project Point of Contact',
       value: 'project_point_of_contact',
       type: 'enum',
@@ -193,7 +193,8 @@ export const getTimesheetProjectTabFilterFields = (
       // hide:
       //   !permissionMap?.['imported_on']?.edit &&
       //   !permissionMap?.['imported_on']?.read,
-    },{
+    },
+    {
       name: 'Technical Point of Contact',
       value: 'technical_point_of_contact',
       type: 'enum',
