@@ -475,7 +475,7 @@ export const setProjectFiscalSummary = (dbData : any, requestData : any) => {
   }
   if(requestData.total_cost != undefined) {
   newFisSummary.total_cost_prj = requestData.total_cost != dbData.total_cost_prj ? requestData.total_cost : dbData.total_cost_prj
-  let data = newFisSummary.total_cost_prj == '' ? `total_effort_prj = null` :  `total_effort_prj = ${parseFloat(newFisSummary.total_cost_prj)}`
+  let data = newFisSummary.total_cost_prj == '' ? `total_cost_prj = null` :  `total_cost_prj = ${parseFloat(newFisSummary.total_cost_prj)}`
   newFisSummaryArray.push(data)
   }
   if(requestData.total_cost_fte != undefined) {
