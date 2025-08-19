@@ -243,6 +243,6 @@ export interface InteractionAttachmentListParams {
 export interface InteractionAttachmentApiResponse {
   data: {
     attachments: InteractionAttachmentType[];
-    total_count: number;
+    total_records: number;
   };
 }

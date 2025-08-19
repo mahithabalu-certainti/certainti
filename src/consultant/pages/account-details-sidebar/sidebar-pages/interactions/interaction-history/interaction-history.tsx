@@ -95,23 +95,22 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
           count={totalItems}
           showItemCount={true}
         />
-        <Box className='max-w-[100%] border-t border border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
+        <Box className='border-t border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
           <InfoSection
             columns={transformedInteractionHistoryColumns}
             loading={isLoading}
-            singleLineView={false}
+            singleLineView={true}
             className='!border-b-0'
           />
         </Box>
         <div className='p-1'></div>
-        <div className='border border-[#CBD6E2]'>
+        <div className='border-t border-[#CBD6E2]'>
           <ListTable
             data={tableData}
             columns={interactionHistoryColumns}
             getRowId={getRowId}
             hoverHighlight={false}
             tableStyle={{
-              borderBottom: '1px solid #CBD6E2',
               height: '100%',
               maxHeight: 'calc(100vh - 290px)',
               overflow: 'auto',
@@ -121,6 +120,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
+            loadindRowCount={5}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}

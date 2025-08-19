@@ -51,6 +51,10 @@ export const transformInteractionHistoryData = (
           //   !permissionMap?.['interaction_code']?.read &&
           //   !permissionMap?.['interaction_code']?.edit,
         },
+      ],
+    },
+    {
+      items: [
         {
           label: 'Type',
           value: `${getValueOrDefault(interactionHistoryData?.response_source)} `,
@@ -69,6 +73,10 @@ export const transformInteractionHistoryData = (
           //   !permissionMap?.['interaction_subject']?.read &&
           //   !permissionMap?.['interaction_subject']?.edit,
         },
+      ],
+    },
+    {
+      items: [
         {
           label: 'Project Name',
           value: getValueOrDefault(interactionHistoryData?.project_name),

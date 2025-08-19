@@ -59,7 +59,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           onBackClick={handleBackClick}
           showBackArrow={true}
-          count={data?.data.total_count || 0}
+          count={data?.data.total_records || 0}
           showItemCount={true}
         />
         <div className='border border-[#CBD6E2]'>
@@ -79,11 +79,12 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
+            loadindRowCount={5}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
             currentPage={currentPage}
-            totalItems={data?.data.total_count || 0}
+            totalItems={data?.data.total_records || 0}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
           />
