@@ -6,7 +6,12 @@ import DetailsSection, {
 } from '../../../../../../components/details-section/details';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { INTERACTIONS_EDIT } from '../../../../../../routes';
@@ -24,6 +29,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   handleBackClick,
   projectDetails,
 }) => {
+  const { projectid } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -42,11 +48,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_name: projectDetails?.account_name || '',
       account_rid: projectDetails?.account_rid || '',
       project_rid: projectDetails?.project_rid || '',
-      project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
     };
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'project',
-      interactionId: data?.rid || '',
+      interactionId: data?.rid || interactionId || '',
     });
     const queryParams = new URLSearchParams({
       accountId,
@@ -130,21 +140,21 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: data?.response_received_on,
-      key: 'response_received_on',
+      value: data?.response_updated_on,
+      key: 'response_updated_on',
     },
   ];
 
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid,
+      value: data?.rid || interactionId,
       key: 'rid',
     },
     {
       label: 'Interaction ID',
-      value: data?.interaction_number,
-      key: 'interaction_number',
+      value: data?.r_number,
+      key: 'r_number',
     },
     {
       label: 'Created On',
@@ -173,7 +183,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction'
-          subValue={data?.interaction_number || ''}
+          subValue={data?.r_number || ''}
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'

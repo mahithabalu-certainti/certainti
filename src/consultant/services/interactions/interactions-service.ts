@@ -1,19 +1,19 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   InteractionDetails,
-  InteractionFormData,
+  InteractionFormPayload,
+  InteractionDetailsResponse,
   InteractionList,
   InteractionListResponse,
   InteractionListURLParams,
 } from '../../types';
-import { mockInteractionDetailsMap } from '../../pages/project/project-details/interactions/mock-response';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
 import { getInteractionListUrl } from '../urls/interactions-url';
 
-// const getInteractionDetailsURL = (projectid: string, interactionId: string) => {
-//   return `/api/interaction/list/${projectid}/${interactionId}`;
-// };
+const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
+  return `/api/interactions/detail/${accountId}/${interactionId}`;
+};
 
 export const fetchInteractionList = async (
   params: InteractionListURLParams
@@ -65,19 +65,11 @@ const fetchInteractionDetails = async (
   accountId: string,
   interactionId: string
 ): Promise<InteractionDetails> => {
-  //   const response = await resourceServiceApi.get<InteractionDetailsResponse>(
-  //     getInteractionDetailsURL(accountId, interactionId)
-  //   );
+  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
+    getInteractionDetailsURL(accountId, interactionId)
+  );
 
-  //   return response.data.data.interactions;
-  console.log('accountId', accountId);
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  const interaction = mockInteractionDetailsMap[interactionId];
-  if (!interaction) throw new Error('Interaction not found');
-
-  return interaction;
+  return response.data.data.interactionDetails;
 };
 
 export const useInteractionDetails = (
@@ -95,11 +87,11 @@ export const useInteractionDetails = (
 
 // Create & Edit
 export const getCreateInteractionUrl = (): string => {
-  return `/api/interaction/create`;
+  return `/api/interactions/new`;
 };
 
 export const createInteraction = async (
-  body: Partial<InteractionFormData>
+  body: Partial<InteractionFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
     const { data } = await interactionServiceApi.post<CommonApiResponse>(
@@ -114,17 +106,19 @@ export const createInteraction = async (
 };
 
 export const useCreateInteraction = () => {
-  return useMutation<CommonApiResponse, Error, Partial<InteractionFormData>>({
-    mutationFn: (body) => createInteraction({ ...body }),
-  });
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => createInteraction({ ...body }),
+    }
+  );
 };
 
 export const getUpdateInteractionUrl = (): string => {
-  return `/api/interaction/update`;
+  return `/api/interactions/update`;
 };
 
 export const updateInteractionDetails = async (
-  body: Partial<InteractionFormData>
+  body: Partial<InteractionFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
     const { data } = await interactionServiceApi.put<CommonApiResponse>(
@@ -139,7 +133,9 @@ export const updateInteractionDetails = async (
 };
 
 export const useUpdateInteractionDetails = () => {
-  return useMutation<CommonApiResponse, Error, Partial<InteractionFormData>>({
-    mutationFn: (body) => updateInteractionDetails({ ...body }),
-  });
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => updateInteractionDetails({ ...body }),
+    }
+  );
 };

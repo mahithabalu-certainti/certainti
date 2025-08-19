@@ -5,7 +5,11 @@ export enum QuestionUpdate {
   Add = 'add',
   Edit = 'edit',
   Delete = 'delete',
-  NoChange = 'no_change',
+}
+
+export enum StatusActionEnum {
+  Create = 'CREATE',
+  Draft = 'DRAFT',
 }
 export interface InteractionFormTableColumn {
   name: string;
@@ -25,9 +29,9 @@ export interface ProjectDetails {
 }
 
 export interface InteractionFormQuestion {
-  questionNo: string;
+  question_seq_num: string;
   question: string;
-  mandatory: boolean;
+  is_mandatory: boolean;
   notes: string;
   rid?: string;
   action_type?: QuestionUpdate;
@@ -47,8 +51,29 @@ export interface InteractionFormData {
   created_by?: string;
   updated_on?: string;
   updated_by?: string;
-  flag?: 'submit' | 'draft';
+  flag?: StatusActionEnum;
 }
+
+export type InteractionQuestionPayload = {
+  rid?: string;
+  question: string;
+  notes: string;
+  is_mandatory: boolean;
+  action_type: QuestionUpdate;
+};
+
+export type InteractionFormPayload = {
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+  status_action?: StatusActionEnum;
+  fiscal_year?: number;
+  interaction_rid?: string;
+  status_rid?: string;
+  interaction_type_rid?: string;
+  parent_interaction_rid?: string;
+  questions: InteractionQuestionPayload[];
+};
 
 export interface InteractionQuestionErrors {
   question?: string;
@@ -168,12 +193,12 @@ export interface InteractionQuestion {
 }
 
 export interface InteractionDetails {
-  rid: string;
+  rid?: string;
   account_rid: string;
   project_rid: string;
   fiscal_year: number;
   project_fiscal_rid: string;
-  interaction_number: string;
+  r_number: string;
   interaction_type: string;
   interaction_type_name: string;
   status: string;
@@ -187,8 +212,8 @@ export interface InteractionDetails {
   project_code: string;
   project_name: string | null;
   account_name: string | null;
-  response_updated_by: string;
-  response_received_on: string;
+  response_updated_by: string | null;
+  response_updated_on: string | null;
 }
 
 export interface InteractionDetailsResponse {
@@ -196,7 +221,7 @@ export interface InteractionDetailsResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    interactions: InteractionDetails;
+    interactionDetails: InteractionDetails;
   };
 }
 

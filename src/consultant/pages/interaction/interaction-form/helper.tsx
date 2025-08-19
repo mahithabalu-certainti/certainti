@@ -3,12 +3,25 @@ import {
   InteractionDetails,
   InteractionFormData,
   InteractionFormErrors,
+  InteractionFormPayload,
   InteractionFormQuestion,
   InteractionFormTableColumn,
   InteractionQuestion,
   InteractionQuestionErrors,
+  InteractionQuestionPayload,
   QuestionUpdate,
+  StatusActionEnum,
 } from '../../../types';
+
+export interface ProjectDetails {
+  project_code: string;
+  project_name: string;
+  fiscal_year: number;
+  account_name: string;
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+}
 
 export const getQuestionTableColumns = (
   isEditView: boolean
@@ -93,17 +106,17 @@ export const questionsTransformPayload = (
   formQuestions: InteractionFormQuestion[],
   isEdit: boolean = false,
   existingQuestions: InteractionQuestion[] = []
-): InteractionFormQuestion[] => {
-  const transformedQuestions: InteractionFormQuestion[] = [];
+): InteractionQuestionPayload[] => {
+  const transformedQuestions: InteractionQuestionPayload[] = [];
   const retainedRids = new Set<string>();
   const seenQuestionNos = new Set<string>();
 
   // Process form questions first
-  formQuestions.forEach((question) => {
-    if (seenQuestionNos.has(question.questionNo)) {
+  formQuestions.forEach(({ question_seq_num, ...question }) => {
+    if (seenQuestionNos.has(question_seq_num)) {
       return;
     }
-    seenQuestionNos.add(question.questionNo);
+    seenQuestionNos.add(question_seq_num);
 
     if (isEdit && question.rid) {
       retainedRids.add(question.rid);
@@ -120,21 +133,20 @@ export const questionsTransformPayload = (
   });
 
   if (isEdit) {
-    existingQuestions.forEach((existingQuestion) => {
+    existingQuestions.forEach(({ question_seq_num, ...existingQues }) => {
       if (
-        existingQuestion.rid &&
-        !retainedRids.has(existingQuestion.rid) &&
-        !seenQuestionNos.has(existingQuestion.question_seq_num)
+        existingQues.rid &&
+        !retainedRids.has(existingQues.rid) &&
+        !seenQuestionNos.has(question_seq_num)
       ) {
         transformedQuestions.push({
-          questionNo: existingQuestion.question_seq_num,
-          question: existingQuestion.question || '',
-          mandatory: existingQuestion.is_mandatory ?? false,
-          notes: existingQuestion.notes || '',
-          rid: existingQuestion.rid,
+          rid: existingQues.rid,
+          question: existingQues.question || '',
+          notes: existingQues.notes || '',
+          is_mandatory: existingQues.is_mandatory ?? false,
           action_type: QuestionUpdate.Delete,
         });
-        seenQuestionNos.add(existingQuestion.question_seq_num);
+        seenQuestionNos.add(question_seq_num);
       }
     });
   }
@@ -143,33 +155,41 @@ export const questionsTransformPayload = (
 };
 
 export const transFormPayload = (
+  accountId: string,
   formData: Partial<InteractionFormData>,
   isEditView: boolean,
+  saveFlag: StatusActionEnum,
   interactionData?: InteractionDetails,
-  saveFlag?: 'submit' | 'draft'
-): InteractionFormData => {
+  projectData?: ProjectDetails
+): InteractionFormPayload => {
   const transformedQuestions = questionsTransformPayload(
     formData.questions || [],
     isEditView,
     interactionData?.questions || []
   );
 
-  const basePayload: InteractionFormData = {
-    projectCode: formData.projectCode || '',
-    projectName: formData.projectName || '',
-    fiscalYear: formData.fiscalYear || 0,
+  const basePayload: InteractionFormPayload = {
+    account_rid: accountId || projectData?.account_rid || '',
+    project_rid: projectData?.project_rid || interactionData?.project_rid || '',
+    project_fiscal_rid:
+      projectData?.project_fiscal_rid ||
+      interactionData?.project_fiscal_rid ||
+      '',
     questions: transformedQuestions,
-    accountName: formData.accountName || '',
-    flag: saveFlag,
   };
 
   if (isEditView && interactionData) {
     return {
       ...basePayload,
-      rid: interactionData.rid,
-      status: formData.status,
+      interaction_rid: interactionData.rid || formData.rid,
+      status_rid: formData.status || interactionData.status,
     };
   }
 
-  return basePayload;
+  return {
+    ...basePayload,
+    fiscal_year: formData.fiscalYear,
+    status_action: saveFlag,
+    interaction_type_rid: 'D001-d37a864c-8853-4441-a146-72cc6fa6ce78',
+  };
 };
