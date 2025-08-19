@@ -56,7 +56,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     };
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'project',
-      interactionId: data?.rid || interactionId || '',
+      interactionId: data?.interaction_rid || interactionId || '',
     });
     const queryParams = new URLSearchParams({
       accountId,
@@ -147,7 +147,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid || interactionId,
+      value: data?.interaction_rid || interactionId,
       key: 'rid',
     },
     {
