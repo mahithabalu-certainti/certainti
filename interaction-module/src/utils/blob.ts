@@ -14,10 +14,10 @@ dotenv.config();
 // Generate a SAS token for a blob URL
 export async function generateSasUrl(blobUrl: string, expiryMinutes = blobUrlExpiration): Promise<string> {
   try {
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    //const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
     // const connectionString = await getSecret("storage-account-connection-string");
-    // const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string
 
     if (!connectionString) {
       throw new Error("Azure storage connection string is required");

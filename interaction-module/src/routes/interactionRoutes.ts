@@ -55,6 +55,7 @@ routes.post('/responseHistory/list', checkUserStatusMiddleware("NA"), controller
 routes.post('/responseHistory/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportResponseHistory)
 routes.post('/history', checkUserStatusMiddleware("NA"), controller.interactionsController.listInteractionHistory)
 routes.post('/attachments', checkUserStatusMiddleware("NA"), controller.interactionsController.fetchInteractionAttachments)
+routes.post('/responseHistory/details', checkUserStatusMiddleware('NA'), controller.interactionsController.fetchResponseHistoryDetails)
 const upload = multer(); // You can configure storage if needed
 
 routes.post(

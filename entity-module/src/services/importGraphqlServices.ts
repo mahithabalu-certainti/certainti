@@ -1,8 +1,18 @@
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
-import { fetchImportListByRid, listAllImportedDatasQuery, listAllStageFailures,listAllLoadFailures } from "../utils/rawQueries";
+import {
+  HttpStatus,
+  MAIN_SCHEMA_NAME,
+  rawQueries,
+  STATUS_MESSAGE,
+} from "../utils/constants";
+import {
+  fetchImportListByRid,
+  listAllImportedDatasQuery,
+  listAllStageFailures,
+  listAllLoadFailures,
+} from "../utils/rawQueries";
 import { setInlineForImports } from "../utils/helpers";
 import { generateSasUrl } from "../utils/blob";
 import { ProjectService } from "./projectService";
@@ -13,197 +23,261 @@ import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
 import { raw } from "express";
 
-
 export default class ImportGraphqlServices {
-      private orgSequelize: Sequelize | null = null;
-      private mainDbSequelize: Sequelize | null = null;
-      private projectService: ProjectService;
-      private resourceService: ResourceService;
-      private projectTaskService: ProjectTaskService;
-      private schemaService: SchemaService;
-      private projectIngestion: ProjectIngestionService;
-      private logger: Logger;
+  private orgSequelize: Sequelize | null = null;
+  private mainDbSequelize: Sequelize | null = null;
+  private projectService: ProjectService;
+  private resourceService: ResourceService;
+  private projectTaskService: ProjectTaskService;
+  private schemaService: SchemaService;
+  private projectIngestion: ProjectIngestionService;
+  private logger: Logger;
 
-      constructor(logger: Logger) {
-        this.logger = logger;
-        this.projectService = new ProjectService(logger);
-        this.resourceService = new ResourceService();
-        this.projectTaskService = new ProjectTaskService(logger);
-        this.schemaService = new SchemaService();
-        this.projectIngestion = new ProjectIngestionService(logger);
-      }
-    
-      private async getOrgSequelize(): Promise<Sequelize> {
-        if (!this.orgSequelize) {
-          this.orgSequelize = await initOrgSequelize();
-        }
-        return this.orgSequelize;
-      }
-
-      private async getMainDbSequelize(): Promise<Sequelize> {
-        if (!this.mainDbSequelize) {
-          this.mainDbSequelize = await initMainDbSequelize();
-        }
-        return this.mainDbSequelize;
-      }
-    async listAllImportedData (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : Record<string, any>, fiscal_year : number) {
-        const orgSequelize = await this.getOrgSequelize()
-        const mainSequelize = await this.getMainDbSequelize()
-        let disablePagination : boolean = false
-
-        const fetchParentRnumber : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
-        let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
-
-        if (filters.imported_by) {
-          disablePagination = true
-          delete filters.imported_by;
-        }
-        const result = await orgSequelize.query(listAllImportedDatasQuery(page, limit, sort, sortBy, account_rid, filters, schemaName, disablePagination, fiscal_year))
-       if(result[0].length > 0) {
-            return {
-                statusCode : HttpStatus.SUCCESS,
-                data : result[0]
-            }
-        }
-        else {
-            return {
-                statusCode : HttpStatus.NOT_FOUND,
-                data : []
-            }
-        }
-    }
-
-    async listAllStageFailures (account_rid : string,import_rid:string,entity_type:string) {
-        const orgSequelize = await this.getOrgSequelize()
-        const mainSequelize = await this.getMainDbSequelize()
-
-        const fetchParentRnumber : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
-        let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
-
-        const result = await orgSequelize.query(listAllStageFailures(schemaName,import_rid,entity_type))
-        if(result[0].length > 0) {
-            return {
-                statusCode : HttpStatus.SUCCESS,
-                data : result[0]
-            }
-        }
-        else {
-            return {
-                statusCode : HttpStatus.NOT_FOUND,
-                data : []
-            }
-        }
-    }
-
-    async listAllLoadFailures (account_rid : string,import_rid:string,entity_type:string) {
-        const orgSequelize = await this.getOrgSequelize()
-        const mainSequelize = await this.getMainDbSequelize()
-
-        const fetchParentRnumber : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
-        let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
-
-        const result = await orgSequelize.query(listAllLoadFailures(schemaName,import_rid,entity_type))
-        if(result[0].length > 0) {
-            return {
-                statusCode : HttpStatus.SUCCESS,
-                data : result[0]
-            }
-        }
-        else {
-            return {
-                statusCode : HttpStatus.NOT_FOUND,
-                data : []
-            }
-        }
-    }
-    async fetchUserDetails(userRids: string[]) {
-      const mainSequelize = await this.getMainDbSequelize();
-      if (!userRids.length) return [];
-
-      const placeholders = userRids.map(() => '?').join(',');
-      const query = `SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${placeholders})`;
-
-      const [results] = await mainSequelize.query(query, {
-          replacements: userRids
-      });
-
-      return results;
+  constructor(logger: Logger) {
+    this.logger = logger;
+    this.projectService = new ProjectService(logger);
+    this.resourceService = new ResourceService();
+    this.projectTaskService = new ProjectTaskService(logger);
+    this.schemaService = new SchemaService();
+    this.projectIngestion = new ProjectIngestionService(logger);
   }
-    
-    async fetchImportById (account_rid : string, rid : string) {
-      let mainSequelize = await this.getMainDbSequelize()
-      let orgSequelize = await this.getOrgSequelize()
 
-      let fetchParentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(account_rid, mainSequelize))
-      let schemaName = rawQueries.fetchSchemaName(fetchParentAccount[0][0].r_number)
-
-      const result : any = await orgSequelize.query(fetchImportListByRid(rid, schemaName))
-      if(result[0][0]) {
-        const fetchUserDetails : any = await mainSequelize.query(rawQueries.fetchUserDetailsById(result[0][0].imports.imported_by))
-        delete result[0][0].imports.imported_by
-        result[0][0].imports.document_url = await generateSasUrl(result[0][0].imports.document_url)
-        result[0][0].imports.imported_on = new Date(result[0][0].imports.imported_on).toISOString()
-        result[0][0].imports.imported_by = fetchUserDetails[0][0].imported_by
-
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : result[0][0]
-        }
-      } else {
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : null
-        }
-      }
+  private async getOrgSequelize(): Promise<Sequelize> {
+    if (!this.orgSequelize) {
+      this.orgSequelize = await initOrgSequelize();
     }
+    return this.orgSequelize;
+  }
 
-    async inlineEditImportList (data : any) {
-      const mainDb = await this.getMainDbSequelize()
-      const orgDb = await this.getOrgSequelize()
-      console.log(data)
-      const fetchAccountDetails : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
-      let schemaName = rawQueries.fetchSchemaName(fetchAccountDetails[0][0].r_number)
-
-      const checkImportDataExists = await this.fetchImportById(data.account_rid, data.rid)
-      let importDbData = checkImportDataExists.data
-      const setInlineDetails = setInlineForImports(importDbData, data)
-      if(setInlineDetails == null) {
-        return {
-          statusCode : HttpStatus.BAD_REQUEST,
-          statusMessage : STATUS_MESSAGE.noDataToUpdate,
-          data : null
-        }        
-      }
-      const updateImportDetails = await orgDb.query(rawQueries.updateImport(schemaName, setInlineDetails, data.rid))
-      if(updateImportDetails.length > 0) {
-        const latestUpdatedData = await this.fetchImportById(data.account_rid, data.rid)
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          statusMessage : STATUS_MESSAGE.importUpdatedSuccess,
-          data : latestUpdatedData.data
-        }
-      }
+  private async getMainDbSequelize(): Promise<Sequelize> {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
     }
+    return this.mainDbSequelize;
+  }
+  async listAllImportedData(
+    page: number,
+    limit: number,
+    sort: string,
+    sortBy: string,
+    account_rid: string,
+    filters: Record<string, any>,
+    fiscal_year: number
+  ) {
+    const orgSequelize = await this.getOrgSequelize();
+    const mainSequelize = await this.getMainDbSequelize();
+    let disablePagination: boolean = false;
 
-    async fetchAccountLevelImportedProjects(
-      accountId: string,
-      fiscalYear: number = 0,
-      page: number = 1,
-      limit: number = 10,
-      search: string,
-      filters: Record<string, any> = {},
-      sortBy: string = "created_datetime",
-      sortOrder: string = "ASC",
-      bothParentAndChild: boolean = false,
-      userId: string,
-      documentRid: string
-    ): Promise<{
-      statusCode: number;
-      message: string;
-      errorMessage?: string;
-      data?: { projects: any; totalCount: number };
-    }> {
-      try {
+    const fetchParentRnumber: any = await mainSequelize.query(
+      await rawQueries.fetchParentAccount(account_rid, mainSequelize)
+    );
+    let schemaName = rawQueries.fetchSchemaName(
+      fetchParentRnumber[0][0].r_number
+    );
+
+    if (filters.imported_by) {
+      disablePagination = true;
+      delete filters.imported_by;
+    }
+    const result = await orgSequelize.query(
+      listAllImportedDatasQuery(
+        page,
+        limit,
+        sort,
+        sortBy,
+        account_rid,
+        filters,
+        schemaName,
+        disablePagination,
+        fiscal_year
+      )
+    );
+    if (result[0].length > 0) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        data: result[0],
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        data: [],
+      };
+    }
+  }
+
+  async listAllStageFailures(
+    account_rid: string,
+    import_rid: string,
+    entity_type: string
+  ) {
+    const orgSequelize = await this.getOrgSequelize();
+    const mainSequelize = await this.getMainDbSequelize();
+
+    const fetchParentRnumber: any = await mainSequelize.query(
+      await rawQueries.fetchParentAccount(account_rid, mainSequelize)
+    );
+    let schemaName = rawQueries.fetchSchemaName(
+      fetchParentRnumber[0][0].r_number
+    );
+
+    const result = await orgSequelize.query(
+      listAllStageFailures(schemaName, import_rid, entity_type)
+    );
+    if (result[0].length > 0) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        data: result[0],
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        data: [],
+      };
+    }
+  }
+
+  async listAllLoadFailures(
+    account_rid: string,
+    import_rid: string,
+    entity_type: string
+  ) {
+    const orgSequelize = await this.getOrgSequelize();
+    const mainSequelize = await this.getMainDbSequelize();
+
+    const fetchParentRnumber: any = await mainSequelize.query(
+      await rawQueries.fetchParentAccount(account_rid, mainSequelize)
+    );
+    let schemaName = rawQueries.fetchSchemaName(
+      fetchParentRnumber[0][0].r_number
+    );
+
+    const result = await orgSequelize.query(
+      listAllLoadFailures(schemaName, import_rid, entity_type)
+    );
+    if (result[0].length > 0) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        data: result[0],
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        data: [],
+      };
+    }
+  }
+  async fetchUserDetails(userRids: string[]) {
+    const mainSequelize = await this.getMainDbSequelize();
+    if (!userRids.length) return [];
+
+    const placeholders = userRids.map(() => "?").join(",");
+    const query = `SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${placeholders})`;
+
+    const [results] = await mainSequelize.query(query, {
+      replacements: userRids,
+    });
+
+    return results;
+  }
+
+  async fetchImportById(account_rid: string, rid: string) {
+    let mainSequelize = await this.getMainDbSequelize();
+    let orgSequelize = await this.getOrgSequelize();
+
+    let fetchParentAccount: any = await mainSequelize.query(
+      await rawQueries.fetchParentAccount(account_rid, mainSequelize)
+    );
+    let schemaName = rawQueries.fetchSchemaName(
+      fetchParentAccount[0][0].r_number
+    );
+
+    const result: any = await orgSequelize.query(
+      fetchImportListByRid(rid, schemaName)
+    );
+    if (result[0][0]) {
+      const fetchUserDetails: any = await mainSequelize.query(
+        rawQueries.fetchUserDetailsById(result[0][0].imports.imported_by)
+      );
+      delete result[0][0].imports.imported_by;
+      result[0][0].imports.document_url = await generateSasUrl(
+        result[0][0].imports.document_url
+      );
+      result[0][0].imports.imported_on = new Date(
+        result[0][0].imports.imported_on
+      ).toISOString();
+      result[0][0].imports.imported_by = fetchUserDetails[0][0].imported_by;
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        data: result[0][0],
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        data: null,
+      };
+    }
+  }
+
+  async inlineEditImportList(data: any) {
+    const mainDb = await this.getMainDbSequelize();
+    const orgDb = await this.getOrgSequelize();
+    console.log(data);
+    const fetchAccountDetails: any = await mainDb.query(
+      await rawQueries.fetchParentAccount(data.account_rid, mainDb)
+    );
+    let schemaName = rawQueries.fetchSchemaName(
+      fetchAccountDetails[0][0].r_number
+    );
+
+    const checkImportDataExists = await this.fetchImportById(
+      data.account_rid,
+      data.rid
+    );
+    let importDbData = checkImportDataExists.data;
+    const setInlineDetails = setInlineForImports(importDbData, data);
+    if (setInlineDetails == null) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: STATUS_MESSAGE.noDataToUpdate,
+        data: null,
+      };
+    }
+    const updateImportDetails = await orgDb.query(
+      rawQueries.updateImport(schemaName, setInlineDetails, data.rid)
+    );
+    if (updateImportDetails.length > 0) {
+      const latestUpdatedData = await this.fetchImportById(
+        data.account_rid,
+        data.rid
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: STATUS_MESSAGE.importUpdatedSuccess,
+        data: latestUpdatedData.data,
+      };
+    }
+  }
+
+  async fetchAccountLevelImportedProjects(
+    accountId: string,
+    fiscalYear: number = 0,
+    page: number = 1,
+    limit: number = 10,
+    search: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    bothParentAndChild: boolean = false,
+    userId: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }> {
+    try {
       const mainDb = await this.getMainDbSequelize();
       const orgDb = await this.getOrgSequelize();
 
@@ -271,9 +345,8 @@ export default class ImportGraphqlServices {
         }
       }
 
-      
       const isExists = await this.schemaService.checkIfSchemaAndTableExists(
-        fetchAccountDetails[0][0].r_number,
+        fetchAccountDetails[0][0].r_number
       );
 
       if (!isExists) {
@@ -287,10 +360,8 @@ export default class ImportGraphqlServices {
         };
       }
 
-      const [finalSortBy, finalSortOrder] = this.projectService.getSortParameters(
-        sortBy,
-        sortOrder
-      );
+      const [finalSortBy, finalSortOrder] =
+        this.projectService.getSortParameters(sortBy, sortOrder);
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.projectService.getMetaDataSortParameters(sortBy, sortOrder);
 
@@ -330,27 +401,29 @@ export default class ImportGraphqlServices {
           totalCount: count,
         },
       };
-      } catch (err) {
-      throw new Error("Error fetching imported projects: " + (err as Error).message);
-      }
+    } catch (err) {
+      throw new Error(
+        "Error fetching imported projects: " + (err as Error).message
+      );
     }
+  }
 
-    async fetchAccountLevelImportedResources(
-    accountId: string,  
+  async fetchAccountLevelImportedResources(
+    accountId: string,
     page: number = 1,
     limit: number = 10,
     search: string,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    documentRid: string,
+    documentRid: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { resources: any; count: number };
   }> {
-      try {
+    try {
       const mainDb = await this.getMainDbSequelize();
       const orgDb = await this.getOrgSequelize();
 
@@ -370,12 +443,11 @@ export default class ImportGraphqlServices {
 
       const offset = (page - 1) * limit;
 
-      const [finalSortBy, finalSortOrder] = this.resourceService.getSortParameters(
-        sortBy,
-        sortOrder
-      );
+      const [finalSortBy, finalSortOrder] =
+        this.resourceService.getSortParameters(sortBy, sortOrder);
 
-      const { whereClause, havingClause } = this.resourceService.buildWhereClause(filters, search);
+      const { whereClause, havingClause } =
+        this.resourceService.buildWhereClause(filters, search);
       const { geoDataSort } = this.resourceService.processGeoDataSort(
         sortBy,
         sortOrder
@@ -401,8 +473,147 @@ export default class ImportGraphqlServices {
           count: resources.totalCount,
         },
       };
-      } catch (err) {
-      throw new Error("Error fetching imported resources: " + (err as Error).message);
-      }
+    } catch (err) {
+      throw new Error(
+        "Error fetching imported resources: " + (err as Error).message
+      );
     }
+  }
+
+  async fetchAccountLevelImportedProjectTasks(
+    accountRid: string,
+    documentRid: string,
+    filters: Record<string, any> = {},
+    search?: string,
+    page: number = 1,
+    limit: number = 10,
+    sortBy: string = "created_datetime",
+    sortOrder: string = "DESC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }> {
+    try {
+      const sequelize = await initOrgSequelize();
+      const mainSequelize = await initMainDbSequelize();
+
+      const schemaName = await this.projectTaskService.getSchemaInfo(
+        accountRid
+      );
+
+      // ✅ Initialize all models first
+      const { models } =
+        await this.projectTaskService.initializeModelsAndAssociations(
+          schemaName
+        );
+
+      let resourceFilter: Record<string, any> | undefined;
+      if (filters.resource_name) {
+        resourceFilter = filters.resource_name;
+        delete filters.resource_name;
+      }
+
+      // ✅ Build where clause with project filter
+      const { whereClause } = this.projectTaskService.buildRawWhereClause(
+        filters,
+        search
+      );
+
+      // ✅ Define includes with ProjectTaskTimeline join
+      const includes = [
+        {
+          model: models.AccountDetailsModel,
+          attributes: ["account_name"],
+          required: false,
+          as: "account",
+        },
+        {
+          model: models.ProjectFiscalModel,
+          attributes: ["project_name", "project_code", "currency_rid"],
+          required: false,
+          as: "project",
+        },
+        {
+          model: models.ResourceModel,
+          attributes: [
+            "resource_code",
+            "resource_name",
+            "resource_type_rid",
+            "resource_role",
+            "resource_orgname",
+          ],
+          required: false,
+          as: "resource",
+        },
+        // ✅ New: Join with ProjectTaskTimeline
+        {
+          model: models.ProjectTaskTimelineModel, // Ensure this model is initialized
+          as: "ProjectTimeline",
+          required: true, // INNER JOIN (only tasks with matching timeline entries)
+          where: {
+            document_rid: documentRid, // Filter by the provided documentRid
+          },
+          attributes: [], // No need to select timeline fields
+        },
+      ];
+
+      // ✅ Get all tasks without pagination first to properly handle sorting of related data
+      const allTasks = await models.ProjectTaskModel.findAll({
+        where: whereClause,
+        include: includes,
+      });
+
+      // ✅ Fetch and map related data
+      const { resourceTypeMap, currencyMap } =
+        await this.projectTaskService.fetchRelatedData(allTasks, mainSequelize);
+
+      // ✅ Format all tasks
+      let formattedTasks = allTasks.map((task) =>
+        this.projectTaskService.formatTaskData(
+          task,
+          resourceTypeMap,
+          currencyMap
+        )
+      );
+
+      if (resourceFilter) {
+        formattedTasks = formattedTasks.filter((task) => {
+          const resourcePass = resourceFilter
+            ? this.projectTaskService.applyTextFilter(
+                task.resource_name,
+                resourceFilter
+              )
+            : true;
+
+          return resourcePass;
+        });
+      }
+
+      // ✅ Handle special sorting cases
+      formattedTasks = this.projectTaskService.sortTasks(
+        formattedTasks,
+        sortBy,
+        sortOrder
+      );
+
+      // ✅ Apply pagination after sorting
+      const total = formattedTasks.length;
+      formattedTasks = formattedTasks.slice((page - 1) * limit, page * limit);
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          tasks: formattedTasks,
+          totalCount: total,
+        },
+      };
+    } catch (err) {
+      throw new Error(
+        "Error fetching imported project_tasks: " + (err as Error).message
+      );
+    }
+  }
 }

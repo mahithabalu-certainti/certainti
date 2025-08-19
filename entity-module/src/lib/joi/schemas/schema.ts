@@ -2590,6 +2590,44 @@ const importedAccountLevelResources = Joi.object({
     .pattern(uuidRegex, "valid UUID")
 });
 
+const importedAccountLevelProjectTasks = Joi.object({
+  documentRid: Joi.string().pattern(uuidRegex).required(),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2627,5 +2665,6 @@ export {
   listAccountLevelProjectCostsSchema,
   exportListAccountLevelProjectCostsSchema,
   importedAccountLevelProjects,
-  importedAccountLevelResources
+  importedAccountLevelResources,
+  importedAccountLevelProjectTasks
 };

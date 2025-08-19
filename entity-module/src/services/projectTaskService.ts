@@ -16,6 +16,7 @@ import { Resources } from "../models/resource";
 import { ProjectFiscal } from "../models/projectFiscal";
 import currency from "currency.js";
 import Decimal from "decimal.js";
+import { ProjectTaskTimeline } from "../models/projectTaskTimeline";
 
 export class ProjectTaskService {
   schemaService: SchemaService;
@@ -290,7 +291,7 @@ export class ProjectTaskService {
     }
   }
 
-  private async initializeModelsAndAssociations(schemaName: string) {
+  async initializeModelsAndAssociations(schemaName: string) {
     const sequelize = await initOrgSequelize();
 
     // Initialize models
@@ -302,6 +303,7 @@ export class ProjectTaskService {
     const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
     const ResourceModel = Resources.initialize(sequelize, schemaName);
     const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
+    const ProjectTaskTimelineModel = ProjectTaskTimeline.initialize(sequelize, schemaName);
 
     // Define associations
     ProjectTaskModel.belongsTo(AccountDetailsModel, {
@@ -330,11 +332,12 @@ export class ProjectTaskService {
         ProjectFiscalModel,
         ResourceModel,
         ProjectTaskModel,
+        ProjectTaskTimelineModel,
       },
     };
   }
 
-  private async getSchemaInfo(accountRid: string) {
+  async getSchemaInfo(accountRid: string) {
     const accountData = await this.schemaService.fetchAccountById(accountRid);
     if (!accountData) throw new Error("Invalid account ID");
 
@@ -348,7 +351,7 @@ export class ProjectTaskService {
     return `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, "")}`;
   }
 
-  private async fetchRelatedData(allTasks: any[], mainSequelize: any) {
+  async fetchRelatedData(allTasks: any[], mainSequelize: any) {
     // Fetch resource types
     const resourceTypeRids = allTasks
       .map((task) => (task as any)?.resource.resource_type_rid)
@@ -388,7 +391,7 @@ export class ProjectTaskService {
     };
   }
 
-  private formatTaskData(
+  formatTaskData(
     task: any,
     resourceTypeMap: Map<string, string>,
     currencyMap: Map<string, string>
@@ -427,7 +430,7 @@ export class ProjectTaskService {
     };
   }
 
-  private sortTasks(formattedTasks: any[], sortBy: string, sortOrder: string) {
+  sortTasks(formattedTasks: any[], sortBy: string, sortOrder: string) {
     const validSortFields = [
       "resource_code",
       "r_number",

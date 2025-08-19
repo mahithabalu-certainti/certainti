@@ -65,7 +65,7 @@ export const filtersColumns : Record<string, string> =
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
-    attachments : "attachments",
+    attachment_count : "attachment_count",
     response_source : "response_source",
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime"
@@ -82,7 +82,7 @@ export const filtersColumns : Record<string, string> =
     last_reminder_on : "datetime",
     response_submitted_on : "datetime",
     response_updated_on : "datetime",
-    attachments : "number",
+    attachment_count : "number",
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime"
@@ -234,6 +234,14 @@ export const rawQueries = {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
   },
+  fetchProjectInfo(rid : string,schemaName : string) {
+    return `
+    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project WHERE rid = '${rid}'`
+  },
+  fetchAccountInfo(rid: string) {
+    return `
+    SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+  },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)
     return `
@@ -252,7 +260,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     last_reminder_on : "datetime",
     response_submitted_on : "datetime",
     response_updated_on : "datetime",
-    attachments : "number",
+    attachment_count : "number",
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
@@ -274,7 +282,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
-    attachments : "attachments",
+    attachment_count : "attachment_count",
     response_source : "response_source",
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",

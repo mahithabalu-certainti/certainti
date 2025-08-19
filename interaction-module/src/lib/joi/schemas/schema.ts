@@ -8,7 +8,6 @@ const createInteractionSchema = Joi.object({
   project_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
-  interaction_type_rid: Joi.string().pattern(uuidRegex).required(),
   status_action: Joi.string().required(),
   parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()

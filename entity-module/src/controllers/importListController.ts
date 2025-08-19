@@ -4,7 +4,7 @@ import Configurations from '../config/config';
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
-import { importedAccountLevelProjects, importedAccountLevelResources } from '../lib/joi/schemas/schema';
+import { importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -738,6 +738,78 @@ async function importedAccountLevelresourceList(req: Request, res: Response): Pr
   }
 }
 
+async function importedAccountLevelProjectTaskList(req: Request, res: Response): Promise<void> {
+  const methodName = "importedAccountLevelProjectTaskList";
+  try {
+    const { accountId } = req.params;
+    const value = await validateRequest(
+      req,
+      importedAccountLevelProjectTasks,
+      res,
+      "GET"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+    // Before calling buildRawWhereClause
+    if (typeof value.filters === "string") {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error("Invalid filters JSON:", value.filters);
+        value.filters = {};
+      }
+    }
+    const tasks = await importServices.fetchAccountLevelImportedProjectTasks(
+      accountId,
+      value.documentRid,
+      value.filters,
+      value.search,
+      value.page,
+      value.limit,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (tasks.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, tasks.data);
+      return;
+    } else {
+      errorLog(methodName, tasks.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        tasks.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
     fetchAllImportList,
     importListByRid,
@@ -745,5 +817,6 @@ export default {
     exportStagingFailureList,
     exportLoadFailureList,
     importedAccountLevelprojectList,
-    importedAccountLevelresourceList
+    importedAccountLevelresourceList,
+    importedAccountLevelProjectTaskList
 }   
