@@ -16,7 +16,7 @@ export interface ICreateInteraction {
   template_rid?: string;
   parent_interaction_rid?: string;
   interaction_iteration?: number;
-  interaction_status_rid?: string;
+  status_rid?: string;
   interaction_url?: string;
   interaction_age?: number;
   created_by: string;
@@ -41,7 +41,7 @@ export interface IUpdateInteraction {
   template_rid?: string;
   parent_interaction_rid?: string;
   interaction_iteration?: number;
-  interaction_status_rid?: string;
+  status_rid?: string;
   interaction_url?: string;
   interaction_age?: number;
   created_by: string;
@@ -67,6 +67,8 @@ export interface InteractionDetailsResponse {
   global_attachments: any[];
   created_by: string;
   created_datetime: Date | null;
+  response_updated_by: string | null;
+  response_updated_on: Date | null;
 }
 export interface InteractionResponse {
   interaction_rid: string;
@@ -76,6 +78,7 @@ export interface InteractionResponse {
   project_rid: string;
   fiscal_year: number;
   status_rid: string;
+  status_action:string
    attachments:any;
   questions: {
     rid: string;

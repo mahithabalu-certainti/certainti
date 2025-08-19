@@ -15,6 +15,7 @@ interface InteractionResponseHistoryAttributes {
   response_by?: string;
   response_source?: string;
   interaction_response?: string;
+  interaction_version: number;
 }
 
 type InteractionResponseHistoryCreationAttributes = Optional<
@@ -42,6 +43,7 @@ export class InteractionResponseHistory
   public response_by?: string;
   public response_source?: string;
   public interaction_response?: string;
+  public interaction_version!: number;
 
   static initialize(
     sequelize: Sequelize,
@@ -72,6 +74,7 @@ export class InteractionResponseHistory
         response_by: { type: DataTypes.STRING(50), allowNull: true },
         response_source: { type: DataTypes.STRING(50), allowNull: true },
         interaction_response: { type: DataTypes.STRING(50), allowNull: true },
+        interaction_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
       },
       {
         sequelize,

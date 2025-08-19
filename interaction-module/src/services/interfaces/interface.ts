@@ -86,4 +86,15 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionResponse: any };
   }>;
+  fetchInteractionHistory(data : any) : Promise<{
+    statusCodeValue : string,
+    data : any
+  }>
+  listInteractionAttachments(data : any) : Promise<{
+    statusCodeValue : string,
+    page : number,
+    limit : number,
+    totalRecords : number,
+    attachments : any
+  }>
 }
