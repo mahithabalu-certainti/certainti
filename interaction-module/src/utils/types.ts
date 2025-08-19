@@ -91,4 +91,11 @@ export interface InteractionResponse {
   created_by: string;
   modified_by?: string;
 }
-
+export interface IEmailMessage {
+  subject: string;
+  body: {
+    contentType: string;
+    content: string;
+  };
+  toRecipients: { emailAddress: { address: string } }[];
+}
