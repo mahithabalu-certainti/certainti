@@ -26,6 +26,7 @@ interface InteractionQuesProps {
   questions: InteractionQuestion[];
   globalAttachments: Attachment[];
   isEditEnable?: boolean;
+  handleResponseHistory?: () => void;
 }
 
 interface UploadedFile {
@@ -37,6 +38,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   questions,
   globalAttachments,
   isEditEnable = false,
+  handleResponseHistory,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
@@ -208,8 +210,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {
           label: 'Response History',
           variant: 'outlined' as const,
-          onClick: () => console.log('Response History clicked'),
+          onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
+          hide: true,
         },
       ];
 
@@ -229,6 +232,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               aria-label={button.label}
               sx={button.sx}
               disabled={button.disabled}
+              hide={button.hide}
             />
           ))}
           <input

@@ -104,7 +104,19 @@ export type InteractionList = {
   project_fiscal_rid: string;
   fiscal_year: number;
 };
-
+export type responseInteractionList = {
+  rid: string;
+  r_number: string;
+  response_on: string;
+  total_records: number;
+  response_email: null | string;
+  response_by_rid: string;
+  response_source: string;
+  interaction_response: string;
+  interaction_source_rid: string;
+  interaction_source_name: string;
+  response_by: string;
+};
 export interface InteractionListURLParams {
   page: number;
   limit: number;
@@ -127,6 +139,18 @@ export interface InteractionListResponse {
     limit: number;
     totalRecords: number;
     interactions: InteractionList[];
+    count?: number;
+  };
+}
+export interface responseInteractionListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    response_history: responseInteractionList[];
     count?: number;
   };
 }
