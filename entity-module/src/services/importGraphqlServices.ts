@@ -210,17 +210,6 @@ export default class ImportGraphqlServices {
       const fetchAccountDetails: any = await mainDb.query(
         await rawQueries.fetchParentAccount(accountId, mainDb)
       );
-      let schemaName = rawQueries.fetchSchemaName(fetchAccountDetails[0][0].r_number);
-      let entityRids: string[] = [];
-      if (documentRid) {
-        const [timelineResult]: any = await orgDb.query(
-        rawQueries.fetchProjectTimelineByDocumentRid(schemaName),
-        { replacements: [documentRid] }
-        );
-        if (timelineResult.length > 0) {
-        entityRids = timelineResult.map((row: any) => row.entity_rid);
-        }
-      }
 
       const fetchGivenAccountDetails: any = await mainDb.query(
         await rawQueries.fetchAccountDetailsByRid(accountId)
@@ -330,7 +319,7 @@ export default class ImportGraphqlServices {
         finalMetaDataSortOrder,
         {},
         accessibleIds,
-        entityRids
+        documentRid
       );
 
       return {
@@ -368,21 +357,6 @@ export default class ImportGraphqlServices {
       const fetchAccountDetails: any = await mainDb.query(
         await rawQueries.fetchParentAccount(accountId, mainDb)
       );
-      let schemaName = rawQueries.fetchSchemaName(fetchAccountDetails[0][0].r_number);
-      let entityRids: string[] = [];
-      if (documentRid) {
-        const [timelineResult]: any = await orgDb.query(
-        rawQueries.fetchResourceTimelineByDocumentRid(schemaName),
-        { replacements: [documentRid] }
-        );
-        if (timelineResult.length > 0) {
-        entityRids = timelineResult.map((row: any) => row.entity_rid);
-        }
-      }
-
-      const fetchGivenAccountDetails: any = await mainDb.query(
-        await rawQueries.fetchAccountDetailsByRid(accountId)
-      );
 
       const isExists = await this.schemaService.checkIfSchemaExists(
         fetchAccountDetails[0][0].r_number
@@ -416,7 +390,7 @@ export default class ImportGraphqlServices {
         havingClause,
         geoDataSort,
         accountId,
-        entityRids
+        documentRid
       );
 
       return {

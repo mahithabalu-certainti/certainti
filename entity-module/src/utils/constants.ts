@@ -650,12 +650,6 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
-  fetchProjectTimelineByDocumentRid(schemaName: string) {
-    return `SELECT entity_rid FROM ${schemaName}.project_timeline WHERE document_rid = ?`;
-  },
-  fetchResourceTimelineByDocumentRid(schemaName: string) {
-    return `SELECT entity_rid FROM ${schemaName}.resources_timeline WHERE document_rid = ?`;
-  },
   GET_ACCOUNT_ACCESS: `
 (
   (

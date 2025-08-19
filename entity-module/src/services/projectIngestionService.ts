@@ -127,6 +127,12 @@ class ProjectIngestionService {
       schemaName
     );
 
+    ProjectFiscalModel.hasMany(ProjectTimelineModel, {
+      foreignKey: "entity_rid",
+      sourceKey: "rid",
+      as: "ProjectTimelines",
+    });
+
     AccountFiscalModel.belongsTo(AccountDetailsModel, {
       foreignKey: "account_rid",
       targetKey: "account_rid",
@@ -1516,9 +1522,9 @@ class ProjectIngestionService {
     finalMetaDataSortOrder: string,
     graphqlData: any,
     accessibleIds: string[],
-    entityRids: string[] = []
+    documentRid?: string
   ) {
-    const { Project, ProjectFiscal } = await this.getModels(accountNumber);
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
 
     const parentLevelFields = [
       "project_name",
@@ -1596,11 +1602,6 @@ class ProjectIngestionService {
         account_rid: accountData.rid,
       };
 
-      // Add entityRids if they exist
-      if (entityRids.length > 0) {
-        whereFiscal.rid = entityRids;
-      }
-
         projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
@@ -1615,11 +1616,25 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: entityRids.length > 0,
+            required: !!documentRid,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
             },
+            include: documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+            }] : [],
             attributes: {
               include: [
                 ["rid", "project_fiscal_rid"],
@@ -1643,11 +1658,6 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
-
-      // Add entityRids if they exist
-      if (entityRids.length > 0) {
-        whereFiscal.rid = entityRids;
-      }
       
       for (const key in filters) {
         const dbField = fiscalFieldMap[key];
@@ -1709,11 +1719,25 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: entityRids.length > 0,
+            required: !!documentRid,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
             },
+            include: documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+            }] : [],
             attributes: {
               include: [
                 ["rid", "project_fiscal_rid"],
@@ -1742,7 +1766,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: entityRids.length > 0,
+          required: !!documentRid,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
