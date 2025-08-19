@@ -213,6 +213,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
           isEditEnable={true}
+          actionButtonENable={true}
           handleResponseHistory={handleResponseHistory}
         />
       )}
