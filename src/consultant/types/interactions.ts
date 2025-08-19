@@ -1,3 +1,5 @@
+import { SortOrder } from './configuration';
+
 // Form Types
 export enum QuestionUpdate {
   Add = 'add',
@@ -104,7 +106,19 @@ export type InteractionList = {
   project_fiscal_rid: string;
   fiscal_year: number;
 };
-
+export type ResponseInteractionList = {
+  rid: string;
+  r_number: string;
+  response_on: string;
+  total_records: number;
+  response_email: null | string;
+  response_by_rid: string;
+  response_source: string;
+  interaction_response: string;
+  interaction_source_rid: string;
+  interaction_source_name: string;
+  response_by: string;
+};
 export interface InteractionListURLParams {
   page: number;
   limit: number;
@@ -127,6 +141,18 @@ export interface InteractionListResponse {
     limit: number;
     totalRecords: number;
     interactions: InteractionList[];
+    count?: number;
+  };
+}
+export interface ResponseInteractionListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    response_history: ResponseInteractionList[];
     count?: number;
   };
 }
@@ -190,17 +216,14 @@ export interface InteractionAttachmentType {
   uploaded_by: string;
   uploaded_date: string;
   download: string;
-  [key: string]: unknown; // Add index signature
+  [key: string]: unknown;
 }
-
-export type SortOrder = 'ASC' | 'DESC';
 
 export type FilterCondition = {
   startsWith?: string;
   endsWith?: string;
   contains?: string;
   equals?: string | number | boolean;
-  // Add other filter conditions as needed
 };
 
 export type Filters = Record<string, FilterCondition>;

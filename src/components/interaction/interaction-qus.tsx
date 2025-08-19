@@ -26,6 +26,8 @@ interface InteractionQuesProps {
   questions: InteractionQuestion[];
   globalAttachments: Attachment[];
   isEditEnable?: boolean;
+  actionButtonENable?: boolean;
+  handleResponseHistory?: () => void;
 }
 
 interface UploadedFile {
@@ -37,6 +39,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   questions,
   globalAttachments,
   isEditEnable = false,
+  actionButtonENable,
+  handleResponseHistory,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
@@ -204,12 +208,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           disabled: !isEditEnable,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
+          hide: !actionButtonENable,
         },
         {
           label: 'Response History',
           variant: 'outlined' as const,
-          onClick: () => console.log('Response History clicked'),
+          onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
+          hide: !actionButtonENable,
         },
       ];
 
@@ -220,17 +226,22 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           Interaction Question
         </div>
         <div className='flex items-center gap-2'>
-          {buttons.map((button, index) => (
-            <TextButton
-              key={`section-header-btn-${index}`}
-              label={button.label}
-              onClick={button.onClick}
-              loading={button.loading}
-              aria-label={button.label}
-              sx={button.sx}
-              disabled={button.disabled}
-            />
-          ))}
+          {buttons.map((button, index) => {
+            if (button.hide) return null;
+
+            return (
+              <TextButton
+                key={`section-header-btn-${index}`}
+                label={button.label}
+                onClick={button.onClick}
+                loading={button.loading}
+                aria-label={button.label}
+                sx={button.sx}
+                disabled={button.disabled}
+              />
+            );
+          })}
+
           <input
             ref={globalFileInputRef}
             type='file'

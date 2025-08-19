@@ -23,3 +23,16 @@ export const mockInteractionHistory: InteractionHistoryData = {
     ],
   },
 };
+
+// Mock permission map
+export const mockPermissionMap: Record<
+  string,
+  { read: boolean; edit: boolean }
+> = {
+  interaction_code: { read: true, edit: false },
+  interaction_type: { read: true, edit: true },
+  interaction_subject: { read: true, edit: false },
+  interaction_priority: { read: true, edit: false },
+  interaction_category_rid: { read: true, edit: false },
+  created_by_name: { read: true, edit: false },
+};

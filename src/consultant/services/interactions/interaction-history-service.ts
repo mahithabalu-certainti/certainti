@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { mockInteractionHistory } from '../../pages/project/project-details/interactions/interaction-history/mock-response';
-import { InteractionHistoryData } from '../../pages/account-details-sidebar/sidebar-pages/interactions/interaction-history/utils';
+import { InteractionHistoryData } from '../../pages/project/project-details/interactions/interaction-history/utils';
 
 export const useInteractionHistoryList = (
   interactionHistoryId: string,
@@ -9,6 +9,7 @@ export const useInteractionHistoryList = (
   return useQuery<InteractionHistoryData, Error>({
     queryKey: ['interactionHistory', interactionHistoryId],
     queryFn: async () => {
+      // a mock async function
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return mockInteractionHistory;
     },

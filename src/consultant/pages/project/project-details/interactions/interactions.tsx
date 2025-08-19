@@ -26,6 +26,7 @@ import { ActionItem } from '../../../../../components/table/types';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
 import { SendInteractionModal } from '../../../../../components/interaction';
+import HistoryTable from './response-history/history-table';
 import { InteractionAttachment } from './interaction-attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
@@ -76,8 +77,14 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionAttachmentId = searchParams.get('interaction_attachment_id');
 
+  const responseHistory = searchParams.get('history');
+  const interactionResponseId = searchParams.get('interactionResponse_id');
+
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
+  const viewInteractionAttachmentId = !!interactionAttachmentId;
+  const viewHistory = !!responseHistory;
+  // console.log('viewHistory', viewHistory);
   const viewInteractionAttachment = !!interactionAttachmentId;
 
   const projectData = {
@@ -201,7 +208,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: selectedRows.length === 0 || accountInActive,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
-      hide: false,
+      hide: viewHistory,
     },
     {
       label: 'New',
@@ -209,7 +216,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: viewHistory,
     },
   ];
 
@@ -249,18 +256,31 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleViewInteractionAttachment = (interactionAttachmentId: string) => {
-    if (interactionAttachmentId) {
-      searchParams.set('interaction_attachment_id', interactionAttachmentId);
+  const handleViewInteractionAttachment = (interactionAttachentId: string) => {
+    if (interactionAttachentId) {
+      searchParams.set('interaction_attachment_id', interactionAttachentId);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
 
   const handleBackClick = () => {
-    searchParams.delete('interaction_id');
-    searchParams.delete('interaction_history_id');
-    searchParams.delete('interaction_attachment_id');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    if (!interactionResponseId) {
+      searchParams.delete('interaction_id');
+      searchParams.delete('interaction_history_id');
+      searchParams.delete('interaction_attachment_id');
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+  };
+
+  const handleBackFromResponse = () => {
+    if (interactionResponseId) {
+      searchParams.delete('interactionResponse_id');
+      navigate({ search: searchParams.toString() }, { replace: true });
+    } else {
+      searchParams.delete('history');
+      searchParams.delete('interaction_attachment_id');
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
   };
 
   const actionButtons: ActionItem<InteractionList>[] = [
@@ -307,7 +327,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
       />
-      {viewDetails ? (
+      {viewDetails && !viewHistory ? (
         <InteractionDetails
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
@@ -319,6 +339,8 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectDetails={projectDetails}
           accountInActive={accountInActive}
         />
+      ) : viewInteractionAttachmentId ? (
+        <InteractionAttachment handleBackClick={handleBackClick} />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment handleBackClick={handleBackClick} />
       ) : (
@@ -333,50 +355,56 @@ const Interactions: React.FC<InteractionsProps> = ({
             }
             count={count}
             showItemCount={true}
+            showBackArrow={viewHistory}
+            onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
+
           <div className='border border-[#CBD6E2]'>
-            <ListTable
-              data={interactionList}
-              columns={interactionColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
-                overflow: 'auto',
+            {!viewHistory ? (
+              <ListTable
+                data={interactionList}
+                columns={interactionColumns}
+                getRowId={getRowId}
+                hoverHighlight={false}
+                tableStyle={{
+                  borderBottom: '1px solid #CBD6E2',
+                  height: '100%',
+                  maxHeight: 'calc(100vh - 290px)',
+                  overflow: 'auto',
+                }}
+                stickyHeader={true}
+                stickyColumnsCount={1}
+                selectable={true}
+                onSelectionChange={handleSelectionChange}
+                actionWidth={80}
+                actionDisplayMode='dropdown'
+                actionMenuItems={actionButtons}
+                loading={isLoading || !fiscalYear}
+                error={isError ? 'Failed to load data' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
+                rowsPerPage={rowsPerPage}
+                currentPage={currentPage}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                sortBy={sortField}
+                sortOrder={sortBy}
+                onSort={handleSortRequest}
+              />
+            ) : (
+              <HistoryTable />
+            )}
+            <SendInteractionModal
+              isOpen={sendModalOpen}
+              onClose={() => setSendModalOpen(false)}
+              selectedRows={selectedRows}
+              onSend={(emails) => {
+                console.log('Emails to send:', emails);
+                setSendModalOpen(false);
               }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={true}
-              onSelectionChange={handleSelectionChange}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={actionButtons}
-              loading={isLoading || !fiscalYear}
-              error={isError ? 'Failed to load data' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortBy}
-              onSort={handleSortRequest}
             />
           </div>
-
-          <SendInteractionModal
-            isOpen={sendModalOpen}
-            onClose={() => setSendModalOpen(false)}
-            selectedRows={selectedRows}
-            onSend={(emails) => {
-              console.log('Emails to send:', emails);
-              setSendModalOpen(false);
-            }}
-          />
         </>
       )}
     </div>

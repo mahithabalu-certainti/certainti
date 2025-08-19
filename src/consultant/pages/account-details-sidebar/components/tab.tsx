@@ -36,10 +36,7 @@ import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
-import {
-  useGetAppliedProjectResourceCode,
-  useGetProjectResourceCode,
-} from '../../../services/project-resources/project-resources-form-service';
+import { useGetAppliedProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -143,36 +140,24 @@ const TabPanel: React.FC<TabProps> = ({
   const resourceStatusOptions = useGetResourceStatus();
   const skillLevelOptions = useGetSkillLevel();
   const projectTypeOptions = useGetProjectType();
-  const { data: getProjectTaskResourceCode } = useGetProjectResourceCode(
-    projectResourceAccountID as string
-  );
-  const { data: projectResourceCodeOptions } = useGetAppliedProjectResourceCode(
+  const { data: getProjectTaskResourceCode } = useGetAppliedProjectResourceCode(
     projectResourceAccountID as string,
-    projectResourceProjectID as string
+    projectResourceProjectID as string,
+    value === 'project-task' ? 'project_tasks' : 'project_resources'
   );
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
-  const memoizedProjectTaskResourceCode: { option: string; value: string }[] =
-    useMemo(
-      () =>
-        getProjectTaskResourceCode?.data?.resourceCodes.map((item) => ({
-          option: item.resource_code,
-          value: item.resource_code,
-        })) || [],
-      [getProjectTaskResourceCode?.data?.resourceCodes]
-    );
-  const memoizedProjectResourceCode: { option: string; value: string }[] =
-    useMemo(
-      () =>
-        projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-          option: item.resource_code,
-          value: item.resource_code,
-        })) || [],
-      [projectResourceCodeOptions?.data?.resourceCodes]
-    );
+  const memoizedResourceCode: { option: string; value: string }[] = useMemo(
+    () =>
+      getProjectTaskResourceCode?.data?.resourceCodes.map((item) => ({
+        option: item.resource_code,
+        value: item.resource_code,
+      })) || [],
+    [getProjectTaskResourceCode?.data?.resourceCodes]
+  );
   const memoizedCountry: { option: string; value: string }[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -417,7 +402,7 @@ const TabPanel: React.FC<TabProps> = ({
       );
     if (value === 'project-resources')
       return projectResourceFilterFields(
-        memoizedProjectResourceCode,
+        memoizedResourceCode,
         memoizedCountry,
         regionData,
         // memoizedResourceType,
@@ -425,7 +410,7 @@ const TabPanel: React.FC<TabProps> = ({
       );
     if (value === 'project-task')
       return projectTaskFilterFields(
-        memoizedProjectTaskResourceCode,
+        memoizedResourceCode,
         memoizedResourceType,
         permissionMapTaskTableColumn
       );
@@ -453,7 +438,7 @@ const TabPanel: React.FC<TabProps> = ({
     memoizedClassification,
     memoizedProjectTypes,
     projectPermissionMap,
-    memoizedProjectResourceCode,
+    memoizedResourceCode,
     permissionProjectResourcesMap,
     permissionMapTaskTableColumn,
     fieldOptions,
