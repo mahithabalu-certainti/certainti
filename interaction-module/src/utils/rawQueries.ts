@@ -31,10 +31,12 @@ export const fetchInteractionForProjectLevelQuery = (
     else pagination
 
     if(flag == interactionFlag.account) {
+        let fiscalQuery = ``
+        if(fiscal_year === 0) fiscalQuery = ` `
+        else fiscalQuery = ` AND i.fiscal_year = ${fiscal_year}`
         whereConditions = `
         i.account_rid = '${account_rid}' 
-        AND 
-        i.fiscal_year = ${fiscal_year}`
+        ${fiscalQuery}`
     } else {
         whereConditions = `
         i.account_rid = '${account_rid}' 
