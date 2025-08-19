@@ -323,7 +323,8 @@ export const fetchImportListByRid = (rid : string, schemaName : string) => {
     'records_failed_to_load', i.target_load_error_records_count,
     'records_failed_to_stage', (COALESCE(i.total_records,0) - COALESCE(i.total_staging_processed, 0)),
     'records_with_warning', i.total_staging_warning_count,
-    'document_url', d.document_url
+    'document_url', d.document_url,
+    'document_rid', i.document_rid
     ) AS imports
     FROM ${schemaName}.import i
     LEFT JOIN ${schemaName}.document d ON d.rid = i.document_rid
