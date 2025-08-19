@@ -24,11 +24,13 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ isError }) => {
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const accountId = searchParams.get('accountID') || '';
+  // const accountId = searchParams.get('accountID') || '';
+  const accountId = 'D001-61c08383-92ec-4b84-97b5-337993d8144f';
   const interactionId = searchParams.get('interaction_id') || undefined;
   const interactionResponseId =
     searchParams.get('interactionResponse_id') || undefined;
   const { data } = useInteractionDetails(accountId, interactionId);
+  console.log('project', accountId);
   useEffect(() => {
     if (mockResponse?.data?.response_history) {
       setAccountDetails(

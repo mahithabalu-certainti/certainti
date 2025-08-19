@@ -58,7 +58,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const handleResponseHistory = () => {
     searchParams.set('history', 'response_histroy');
     navigate({ search: searchParams.toString() }, { replace: true });
-    console.log('respose history');
   };
 
   const headerButtons = [

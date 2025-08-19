@@ -53,6 +53,11 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  const handleResponseHistory = () => {
+    searchParams.set('history', 'response_histroy');
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
+
   const headerButtons = [
     {
       label: 'Edit',
@@ -205,6 +210,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
           isEditEnable={true}
+          actionButtonENable={true}
+          handleResponseHistory={handleResponseHistory}
         />
       )}
       {!isLoading && !error && (

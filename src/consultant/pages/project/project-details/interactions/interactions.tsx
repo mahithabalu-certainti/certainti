@@ -86,7 +86,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
   const viewHistory = !!responseHistory;
-  // console.log('viewHistory', viewHistory);
 
   const projectData = {
     project_code: projectDetails?.project_code || '',
