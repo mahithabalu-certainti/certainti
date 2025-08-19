@@ -103,7 +103,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
           <InfoSection
             columns={transformedInteractionHistoryColumns}
             loading={isLoading}
-            singleLineView={false}
+            singleLineView={true}
             className='!border-b-0'
           />
         </Box>

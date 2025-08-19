@@ -3,7 +3,7 @@ import { interactionAttachmentMockData } from '../../mockdata/interaction-attach
 import {
   InteractionAttachmentApiResponse,
   InteractionAttachmentListParams,
-} from '../../types/interaction-attachment';
+} from '../../types';
 
 export const fetchInteractionAttachmentList = async () =>
   // params: InteractionAttachmentListParams = {}

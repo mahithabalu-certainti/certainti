@@ -1,4 +1,4 @@
-import { InteractionAttachmentApiResponse } from '../types/interaction-attachment';
+import { InteractionAttachmentApiResponse } from '../types';
 
 export const interactionAttachmentMockData: InteractionAttachmentApiResponse = {
   data: {

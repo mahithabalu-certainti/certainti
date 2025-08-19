@@ -1,5 +1,5 @@
 import { ListTableColumn } from '../../../../../../components/table/types';
-import { InteractionAttachmentType } from '../../../../../types/interaction-attachment';
+import { InteractionAttachmentType } from '../../../../../types';
 
 export const getInteractionAttachmentListColumns =
   (): ListTableColumn<InteractionAttachmentType>[] => [

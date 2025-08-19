@@ -5,9 +5,9 @@ import { InteractionDetailIcon } from '../../../../../../assets';
 import { ListTable } from '../../../../../../components/table';
 import { useGetInteractionAttachmentList } from '../../../../../services/interactions/interaction-attachment-service';
 import {
-  InteractionAttachmentType,
   InteractionAttachmentListParams,
-} from '../../../../../types/interaction-attachment';
+  InteractionAttachmentType,
+} from '../../../../../types';
 
 interface InteractionAttachmentProps {
   handleBackClick: () => void;

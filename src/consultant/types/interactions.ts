@@ -1,3 +1,5 @@
+import { SortOrder } from './configuration';
+
 // Form Types
 export enum QuestionUpdate {
   Add = 'add',
@@ -202,5 +204,45 @@ export interface InteractionDetailsResponse {
   statusMessage: string;
   data: {
     interactions: InteractionDetails;
+  };
+}
+
+export interface InteractionAttachmentType {
+  rid: string;
+  question_number: string;
+  name: string;
+  type: string;
+  size: string;
+  uploaded_by: string;
+  uploaded_date: string;
+  download: string;
+  [key: string]: unknown;
+}
+
+export type FilterCondition = {
+  startsWith?: string;
+  endsWith?: string;
+  contains?: string;
+  equals?: string | number | boolean;
+};
+
+export type Filters = Record<string, FilterCondition>;
+
+export interface InteractionAttachmentListParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: SortOrder;
+  filters?: Filters;
+  searchTerm?: string;
+  exportKey?: string;
+  timezone?: string;
+  entity_type?: string;
+}
+
+export interface InteractionAttachmentApiResponse {
+  data: {
+    attachments: InteractionAttachmentType[];
+    total_count: number;
   };
 }
