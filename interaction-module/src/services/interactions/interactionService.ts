@@ -12,6 +12,7 @@ import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { generateSasUrl } from "../../utils/blob";
 import { interactionMailTemplate } from "../../utils/mailTemplate";
 import {  sendEmailWithAttachment } from "../emailService";
 import * as fs from 'fs';
@@ -874,17 +875,29 @@ export class InteractionService {
       responseData = await Promise.all(responseData.map(async (d : any) => {
         return {
           ...d,
-          uploaded_by : mapUsers.get(d.created_by)
+          uploaded_by : mapUsers.get(d.created_by),
+          new_url : await generateSasUrl(d.download_link)
         }
       })
     )
-      return {
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        page : data.page,
-        limit : data.limit,
-        totalRecords : responseData[0].total_records,
-        attachments : responseData
+    let total = responseData[0].total_records
+    responseData = responseData.map((d : any) => {
+      delete d.download_link
+      const data =  {
+        ...d,
+        download_link : d.new_url
       }
+      delete data.total_records
+      delete data.new_url
+      return data;
+    })
+    return {
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      page : data.page,
+      limit : data.limit,
+      totalRecords : total,
+      attachments : responseData
+    }
     } else {
       return {
         statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
