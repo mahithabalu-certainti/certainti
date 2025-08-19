@@ -28,7 +28,7 @@ export const getInteractionHistoryListColumns =
       id: 'date',
       sortId: 'date',
       label: 'Date',
-      width: 140,
+      width: 200,
       sortable: true,
       // hide: !permissionMap?.['status_rid']?.edit && !permissionMap?.['status_rid']?.read,
       render: (row: InteractionHistoryList) => row.date || '-',

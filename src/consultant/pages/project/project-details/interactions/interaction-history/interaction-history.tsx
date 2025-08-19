@@ -17,10 +17,12 @@ interface InteractionHistoryProps {
   accountInActive: boolean;
   handleBackClick: () => void;
   projectDetails: NewProjectData | null;
+  refresh?: number;
 }
 
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   handleBackClick,
+  refresh,
 }) => {
   const [searchParams] = useSearchParams();
   const interactionHistoryId = searchParams.get('interaction_history_id') || '';
@@ -34,7 +36,11 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     data: interactionHistoryData,
     isLoading,
     isError,
-  } = useInteractionHistoryList(interactionHistoryId, !!interactionHistoryId);
+  } = useInteractionHistoryList(
+    interactionHistoryId,
+    !!interactionHistoryId,
+    refresh
+  );
 
   const actionData = useMemo(
     () => interactionHistoryData?.data?.interaction_history || [],
