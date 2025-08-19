@@ -1,9 +1,10 @@
 import { Request, Response } from 'express'
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
-import { generateExcelBase64, handleErrorResponse, handleSuccessResponse, validateImportListByRidRequest, validateImportListRequest } from '../utils/helpers';
+import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
+import { importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -33,6 +34,7 @@ async function fetchAllImportList(req: Request, res: Response) {
         if(data.filters.imported_by) {
             importedByFilter = data.filters.imported_by
         }
+
         const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters, data.fiscal_year);
         if (result.statusCode !== HttpStatus.SUCCESS) {
             handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.importsNoFound);
@@ -59,7 +61,8 @@ async function fetchAllImportList(req: Request, res: Response) {
                 status_descriptions: data.status_description,
                 imported_on: new Date(data.imported_on).toISOString(),
                 imported_by: data.imported_by,
-                document_url: await generateSasUrl(data.document_url)
+                document_url: await generateSasUrl(data.document_url),
+                document_rid: data.document_rid
             }));
             })
         )
@@ -598,10 +601,222 @@ async function exportAllImportedData (req : Request, res : Response) {
         return;  
 }
 
+async function importedAccountLevelprojectList(req: Request, res: Response): Promise<void> {
+  const methodName = "ImportedAccountLevelprojectList";
+  try {
+    const { accountId } = req.params;
+
+    const value = await validateRequest(req, importedAccountLevelProjects, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const pageNum: number = parseInt(value.page, 10) || 1;
+    const limitNum: number = parseInt(value.limit, 10) || 25;
+
+    const project = await importServices.fetchAccountLevelImportedProjects(
+      accountId,
+      value.fiscalYear !== "" && value.fiscalYear !== null
+        ? value.fiscalYear
+        : 0,
+      pageNum,
+      limitNum,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.bothParentAndChild,
+      userId,
+      value.documentRid
+    );
+
+    if (project.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, project.data);
+      return;
+    } else {
+      errorLog(methodName, project.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        project.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function importedAccountLevelresourceList(req: Request, res: Response): Promise<void> {
+  const methodName = "importedAccountLevelresourceList";
+  try {
+    const { accountId } = req.params;
+
+    const value = await validateRequest(req, importedAccountLevelResources, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const pageNum: number = parseInt(value.page, 10) || 1;
+    const limitNum: number = parseInt(value.limit, 10) || 25;
+
+    const resource = await importServices.fetchAccountLevelImportedResources(
+      accountId,
+      pageNum,
+      limitNum,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.documentRid
+    );
+
+    if (resource.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, resource.data);
+      return;
+    } else {
+      errorLog(methodName, resource.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resource.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function importedAccountLevelProjectTaskList(req: Request, res: Response): Promise<void> {
+  const methodName = "importedAccountLevelProjectTaskList";
+  try {
+    const { accountId } = req.params;
+    const value = await validateRequest(
+      req,
+      importedAccountLevelProjectTasks,
+      res,
+      "GET"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+    // Before calling buildRawWhereClause
+    if (typeof value.filters === "string") {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error("Invalid filters JSON:", value.filters);
+        value.filters = {};
+      }
+    }
+    const tasks = await importServices.fetchAccountLevelImportedProjectTasks(
+      accountId,
+      value.documentRid,
+      value.filters,
+      value.search,
+      value.page,
+      value.limit,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (tasks.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, tasks.data);
+      return;
+    } else {
+      errorLog(methodName, tasks.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        tasks.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
     fetchAllImportList,
     importListByRid,
     exportAllImportedData,
     exportStagingFailureList,
-    exportLoadFailureList
-}
+    exportLoadFailureList,
+    importedAccountLevelprojectList,
+    importedAccountLevelresourceList,
+    importedAccountLevelProjectTaskList
+}   
