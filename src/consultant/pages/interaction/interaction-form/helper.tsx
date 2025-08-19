@@ -181,7 +181,7 @@ export const transFormPayload = (
   if (isEditView && interactionData) {
     return {
       ...basePayload,
-      interaction_rid: interactionData.rid || formData.rid,
+      interaction_rid: interactionData.interaction_rid || formData.rid,
       status_rid: formData.status || interactionData.status,
     };
   }

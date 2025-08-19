@@ -194,6 +194,7 @@ export interface InteractionQuestion {
 
 export interface InteractionDetails {
   rid?: string;
+  interaction_rid?: string;
   account_rid: string;
   project_rid: string;
   fiscal_year: number;

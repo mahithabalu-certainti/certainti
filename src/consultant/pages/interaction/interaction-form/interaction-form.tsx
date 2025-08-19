@@ -153,12 +153,15 @@ const InteractionForm = () => {
         updated_on: formatDateToYYYYMMDDWithTime(
           interactionData.modified_datetime
         ),
-        rid: interactionData.rid || interactionId,
+        rid: interactionData.interaction_rid || interactionId,
         interaction_id: interactionData.r_number,
         status: interactionData.status,
-        projectCode: interactionData.project_code || formData.projectCode,
-        projectName: interactionData.project_name || formData.projectName || '',
-        accountName: interactionData.account_name || formData.accountName || '',
+        projectCode:
+          interactionData.project_code || selectedProject.project_code,
+        projectName:
+          interactionData.project_name || selectedProject.project_name || '',
+        accountName:
+          interactionData.account_name || selectedProject.account_name || '',
         fiscalYear: Number(interactionData.fiscal_year),
         questions:
           interactionData.questions.length > 0
@@ -180,9 +183,9 @@ const InteractionForm = () => {
       }));
     }
   }, [
-    formData.accountName,
-    formData.projectCode,
-    formData.projectName,
+    selectedProject.account_name,
+    selectedProject.project_code,
+    selectedProject.project_name,
     interactionData,
     interactionId,
     isEditView,
