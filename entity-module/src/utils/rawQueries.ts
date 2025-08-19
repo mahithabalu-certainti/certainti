@@ -185,7 +185,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     let query = 
     `
     WITH all_datas AS (
-    SELECT i.rid, i.r_number, i.document_name, d.document_format,
+    SELECT i.rid, i.r_number, i.document_name, d.document_format, i.document_rid,
     d.document_size,i.entity_type, i.total_records,i.fiscal_year,
     ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))) AS records_loaded_successfully,
     (COALESCE(i.target_load_error_records_count,0) + (COALESCE(i.total_records, 0) - COALESCE(i.total_staging_processed,0))) AS records_failed_to_load,
@@ -230,7 +230,8 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     'status_description', a.upload_failure_reason,
     'imported_on', a.uploaded_datetime,
     'imported_by', a.uploaded_by_user_rid,
-    'document_url', a.document_url
+    'document_url', a.document_url,
+    'document_rid', a.document_rid
     )ORDER BY ${sortValue}) AS imports
     FROM paginated_datas a
     `
@@ -322,7 +323,8 @@ export const fetchImportListByRid = (rid : string, schemaName : string) => {
     'records_failed_to_load', i.target_load_error_records_count,
     'records_failed_to_stage', (COALESCE(i.total_records,0) - COALESCE(i.total_staging_processed, 0)),
     'records_with_warning', i.total_staging_warning_count,
-    'document_url', d.document_url
+    'document_url', d.document_url,
+    'document_rid', i.document_rid
     ) AS imports
     FROM ${schemaName}.import i
     LEFT JOIN ${schemaName}.document d ON d.rid = i.document_rid

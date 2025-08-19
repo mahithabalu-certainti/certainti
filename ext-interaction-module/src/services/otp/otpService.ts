@@ -148,7 +148,7 @@ export class OtpService {
     statusCode: number;
     statusMessage: string;
     errorMessage?: string;
-    data?: { auth_token: string }
+    data?: { auth_token: string, email: string }
   }> {
     try {
       const { account_rid, interaction_rid, otp: enteredOtp } = data;
@@ -257,7 +257,8 @@ export class OtpService {
           statusMessage:
             "OTP verified successfully. Redirecting to interaction details.",
           data: {
-            auth_token: token
+            auth_token: token,
+            email
           }
         };
       } else {

@@ -127,6 +127,12 @@ class ProjectIngestionService {
       schemaName
     );
 
+    ProjectFiscalModel.hasMany(ProjectTimelineModel, {
+      foreignKey: "entity_rid",
+      sourceKey: "rid",
+      as: "ProjectTimelines",
+    });
+
     AccountFiscalModel.belongsTo(AccountDetailsModel, {
       foreignKey: "account_rid",
       targetKey: "account_rid",
@@ -1515,9 +1521,10 @@ class ProjectIngestionService {
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
     graphqlData: any,
-    accessibleIds: string[]
+    accessibleIds: string[],
+    documentRid?: string
   ) {
-    const { Project, ProjectFiscal } = await this.getModels(accountNumber);
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
 
     const parentLevelFields = [
       "project_name",
@@ -1584,6 +1591,7 @@ class ProjectIngestionService {
     let projectData: any;
     const fullOrder: any[] = [];
     let totalCount: number = 0;
+
     if (graphqlData.type == "graphql") {
       whereProject = {
         account_rid: accountData.rid,
@@ -1608,11 +1616,25 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: false,
+            required: !!documentRid,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
             },
+            include: documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+            }] : [],
             attributes: {
               include: [
                 ["rid", "project_fiscal_rid"],
@@ -1697,11 +1719,25 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: false,
+            required: !!documentRid,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
             },
+            include: documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+            }] : [],
             attributes: {
               include: [
                 ["rid", "project_fiscal_rid"],
@@ -1730,7 +1766,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: false,
+          required: !!documentRid,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,

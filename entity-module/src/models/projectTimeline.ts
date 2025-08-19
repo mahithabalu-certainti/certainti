@@ -2,6 +2,7 @@ import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constants";
 import { Project } from "./project";
 import AccountDetails from "./accountDetails";
+import { ProjectFiscal } from "./projectFiscal";
 
 interface ProjectTimelineAttributes {
   rid?: string;
@@ -104,17 +105,12 @@ export class ProjectTimeline
       as: 'project_timeline_account',
     });
 
-      ProjectTimeline.belongsTo(Project, {
-        foreignKey: 'entity_rid',
-        targetKey: 'rid',
-        as: 'project',
-      });
-
-      Project.hasMany(ProjectTimeline, {
-        foreignKey: 'entity_rid',
-        sourceKey: 'rid',
-        as: 'ProjectTimeline',
-      });
+    ProjectTimeline.belongsTo(ProjectFiscal, {
+      foreignKey: 'entity_rid',
+      targetKey: 'rid',
+      as: 'ProjectFiscal',
+    });
+    
       return model;
   } 
 }

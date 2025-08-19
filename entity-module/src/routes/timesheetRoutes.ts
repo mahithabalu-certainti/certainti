@@ -18,4 +18,13 @@ router.get('/export/stagingFailure/:accountRid/:importRid/:entityType',
 router.get('/export/loadFailure/:accountRid/:importRid/:entityType',
      checkUserStatusMiddleware('timesheet_view_edit'),
       controller.importListController.exportLoadFailureList)
+router.get('/importedProjects/:accountId',
+     checkUserStatusMiddleware('projects_view_edit'),
+       controller.importListController.importedAccountLevelprojectList)
+router.get('/importedResources/:accountId',
+     checkUserStatusMiddleware('account_resources_view_edit'),
+       controller.importListController.importedAccountLevelresourceList)    
+router.get('/importedProjectTasks/:accountId',
+     checkUserStatusMiddleware('projects_task_view_edit'),
+       controller.importListController.importedAccountLevelProjectTaskList)
 export default router;

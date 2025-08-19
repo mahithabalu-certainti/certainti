@@ -19,7 +19,6 @@ export const HttpStatus = {
 };
 export const statusAction = {
   CREATE: "Create",
-  DRAFT: "Draft",
   SENT: "Sent",
   RESPONSE_DRAFT: "Response Draft",
   CREATED: "Created",
@@ -88,7 +87,7 @@ export const filtersColumns : Record<string, string> =
     modified_datetime : "datetime"
   }
 
-  export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
+  export const ALPHANUMERIC_CONDITIONS = {
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
@@ -186,9 +185,7 @@ export const STATUS_MESSAGE = {
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   interactionFetchedSuccess : "Interactions fetched successfully",
   dataNotFound : "Data not found",
-  historyResponseFetched : "Interaction Response history fetched successfully",
-  interactionHistoryFetched : "Interaction history fetched successfully",
-  interactionAttachmentFetched : "Interaction attachments fetched successfully"
+  historyResponseFetched : "Interaction Response history fetched successfully"
 };
 
 export const rawQueries = {
@@ -229,18 +226,6 @@ export const rawQueries = {
      let ids = data.map((d : any) => `'${d}'`)
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`
-  },
-  fetchInteractionStatusByType(type : string) {
-    return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
-  },
-  fetchProjectInfo(rid : string,schemaName : string) {
-    return `
-    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project WHERE rid = '${rid}'`
-  },
-  fetchAccountInfo(rid: string) {
-    return `
-    SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
   },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)
@@ -293,5 +278,4 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     updated_user_name : "updated_user_name"
   }
 
-  export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
-  export const blobUrlExpiration = 60
+  export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response"]
