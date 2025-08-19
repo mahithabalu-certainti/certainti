@@ -655,6 +655,41 @@ export interface IImportListGraphqlServices {
         data: null;
       }
   >;
+
+  fetchAccountLevelImportedProjects(
+    accountId: string,
+    fiscal_year: number,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    bothParentAndChild: boolean,
+    userId: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }>;
+
+  fetchAccountLevelImportedResources(
+    accountId: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any };
+  }>;
 }
 
 export interface IProjectTaskIngestionService {

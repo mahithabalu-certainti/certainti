@@ -169,6 +169,11 @@ export const rawQueries = {
       WHERE a.rid = ad.parent_account_rid`;
     }
   },
+  async fetchAccountDetailsByRid(
+    accountRid: string) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+  },
   findProject(schemaName: string, projectRid: string, accountRid: string) {
     return `
             SELECT * FROM ${schemaName}.project p WHERE rid = '${projectRid}' AND account_rid = '${accountRid}' 
