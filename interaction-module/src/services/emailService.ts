@@ -69,7 +69,6 @@ export async function sendEmailWithAttachment(emailMessage: {
     return true;
   } catch (error: any) {
     return false
-    throw new Error(error.message);
   }
 }
 export async function sendEmail(emailMessage: {

@@ -433,6 +433,7 @@ class InteractionSchemaService {
       //interactionDetails.dataValues.questions = interactionItems;
       // Optionally, pick only required fields for the response
       const {
+        rid,
         account_rid,
         project_rid,
         fiscal_year,
@@ -456,6 +457,7 @@ class InteractionSchemaService {
       );
       console.log(metainfo);
       const response: InteractionDetailsResponse = {
+        interaction_rid:rid,
         project_name: metainfo?.project_name ?? "",
         project_code: metainfo?.project_code ?? "",
         account_rid,
@@ -571,7 +573,7 @@ class InteractionSchemaService {
         const result = await this.orgDbSequelize.query(
           `SELECT project_code, project_name FROM ${schemaName}.project WHERE rid = :id`,
           {
-            replacements: { id: interactionDetails.dataValues.rid },
+            replacements: { id: interactionDetails.dataValues.project_rid },
             type: "SELECT",
           }
         );
@@ -590,6 +592,55 @@ class InteractionSchemaService {
     } catch (err) {
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
+  }
+
+  async fetchInteractionInfo(interactionRid: string, accountNumber: string) {
+    const { Interaction } = await this.interactionModelService.getModels(accountNumber);
+
+    const interactionDetails = await Interaction.findOne({
+      where: { rid: interactionRid },
+      raw: true,
+    });
+    if (!interactionDetails) {
+      throw new Error("Interaction not found");
+    }
+
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    // Fetch project info
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(interactionDetails.project_rid, schemaName),
+      { type: "SELECT" }
+    );
+
+    // Fetch account info
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountInfo(interactionDetails.account_rid),
+      { type: "SELECT" }
+    );
+
+    return {
+      projectInfo: {
+        project_id: projectInfo?.r_number ?? null, 
+        project_code: projectInfo?.project_code ?? null,
+        project_name: projectInfo?.project_name ?? null,
+        fiscalYear: interactionDetails.fiscal_year ?? null,
+      },
+      accountInfo: {
+        account_name: accountInfo?.account_name ?? null,
+        account_rid: accountInfo?.rid ?? null
+      },
+      interactionInfo:{
+        interaction_id: interactionDetails?.r_number ?? null,
+       
+      }
+    };
   }
 
   async getInteractionStatus() {
