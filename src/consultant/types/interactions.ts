@@ -1,3 +1,5 @@
+import { SortOrder } from './configuration';
+
 // Form Types
 export enum QuestionUpdate {
   Add = 'add',
@@ -45,6 +47,7 @@ export interface InteractionFormData {
   created_by?: string;
   updated_on?: string;
   updated_by?: string;
+  flag?: 'submit' | 'draft';
 }
 
 export interface InteractionQuestionErrors {
@@ -103,7 +106,19 @@ export type InteractionList = {
   project_fiscal_rid: string;
   fiscal_year: number;
 };
-
+export type ResponseInteractionList = {
+  rid: string;
+  r_number: string;
+  response_on: string;
+  total_records: number;
+  response_email: null | string;
+  response_by_rid: string;
+  response_source: string;
+  interaction_response: string;
+  interaction_source_rid: string;
+  interaction_source_name: string;
+  response_by: string;
+};
 export interface InteractionListURLParams {
   page: number;
   limit: number;
@@ -129,6 +144,18 @@ export interface InteractionListResponse {
     count?: number;
   };
 }
+export interface ResponseInteractionListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    response_history: ResponseInteractionList[];
+    count?: number;
+  };
+}
 
 export interface Attachment {
   file_id: string;
@@ -137,32 +164,38 @@ export interface Attachment {
 }
 
 export interface InteractionQuestion {
-  question_id: string;
   rid: string;
+  question_seq_num: string;
   question: string;
-  answer: string;
-  response_received_on: string;
-  attachments: Attachment[];
-  mandatory: boolean;
   notes: string;
+  is_mandatory: boolean;
+  response_on_datetime: string | null;
+  response: string | null;
+  attachments: Attachment[];
 }
 
 export interface InteractionDetails {
   rid: string;
-  r_number: string;
+  account_rid: string;
+  project_rid: string;
+  fiscal_year: number;
+  project_fiscal_rid: string;
+  interaction_number: string;
+  interaction_type: string;
+  interaction_type_name: string;
+  status: string;
+  status_name: string;
+  modified_by: string;
+  created_by: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+  questions: InteractionQuestion[];
+  global_attachments: Attachment[];
   project_code: string;
   project_name: string | null;
   account_name: string | null;
-  fiscal_year: string | number;
-  interaction_type: string;
-  status: string;
   response_updated_by: string;
   response_received_on: string;
-  created_on: string;
-  created_by: string;
-  updated_on: string;
-  updated_by: string;
-  questions: InteractionQuestion[];
 }
 
 export interface InteractionDetailsResponse {
@@ -171,5 +204,45 @@ export interface InteractionDetailsResponse {
   statusMessage: string;
   data: {
     interactions: InteractionDetails;
+  };
+}
+
+export interface InteractionAttachmentType {
+  rid: string;
+  question_rnumber: string;
+  attachment_name: string;
+  attachment_type: string;
+  attachment_size: string;
+  uploaded_by: string;
+  uploaded_date: string;
+  download_link: string;
+  [key: string]: unknown; // Add index signature
+}
+
+export type FilterCondition = {
+  startsWith?: string;
+  endsWith?: string;
+  contains?: string;
+  equals?: string | number | boolean;
+};
+
+export type Filters = Record<string, FilterCondition>;
+
+export interface InteractionAttachmentListParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: SortOrder;
+  filters?: Filters;
+  searchTerm?: string;
+  exportKey?: string;
+  timezone?: string;
+  entity_type?: string;
+}
+
+export interface InteractionAttachmentApiResponse {
+  data: {
+    attachments: InteractionAttachmentType[];
+    total_records: number;
   };
 }

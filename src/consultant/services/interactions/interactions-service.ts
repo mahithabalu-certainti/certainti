@@ -42,7 +42,11 @@ export const useInteractionList = (
     queryFn: () => fetchInteractionList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.account_rid && !!params.fiscal_year && !!shouldFetchList,
+    enabled:
+      !!params.account_rid &&
+      params.fiscal_year !== undefined &&
+      params.fiscal_year !== null &&
+      !!shouldFetchList,
   });
 };
 

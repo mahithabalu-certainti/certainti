@@ -135,11 +135,15 @@ const InteractionForm = () => {
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
-        created_on: formatDateToYYYYMMDDWithTime(interactionData.created_on),
-        updated_by: interactionData.updated_by,
-        updated_on: formatDateToYYYYMMDDWithTime(interactionData.updated_on),
+        created_on: formatDateToYYYYMMDDWithTime(
+          interactionData.created_datetime
+        ),
+        updated_by: interactionData.modified_by,
+        updated_on: formatDateToYYYYMMDDWithTime(
+          interactionData.modified_datetime
+        ),
         rid: interactionData.rid,
-        interaction_id: interactionData.r_number,
+        interaction_id: interactionData.interaction_number,
         status: interactionData.status,
         projectCode: interactionData.project_code,
         projectName: interactionData.project_name || '',
@@ -148,9 +152,9 @@ const InteractionForm = () => {
         questions:
           interactionData.questions.length > 0
             ? interactionData.questions.map((q) => ({
-                questionNo: q.question_id,
+                questionNo: q.question_seq_num,
                 question: q.question || '',
-                mandatory: q.mandatory ?? false,
+                mandatory: q.is_mandatory ?? false,
                 notes: q.notes || '',
                 rid: q.rid,
               }))
@@ -308,12 +312,16 @@ const InteractionForm = () => {
     return isValid;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (saveFlag: 'submit' | 'draft') => {
     if (!validateForm()) {
       return;
     }
-    console.log(formData);
-    const payload = transFormPayload(formData, isEditView, interactionData);
+    const payload = transFormPayload(
+      formData,
+      isEditView,
+      interactionData,
+      saveFlag
+    );
     console.log(payload);
 
     if (isEditView && interactionData) {
@@ -356,8 +364,8 @@ const InteractionForm = () => {
                 ) : (
                   <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                     {isProjectFields
-                      ? `Project > ${formData.projectCode} > ${interactionData?.r_number}`
-                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.r_number}`}
+                      ? `Project > ${formData.projectCode} > ${interactionData?.interaction_number}`
+                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.interaction_number}`}
                   </div>
                 )}
               </>
@@ -369,12 +377,23 @@ const InteractionForm = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Save'
+            label='Save as Draft'
             // loading={createAccount.isPending || updateAccount.isPending}
-            onClick={handleSubmit}
+            onClick={() => handleSubmit('draft')}
             sx={{
-              width: '64px',
-              minWidth: '64px',
+              width: '110px',
+              minWidth: '110px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Save & Submit'
+            // loading={createAccount.isPending || updateAccount.isPending}
+            onClick={() => handleSubmit('submit')}
+            sx={{
+              width: '110px',
+              minWidth: '110px',
               fontSize: '13px',
               fontWeight: 400,
             }}
@@ -395,7 +414,7 @@ const InteractionForm = () => {
         {formLoading ? (
           <SkeletonForm />
         ) : (
-          <form onSubmit={handleSubmit}>
+          <form>
             <div
               className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
             >

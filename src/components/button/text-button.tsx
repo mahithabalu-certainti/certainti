@@ -9,6 +9,7 @@ interface TextButtonProps {
   color?: ButtonOwnProps['color'];
   loading?: boolean;
   disabled?: boolean;
+  hide?: boolean;
   onClick?: () => void;
 }
 const StyledButton = styled(Button)(() => {

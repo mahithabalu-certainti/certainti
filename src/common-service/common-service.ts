@@ -9,6 +9,9 @@ import {
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
+  GetInteractionSourcesApiResponse,
+  GetInteractionStatusApiResponse,
+  GetInteractionTypesApiResponse,
   GetStatusApiResponse,
 } from './';
 
@@ -167,7 +170,6 @@ export const fetchImportEntityTypes =
         await accountServiceApi.get<GetImportEntityTypeApiResponse>(
           getImportEntityTypesUrl()
         );
-      console.log(data);
       return data;
     } catch (error) {
       console.error('Error fetching entity type list:', error);
@@ -179,6 +181,98 @@ export const useGetImportEntityTypes = () => {
   return useQuery<GetImportEntityTypeApiResponse, Error>({
     queryKey: ['import-entity-types'],
     queryFn: () => fetchImportEntityTypes(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+//Interactions
+
+export const getInteractionStatusUrl = (): string => {
+  return `/api/interactions/interactionStatus`;
+};
+
+export const fetchInteractionStatus =
+  async (): Promise<GetInteractionStatusApiResponse> => {
+    try {
+      const { data } =
+        await resourceServiceApi.get<GetInteractionStatusApiResponse>(
+          getInteractionStatusUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction status:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionStatus = () => {
+  return useQuery<GetInteractionStatusApiResponse, Error>({
+    queryKey: ['interaction-status'],
+    queryFn: () => fetchInteractionStatus(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getInteractionTypesUrl = (): string => {
+  return `/api/interactions/interactionTypes`;
+};
+
+export const fetchInteractionTypes =
+  async (): Promise<GetInteractionTypesApiResponse> => {
+    try {
+      const { data } =
+        await resourceServiceApi.get<GetInteractionTypesApiResponse>(
+          getInteractionTypesUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction types:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionTypes = () => {
+  return useQuery<GetInteractionTypesApiResponse, Error>({
+    queryKey: ['interaction-types'],
+    queryFn: () => fetchInteractionTypes(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getInteractionSourcesUrl = (): string => {
+  return `/api/interactions/interactionSource`;
+};
+
+export const fetchInteractionSources =
+  async (): Promise<GetInteractionSourcesApiResponse> => {
+    try {
+      const { data } =
+        await resourceServiceApi.get<GetInteractionSourcesApiResponse>(
+          getInteractionSourcesUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction sources:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionSources = () => {
+  return useQuery<GetInteractionSourcesApiResponse, Error>({
+    queryKey: ['interaction-sources'],
+    queryFn: () => fetchInteractionSources(),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,
