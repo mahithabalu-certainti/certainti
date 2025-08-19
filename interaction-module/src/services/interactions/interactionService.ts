@@ -7,13 +7,16 @@ import {
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
 import SchemaService from "./schemaService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
-
+import { interactionMailTemplate, otpMailTemplate } from "../../utils/mailTemplate";
+import {  sendEmailWithAttachment } from "../emailService";
+import * as fs from 'fs';
+import * as path from 'path';
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -57,7 +60,7 @@ export class InteractionService {
 
       const { interactionStatus, intSource } =
         await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.interaction_status_rid = interactionStatus || "";
+      interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
 
       const interaction =
@@ -85,7 +88,7 @@ export class InteractionService {
           accountNumber,
           "create",
           interactionData,
-          interaction.rid,
+          interaction.dataValues.rid,
           userId,
           transaction
         );
@@ -145,7 +148,7 @@ export class InteractionService {
         );
       const { interactionStatus, intSource } =
         await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.interaction_status_rid = interactionStatus || "";
+      interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
@@ -407,71 +410,50 @@ export class InteractionService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      // for (const rid of interactionRid) {
-      //   const interactionItems = await this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber,rid);
-      // }
-     /* for (const rid of interactionRid) {
-        const interactionItems = await this.interactionSchemaService.fetchInteractionItemsById(rid);
-        const latestResponses = await this.interactionSchemaService.fetchLatestResponsesByInteractionId(rid);
-
-        const csvRows: string[] = [];
-        csvRows.push("Item,Latest Response");
-
-        for (const item of interactionItems) {
-          const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
-          csvRows.push(`"${item.name}","${response ? response.value : ""}"`);
+      for (const rid of interactionRid) {
+         const interactionItems = await this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber,rid);
+         const csvRows: string[] = [];
+           const plainItems = interactionItems.map(item => item.get({ plain: true }));
+         csvRows.push("Question,Response");
+         console.log("Send interaction items")
+         
+        for (const item of plainItems) {
+          console.log(item);
+        //  const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
+          csvRows.push(`"${item.question}"`);
         }
-
         const csvContent = csvRows.join('\n');
-        const interactionDetails = await this.interactionSchemaService.fetchInteractionDetailsById(undefined, rid);
-        if (!interactionDetails) continue;
-
-        // Assuming sendEmailWithAttachment is a method to send email with attachment
-        await this.interactionSchemaService.sendEmailWithAttachment(
-          interactionDetails,
-          userId,
+        const csvFolder = path.resolve(__dirname, '../../csv_exports');
+        if (!fs.existsSync(csvFolder)) {
+          fs.mkdirSync(csvFolder, { recursive: true });
+        }
+        const filePath = path.join(csvFolder, `interaction_${rid}.csv`);
+        fs.writeFileSync(filePath, csvContent, 'utf-8');
+        const emailInfo = await this.interactionSchemaService.fetchPOCEmail(accountNumber,rid);
+        console.log("Email Info:", emailInfo);
+        const emailResponse = await this.sendEmailWithAttachment(
+          emailInfo,
           {
             filename: `interaction_${rid}.csv`,
-            content: csvContent,
+            content: Buffer.from(csvContent, 'utf-8').toString('base64'),
             contentType: 'text/csv'
           }
         );
+        if(emailResponse){
+          await this.interactionSchemaService.updateInteractionInfo(
+            accountNumber,
+            rid,
+            statusAction.SENT,
+            userId,
+            emailInfo
+          );
+        }
 
         interactionResponse.push({
           interactionRid: rid,
           csvSent: true
         });
-      }
-  //  const interactionResponse = [];
-  /*  for (const rid of interactionRid) {
-      const interactionResponse: any[] = [];
-      const interactionItems = await this.interactionSchemaService.fetchInteractionItemsById(rid);
-      const latestResponses = await this.interactionSchemaService.fetchLatestResponsesByInteractionId(rid);
-
-      const csvRows: string[] = [];
-      csvRows.push("Item,Latest Response");
-
-      for (const item of interactionItems) {
-        const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
-        csvRows.push(`"${item.name}","${response ? response.value : ""}"`);
-      }
-
-      // You can write csvRows.join('\n') to a file or return as needed
-      interactionResponse.push({
-        interactionRid: rid,
-        csv: csvRows.join('\n')
-      });
-      const interactionDetails = await this.interactionSchemaService.fetchInteractionDetailsById(undefined, rid);
-      if (!interactionDetails) continue;
-      // Assuming sendEmail is a method to send email for an interaction
-      // const emailResult = await this.interactionSchemaService.sendEmail(interactionDetails, userId);
-      // interactionResponse.push({
-      //   interactionRid: rid,
-      //   emailStatus: emailResult?.status || "sent",
-      //   message: emailResult?.message || "Email sent successfully"
-      // });
-    }
-    */  
+      }  
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -481,9 +463,35 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      console.log("Error sending email with attachment send", err);
       throw this.throwServiceError(err as Error);
     }
   }
+  async sendEmailWithAttachment(
+    emailInfo: {name: string, email: string},
+    attachment: { filename: string; content: string; contentType: string }
+  ) {
+    let emailResponse = false;
+    try {
+      const emailContent = interactionMailTemplate(emailInfo);
+      emailResponse = await sendEmailWithAttachment({
+        message: emailContent.message,
+          attachments: [
+        {
+          '@odata.type': '#microsoft.graph.fileAttachment',
+          name: attachment.filename,
+          contentBytes: attachment.content,
+          contentType: attachment.contentType
+        }
+          ]
+        });
+        return emailResponse;
+      } catch (error) {
+        this.logger.error("Error sending email with attachment", error);
+        return emailResponse;
+      }
+  }
+ 
 
   /**
    * Formats an error response to be returned from service methods.

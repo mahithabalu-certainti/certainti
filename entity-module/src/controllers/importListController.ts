@@ -468,13 +468,13 @@ async function exportLoadFailureList(req: Request, res: Response) {
 
 async function importListByRid (req : Request, res : Response) {
     try {
-        const {account_rid, rid} = req.params
-        const validation = validateImportListByRidRequest(account_rid, rid)
+        const {accountRid, rid} = req.params
+        const validation = validateImportListByRidRequest(accountRid, rid)
         if(validation) {
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
             return;
         }
-        const result = await importServices.fetchImportById(account_rid, rid)
+        const result = await importServices.fetchImportById(accountRid, rid)
         if(result.statusCode == HttpStatus.SUCCESS) {
             handleSuccessResponse(res, result.data);
             return;
