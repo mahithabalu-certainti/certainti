@@ -5,7 +5,7 @@ import { InteractionList } from '../../../../types';
 export const getInteractionListColumns = (
   handleViewInteraction: (rid: string) => void,
   handleViewInteractionHistory: (interactionHistory: string) => void,
-  handleViewInteractionAttachment: (interactionAttachentId: string) => void
+  handleViewInteractionAttachment: (interactionAttachentURL: string) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
