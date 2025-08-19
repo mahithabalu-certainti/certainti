@@ -2,30 +2,7 @@ import {
   ICreateInteraction,
   InteractionResponse,
   IUpdateInteraction,
-  IVerifyOtp,
 } from "../../utils/types";
-
-import { IGenerateOtp } from "../../utils/types";
-export interface IOtpServices {
-  generateOtp(data: IGenerateOtp): Promise<{
-    statusCode: number;
-    statusMessage: string;
-    errorMessage?: string;
-    data?: { otp: string };
-  }>;
-  verifyOtp(data: IVerifyOtp): Promise<{
-    statusCode: number;
-    statusMessage: string;
-    errorMessage?: string;
-    data?: { auth_token: string };
-  }>;
-  resendOtp(data: IGenerateOtp): Promise<{
-    statusCode: number;
-    statusMessage: string;
-    errorMessage?: string;
-    data?: { otp: any };
-  }>;
-}
 
 export interface IInteractionService {
   listInteractionPrjAccount(data: any): Promise<any>;
