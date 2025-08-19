@@ -281,3 +281,4 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response"]
+  export const blobUrlExpiration = 60
