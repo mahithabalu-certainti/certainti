@@ -28,6 +28,7 @@ import { NewProjectData } from '../../../../types/project';
 import { SendInteractionModal } from '../../../../../components/interaction';
 import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
+import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -93,7 +94,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     account_name: projectDetails?.account_name || '',
     account_rid: projectDetails?.account_rid || '',
     project_rid: projectDetails?.project_rid || '',
-    project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+    project_fiscal_rid:
+      projectDetails?.project_fiscal_rid || projectDetails?.rid || '',
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
 
@@ -104,10 +106,11 @@ const Interactions: React.FC<InteractionsProps> = ({
       sort: sortField,
       sort_by: sortBy,
       filters: appliedFilters,
-      project_rid: projectid || '',
-      project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+      project_rid: projectDetails?.project_rid || '',
+      project_fiscal_rid: projectDetails?.project_fiscal_rid || projectid || '',
       fiscal_year: fiscalYear,
       account_rid: accountId,
+      flag: 'project',
     },
     !viewDetails,
     refreshInteractions
@@ -301,11 +304,13 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteractionAttachment
   );
 
-  const filterFields = getInteractionFilterFields(
-    memoizedInteractionTypes,
-    memoizedInteractionSources,
-    memoizedInteractionStatus
-  );
+  const filterFields = !viewInteractionHistory
+    ? getInteractionFilterFields(
+        memoizedInteractionTypes,
+        memoizedInteractionSources,
+        memoizedInteractionStatus
+      )
+    : getInteractionHistoryFilterFields();
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -336,9 +341,13 @@ const Interactions: React.FC<InteractionsProps> = ({
           handleBackClick={handleBackClick}
           projectDetails={projectDetails}
           accountInActive={accountInActive}
+          refresh={refreshInteractions}
         />
       ) : viewInteractionAttachment ? (
-        <InteractionAttachment handleBackClick={handleBackClick} />
+        <InteractionAttachment
+          handleBackClick={handleBackClick}
+          refresh={refreshInteractions}
+        />
       ) : (
         <>
           <SectionHeader

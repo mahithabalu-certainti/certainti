@@ -4,15 +4,18 @@ import { InteractionHistoryData } from '../../pages/project/project-details/inte
 
 export const useInteractionHistoryList = (
   interactionHistoryId: string,
-  enabled: boolean
+  enabled: boolean,
+  refreshTrigger?: number
 ) => {
   return useQuery<InteractionHistoryData, Error>({
-    queryKey: ['interactionHistory', interactionHistoryId],
+    queryKey: ['interactionHistory', interactionHistoryId, refreshTrigger],
     queryFn: async () => {
       // a mock async function
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return mockInteractionHistory;
     },
     enabled: enabled,
+    staleTime: 0,
+    gcTime: 0,
   });
 };

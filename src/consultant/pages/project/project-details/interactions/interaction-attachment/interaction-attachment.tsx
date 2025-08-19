@@ -11,10 +11,12 @@ import {
 
 interface InteractionAttachmentProps {
   handleBackClick: () => void;
+  refresh?: number;
 }
 
 const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   handleBackClick,
+  refresh,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -24,8 +26,10 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
       limit: rowsPerPage,
     });
 
-  const { data, isLoading, isError } =
-    useGetInteractionAttachmentList(tableParams);
+  const { data, isLoading, isError } = useGetInteractionAttachmentList(
+    tableParams,
+    refresh
+  );
 
   const getRowId = (row: InteractionAttachmentType) => row.rid;
   const interactionAttachmentColumns = getInteractionAttachmentListColumns();

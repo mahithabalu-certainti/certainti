@@ -8,7 +8,6 @@ export const getInteractionAttachmentListColumns =
       sortId: 'question_number',
       label: 'Question Number',
       width: 160,
-      sortable: true,
       sticky: true,
       render: (row: InteractionAttachmentType) => row.question_number || '-',
       sx: {
