@@ -363,7 +363,7 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     WITH fetch_interaction_response AS (
     SELECT i.rid, i.r_number, r.response_by, r.response_on, r.response_email,
     r.interaction_response, i.interaction_source_rid, COUNT(i.rid) OVER() AS total_records,
-    r.response_source
+    r.response_source, r.interaction_version
     FROM 
     ${schemaName}.interaction_response_history r
     LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
@@ -384,7 +384,8 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     'interaction_response', i.interaction_response,
     'interaction_source_rid', i.interaction_source_rid,
     'total_records', i.total_records,
-    'response_source', i.response_source
+    'response_source', i.response_source,
+    'interaction_version', i.interaction_version
     )${sortQuery}) AS response_history
     FROM
     paginated_data i`
