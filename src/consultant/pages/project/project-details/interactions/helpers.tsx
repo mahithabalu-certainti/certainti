@@ -191,7 +191,7 @@ export const getInteractionFilterFields = (
       name: 'Sort Options',
       value: 'sort_options',
       type: 'system-sort',
-      options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
+      options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
     },
   ];
 };

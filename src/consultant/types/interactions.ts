@@ -69,42 +69,35 @@ export type InteractionList = {
   rid: string;
   r_number: string;
   iteration: number;
-  interaction_age: number;
-  status: {
-    rid: string;
-    status_name: string;
-  };
-  recipient_details: {
-    rid: string;
-    recipient_name: string;
-    recipient_email: string;
-  };
-  last_sent_on: string;
-  last_reminder_on: string;
-  response_submitted_on: string;
-  response_updated_on: string;
+  interaction_age: number | null;
+  status: string;
+  status_rid: string;
+  recipient_name: string | null;
+  recipient_email: string | null;
+  last_sent_on: string | null;
+  last_reminder_on: string | null;
+  response_submitted_on: string | null;
+  response_updated_on: string | null;
   attachments: number;
-  interaction_url: string;
+  interaction_url: string | null;
   interaction_history: string;
-  parent_interaction_rid: string;
-  interaction_type: {
-    rid: string;
-    type_name: string;
-  };
-  response_source: string;
-  created_by: {
-    rid: string;
-    created_by_user_name: string;
-  };
+  parent_interaction_rid: string | null;
+  interaction_type: string;
+  interaction_type_name: string;
+  response_source: string | null;
+  created_by: string;
+  created_user_name: string;
   created_datetime: string;
-  modified_by: {
-    rid: string;
-    modified_by_user_name: string;
-  };
-  modified_datetime: string;
+  modified_by: string | null;
+  updated_user_name: string | null;
+  modified_datetime: string | null;
   account_rid: string;
   project_fiscal_rid: string;
   fiscal_year: number;
+  total_records: number;
+  totalCount: number;
+  last_resent_on: string | null;
+  interaction_iteration: number | null;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -130,6 +123,7 @@ export interface InteractionListURLParams {
   project_fiscal_rid?: string;
   fiscal_year?: number;
   isGlobal?: boolean;
+  flag?: string;
 }
 
 export interface InteractionListResponse {
@@ -139,9 +133,8 @@ export interface InteractionListResponse {
   data: {
     page: number;
     limit: number;
-    totalRecords: number;
+    totalCount: number;
     interactions: InteractionList[];
-    count?: number;
   };
 }
 export interface ResponseInteractionListResponse {

@@ -36,8 +36,8 @@ export const getInteractionListColumns = (
     ),
   },
   {
-    id: 'iteration',
-    sortId: 'iteration',
+    id: 'interaction_iteration',
+    sortId: 'interaction_iteration',
     label: 'Iteration',
     width: 120,
     sortable: true,
@@ -61,7 +61,7 @@ export const getInteractionListColumns = (
     width: 140,
     sortable: true,
     // hide: !permissionMap?.['status_rid']?.edit && !permissionMap?.['status_rid']?.read,
-    render: (row: InteractionList) => row.status.status_name || '-',
+    render: (row: InteractionList) => row.status || '-',
   },
   {
     id: 'recipient_name',
@@ -72,8 +72,7 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['recipient_name']?.edit &&
     //   !permissionMap?.['recipient_name']?.read,
-    render: (row: InteractionList) =>
-      row.recipient_details.recipient_name || '-',
+    render: (row: InteractionList) => row.recipient_name || '-',
   },
   {
     id: 'recipient_email',
@@ -84,12 +83,11 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['recipient_email']?.edit &&
     //   !permissionMap?.['recipient_email']?.read,
-    render: (row: InteractionList) =>
-      row.recipient_details.recipient_email || '-',
+    render: (row: InteractionList) => row.recipient_email || '-',
   },
   {
-    id: 'last_sent_on',
-    sortId: 'last_sent_on',
+    id: 'last_resent_on',
+    sortId: 'last_resent_on',
     label: 'Last Sent Date',
     width: 180,
     sortable: true,
@@ -181,7 +179,10 @@ export const getInteractionListColumns = (
     render: (row: InteractionList) =>
       row.interaction_url ? (
         <span
-          onClick={() => handleViewInteractionAttachment(row.interaction_url)}
+          onClick={() =>
+            row.interaction_url &&
+            handleViewInteractionAttachment(row.interaction_url)
+          }
           className='text-[#1755E7] hover:underline'
         >
           Link
@@ -207,7 +208,7 @@ export const getInteractionListColumns = (
     width: 140,
     sortable: true,
     // hide: !permissionMap?.['interaction_type']?.edit && !permissionMap?.['interaction_type']?.read,
-    render: (row: InteractionList) => row.interaction_type.type_name || '-',
+    render: (row: InteractionList) => row.interaction_type_name || '-',
   },
   {
     id: 'response_source',
@@ -228,8 +229,7 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['created_by']?.edit &&
     //   !permissionMap?.['created_by']?.read,
-    render: (row: InteractionList) =>
-      row.created_by.created_by_user_name || '-',
+    render: (row: InteractionList) => row.created_user_name || '-',
   },
   {
     id: 'created_datetime',
@@ -252,8 +252,7 @@ export const getInteractionListColumns = (
     // hide:
     //   !permissionMap?.['modified_by']?.edit &&
     //   !permissionMap?.['modified_by']?.read,
-    render: (row: InteractionList) =>
-      row.modified_by.modified_by_user_name || '-',
+    render: (row: InteractionList) => row.updated_user_name || '-',
   },
   {
     id: 'modified_datetime',

@@ -2,16 +2,14 @@ import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   InteractionDetails,
   InteractionFormData,
-  //   InteractionDetailsResponse,
   InteractionList,
+  InteractionListResponse,
   InteractionListURLParams,
 } from '../../types';
-import {
-  mockInteractionDetailsMap,
-  mockInteractionList,
-} from '../../pages/project/project-details/interactions/mock-response';
+import { mockInteractionDetailsMap } from '../../pages/project/project-details/interactions/mock-response';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
+import { getInteractionListUrl } from '../urls/interactions-url';
 
 // const getInteractionDetailsURL = (projectid: string, interactionId: string) => {
 //   return `/api/interaction/list/${projectid}/${interactionId}`;
@@ -20,12 +18,13 @@ import { CommonApiResponse } from '../../../common-service';
 export const fetchInteractionList = async (
   params: InteractionListURLParams
 ): Promise<{ interactions: InteractionList[]; count: number }> => {
-  console.log('interaction-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
+  const { data } = await interactionServiceApi.post<InteractionListResponse>(
+    getInteractionListUrl(),
+    params
+  );
   return {
-    interactions: mockInteractionList.data.interactions,
-    count: mockInteractionList.data.totalRecords,
+    interactions: data.data.interactions,
+    count: data.data.totalCount,
   };
 };
 
