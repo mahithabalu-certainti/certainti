@@ -3,6 +3,7 @@ import {
   accountServiceApi,
   userServiceApi,
   resourceServiceApi,
+  interactionServiceApi,
 } from '../api/api';
 import {
   DocumentTypeResponse,
@@ -199,7 +200,7 @@ export const fetchInteractionStatus =
   async (): Promise<GetInteractionStatusApiResponse> => {
     try {
       const { data } =
-        await resourceServiceApi.get<GetInteractionStatusApiResponse>(
+        await interactionServiceApi.get<GetInteractionStatusApiResponse>(
           getInteractionStatusUrl()
         );
       return data;
@@ -229,7 +230,7 @@ export const fetchInteractionTypes =
   async (): Promise<GetInteractionTypesApiResponse> => {
     try {
       const { data } =
-        await resourceServiceApi.get<GetInteractionTypesApiResponse>(
+        await interactionServiceApi.get<GetInteractionTypesApiResponse>(
           getInteractionTypesUrl()
         );
       return data;
@@ -259,7 +260,7 @@ export const fetchInteractionSources =
   async (): Promise<GetInteractionSourcesApiResponse> => {
     try {
       const { data } =
-        await resourceServiceApi.get<GetInteractionSourcesApiResponse>(
+        await interactionServiceApi.get<GetInteractionSourcesApiResponse>(
           getInteractionSourcesUrl()
         );
       return data;

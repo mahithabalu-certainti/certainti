@@ -10,7 +10,7 @@ import {
   mockInteractionDetailsMap,
   mockInteractionList,
 } from '../../pages/project/project-details/interactions/mock-response';
-import { resourceServiceApi } from '../../../api/api';
+import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
 
 // const getInteractionDetailsURL = (projectid: string, interactionId: string) => {
@@ -107,7 +107,7 @@ export const createInteraction = async (
   body: Partial<InteractionFormData>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await resourceServiceApi.post<CommonApiResponse>(
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
       getCreateInteractionUrl(),
       body
     );
@@ -132,7 +132,7 @@ export const updateInteractionDetails = async (
   body: Partial<InteractionFormData>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await resourceServiceApi.put<CommonApiResponse>(
+    const { data } = await interactionServiceApi.put<CommonApiResponse>(
       getUpdateInteractionUrl(),
       body
     );
