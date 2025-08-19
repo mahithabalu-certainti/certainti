@@ -108,7 +108,7 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   ) => {
     console.log(interactionAttachmentURL);
     navigate(
-      `/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_attachment_id=${interactionAttachmentURL}&main_source=interactions`
+      `/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_attachment_url=${interactionAttachmentURL}&main_source=interactions`
     );
   };
 
