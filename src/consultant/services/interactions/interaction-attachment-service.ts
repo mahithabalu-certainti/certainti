@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { interactionAttachmentMockData } from '../../mockdata/interaction-attachment-list';
+import { interactionAttachmentList } from '../../mockdata/interaction-attachment-list';
 import {
   InteractionAttachmentApiResponse,
   InteractionAttachmentListParams,
@@ -22,7 +22,7 @@ export const fetchInteractionAttachmentList = async () =>
     // const response = await userServiceApi.get<InteractionAttachmentApiResponse>(url);
     // return response.data;
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return interactionAttachmentMockData;
+    return interactionAttachmentList;
   };
 
 export const useGetInteractionAttachmentList = (

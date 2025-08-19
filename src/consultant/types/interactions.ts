@@ -209,14 +209,14 @@ export interface InteractionDetailsResponse {
 
 export interface InteractionAttachmentType {
   rid: string;
-  question_number: string;
-  name: string;
-  type: string;
-  size: string;
+  question_rnumber: string;
+  attachment_name: string;
+  attachment_type: string;
+  attachment_size: string;
   uploaded_by: string;
   uploaded_date: string;
-  download: string;
-  [key: string]: unknown;
+  download_link: string;
+  [key: string]: unknown; // Add index signature
 }
 
 export type FilterCondition = {

@@ -10,7 +10,7 @@ export const getInteractionAttachmentListColumns =
       width: 160,
       sortable: true,
       sticky: true,
-      render: (row: InteractionAttachmentType) => row.question_number || '-',
+      render: (row: InteractionAttachmentType) => row.question_rnumber || '-',
       sx: {
         position: 'sticky',
         left: 32,
@@ -26,7 +26,7 @@ export const getInteractionAttachmentListColumns =
       label: 'Name',
       width: 140,
       sortable: true,
-      render: (row: InteractionAttachmentType) => row.name || '-',
+      render: (row: InteractionAttachmentType) => row.attachment_name || '-',
     },
     {
       id: 'type',
@@ -34,7 +34,7 @@ export const getInteractionAttachmentListColumns =
       label: 'Type',
       width: 140,
       sortable: true,
-      render: (row: InteractionAttachmentType) => row.type || '-',
+      render: (row: InteractionAttachmentType) => row.attachment_type || '-',
     },
     {
       id: 'size',
@@ -42,7 +42,7 @@ export const getInteractionAttachmentListColumns =
       label: 'Size',
       width: 140,
       sortable: true,
-      render: (row: InteractionAttachmentType) => row.size || '-',
+      render: (row: InteractionAttachmentType) => row.attachment_size || '-',
     },
     {
       id: 'uploaded_by',
@@ -66,6 +66,6 @@ export const getInteractionAttachmentListColumns =
       label: 'Download',
       width: 140,
       sortable: true,
-      render: (row: InteractionAttachmentType) => row.download || '-',
+      render: (row: InteractionAttachmentType) => row.download_link || '-',
     },
   ];
