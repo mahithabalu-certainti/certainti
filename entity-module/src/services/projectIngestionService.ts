@@ -1515,7 +1515,8 @@ class ProjectIngestionService {
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
     graphqlData: any,
-    accessibleIds: string[]
+    accessibleIds: string[],
+    entityRids: string[] = []
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1584,6 +1585,7 @@ class ProjectIngestionService {
     let projectData: any;
     const fullOrder: any[] = [];
     let totalCount: number = 0;
+
     if (graphqlData.type == "graphql") {
       whereProject = {
         account_rid: accountData.rid,
@@ -1593,6 +1595,11 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+
+      // Add entityRids if they exist
+      if (entityRids.length > 0) {
+        whereFiscal.rid = entityRids;
+      }
 
         projectData = await Project.findAll({
         where: whereProject,
@@ -1608,7 +1615,7 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: false,
+            required: entityRids.length > 0,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
@@ -1636,6 +1643,11 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+
+      // Add entityRids if they exist
+      if (entityRids.length > 0) {
+        whereFiscal.rid = entityRids;
+      }
       
       for (const key in filters) {
         const dbField = fiscalFieldMap[key];
@@ -1697,7 +1709,7 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: false,
+            required: entityRids.length > 0,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
@@ -1730,7 +1742,7 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: false,
+          required: entityRids.length > 0,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,

@@ -328,7 +328,8 @@ class SchemaService {
     whereClause: Record<string, string> = {},
     havingClause: Record<string, string> = {},
     geoDataSort: string[][],
-    accountId: string
+    accountId: string,
+    entityRids: string[] = []
   ) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
@@ -383,10 +384,18 @@ class SchemaService {
         as: "ResourceFiscal",
       });
 
+      let finalWhereClause: Record<string, any> = { ...whereClause };
+      if (entityRids.length > 0) {
+        finalWhereClause.rid = {
+          [Op.in]: entityRids,  // Filter by provided resource IDs
+        };
+      }
+
+
       // First get all resources without pagination
       const resources = await Resource.findAll({
         where: {
-          ...whereClause,
+          ...finalWhereClause,
           account_rid: accountId,
         },
         having: havingClause,

@@ -8,6 +8,8 @@ import { generateSasUrl } from "../utils/blob";
 import { ProjectService } from "./projectService";
 import { ResourceService } from "./resourceServices";
 import { ProjectTaskService } from "./projectTaskService";
+import SchemaService from "./schemaService";
+import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
 import { raw } from "express";
 
@@ -18,6 +20,8 @@ export default class ImportGraphqlServices {
       private projectService: ProjectService;
       private resourceService: ResourceService;
       private projectTaskService: ProjectTaskService;
+      private schemaService: SchemaService;
+      private projectIngestion: ProjectIngestionService;
       private logger: Logger;
 
       constructor(logger: Logger) {
@@ -25,6 +29,8 @@ export default class ImportGraphqlServices {
         this.projectService = new ProjectService(logger);
         this.resourceService = new ResourceService();
         this.projectTaskService = new ProjectTaskService(logger);
+        this.schemaService = new SchemaService();
+        this.projectIngestion = new ProjectIngestionService(logger);
       }
     
       private async getOrgSequelize(): Promise<Sequelize> {
@@ -216,79 +222,127 @@ export default class ImportGraphqlServices {
         }
       }
 
-      const fetchedProjects = await this.projectService.projectList(
-        accountId,
-        fiscalYear,
-        page,
-        limit,
-        search,
-        filters,
-        sortBy,
-        sortOrder,
-        bothParentAndChild,
+      const fetchGivenAccountDetails: any = await mainDb.query(
+        await rawQueries.fetchAccountDetailsByRid(accountId)
+      );
+
+      if (
+        fetchGivenAccountDetails[0][0].parent_account_rid === null ||
+        fetchGivenAccountDetails[0][0].parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
+      }
+      const userGroupType = await this.schemaService.getUserGroupType(userId);
+      const userProfileType = await this.schemaService.getUserProfileType(
         userId
       );
-      let projects =
-        fetchedProjects.statusCode === HttpStatus.SUCCESS &&
-        fetchedProjects.data &&
-        fetchedProjects.data.projects
-        ? fetchedProjects.data.projects
-        : [];
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
 
-        console.log("Entity RIDs:", entityRids);  // Log the entityRids for debugging 
-
-      if (entityRids.length > 0) {
-        console.log("Filtering projects based on ProjectFiscal.rid");
-        
-        projects = projects
-          .filter((project: any) => {
-            // Check if project has ProjectFiscal array
-            if (!project.ProjectFiscal || !Array.isArray(project.ProjectFiscal)) {
-              console.log(`Project ${project.rid} has no ProjectFiscal data`);
-              return false;
-            }
-            
-            // Check if any ProjectFiscal.rid matches entityRids
-            const hasMatch = project.ProjectFiscal.some((fiscal: any) => 
-              entityRids.includes(fiscal.rid)
-            );
-            
-            console.log(`Project ${project.rid} match: ${hasMatch}`);
-            return hasMatch;
-          })
-          .map((project: any) => {
-            console.log('Processing project:', project.rid);
-            return {  
-              ...project,
-              document_rid: documentRid
-            };
-          });
-
-        console.log(`Filtered projects count: ${projects.length}`);
+      if (!isCustomGlobal) {
+        accessibleIds = await this.projectService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
       }
 
-      if (projects.length > 0) {
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.projectService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projects: [],
+              totalCount: 0,
+            },
+          };
+        }
+      }
+
+      
+      const isExists = await this.schemaService.checkIfSchemaAndTableExists(
+        fetchAccountDetails[0][0].r_number,
+      );
+
+      if (!isExists) {
         return {
-        statusCode: HttpStatus.SUCCESS,
-        message: "Projects fetched successfully",
-        data: { projects, totalCount: projects.length }
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projects: [],
+            totalCount: 0,
+          },
         };
       }
 
+      const [finalSortBy, finalSortOrder] = this.projectService.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] =
+        this.projectService.getMetaDataSortParameters(sortBy, sortOrder);
+
+      const { whereClause } = this.projectService.buildWhereClause(
+        filters,
+        search,
+        false,
+        bothParentAndChild
+      );
+
+      const offset = (page - 1) * limit;
+
+      const order = [[finalSortBy, finalSortOrder]];
+
+      const { projects, count } = await this.projectIngestion.fetchProjectList(
+        fetchAccountDetails[0][0].r_number,
+        fetchGivenAccountDetails[0][0],
+        whereClause,
+        fiscalYear,
+        offset,
+        limit,
+        order,
+        bothParentAndChild,
+        filters,
+        finalMetaDataSortBy,
+        finalMetaDataSortOrder,
+        {},
+        accessibleIds,
+        entityRids
+      );
+
       return {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: "No projects found",
-        data: { projects: [], totalCount: 0 }
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projects: projects,
+          totalCount: count,
+        },
       };
-      } catch (error) {
-      this.logger.error("Error in fetchAccountLevelImportedProjects:", error);
-      console.error("Error in fetchAccountLevelImportedProjects:", error);
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: "Failed to fetch projects",
-        errorMessage: error instanceof Error ? error.message : String(error),
-        data: { projects: [], totalCount: 0 }
-      };
+      } catch (err) {
+      throw new Error("Error fetching imported projects: " + (err as Error).message);
       }
     }
 
@@ -330,70 +384,51 @@ export default class ImportGraphqlServices {
         await rawQueries.fetchAccountDetailsByRid(accountId)
       );
 
-      const fetchedResources = await this.resourceService.resourcesList(
-        fetchGivenAccountDetails[0][0].r_number,
-        page,
-        limit,
-        search,
-        filters,
-        sortBy,
-        sortOrder,
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        fetchAccountDetails[0][0].r_number
       );
-      let resources =
-        fetchedResources.statusCode === HttpStatus.SUCCESS &&
-        fetchedResources.data &&
-        fetchedResources.data.resources
-        ? fetchedResources.data.resources
-        : [];
 
-        console.log("Entity RIDs:", entityRids);  // Log the entityRids for debugging 
-
-      if (entityRids.length > 0) {
-        console.log("Filtering resources based on resources.rid");
-        
-        resources = resources
-          .filter((resource: any) => {
-            
-            // Check if any resources.rid matches entityRids
-            const hasMatch = entityRids.includes(resource.rid);
-          
-            
-            console.log(`Resource ${resource.rid} match: ${hasMatch}`);
-            return hasMatch;
-          })
-          .map((resource: any) => {
-            console.log('Processing resource:', resource.rid);
-            return {  
-              ...resource,
-              document_rid: documentRid
-            };
-          });
-
-        console.log(`Filtered resources count: ${resources.length}`);
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
       }
 
-      if (resources.length > 0) {
-        return {
+      const offset = (page - 1) * limit;
+
+      const [finalSortBy, finalSortOrder] = this.resourceService.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { whereClause, havingClause } = this.resourceService.buildWhereClause(filters, search);
+      const { geoDataSort } = this.resourceService.processGeoDataSort(
+        sortBy,
+        sortOrder
+      );
+
+      const resources = await this.schemaService.fetchResources(
+        fetchAccountDetails[0][0].r_number,
+        offset,
+        limit,
+        [[finalSortBy, finalSortOrder]],
+        whereClause,
+        havingClause,
+        geoDataSort,
+        accountId,
+        entityRids
+      );
+
+      return {
         statusCode: HttpStatus.SUCCESS,
-        message: "Resources fetched successfully",
-        data: { resources, count: resources.length }
-        };
-      }
-
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: "No resources found",
-        data: { resources: [], count: 0 }
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resources: resources.resources,
+          count: resources.totalCount,
+        },
       };
-      } catch (error) {
-      this.logger.error("Error in fetchAccountLevelImportedResources:", error);
-      console.error("Error in fetchAccountLevelImportedResources:", error);
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: "Failed to fetch resources",
-        errorMessage: error instanceof Error ? error.message : String(error),
-        data: { resources: [], count: 0 }
-      };
+      } catch (err) {
+      throw new Error("Error fetching imported resources: " + (err as Error).message);
       }
     }
 }
