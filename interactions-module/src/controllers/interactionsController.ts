@@ -24,11 +24,9 @@ const interactionService = services.interactionService;
 async function createInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Create interaction";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, createInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -53,12 +51,10 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
       handleSuccessResponse(res, interaction.data);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -70,7 +66,6 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
@@ -84,11 +79,9 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
 async function updateInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, updateInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -113,12 +106,10 @@ async function updateInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
       handleSuccessResponse(res, interaction.data);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -146,15 +137,13 @@ async function updateInteractionResponse(
 ): Promise<void> {
   const methodName = "Update interaction response";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(
       req,
       updateInteractionResponseSchema,
       res
     );
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -179,12 +168,10 @@ async function updateInteractionResponse(
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
       handleSuccessResponse(res, interaction.data);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -212,13 +199,9 @@ async function getInteractionDetailsById(
 ): Promise<void> {
   const methodName = "Get interaction details";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
     const userId = req.headers["x-user-id"] as string;
-    console.log(
-      `[${methodName}] userId: ${userId}, interactionRid: ${interactionRid}, accountId: ${accountId}`
-    );
-
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -255,15 +238,10 @@ async function getInteractionDetailsById(
     );
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(
-        `[${methodName}] Success:`,
-        JSON.stringify(interactionDetails.data)
-      );
       handleSuccessResponse(res, interactionDetails.data);
       return;
     } else {
       errorLog(methodName, interactionDetails.errorMessage);
-      console.log(`[${methodName}] Error:`, interactionDetails.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -275,7 +253,6 @@ async function getInteractionDetailsById(
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
@@ -664,12 +641,10 @@ async function exportResponseHistory (req : Request, res : Response) {
 async function sendInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Send interaction";
   try {
-    console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
   //  const value = await validateRequest(req, sendInteractionSchema, res);
     const value = req.body;
     const userId = req.headers["x-user-id"] as string;
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] request body:`, JSON.stringify(value));
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -700,12 +675,10 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      console.log(`[${methodName}] Success:`, JSON.stringify(interaction.data));
       handleSuccessResponse(res, interaction.data);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
-      console.log(`[${methodName}] Error:`, interaction.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
@@ -717,7 +690,6 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
@@ -735,7 +707,6 @@ async function uploadAttachmentToAzure(req: Request, res: Response): Promise<voi
   //  const value = await validateRequest(req, sendInteractionSchema, res)
     const userId = req.headers["x-user-id"] as string;
     let value = req.body;
-    console.log(`[${methodName}] userId:`, userId);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -768,7 +739,6 @@ async function uploadAttachmentToAzure(req: Request, res: Response): Promise<voi
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
@@ -782,11 +752,9 @@ async function uploadAttachmentToAzure(req: Request, res: Response): Promise<voi
 async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<void> {
   const methodName = "Delete attachment from Azure";
   try {
-    console.log(`[${methodName}] Request received`);
   //  const value = await validateRequest(req, sendInteractionSchema, res)
     const userId = req.headers["x-user-id"] as string;
     let value = req.body;
-    console.log(`[${methodName}] userId:`, userId);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -814,7 +782,6 @@ async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<v
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
