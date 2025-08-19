@@ -66,5 +66,10 @@ routes.delete(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.deleteAttachmentFromAzure
 );
+
+routes.post("/sendInteraction",
+  checkUserStatusMiddleware("NA"),
+  controller.interactionsController.sendInteraction
+);
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);
 export default routes;

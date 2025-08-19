@@ -19,6 +19,7 @@ export const HttpStatus = {
 };
 export const statusAction = {
   CREATE: "Create",
+  DRAFT: "Draft",
   SENT: "Sent",
   RESPONSE_DRAFT: "Response Draft",
   CREATED: "Created",
@@ -226,6 +227,10 @@ export const rawQueries = {
      let ids = data.map((d : any) => `'${d}'`)
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`
+  },
+  fetchInteractionStatusByType(type : string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
   },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)

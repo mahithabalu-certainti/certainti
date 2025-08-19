@@ -9,7 +9,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -117,7 +117,6 @@ class InteractionSchemaService {
         interaction_rid: interactionRid,
         ...question,
         ...interactionData,
-        question_seq_num: "QUE01",
       };
       await InteractionItem.create(item, { transaction });
       console.log(`[addInteractionItems] Added question:`, item);
@@ -444,6 +443,8 @@ class InteractionSchemaService {
         modified_by,
         created_by,
         created_datetime,
+        response_updated_by,
+        response_updated_on
       } = interactionDetails.dataValues;
       const metainfo = await this.insetAdditionalInfo(
         interactionDetails,
@@ -470,8 +471,10 @@ class InteractionSchemaService {
         created_by: userInfo.created_by ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
-          interactionDetails.dataValues.modified_datetime ?? null,
+        interactionDetails.dataValues.modified_datetime ?? null,
         questions: interactionItems,
+        response_updated_by: response_updated_by ?? null,
+        response_updated_on: response_updated_on ?? null,
         global_attachments: globalAttachments,
       };
 
@@ -685,30 +688,64 @@ class InteractionSchemaService {
     transaction: Transaction
   ) {
     try {
-      const { InteractionResponseHistory ,InteractionAttachment} =
+      const { InteractionResponseHistory, InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
 
       let responseCreated = false;
-       for(const attachment of responseData.attachments) {
-            await InteractionAttachment.create(
-              {
-                interaction_rid: responseData.interaction_rid,
-                interaction_response_rid:"",
-                attachment_url: attachment.fileUrl,
-                attachment_name: attachment.fileName,
-                attachment_size: attachment.fileSize,
-                attachment_type: attachment.fileType,
-              },
-              { transaction }
-            );
-          }
+      let interactionVersion = 0;
+      const latestResponse = await InteractionResponseHistory.max(
+        "interaction_version",
+        {
+          where: { interaction_rid: responseData.interaction_rid },
+        }
+      );
+      console.log("Latest response version", latestResponse);
+
+      if (latestResponse !== null && latestResponse !== undefined) {
+        interactionVersion = Number(latestResponse) + 1;
+      } else {
+        interactionVersion = 1;
+      }
+      console.log("Latest interactionVersion ", interactionVersion);
+      if (
+        responseData.attachments &&
+        Array.isArray(responseData.attachments) &&
+        responseData.attachments.length > 0
+      ) {
+        await InteractionResponseHistory.create({
+          interaction_rid: responseData.interaction_rid,
+          interaction_version: interactionVersion,
+          interaction_item_rid: "",
+          interaction_response: "",
+          created_by: userId,
+          response_by: userId,
+          response_on: new Date(),
+          response_source: "Manual",
+        });
+        for (const attachment of responseData.attachments) {
+          await InteractionAttachment.create(
+            {
+              interaction_rid: responseData.interaction_rid,
+              interaction_version: interactionVersion,
+              interaction_response_rid: "",
+              attachment_url: attachment.fileUrl,
+              attachment_name: attachment.fileName,
+              attachment_size: attachment.fileSize,
+              attachment_type: attachment.fileType,
+              created_by: userId,
+            },
+            { transaction }
+          );
+        }
+      }
 
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
           const created = await InteractionResponseHistory.create(
             {
               interaction_rid: responseData.interaction_rid,
-              interaction_item_rid:   question.rid,
+              interaction_version: interactionVersion,
+              interaction_item_rid: question.rid,
               interaction_response: question.response,
               created_by: userId,
               response_by: userId,
@@ -717,16 +754,18 @@ class InteractionSchemaService {
             },
             { transaction }
           );
-          for(const attachment of question.attachments) {
+          for (const attachment of question.attachments) {
             await InteractionAttachment.create(
               {
                 interaction_rid: responseData.interaction_rid,
                 interaction_response_rid: created.rid,
-                question: question.rid,
+                interaction_version: interactionVersion,
+                interaction_item_rid: question.rid,
                 attachment_url: attachment.fileUrl,
                 attachment_name: attachment.fileName,
                 attachment_size: attachment.fileSize,
                 attachment_type: attachment.fileType,
+                created_by: userId,
               },
               { transaction }
             );
@@ -738,27 +777,33 @@ class InteractionSchemaService {
       if (responseCreated) {
         const { Interaction, InteractionSummary } =
           await this.interactionModelService.getModels(accountNumber);
+        const updateData: any = {
+          status_rid: responseData.status_rid,
+          response_updated_on: new Date(),
+          response_updated_by: userId,
+          response_source: "Manual",
+        };
 
-        await Interaction.update(
-          {
-            status_rid: responseData.status_rid,
-            response_updated_on: new Date(),
-            response_updated_by: userId,
-          },
-          {
-            where: { rid: responseData.interaction_rid },
-          }
-        );
-        await InteractionSummary.update(
-          {
-            status_rid: responseData.status_rid,
-            response_updated_on: new Date(),
-            response_updated_by: userId,
-          },
-          {
-            where: { rid: responseData.interaction_rid },
-          }
-        );
+        const summaryUpdateData: any = {
+          status_rid: responseData.status_rid,
+          response_updated_on: new Date(),
+          response_updated_by: userId,
+          response_source: "Manual",
+        };
+
+        if (responseData.status_action === "Submit") {
+          updateData.response_submitted_on = new Date();
+          updateData.response_submission_by = userId;
+          summaryUpdateData.response_submitted_on = new Date();
+          summaryUpdateData.response_submission_by = userId;
+        }
+
+        await Interaction.update(updateData, {
+          where: { rid: responseData.interaction_rid },
+        });
+        await InteractionSummary.update(summaryUpdateData, {
+          where: { rid: responseData.interaction_rid },
+        });
       }
     } catch (err) {
       throw new Error(
@@ -833,7 +878,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
     const { InteractionAttachment } = await this.interactionModelService.getModels(accountNumber);
 
     const attachments = await InteractionAttachment.findAll({
-      where: { interaction_rid: interactionRid, question: '' },
+      where: { interaction_rid: interactionRid, interaction_item_rid: '' },
       attributes: [
         "attachment_url",
         "attachment_name",
@@ -875,12 +920,10 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
         where: { interaction_rid: interactionRid },
       });
       const plainItems = items.map(item => item.get({ plain: true }));
-   //   const { InteractionAttachment, InteractionResponseHistory } = await this.interactionModelService.getModels(accountNumber);
-
       for (const item of plainItems) {
         // Fetch attachments for each question
         const attachments = await InteractionAttachment.findAll({
-          where: { question: item.rid },
+          where: { interaction_item_rid: item.rid },
           attributes: [
         "attachment_url",
         "attachment_name",
@@ -977,6 +1020,72 @@ async fetchInteractionQuestionsById(
       );
     }
   }
+
+  async fetchPOCEmail(accountNumber: string, interactionRid: string) {
+    try {
+      const { Interaction } =
+        await this.interactionModelService.getModels(accountNumber);
+        const interactionInfo = await Interaction.findOne({
+          where: { rid: interactionRid },
+          raw: true,
+        });
+        if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+
+      const [result]: any[] = await this.mainDbSequelize!.query(
+        `SELECT project_point_of_contact, project_point_of_contact_email FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = :projectRid LIMIT 1`,
+        {
+          replacements: { projectRid: interactionInfo?.project_fiscal_rid },
+          type: "SELECT",
+        }
+      );
+      return {
+        name: result?.project_point_of_contact ?? null,
+        email: result?.project_point_of_contact_email ?? null
+      };
+
+  } catch (err) {
+    throw new Error(
+      "Error fetching POC email: " + (err as Error).message
+    );
+  }
 }
+async updateInteractionInfo(
+  accountNumber: string,
+  interactionRid: string,
+  status: string,
+  userId: string,
+  emailInfo: { name: string | null; email: string | null }
+) {
+  try {
+    const { Interaction } = await this.interactionModelService.getModels(
+      accountNumber
+    );
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+    const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+    const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+    await Interaction.update(
+      { status_rid: statusRid, modified_by: userId, modified_datetime: new Date(),
+        recipient_email: emailInfo.email,
+        recipient_name: emailInfo.name,
+        sent_by_rid: userId,
+        sent_by_mail_id: "dhivya.s@hubino.com",
+        sent_on_datetime: new Date(),
+      },
+      { where: { rid: interactionRid } }
+    );
+  } catch (err) {
+    throw new Error(
+      "Error updating interaction status: " + (err as Error).message
+    );
+  }
+}
+}
+
 
 export default InteractionSchemaService;

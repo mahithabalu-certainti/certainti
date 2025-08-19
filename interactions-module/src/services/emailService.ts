@@ -17,6 +17,61 @@ import { IEmailMessage } from "../utils/types";
  * 
  * @throws {Error} - If there is an error in sending the email, the error is thrown with the error message.
  */
+/**
+ * Sends an email with attachments using the Microsoft Graph API.
+ *
+ * @param {Object} emailMessage - The email message object containing the email details and attachments.
+ * @param {IEmailMessage} emailMessage.message - The email message details including recipient, subject, body, etc.
+ * @param {Array} emailMessage.attachments - Array of attachment objects.
+ *
+ * @returns {Promise<any>} - A promise that resolves with the response from the Graph API if the email is sent successfully.
+ *
+ * @throws {Error} - If there is an error in sending the email, the error is thrown with the error message.
+ */
+export async function sendEmailWithAttachment(emailMessage: {
+  message: IEmailMessage;
+  attachments: Array<{
+    '@odata.type': string;
+    name: string;
+    contentBytes: string;
+    contentType?: string;
+  }>;
+}): Promise<any> {
+  const credential = new ClientSecretCredential(
+    process.env.MAIL_TENANT_ID!,
+    process.env.MAIL_CLIENT_ID!,
+    process.env.MAIL_CLIENT_SECRET!
+  );
+
+  const graphClient = Client.initWithMiddleware({
+    authProvider: {
+      getAccessToken: async (): Promise<string> => {
+        const tokenResponse = await credential.getToken(
+          "https://graph.microsoft.com/.default"
+        );
+        return tokenResponse.token;
+      },
+    },
+  });
+
+  const mail = {
+    message: {
+      ...emailMessage.message,
+      attachments: emailMessage.attachments,
+    },
+  };
+
+  try {
+    const response = await graphClient
+      .api(`/users/${process.env.EMAIL_FROM}/sendMail`)
+      .post(mail);
+
+    return true;
+  } catch (error: any) {
+    return false
+    throw new Error(error.message);
+  }
+}
 export async function sendEmail(emailMessage: {
   message: IEmailMessage;
 }): Promise<any> {

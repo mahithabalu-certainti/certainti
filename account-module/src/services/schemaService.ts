@@ -102,6 +102,13 @@ class SchemaService {
       await this.createProjectTaskTable(schemaName, sequelize);
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
       await this.createProjectTaskHistoryTable(schemaName, sequelize);
+      await this.createInteractionTable(schemaName, sequelize);
+      await this.createInteractionItemTable(schemaName, sequelize);
+      await this.createInteractionHistoryTable(schemaName, sequelize);
+      await this.createInteractionResponseTable(schemaName, sequelize);
+     // await this.createInteractionStatusHistoryTable(schemaName, sequelize);
+      await this.createInteractionAttachments(schemaName, sequelize);
+      await this.createInteractionTimeline(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
@@ -1864,6 +1871,292 @@ class SchemaService {
         ALTER TABLE "${schemaName}".project_resource_fiscal_region ADD CONSTRAINT project_resource_fiscal_region_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
     `);
   }
+private async createInteractionTable(
+  schemaName: string,
+  sequelize: any
+) {
+  await sequelize.query(`
+    CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interactions_seq START 1;
+  `);
+
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
+      rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      r_number VARCHAR(20) UNIQUE DEFAULT 'INT-' || LPAD(nextval('"${schemaName}".interactions_seq')::TEXT, 10, '0'),
+      eid character varying(50),
+      created_by character varying(50),
+      modified_by character varying(50),
+      created_datetime timestamp with time zone,
+      modified_datetime timestamp with time zone,
+      account_rid character varying(50),
+      project_rid character varying(50),
+      project_fiscal_rid character varying(50),
+      fiscal_year integer,
+      interaction_source_rid character varying(255),
+      interaction_type_rid character varying(50),
+      template_rid character varying(50),
+      recipient_email character varying(50),
+      recipient_name character varying(50),
+      sent_by_rid character varying(50),
+      sent_by_mail_id character varying(255),
+      sent_on_datetime timestamp with time zone,
+      parent_interaction_rid character varying(50),
+      interaction_iteration integer,
+      last_resent_on timestamp with time zone,
+      last_reminder_on timestamp with time zone,
+      last_reminder_by timestamp with time zone,
+      response_from character varying(255),
+      response_updated_on timestamp with time zone,
+      response_updated_by character varying(50),
+      response_submitted_on character varying(50),
+      response_submission_by character varying(50),
+      response_source character varying(255),
+      status_rid character varying(50),
+      interaction_url character varying(255),
+      interaction_age integer,
+      CONSTRAINT interactions_rid_unique UNIQUE (rid)
+    );
+  `);
+
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_status_history (
+      rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      created_by VARCHAR(50),
+      created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+      interaction_rid VARCHAR(50) NOT NULL,
+      old_status_rid VARCHAR(50),
+      new_status_rid VARCHAR(50) NOT NULL
+    );
+  `);
+
+  await sequelize.query(`
+    CREATE OR REPLACE FUNCTION "${schemaName}".log_interaction_status_change()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      -- Handle first insert
+      IF TG_OP = 'INSERT' THEN
+        INSERT INTO "${schemaName}".interaction_status_history (
+          interaction_rid,
+          created_by,
+          created_datetime,
+          old_status_rid,
+          new_status_rid
+        )
+        VALUES (
+          NEW.rid,
+          NEW.created_by,
+          NOW(),
+          NULL,
+          NEW.status_rid
+        );
+
+      -- Handle update when status changes
+      ELSIF TG_OP = 'UPDATE' AND (OLD.status_rid IS DISTINCT FROM NEW.status_rid) THEN
+        INSERT INTO "${schemaName}".interaction_status_history (
+          interaction_rid,
+          created_by,
+          created_datetime,
+          old_status_rid,
+          new_status_rid
+        )
+        VALUES (
+          NEW.rid,
+          NEW.modified_by,
+          NOW(),
+          OLD.status_rid,
+          NEW.status_rid
+        );
+      END IF;
+
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+
+  await sequelize.query(`
+    DROP TRIGGER IF EXISTS trg_log_interaction_status_change ON "${schemaName}".interactions;
+  `);
+
+  await sequelize.query(`
+    CREATE TRIGGER trg_log_interaction_status_change
+    AFTER INSERT OR UPDATE ON "${schemaName}".interactions
+    FOR EACH ROW
+    EXECUTE FUNCTION "${schemaName}".log_interaction_status_change();
+  `);
+}
+
+  private async createInteractionHistoryTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interaction_history_seq START 1;
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_history (
+      rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      r_number VARCHAR(20) UNIQUE DEFAULT 'INH-' || LPAD(nextval('"${schemaName}".interaction_history_seq')::TEXT, 10, '0'),
+      created_by varchar(50) NOT NULL,
+      modified_by varchar(50),
+      created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+      modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+      interaction_rid varchar(50) NOT NULL,
+      interaction_item_rid varchar(50),
+      attribute_name VARCHAR(100) NOT NULL,
+      old_value VARCHAR(2000),
+      new_value VARCHAR(2000) NOT NULL
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
+    `);
+  }
+  
+  private async createInteractionItemTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interaction_item_seq START 1;
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".question_seq START 1;
+    `);
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_items (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ITI-' || LPAD(nextval('"${schemaName}".interaction_item_seq')::TEXT, 10, '0'),
+        eid character varying(50),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+        account_rid character varying(50),
+        project_rid character varying(50),
+        fiscal_year character varying(50),
+        project_fiscal_rid character varying(50),
+        interaction_rid character varying(50),
+        question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
+        is_mandatory boolean,
+        question text,
+        notes text,
+        response text,
+        response_by character varying(50),
+        response_on_datetime timestamp with time zone,
+        response_via character varying(50),
+        is_attachment boolean
+      );
+    `);
+
+    await sequelize.query(`
+        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+    `);
+  }
+
+  private async createInteractionResponseTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interaction_response_seq START 1;
+    `);
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_response_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ITR-' || LPAD(nextval('"${schemaName}".interaction_response_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+        interaction_rid character varying(50),
+        interaction_item_rid character varying(50),
+        interaction_response character varying(50),
+        response_on timestamp with time zone,
+        response_email character varying(255),
+        response_by character varying(50),
+        response_source character varying(50),
+        interaction_version integer
+      );
+    `);
+
+    await sequelize.query(`
+        ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
+    `);
+  }
+
+  private async createInteractionStatusHistoryTable(schemaName: string, sequelize: any)
+  {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_status_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+        interaction_rid character varying(50),
+        old_status_rid character varying(50),
+        new_status_rid character varying(50)
+      );
+    `);
+
+    await sequelize.query(`
+        ALTER TABLE "${schemaName}".interaction_status_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+  
+    `);
+  }
+  private async createInteractionAttachments(schemaName: string, sequelize: any)
+  {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_attachments (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+        interaction_rid character varying(50),
+        interaction_item_rid character varying(50),
+        interaction_response_rid character varying(50),
+        attachment_name character varying(255) NOT NULL,
+        attachment_type character varying(50),
+        attachment_size numeric(10,2),
+        attachment_url character varying(1000),
+        interaction_version integer
+      );
+    `);
+
+    await sequelize.query(`
+        ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+         ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
+         ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_response_rid_fkey FOREIGN KEY (interaction_response_rid) REFERENCES "${schemaName}".interaction_response_history(rid) ON UPDATE CASCADE;
+
+    `);
+  }
+
+  private async createInteractionTimeline(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interaction_timeline_seq START 1;
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".interaction_timeline (
+       rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      r_number varchar(20) UNIQUE DEFAULT (('ITI-'::text || lpad(nextval('"${schemaName}".interaction_timeline_seq'::regclass)::text, 10, '0'::text))) NULL,
+      created_by VARCHAR(50) NOT NULL,
+      modified_by VARCHAR(50),
+      created_datetime TIMESTAMP DEFAULT NOW(),
+      modified_datetime TIMESTAMP,
+      account_rid varchar(50) NOT NULL,
+      document_rid  varchar(50),
+      entity_rid varchar(50) NOT NULL,
+      event_name varchar(100) NOT NULL,
+      event_type varchar(100) NOT NULL,
+      event_status varchar(100) NOT NULL,
+      event_datetime timestamptz NOT NULL
+    );  
+    `);
+
+    await sequelize.query(`
+     ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+    ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+    `);
+  }
+
+  
+
 
   async insertAccountDetails(
     account_number: string,

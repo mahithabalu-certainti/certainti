@@ -684,15 +684,16 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-    const interaction = {
+   /* const interaction = {
       statusCode: HttpStatus.SUCCESS,
       data: { message: " interaction sent successfully" },
       errorMessage: ""
-    };
-    // const interaction = await interactionService.sendInteraction(
-    //   value,
-    //   userId
-    // );
+    };*/
+     const interaction = await interactionService.sendInteraction(
+       value.interaction_rid,
+       value.account_rid,
+       userId
+     );
     console.log(
       `[${methodName}] Service response:`,
       JSON.stringify(interaction)
