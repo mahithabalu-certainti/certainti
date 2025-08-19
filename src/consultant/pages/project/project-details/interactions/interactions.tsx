@@ -75,13 +75,15 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
-  const interactionAttachmentId = searchParams.get('interaction_attachment_id');
+  const interactionAttachmentId = searchParams.get(
+    'interaction_attachment_url'
+  );
 
   const responseHistory = searchParams.get('history');
   const interactionResponseId = searchParams.get('interactionResponse_id');
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
-  const viewInteractionAttachmentId = !!interactionAttachmentId;
+  const viewInteractionAttachment = !!interactionAttachmentId;
   const viewHistory = !!responseHistory;
   // console.log('viewHistory', viewHistory);
   const projectData = {
@@ -253,9 +255,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleViewInteractionAttachment = (interactionAttachentId: string) => {
-    if (interactionAttachentId) {
-      searchParams.set('interaction_attachment_id', interactionAttachentId);
+  const handleViewInteractionAttachment = (interactionAttachentURL: string) => {
+    if (interactionAttachentURL) {
+      searchParams.set('interaction_attachment_url', interactionAttachentURL);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -264,7 +266,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
       searchParams.delete('interaction_history_id');
-      searchParams.delete('interaction_attachment_id');
+      searchParams.delete('interaction_attachment_url');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -335,7 +337,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectDetails={projectDetails}
           accountInActive={accountInActive}
         />
-      ) : viewInteractionAttachmentId ? (
+      ) : viewInteractionAttachment ? (
         <InteractionAttachment handleBackClick={handleBackClick} />
       ) : (
         <>

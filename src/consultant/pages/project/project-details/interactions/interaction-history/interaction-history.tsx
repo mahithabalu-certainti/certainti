@@ -123,6 +123,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
+            loadindRowCount={4}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
