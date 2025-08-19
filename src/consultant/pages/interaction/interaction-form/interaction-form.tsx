@@ -20,6 +20,7 @@ import {
   InteractionFormTableColumn,
   InteractionQuestionErrors,
   SelectOption,
+  StatusActionEnum,
 } from '../../../types';
 import { useToast } from '../../../../hooks';
 import {
@@ -31,6 +32,7 @@ import { useAccountProjects } from '../../../services/project';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import {
   getQuestionTableColumns,
+  ProjectDetails,
   transFormPayload,
   validateInteractionForm,
 } from './helper';
@@ -43,13 +45,7 @@ import {
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
-
-interface ProjectDetails {
-  project_code: string;
-  project_name: string;
-  fiscal_year: number;
-  account_name: string;
-}
+import { useGetInteractionStatus } from '../../../../common-service';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
@@ -64,9 +60,9 @@ const InteractionForm = () => {
     status: '',
     questions: [
       {
-        questionNo: '1',
+        question_seq_num: 'SNO_1',
         question: '',
-        mandatory: false,
+        is_mandatory: false,
         notes: '',
       },
     ],
@@ -116,6 +112,7 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
+  const interactionStatus = useGetInteractionStatus();
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
 
@@ -142,33 +139,40 @@ const InteractionForm = () => {
         updated_on: formatDateToYYYYMMDDWithTime(
           interactionData.modified_datetime
         ),
-        rid: interactionData.rid,
-        interaction_id: interactionData.interaction_number,
+        rid: interactionData.rid || interactionId,
+        interaction_id: interactionData.r_number,
         status: interactionData.status,
-        projectCode: interactionData.project_code,
-        projectName: interactionData.project_name || '',
-        accountName: interactionData.account_name || '',
+        projectCode: interactionData.project_code || formData.projectCode,
+        projectName: interactionData.project_name || formData.projectName || '',
+        accountName: interactionData.account_name || formData.accountName || '',
         fiscalYear: Number(interactionData.fiscal_year),
         questions:
           interactionData.questions.length > 0
-            ? interactionData.questions.map((q) => ({
-                questionNo: q.question_seq_num,
-                question: q.question || '',
-                mandatory: q.is_mandatory ?? false,
-                notes: q.notes || '',
-                rid: q.rid,
+            ? interactionData.questions.map((qus, index) => ({
+                question_seq_num: qus.question_seq_num || `Q00${index + 1}`,
+                question: qus.question || '',
+                is_mandatory: qus.is_mandatory ?? false,
+                notes: qus.notes || '',
+                rid: qus.rid,
               }))
             : [
                 {
-                  questionNo: '1',
+                  question_seq_num: 'SNO_1',
                   question: '',
-                  mandatory: false,
+                  is_mandatory: false,
                   notes: '',
                 },
               ],
       }));
     }
-  }, [interactionData, isEditView]);
+  }, [
+    formData.accountName,
+    formData.projectCode,
+    formData.projectName,
+    interactionData,
+    interactionId,
+    isEditView,
+  ]);
 
   useEffect(() => {
     if (projectsData) {
@@ -240,9 +244,9 @@ const InteractionForm = () => {
       questions: [
         ...prev.questions,
         {
-          questionNo: `${prev.questions.length + 1}`,
+          question_seq_num: `SNO_${prev.questions.length + 1}`,
           question: '',
-          mandatory: false,
+          is_mandatory: false,
           notes: '',
         },
       ],
@@ -255,9 +259,9 @@ const InteractionForm = () => {
 
       if (updatedQuestions.length === 0) {
         updatedQuestions.push({
-          questionNo: '1',
+          question_seq_num: 'SNO_1',
           question: '',
-          mandatory: false,
+          is_mandatory: false,
           notes: '',
         });
       }
@@ -312,15 +316,21 @@ const InteractionForm = () => {
     return isValid;
   };
 
-  const handleSubmit = (saveFlag: 'submit' | 'draft') => {
+  const handleSubmit = (saveFlag: StatusActionEnum) => {
     if (!validateForm()) {
       return;
     }
+    const projectData: ProjectDetails = JSON.parse(
+      decodeURIComponent(projectDetails || '')
+    );
+
     const payload = transFormPayload(
+      accountId,
       formData,
       isEditView,
+      saveFlag,
       interactionData,
-      saveFlag
+      projectData
     );
     console.log(payload);
 
@@ -331,15 +341,14 @@ const InteractionForm = () => {
     }
   };
 
-  const statusOptions = [
-    { value: 'Draft', label: 'Draft' },
-    { value: 'Created', label: 'Created' },
-    { value: 'Sent', label: 'Sent' },
-    { value: 'Response Draft', label: 'Response Draft' },
-    { value: 'Response Received', label: 'Response Received' },
-    { value: 'On-Hold', label: 'On-Hold' },
-    { value: 'Cancelled', label: 'Cancelled' },
-  ];
+  const statusOptions = useMemo(
+    () =>
+      interactionStatus.data?.data.interactionStatus.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [interactionStatus.data?.data.interactionStatus]
+  );
 
   const questionTableColumns = getQuestionTableColumns(isEditView);
 
@@ -364,8 +373,8 @@ const InteractionForm = () => {
                 ) : (
                   <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                     {isProjectFields
-                      ? `Project > ${formData.projectCode} > ${interactionData?.interaction_number}`
-                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.interaction_number}`}
+                      ? `Project > ${formData.projectCode} > ${interactionData?.r_number}`
+                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.r_number}`}
                   </div>
                 )}
               </>
@@ -378,8 +387,8 @@ const InteractionForm = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Save as Draft'
-            // loading={createAccount.isPending || updateAccount.isPending}
-            onClick={() => handleSubmit('draft')}
+            loading={createInteraction.isPending || updateInteraction.isPending}
+            onClick={() => handleSubmit(StatusActionEnum.Draft)}
             sx={{
               width: '110px',
               minWidth: '110px',
@@ -389,8 +398,8 @@ const InteractionForm = () => {
           />
           <TextButton
             label='Save & Submit'
-            // loading={createAccount.isPending || updateAccount.isPending}
-            onClick={() => handleSubmit('submit')}
+            loading={createInteraction.isPending || updateInteraction.isPending}
+            onClick={() => handleSubmit(StatusActionEnum.Create)}
             sx={{
               width: '110px',
               minWidth: '110px',
@@ -401,6 +410,9 @@ const InteractionForm = () => {
           <TextButton
             label='Cancel'
             onClick={goBack}
+            disabled={
+              createInteraction.isPending || updateInteraction.isPending
+            }
             sx={{
               width: '75px',
               minWidth: '75px',
@@ -446,7 +458,7 @@ const InteractionForm = () => {
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-5`}
             >
-              {!isProjectFields ? (
+              {!isProjectFields && !isEditView ? (
                 <div className='w-full'>
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -626,12 +638,16 @@ const InteractionForm = () => {
                   className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
                     ${formData.status === '' ? 'text-[#7D98B6] ' : ''} ${errors?.status && 'border-red-500 bg-[#FEF2F2]'}
                   `}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       status: e.target.value as string,
-                    })
-                  }
+                    });
+                    setErrors((prev) => ({
+                      ...prev,
+                      status: undefined,
+                    }));
+                  }}
                   value={formData.status || ''}
                   displayEmpty
                   fullWidth
@@ -812,7 +828,11 @@ const InteractionForm = () => {
                                 >
                                   {col.name === 'questionNo' && (
                                     <div style={{ textAlign: 'center' }}>
-                                      {question.questionNo}
+                                      {question.question_seq_num.startsWith(
+                                        'SNO'
+                                      )
+                                        ? '-'
+                                        : question.question_seq_num}
                                     </div>
                                   )}
 
@@ -865,11 +885,11 @@ const InteractionForm = () => {
                                     <div style={{ textAlign: 'center' }}>
                                       <input
                                         type='checkbox'
-                                        checked={question.mandatory}
+                                        checked={question.is_mandatory}
                                         onChange={(e) =>
                                           handleQuestionChange(
                                             index,
-                                            'mandatory',
+                                            'is_mandatory',
                                             e.target.checked
                                           )
                                         }
@@ -998,8 +1018,10 @@ const InteractionForm = () => {
                     <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
                       {field.label}
                     </label>
-                    <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none'>
-                      {field.value || '-'}
+                    <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none text-nowrap overflow-hidden'>
+                      <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
+                        {field.value || '-'}
+                      </span>
                     </div>
                   </div>
                 ))}

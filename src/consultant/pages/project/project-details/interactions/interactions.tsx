@@ -96,7 +96,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     account_rid: projectDetails?.account_rid || '',
     project_rid: projectDetails?.project_rid || '',
     project_fiscal_rid:
-      projectDetails?.project_fiscal_rid || projectDetails?.rid || '',
+      projectDetails?.project_fiscal_rid ||
+      projectid ||
+      projectDetails?.rid ||
+      '',
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
 
@@ -108,7 +111,11 @@ const Interactions: React.FC<InteractionsProps> = ({
       sort_by: sortBy,
       filters: appliedFilters,
       project_rid: projectDetails?.project_rid || '',
-      project_fiscal_rid: projectDetails?.project_fiscal_rid || projectid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
       fiscal_year: fiscalYear,
       account_rid: accountId,
       flag: 'project',
