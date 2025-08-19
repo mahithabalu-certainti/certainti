@@ -7,12 +7,21 @@ import {
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
 import SchemaService from "./schemaService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listResponseHistory } from "../../utils/rawQueries";
-
+import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { generateSasUrl } from "../../utils/blob";
+import { interactionMailTemplate } from "../../utils/mailTemplate";
+import {  sendEmailWithAttachment } from "../emailService";
+import * as fs from 'fs';
+import * as path from 'path';
+type filterType = {
+        [key : string] : {
+            [condition : string] : any
+        }
+}
 // Assuming there is an interface named IInteractionService to implement
 export class InteractionService {
   private interactionSchemaService: InteractionSchemaService;
@@ -51,7 +60,7 @@ export class InteractionService {
 
       const { interactionStatus, intSource } =
         await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.interaction_status_rid = interactionStatus || "";
+      interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
 
       const interaction =
@@ -79,7 +88,7 @@ export class InteractionService {
           accountNumber,
           "create",
           interactionData,
-          interaction.rid,
+          interaction.dataValues.rid,
           userId,
           transaction
         );
@@ -139,7 +148,7 @@ export class InteractionService {
         );
       const { interactionStatus, intSource } =
         await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.interaction_status_rid = interactionStatus || "";
+      interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
@@ -401,71 +410,50 @@ export class InteractionService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      // for (const rid of interactionRid) {
-      //   const interactionItems = await this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber,rid);
-      // }
-     /* for (const rid of interactionRid) {
-        const interactionItems = await this.interactionSchemaService.fetchInteractionItemsById(rid);
-        const latestResponses = await this.interactionSchemaService.fetchLatestResponsesByInteractionId(rid);
-
-        const csvRows: string[] = [];
-        csvRows.push("Item,Latest Response");
-
-        for (const item of interactionItems) {
-          const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
-          csvRows.push(`"${item.name}","${response ? response.value : ""}"`);
+      for (const rid of interactionRid) {
+         const interactionItems = await this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber,rid);
+         const csvRows: string[] = [];
+           const plainItems = interactionItems.map(item => item.get({ plain: true }));
+         csvRows.push("Question,Response");
+         console.log("Send interaction items")
+         
+        for (const item of plainItems) {
+          console.log(item);
+        //  const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
+          csvRows.push(`"${item.question}"`);
         }
-
         const csvContent = csvRows.join('\n');
-        const interactionDetails = await this.interactionSchemaService.fetchInteractionDetailsById(undefined, rid);
-        if (!interactionDetails) continue;
-
-        // Assuming sendEmailWithAttachment is a method to send email with attachment
-        await this.interactionSchemaService.sendEmailWithAttachment(
-          interactionDetails,
-          userId,
+        const csvFolder = path.resolve(__dirname, '../../csv_exports');
+        if (!fs.existsSync(csvFolder)) {
+          fs.mkdirSync(csvFolder, { recursive: true });
+        }
+        const filePath = path.join(csvFolder, `interaction_${rid}.csv`);
+        fs.writeFileSync(filePath, csvContent, 'utf-8');
+        const emailInfo = await this.interactionSchemaService.fetchPOCEmail(accountNumber,rid);
+        console.log("Email Info:", emailInfo);
+        const emailResponse = await this.sendEmailWithAttachment(
+          emailInfo,
           {
             filename: `interaction_${rid}.csv`,
-            content: csvContent,
+            content: Buffer.from(csvContent, 'utf-8').toString('base64'),
             contentType: 'text/csv'
           }
         );
+        if(emailResponse){
+          await this.interactionSchemaService.updateInteractionInfo(
+            accountNumber,
+            rid,
+            statusAction.SENT,
+            userId,
+            emailInfo
+          );
+        }
 
         interactionResponse.push({
           interactionRid: rid,
           csvSent: true
         });
-      }
-  //  const interactionResponse = [];
-  /*  for (const rid of interactionRid) {
-      const interactionResponse: any[] = [];
-      const interactionItems = await this.interactionSchemaService.fetchInteractionItemsById(rid);
-      const latestResponses = await this.interactionSchemaService.fetchLatestResponsesByInteractionId(rid);
-
-      const csvRows: string[] = [];
-      csvRows.push("Item,Latest Response");
-
-      for (const item of interactionItems) {
-        const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
-        csvRows.push(`"${item.name}","${response ? response.value : ""}"`);
-      }
-
-      // You can write csvRows.join('\n') to a file or return as needed
-      interactionResponse.push({
-        interactionRid: rid,
-        csv: csvRows.join('\n')
-      });
-      const interactionDetails = await this.interactionSchemaService.fetchInteractionDetailsById(undefined, rid);
-      if (!interactionDetails) continue;
-      // Assuming sendEmail is a method to send email for an interaction
-      // const emailResult = await this.interactionSchemaService.sendEmail(interactionDetails, userId);
-      // interactionResponse.push({
-      //   interactionRid: rid,
-      //   emailStatus: emailResult?.status || "sent",
-      //   message: emailResult?.message || "Email sent successfully"
-      // });
-    }
-    */  
+      }  
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -475,9 +463,35 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      console.log("Error sending email with attachment send", err);
       throw this.throwServiceError(err as Error);
     }
   }
+  async sendEmailWithAttachment(
+    emailInfo: {name: string, email: string},
+    attachment: { filename: string; content: string; contentType: string }
+  ) {
+    let emailResponse = false;
+    try {
+      const emailContent = interactionMailTemplate(emailInfo);
+      emailResponse = await sendEmailWithAttachment({
+        message: emailContent.message,
+          attachments: [
+        {
+          '@odata.type': '#microsoft.graph.fileAttachment',
+          name: attachment.filename,
+          contentBytes: attachment.content,
+          contentType: attachment.contentType
+        }
+          ]
+        });
+        return emailResponse;
+      } catch (error) {
+        this.logger.error("Error sending email with attachment", error);
+        return emailResponse;
+      }
+  }
+ 
 
   /**
    * Formats an error response to be returned from service methods.
@@ -733,6 +747,164 @@ export class InteractionService {
       return {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         data : []
+      }
+    }
+  }
+  async fetchInteractionHistory (data : any) {
+    let actionFilter;
+    let actionConditionsFilter : string | undefined;
+    let disablePagination : boolean = false
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+    const detectConditions = (filters : any) => {
+      for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+        if(Object.keys(filters).includes(conditions)) {
+          return conditions
+        }
+      }
+    }
+    const applyFilters = (finalData : any, filters : filterType, conditions : any, values : any) => {
+        finalData = finalData.filter((d : any) => {
+          let statusName = d[values].toLowerCase()
+          let value : any =  filters[conditions]
+          
+          switch(conditions) {
+            case "equals" : {
+              return statusName === value.toLowerCase()
+            }
+            case "not_equals" : {
+              return statusName != value.toLowerCase()
+            }
+            case "contains" : {
+              return statusName.includes(value)
+            }
+            case "is_empty" : {
+              return !statusName
+            }
+          }
+        })
+      return finalData
+    }
+
+    if(Object.keys(data.filters).length > 0) {
+      if(data.filters.status_name != undefined) {
+        actionFilter = data.filters.status_name;
+        delete data.filters.status_name;
+        disablePagination = true
+        actionConditionsFilter = detectConditions(actionFilter)
+      }
+    }
+    const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName, disablePagination));
+    if(result[0][0].interaction_history !== null) {
+      let finalResponseData;
+      let totalRecords;
+      let responseData = result[0][0]
+      const statusIds = [...new Set(responseData.interaction_history.map((d : any) => d.new_status_rid))]
+      const fetchStatus : any = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
+      const mapStatus = new Map(fetchStatus[0].map((d : any) => [d.rid, d.status_name]))
+      responseData = responseData.interaction_history.map((d : any) => {
+        return {
+          ...d,
+          status_name : mapStatus.get(d.new_status_rid)
+        }
+      })
+    finalResponseData = disablePagination ? applyFilters(responseData, actionFilter, actionConditionsFilter, "status_name") : responseData
+    totalRecords = disablePagination ? finalResponseData.length : finalResponseData[0].total_records
+    let paginatedData = disablePagination ? finalResponseData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalResponseData
+    let finalSortedData = data.sort === 'status_name' ? paginatedData.sort((a : any, b : any) => {
+      if(data.sort_by.toLowerCase() === 'desc') {
+        return b.status_name.localeCompare(a.status_name)
+      } else {
+        return a.status_name.localeCompare(b.status_name)
+      }
+    }) : paginatedData
+
+    let finalStructuredData = {
+      interaction_rnumber : finalSortedData[0].interaction_rnumber,
+      project_code : finalSortedData[0].project_code,
+      project_name : finalSortedData[0].project_name,
+      response_source : finalSortedData[0].response_source,
+      interaction_history : finalSortedData.map((d : any) => {
+        return {
+          rid : d.interaction_history_rid,
+          status_name : d.status_name,
+          date : d.date
+        }
+      })
+    }
+
+    let response = {
+      page : data.page,
+      limit : data.limit,
+      total_records : totalRecords,
+      data : finalStructuredData
+    }
+    return {
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      data : response
+    };
+    } else {
+      let response = {
+      page : data.page,
+      limit : data.limit,
+      total_records : 0,
+      interaction_history : []
+    }
+      return {
+      statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      data : response
+    };
+    }
+  }
+  async listInteractionAttachments (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+    const result : any = await orgDb.query(listAttachments(data.page, data.limit, data.interaction_rid, schemaName))
+    if(result[0][0].attachments !== null) {
+      let responseData = result[0][0].attachments
+      const createdByIds = [...new Set(responseData.map((d : any) => d.created_by))]
+      const fetchUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
+      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name}, ${d.last_name}`]))
+
+      responseData = await Promise.all(responseData.map(async (d : any) => {
+        return {
+          ...d,
+          uploaded_by : mapUsers.get(d.created_by),
+          new_url : await generateSasUrl(d.download_link)
+        }
+      })
+    )
+    let total = responseData[0].total_records
+    responseData = responseData.map((d : any) => {
+      delete d.download_link
+      const data =  {
+        ...d,
+        download_link : d.new_url
+      }
+      delete data.total_records
+      delete data.new_url
+      return data;
+    })
+    return {
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      page : data.page,
+      limit : data.limit,
+      totalRecords : total,
+      attachments : responseData
+    }
+    } else {
+      return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        page : data.page,
+        limit : data.limit,
+        totalRecords : 0,
+        attachments : []
       }
     }
   }

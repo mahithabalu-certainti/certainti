@@ -9,10 +9,8 @@ import { InteractionType } from "../models/interactionType";
 import { MAIN_SCHEMA_NAME } from "../utils/constants";
 import { InteractionSummary } from "../models/interactionSummary";
 import { InteractionResponseHistory } from "../models/interactionResponseHistory";
-
-import { Otp } from "../models/otp";
-import { OtpHistory } from "../models/otpHistory";
 import { InteractionAttachment } from "../models/interactionAttachment";
+
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
   mainDbSequelize: Sequelize | null = null;
@@ -29,12 +27,6 @@ export class InteractionModelService {
       InteractionType: ReturnType<
         typeof InteractionType.initialize
       >;
-      Otp: ReturnType<
-        typeof Otp.initialize
-      >;
-      OtpHistory: ReturnType<
-      typeof OtpHistory.initialize
-    >;
     }
   > = new Map();
 
@@ -83,14 +75,7 @@ export class InteractionModelService {
     );
     const InteractionResponseHistoryModel =
       InteractionResponseHistory.initialize(sequelize, schemaName);
-    const OtpModel = Otp.initialize(
-      sequelize,
-      schemaName
-    );
-    const OtpHistoryModel = OtpHistory.initialize(
-      sequelize,
-      schemaName
-    )
+
     const InteractionAttachmentModel = InteractionAttachment.initialize(
       sequelize,
       schemaName
@@ -104,8 +89,6 @@ export class InteractionModelService {
       InteractionTimeline: InteractionTimelineModel,
       InteractionType: InteractionTypeModel,
       InteractionSummary: InteractionSummaryModel,
-      Otp: OtpModel,
-      OtpHistory: OtpHistoryModel,
       InteractionAttachment: InteractionAttachmentModel
     };
 

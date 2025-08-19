@@ -361,9 +361,9 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     let query = 
     `
     WITH fetch_interaction_response AS (
-    SELECT i.rid, i.r_number, r.response_by, r.response_on, r.response_email,
+    SELECT r.rid, i.r_number, r.response_by, r.response_on, r.response_email,
     r.interaction_response, i.interaction_source_rid, COUNT(i.rid) OVER() AS total_records,
-    r.response_source
+    r.response_source, r.interaction_version, r.interaction_rid, r.interaction_item_rid
     FROM 
     ${schemaName}.interaction_response_history r
     LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
@@ -377,6 +377,8 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     SELECT 
     array_agg(jsonb_build_object(
     'rid', i.rid,
+    'interaction_rid', i.interaction_rid,
+    'interaction_item_rid', i.interaction_item_rid,
     'r_number', i.r_number,
     'response_by_rid', i.response_by,
     'response_on', i.response_on,
@@ -384,10 +386,164 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     'interaction_response', i.interaction_response,
     'interaction_source_rid', i.interaction_source_rid,
     'total_records', i.total_records,
-    'response_source', i.response_source
+    'response_source', i.response_source,
+    'interaction_version', i.interaction_version
     )${sortQuery}) AS response_history
     FROM
     paginated_data i`
     return query
+}
+
+export const listInteractionHistory = (page : number, limit : number, sort : string, sortBy : string, filter : filterType, interactionRid : string, schemaName : string, disablPagination : boolean) => {
+    let offset = (page - 1 ) * limit
+    let pagination;
+    let filterQueryArray : string[]  = []
+    let sortValue : any = ``
+    let keyType : string = ``
+    let andConditions : string = ``
+    let filterQueryCombinedValues : string  = ``
+
+    if(disablPagination) pagination = ` `
+    else pagination = `LIMIT ${limit} OFFSET ${offset}`
+
+    if(sort.toLowerCase() === "date") sortValue = `ORDER BY ih.changed_at ${sortBy}`
+    else sortValue = `ORDER BY ih.changed_at ASC`
+
+    if(Object.keys(filter).length > 0) {
+        for(let [key, condition] of Object.entries(filter)) {
+            if(key == 'date') {
+                keyType = `datetime`
+                andConditions = ` AND `
+            }
+            for(let [cond, values] of Object.entries(condition)) {
+                if(keyType === 'datetime') {
+                    switch(ALPHANUMERIC_CONDITIONS[cond]) {
+                        case ALPHANUMERIC_CONDITIONS['equals'] : {
+                            filterQueryArray.push(`DATE(ih.changed_at) = '${values}'`)
+                            break
+                        }
+                        case ALPHANUMERIC_CONDITIONS['before'] : {
+                            filterQueryArray.push(`DATE(ih.changed_at) < '${values}'`)
+                            break;
+                        }
+                        case ALPHANUMERIC_CONDITIONS['after'] : {
+                            filterQueryArray.push(`DATE(ih.changed_at) > '${values}'`)
+                            break;
+                        }
+                        case ALPHANUMERIC_CONDITIONS['between'] : {
+                            filterQueryArray.push(`DATE(ih.changed_at) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                            break;
+                        }
+                        case ALPHANUMERIC_CONDITIONS['isEmpty'] : {
+                            filterQueryArray.push(`ih.changed_at IS NULL`)
+                            break;
+                        }
+                        default : {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        filterQueryArray = []
+        andConditions = ` `
+    }
+
+    if(filterQueryArray.length > 0) {
+        filterQueryCombinedValues = filterQueryArray.join('AND')
+    } else {
+        filterQueryCombinedValues = ` `
+    }
+
+    let query = 
+    `WITH fetch_interaction_history AS (
+    SELECT 
+    i.r_number, ih.rid, ih.new_status_rid, ih.changed_at,
+    i.response_source, p.project_code, p.project_name,
+    COUNT(*) OVER() AS total_records
+    FROM 
+    ${schemaName}.interaction_status_history ih
+    LEFT JOIN ${schemaName}.interactions i ON i.rid = ih.interaction_rid
+    LEFT JOIN ${schemaName}.project p ON p.rid = i.project_rid
+    WHERE
+    ih.interaction_rid = '${interactionRid}'
+    ${andConditions}
+    ${filterQueryCombinedValues}
+    GROUP BY 
+    i.r_number, p.project_name, p.project_code, i.response_source, ih.rid
+    ),
+    paginated_data AS (
+    SELECT * from fetch_interaction_history ${pagination})
+
+    SELECT 
+    array_agg(jsonb_build_object(
+    'total_records', ih.total_records,
+    'interaction_rnumber', ih.r_number,
+    'project_code', ih.project_code, 
+    'project_name', ih.project_name,
+    'response_source', ih.response_source,
+    'interaction_history_rid', ih.rid,
+    'new_status_rid', ih.new_status_rid,
+    'date', ih.changed_at
+    )${sortValue}) AS interaction_history
+    FROM
+    paginated_data ih
+    `
+    return query;
+}
+
+export const listAttachments = (page : number, limit : number, interaction_rid : string, schemaName : string) => {
+    let offset = (page - 1) * limit
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+
+    let query =
+    `WITH fetch_latest_attachments AS (
+    SELECT iah.rid
+    FROM
+    ${schemaName}.interaction_response_history iah
+    WHERE
+    iah.interaction_rid = '${interaction_rid}'
+    ORDER BY iah.created_datetime DESC
+    ),
+    fetch_attachments AS (
+        SELECT 
+            ia.rid, ii.r_number, ia.attachment_name,
+            ia.attachment_type, ia.attachment_size,
+            ia.attachment_url, ia.created_datetime, 
+            ia.created_by, COUNT(*) OVER() AS total_records,
+            ia.interaction_version
+        FROM
+        ${schemaName}.interactions i
+        LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
+		LEFT JOIN ${schemaName}.interaction_attachments ia ON ia.interaction_item_rid = ii.rid
+        LEFT JOIN fetch_latest_attachments fla ON 
+        fla.rid = ia.interaction_response_rid
+        WHERE
+        ia.interaction_rid = '${interaction_rid}'
+        AND
+        ia.interaction_response_rid IN (fla.rid)
+    ),
+    paginated_data AS (
+    SELECT * FROM fetch_attachments ${pagination}
+    )
+    SELECT 
+    array_agg(jsonb_build_object(
+    'rid', i.rid,
+    'question_rnumber', i.r_number,
+    'name', i.attachment_name,
+    'type', i.attachment_type,
+    'size', i.attachment_size,
+    'created_by', i.created_by,
+    'uploaded_date', i.created_datetime,
+    'total_records', i.total_records,
+    'version', i.interaction_version,
+    'download_link', i.attachment_url
+    )) AS attachments
+    FROM
+    paginated_data i 
+    `
+
+    return query;
 }
 

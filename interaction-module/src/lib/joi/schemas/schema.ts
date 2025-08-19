@@ -9,8 +9,7 @@ const createInteractionSchema = Joi.object({
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   interaction_type_rid: Joi.string().pattern(uuidRegex).required(),
-  interaction_source_rid: Joi.string().pattern(uuidRegex).required(),
-  status_rid: Joi.string().pattern(uuidRegex).required(),
+  status_action: Joi.string().required(),
   parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
@@ -51,8 +50,16 @@ const updateInteractionResponseSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  status_rid: Joi.string().pattern(uuidRegex).required(),
+  status_action: Joi.string().required(),
   parent_interaction_rid: Joi.string().allow(null, ""),
+   attachments: Joi.array().items(
+          Joi.object({
+            fileName: Joi.string().max(255).required(),
+            fileSize: Joi.number().required(),
+            fileType: Joi.string().max(20).required(),
+            fileUrl: Joi.string().uri().required(),
+          })
+        ).optional(),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -73,21 +80,8 @@ const updateInteractionResponseSchema = Joi.object({
     .required(),
 });
 
-const generateOtpSchema = Joi.object({
-  interaction_rid: Joi.string().max(50).required(),
-  account_rid: Joi.string().max(50).required(),
-});
-
-const verifyOtpSchema = Joi.object({
-  interaction_rid: Joi.string().max(50).required(),
-  account_rid: Joi.string().max(50).required(),
-  otp: Joi.string().max(6).required(),
-});
-
 export {
   createInteractionSchema,
   updateInteractionSchema,
-  updateInteractionResponseSchema,
-  generateOtpSchema,
-  verifyOtpSchema
+  updateInteractionResponseSchema
 };
