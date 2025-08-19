@@ -37,7 +37,7 @@ jobs:
               - 'account-module/**'
             entity-module:
               - 'entity-module/**'
-            interaction-module
+            interaction-module:
               - 'interaction-module/**'
 
   # JOB to build backend user-module code
