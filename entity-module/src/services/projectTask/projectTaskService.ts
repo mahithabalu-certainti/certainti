@@ -585,6 +585,37 @@ export class ProjectInjestionTaskService {
     }
   }
 
+  async getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const resourceCodes = await this.projectTaskSchema.listAssignedResourceCodes(
+        accountNumber,
+        accountId,
+        projectFiscalId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resourceCodes,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   /**
    * Formats an error response to be returned from service methods.
    *

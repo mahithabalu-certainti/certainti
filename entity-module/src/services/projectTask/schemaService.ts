@@ -20,7 +20,7 @@ import {
   setupProjectTaskTimelineSeq,
 } from "../../models/projectTaskTimeline";
 import { ProjectResource } from "../../models/projectResource";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
@@ -2916,4 +2916,80 @@ export class ProjectTaskSchemaService {
 
     return projectTaskData;
   }
+
+  async listAssignedResourceCodes(accountNumber: string, accountId: string, projectFiscalId: string){
+    const { Resources, ProjectTask } = await this.getModels(accountNumber);
+
+    const assignedResources = await ProjectTask.findAll({
+      attributes: ["resource_rid"],
+      where: {
+        project_fiscal_rid: projectFiscalId,
+        account_rid: accountId,
+      },
+    });
+
+    const resourceRids = assignedResources.map((res: any) => res.resource_rid);
+
+    if (resourceRids.length === 0) {
+      return [];
+    }
+
+    let resourceCodes = await Resources.findAll({
+      attributes: ["rid", "resource_code", "resource_type_rid"],
+      where: {
+        rid: resourceRids,
+      },
+      order: [["resource_code", "ASC"]]
+    });
+
+    if (resourceCodes && resourceCodes.length > 0) {
+      resourceCodes = await this.insertResourceTypeName(resourceCodes);
+    }
+
+    return resourceCodes;
+  }
+
+  async insertResourceTypeName(resourceCodes: any[]) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
+    }
+  
+    // Step 1: Extract unique resource_type_rids
+    const uniqueTypeIds = [
+      ...new Set(
+        resourceCodes
+          .map((res) => res.resource_type_rid)
+          .filter((id) => id !== null && id !== undefined)
+      ),
+    ];
+  
+    if (uniqueTypeIds.length === 0) return resourceCodes;
+  
+    // Step 2: Query resource_type table for names
+    const query = rawQueries.fetchResourceTypeById(MAIN_SCHEMA_NAME);
+    const typeResult: any[] = await this.mainDbSequelize.query(
+      query,
+      {
+        replacements: { ids: uniqueTypeIds },
+        type: "SELECT",
+      }
+    );
+  
+    // Step 3: Build lookup map
+    const typeMap = new Map<string, string>();
+    for (const type of typeResult) {
+      typeMap.set(type.resource_type_rid, type.resource_type_name);
+    }
+  
+    // Step 4: Enrich resourceCodes with resource_type_name
+    const enriched = resourceCodes.map((resource) => {
+      const typeName = typeMap.get(resource.resource_type_rid) || null;
+      return {
+        ...(resource.dataValues ?? resource),
+        resource_type_name: typeName,
+      };
+    });
+  
+    return enriched;
+  } 
 }
