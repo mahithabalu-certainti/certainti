@@ -690,6 +690,22 @@ export interface IImportListGraphqlServices {
     errorMessage?: string;
     data?: { resources: any };
   }>;
+
+  fetchAccountLevelImportedProjectTasks(
+    accountRid: string,
+    documentRid: string,
+    filters: Record<string, any>,
+    search: string,
+    page: number,
+    limit: number,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }>; 
 }
 
 export interface IProjectTaskIngestionService {
