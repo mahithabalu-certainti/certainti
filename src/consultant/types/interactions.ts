@@ -152,6 +152,12 @@ export interface InteractionListURLParams {
   flag?: string;
 }
 
+export interface ResponseListURLParams {
+  account_rid?: string;
+  interaction_rid?: string;
+  version: 1;
+}
+
 export interface InteractionListResponse {
   statusCode: number;
   statusMessage: string;

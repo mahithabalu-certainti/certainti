@@ -4,19 +4,22 @@ import { ResponseInteractionList } from '../../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ListTable } from '../../../../../../components/table';
 import { mockResponse } from './mockresponse';
-import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
 import {
   InfoSection,
   InteractionQuestions,
 } from '../../../../../../components';
 import { DisplayColumn, transformInteractionData } from './ultils';
+import {
+  useInteractionResponseHistoryList,
+  useResponseInteractionDetails,
+} from '../../../../../services/interactions/response-interaction-service';
 
 interface HistoryTableProps {
   loading?: boolean;
   isError?: boolean;
 }
 
-const HistoryTable: React.FC<HistoryTableProps> = ({ isError }) => {
+const HistoryTable: React.FC<HistoryTableProps> = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('r_number');
@@ -28,14 +31,30 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ isError }) => {
   const interactionId = searchParams.get('interaction_id') || undefined;
   const interactionResponseId =
     searchParams.get('interactionResponse_id') || undefined;
-  const { data } = useInteractionDetails(accountId, interactionId);
+  const { data } = useResponseInteractionDetails({
+    account_rid: accountId,
+    interaction_rid: interactionId,
+    version: 1,
+  });
+  const {
+    data: responseDataList,
+    isLoading,
+    isError,
+  } = useInteractionResponseHistoryList({
+    page: currentPage + 1,
+    limit: rowsPerPage,
+    sort: sortField,
+    sort_by: sortBy,
+    filters: {},
+    fiscal_year: 2023,
+    account_rid: accountId,
+    flag: 'project',
+  });
   useEffect(() => {
-    if (mockResponse?.data?.response_history) {
-      setAccountDetails(
-        transformInteractionData(mockResponse?.data?.response_history)
-      );
+    if (responseDataList) {
+      setAccountDetails(transformInteractionData(responseDataList));
     }
-  }, [data]);
+  }, [responseDataList]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -98,7 +117,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ isError }) => {
           actionWidth={80}
           actionDisplayMode='dropdown'
           actionMenuItems={[]}
-          loading={false}
+          loading={isLoading}
           error={isError ? 'error occurs' : undefined}
           rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={rowsPerPage}
