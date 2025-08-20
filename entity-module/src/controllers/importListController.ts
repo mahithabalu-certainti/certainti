@@ -4,7 +4,7 @@ import Configurations from '../config/config';
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
-import { importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
+import { exportImportedAccountLevelProjects, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -672,6 +672,73 @@ async function importedAccountLevelprojectList(req: Request, res: Response): Pro
   }
 }
 
+async function exportImportedProjectList(req: Request, res: Response): Promise<void> {
+  const methodName = "exportImportedProjectList";
+  try {
+    const { accountId } = req.params;
+
+    const value = await validateRequest(req, exportImportedAccountLevelProjects, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const project = await importServices.exportAccountLevelImportedProjects(
+      accountId,
+      value.fiscalYear !== "" && value.fiscalYear !== null
+        ? value.fiscalYear
+        : 0,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.bothParentAndChild,
+      userId,
+      value.timezone,
+      value.documentRid
+    );
+
+    if (project.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(project?.data?.projects,"Projects"));
+      return;
+    } else {
+      errorLog(methodName, project.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        project.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 async function importedAccountLevelresourceList(req: Request, res: Response): Promise<void> {
   const methodName = "importedAccountLevelresourceList";
   try {
@@ -722,6 +789,68 @@ async function importedAccountLevelresourceList(req: Request, res: Response): Pr
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         resource.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function exportImportedResourceList(req: Request, res: Response): Promise<void> {
+  const methodName = "exportImportedResourceList";
+  try {
+    const { accountId } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+
+
+    const value = await validateRequest(req, exportImportedAccountLevelResources, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const resourcesList = await importServices.exportAccountLevelImportedResources(
+      accountId,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.documentRid
+    );
+
+    if (resourcesList.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(resourcesList?.data?.resources,"Resources"));
+      return;
+    } else {
+      errorLog(methodName, resourcesList.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resourcesList.errorMessage
       );
       return;
     }
@@ -818,5 +947,7 @@ export default {
     exportLoadFailureList,
     importedAccountLevelprojectList,
     importedAccountLevelresourceList,
-    importedAccountLevelProjectTaskList
+    importedAccountLevelProjectTaskList,
+    exportImportedProjectList,
+    exportImportedResourceList
 }   

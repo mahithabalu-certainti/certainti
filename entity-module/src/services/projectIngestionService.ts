@@ -1843,9 +1843,10 @@ class ProjectIngestionService {
     finalMetaDataSortOrder: string,
     timezone: string,
     userId: string,
-    accessibleIds: string[]
+    accessibleIds: string[],
+    documentRid?: string
   ) {
-    const { Project, ProjectFiscal } = await this.getModels(accountNumber);
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
 
     const parentLevelFields = [
       "project_name",
@@ -1961,11 +1962,25 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: false,
+          required: !!documentRid,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
           },
+          include: documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+            }] : [],
           attributes: [
             "rid",
             "r_number",
