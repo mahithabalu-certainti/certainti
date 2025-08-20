@@ -152,7 +152,7 @@ export async function uploadToAzureBlob
   if (!connString) throw new Error('Azure storage connection string is required');
   const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  await containerClient.createIfNotExists({ access: 'blob' })
+  await containerClient.createIfNotExists();
   const blobName = `${account_id}/${project_id}/${interaction_id}/attachements/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.uploadData(file.buffer, {
