@@ -3,6 +3,7 @@ import {
   accountServiceApi,
   userServiceApi,
   resourceServiceApi,
+  interactionServiceApi,
 } from '../api/api';
 import {
   CommonApiResponse,
@@ -11,6 +12,9 @@ import {
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
+  GetInteractionSourcesApiResponse,
+  GetInteractionStatusApiResponse,
+  GetInteractionTypesApiResponse,
   GetStatusApiResponse,
   VerifyOtp,
   VerifyOtpApiResponse,
@@ -171,7 +175,6 @@ export const fetchImportEntityTypes =
         await accountServiceApi.get<GetImportEntityTypeApiResponse>(
           getImportEntityTypesUrl()
         );
-      console.log(data);
       return data;
     } catch (error) {
       console.error('Error fetching entity type list:', error);
@@ -214,6 +217,28 @@ export const postMailIntractionOtp = async (
     };
   } catch (error) {
     console.error('Error fetching highlights details:', error);
+    throw error;
+  }
+};
+
+//Interactions
+export const getInteractionStatusUrl = (statusId?: string): string => {
+  return statusId
+    ? `/api/interactions/interactionStatus?status_scope=UI&current_status=${statusId}`
+    : `/api/interactions/interactionStatus`;
+};
+
+export const fetchInteractionStatus = async (
+  statusId?: string
+): Promise<GetInteractionStatusApiResponse> => {
+  try {
+    const { data } =
+      await interactionServiceApi.get<GetInteractionStatusApiResponse>(
+        getInteractionStatusUrl(statusId)
+      );
+    return data;
+  } catch (error) {
+    console.error('Error fetching interaction status:', error);
     throw error;
   }
 };
@@ -274,4 +299,85 @@ export const postVerifyOtp = async (
     console.error('Error fetching highlights details:', error);
     throw error;
   }
+};
+
+export const useGetInteractionStatusById = (statusId: string) => {
+  return useQuery<GetInteractionStatusApiResponse, Error>({
+    queryKey: ['gat-interaction-status-list', statusId],
+    queryFn: () => fetchInteractionStatus(statusId),
+    retry: 0,
+    enabled: !!statusId,
+  });
+};
+
+export const useGetInteractionStatus = () => {
+  return useQuery<GetInteractionStatusApiResponse, Error>({
+    queryKey: ['interaction-status'],
+    queryFn: () => fetchInteractionStatus(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getInteractionTypesUrl = (): string => {
+  return `/api/interactions/interactionTypes`;
+};
+
+export const fetchInteractionTypes =
+  async (): Promise<GetInteractionTypesApiResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<GetInteractionTypesApiResponse>(
+          getInteractionTypesUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction types:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionTypes = () => {
+  return useQuery<GetInteractionTypesApiResponse, Error>({
+    queryKey: ['interaction-types'],
+    queryFn: () => fetchInteractionTypes(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getInteractionSourcesUrl = (): string => {
+  return `/api/interactions/interactionSource`;
+};
+
+export const fetchInteractionSources =
+  async (): Promise<GetInteractionSourcesApiResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<GetInteractionSourcesApiResponse>(
+          getInteractionSourcesUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction sources:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionSources = () => {
+  return useQuery<GetInteractionSourcesApiResponse, Error>({
+    queryKey: ['interaction-sources'],
+    queryFn: () => fetchInteractionSources(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
 };

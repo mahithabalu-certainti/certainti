@@ -6,12 +6,17 @@ import DetailsSection, {
 } from '../../../../../../components/details-section/details';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
-import InteractionQuestions from './interaction-qus';
 import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import { NewProjectData } from '../../../../../types/project';
+import { InteractionQuestions } from '../../../../../../components/interaction';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -24,12 +29,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   handleBackClick,
   projectDetails,
 }) => {
+  const { projectid } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
 
-  const { data, isLoading, error } = useInteractionDetails(
+  const { data, isLoading, error, refetch } = useInteractionDetails(
     accountId,
     interactionId
   );
@@ -40,10 +46,17 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       project_name: projectDetails?.project_name || '',
       fiscal_year: projectDetails?.fiscal_year || '',
       account_name: projectDetails?.account_name || '',
+      account_rid: projectDetails?.account_rid || '',
+      project_rid: projectDetails?.project_rid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
     };
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'project',
-      interactionId: data?.rid || '',
+      interactionId: data?.interaction_rid || interactionId || '',
     });
     const queryParams = new URLSearchParams({
       accountId,
@@ -51,6 +64,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       projectDetails: JSON.stringify(projectData),
     });
     navigate(`${path}?${queryParams.toString()}`);
+  };
+  const handleResponseHistory = () => {
+    searchParams.set('history', 'response_histroy');
+    navigate({ search: searchParams.toString() }, { replace: true });
   };
 
   const headerButtons = [
@@ -93,24 +110,24 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: (
         <span
           className={`font-semibold ${
-            data?.status === 'Draft'
+            data?.status_name === 'Draft'
               ? 'text-gray-500'
-              : data?.status === 'Created'
+              : data?.status_name === 'Created'
                 ? 'text-blue-500'
-                : data?.status === 'Sent'
+                : data?.status_name === 'Sent'
                   ? 'text-purple-500'
-                  : data?.status === 'Response Draft'
+                  : data?.status_name === 'Response Draft'
                     ? 'text-orange-500'
-                    : data?.status === 'Response Received'
+                    : data?.status_name === 'Response Received'
                       ? 'text-green-600'
-                      : data?.status === 'On-Hold'
+                      : data?.status_name === 'On-Hold'
                         ? 'text-yellow-500'
-                        : data?.status === 'Cancelled'
+                        : data?.status_name === 'Cancelled'
                           ? 'text-red-600'
                           : 'text-gray-700'
           }`}
         >
-          {data?.status}
+          {data?.status_name}
         </span>
       ),
       key: 'status',
@@ -122,15 +139,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: data?.response_received_on,
-      key: 'response_received_on',
+      value: data?.response_updated_on,
+      key: 'response_updated_on',
     },
   ];
 
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid,
+      value: data?.interaction_rid || interactionId,
       key: 'rid',
     },
     {
@@ -140,8 +157,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(data?.created_on),
-      key: 'created_on',
+      value: formatDateToYYYYMMDDWithTime(data?.created_datetime),
+      key: 'created_datetime',
     },
     {
       label: 'Created By',
@@ -150,13 +167,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.updated_on),
-      key: 'updated_on',
+      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+      key: 'modified_datetime',
     },
     {
       label: 'Updated By',
-      value: data?.updated_by,
-      key: 'updated_by',
+      value: data?.modified_by,
+      key: 'modified_by',
     },
   ];
 
@@ -201,7 +218,24 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         )}
       </div>
       {data?.questions && data?.questions.length > 0 && (
-        <InteractionQuestions questions={data?.questions} />
+        <InteractionQuestions
+          questions={data?.questions}
+          globalAttachments={data?.global_attachments}
+          isEditEnable={true}
+          actionButtonEnable={true}
+          handleResponseHistory={handleResponseHistory}
+          refetchDeetails={refetch}
+          formData={{
+            account_rid: projectDetails?.account_rid || '',
+            project_rid: projectDetails?.project_rid || '',
+            project_fiscal_rid:
+              projectDetails?.project_fiscal_rid ||
+              projectid ||
+              projectDetails?.rid ||
+              '',
+            interaction_rid: data?.interaction_rid || interactionId || '',
+          }}
+        />
       )}
       {!isLoading && !error && (
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>

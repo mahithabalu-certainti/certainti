@@ -1,31 +1,74 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   InteractionDetails,
-  InteractionFormData,
-  //   InteractionDetailsResponse,
+  InteractionFormPayload,
+  InteractionDetailsResponse,
   InteractionList,
+  InteractionListResponse,
   InteractionListURLParams,
 } from '../../types';
-import {
-  mockInteractionDetailsMap,
-  mockInteractionList,
-} from '../../pages/project/project-details/interactions/mock-response';
-import { resourceServiceApi } from '../../../api/api';
+import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
+import {
+  getInteractionExportUrl,
+  getInteractionListUrl,
+} from '../urls/interactions-url';
 
-// const getInteractionDetailsURL = (projectid: string, interactionId: string) => {
-//   return `/api/interaction/list/${projectid}/${interactionId}`;
-// };
+export const exportInteractions = async (
+  body: InteractionListURLParams
+): Promise<void> => {
+  try {
+    const response = await interactionServiceApi.post(
+      getInteractionExportUrl(),
+      body,
+      {
+        responseType: 'blob',
+      }
+    );
+
+    const contentDisposition = response.headers['content-disposition'];
+    let fileName = 'project_interactions.xlsx';
+    if (contentDisposition) {
+      const fileNameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      if (fileNameMatch && fileNameMatch[1]) {
+        fileName = fileNameMatch[1];
+      }
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting interactions:', error);
+    throw error;
+  }
+};
+
+export const useExportInteractions = () => {
+  return useMutation<void, Error, InteractionListURLParams>({
+    mutationFn: (body) => exportInteractions(body),
+  });
+};
+
+const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
+  return `/api/interactions/detail/${accountId}/${interactionId}`;
+};
 
 export const fetchInteractionList = async (
   params: InteractionListURLParams
 ): Promise<{ interactions: InteractionList[]; count: number }> => {
-  console.log('interaction-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
+  const { data } = await interactionServiceApi.post<InteractionListResponse>(
+    getInteractionListUrl(),
+    params
+  );
   return {
-    interactions: mockInteractionList.data.interactions,
-    count: mockInteractionList.data.totalRecords,
+    interactions: data.data.interactions,
+    count: data.data.totalCount,
   };
 };
 
@@ -70,19 +113,11 @@ const fetchInteractionDetails = async (
   accountId: string,
   interactionId: string
 ): Promise<InteractionDetails> => {
-  //   const response = await resourceServiceApi.get<InteractionDetailsResponse>(
-  //     getInteractionDetailsURL(accountId, interactionId)
-  //   );
+  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
+    getInteractionDetailsURL(accountId, interactionId)
+  );
 
-  //   return response.data.data.interactions;
-  console.log('accountId', accountId);
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  const interaction = mockInteractionDetailsMap[interactionId];
-  if (!interaction) throw new Error('Interaction not found');
-
-  return interaction;
+  return response.data.data.interactionDetails;
 };
 
 export const useInteractionDetails = (
@@ -100,14 +135,14 @@ export const useInteractionDetails = (
 
 // Create & Edit
 export const getCreateInteractionUrl = (): string => {
-  return `/api/interaction/create`;
+  return `/api/interactions/new`;
 };
 
 export const createInteraction = async (
-  body: Partial<InteractionFormData>
+  body: Partial<InteractionFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await resourceServiceApi.post<CommonApiResponse>(
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
       getCreateInteractionUrl(),
       body
     );
@@ -119,20 +154,22 @@ export const createInteraction = async (
 };
 
 export const useCreateInteraction = () => {
-  return useMutation<CommonApiResponse, Error, Partial<InteractionFormData>>({
-    mutationFn: (body) => createInteraction({ ...body }),
-  });
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => createInteraction({ ...body }),
+    }
+  );
 };
 
 export const getUpdateInteractionUrl = (): string => {
-  return `/api/interaction/update`;
+  return `/api/interactions/update`;
 };
 
 export const updateInteractionDetails = async (
-  body: Partial<InteractionFormData>
+  body: Partial<InteractionFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await resourceServiceApi.put<CommonApiResponse>(
+    const { data } = await interactionServiceApi.put<CommonApiResponse>(
       getUpdateInteractionUrl(),
       body
     );
@@ -144,7 +181,9 @@ export const updateInteractionDetails = async (
 };
 
 export const useUpdateInteractionDetails = () => {
-  return useMutation<CommonApiResponse, Error, Partial<InteractionFormData>>({
-    mutationFn: (body) => updateInteractionDetails({ ...body }),
-  });
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => updateInteractionDetails({ ...body }),
+    }
+  );
 };
