@@ -5,7 +5,10 @@ import { InteractionList } from '../../../../types';
 export const getInteractionListColumns = (
   handleViewInteraction: (rid: string) => void,
   handleViewInteractionHistory: (interactionHistory: string) => void,
-  handleViewInteractionAttachment: (interactionAttachentURL: string) => void
+  handleViewInteractionAttachmentCount: (
+    interactionAttachentCount: string | number,
+    rid: string
+  ) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
@@ -142,7 +145,20 @@ export const getInteractionListColumns = (
     label: 'Attachments',
     width: 160,
     sortable: true,
-    render: (row: InteractionList) => row.attachment_count || '-',
+    render: (row: InteractionList) =>
+      row.attachment_count ? (
+        <span
+          onClick={() =>
+            row.attachment_count &&
+            handleViewInteractionAttachmentCount(row.attachment_count, row.rid)
+          }
+          className='text-[#1755E7] hover:underline cursor-pointer'
+        >
+          {row.attachment_count}
+        </span>
+      ) : (
+        '-'
+      ),
     // hide:
     //   !permissionMap?.['attachments']?.edit &&
     //   !permissionMap?.['attachments']?.read,
@@ -181,8 +197,7 @@ export const getInteractionListColumns = (
       row.interaction_url ? (
         <span
           onClick={() =>
-            row.interaction_url &&
-            handleViewInteractionAttachment(row.interaction_url)
+            row.interaction_url && window.open(row.interaction_url, '_blank')
           }
           className='text-[#1755E7] hover:underline cursor-pointer'
         >

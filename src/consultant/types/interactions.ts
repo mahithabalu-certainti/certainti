@@ -277,13 +277,15 @@ export interface InteractionDetailsHistoryResponse {
 
 export interface InteractionAttachmentType {
   rid: string;
-  question_number: string;
   name: string;
+  size: number;
   type: string;
-  size: string;
-  uploaded_by: string;
+  version: number;
+  created_by: string;
   uploaded_date: string;
-  download: string;
+  question_rnumber: string;
+  uploaded_by: string;
+  download_link: string;
   [key: string]: unknown;
 }
 
@@ -312,8 +314,8 @@ export interface InteractionAttachmentListParams {
 
 export interface InteractionAttachmentApiResponse {
   data: {
-    attachments: InteractionAttachmentType[];
-    total_count: number;
+    data: InteractionAttachmentType[];
+    totalRecords: number;
   };
 }
 

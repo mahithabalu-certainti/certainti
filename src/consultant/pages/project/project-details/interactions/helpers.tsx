@@ -154,7 +154,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Created By',
-      value: 'created_by',
+      value: 'created_user_name',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -172,7 +172,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Updated By',
-      value: 'modified_by',
+      value: 'updated_user_name',
       type: 'text',
       operatorOption: textOptions,
       // hide:
