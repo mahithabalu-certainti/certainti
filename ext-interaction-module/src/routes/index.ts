@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { errorLog, successLog } from "../utils/helpers";
-// import interactionRoutes from "./interactionRoutes";
+import interactionRoutes from "./interactionRoutes";
 import otpRoutes from "./otpRoutes";
 
 const routes: Router = Router();
@@ -24,7 +24,7 @@ routes.get("/health", async (req, res) => {
   }
 });
 
-// routes.use("/interactions", interactionRoutes);
+routes.use("/interactions", interactionRoutes);
 routes.use("/otp", otpRoutes);
 
 export default routes;

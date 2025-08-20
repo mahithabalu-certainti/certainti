@@ -27,4 +27,10 @@ router.get('/importedResources/:accountId',
 router.get('/importedProjectTasks/:accountId',
      checkUserStatusMiddleware('projects_task_view_edit'),
        controller.importListController.importedAccountLevelProjectTaskList)
+router.get('/export/importedProjects/:accountId',
+     checkUserStatusMiddleware('projects_export'),
+       controller.importListController.exportImportedProjectList)
+router.get('/export/importedResources/:accountId',
+     checkUserStatusMiddleware('account_resources_export'),
+       controller.importListController.exportImportedResourceList);              
 export default router;

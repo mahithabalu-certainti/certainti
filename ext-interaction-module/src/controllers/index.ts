@@ -1,7 +1,9 @@
 import otpController from "./otpController";
+import interactionsController from "./interactionsController";
 
 const controller = {
-  otpController
+  otpController,
+  interactionsController
 };
 
 export default controller;
