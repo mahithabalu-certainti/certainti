@@ -29,13 +29,13 @@ export const getQuestionTableColumns = (
   {
     name: 'questionNo',
     label: 'Question No.',
-    width: '7%',
+    width: '10%',
     hide: !isEditView,
   },
   {
     name: 'question',
     label: 'Interaction Questions',
-    width: '60%',
+    width: '57%',
     required: true,
   },
   { name: 'mandatory', label: 'Mandatory', width: '8%' },
@@ -57,7 +57,8 @@ export const getQuestionTableColumns = (
 export const validateInteractionForm = (
   formData: InteractionFormData,
   source: string | null,
-  isEditView: boolean
+  isEditView: boolean,
+  isDisableForDraft: boolean
 ): { isValid: boolean; errors: InteractionFormErrors } => {
   let isValid = true;
   const newErrors: InteractionFormErrors = {};
@@ -75,7 +76,7 @@ export const validateInteractionForm = (
     }
   }
 
-  if (!formData.status && isEditView) {
+  if (!formData.status && isEditView && !isDisableForDraft) {
     newErrors.status = 'Status is required';
     isValid = false;
   }
@@ -183,7 +184,10 @@ export const transFormPayload = (
     return {
       ...basePayload,
       interaction_rid: interactionData.interaction_rid || formData.rid,
-      status_rid: formData.status || interactionData.status,
+      status_rid:
+        saveFlag === StatusActionEnum.Draft
+          ? ''
+          : formData.status || interactionData.status,
     };
   }
 

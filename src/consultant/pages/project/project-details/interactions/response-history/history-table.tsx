@@ -93,7 +93,8 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
               questions={data?.questions}
               globalAttachments={data?.global_attachments}
               isEditEnable={false}
-              actionButtonENable={false}
+              actionButtonEnable={false}
+              // handleResponseHistory={handleResponseHistory}
             />
           )}
         </>

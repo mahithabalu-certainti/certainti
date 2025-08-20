@@ -192,23 +192,35 @@ export const useGetImportEntityTypes = () => {
 
 //Interactions
 
-export const getInteractionStatusUrl = (): string => {
-  return `/api/interactions/interactionStatus`;
+export const getInteractionStatusUrl = (statusId?: string): string => {
+  return statusId
+    ? `/api/interactions/interactionStatus?status_scope=UI&current_status=${statusId}`
+    : `/api/interactions/interactionStatus`;
 };
 
-export const fetchInteractionStatus =
-  async (): Promise<GetInteractionStatusApiResponse> => {
-    try {
-      const { data } =
-        await interactionServiceApi.get<GetInteractionStatusApiResponse>(
-          getInteractionStatusUrl()
-        );
-      return data;
-    } catch (error) {
-      console.error('Error fetching interaction status:', error);
-      throw error;
-    }
-  };
+export const fetchInteractionStatus = async (
+  statusId?: string
+): Promise<GetInteractionStatusApiResponse> => {
+  try {
+    const { data } =
+      await interactionServiceApi.get<GetInteractionStatusApiResponse>(
+        getInteractionStatusUrl(statusId)
+      );
+    return data;
+  } catch (error) {
+    console.error('Error fetching interaction status:', error);
+    throw error;
+  }
+};
+
+export const useGetInteractionStatusById = (statusId: string) => {
+  return useQuery<GetInteractionStatusApiResponse, Error>({
+    queryKey: ['gat-interaction-status-list', statusId],
+    queryFn: () => fetchInteractionStatus(statusId),
+    retry: 0,
+    enabled: !!statusId,
+  });
+};
 
 export const useGetInteractionStatus = () => {
   return useQuery<GetInteractionStatusApiResponse, Error>({

@@ -21,17 +21,16 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  // const { projectid } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const interactionId = searchParams.get('interaction_id') || '';
+  const interactionId = searchParams.get('interaction_rid') || '';
 
   const [tableParams, setTableParams] =
     useState<InteractionAttachmentListParams>({
       page: currentPage,
       limit: rowsPerPage,
       account_rid: accountId,
-      interaction_rid: interactionId,
+      interaction_rid: interactionId || '',
     });
 
   const { data, isLoading, isError } = useGetInteractionAttachmentList(
@@ -39,8 +38,20 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
     refresh
   );
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getRowId = (row: InteractionAttachmentType) => row.rid;
-  const interactionAttachmentColumns = getInteractionAttachmentListColumns();
+  const interactionAttachmentColumns =
+    getInteractionAttachmentListColumns(handleDownload);
 
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
@@ -59,7 +70,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
       page: currentPage,
       limit: rowsPerPage,
       account_rid: accountId,
-      interaction_rid: interactionId,
+      interaction_rid: interactionId || '',
     }));
   }, [currentPage, rowsPerPage, accountId, interactionId]);
 
@@ -77,17 +88,16 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           onBackClick={handleBackClick}
           showBackArrow={true}
-          count={data?.data.total_records || 0}
+          count={data?.data.totalRecords || 0}
           showItemCount={true}
         />
-        <div className='border border-[#CBD6E2]'>
+        <div className='border-t border-[#CBD6E2]'>
           <ListTable
-            data={data?.data.attachments || []}
+            data={data?.data.data || []}
             columns={interactionAttachmentColumns}
             getRowId={getRowId}
             hoverHighlight={false}
             tableStyle={{
-              borderBottom: '1px solid #CBD6E2',
               height: '100%',
               maxHeight: 'calc(100vh - 290px)',
               overflow: 'auto',
@@ -102,7 +112,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
             currentPage={currentPage}
-            totalItems={data?.data.total_records || 0}
+            totalItems={data?.data.totalRecords || 0}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
           />

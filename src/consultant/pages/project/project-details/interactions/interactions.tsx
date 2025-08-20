@@ -77,7 +77,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionAttachmentId = searchParams.get(
-    'interaction_attachment_url'
+    'interaction_attachment_count'
   );
 
   const responseHistory = searchParams.get('history');
@@ -266,9 +266,16 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleViewInteractionAttachment = (interactionAttachentURL: string) => {
-    if (interactionAttachentURL) {
-      searchParams.set('interaction_attachment_url', interactionAttachentURL);
+  const handleViewInteractionAttachmentCount = (
+    interactionAttachentCount: string | number,
+    rowId: string
+  ) => {
+    if (interactionAttachentCount) {
+      searchParams.set('interaction_rid', rowId);
+      searchParams.set(
+        'interaction_attachment_count',
+        String(interactionAttachentCount)
+      );
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -277,7 +284,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
       searchParams.delete('interaction_history_id');
-      searchParams.delete('interaction_attachment_url');
+      searchParams.delete('interaction_attachment_count');
+      searchParams.delete('interaction_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -310,7 +318,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachment
+    handleViewInteractionAttachmentCount
   );
 
   const filterFields = !viewInteractionHistory
@@ -326,7 +334,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       <SectionTabPanel
         tabs={InteractionsTabs}
         filterMenu={filterFields}
-        filterVisibility={!viewDetails}
+        filterVisibility={!viewDetails && !viewInteractionAttachment}
         showFilter={showFilter}
         contextKey='project-interactions'
         appliedFilters={appliedFilters}
