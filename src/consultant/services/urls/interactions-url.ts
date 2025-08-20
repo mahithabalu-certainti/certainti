@@ -9,3 +9,6 @@ export const getInteractionResponseHistroyListUrl = () =>
 export const getInteractionResponseHistoryDetailsURL = () => {
   return `/api/interactions/responseHistory/details`;
 };
+export const getInteractionHistoryUrl = (): string => {
+  return '/api/interactions/history';
+};
