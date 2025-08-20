@@ -675,6 +675,24 @@ export interface IImportListGraphqlServices {
     data?: { projects: any; totalCount: number };
   }>;
 
+  exportAccountLevelImportedProjects(
+    accountId: string,
+    fiscal_year: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    bothParentAndChild: boolean,
+    userId: string,
+    timezone: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }>;
+
   fetchAccountLevelImportedResources(
     accountId: string,
     page: number,
@@ -688,7 +706,21 @@ export interface IImportListGraphqlServices {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { resources: any };
+    data?: { resources: any; count: number};
+  }>;
+
+  exportAccountLevelImportedResources(
+    accountId: string,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any; count: number};
   }>;
 
   fetchAccountLevelImportedProjectTasks(
