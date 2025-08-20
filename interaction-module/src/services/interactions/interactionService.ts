@@ -145,10 +145,21 @@ export class InteractionService {
           accountNumber,
           interactionData.interaction_rid
         );
-      const { interactionStatus, intSource } =
-        await this.getInteractionStatusAndSource();
-      interactionData.status_rid = interactionData.status_rid || "";
-      interactionData.interaction_source_rid = intSource || "";
+      if(interactionData.status_action === 'DRAFT')
+      {
+       const { interactionStatus, intSource } =
+        await this.getInteractionStatusAndSource(interactionData.status_action);
+        interactionData.status_rid = interactionStatus || "";
+        interactionData.interaction_source_rid = intSource || "";
+      }
+      else{
+
+        const { interactionStatus, intSource } =
+          await this.getInteractionStatusAndSource(interactionData.status_action);
+        if(!interactionData.status_rid)
+          interactionData.status_rid = interactionStatus || "";
+        interactionData.interaction_source_rid = intSource || "";
+      }
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
           accountNumber,

@@ -648,10 +648,7 @@ class InteractionSchemaService {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-  let whereClause = "status = 'active'";
-  if (status_scope && status_scope === "UI") {
-    whereClause += " AND status_type = 'UI'";
-  }
+  let whereClause = "status = 'active' AND (status_type IS NULL OR status_type = 'UI')";
   if (currentStatus) {
     // Fetch status_name for the given status_rid (currentStatus)
     const [statusResult]: any[] = await this.mainDbSequelize.query(
@@ -661,7 +658,7 @@ class InteractionSchemaService {
       type: "SELECT",
       }
     );
-    if (statusResult?.status_name === "On-Hold") {
+    if (statusResult?.status_name === "On Hold") {
       whereClause += " OR status_type = 'CONDITIONAL'";
     }
   }
@@ -782,7 +779,7 @@ class InteractionSchemaService {
         await InteractionResponseHistory.create({
           interaction_rid: responseData.interaction_rid,
           interaction_version: interactionVersion,
-          interaction_item_rid: "",
+          interaction_item_rid: null,
           interaction_response: "",
           created_by: userId,
           response_by: userId,
@@ -794,7 +791,7 @@ class InteractionSchemaService {
             {
               interaction_rid: responseData.interaction_rid,
               interaction_version: interactionVersion,
-              interaction_response_rid: "",
+              interaction_response_rid: null,
               attachment_url: attachment.fileUrl,
               attachment_name: attachment.fileName,
               attachment_size: attachment.fileSize,
@@ -842,6 +839,10 @@ class InteractionSchemaService {
       }
 
       if (responseCreated) {
+        const attachmentCount = await InteractionAttachment.count({
+          where: { interaction_rid: responseData.interaction_rid }
+        });
+        const attachmentcount = attachmentCount;
         const { Interaction, InteractionSummary } =
           await this.interactionModelService.getModels(accountNumber);
         const updateData: any = {
@@ -849,6 +850,7 @@ class InteractionSchemaService {
           response_updated_on: new Date(),
           response_updated_by: userId,
           response_source: "Manual",
+          attachment_count: attachmentcount
         };
 
         const summaryUpdateData: any = {
@@ -856,6 +858,7 @@ class InteractionSchemaService {
           response_updated_on: new Date(),
           response_updated_by: userId,
           response_source: "Manual",
+          attachment_count: attachmentcount
         };
 
         if (responseData.status_action === "Submit") {
@@ -873,7 +876,9 @@ class InteractionSchemaService {
         });
       }
     } catch (err) {
+      console.log(err)
       throw new Error(
+
         "Error updating interaction response: " + (err as Error).message
       );
     }
