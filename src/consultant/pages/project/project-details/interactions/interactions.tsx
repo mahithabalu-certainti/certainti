@@ -81,7 +81,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
 
   const responseHistory = searchParams.get('history');
-  const interactionResponseId = searchParams.get('interactionResponse_id');
+  const interactionResponseId = searchParams.get('versionID');
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
@@ -283,7 +283,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const handleBackFromResponse = () => {
     if (interactionResponseId) {
-      searchParams.delete('interactionResponse_id');
+      searchParams.delete('versionID');
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {
       searchParams.delete('history');

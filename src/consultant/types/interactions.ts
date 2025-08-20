@@ -148,8 +148,11 @@ export type ResponseInteractionList = {
   response_by_rid: string;
   response_source: string;
   interaction_response: string;
+  interaction_rid: string;
+  interaction_item_rid: string;
   interaction_source_rid: string;
   interaction_source_name: string;
+  interaction_version: number;
   response_by: string;
 };
 export interface InteractionListURLParams {
@@ -159,6 +162,7 @@ export interface InteractionListURLParams {
   sort_by: 'ASC' | 'DESC';
   filters?: object;
   account_rid?: string;
+  interaction_rid?: string;
   project_rid?: string;
   project_fiscal_rid?: string;
   fiscal_year?: number;
@@ -170,7 +174,7 @@ export interface InteractionListURLParams {
 export interface ResponseListURLParams {
   account_rid?: string;
   interaction_rid?: string;
-  version: 1;
+  version: number;
 }
 
 export interface InteractionListResponse {
@@ -247,6 +251,27 @@ export interface InteractionDetailsResponse {
   statusMessage: string;
   data: {
     interactionDetails: InteractionDetails;
+  };
+}
+
+export interface InteractionHistoryResponse {
+  interaction_response_rid: string;
+  interaction_item_rid: string;
+  response_submitted_on: string;
+  question_id: string;
+  question: string;
+  response: string;
+  response_on: string;
+  attachments: Attachment[];
+}
+export interface InteractionDetailsHistoryResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    history_details: InteractionHistoryResponse[];
+    interaction_rid: string;
+    project_name: string;
   };
 }
 
