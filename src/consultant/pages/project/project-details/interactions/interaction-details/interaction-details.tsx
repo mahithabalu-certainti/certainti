@@ -35,7 +35,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
 
-  const { data, isLoading, error } = useInteractionDetails(
+  const { data, isLoading, error, refetch } = useInteractionDetails(
     accountId,
     interactionId
   );
@@ -68,7 +68,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const handleResponseHistory = () => {
     searchParams.set('history', 'response_histroy');
     navigate({ search: searchParams.toString() }, { replace: true });
-    console.log('respose history');
   };
 
   const headerButtons = [
@@ -223,8 +222,19 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
           isEditEnable={true}
-          actionButtonENable={true}
+          actionButtonEnable={true}
           handleResponseHistory={handleResponseHistory}
+          refetchDeetails={refetch}
+          formData={{
+            account_rid: projectDetails?.account_rid || '',
+            project_rid: projectDetails?.project_rid || '',
+            project_fiscal_rid:
+              projectDetails?.project_fiscal_rid ||
+              projectid ||
+              projectDetails?.rid ||
+              '',
+            interaction_rid: data?.interaction_rid || interactionId || '',
+          }}
         />
       )}
       {!isLoading && !error && (

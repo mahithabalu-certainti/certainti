@@ -11,6 +11,10 @@ import {
   PdfIcon,
 } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import {
+  useUpdateInteractionQuestionResponse,
+  useUploadInteractionAttachment,
+} from '../../consultant/services/interactions/response-interaction-service';
 
 interface SectionHeaderButton {
   label: string;
@@ -26,27 +30,28 @@ interface InteractionQuesProps {
   questions: InteractionQuestion[];
   globalAttachments: Attachment[];
   isEditEnable?: boolean;
-  actionButtonENable?: boolean;
+  isLoading?: boolean;
+  actionButtonEnable?: boolean;
   handleResponseHistory?: () => void;
-}
-
-interface UploadedFile {
-  file: File;
-  url?: string;
+  refetchDeetails?: () => void;
+  formData?: Record<string, string>;
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   questions,
   globalAttachments,
   isEditEnable = false,
-  actionButtonENable,
+  isLoading = false,
+  actionButtonEnable,
   handleResponseHistory,
+  refetchDeetails,
+  formData,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
     questions.reduce(
       (acc, q) => {
-        acc[q.question_seq_num] = q.response || '';
+        acc[q.rid] = q.response || '';
         return acc;
       },
       {} as Record<string, string>
@@ -54,25 +59,17 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   );
 
   const [newGlobalAttachments, setNewGlobalAttachments] = useState<
-    UploadedFile[]
-  >(
-    (globalAttachments || []).map((f) => ({
-      file: new File([], f.fileName), // placeholder so UI works
-      url: f.fileUrl,
-    }))
-  );
+    Attachment[]
+  >(globalAttachments || []);
   const [questionAttachments, setQuestionAttachments] = useState<
-    Record<string, UploadedFile[]>
+    Record<string, Attachment[]>
   >(
     questions.reduce(
       (acc, q) => {
-        acc[q.question_seq_num] = (q.attachments || []).map((f) => ({
-          file: new File([], f.fileName), // placeholder for UI
-          url: f.fileUrl,
-        }));
+        acc[q.rid] = q.attachments || [];
         return acc;
       },
-      {} as Record<string, UploadedFile[]>
+      {} as Record<string, Attachment[]>
     )
   );
 
@@ -80,6 +77,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const questionFileInputRefs = useRef<Record<string, HTMLInputElement | null>>(
     {}
   );
+  const uploadFileMutation = useUploadInteractionAttachment();
+  const updateInteractionQusResponse = useUpdateInteractionQuestionResponse();
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -92,7 +91,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     setEditedAnswers(
       questions.reduce(
         (acc, q) => {
-          acc[q.question_seq_num] = q.response || '';
+          acc[q.rid] = q.response || '';
           return acc;
         },
         {} as Record<string, string>
@@ -100,34 +99,47 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     );
 
     // revert global attachments
-    setNewGlobalAttachments(
-      (globalAttachments || []).map((f) => ({
-        file: new File([], f.fileName),
-        url: f.fileUrl,
-      }))
-    );
+    setNewGlobalAttachments(globalAttachments || []);
 
     // revert question attachments
     setQuestionAttachments(
       questions.reduce(
         (acc, q) => {
-          acc[q.question_seq_num] = (q.attachments || []).map((f) => ({
-            file: new File([], f.fileName),
-            url: f.fileUrl,
-          }));
+          acc[q.rid] = q.attachments || [];
           return acc;
         },
-        {} as Record<string, UploadedFile[]>
+        {} as Record<string, Attachment[]>
       )
     );
   };
 
-  const handleSave = (flag: 'draft' | 'submit') => {
-    console.log('Saving answers:', editedAnswers);
-    console.log('Flag:', flag);
-    console.log('New Global Attachments:', newGlobalAttachments);
-    console.log('Question Attachments:', questionAttachments);
-    setIsEditing(false);
+  const handleSave = async (flag: 'draft' | 'submit') => {
+    const payload = {
+      status_action: (flag === 'draft'
+        ? 'RESPONSE_DRAFT'
+        : 'RESPONSE_RECEIVED') as 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED',
+      attachments: newGlobalAttachments,
+      questions: questions.map((q) => ({
+        question: q.question,
+        response: editedAnswers[q.rid] || '',
+        rid: q.rid,
+        attachments: questionAttachments[q.rid] || [],
+      })),
+    };
+
+    const finalPayload = {
+      account_rid: formData?.account_rid || '',
+      project_rid: formData?.project_rid || '',
+      project_fiscal_rid: formData?.project_fiscal_rid || '',
+      interaction_rid: formData?.interaction_rid || '',
+      ...payload,
+    };
+    updateInteractionQusResponse.mutate(finalPayload, {
+      onSuccess: () => {
+        refetchDeetails?.();
+        setIsEditing(false);
+      },
+    });
   };
 
   const handleAnswerChange = (questionId: string, value: string) => {
@@ -137,30 +149,48 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     }));
   };
 
-  const handleGlobalFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files).map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-    }));
-    setNewGlobalAttachments((prev) => [...prev, ...files]);
-    e.target.value = '';
+  const handleGlobalFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const res = await uploadFileMutation.mutateAsync({
+        account_rid: formData?.account_rid || '',
+        project_rid: formData?.project_rid || '',
+        interaction_rid: formData?.interaction_rid || '',
+        file,
+      });
+      setNewGlobalAttachments((prev) => [...prev, res.data]);
+      e.target.value = '';
+    } catch (err) {
+      console.error('Upload failed', err);
+    }
   };
 
-  const handleQuestionFileUpload = (
+  const handleQuestionFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     questionId: string
   ) => {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files).map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-    }));
-    setQuestionAttachments((prev) => ({
-      ...prev,
-      [questionId]: [...(prev[questionId] || []), ...files],
-    }));
-    e.target.value = '';
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const res = await uploadFileMutation.mutateAsync({
+        account_rid: formData?.account_rid || '',
+        project_rid: formData?.project_rid || '',
+        interaction_rid: formData?.interaction_rid || '',
+        file,
+      });
+      setQuestionAttachments((prev) => ({
+        ...prev,
+        [questionId]: [...(prev[questionId] || []), res.data],
+      }));
+      e.target.value = '';
+    } catch (err) {
+      console.error('Upload failed', err);
+    }
   };
 
   const removeGlobalAttachment = (index: number) => {
@@ -174,6 +204,19 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     }));
   };
 
+  const isUpdateLoading = updateInteractionQusResponse.isPending || isLoading;
+
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const buttons: SectionHeaderButton[] = isEditing
     ? [
         {
@@ -181,24 +224,30 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           variant: 'contained' as const,
           onClick: () => handleSave('draft'),
           sx: { width: '110px', minWidth: '110px' },
+          loading: isUpdateLoading,
+          disabled: uploadFileMutation.isPending,
         },
         {
           label: 'Save & Submit',
           variant: 'contained' as const,
           onClick: () => handleSave('submit'),
           sx: { width: '110px', minWidth: '110px' },
+          loading: isUpdateLoading,
+          disabled: uploadFileMutation.isPending,
         },
         {
           label: 'Upload Files',
           variant: 'outlined' as const,
           onClick: () => globalFileInputRef.current?.click(),
           sx: { width: '100px', minWidth: '100px' },
+          disabled: isUpdateLoading || uploadFileMutation.isPending,
         },
         {
           label: 'Cancel',
           variant: 'outlined' as const,
           onClick: handleCancel,
           sx: { width: '75px', minWidth: '75px' },
+          disabled: isUpdateLoading || uploadFileMutation.isPending,
         },
       ]
     : [
@@ -208,19 +257,21 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           disabled: !isEditEnable,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
-          hide: !actionButtonENable,
+          hide: !actionButtonEnable,
         },
         {
           label: 'Response History',
           variant: 'outlined' as const,
           onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
-          hide: !actionButtonENable,
+          hide: !actionButtonEnable,
         },
       ];
 
   return (
-    <div className='my-3 border border-[#CBD6E2] rounded-[2px]'>
+    <div
+      className={`my-3 border border-[#CBD6E2] rounded-[2px] ${isUpdateLoading ? 'pointer-events-none' : ''}`}
+    >
       <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
         <div className='text-[14px] text-[#2D3E4F] font-semibold'>
           Interaction Question
@@ -245,7 +296,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           <input
             ref={globalFileInputRef}
             type='file'
-            multiple
             className='hidden'
             onChange={handleGlobalFileUpload}
           />
@@ -272,7 +322,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   <div className='flex items-center gap-2'>
                     <PdfIcon />
                     <div className='text-[14px] text-[#425A76] font-normal'>
-                      {'fileName' in file ? file.fileName : file.file.name}
+                      {file.fileName}.{file.fileType}
                     </div>
                   </div>
                   {isEditing ? (
@@ -285,14 +335,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       </button>
                     </Tooltip>
                   ) : (
-                    <a
-                      href={
-                        'fileUrl' in file
-                          ? file.fileUrl
-                          : URL.createObjectURL(file.file)
-                      }
-                      download
-                      className='p-1 border border-[#CBD6E2] rounded-[2px]'
+                    <button
+                      onClick={() => handleDownload(file.fileUrl)}
+                      className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
                       style={{
                         boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
                         background:
@@ -300,7 +345,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       }}
                     >
                       <DownloadIcon />
-                    </a>
+                    </button>
                   )}
                 </div>
               )
@@ -312,7 +357,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       {/* Questions */}
       <div>
         {questions.map((q, index) => (
-          <div key={q.question_seq_num} className='p-3'>
+          <div key={q.rid} className='p-3'>
             <div className='font-medium text-[14px] text-[#2D3E4F]'>
               <span className='font-bold'>
                 {q.question_seq_num || `Q00${index + 1}`}
@@ -323,10 +368,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             {isEditing ? (
               <div className='mt-2 relative'>
                 <ReactQuill
-                  value={editedAnswers[q.question_seq_num]}
-                  onChange={(value) =>
-                    handleAnswerChange(q.question_seq_num, value)
-                  }
+                  value={editedAnswers[q.rid]}
+                  onChange={(value) => handleAnswerChange(q.rid, value)}
                   theme='snow'
                   className='rounded-[2px] bg-white'
                   modules={{
@@ -372,23 +415,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                 />
                 <button
                   type='button'
-                  onClick={() =>
-                    questionFileInputRefs.current[q.question_seq_num]?.click()
-                  }
+                  onClick={() => questionFileInputRefs.current[q.rid]?.click()}
                   className='absolute top-3 right-[8%] w-6 h-5 flex items-center justify-center cursor-pointer'
                 >
                   <AttachmentsSideIcon className='w-4 h-4' />
                 </button>
                 <input
-                  ref={(el) =>
-                    (questionFileInputRefs.current[q.question_seq_num] = el)
-                  }
+                  ref={(el) => (questionFileInputRefs.current[q.rid] = el)}
                   type='file'
-                  multiple
                   className='hidden'
-                  onChange={(e) =>
-                    handleQuestionFileUpload(e, q.question_seq_num)
-                  }
+                  onChange={(e) => handleQuestionFileUpload(e, q.rid)}
                 />
               </div>
             ) : (
@@ -401,65 +437,55 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             )}
 
             {/* Question-specific attachments */}
-            {(isEditing
-              ? questionAttachments[q.question_seq_num]
-              : q.attachments
-            ).length > 0 && (
+            {(isEditing ? questionAttachments[q.rid] : q.attachments).length >
+              0 && (
               <div
                 className={`flex flex-col gap-1 mt-1 max-h-[85px] ${
-                  (isEditing
-                    ? questionAttachments[q.question_seq_num]
-                    : q.attachments
-                  ).length > 2
+                  (isEditing ? questionAttachments[q.rid] : q.attachments)
+                    .length > 2
                     ? 'overflow-auto'
                     : 'overflow-visible'
                 }`}
               >
-                {(isEditing
-                  ? questionAttachments[q.question_seq_num]
-                  : q.attachments
-                ).map((file, index) => (
-                  <div
-                    key={index}
-                    className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                  >
-                    <div className='flex items-center gap-2'>
-                      <PdfIcon />
-                      <div className='text-[14px] text-[#425A76] font-normal'>
-                        {'fileName' in file ? file.fileName : file.file.name}
+                {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
+                  (file, index) => (
+                    <div
+                      key={index}
+                      className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                    >
+                      <div className='flex items-center gap-2'>
+                        <PdfIcon />
+                        <div className='text-[14px] text-[#425A76] font-normal'>
+                          {file.fileName}.{file.fileType}
+                        </div>
                       </div>
-                    </div>
-                    {isEditing ? (
-                      <Tooltip title='Remove file' arrow placement='top'>
+                      {isEditing ? (
+                        <Tooltip title='Remove file' arrow placement='top'>
+                          <button
+                            onClick={() =>
+                              removeQuestionAttachment(q.rid, index)
+                            }
+                            className='cursor-pointer p-[4px]'
+                          >
+                            <KeyContactRemoveIcon />
+                          </button>
+                        </Tooltip>
+                      ) : (
                         <button
-                          onClick={() =>
-                            removeQuestionAttachment(q.question_seq_num, index)
-                          }
-                          className='cursor-pointer p-[4px]'
+                          onClick={() => handleDownload(file.fileUrl)}
+                          className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                          style={{
+                            boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                            background:
+                              'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                          }}
                         >
-                          <KeyContactRemoveIcon />
+                          <DownloadIcon />
                         </button>
-                      </Tooltip>
-                    ) : (
-                      <a
-                        href={
-                          'fileUrl' in file
-                            ? file.fileUrl
-                            : URL.createObjectURL(file.file)
-                        }
-                        download
-                        className='p-1 border border-[#CBD6E2] rounded-[2px]'
-                        style={{
-                          boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                          background:
-                            'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                        }}
-                      >
-                        <DownloadIcon />
-                      </a>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  )
+                )}
               </div>
             )}
 

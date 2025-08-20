@@ -11,6 +11,18 @@ export enum StatusActionEnum {
   Create = 'CREATE',
   Draft = 'DRAFT',
 }
+
+export enum StatusTypeEnum {
+  create = 'create',
+  draft = 'draft',
+  sent = 'sent',
+  response_draft = 'response draft',
+  created = 'created',
+  response_received = 'response received',
+  cancelled = 'cancelled',
+  on_hold = 'on-hold',
+}
+
 export interface InteractionFormTableColumn {
   name: string;
   label: string;
@@ -189,7 +201,7 @@ export interface Attachment {
   fileName: string;
   fileUrl: string;
   fileType: string;
-  fileSize: string;
+  fileSize: string | number;
 }
 
 export interface InteractionQuestion {
@@ -277,5 +289,51 @@ export interface InteractionAttachmentApiResponse {
   data: {
     attachments: InteractionAttachmentType[];
     total_count: number;
+  };
+}
+
+// Interaction Question Response
+
+export interface InteractionQuestionResponseType {
+  question: string;
+  response: string;
+  rid: string;
+  attachments?: Attachment[];
+}
+
+export interface InteractionQuestionResUpdateRequest {
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+  interaction_rid: string;
+  status_action: 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED';
+  attachments: Attachment[];
+  questions: InteractionQuestionResponseType[];
+}
+
+export interface InteractionQuestionResUpdateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: unknown;
+}
+
+// Upload Interaction Attachment
+export interface UploadInteractionAttachmentRequest {
+  account_rid: string;
+  project_rid: string;
+  interaction_rid: string;
+  file: File;
+}
+
+export interface UploadInteractionAttachmentResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    fileUrl: string;
   };
 }

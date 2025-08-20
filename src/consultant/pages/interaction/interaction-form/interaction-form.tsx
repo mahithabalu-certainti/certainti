@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Select,
@@ -21,6 +21,7 @@ import {
   InteractionQuestionErrors,
   SelectOption,
   StatusActionEnum,
+  StatusTypeEnum,
 } from '../../../types';
 import { useToast } from '../../../../hooks';
 import {
@@ -45,13 +46,14 @@ import {
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
-import { useGetInteractionStatus } from '../../../../common-service';
+import { useGetInteractionStatusById } from '../../../../common-service';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
+  const [currentStatusId, setCurrentStatusId] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
     project_code: '',
@@ -127,9 +129,11 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatus = useGetInteractionStatus();
+  const interactionStatus = useGetInteractionStatusById(currentStatusId || '');
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
+  const isDisableForDraft =
+    interactionData?.status_name?.toLowerCase() === StatusTypeEnum.draft;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
     {
@@ -144,6 +148,7 @@ const InteractionForm = () => {
 
   useEffect(() => {
     if (interactionData && isEditView) {
+      setCurrentStatusId(interactionData.status);
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
@@ -156,7 +161,6 @@ const InteractionForm = () => {
         ),
         rid: interactionData.interaction_rid || interactionId,
         interaction_id: interactionData.r_number,
-        status: interactionData.status,
         projectCode:
           interactionData.project_code || selectedProject.project_code,
         projectName:
@@ -342,7 +346,8 @@ const InteractionForm = () => {
     const { isValid, errors: validationErrors } = validateInteractionForm(
       formData,
       searchParams.get('source'),
-      isEditView
+      isEditView,
+      isDisableForDraft
     );
     setErrors(validationErrors);
     return isValid;
@@ -423,6 +428,7 @@ const InteractionForm = () => {
               fontSize: '13px',
               fontWeight: 400,
             }}
+            hide={isDisableForDraft}
           />
           <TextButton
             label='Save & Submit'
@@ -654,7 +660,9 @@ const InteractionForm = () => {
                 )}
               </div>
 
-              <div className={`${isEditView ? 'block' : 'hidden'}`}>
+              <div
+                className={`${isEditView && !isDisableForDraft ? 'block' : 'hidden'}`}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='status'
@@ -731,6 +739,16 @@ const InteractionForm = () => {
                     },
                   }}
                 >
+                  <MenuItem
+                    value=''
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                  >
+                    Choose Status
+                  </MenuItem>
                   {statusOptions?.map((option, i) => (
                     <MenuItem
                       sx={{
@@ -830,15 +848,17 @@ const InteractionForm = () => {
                             position: 'relative',
                             height: '32px !important',
                           }}
-                          className={`${!question.is_editable ? 'bg-[#f3f4f6]' : ''}`}
+                          className={`${!question.is_editable && isEditView ? 'bg-[#f3f4f6] cursor-default pointer-events-none' : ''}`}
                         >
                           {questionTableColumns
                             .filter((col) => !col.hide)
                             .map((col: InteractionFormTableColumn) => {
                               const isDisabled =
-                                !question.is_editable || col.disabled;
+                                (!question.is_editable && isEditView) ||
+                                col.disabled;
                               const isBtnDisabled =
-                                !question.is_editable || col.disabled;
+                                (!question.is_editable && isEditView) ||
+                                col.disabled;
                               const error =
                                 errors.questions?.[index]?.[
                                   col.name as keyof InteractionQuestionErrors
@@ -999,10 +1019,12 @@ const InteractionForm = () => {
                                         aria-label='Remove question'
                                         disabled={isBtnDisabled}
                                       >
-                                        <KeyContactRemoveIcon
-                                          alt='Remove'
-                                          style={{ width: 20, height: 20 }}
-                                        />
+                                        <React.Suspense fallback={null}>
+                                          <KeyContactRemoveIcon
+                                            alt='Remove'
+                                            style={{ width: 20, height: 20 }}
+                                          />
+                                        </React.Suspense>
                                       </button>
                                     </Tooltip>
                                   )}
