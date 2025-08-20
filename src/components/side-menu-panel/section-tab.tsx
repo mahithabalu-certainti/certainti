@@ -39,6 +39,7 @@ interface TabPanelProps {
 
   showRefresh?: boolean;
   onRefreshClick?: () => void;
+  showToggle?: boolean;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
@@ -69,6 +70,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
 
   showRefresh,
   onRefreshClick,
+  showToggle,
   toggleEnabled,
   setToggleEnabled,
   onFilterChange,
@@ -179,7 +181,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
         )}
 
         <Box className='flex items-center'>
-          {tabValue === 'account_projects_view_overview' && (
+          {tabValue === 'account_projects_view_overview' || showToggle && (
             <div className='flex items-center gap-2'>
               <span className='font-semibold text-[13px] text-[#425A76]'>
                 Include Parent
@@ -205,13 +207,13 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                   <ResourceFilterIcon />
                   {(Object.keys(appliedFilters).length > 0 ||
                     sortFilterCount > 0) && (
-                    <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
-                      <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                      <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                        {Object.keys(appliedFilters).length + sortFilterCount}
-                      </span>
-                    </div>
-                  )}
+                      <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
+                        <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                        <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                          {Object.keys(appliedFilters).length + sortFilterCount}
+                        </span>
+                      </div>
+                    )}
                 </Box>
 
                 <Suspense fallback={null}>
@@ -245,7 +247,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
             <GlobalFiscalYearDropdown
               fiscalYear={String(fiscalYearValue)}
               fiscalYearsOptions={allYears || []}
-              onChange={updatedYear || (() => {})}
+              onChange={updatedYear || (() => { })}
               className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
             />
           )}

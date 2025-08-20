@@ -2,10 +2,12 @@ export interface TimesheetProjectTableListURLParams {
   page: number;
   limit: number;
   sort: string;
-  sort_by: 'asc' | 'desc';
+  sort_by: 'ASC' | 'DESC';
   filters?: object;
   fiscal_year?: number | string;
   account_rid: string;
+  documentRid: string;
+  bothParentAndChild?: boolean;
 }
 
 export interface TimesheetProjectTableListResponse {
@@ -14,7 +16,7 @@ export interface TimesheetProjectTableListResponse {
   statusCodeValue: string;
   data: {
     projects: TimesheetProjectList[];
-    count?: number;
+    totalCount?: number;
   };
 }
 
@@ -92,4 +94,46 @@ export type ProjectFiscalSummary = {
   created_datetime: string;
   project_fiscal_rid: string;
   rid: string;
+};
+
+export interface TimesheetResourceTableListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue: string;
+  data: {
+    resources: TimesheetResourceListType[];
+    count?: number;
+  };
+}
+export type TimesheetResourceListType = {
+  rid: string;
+  r_number: string;
+  resource_code: string;
+  resource_name: string;
+  resource_firstname: string | null;
+  resource_lastname: string | null;
+  resource_type_rid: string;
+  status_rid: string;
+  resource_role: string | null;
+  resource_designation: string | null;
+  resource_orgname: string | null;
+  comments: string | null;
+  resource_total_experience: number | null;
+  country_rid: string | null;
+  region_rid: string | null;
+  city_rid: string | null;
+  account_name: string;
+  total_project_hours: number | null;
+  estimated_rd_hours: number | null;
+  country_name: string | null;
+  region_name: string | null;
+  city_name: string | null;
+  resource_type_name: string;
+  status_name: string;
+  total_hours_pro_res: number | null;
+  total_cost_pro_res: number | null;
+  qre_percent: number | null;
+  qre_final: number | null;
+  currency_symbol: string;
+
 };

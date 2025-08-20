@@ -2,7 +2,6 @@ import {
   valueDisplay,
   costDisplay,
   getDateFormat,
-  PROJECT_TASK_REGEX,
 } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import { ProjectTaskListType } from '../../../../../../types/project-task';
@@ -10,7 +9,6 @@ import { ProjectTaskListType } from '../../../../../../types/project-task';
 export const getProjectTaskColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ProjectTaskListType>[] => {
-  console.log('permissionMap', permissionMap);
   return [
     {
       id: 'resource_code',
@@ -28,9 +26,9 @@ export const getProjectTaskColumns = (
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
       },
-      // hide:
-      //   !permissionMap?.['resource_code']?.read &&
-      //   !permissionMap?.['resource_code']?.edit,
+      hide:
+        !permissionMap?.['resource_code']?.read &&
+        !permissionMap?.['resource_code']?.edit,
     },
     {
       id: 'resource_name',
@@ -38,9 +36,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'resource_name',
       width: 160,
-      // hide:
-      //   !permissionMap?.['resource_name']?.read &&
-      //   !permissionMap?.['resource_name']?.edit,
+      hide:
+        !permissionMap?.['resource_name']?.read &&
+        !permissionMap?.['resource_name']?.edit,
     },
     {
       id: 'resource_type_name',
@@ -48,9 +46,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'resource_type',
       width: 160,
-      // hide:
-      //   !permissionMap?.['resource_type_name']?.read &&
-      //   !permissionMap?.['resource_type_name']?.edit,
+      hide:
+        !permissionMap?.['resource_type_name']?.read &&
+        !permissionMap?.['resource_type_name']?.edit,
     },
     {
       id: 'resource_role',
@@ -58,9 +56,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'resource_role',
       width: 160,
-      // hide:
-      //   !permissionMap?.['resource_role']?.read &&
-      //   !permissionMap?.['resource_role']?.edit,
+      hide:
+        !permissionMap?.['resource_role']?.read &&
+        !permissionMap?.['resource_role']?.edit,
     },
     {
       id: 'start_date',
@@ -68,9 +66,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'start_date',
       width: 160,
-      // hide:
-      //   !permissionMap?.['start_date']?.read &&
-      //   !permissionMap?.['start_date']?.edit,
+      hide:
+        !permissionMap?.['start_date']?.read &&
+        !permissionMap?.['start_date']?.edit,
       render: (row: ProjectTaskListType) =>
         row.start_date ? getDateFormat(row.start_date) : '-',
     },
@@ -79,27 +77,14 @@ export const getProjectTaskColumns = (
       id: 'total_cost_pro_task',
       label: 'Cost',
       sortable: true,
-      editId: 'total_cost_pro_task',
       sortId: 'total_cost_pro_task',
       width: 130,
       sx: {
         textAlign: 'right',
       },
-      // hide:
-      //   !permissionMap?.['total_cost_pro_task']?.read &&
-      //   !permissionMap?.['total_cost_pro_task']?.edit,
-      field: {
-        type: 'text',
-        required: false,
-        placeholder: 'Enter Cost',
-        validation: [
-          {
-            regex: PROJECT_TASK_REGEX.COST_REGEX,
-            errorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-          },
-        ],
-      },
+      hide:
+        !permissionMap?.['total_cost_pro_task']?.read &&
+        !permissionMap?.['total_cost_pro_task']?.edit,
       render: (row: ProjectTaskListType) =>
         row.total_cost_pro_task
           ? costDisplay(row.total_cost_pro_task, row.currency_symbol)
@@ -115,21 +100,9 @@ export const getProjectTaskColumns = (
       sx: {
         textAlign: 'right',
       },
-      // hide:
-      //   !permissionMap?.['total_hours_pro_task']?.read &&
-      //   !permissionMap?.['total_hours_pro_task']?.edit,
-      field: {
-        type: 'text',
-        required: false,
-        placeholder: 'Enter an effort',
-        validation: [
-          {
-            regex: PROJECT_TASK_REGEX.EFFORT,
-            errorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-          },
-        ],
-      },
+      hide:
+        !permissionMap?.['total_hours_pro_task']?.read &&
+        !permissionMap?.['total_hours_pro_task']?.edit,
       render: (row: ProjectTaskListType) =>
         row.total_hours_pro_task ? valueDisplay(row.total_hours_pro_task) : '-',
     },
@@ -140,20 +113,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'comments',
       width: 200,
-      // hide:
-      //   !permissionMap?.['comments']?.read &&
-      //   !permissionMap?.['comments']?.edit,
-      field: {
-        type: 'text',
-        required: false,
-        placeholder: 'Enter Comments',
-        validation: [
-          {
-            regex: PROJECT_TASK_REGEX.DESCRIPTION,
-            errorMessage: 'Maximum 2000 characters allowed',
-          },
-        ],
-      },
+      hide:
+        !permissionMap?.['comments']?.read &&
+        !permissionMap?.['comments']?.edit,
     },
     {
       id: 'r_number',
@@ -161,9 +123,9 @@ export const getProjectTaskColumns = (
       sortable: true,
       sortId: 'r_number',
       width: 140,
-      // hide:
-      //   !permissionMap?.['r_number']?.read &&
-      //   !permissionMap?.['r_number']?.edit,
+      hide:
+        !permissionMap?.['r_number']?.read &&
+        !permissionMap?.['r_number']?.edit,
     },
   ];
 };

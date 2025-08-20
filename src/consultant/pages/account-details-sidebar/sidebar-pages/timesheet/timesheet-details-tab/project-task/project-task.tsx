@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import { AllPermissions } from '../../../../../../../common-service';
@@ -10,20 +10,21 @@ import { ProjectTaskListType } from '../../../../../../types/project-task';
 import { getProjectTaskColumns } from './columns';
 
 interface projectTaskProps {
+  documentRid: string;
+  appliedFilters?: Record<string, string | number | boolean | string[]>;
   setExportType?: (type: ExportType) => void;
   onRefreshClick?: number;
 }
 
 const TimesheetProjectTask: React.FC<projectTaskProps> = ({
+  documentRid,
+  appliedFilters,
   setExportType,
   onRefreshClick,
 }) => {
-  const [appliedFilters] = useState<
-    Record<string, string | number | boolean | string[]>
-  >({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [sortField, setSortField] = useState<string>('r_number');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [projectTaskList, setProjectTaskList] = useState<ProjectTaskListType[]>(
     []
@@ -31,6 +32,7 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
 
   // hooks
   const { accountid } = useParams();
+  const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -40,7 +42,7 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
   const projectTaskViewEditFields = useMemo(
     () =>
       permission?.find(
-        (item) => item.name === AllPermissions.TIMESHEET_PROJECT_TASK_VIEW_EDIT
+        (item) => item.name === AllPermissions.PROJECTS_TASK_VIEW_EDIT
       )?.fields ?? [],
     [permission]
   );
@@ -51,7 +53,9 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
     });
     return map;
   }, [projectTaskViewEditFields]);
-
+  const tabName = searchParams.get('tab');
+  const isTaskTable = tabName === 'timesheet_project_task';
+  const viewDetails = !!isTaskTable;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const {
     data: projectApiListData,
@@ -66,13 +70,15 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
       filters: { ...appliedFilters },
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      documentRid,
     },
+    viewDetails,
     onRefreshClick
   );
 
   useEffect(() => {
     if (projectApiListData) {
-      setProjectTaskList(projectApiListData.data.tasks || []);
+      setProjectTaskList(projectApiListData?.timesheet_project_task || []);
     }
   }, [projectApiListData]);
   useEffect(() => {
@@ -89,12 +95,12 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
   };
-  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
+  const handleSortRequest = (property: string, sortOrder: 'ASC' | 'DESC') => {
     setSortOrder(sortOrder);
     setSortField(property);
   };
 
-  const totalItems = projectApiListData?.data.totalCount || 0;
+  const totalItems = projectApiListData?.count || 0;
   const projectTaskColumns = getProjectTaskColumns(permissionMap);
 
   return (
@@ -125,8 +131,9 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={sortField}
-        sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
-        onSort={handleSortRequest}
+        sortOrder={sortOrder}
+        onSort={(property: string, sortOrder: 'asc' | 'desc') =>
+          handleSortRequest(property, sortOrder.toUpperCase() as 'ASC' | 'DESC')}
       />
     </div>
   );

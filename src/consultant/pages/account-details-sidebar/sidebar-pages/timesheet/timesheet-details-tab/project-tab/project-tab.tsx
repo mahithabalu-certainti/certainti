@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useMemo, useState } from 'react';
 //Commented lines for future use
@@ -12,7 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 // import { ResourceTabs } from '../resources/resources';
 // import { getTimesheetFilterFields } from './helpers';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 // import ImportFile from './import-file';
 // import SectionHeader from '../../../../../components/details-section/section-header';
 // import { TimeSheetIcon } from '../../../../../assets';
@@ -26,23 +27,25 @@ import { TimesheetProjectList } from '../../../../../../types/timesheet-projects
 import { ExportType } from '../../../../../../types';
 
 interface projectTabListProps {
+  bothParentAndChild: boolean;
+  documentRid: string;
+  appliedFilters?: Record<string, string | number | boolean | string[]>;
   setExportType?: (type: ExportType) => void;
   onRefreshClick?: number;
 }
 
 const TimesheetProjectTab: React.FC<projectTabListProps> = ({
+  bothParentAndChild,
+  documentRid,
+  appliedFilters,
   setExportType,
   onRefreshClick,
 }) => {
-  const [appliedFilters] = useState<
-    Record<string, string | number | boolean | string[]>
-  >({});
   const [currentPage, setCurrentPage] = useState(0);
   // const [showFilter, setShowFilter] = useState<boolean>(false);
   // const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [sortField, setSortField] = useState<string>('r_number');
-  // const [refreshTimesheetProject, setRefreshTimesheetProject] = useState<number>(Date.now());
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [projectTabList, setProjectTabList] = useState<TimesheetProjectList[]>(
     []
@@ -51,7 +54,7 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
   // hooks
   // const navigate = useNavigate();
   const { accountid } = useParams();
-  // const [searchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -59,19 +62,19 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   // TODO: Have to update view & edit permissions
-  const timesheetViewEditFields = useMemo(
+  const timesheet_Project_ViewEditFields = useMemo(
     () =>
-      permission?.find((item) => item.name === AllPermissions.IMPORTS_VIEW_EDIT)
+      permission?.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
         ?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    timesheetViewEditFields.forEach((item) => {
+    timesheet_Project_ViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [timesheetViewEditFields]);
+  }, [timesheet_Project_ViewEditFields]);
   // TODO: Have to update export permissions
   // const isTimesheetProjectExportEnable = checkPermission(
   //     permission,
@@ -79,8 +82,9 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
   // );
 
   // API Hooks
-  // const fileId = searchParams.get('timesheet_id');
-  // const viewDetails = !!fileId;
+  const tabName = searchParams.get('tab');
+  const isTaskTable = tabName === 'timesheet_project';
+  const viewDetails = !!isTaskTable;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const {
     data: projectApiListData,
@@ -95,8 +99,10 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
       filters: { ...appliedFilters },
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      bothParentAndChild,
+      documentRid,
     },
-    // !viewDetails,
+    viewDetails,
     onRefreshClick
   );
 
@@ -130,9 +136,6 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
       // convertedFiscalYear,
     ]
   );
-  // const onRefreshClick = () => {
-  //     setRefreshTimesheetProject(Date.now());
-  // };
 
   // const handleBackClick = () => {
   //     searchParams.delete('timesheet_id');
@@ -147,13 +150,12 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
   };
-  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
+  const handleSortRequest = (property: string, sortOrder: 'ASC' | 'DESC') => {
     setSortOrder(sortOrder);
     setSortField(property);
   };
 
   const totalItems = projectApiListData?.count || 0;
-
   const projectTabTableColumns = getProjectTabTableColumns(permissionMap);
 
   return (
@@ -164,14 +166,16 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
         getRowId={(row: TimesheetProjectList): string => row.rid || ''}
         hoverHighlight={false}
         tableStyle={{
-          borderBottom: '1px solid #CBD6E2',
           height: '100%',
           maxHeight: 'calc(100vh - 290px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
+        expandAllParent={true}
+        expandable={true}
+        childrenKey='ProjectFiscal'
+        maxNestingLevel={2}
         stickyColumnsCount={1}
-        selectable={false}
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
@@ -184,8 +188,14 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={sortField}
-        sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
-        onSort={handleSortRequest}
+        sortOrder={sortOrder}
+        onSort={(property: string, sortOrder: 'asc' | 'desc') =>
+          handleSortRequest(property, sortOrder.toUpperCase() as 'ASC' | 'DESC')}
+        selectable={false}
+        onSelectionChange={(selectedIds) =>
+          console.log('Selected:', selectedIds)
+        }
+        component='project'
       />
     </div>
   );

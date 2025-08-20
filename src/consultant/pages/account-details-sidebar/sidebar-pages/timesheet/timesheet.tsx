@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, useGetStatus, } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
@@ -19,8 +19,8 @@ import { TimeSheetIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { getTimesheetListColumns } from './columns';
 import TimesheetDetails from './timesheet-details';
+import { getTimesheetResourceTabFilterFields } from './timesheet-details-tab/resource-tab/resource-tab-filters';
 import { projectTaskFilterFields } from './timesheet-details-tab/project-task/filters';
-import { useGetAppliedProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import { useGetResourceType } from '../../../../services/resource-list';
 
 interface TimeSheetProps {
@@ -79,30 +79,19 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     });
     return map;
   }, [timesheetViewEditFields]);
-  const projectTaskViewEditFields = useMemo(
-    () =>
-      permission?.find(
-        (item) => item.name === AllPermissions.TIMESHEET_PROJECT_TASK_VIEW_EDIT
-      )?.fields ?? [],
-    [permission]
-  );
-  const permissionMapTaskTableColumn = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    projectTaskViewEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [projectTaskViewEditFields]);
+
 
   const isTimesheetExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
+  const [toggleEnabled, setToggleEnabled] = useState(false);
 
   // API Hooks
   const fileId = searchParams.get('timesheet_id');
   const tabName = searchParams.get('tab');
   const isProjectTab = tabName === 'timesheet_project';
+  const isResourceTab = tabName === 'timesheet_project_resource';
   const isProjectTaskTab = tabName === 'timesheet_project_task';
   const viewDetails = !!fileId;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -119,13 +108,9 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     !viewDetails,
     refreshTimesheet
   );
-  const { data: getProjectTaskResourceCode } = useGetAppliedProjectResourceCode(
-    accountid as string,
-    'D001-0f689f8c-b27d-404b-8205-7dcfb5516ead' as string,
-    'project_tasks'
-  );
-  const resourceTypeOptions = useGetResourceType();
 
+  const resourceTypeOptions = useGetResourceType();
+  const statusOptions = useGetStatus();
   // UseEffects
   useEffect(() => {
     if (data) {
@@ -209,6 +194,22 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     setSortField(property);
   };
 
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status: { status_name: string; rid: string }) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
   // Variables
   const currentYear = new Date().getFullYear();
   const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
@@ -216,6 +217,19 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     fiscalYears,
     permissionMap
   );
+
+  const timesheetProjectFilterFields = getTimesheetProjectTabFilterFields(
+    fiscalYears,
+    memoizedResourceType,
+    memoizedStatus,
+  );
+
+  const timesheetResourcesFilterFields = getTimesheetResourceTabFilterFields();
+
+  const timesheetProjectTaskFilterFields = projectTaskFilterFields(
+    memoizedResourceType,
+  );
+
   const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
   const timesheetColumns = getTimesheetListColumns(
@@ -225,34 +239,14 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     isTimesheetExportEnable
   );
   const getRowId = (row: TimeSheetList) => row.rid;
-  const memoizedResourceCode: { option: string; value: string }[] = useMemo(
-    () =>
-      getProjectTaskResourceCode?.data?.resourceCodes.map((item) => ({
-        option: item.resource_code,
-        value: item.resource_code,
-      })) || [],
-    [getProjectTaskResourceCode?.data?.resourceCodes]
-  );
-  const memoizedResourceType = useMemo(
-    () =>
-      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-        option: item.resource_type_name,
-        value: item.rid,
-      })) || [],
-    [resourceTypeOptions?.data?.data?.resouceType]
-  );
+
   const getFiltersMenu = () => {
     if (isProjectTab) {
-      return getTimesheetProjectTabFilterFields(
-        fiscalYears
-        // permissionMap
-      );
+      return timesheetProjectFilterFields
+    } else if (isResourceTab) {
+      return timesheetResourcesFilterFields
     } else if (isProjectTaskTab) {
-      return projectTaskFilterFields(
-        memoizedResourceCode,
-        memoizedResourceType,
-        permissionMapTaskTableColumn
-      );
+      return timesheetProjectTaskFilterFields
     }
     return timesheetFilterFields;
   };
@@ -262,7 +256,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       <SectionTabPanel
         tabs={TimesheetTabs}
         filterMenu={getFiltersMenu()}
-        filterVisibility={!viewDetails || isProjectTab || isProjectTaskTab}
+        filterVisibility={!viewDetails || isProjectTab || isResourceTab || isProjectTaskTab}
         showFilter={showFilter}
         contextKey='timesheet'
         appliedFilters={appliedFilters}
@@ -272,12 +266,17 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={!showUploads || !viewDetails || isProjectTab}
+        showToggle={isProjectTab}
+        toggleEnabled={toggleEnabled}
+        setToggleEnabled={setToggleEnabled}
+        showRefresh={!showUploads || !viewDetails || isProjectTab || isResourceTab || isProjectTaskTab}
         onRefreshClick={onRefreshClick}
       />
       {viewDetails ? (
         <TimesheetDetails
           handleBackClick={handleBackClick}
+          bothParentAndChild={toggleEnabled}
+          appliedFilters={appliedFilters}
           setExportType={setExportType}
           onRefreshClick={refreshTimesheet}
         />

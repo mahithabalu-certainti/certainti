@@ -22,10 +22,13 @@ import { AllPermissions } from '../../../../../common-service';
 import { TabMenus } from '../resources/resources';
 import TimesheetProjectTab from './timesheet-details-tab/project-tab/project-tab';
 import { ExportType, TimeSheetListURLParams } from '../../../../types';
+import TimesheetResourcesTab from './timesheet-details-tab/resource-tab/resource-tab';
 import TimesheetProjectTask from './timesheet-details-tab/project-task/project-task';
 
 interface TimesheetDetailsProps {
   handleBackClick: () => void;
+  appliedFilters?: Record<string, string | number | boolean | string[]>;
+  bothParentAndChild: boolean;
   setExportType?: (type: ExportType) => void;
   setTimesheetParams?: React.Dispatch<
     React.SetStateAction<TimeSheetListURLParams>
@@ -62,6 +65,8 @@ const tabs: TabMenus[] = [
 
 const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   handleBackClick,
+  bothParentAndChild,
+  appliedFilters,
   setExportType,
   onRefreshClick,
 }) => {
@@ -72,9 +77,14 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const [value, setValue] = useState('details'); // Resource inner tab value
-
+  const [documentRid, setDocumentRid] = useState<string>('');
   const { data, isLoading, error } = useTimesheetDetails(accountid, fileId);
 
+  useEffect(() => {
+    if (data) {
+      setDocumentRid(data?.document_rid || '')
+    }
+  }, [data])
   const handleExportFailureData = (
     type: FailureType,
     entity: ImportEntityType
@@ -152,15 +162,14 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
       label: 'Status',
       value: (
         <span
-          className={`font-semibold ${
-            data?.status === 'Failed'
+          className={`font-semibold ${data?.status === 'Failed'
               ? 'text-red-600'
               : data?.status === 'Completed'
                 ? 'text-green-600'
                 : data?.status === 'Processing'
                   ? 'text-yellow-600'
                   : 'text-gray-700'
-          }`}
+            }`}
         >
           {data?.status}
         </span>
@@ -319,12 +328,26 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
           )}
           {value === 'timesheet_project' && (
             <TimesheetProjectTab
+              bothParentAndChild={bothParentAndChild}
+              documentRid={documentRid}
+              appliedFilters={appliedFilters}
               setExportType={setExportType}
               onRefreshClick={onRefreshClick}
             />
           )}
+          {value === 'timesheet_project_resource' && (
+            <TimesheetResourcesTab
+              documentRid={documentRid}
+              appliedFilters={appliedFilters}
+              setExportType={setExportType}
+              onRefreshClick={onRefreshClick}
+            />
+          )}
+
           {value === 'timesheet_project_task' && (
             <TimesheetProjectTask
+              documentRid={documentRid}
+              appliedFilters={appliedFilters}
               setExportType={setExportType}
               onRefreshClick={onRefreshClick}
             />

@@ -11,17 +11,10 @@ import {
   ImportsListURLParams,
 } from '../../types/imports';
 import { uploadUrl } from '../urls';
-import { TimesheetProjectList } from '../../types/timesheet-projects';
-import { ManageProjectsMockData } from '../../mockdata/project-mockdata';
-import {
-  TimesheetDetails,
-  TimesheetDetailsResponse,
-  TimeSheetList,
-  TImesheetListResponse,
-  TimeSheetListURLParams,
-} from '../../types';
-import { ProjectTaskApiResponse } from '../../types/project-task';
-import { mockTimesheetProjectTask } from '../../mockdata';
+import { TimesheetProjectList, TimesheetProjectTableListResponse, TimesheetProjectTableListURLParams, TimesheetResourceListType, TimesheetResourceTableListResponse, } from '../../types/timesheet-projects';
+
+import { TimesheetDetails, TimesheetDetailsResponse, TimeSheetList, TImesheetListResponse, TimeSheetListURLParams } from '../../types';
+import { ProjectTaskApiResponse, ProjectTaskListType } from '../../types/project-task';
 
 const getImportDetailsURL = (accountId: string, fileId: string) => {
   return `/api/import/list/${accountId}/${fileId}`;
@@ -284,58 +277,223 @@ export const downloadTimesheetFailureData = async (
 
 // Timesheet view project tab table
 export const useTimesheetProjectTableList = (
-  params: ImportsListURLParams,
-  // shouldFetchList: boolean,
-  refreshImports?: number
-): UseQueryResult<
-  { timesheet_projects: TimesheetProjectList[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { timesheet_projects: TimesheetProjectList[]; count: number },
-    Error
-  >({
-    queryKey: ['importList', params, refreshImports],
+  params: TimesheetProjectTableListURLParams,
+  shouldFetchList: boolean,
+  refreshProject?: number
+): UseQueryResult<{ timesheet_projects: TimesheetProjectList[]; count: number }, Error> => {
+  return useQuery<{ timesheet_projects: TimesheetProjectList[]; count: number }, Error>({
+    queryKey: ['timesheetProjectList', params, refreshProject],
     queryFn: () => fetchTimesheetProjectTableList(params),
     retry: 0,
     gcTime: 0,
-    // enabled: !!params.account_rid && !!shouldFetchList,
+    enabled: !!params.account_rid && !!params.documentRid && !!shouldFetchList,
   });
 };
 
 export const fetchTimesheetProjectTableList = async (
-  params: ImportsListURLParams
+  params: TimesheetProjectTableListURLParams
 ): Promise<{ timesheet_projects: TimesheetProjectList[]; count: number }> => {
-  console.log('params', params);
-  // const response = await resourceServiceApi.post<TimesheetProjectTableListResponse>(
-  //   '/api/import/list',
-  //   params
-  // );
+  console.log("bothParentAndChild-api1", params.bothParentAndChild)
+  const response = await resourceServiceApi.get<TimesheetProjectTableListResponse>(
+    TimesheetProjectURL(params)
+  );
   return {
-    timesheet_projects: ManageProjectsMockData.data.projects || [],
-    count: ManageProjectsMockData.data.count || 0,
+    timesheet_projects: response?.data?.data?.projects || [],
+    count: response?.data?.data?.totalCount || 0,
+  };
+};
+export const getTimesheetProjectUrl = (
+  account_rid: string,
+) => `/api/timesheet/importedProjects/${account_rid}`;
+
+const returnTimesheetProjectURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+  console.log("bothParentAndChild-api2", params.bothParentAndChild)
+
+  const { page, limit, sort, sort_by, filters, fiscalYear, bothParentAndChild, documentRid, } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (page !== undefined) searchParams.set('page', String(page));
+  if (limit !== undefined) searchParams.set('limit', String(limit));
+  if (sort) searchParams.set('sortBy', String(sort));
+  if (sort_by) searchParams.set('sortOrder', String(sort_by));
+  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (bothParentAndChild !== undefined) {
+    searchParams.set("bothParentAndChild", String(bothParentAndChild));
+  }
+
+  if (documentRid) {
+    searchParams.set('documentRid', String(documentRid));
+  }
+  return `${baseURL}/?${searchParams.toString()}`;
+};
+export const TimesheetProjectURL = ({
+  page,
+  limit,
+  sort,
+  sort_by,
+  filters,
+  fiscal_year,
+  account_rid,
+  bothParentAndChild,
+  documentRid,
+}: TimesheetProjectTableListURLParams): string => {
+  const base = getTimesheetProjectUrl(account_rid ?? '');
+  return returnTimesheetProjectURL(base, {
+    page,
+    limit,
+    sort,
+    sort_by,
+    filters,
+    fiscal_year,
+    bothParentAndChild: bothParentAndChild ? "true" : "false",
+    documentRid,
+  });
+};
+// Timesheet view Resource tab table
+export const useTimesheetResourceTableList = (
+  params: TimesheetProjectTableListURLParams,
+  shouldFetchList: boolean,
+  refreshResource?: number
+): UseQueryResult<{ timesheet_resources: TimesheetResourceListType[]; count: number }, Error> => {
+  return useQuery<{ timesheet_resources: TimesheetResourceListType[]; count: number }, Error>({
+    queryKey: ['timesheetResourceList', params, refreshResource],
+    queryFn: () => fetchTimesheetResourceTableList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.account_rid && !!params.documentRid && !!shouldFetchList,
+  });
+};
+
+export const fetchTimesheetResourceTableList = async (
+  params: TimesheetProjectTableListURLParams
+): Promise<{ timesheet_resources: TimesheetResourceListType[]; count: number }> => {
+  const response = await resourceServiceApi.get<TimesheetResourceTableListResponse>(
+    TimesheetProjectResourcesURL(params),
+  );
+  return {
+    timesheet_resources: response.data.data.resources || [],
+    count: response.data.data.count || 0,
   };
 };
 
+export const getProjectResourcesUrl = (
+  account_rid: string,
+) => `/api/timesheet/importedResources/${account_rid}`;
+
+const returnURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+  const { page, limit, sort, sort_by, filters, fiscalYear, documentRid } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (page !== undefined) searchParams.set('page', String(page));
+  if (limit !== undefined) searchParams.set('limit', String(limit));
+  if (sort) searchParams.set('sortBy', String(sort));
+  if (sort_by) searchParams.set('sortOrder', String(sort_by));
+  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (documentRid) {
+    searchParams.set('documentRid', String(documentRid));
+  }
+  return `${baseURL}/?${searchParams.toString()}`;
+};
+export const TimesheetProjectResourcesURL = ({
+  page,
+  limit,
+  sort,
+  sort_by,
+  filters,
+  fiscal_year,
+  account_rid,
+  documentRid,
+}: TimesheetProjectTableListURLParams): string => {
+  const base = getProjectResourcesUrl(account_rid ?? '');
+  return returnURL(base, {
+    page,
+    limit,
+    sort,
+    sort_by,
+    filters,
+    fiscal_year,
+    documentRid
+  });
+};
+
+// Timesheet view Project Task tab table
 export const useTimesheetProjectTaskList = (
-  params: ImportsListURLParams,
+  params: TimesheetProjectTableListURLParams,
+  shouldFetchList: boolean,
   refreshProjectTask?: number
-): UseQueryResult<ProjectTaskApiResponse, Error> => {
-  return useQuery<ProjectTaskApiResponse, Error>({
+): UseQueryResult<{ timesheet_project_task: ProjectTaskListType[]; count: number }, Error> => {
+  return useQuery<{ timesheet_project_task: ProjectTaskListType[]; count: number }, Error>({
     queryKey: ['timesheetProjectTask', params, refreshProjectTask],
     queryFn: () => fetchTimesheetProjectTaskList(params),
     retry: 0,
     gcTime: 0,
+    enabled: !!params.account_rid && !!params.documentRid && !!shouldFetchList,
   });
 };
 
 export const fetchTimesheetProjectTaskList = async (
-  params: ImportsListURLParams
-): Promise<ProjectTaskApiResponse> => {
-  console.log('params', params);
-  // const response = await resourceServiceApi.post<ProjectTaskApiResponse>(
-  //   '/api/projectTask/list',
-  //   params
-  // );
-  return mockTimesheetProjectTask;
+  params: TimesheetProjectTableListURLParams
+): Promise<{ timesheet_project_task: ProjectTaskListType[]; count: number }> => {
+  const response = await resourceServiceApi.get<ProjectTaskApiResponse>(
+    TimesheetProjectTaskURL(params),
+  );
+  return {
+    timesheet_project_task: response.data.data.tasks || [],
+    count: response.data.data.totalCount || 0,
+  };
+};
+
+export const getProjectTaskUrl = (
+  account_rid: string,
+) => `/api/timesheet/importedProjectTasks/${account_rid}`;
+
+const returnTimesheetProjectTaskURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+  const { page, limit, sort, sort_by, filters, fiscalYear, documentRid } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (page !== undefined) searchParams.set('page', String(page));
+  if (limit !== undefined) searchParams.set('limit', String(limit));
+  if (sort) searchParams.set('sortBy', String(sort));
+  if (sort_by) searchParams.set('sortOrder', String(sort_by));
+  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (documentRid) {
+    searchParams.set('documentRid', String(documentRid));
+  }
+  return `${baseURL}/?${searchParams.toString()}`;
+};
+export const TimesheetProjectTaskURL = ({
+  page,
+  limit,
+  sort,
+  sort_by,
+  filters,
+  fiscal_year,
+  account_rid,
+  documentRid,
+}: TimesheetProjectTableListURLParams): string => {
+  const base = getProjectTaskUrl(account_rid ?? '');
+  return returnTimesheetProjectTaskURL(base, {
+    page,
+    limit,
+    sort,
+    sort_by,
+    filters,
+    fiscal_year,
+    documentRid
+  });
 };

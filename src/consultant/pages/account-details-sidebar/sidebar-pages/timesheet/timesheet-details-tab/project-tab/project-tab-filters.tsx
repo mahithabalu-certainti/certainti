@@ -1,8 +1,13 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 // import { SelectOption } from '../../../../types';
 // import { FieldConfig } from '../../components/filter/filterType';
 
+import { useMemo } from 'react';
 import { SelectOption } from '../../../../../../types';
 import { FieldConfig } from '../../../../components/filter/filterType';
+import { AllPermissions } from '../../../../../../../common-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
 
 const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -10,12 +15,12 @@ const textOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
 ];
 
-// const nonReqTextOptions: { option: string; value: string }[] = [
-//   { option: 'Equals', value: 'equals' },
-//   { option: 'Not-Equals', value: 'not_equals' },
-//   { option: 'Contains', value: 'contains' },
-//   { option: 'Is-Empty', value: 'is_empty' },
-// ];
+const nonReqTextOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
 
 const numberOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -30,52 +35,63 @@ const enumOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'In', value: 'in' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
 
-// const dateOptions: { option: string; value: string }[] = [
-//   { option: 'Equals', value: 'equals' },
-//   { option: 'Before', value: 'before' },
-//   { option: 'After', value: 'after' },
-//   { option: 'Between', value: 'between' },
-// ];
+const dateOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+];
 
 export const getTimesheetProjectTabFilterFields = (
-  fiscalYears: SelectOption[]
-  // permissionMap: Record<string, { read: boolean; edit: boolean }>
+  fiscalYears: SelectOption[],
+  resourceTypeOptions: { option: string; value: string }[],
+  memoizedStatus: { option: string; value: string }[],
 ): FieldConfig[] => {
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const timesheet_Project_ViewEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    timesheet_Project_ViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [timesheet_Project_ViewEditFields]);
   return [
     {
       name: 'Project Code',
       value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['project_code']?.edit &&
-      //   !permissionMap?.['project_code']?.read,
+      // options: memoizedProjectTaskResourceCode,
+      hide:
+        !permissionMap?.['project_code']?.edit &&
+        !permissionMap?.['project_code']?.read,
     },
     {
       name: 'Project Name',
       value: 'project_name',
       type: 'text',
-      operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['project_name']?.edit &&
-      //   !permissionMap?.['project_name']?.read,
+      operatorOption: nonReqTextOptions,
+      hide:
+        !permissionMap?.['project_name']?.edit &&
+        !permissionMap?.['project_name']?.read,
     },
     {
       name: 'Project Type',
       value: 'project_type_name',
-      type: 'text',
-      operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['format']?.edit && !permissionMap?.['format']?.read,
-    },
-    {
-      name: 'Account Name',
-      value: 'account_name',
-      type: 'text',
-      operatorOption: textOptions,
-      // hide: !permissionMap?.['size']?.edit && !permissionMap?.['size']?.read,
+      type: 'enum',
+      operatorOption: enumOptions,
+      options: resourceTypeOptions,
+      hide:
+        !permissionMap?.['project_type_rid']?.edit && !permissionMap?.['project_type_rid']?.read,
     },
     {
       name: 'Fiscal Year',
@@ -83,143 +99,140 @@ export const getTimesheetProjectTabFilterFields = (
       type: 'enum',
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['fiscal']?.edit && !permissionMap?.['fiscal']?.read,
+      hide:
+        !permissionMap?.['fiscal']?.edit && !permissionMap?.['fiscal']?.read,
     },
     {
-      name: 'Classification Name',
+      name: 'Project Classification',
       value: 'classification_name',
       type: 'text',
-      operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['total_records']?.edit &&
-      //   !permissionMap?.['total_records']?.read,
+      operatorOption: nonReqTextOptions,
+      hide:
+        !permissionMap?.['project_classification_rid']?.edit &&
+        !permissionMap?.['project_classification_rid']?.read,
     },
     {
       name: 'Customer Group',
       value: 'project_client_group',
       type: 'text',
-      operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['records_loaded_successfully']?.edit &&
-      //   !permissionMap?.['records_loaded_successfully']?.read,
+      operatorOption: nonReqTextOptions,
+      hide:
+        !permissionMap?.['project_client_group']?.edit &&
+        !permissionMap?.['project_client_group']?.read,
     },
     {
       name: 'Project Group',
       value: 'project_group',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['records_with_warning']?.edit &&
-      //   !permissionMap?.['records_with_warning']?.read,
+      hide:
+        !permissionMap?.['project_group']?.edit &&
+        !permissionMap?.['project_group']?.read,
     },
     {
       name: 'Project Effort (Hours)',
       value: 'total_effort',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['records_failed_to_load']?.edit &&
-      //   !permissionMap?.['records_failed_to_load']?.read,
+      hide:
+        !permissionMap?.['total_effort']?.edit &&
+        !permissionMap?.['total_effort']?.read,
     },
     {
       name: 'Project Cost',
       value: 'total_cost',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+      hide:
+        !permissionMap?.['total_cost']?.edit && !permissionMap?.['total_cost']?.read,
     },
     {
       name: 'FTE Cost',
       value: 'total_cost_fte',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['status_description']?.edit &&
-      //   !permissionMap?.['status_description']?.read,
+      hide:
+        !permissionMap?.['total_cost_fte']?.edit &&
+        !permissionMap?.['total_cost_fte']?.read,
     },
     {
       name: 'SubCon Cost',
       value: 'total_cost_subcon',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['imported_by']?.edit &&
-      //   !permissionMap?.['imported_by']?.read,
+      hide:
+        !permissionMap?.['total_cost_subcon']?.edit &&
+        !permissionMap?.['total_cost_subcon']?.read,
     },
     {
       name: 'Non-Labor Cost',
       value: 'total_cost_nonlabor',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
+      hide:
+        !permissionMap?.['total_cost_nonlabor']?.edit &&
+        !permissionMap?.['total_cost_nonlabor']?.read,
     },
     {
       name: 'Assessment Status',
       value: 'assessment_status',
       type: 'enum',
-      options: [{ option: 'Assessed', value: 'Assessed' }],
+      options: memoizedStatus,
       operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
+      hide:
+        !permissionMap?.['assessment_status']?.edit &&
+        !permissionMap?.['assessment_status']?.read,
     },
     {
       name: 'QRE %',
-      value: 'qre_final',
+      value: 'qre',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
+      hide:
+        !permissionMap?.['qre']?.edit &&
+        !permissionMap?.['qre']?.read,
     },
     {
       name: 'QRE',
-      value: 'qre',
-      type: 'enum',
-      operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
-    },
-    {
-      name: 'Project Point of Contact',
-      value: 'project_point_of_contact',
-      type: 'enum',
-      operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
-    },
-    {
-      name: 'Technical Point of Contact',
-      value: 'technical_point_of_contact',
-      type: 'enum',
-      operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
+      value: 'qre_final',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['qre_final']?.edit &&
+        !permissionMap?.['qre_final']?.read,
     },
     {
       name: 'Comments',
       value: 'comments',
       type: 'text',
-      operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
+      operatorOption: nonReqTextOptions,
+      hide:
+        !permissionMap?.['comments']?.edit &&
+        !permissionMap?.['comments']?.read,
+    },
+    {
+      name: 'Last Modified',
+      value: 'modified_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+      hide:
+        !permissionMap?.['modified_datetime']?.read &&
+        !permissionMap?.['modified_datetime']?.edit,
     },
     {
       name: 'Project ID',
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['imported_on']?.edit &&
-      //   !permissionMap?.['imported_on']?.read,
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Sort Options',
+      value: 'sort_options',
+      type: 'system-sort',
+      options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
     },
   ];
 };

@@ -210,6 +210,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
       searchParams.get('tab') !== 'timesheet_project' &&
+      searchParams.get('tab') !== 'timesheet_project_resource' &&
       searchParams.get('tab') !== 'timesheet_project_task'
     ) {
       return;
@@ -276,8 +277,15 @@ export const AccountDetails = () => {
         },
       });
     } else if (exportType === 'timesheet_project') {
-      console.log('Timesheet Prject export');
-    } else if (exportType === 'financial_resource_cost') {
+      console.log("Timesheet Prject export")
+    }
+    else if (exportType === 'timesheet_project_resource') {
+      console.log("Timesheet resource export")
+    }
+    else if (exportType === 'timesheet_project_task') {
+      console.log("Timesheet project task export")
+    }
+    else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
@@ -378,6 +386,8 @@ export const AccountDetails = () => {
     } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
+      return false;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
       return false;
     } else if (list === 'timesheet' && tab === 'timesheet_project_task') {
       return false;
@@ -645,9 +655,9 @@ export const AccountDetails = () => {
           primaryButton={
             isAccountFieldsEditable
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -665,11 +675,10 @@ export const AccountDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
+          className={`flex transition-all ease-in-out ${isCollapsed
               ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
               : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
