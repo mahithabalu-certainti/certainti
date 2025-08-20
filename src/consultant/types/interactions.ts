@@ -13,14 +13,16 @@ export enum StatusActionEnum {
 }
 
 export enum StatusTypeEnum {
-  create = 'create',
-  draft = 'draft',
-  sent = 'sent',
-  response_draft = 'response draft',
-  created = 'created',
-  response_received = 'response received',
   cancelled = 'cancelled',
-  on_hold = 'on-hold',
+  completed = 'completed',
+  created = 'created',
+  draft = 'draft',
+  on_hold = 'on hold',
+  question_updated = 'question updated',
+  response_draft = 'response draft',
+  response_received = 'response received',
+  resume = 'resume',
+  sent = 'sent',
 }
 
 export interface InteractionFormTableColumn {

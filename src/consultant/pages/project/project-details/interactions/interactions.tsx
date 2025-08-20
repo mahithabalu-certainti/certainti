@@ -354,7 +354,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       ) : viewInteractionHistory ? (
         <InteractionHistory
           handleBackClick={handleBackClick}
-          projectDetails={projectDetails}
           accountInActive={accountInActive}
           refresh={refreshInteractions}
           appliedFilters={appliedFilters}
