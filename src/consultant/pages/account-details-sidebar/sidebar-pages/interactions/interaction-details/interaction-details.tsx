@@ -34,7 +34,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const [searchParams] = useSearchParams();
   const interactionId = searchParams.get('interaction_id') || undefined;
 
-  const { data, isLoading, error } = useInteractionDetails(
+  const { data, isLoading, error, refetch } = useInteractionDetails(
     accountid,
     interactionId
   );
@@ -210,8 +210,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
           isEditEnable={true}
-          actionButtonENable={true}
+          actionButtonEnable={true}
           handleResponseHistory={handleResponseHistory}
+          refetchDeetails={refetch}
+          formData={{
+            account_rid: accountid || data?.account_rid || '',
+            project_rid: data?.project_rid || '',
+            project_fiscal_rid: data?.project_fiscal_rid || '',
+            interaction_rid: data?.interaction_rid || interactionId || '',
+          }}
         />
       )}
       {!isLoading && !error && (

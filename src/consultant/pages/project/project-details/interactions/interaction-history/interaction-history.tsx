@@ -3,21 +3,18 @@ import SectionHeader from '../../../../../../components/details-section/section-
 import { InteractionDetailIcon } from '../../../../../../assets';
 import { ListTable } from '../../../../../../components/table';
 import { getInteractionHistoryListColumns } from './columns';
-import { NewProjectData } from '../../../../../types/project';
 import { InfoSection } from '../../../../../../components';
 import { Box } from '@mui/material';
 import {
   InteractionHistoryAction,
   transformInteractionHistoryData,
 } from './utils';
-
 import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
 import { useSearchParams } from 'react-router-dom';
 
 interface InteractionHistoryProps {
   accountInActive: boolean;
   handleBackClick: () => void;
-  projectDetails: NewProjectData | null;
   refresh?: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
 }
@@ -25,11 +22,11 @@ interface InteractionHistoryProps {
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   handleBackClick,
   refresh,
-  projectDetails,
   appliedFilters,
 }) => {
   const [searchParams] = useSearchParams();
   const interactionHistoryId = searchParams.get('interaction_history_id') || '';
+  const accountId = searchParams.get('accountID') || '';
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('action');
@@ -49,10 +46,9 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       sort: sortField,
       sort_by: sortBy.toLowerCase() as 'asc' | 'desc',
       filters: appliedFilters,
-      account_rid: projectDetails?.account_rid || '',
+      account_rid: accountId || '',
       interaction_rid: interactionHistoryId,
     },
-    !!interactionHistoryId,
     refresh
   );
 

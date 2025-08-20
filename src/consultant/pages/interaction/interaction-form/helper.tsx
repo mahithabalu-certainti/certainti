@@ -11,6 +11,7 @@ import {
   InteractionQuestionPayload,
   QuestionUpdate,
   StatusActionEnum,
+  StatusTypeEnum,
 } from '../../../types';
 
 export interface ProjectDetails {
@@ -56,9 +57,7 @@ export const getQuestionTableColumns = (
 
 export const validateInteractionForm = (
   formData: InteractionFormData,
-  source: string | null,
-  isEditView: boolean,
-  isDisableForDraft: boolean
+  source: string | null
 ): { isValid: boolean; errors: InteractionFormErrors } => {
   let isValid = true;
   const newErrors: InteractionFormErrors = {};
@@ -74,11 +73,6 @@ export const validateInteractionForm = (
       newErrors.fiscalYear = 'Fiscal Year is required';
       isValid = false;
     }
-  }
-
-  if (!formData.status && isEditView && !isDisableForDraft) {
-    newErrors.status = 'Status is required';
-    isValid = false;
   }
 
   // Validate questions
@@ -156,11 +150,53 @@ export const questionsTransformPayload = (
   return transformedQuestions;
 };
 
+export const getStatusId = (
+  formData: Partial<InteractionFormData>,
+  isEditView: boolean,
+  isDraftStatus: boolean,
+  saveFlag: StatusActionEnum,
+  currentStatusId: string,
+  statusOptions: { label: string; value: string; hide: boolean }[]
+): string => {
+  if (formData.status && formData.status !== currentStatusId) {
+    return formData.status;
+  }
+
+  if (isEditView && !isDraftStatus) {
+    if (saveFlag === StatusActionEnum.Create) {
+      const updatedStatus = statusOptions.find(
+        (option) =>
+          option.label.toLowerCase() === StatusTypeEnum.question_updated
+      );
+      return (
+        updatedStatus?.value || 'D001-19160669-3f82-4ca6-8403-213f-updated'
+      );
+    }
+    return currentStatusId;
+  }
+
+  if (saveFlag === StatusActionEnum.Draft) {
+    const draftStatus = statusOptions.find(
+      (option) => option.label.toLowerCase() === StatusTypeEnum.draft
+    );
+    return draftStatus?.value || '';
+  }
+
+  if (saveFlag === StatusActionEnum.Create) {
+    const createStatus = statusOptions.find(
+      (option) => option.label.toLowerCase() === StatusTypeEnum.created
+    );
+    return createStatus?.value || '';
+  }
+
+  return currentStatusId;
+};
+
 export const transFormPayload = (
   accountId: string,
   formData: Partial<InteractionFormData>,
   isEditView: boolean,
-  saveFlag: StatusActionEnum,
+  statusRid: string,
   interactionData?: InteractionDetails,
   projectData?: ProjectDetails
 ): InteractionFormPayload => {
@@ -177,6 +213,7 @@ export const transFormPayload = (
       projectData?.project_fiscal_rid ||
       interactionData?.project_fiscal_rid ||
       '',
+    status_rid: statusRid,
     questions: transformedQuestions,
   };
 
@@ -184,16 +221,11 @@ export const transFormPayload = (
     return {
       ...basePayload,
       interaction_rid: interactionData.interaction_rid || formData.rid,
-      status_rid:
-        saveFlag === StatusActionEnum.Draft
-          ? ''
-          : formData.status || interactionData.status,
     };
   }
 
   return {
     ...basePayload,
     fiscal_year: formData.fiscalYear,
-    status_action: saveFlag,
   };
 };

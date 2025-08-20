@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { getInteractionListColumns } from './columns';
-import { ResponseInteractionList } from '../../../../../types';
+import {
+  InteractionHistoryResponse,
+  ResponseInteractionList,
+} from '../../../../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ListTable } from '../../../../../../components/table';
-import { mockResponse } from './mockresponse';
 import {
   InfoSection,
   InteractionQuestions,
@@ -13,6 +16,7 @@ import {
   useInteractionResponseHistoryList,
   useResponseInteractionDetails,
 } from '../../../../../services/interactions/response-interaction-service';
+import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 
 interface HistoryTableProps {
   loading?: boolean;
@@ -22,20 +26,41 @@ interface HistoryTableProps {
 const HistoryTable: React.FC<HistoryTableProps> = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('r_number');
+  const [sortField, setSortField] = useState<string>('interaction_version');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [detailQuestions, setDetailQuestions] = useState<any[]>([]);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
-  const interactionResponseId =
-    searchParams.get('interactionResponse_id') || undefined;
-  const { data } = useResponseInteractionDetails({
+  const interactionResponseId = searchParams.get('versionID') || undefined;
+  const {
+    data: detialsResponse,
+    isLoading: detailsLoading,
+    isError: detailsError,
+  } = useResponseInteractionDetails({
+    // account_rid: 'D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3',
+    // interaction_rid: 'D001-21b89b4b-15ba-47dc-abed-7ec186cd16a3',
     account_rid: accountId,
     interaction_rid: interactionId,
-    version: 1,
+    version: Number(interactionResponseId),
   });
+  useEffect(() => {
+    if (detialsResponse?.data.history_details) {
+      const updatedData = detialsResponse?.data.history_details.map(
+        (question: InteractionHistoryResponse) => ({
+          ...question,
+          rid: question?.interaction_response_rid,
+          question_seq_num: question?.question_id,
+          notes: '',
+          is_mandatory: false,
+          response_on_datetime: question?.response_on,
+        })
+      );
+      setDetailQuestions(updatedData);
+    }
+  }, [detialsResponse?.data.history_details]);
   const {
     data: responseDataList,
     isLoading,
@@ -45,16 +70,17 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
     limit: rowsPerPage,
     sort: sortField,
     sort_by: sortBy,
-    filters: {},
     fiscal_year: 2023,
+    // account_rid: 'D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3',
+    // interaction_rid: 'D001-21b89b4b-15ba-47dc-abed-7ec186cd16a3',
     account_rid: accountId,
-    flag: 'project',
+    interaction_rid: interactionId,
   });
   useEffect(() => {
     if (responseDataList) {
-      setAccountDetails(transformInteractionData(responseDataList));
+      setAccountDetails(transformInteractionData(detialsResponse));
     }
-  }, [responseDataList]);
+  }, [detialsResponse]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -67,9 +93,11 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
     setSortBy(apiOrder);
     setSortField(property);
   };
-  const handleViewInteraction = (rowId: string) => {
-    if (rowId) {
-      searchParams.set('interactionResponse_id', rowId);
+  const handleViewInteraction = (row: ResponseInteractionList) => {
+    if (row) {
+      console.log('rowId', row);
+      const versionValue = String(row?.interaction_version);
+      searchParams.set('versionID', versionValue);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -84,23 +112,28 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
         <>
           <InfoSection
             columns={accountDetails}
-            loading={false}
-            error={isError}
+            loading={detailsLoading}
+            error={detailsError}
             singleLineView={true}
           />
-          {data?.questions && data?.questions.length > 0 && (
-            <InteractionQuestions
-              questions={data?.questions}
-              globalAttachments={data?.global_attachments}
-              isEditEnable={false}
-              actionButtonEnable={false}
-              // handleResponseHistory={handleResponseHistory}
-            />
+          {detailsLoading ? (
+            <DetailsSectionSkeleton />
+          ) : (
+            detialsResponse?.data?.history_details &&
+            detialsResponse?.data?.history_details.length > 0 && (
+              <InteractionQuestions
+                questions={detailQuestions}
+                globalAttachments={[]}
+                isEditEnable={false}
+                actionButtonEnable={false}
+                // handleResponseHistory={handleResponseHistory}
+              />
+            )
           )}
         </>
       ) : (
         <ListTable
-          data={mockResponse?.data?.response_history || []}
+          data={responseDataList?.interactions || []}
           columns={interactionColumns}
           getRowId={getRowId}
           hoverHighlight={false}
@@ -122,7 +155,7 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
           rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={rowsPerPage}
           currentPage={currentPage}
-          totalItems={10}
+          totalItems={responseDataList?.count || 0}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
           sortBy={sortField}

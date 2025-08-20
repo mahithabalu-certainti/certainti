@@ -213,15 +213,6 @@ export const fetchInteractionStatus = async (
   }
 };
 
-export const useGetInteractionStatusById = (statusId: string) => {
-  return useQuery<GetInteractionStatusApiResponse, Error>({
-    queryKey: ['gat-interaction-status-list', statusId],
-    queryFn: () => fetchInteractionStatus(statusId),
-    retry: 0,
-    enabled: !!statusId,
-  });
-};
-
 export const useGetInteractionStatus = () => {
   return useQuery<GetInteractionStatusApiResponse, Error>({
     queryKey: ['interaction-status'],

@@ -33,6 +33,7 @@ import { useAccountProjects } from '../../../services/project';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import {
   getQuestionTableColumns,
+  getStatusId,
   ProjectDetails,
   transFormPayload,
   validateInteractionForm,
@@ -46,14 +47,13 @@ import {
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
-import { useGetInteractionStatusById } from '../../../../common-service';
+import { useGetInteractionStatus } from '../../../../common-service';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
-  const [currentStatusId, setCurrentStatusId] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
     project_code: '',
@@ -129,10 +129,10 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatus = useGetInteractionStatusById(currentStatusId || '');
+  const interactionStatus = useGetInteractionStatus();
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
-  const isDisableForDraft =
+  const isDraftStatus =
     interactionData?.status_name?.toLowerCase() === StatusTypeEnum.draft;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
@@ -146,9 +146,18 @@ const InteractionForm = () => {
     !isProjectFields
   );
 
+  const statusOptions = useMemo(
+    () =>
+      interactionStatus.data?.data.interactionStatus.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+        hide: !status.status_type,
+      })) || [],
+    [interactionStatus.data?.data.interactionStatus]
+  );
+
   useEffect(() => {
     if (interactionData && isEditView) {
-      setCurrentStatusId(interactionData.status);
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
@@ -345,15 +354,21 @@ const InteractionForm = () => {
   const validateForm = (): boolean => {
     const { isValid, errors: validationErrors } = validateInteractionForm(
       formData,
-      searchParams.get('source'),
-      isEditView,
-      isDisableForDraft
+      searchParams.get('source')
     );
     setErrors(validationErrors);
     return isValid;
   };
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
+    const statusRid = getStatusId(
+      formData,
+      isEditView,
+      isDraftStatus,
+      saveFlag,
+      interactionData?.status || '',
+      statusOptions
+    );
     if (!validateForm()) {
       return;
     }
@@ -362,26 +377,17 @@ const InteractionForm = () => {
       accountId,
       formData,
       isEditView,
-      saveFlag,
+      statusRid,
       interactionData,
       selectedProject
     );
-
+    console.log(payload);
     if (isEditView && interactionData) {
       updateInteraction.mutate(payload);
     } else {
       createInteraction.mutate(payload);
     }
   };
-
-  const statusOptions = useMemo(
-    () =>
-      interactionStatus.data?.data.interactionStatus.map((status) => ({
-        label: status.status_name,
-        value: status.rid,
-      })) || [],
-    [interactionStatus.data?.data.interactionStatus]
-  );
 
   const questionTableColumns = getQuestionTableColumns(isEditView);
 
@@ -428,7 +434,7 @@ const InteractionForm = () => {
               fontSize: '13px',
               fontWeight: 400,
             }}
-            hide={isDisableForDraft}
+            hide={!isDraftStatus && isEditView}
           />
           <TextButton
             label='Save & Submit'
@@ -660,9 +666,7 @@ const InteractionForm = () => {
                 )}
               </div>
 
-              <div
-                className={`${isEditView && !isDisableForDraft ? 'block' : 'hidden'}`}
-              >
+              <div className={`${isEditView ? 'block' : 'hidden'}`}>
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='status'
@@ -755,6 +759,7 @@ const InteractionForm = () => {
                         color: '#425A76',
                         fontSize: '13px',
                         fontWeight: '500',
+                        display: option.hide ? 'none' : 'block',
                       }}
                       key={`${option.value}-${i}`}
                       value={option.value}
@@ -878,7 +883,12 @@ const InteractionForm = () => {
                                   }}
                                 >
                                   {col.name === 'questionNo' && (
-                                    <div style={{ textAlign: 'center' }}>
+                                    <div
+                                      style={{
+                                        textAlign: 'center',
+                                        padding: '4px',
+                                      }}
+                                    >
                                       {question.question_seq_num.startsWith(
                                         'SNO'
                                       )
