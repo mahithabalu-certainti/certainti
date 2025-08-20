@@ -1014,8 +1014,8 @@ export class InteractionService {
   }
   async triggerAI (data : any) {
     let payload = {
-      project_id : "test_project_123" , //data.project_rid,
-      company_id : "test_company_456", //data.account_rid,
+      project_id : data.project_rid, //"test_project_123" 
+      company_id : data.account_rid, // "test_company_456",
       input_text : "This is some text to be processed by the AI.",
       model_type : "NA"
     }
