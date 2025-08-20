@@ -104,6 +104,7 @@ export interface InteractionFormErrors {
 
 // List and Details Types
 export type InteractionList = {
+  status_name: string;
   rid: string;
   r_number: string;
   iteration: number;
@@ -124,7 +125,7 @@ export type InteractionList = {
   interaction_type_name: string;
   response_source: string | null;
   created_by: string;
-  created_user_name: string;
+  created_user_name: string | null;
   created_datetime: string;
   modified_by: string | null;
   updated_user_name: string | null;
@@ -136,7 +137,6 @@ export type InteractionList = {
   totalCount: number;
   last_resent_on: string | null;
   interaction_iteration: number | null;
-  status_name: string | null;
   attachment_count: number | null;
 };
 export type ResponseInteractionList = {
@@ -151,6 +151,7 @@ export type ResponseInteractionList = {
   interaction_source_rid: string;
   interaction_source_name: string;
   response_by: string;
+  attachment_count: number | string | null;
 };
 export interface InteractionListURLParams {
   page: number;
@@ -158,6 +159,7 @@ export interface InteractionListURLParams {
   sort: string;
   sort_by: 'ASC' | 'DESC';
   filters?: object;
+  globalFilters?: object;
   account_rid?: string;
   project_rid?: string;
   project_fiscal_rid?: string;

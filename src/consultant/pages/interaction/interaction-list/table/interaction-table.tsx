@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { InteractionList, InteractionListURLParams } from '../../../../types';
-import { useGetAllInteractionList } from '../../../../services/interactions/interactions-service';
+import { useGlobalInteractionList } from '../../../../services/interactions/interactions-service';
 import { ListTable } from '../../../../../components/table';
 import { getGlobalInteractionListColumns } from './columns';
 import { generatePath, useNavigate } from 'react-router-dom';
@@ -26,7 +26,7 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   const navigate = useNavigate();
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
 
-  const { data, isLoading, isError } = useGetAllInteractionList(
+  const { data, isLoading, isError } = useGlobalInteractionList(
     tableParams,
     refreshTrigger
   );
@@ -64,13 +64,6 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     }));
   };
 
-  const handleViewInteraction = (row: InteractionList) => {
-    console.log(row);
-    navigate(
-      '/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_id=D001-0001&main_source=interactions'
-    );
-  };
-
   const handleEdit = (row: InteractionList) => {
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'interactions',
@@ -96,19 +89,21 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     },
   ];
 
-  const handleViewInteractionHistory = (interactionHistoryId: string) => {
-    console.log(interactionHistoryId);
+  const handleViewInteraction = (row: InteractionList) => {
     navigate(
-      `/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_history_id=${interactionHistoryId}&main_source=interactions`
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_id=${row.rid}&main_source=interactions`
     );
   };
 
-  const handleViewInteractionAttachment = (
-    interactionAttachmentURL: string
-  ) => {
-    console.log(interactionAttachmentURL);
+  const handleViewInteractionHistory = (row: InteractionList) => {
     navigate(
-      `/interactions/details/D001-0f689f8c-b27d-404b-8205-7dcfb5516ead?accountID=D001-ef8441a9-a2fb-4b8a-83d4-9fc41b82d262&source=project&currency_rid=&list=interactions&interaction_attachment_url=${interactionAttachmentURL}&main_source=interactions`
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_history_id=${row.interaction_history}&main_source=interactions`
+    );
+  };
+
+  const handleViewInteractionAttachmentCount = (row: InteractionList) => {
+    navigate(
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_rid=${row.rid}&interaction_attachment_count=${row.attachment_count}&main_source=interactions`
     );
   };
 
@@ -116,7 +111,7 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   const interactionColumns = getGlobalInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachment
+    handleViewInteractionAttachmentCount
   );
 
   return (

@@ -12,3 +12,5 @@ export const getInteractionResponseHistoryDetailsURL = () => {
 export const getInteractionHistoryUrl = (): string => {
   return '/api/interactions/history';
 };
+
+export const getGlobalInteractionListUrl = () => '/api/interactions/globalList';

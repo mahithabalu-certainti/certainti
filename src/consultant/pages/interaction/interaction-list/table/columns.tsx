@@ -4,8 +4,8 @@ import { InteractionList } from '../../../../types';
 
 export const getGlobalInteractionListColumns = (
   handleViewInteraction: (row: InteractionList) => void,
-  handleViewInteractionHistory: (interactionHistory: string) => void,
-  handleViewInteractionAttachment: (interactionAttachment: string) => void
+  handleViewInteractionHistory: (row: InteractionList) => void,
+  handleViewInteractionAttachmentCount: (row: InteractionList) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
@@ -36,8 +36,8 @@ export const getGlobalInteractionListColumns = (
     ),
   },
   {
-    id: 'iteration',
-    sortId: 'iteration',
+    id: 'interaction_iteration',
+    sortId: 'interaction_iteration',
     label: 'Iteration',
     width: 120,
     sortable: true,
@@ -55,13 +55,13 @@ export const getGlobalInteractionListColumns = (
     //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,
   },
   {
-    id: 'status',
-    sortId: 'status_rid',
+    id: 'status_name',
+    sortId: 'status_name',
     label: 'Status',
     width: 140,
     sortable: true,
     // hide: !permissionMap?.['status_rid']?.edit && !permissionMap?.['status_rid']?.read,
-    render: (row: InteractionList) => row.status.status_name || '-',
+    render: (row: InteractionList) => row.status_name || '-',
   },
   {
     id: 'recipient_name',
@@ -72,8 +72,7 @@ export const getGlobalInteractionListColumns = (
     // hide:
     //   !permissionMap?.['recipient_name']?.edit &&
     //   !permissionMap?.['recipient_name']?.read,
-    render: (row: InteractionList) =>
-      row.recipient_details.recipient_name || '-',
+    render: (row: InteractionList) => row.recipient_name || '-',
   },
   {
     id: 'recipient_email',
@@ -84,12 +83,11 @@ export const getGlobalInteractionListColumns = (
     // hide:
     //   !permissionMap?.['recipient_email']?.edit &&
     //   !permissionMap?.['recipient_email']?.read,
-    render: (row: InteractionList) =>
-      row.recipient_details.recipient_email || '-',
+    render: (row: InteractionList) => row.recipient_email || '-',
   },
   {
-    id: 'last_sent_on',
-    sortId: 'last_sent_on',
+    id: 'last_resent_on',
+    sortId: 'last_resent_on',
     label: 'Last Sent Date',
     width: 180,
     sortable: true,
@@ -97,7 +95,7 @@ export const getGlobalInteractionListColumns = (
     //   !permissionMap?.['last_sent_on']?.edit &&
     //   !permissionMap?.['last_sent_on']?.read,
     render: (row: InteractionList) =>
-      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_sent_on),
+      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
   },
   {
     id: 'last_reminder_on',
@@ -139,11 +137,24 @@ export const getGlobalInteractionListColumns = (
       formatDateToYYYYMMDDWithTime(row.response_updated_on),
   },
   {
-    id: 'attachments',
-    sortId: 'attachments',
+    id: 'attachment_count',
+    sortId: 'attachment_count',
     label: 'Attachments',
     width: 160,
     sortable: true,
+    render: (row: InteractionList) =>
+      row.attachment_count ? (
+        <span
+          onClick={() =>
+            row.attachment_count && handleViewInteractionAttachmentCount(row)
+          }
+          className='text-[#1755E7] hover:underline cursor-pointer'
+        >
+          {row.attachment_count}
+        </span>
+      ) : (
+        '-'
+      ),
     // hide:
     //   !permissionMap?.['attachments']?.edit &&
     //   !permissionMap?.['attachments']?.read,
@@ -154,20 +165,20 @@ export const getGlobalInteractionListColumns = (
     label: 'Interaction History',
     width: 200,
     sortable: false,
+    // hide:
+    //   !permissionMap?.['interaction_history']?.edit &&
+    //   !permissionMap?.['interaction_history']?.read,
     render: (row: InteractionList) =>
       row.interaction_history ? (
         <span
-          onClick={() => handleViewInteractionHistory(row.interaction_history)}
-          className='text-[#1755E7] hover:underline'
+          onClick={() => handleViewInteractionHistory(row)}
+          className='text-[#1755E7] hover:underline cursor-pointer'
         >
-          {row.interaction_history}
+          View
         </span>
       ) : (
         '-'
       ),
-    // hide:
-    //   !permissionMap?.['interaction_history']?.edit &&
-    //   !permissionMap?.['interaction_history']?.read,
   },
   {
     id: 'interaction_url',
@@ -181,8 +192,10 @@ export const getGlobalInteractionListColumns = (
     render: (row: InteractionList) =>
       row.interaction_url ? (
         <span
-          onClick={() => handleViewInteractionAttachment(row.interaction_url)}
-          className='text-[#1755E7] hover:underline'
+          onClick={() =>
+            row.interaction_url && window.open(row.interaction_url, '_blank')
+          }
+          className='text-[#1755E7] hover:underline cursor-pointer'
         >
           Link
         </span>
@@ -201,13 +214,12 @@ export const getGlobalInteractionListColumns = (
     //   !permissionMap?.['parent_interaction_rid']?.read,
   },
   {
-    id: 'interaction_type',
-    sortId: 'interaction_type',
+    id: 'interaction_type_name',
+    sortId: 'interaction_type_name',
     label: 'Type',
     width: 140,
     sortable: true,
     // hide: !permissionMap?.['interaction_type']?.edit && !permissionMap?.['interaction_type']?.read,
-    render: (row: InteractionList) => row.interaction_type.type_name || '-',
   },
   {
     id: 'response_source',
@@ -220,16 +232,15 @@ export const getGlobalInteractionListColumns = (
     //   !permissionMap?.['response_source']?.read,
   },
   {
-    id: 'created_by',
-    sortId: 'created_by',
+    id: 'created_user_name',
+    sortId: 'created_user_name',
     label: 'Created By',
     width: 160,
     sortable: true,
     // hide:
     //   !permissionMap?.['created_by']?.edit &&
     //   !permissionMap?.['created_by']?.read,
-    render: (row: InteractionList) =>
-      row.created_by.created_by_user_name || '-',
+    render: (row: InteractionList) => row.created_user_name || '-',
   },
   {
     id: 'created_datetime',
@@ -244,16 +255,15 @@ export const getGlobalInteractionListColumns = (
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
-    id: 'modified_by',
-    sortId: 'modified_by',
+    id: 'updated_user_name',
+    sortId: 'updated_user_name',
     label: 'Last Updated By',
     width: 180,
     sortable: true,
     // hide:
     //   !permissionMap?.['modified_by']?.edit &&
     //   !permissionMap?.['modified_by']?.read,
-    render: (row: InteractionList) =>
-      row.modified_by.modified_by_user_name || '-',
+    render: (row: InteractionList) => row.updated_user_name || '-',
   },
   {
     id: 'modified_datetime',

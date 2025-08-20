@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -8,14 +8,20 @@ import {
 } from '../../../../assets';
 import { ActionsDropdown } from '../../../../components';
 import Filter from '../../account-details-sidebar/components/filter/filter';
-import { InteractionListURLParams } from '../../../types';
+import { FilterState, InteractionListURLParams } from '../../../types';
 import { getInteractionFilterFields } from './helpers';
 import { InteractionTable } from './table/interaction-table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import {
+  useGetInteractionSources,
+  useGetInteractionStatus,
+  useGetInteractionTypes,
+} from '../../../../common-service';
+import { reshapeGlobalFilter } from '../../../../common-utils';
 
 const Interaction: React.FC = () => {
-  const { fiscalYear } = useSelector<
+  const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
@@ -30,9 +36,9 @@ const Interaction: React.FC = () => {
     limit: 100,
     sort: 'r_number',
     sort_by: 'ASC',
-    isGlobal: true,
     filters: appliedFilters,
     fiscal_year: newFiscalYear,
+    globalFilters: reshapeGlobalFilter(filters as FilterState),
   });
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
@@ -53,8 +59,9 @@ const Interaction: React.FC = () => {
       page: 1,
       filters: appliedFilters,
       fiscal_year: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
     }));
-  }, [appliedFilters, fiscalYear]);
+  }, [appliedFilters, fiscalYear, filters]);
 
   const handleCloseFilter = () => {
     setAnchorEl(null);
@@ -64,7 +71,7 @@ const Interaction: React.FC = () => {
   const filterId = isFilterOpen ? 'all-interaction-filter-popover' : undefined;
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'project_code';
+    const defaultSortField = 'r_number';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -72,15 +79,15 @@ const Interaction: React.FC = () => {
       setSortFilterCount(0);
       setTableParams((prev) => ({
         ...prev,
-        sortBy: defaultSortField,
-        sortOrder: defaultSortOrder,
+        sort: defaultSortField,
+        sort_by: defaultSortOrder,
       }));
     } else {
       setSortFilterCount(1);
       setTableParams((prev) => ({
         ...prev,
-        sortBy,
-        sortOrder: apiOrder,
+        sort: sortBy,
+        sort_by: apiOrder,
       }));
     }
   };
@@ -97,7 +104,42 @@ const Interaction: React.FC = () => {
     },
   ];
 
-  const filterFields = getInteractionFilterFields();
+  const interactionTypes = useGetInteractionTypes();
+  const interactionSources = useGetInteractionSources();
+  const interactionStatus = useGetInteractionStatus();
+
+  const memoizedInteractionStatus = useMemo(
+    () =>
+      interactionStatus.data?.data.interactionStatus.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [interactionStatus.data?.data.interactionStatus]
+  );
+
+  const memoizedInteractionTypes = useMemo(
+    () =>
+      interactionTypes.data?.data.interactionTypes.map((type) => ({
+        option: type.interaction_type_name,
+        value: type.rid,
+      })) || [],
+    [interactionTypes.data?.data.interactionTypes]
+  );
+
+  const memoizedInteractionSources = useMemo(
+    () =>
+      interactionSources.data?.data.interactionSource.map((source) => ({
+        option: source.interaction_source_name,
+        value: source.rid,
+      })) || [],
+    [interactionSources.data?.data.interactionSource]
+  );
+
+  const filterFields = getInteractionFilterFields(
+    memoizedInteractionTypes,
+    memoizedInteractionSources,
+    memoizedInteractionStatus
+  );
 
   return (
     <div className='flex flex-col w-full  h-full'>

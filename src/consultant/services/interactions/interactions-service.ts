@@ -10,50 +10,9 @@ import {
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
 import {
-  getInteractionExportUrl,
   getInteractionListUrl,
+  getGlobalInteractionListUrl,
 } from '../urls/interactions-url';
-
-export const exportInteractions = async (
-  body: InteractionListURLParams
-): Promise<void> => {
-  try {
-    const response = await interactionServiceApi.post(
-      getInteractionExportUrl(),
-      body,
-      {
-        responseType: 'blob',
-      }
-    );
-
-    const contentDisposition = response.headers['content-disposition'];
-    let fileName = 'project_interactions.xlsx';
-    if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename="([^"]+)"/);
-      if (fileNameMatch && fileNameMatch[1]) {
-        fileName = fileNameMatch[1];
-      }
-    }
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', fileName);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Error exporting interactions:', error);
-    throw error;
-  }
-};
-
-export const useExportInteractions = () => {
-  return useMutation<void, Error, InteractionListURLParams>({
-    mutationFn: (body) => exportInteractions(body),
-  });
-};
 
 const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
   return `/api/interactions/detail/${accountId}/${interactionId}`;
@@ -102,10 +61,49 @@ export const useGetAllInteractionList = (
 > => {
   return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
     queryKey: ['all-interaction-list', params, refreshTrigger],
-    queryFn: () => fetchInteractionList(params),
+    queryFn: () => fetchGlobalInteractionList(params), // Fixed: Use fetchGlobalInteractionList instead of fetchInteractionList
     retry: 0,
     gcTime: 0,
     enabled: !!params.isGlobal,
+  });
+};
+
+export const fetchGlobalInteractionList = async (
+  params: InteractionListURLParams
+): Promise<{ interactions: InteractionList[]; count: number }> => {
+  const globalPayload = {
+    page: params.page,
+    limit: params.limit,
+    sort: params.sort,
+    sort_by: params.sort_by,
+    filters: params.filters || {},
+    globalFilters: params.globalFilters || {},
+    fiscal_year: params.fiscal_year || 0,
+  };
+
+  const { data } = await interactionServiceApi.post<InteractionListResponse>(
+    getGlobalInteractionListUrl(),
+    globalPayload
+  );
+  return {
+    interactions: data.data.interactions,
+    count: data.data.totalCount,
+  };
+};
+
+export const useGlobalInteractionList = (
+  params: InteractionListURLParams,
+  refreshInteractions?: number
+): UseQueryResult<
+  { interactions: InteractionList[]; count: number },
+  Error
+> => {
+  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+    queryKey: ['global-interaction-list', params, refreshInteractions],
+    queryFn: () => fetchGlobalInteractionList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: params.fiscal_year !== undefined && params.fiscal_year !== null,
   });
 };
 
