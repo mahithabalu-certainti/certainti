@@ -74,6 +74,6 @@ export const ManageProjectsMockData: TimesheetProjectTableListResponse = {
         project_classification_other: null,
       },
     ],
-    count: 1,
+    totalCount: 1,
   },
 };
