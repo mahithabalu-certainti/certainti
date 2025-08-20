@@ -1,4 +1,7 @@
 export const getInteractionListUrl = () => '/api/interactions/list';
+export const getInteractionExportUrl = () => '/api/interactions/export';
+export const getInteractionAttachmentListUrl = () =>
+  '/api/interactions/attachments';
 
 export const getInteractionResponseHistroyListUrl = () =>
   '/api/interactions/responseHistory/list';

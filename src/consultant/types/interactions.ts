@@ -122,8 +122,10 @@ export type InteractionList = {
   fiscal_year: number;
   total_records: number;
   totalCount: number;
+  status_name: string | null;
   last_resent_on: string | null;
   interaction_iteration: number | null;
+  attachment_count: number | null;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -150,6 +152,7 @@ export interface InteractionListURLParams {
   fiscal_year?: number;
   isGlobal?: boolean;
   flag?: string;
+  attachment_count?: number | string | null;
 }
 
 export interface ResponseListURLParams {
@@ -266,6 +269,8 @@ export interface InteractionAttachmentListParams {
   exportKey?: string;
   timezone?: string;
   entity_type?: string;
+  account_rid?: string;
+  interaction_rid?: string;
 }
 
 export interface InteractionAttachmentApiResponse {

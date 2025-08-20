@@ -11,7 +11,10 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { SectionTabPanel } from '../../../../../components';
 import { ListTable } from '../../../../../components/table';
 import { InteractionList } from '../../../../types';
-import { useInteractionList } from '../../../../services/interactions/interactions-service';
+import {
+  useInteractionList,
+  useExportInteractions,
+} from '../../../../services/interactions/interactions-service';
 import {
   generatePath,
   useNavigate,
@@ -73,6 +76,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [count, setCount] = useState<number>(0);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
+
+  const { mutateAsync: exportInteractions } = useExportInteractions();
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
@@ -210,6 +215,30 @@ const Interactions: React.FC<InteractionsProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  const handleExport = async () => {
+    const exportPayload = {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sort: sortField,
+      sort_by: sortBy,
+      filters: appliedFilters,
+      project_rid: projectDetails?.project_rid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
+      fiscal_year: fiscalYear,
+      account_rid: accountId,
+      flag: 'project',
+    };
+    try {
+      await exportInteractions(exportPayload);
+    } catch (error) {
+      console.error('Error during export:', error);
+    }
+  };
+
   const headerButtons = [
     {
       label: 'Send Interaction',
@@ -226,6 +255,14 @@ const Interactions: React.FC<InteractionsProps> = ({
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: viewHistory,
+    },
+    {
+      label: 'Export',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: () => handleExport(),
+      sx: { width: '48px', minWidth: '48px' },
+      hide: false,
     },
   ];
 
