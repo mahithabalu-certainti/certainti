@@ -1,3 +1,4 @@
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
 import { InteractionHistoryList } from './utils';
 
@@ -31,6 +32,7 @@ export const getInteractionHistoryListColumns =
       width: 200,
       sortable: true,
       // hide: !permissionMap?.['status_rid']?.edit && !permissionMap?.['status_rid']?.read,
-      render: (row: InteractionHistoryList) => row.date || '-',
+      render: (row: InteractionHistoryList) =>
+        row?.date ? <span>{formatDateToYYYYMMDDWithTime(row.date)}</span> : '-',
     },
   ];
