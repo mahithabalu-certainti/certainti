@@ -65,10 +65,11 @@ export const filtersColumns : Record<string, string> =
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
-    attachments : "attachments",
+    attachment_count : "attachment_count",
     response_source : "response_source",
     created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime"
+    modified_datetime : "modified_datetime",
+    status_rid : "status_rid"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -82,10 +83,11 @@ export const filtersColumns : Record<string, string> =
     last_reminder_on : "datetime",
     response_submitted_on : "datetime",
     response_updated_on : "datetime",
-    attachments : "number",
+    attachment_count : "number",
     response_source : "string",
     created_datetime : "datetime",
-    modified_datetime : "datetime"
+    modified_datetime : "datetime",
+    status_rid : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -225,19 +227,42 @@ export const rawQueries = {
     return `
     SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`
   },
-  fetchInteractionStatus(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionStatus(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
   fetchInteractionStatusByType(type : string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
   },
+  fetchProjectInfo(rid : string,schemaName : string) {
+    return `
+    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project WHERE rid = '${rid}'`
+  },
+  fetchAccountInfo(rid: string) {
+    return `
+    SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+  },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+  },
+  fetchPOCEmail(projectFiscalRid: string) {
+    return `
+    SELECT project_point_of_contact_email FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+  },
+  fetchInteractionStatusList(whereClause: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
   }
 };
 
@@ -252,7 +277,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     last_reminder_on : "datetime",
     response_submitted_on : "datetime",
     response_updated_on : "datetime",
-    attachments : "number",
+    attachment_count : "number",
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
@@ -260,7 +285,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_type_name : "string",
     interaction_source_name : "string",
     created_user_name : "string",
-    updated_user_name : "string"
+    updated_user_name : "string",
+    status_rid : "string"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -274,7 +300,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
-    attachments : "attachments",
+    attachment_count : "attachment_count",
     response_source : "response_source",
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",
@@ -282,8 +308,14 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_type_name : "interaction_type_name",
     interaction_source_name : "interaction_source_name",
     created_user_name : "created_user_name",
-    updated_user_name : "updated_user_name"
+    updated_user_name : "updated_user_name",
+    status_rid : "status_rid"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
   export const blobUrlExpiration = 60
+
+  export const filterTypesForIntHistory : Record<string, string> = {
+    status_rid : "string",
+    date : "datetime"
+  }

@@ -2544,6 +2544,90 @@ const exportListAccountLevelProjectCostsSchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 });
 
+const importedAccountLevelProjects = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("100"),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
+});
+
+const importedAccountLevelResources = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("100"),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
+});
+
+const importedAccountLevelProjectTasks = Joi.object({
+  documentRid: Joi.string().pattern(uuidRegex).required(),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2579,5 +2663,8 @@ export {
   listResourceCostSchemaForFinancialHighlights,
   exportResourceCostSchemaForFinancialHighlights,
   listAccountLevelProjectCostsSchema,
-  exportListAccountLevelProjectCostsSchema
+  exportListAccountLevelProjectCostsSchema,
+  importedAccountLevelProjects,
+  importedAccountLevelResources,
+  importedAccountLevelProjectTasks
 };

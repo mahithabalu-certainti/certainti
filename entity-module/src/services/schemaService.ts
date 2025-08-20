@@ -328,7 +328,8 @@ class SchemaService {
     whereClause: Record<string, string> = {},
     havingClause: Record<string, string> = {},
     geoDataSort: string[][],
-    accountId: string
+    accountId: string,
+    documentRid?: string
   ) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
@@ -371,6 +372,9 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+
+
       Resource.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         as: "AccountDetails",
@@ -382,6 +386,41 @@ class SchemaService {
         sourceKey: "rid",
         as: "ResourceFiscal",
       });
+
+      Resource.hasMany(ResourceTimelineModel, {
+        foreignKey: "entity_rid",
+        sourceKey: "rid",
+        as: "ResourceTimelines",
+      });
+
+      // Build the include array dynamically
+      const include: any[] = [
+        {
+          model: ResourceFiscalModel,
+          as: "ResourceFiscal",
+          attributes: [],
+          required: false,
+        },
+        {
+          model: AccountDetailsModel,
+          as: "AccountDetails",
+          attributes: [],
+          required: false,
+        },
+      ];
+
+      // Add ResourceTimeline join if documentRid is provided
+      if (documentRid) {
+        include.push({
+          model: ResourceTimelineModel,
+          as: "ResourceTimelines",
+          required: true,
+          where: {
+            document_rid: documentRid
+          },
+          attributes: [] // Only join, don't select fields
+        });
+      }
 
       // First get all resources without pagination
       const resources = await Resource.findAll({
@@ -443,20 +482,7 @@ class SchemaService {
             "estimated_rd_hours",
           ],
         ],
-        include: [
-          {
-            model: ResourceFiscalModel,
-            as: "ResourceFiscal",
-            attributes: [],
-            required: false,
-          },
-          {
-            model: AccountDetailsModel,
-            as: "AccountDetails",
-            attributes: [],
-            required: false,
-          },
-        ],
+        include: include,
       });
 
       if (resources) {

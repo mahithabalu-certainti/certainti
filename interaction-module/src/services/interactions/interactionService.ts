@@ -11,12 +11,11 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,inter
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { fetchInteractionForProjectLevelQuery, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
-import { interactionMailTemplate } from "../../utils/mailTemplate";
-import {  sendEmailWithAttachment } from "../emailService";
-import * as fs from 'fs';
-import * as path from 'path';
+import { surveyMailTemplate } from "../../utils/mailTemplate";
+import { sendEmailWithAttachment } from "../emailService";
+import ExcelJS from 'exceljs';
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -107,17 +106,17 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
-  async getInteractionStatusAndSource(status_action: string) {
-    const status = statusAction[status_action as keyof typeof statusAction];
-    if (!status) {
-      throw new Error("Invalid status_action value");
+  async getInteractionStatusAndSource(status_action?: string) {
+    let interactionStatus = "";
+    if (status_action) {
+      const status = statusAction[status_action as keyof typeof statusAction];
+      if (status) {
+        interactionStatus = (await this.interactionSchemaService.getInteractionStatusByType(status)) ?? "";
+      }
     }
-    const [interactionStatus, intSource] = await Promise.all([
-      this.interactionSchemaService.getInteractionStatusByType(status),
-      this.interactionSchemaService.getInteractionSourceByType(
-        interactionSource.MANUAL
-      ),
-    ]);
+    const intSource = await this.interactionSchemaService.getInteractionSourceByType(
+      interactionSource.MANUAL
+    );
     return { interactionStatus, intSource };
   }
 
@@ -147,8 +146,8 @@ export class InteractionService {
           interactionData.interaction_rid
         );
       const { interactionStatus, intSource } =
-        await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.status_rid = interactionStatus || "";
+        await this.getInteractionStatusAndSource();
+      interactionData.status_rid = interactionData.status_rid || "";
       interactionData.interaction_source_rid = intSource || "";
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
@@ -324,7 +323,7 @@ export class InteractionService {
     }
   }
 
-  async getInteractionStatus(): Promise<{
+  async getInteractionStatus(status_scope?: string,currentStatus?: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -332,7 +331,7 @@ export class InteractionService {
   }> {
     try {
       const interactionStatus =
-        await this.interactionSchemaService.getInteractionStatus();
+        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -393,7 +392,9 @@ export class InteractionService {
   async sendInteraction(
     interactionRid: string[],
     accountRid: string,
-    userId: string
+    userId: string,
+    customRecipient: boolean,
+    customEmailInfo: { name: string; email: string }
   ): Promise<{
     statusCode: number;
     message: string;
@@ -401,45 +402,53 @@ export class InteractionService {
     data?: { interactionResponse: any };
   }> {
     try {
+      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
+      if (!accountNumber) throw new Error("Invalid account ID");
+
       const interactionResponse: any[] = [];
-       const { accountNumber } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-          accountRid
+
+      for (const rid of interactionRid) {
+        const [interactionItems, interactionInfo, emailInfo] =
+          await Promise.all([
+            this.interactionSchemaService.fetchInteractionQuestionsById(
+              accountNumber,
+              rid
+            ),
+            this.interactionSchemaService.fetchInteractionInfo(
+              rid,
+              accountNumber
+            ),
+            customRecipient
+              ? Promise.resolve(customEmailInfo)
+              : this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
+          ]);
+        const interactionLink = await this.generateInteractionLink(
+          rid,
+          interactionInfo.accountInfo.account_rid
         );
 
-      if (!accountNumber) {
-        throw new Error("Invalid account ID");
-      }
-      for (const rid of interactionRid) {
-         const interactionItems = await this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber,rid);
-         const csvRows: string[] = [];
-           const plainItems = interactionItems.map(item => item.get({ plain: true }));
-         csvRows.push("Question,Response");
-         console.log("Send interaction items")
-         
-        for (const item of plainItems) {
-          console.log(item);
-        //  const response = latestResponses.find((resp: any) => resp.item_rid === item.rid);
-          csvRows.push(`"${item.question}"`);
-        }
-        const csvContent = csvRows.join('\n');
-        const csvFolder = path.resolve(__dirname, '../../csv_exports');
-        if (!fs.existsSync(csvFolder)) {
-          fs.mkdirSync(csvFolder, { recursive: true });
-        }
-        const filePath = path.join(csvFolder, `interaction_${rid}.csv`);
-        fs.writeFileSync(filePath, csvContent, 'utf-8');
-        const emailInfo = await this.interactionSchemaService.fetchPOCEmail(accountNumber,rid);
-        console.log("Email Info:", emailInfo);
+        // Prepare Excel workbook
+        const excelBuffer = await this.generateExcelBuffer(
+          rid,
+          interactionItems,
+          interactionInfo
+        );
+        const excelAttachment = {
+          filename: `interaction_${rid}.xlsx`,
+          content: Buffer.from(excelBuffer).toString("base64"),
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        };
+
+        // Send email
         const emailResponse = await this.sendEmailWithAttachment(
           emailInfo,
-          {
-            filename: `interaction_${rid}.csv`,
-            content: Buffer.from(csvContent, 'utf-8').toString('base64'),
-            contentType: 'text/csv'
-          }
+          interactionInfo.projectInfo,
+          interactionInfo.accountInfo,
+          excelAttachment,
+          interactionLink
         );
-        if(emailResponse){
+        if (emailResponse) {
           await this.interactionSchemaService.updateInteractionInfo(
             accountNumber,
             rid,
@@ -447,51 +456,129 @@ export class InteractionService {
             userId,
             emailInfo
           );
+        } else {
+          //need to add logic for sending toPS team
         }
 
         interactionResponse.push({
           interactionRid: rid,
-          csvSent: true
+          csvSent: !!emailResponse,
         });
-      }  
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          interactionResponse:null,
-        },
+        data: { interactionResponse },
       };
     } catch (err) {
-      console.log("Error sending email with attachment send", err);
       throw this.throwServiceError(err as Error);
     }
   }
+  async generateInteractionLink(interactionRid: string, accountRid: string) {
+    return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
+  }
+  async generateExcelBuffer(
+    rid: string,
+    interactionItems: any[],
+    interactionInfo: any
+  ): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Interaction");
+
+    // Header rows
+    const headerRows = [
+      ["Interaction ID", interactionInfo.interactionInfo?.interaction_id ?? ""],
+      ["Project ID", interactionInfo.projectInfo?.project_id ?? ""],
+      ["Project Name", interactionInfo.projectInfo?.project_name ?? ""],
+    ];
+
+    headerRows.forEach((row, idx) => {
+      worksheet.addRow(row);
+      worksheet.getRow(idx + 1).getCell(1).font = { bold: true };
+      worksheet.getRow(idx + 1).getCell(1).protection = { locked: true };
+      worksheet.getRow(idx + 1).getCell(2).protection = { locked: true };
+    });
+
+    // Column headers
+    worksheet.addRow(["Questions", "Answers", "Notes", "Is Mandatory"]);
+    worksheet.getRow(4).eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.protection = { locked: true };
+    });
+
+    worksheet.columns = [
+      { key: "question", width: 50 },
+      { key: "answer", width: 50 },
+      { key: "notes", width: 30 },
+      { key: "is_mandatory", width: 15 },
+    ];
+
+    // Add question rows
+    interactionItems.forEach((item: any) => {
+      const plain = item.get ? item.get({ plain: true }) : item;
+      const row = worksheet.addRow({
+        question: plain.question,
+        answer: "",
+        notes: "",
+        is_mandatory: plain.is_mandatory ? "Yes" : "No",
+      });
+
+      // Lock specific columns right away
+      row.getCell(1).protection = { locked: true };
+      row.getCell(2).protection = { locked: false};
+      row.getCell(3).protection = { locked: true };
+      row.getCell(4).protection = { locked: true };
+    });
+
+    // Now protect worksheet AFTER all protections are set
+    await worksheet.protect("interaction123", {
+      selectLockedCells: true,
+      selectUnlockedCells: true,
+    });
+
+    // Write Excel file to buffer (in-memory)
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(excelBuffer as ArrayBuffer);
+  }
+
   async sendEmailWithAttachment(
-    emailInfo: {name: string, email: string},
-    attachment: { filename: string; content: string; contentType: string }
+    emailInfo: { name: string; email: string },
+
+    projectInfo: {
+      project_id: string;
+      project_name: string;
+      project_code: string;
+      fiscalYear: number;
+    },
+    accountInfo: { account_name: string },
+    excelAttachment: { filename: string; content: string; contentType: string },
+    interactionLink: string
   ) {
     let emailResponse = false;
     try {
-      const emailContent = interactionMailTemplate(emailInfo);
+      const emailContent = surveyMailTemplate(
+        emailInfo,
+        projectInfo,
+        accountInfo,
+        interactionLink
+      );
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
-          attachments: [
-        {
-          '@odata.type': '#microsoft.graph.fileAttachment',
-          name: attachment.filename,
-          contentBytes: attachment.content,
-          contentType: attachment.contentType
-        }
-          ]
-        });
-        return emailResponse;
-      } catch (error) {
-        this.logger.error("Error sending email with attachment", error);
-        return emailResponse;
-      }
+        attachments: [
+          {
+            "@odata.type": "#microsoft.graph.fileAttachment",
+            name: excelAttachment.filename,
+            contentBytes: excelAttachment.content,
+            contentType: excelAttachment.contentType,
+          },
+        ],
+      });
+      return emailResponse;
+    } catch (error) {
+      return emailResponse;
+    }
   }
- 
 
   /**
    * Formats an error response to be returned from service methods.
@@ -547,7 +634,7 @@ export class InteractionService {
     const detectConditions = (filters : any) => {
       if(!filters) return null
       for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
-        if(filters[conditions] !== undefined) return conditions
+        if(Object.keys(filters).includes(conditions)) return conditions
       }
       return null
     }
@@ -567,12 +654,8 @@ export class InteractionService {
       sourceFilter = data.filters.interaction_source_name
       sourceConditions = detectConditions(sourceFilter)
     }
-     if(data.filters?.status_name) {
-      statusFilter = data.filters.status_name
-      statusConditions = detectConditions(sourceFilter)
-    }
 
-    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name", "status_name"].forEach(key => {
+    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name"].forEach(key => {
       if(data.filters[key]) {
         disablePagination = true
         delete data.filters[key]
@@ -616,7 +699,7 @@ export class InteractionService {
         return {
           ...d,
           status_rid : d.status,
-          status_name : statusMap.get(d.status),
+          status_name : d.status == '' || d.status == null ? null :  statusMap.get(d.status),
           interaction_type_rid : d.interaction_type,
           interaction_type_name : typeMap.get(d.interaction_type),
           interaction_source_rid : d.interaction_source,
@@ -652,9 +735,6 @@ export class InteractionService {
       if(typeCondition != undefined && typeCondition != null) {
         finalData = applyFilters(finalData, typeCondition, typeFilter, "interaction_type_name")
       }
-      if(statusConditions != undefined && statusConditions != null) {
-        finalData = applyFilters(finalData, statusConditions, statusFilter, "status_name")
-      }
       if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'asc') {
         finalData = finalData.sort((a : any, b : any) => {
           return a[data.sort].localeCompare(b[data.sort])
@@ -666,6 +746,22 @@ export class InteractionService {
       }
       totalResults = disablePagination ? finalData.length : finalData[0].total_records
       let finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
+      finalPaginatedData = await Promise.all(finalPaginatedData.map(async (d : any) => {
+        let data = {
+          ...d,
+          url : d.interaction_url == '' || d.interaction_url == null ? null : await generateSasUrl(d.interaction_url)
+        }
+        delete data.interaction_url
+        return data;
+      }))
+      finalPaginatedData = finalPaginatedData.map((d : any) => {
+        const data = {
+          ...d,
+          interaction_url : d.url
+        }
+        delete data.url
+        return data;
+      })
       let organizedData = {
         page : data.page,
         limit : data.limit,
@@ -696,9 +792,25 @@ export class InteractionService {
       data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by
     ))
     if(result[0][0].interactions != null) {
+      let finalData = await Promise.all(result[0][0].interactions.map(async (d : any) => {
+        let data = {
+          ...d,
+          url : d.interaction_url == '' || d.interaction_url == null ? null : await generateSasUrl(d.interaction_url)
+        }
+        delete data.interaction_url
+        return data;
+      }))
+      finalData = finalData.map((d : any) => {
+        let data = {
+          ...d,
+          interaction_url : d.url
+        }
+        delete data.url
+        return data;
+      })
       return {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        data : result[0][0].interactions
+        data : finalData
       }
     } else {
       return {
@@ -745,59 +857,17 @@ export class InteractionService {
       }
     } else {
       return {
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
         data : []
       }
     }
   }
   async fetchInteractionHistory (data : any) {
-    let actionFilter;
-    let actionConditionsFilter : string | undefined;
-    let disablePagination : boolean = false
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-
-    const detectConditions = (filters : any) => {
-      for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
-        if(Object.keys(filters).includes(conditions)) {
-          return conditions
-        }
-      }
-    }
-    const applyFilters = (finalData : any, filters : filterType, conditions : any, values : any) => {
-        finalData = finalData.filter((d : any) => {
-          let statusName = d[values].toLowerCase()
-          let value : any =  filters[conditions]
-          
-          switch(conditions) {
-            case "equals" : {
-              return statusName === value.toLowerCase()
-            }
-            case "not_equals" : {
-              return statusName != value.toLowerCase()
-            }
-            case "contains" : {
-              return statusName.includes(value)
-            }
-            case "is_empty" : {
-              return !statusName
-            }
-          }
-        })
-      return finalData
-    }
-
-    if(Object.keys(data.filters).length > 0) {
-      if(data.filters.status_name != undefined) {
-        actionFilter = data.filters.status_name;
-        delete data.filters.status_name;
-        disablePagination = true
-        actionConditionsFilter = detectConditions(actionFilter)
-      }
-    }
-    const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName, disablePagination));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number); 
+    const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName));
     if(result[0][0].interaction_history !== null) {
       let finalResponseData;
       let totalRecords;
@@ -811,16 +881,15 @@ export class InteractionService {
           status_name : mapStatus.get(d.new_status_rid)
         }
       })
-    finalResponseData = disablePagination ? applyFilters(responseData, actionFilter, actionConditionsFilter, "status_name") : responseData
-    totalRecords = disablePagination ? finalResponseData.length : finalResponseData[0].total_records
-    let paginatedData = disablePagination ? finalResponseData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalResponseData
-    let finalSortedData = data.sort === 'status_name' ? paginatedData.sort((a : any, b : any) => {
+    finalResponseData = responseData
+    totalRecords =  finalResponseData[0].total_records
+    let finalSortedData = data.sort === 'status_name' ? finalResponseData.sort((a : any, b : any) => {
       if(data.sort_by.toLowerCase() === 'desc') {
         return b.status_name.localeCompare(a.status_name)
       } else {
         return a.status_name.localeCompare(b.status_name)
       }
-    }) : paginatedData
+    }) : finalResponseData
 
     let finalStructuredData = {
       interaction_rnumber : finalSortedData[0].interaction_rnumber,
@@ -830,6 +899,7 @@ export class InteractionService {
       interaction_history : finalSortedData.map((d : any) => {
         return {
           rid : d.interaction_history_rid,
+          status_rid : d.new_status_rid,
           status_name : d.status_name,
           date : d.date
         }
@@ -905,6 +975,51 @@ export class InteractionService {
         limit : data.limit,
         totalRecords : 0,
         attachments : []
+      }
+    }
+  }
+  async listResponseHistoryDetails (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+    const result : any = await orgDb.query(interactionResponseHistoryByVersion(data.interaction_rid, data.version, schemaName));
+    if(result[0][0].responses_history_details !== null) {
+      let finalData = await Promise.all(result[0][0].responses_history_details.map(async (d : any) => {
+        let data = {
+          interaction_response_rid : d.interaction_response_rid,
+          interaction_item_rid : d.interaction_item_rid,
+          response_submitted_on : d.response_submitted_on,
+          question_id : d.question_id,
+          question : d.question,
+          response : d.response,
+          response_on : d.response_on,
+          attachments : await Promise.all(d.attachments.filter((f : any) => f !== null).map(async (da : any) => {
+            return {
+              file_name : da.file_name,
+              file_url : da.file_url == null ? null : await generateSasUrl(da.file_url),
+              file_type : da.file_type,
+              file_size : da.file_size
+            }
+          }))
+        }
+        return data
+      }))
+      let structuredData = {
+        interaction_rid : result[0][0].responses_history_details[0].interaction_rid,
+        interaction_r_number : result[0][0].responses_history_details[0].r_number,
+        project_name : result[0][0].responses_history_details[0].project_name,
+        history_details : finalData
+      }
+      return {
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : structuredData
+      }
+    } else {
+      return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
       }
     }
   }
