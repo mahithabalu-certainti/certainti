@@ -282,5 +282,3 @@ export const responseSortKeys = [
   "response_email",
   "interaction_response",
 ];
-
-export const INTERACTION_BASE_URL = 'https://development-thinkrd365-api-management.azure-api.net/interactionService/api'

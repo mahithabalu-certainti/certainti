@@ -27,6 +27,6 @@ routes.get("/health", async (req, res) => {
 
 // Initialize interaction module endpoints here
 routes.use("/interactions", interactionRoutes);
-routes.use("/ext_interactions", extInteractionRoute);
+routes.use("/extInteractions", extInteractionRoute);
 
 export default routes;

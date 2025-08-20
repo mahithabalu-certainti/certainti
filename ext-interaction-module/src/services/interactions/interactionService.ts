@@ -2,8 +2,9 @@ import { Logger } from "winston";
 import FormData from 'form-data';
 import axios from "axios";
 import { InteractionResponse } from "../../utils/types";
-import { HttpStatus, INTERACTION_BASE_URL } from "../../utils/constants";
+import { HttpStatus } from "../../utils/constants";
 
+const INTERACTION_BASE_URL = process.env.INTERACTION_BASE_URL!;
 export class InteractionService {
   private logger: Logger;
 
@@ -22,7 +23,7 @@ export class InteractionService {
   }> {
     try {
       const response = await axios.put(
-        `${INTERACTION_BASE_URL}/ext_interactions/updateResponse`,
+        `${INTERACTION_BASE_URL}/extInteractions/updateResponse`,
         {
           ...interactionData,
         },
@@ -70,7 +71,7 @@ export class InteractionService {
   }> {
     try {
       const response = await axios.get(
-        `${INTERACTION_BASE_URL}/ext_interactions/detail/${accountRid}/${interactionRid}`,
+        `${INTERACTION_BASE_URL}/extInteractions/detail/${accountRid}/${interactionRid}`,
         {
           headers: {
             "x-user-id": userId,
@@ -132,7 +133,7 @@ export class InteractionService {
       formData.append("project_rid", projectId);
 
       const response = await axios.post(
-        `${INTERACTION_BASE_URL}/ext_interactions/uploadAttachment`,
+        `${INTERACTION_BASE_URL}/extInteractions/uploadAttachment`,
         formData,
         {
           headers: {
@@ -178,7 +179,7 @@ export class InteractionService {
   }> {
     try {
       const response = await axios.delete(
-        `${INTERACTION_BASE_URL}/ext_interactions/deleteAttachment`,
+        `${INTERACTION_BASE_URL}/extInteractions/deleteAttachment`,
         {
           data: {
             file_url: fileUrl
