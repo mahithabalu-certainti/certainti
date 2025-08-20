@@ -13,6 +13,8 @@ import {
 import configurations from "../config/config";
 import {
   createInteractionSchema,
+  getInteractionStatusSchema,
+  sendInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
 } from "../lib/joi/schemas/schema";
@@ -328,7 +330,8 @@ async function getInteractionStatus(
 ): Promise<void> {
   const methodName = "Get resource roles";
   try {
-    const interactionStatus = await interactionService.getInteractionStatus();
+    const value = await validateRequest(req, getInteractionStatusSchema, res,"GET");
+    const interactionStatus = await interactionService.getInteractionStatus(value.status_scope,value.current_status);
     if (interactionStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionStatus.data);
@@ -720,8 +723,7 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Send interaction";
   try {
     console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
-  //  const value = await validateRequest(req, sendInteractionSchema, res);
-    const value = req.body;
+    const value = await validateRequest(req, sendInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -737,15 +739,12 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-   /* const interaction = {
-      statusCode: HttpStatus.SUCCESS,
-      data: { message: " interaction sent successfully" },
-      errorMessage: ""
-    };*/
      const interaction = await interactionService.sendInteraction(
        value.interaction_rid,
        value.account_rid,
-       userId
+       userId,
+       value.customRecipient,
+       value.emailInfo
      );
     console.log(
       `[${methodName}] Service response:`,

@@ -225,10 +225,17 @@ export const rawQueries = {
     return `
     SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`
   },
-  fetchInteractionStatus(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionStatus(data: any) {
+    let ids: string[];
+    if (Array.isArray(data)) {
+      ids = data.map((d: any) => `'${d}'`);
+    } else if (typeof data === "string") {
+      ids = [`'${data}'`];
+    } else {
+      ids = [];
+    }
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
   fetchInteractionStatusByType(type : string) {
     return `
@@ -246,6 +253,14 @@ export const rawQueries = {
      let ids = data.map((d : any) => `'${d}'`)
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+  },
+  fetchPOCEmail(projectFiscalRid: string) {
+    return `
+    SELECT project_point_of_contact_email FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+  },
+  fetchInteractionStatusList(whereClause: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
   }
 };
 

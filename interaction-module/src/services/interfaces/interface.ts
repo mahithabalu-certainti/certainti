@@ -40,7 +40,7 @@ export interface IInteractionService {
     data?: { interactions: any };
   }>;
 
-  getInteractionStatus(): Promise<{
+  getInteractionStatus(statusScope?: string, currentStatus?: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -79,7 +79,9 @@ export interface IInteractionService {
   sendInteraction(
     interactionRid: string[],
     accountId: string,
-    userId: string
+    userId: string,
+    customRecipient:boolean,
+    emailInfo: { name: string; email: string }
   ): Promise<{
     statusCode: number;
     message: string;

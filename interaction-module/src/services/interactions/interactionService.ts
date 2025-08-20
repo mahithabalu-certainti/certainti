@@ -323,7 +323,7 @@ export class InteractionService {
     }
   }
 
-  async getInteractionStatus(): Promise<{
+  async getInteractionStatus(status_scope?: string,currentStatus?: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -331,7 +331,7 @@ export class InteractionService {
   }> {
     try {
       const interactionStatus =
-        await this.interactionSchemaService.getInteractionStatus();
+        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -392,7 +392,9 @@ export class InteractionService {
   async sendInteraction(
     interactionRid: string[],
     accountRid: string,
-    userId: string
+    userId: string,
+    customRecipient: boolean,
+    customEmailInfo: { name: string; email: string }
   ): Promise<{
     statusCode: number;
     message: string;
@@ -416,7 +418,9 @@ export class InteractionService {
               rid,
               accountNumber
             ),
-            this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
+            customRecipient
+              ? Promise.resolve(customEmailInfo)
+              : this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
           ]);
         const interactionLink = await this.generateInteractionLink(
           rid,
