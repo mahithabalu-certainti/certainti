@@ -65,10 +65,11 @@ export const filtersColumns : Record<string, string> =
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
-    attachments : "attachments",
+    attachment_count : "attachment_count",
     response_source : "response_source",
     created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime"
+    modified_datetime : "modified_datetime",
+    status_rid : "status_rid"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -82,10 +83,11 @@ export const filtersColumns : Record<string, string> =
     last_reminder_on : "datetime",
     response_submitted_on : "datetime",
     response_updated_on : "datetime",
-    attachments : "number",
+    attachment_count : "number",
     response_source : "string",
     created_datetime : "datetime",
-    modified_datetime : "datetime"
+    modified_datetime : "datetime",
+    status_rid : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -275,7 +277,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     last_reminder_on : "datetime",
     response_submitted_on : "datetime",
     response_updated_on : "datetime",
-    attachments : "number",
+    attachment_count : "number",
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
@@ -283,7 +285,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_type_name : "string",
     interaction_source_name : "string",
     created_user_name : "string",
-    updated_user_name : "string"
+    updated_user_name : "string",
+    status_rid : "string"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -297,7 +300,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
-    attachments : "attachments",
+    attachment_count : "attachment_count",
     response_source : "response_source",
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",
@@ -305,7 +308,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_type_name : "interaction_type_name",
     interaction_source_name : "interaction_source_name",
     created_user_name : "created_user_name",
-    updated_user_name : "updated_user_name"
+    updated_user_name : "updated_user_name",
+    status_rid : "status_rid"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
