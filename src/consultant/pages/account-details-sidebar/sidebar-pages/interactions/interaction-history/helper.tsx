@@ -1,4 +1,4 @@
-import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
+import { FieldConfig } from '../../../components/filter/filterType';
 
 const enumOptions = [
   { option: 'Equals', value: 'equals' },

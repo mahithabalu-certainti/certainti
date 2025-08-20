@@ -43,7 +43,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     const accountId = accountid ?? '';
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'account',
-      interactionId: data?.rid || '',
+      interactionId: data?.interaction_rid || interactionId || '',
     });
     const queryParams = new URLSearchParams({
       accountId,
@@ -98,24 +98,24 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: (
         <span
           className={`font-semibold ${
-            data?.status === 'Draft'
+            data?.status_name === 'Draft'
               ? 'text-gray-500'
-              : data?.status === 'Created'
+              : data?.status_name === 'Created'
                 ? 'text-blue-500'
-                : data?.status === 'Sent'
+                : data?.status_name === 'Sent'
                   ? 'text-purple-500'
-                  : data?.status === 'Response Draft'
+                  : data?.status_name === 'Response Draft'
                     ? 'text-orange-500'
-                    : data?.status === 'Response Received'
+                    : data?.status_name === 'Response Received'
                       ? 'text-green-600'
-                      : data?.status === 'On-Hold'
+                      : data?.status_name === 'On-Hold'
                         ? 'text-yellow-500'
-                        : data?.status === 'Cancelled'
+                        : data?.status_name === 'Cancelled'
                           ? 'text-red-600'
                           : 'text-gray-700'
           }`}
         >
-          {data?.status}
+          {data?.status_name}
         </span>
       ),
       key: 'status',
@@ -127,21 +127,21 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: data?.response_received_on,
-      key: 'response_received_on',
+      value: data?.response_updated_on,
+      key: 'response_updated_on',
     },
   ];
 
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid,
+      value: data?.interaction_rid || interactionId,
       key: 'rid',
     },
     {
       label: 'Interaction ID',
-      value: data?.interaction_number,
-      key: 'interaction_number',
+      value: data?.r_number,
+      key: 'r_number',
     },
     {
       label: 'Created On',
@@ -170,7 +170,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction'
-          subValue={data?.interaction_number || ''}
+          subValue={data?.r_number || ''}
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'

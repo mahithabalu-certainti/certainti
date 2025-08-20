@@ -1,28 +1,31 @@
-import { useSearchParams } from 'react-router-dom';
-import { NewProjectData } from '../../../../../types/project';
-import { useEffect, useMemo, useState } from 'react';
-import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
-import {
-  InteractionHistoryList,
-  transformInteractionHistoryData,
-} from './utils';
-import { getInteractionHistoryListColumns } from './columns';
+import React, { useState, useEffect, useMemo } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { InteractionDetailIcon } from '../../../../../../assets';
-import { Box } from '@mui/material';
-import { InfoSection } from '../../../../../../components';
 import { ListTable } from '../../../../../../components/table';
+import { getInteractionHistoryListColumns } from './columns';
+import { InfoSection } from '../../../../../../components';
+import { Box } from '@mui/material';
+import {
+  InteractionHistoryAction,
+  transformInteractionHistoryData,
+} from './utils';
 
+import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
+import { useParams, useSearchParams } from 'react-router-dom';
 interface InteractionHistoryProps {
   accountInActive: boolean;
   handleBackClick: () => void;
-  projectDetails?: NewProjectData | null;
+  refresh?: number;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
 }
 
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   handleBackClick,
+  refresh,
+  appliedFilters,
 }) => {
   const [searchParams] = useSearchParams();
+  const { accountid } = useParams();
   const interactionHistoryId = searchParams.get('interaction_history_id') || '';
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -34,10 +37,22 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     data: interactionHistoryData,
     isLoading,
     isError,
-  } = useInteractionHistoryList(interactionHistoryId, !!interactionHistoryId);
+  } = useInteractionHistoryList(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sort: sortField,
+      sort_by: sortBy.toLowerCase() as 'asc' | 'desc',
+      filters: appliedFilters,
+      account_rid: accountid || '',
+      interaction_rid: interactionHistoryId,
+    },
+    !!interactionHistoryId,
+    refresh
+  );
 
   const actionData = useMemo(
-    () => interactionHistoryData?.data?.interaction_history || [],
+    () => interactionHistoryData?.data?.data?.interaction_history || [],
     [interactionHistoryData]
   );
 
@@ -45,13 +60,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     setTotalItems(actionData.length);
   }, [actionData]);
 
-  const tableData: InteractionHistoryList[] = actionData.map((action) => ({
-    rid: action.rid,
-    action: action.action,
-    date: action.date,
-  }));
-
-  const getRowId = (row: InteractionHistoryList) => row.rid;
+  const getRowId = (row: InteractionHistoryAction) => row.rid;
   const interactionHistoryColumns = getInteractionHistoryListColumns();
 
   const handleRowsPerPageChange = (newPageSize: number) => {
@@ -71,8 +80,8 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
 
   const transformedInteractionHistoryColumns = useMemo(
     () =>
-      interactionHistoryData
-        ? transformInteractionHistoryData(interactionHistoryData)
+      interactionHistoryData?.data
+        ? transformInteractionHistoryData(interactionHistoryData.data)
         : [],
     [interactionHistoryData]
   );
@@ -82,7 +91,9 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction History'
-          subValue={interactionHistoryData?.data?.interaction_rnumber || ''}
+          subValue={
+            interactionHistoryData?.data?.data?.interaction_rnumber || ''
+          }
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'
@@ -105,7 +116,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
         </Box>
         <div className='border-t border-[#CBD6E2]'>
           <ListTable
-            data={tableData}
+            data={actionData}
             columns={interactionHistoryColumns}
             getRowId={getRowId}
             hoverHighlight={false}
@@ -119,7 +130,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
-            loadindRowCount={4}
+            loadindRowCount={2}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}

@@ -5,8 +5,24 @@ export enum QuestionUpdate {
   Add = 'add',
   Edit = 'edit',
   Delete = 'delete',
-  NoChange = 'no_change',
 }
+
+export enum StatusActionEnum {
+  Create = 'CREATE',
+  Draft = 'DRAFT',
+}
+
+export enum StatusTypeEnum {
+  create = 'create',
+  draft = 'draft',
+  sent = 'sent',
+  response_draft = 'response draft',
+  created = 'created',
+  response_received = 'response received',
+  cancelled = 'cancelled',
+  on_hold = 'on-hold',
+}
+
 export interface InteractionFormTableColumn {
   name: string;
   label: string;
@@ -25,12 +41,13 @@ export interface ProjectDetails {
 }
 
 export interface InteractionFormQuestion {
-  questionNo: string;
+  question_seq_num: string;
   question: string;
-  mandatory: boolean;
+  is_mandatory: boolean;
   notes: string;
   rid?: string;
   action_type?: QuestionUpdate;
+  is_editable?: boolean;
 }
 
 export interface InteractionFormData {
@@ -47,8 +64,29 @@ export interface InteractionFormData {
   created_by?: string;
   updated_on?: string;
   updated_by?: string;
-  flag?: 'submit' | 'draft';
+  flag?: StatusActionEnum;
 }
+
+export type InteractionQuestionPayload = {
+  rid?: string;
+  question: string;
+  notes: string;
+  is_mandatory: boolean;
+  action_type: QuestionUpdate;
+};
+
+export type InteractionFormPayload = {
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+  status_action?: StatusActionEnum;
+  fiscal_year?: number;
+  interaction_rid?: string;
+  status_rid?: string;
+  interaction_type_rid?: string;
+  parent_interaction_rid?: string;
+  questions: InteractionQuestionPayload[];
+};
 
 export interface InteractionQuestionErrors {
   question?: string;
@@ -98,6 +136,8 @@ export type InteractionList = {
   totalCount: number;
   last_resent_on: string | null;
   interaction_iteration: number | null;
+  status_name: string | null;
+  attachment_count: number | null;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -124,6 +164,13 @@ export interface InteractionListURLParams {
   fiscal_year?: number;
   isGlobal?: boolean;
   flag?: string;
+  attachment_count?: number | string | null;
+}
+
+export interface ResponseListURLParams {
+  account_rid?: string;
+  interaction_rid?: string;
+  version: 1;
 }
 
 export interface InteractionListResponse {
@@ -151,9 +198,10 @@ export interface ResponseInteractionListResponse {
 }
 
 export interface Attachment {
-  file_id: string;
-  file_name: string;
-  file_url: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: string | number;
 }
 
 export interface InteractionQuestion {
@@ -165,15 +213,17 @@ export interface InteractionQuestion {
   response_on_datetime: string | null;
   response: string | null;
   attachments: Attachment[];
+  is_editable?: boolean;
 }
 
 export interface InteractionDetails {
-  rid: string;
+  rid?: string;
+  interaction_rid?: string;
   account_rid: string;
   project_rid: string;
   fiscal_year: number;
   project_fiscal_rid: string;
-  interaction_number: string;
+  r_number: string;
   interaction_type: string;
   interaction_type_name: string;
   status: string;
@@ -187,8 +237,8 @@ export interface InteractionDetails {
   project_code: string;
   project_name: string | null;
   account_name: string | null;
-  response_updated_by: string;
-  response_received_on: string;
+  response_updated_by: string | null;
+  response_updated_on: string | null;
 }
 
 export interface InteractionDetailsResponse {
@@ -196,20 +246,21 @@ export interface InteractionDetailsResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    interactions: InteractionDetails;
+    interactionDetails: InteractionDetails;
   };
 }
-
 export interface InteractionAttachmentType {
   rid: string;
-  question_rnumber: string;
-  attachment_name: string;
-  attachment_type: string;
-  attachment_size: string;
-  uploaded_by: string;
+  name: string;
+  size: number;
+  type: string;
+  version: number;
+  created_by: string;
   uploaded_date: string;
+  question_rnumber: string;
+  uploaded_by: string;
   download_link: string;
-  [key: string]: unknown; // Add index signature
+  [key: string]: unknown;
 }
 
 export type FilterCondition = {
@@ -231,11 +282,59 @@ export interface InteractionAttachmentListParams {
   exportKey?: string;
   timezone?: string;
   entity_type?: string;
+  account_rid?: string;
+  interaction_rid?: string;
 }
 
 export interface InteractionAttachmentApiResponse {
   data: {
-    attachments: InteractionAttachmentType[];
-    total_records: number;
+    data: InteractionAttachmentType[];
+    totalRecords: number;
+  };
+}
+
+// Interaction Question Response
+
+export interface InteractionQuestionResponseType {
+  question: string;
+  response: string;
+  rid: string;
+  attachments?: Attachment[];
+}
+
+export interface InteractionQuestionResUpdateRequest {
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+  interaction_rid: string;
+  status_action: 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED';
+  attachments: Attachment[];
+  questions: InteractionQuestionResponseType[];
+}
+
+export interface InteractionQuestionResUpdateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: unknown;
+}
+
+// Upload Interaction Attachment
+export interface UploadInteractionAttachmentRequest {
+  account_rid: string;
+  project_rid: string;
+  interaction_rid: string;
+  file: File;
+}
+
+export interface UploadInteractionAttachmentResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    fileUrl: string;
   };
 }

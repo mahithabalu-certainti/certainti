@@ -1,19 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockInteractionHistory } from '../../pages/project/project-details/interactions/interaction-history/mock-response';
-import { InteractionHistoryData } from '../../pages/project/project-details/interactions/interaction-history/utils';
+import {
+  InteractionHistoryRequest,
+  InteractionHistoryResponse,
+} from '../../types/interaction';
+import { interactionServiceApi } from '../../../api/api';
+import { getInteractionHistoryUrl } from '../urls';
+
+export const getInteractionHistory = async (
+  payload: InteractionHistoryRequest
+): Promise<InteractionHistoryResponse> => {
+  const response = await interactionServiceApi.post(
+    getInteractionHistoryUrl(),
+    payload
+  );
+  return response.data;
+};
 
 export const useInteractionHistoryList = (
-  interactionHistoryId: string,
+  payload: InteractionHistoryRequest,
   enabled: boolean,
   refreshTrigger?: number
 ) => {
-  return useQuery<InteractionHistoryData, Error>({
-    queryKey: ['interactionHistory', interactionHistoryId, refreshTrigger],
-    queryFn: async () => {
-      // a mock async function
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return mockInteractionHistory;
-    },
+  return useQuery<InteractionHistoryResponse, Error>({
+    queryKey: ['interactionHistory', payload, refreshTrigger],
+    queryFn: () => getInteractionHistory(payload),
     enabled: enabled,
     staleTime: 0,
     gcTime: 0,

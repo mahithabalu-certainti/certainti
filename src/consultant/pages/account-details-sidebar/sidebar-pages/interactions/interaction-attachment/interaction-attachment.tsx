@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   InteractionAttachmentListParams,
   InteractionAttachmentType,
@@ -11,24 +12,46 @@ import { ListTable } from '../../../../../../components/table';
 
 interface InteractionAttachmentProps {
   handleBackClick: () => void;
+  refresh?: number;
 }
 
 const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   handleBackClick,
+  refresh,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [searchParams] = useSearchParams();
+  const { accountid } = useParams();
+  const interactionId = searchParams.get('interaction_rid') || '';
+
   const [tableParams, setTableParams] =
     useState<InteractionAttachmentListParams>({
       page: currentPage,
       limit: rowsPerPage,
+      account_rid: accountid,
+      interaction_rid: interactionId || '',
     });
 
-  const { data, isLoading, isError } =
-    useGetInteractionAttachmentList(tableParams);
+  const { data, isLoading, isError } = useGetInteractionAttachmentList(
+    tableParams,
+    refresh
+  );
+
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const getRowId = (row: InteractionAttachmentType) => row.rid;
-  const interactionAttachmentColumns = getInteractionAttachmentListColumns();
+  const interactionAttachmentColumns =
+    getInteractionAttachmentListColumns(handleDownload);
 
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
@@ -42,8 +65,14 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   };
 
   useEffect(() => {
-    setTableParams({ page: currentPage, limit: rowsPerPage });
-  }, [currentPage, rowsPerPage]);
+    setTableParams((prevParams) => ({
+      ...prevParams,
+      page: currentPage,
+      limit: rowsPerPage,
+      account_rid: accountid,
+      interaction_rid: interactionId || '',
+    }));
+  }, [currentPage, rowsPerPage, accountid, interactionId]);
 
   return (
     <>
@@ -59,17 +88,16 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           onBackClick={handleBackClick}
           showBackArrow={true}
-          count={data?.data.total_records || 0}
+          count={data?.data.totalRecords || 0}
           showItemCount={true}
         />
-        <div className='border border-[#CBD6E2]'>
+        <div className='border-t border-[#CBD6E2]'>
           <ListTable
-            data={data?.data.attachments || []}
+            data={data?.data.data || []}
             columns={interactionAttachmentColumns}
             getRowId={getRowId}
             hoverHighlight={false}
             tableStyle={{
-              borderBottom: '1px solid #CBD6E2',
               height: '100%',
               maxHeight: 'calc(100vh - 290px)',
               overflow: 'auto',
@@ -79,12 +107,12 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
-            loadindRowCount={5}
+            loadindRowCount={4}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
             currentPage={currentPage}
-            totalItems={data?.data.total_records || 0}
+            totalItems={data?.data.totalRecords || 0}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
           />

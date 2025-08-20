@@ -77,7 +77,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionAttachmentId = searchParams.get(
-    'interaction_attachment_url'
+    'interaction_attachment_count'
   );
 
   const responseHistory = searchParams.get('history');
@@ -96,7 +96,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     account_rid: projectDetails?.account_rid || '',
     project_rid: projectDetails?.project_rid || '',
     project_fiscal_rid:
-      projectDetails?.project_fiscal_rid || projectDetails?.rid || '',
+      projectDetails?.project_fiscal_rid ||
+      projectid ||
+      projectDetails?.rid ||
+      '',
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
   // const mainSource = searchParams.get('main_source') || '';
@@ -110,12 +113,16 @@ const Interactions: React.FC<InteractionsProps> = ({
       sort_by: sortBy,
       filters: appliedFilters,
       project_rid: projectDetails?.project_rid || '',
-      project_fiscal_rid: projectDetails?.project_fiscal_rid || projectid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
       fiscal_year: fiscalYear,
       account_rid: accountId,
       flag: 'project',
     },
-    !viewDetails,
+    !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
     refreshInteractions
   );
   const totalItems = data?.count || 0;
@@ -261,9 +268,16 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleViewInteractionAttachment = (interactionAttachentURL: string) => {
-    if (interactionAttachentURL) {
-      searchParams.set('interaction_attachment_url', interactionAttachentURL);
+  const handleViewInteractionAttachmentCount = (
+    interactionAttachentCount: string | number,
+    rowId: string
+  ) => {
+    if (interactionAttachentCount) {
+      searchParams.set('interaction_rid', rowId);
+      searchParams.set(
+        'interaction_attachment_count',
+        String(interactionAttachentCount)
+      );
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -272,7 +286,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
       searchParams.delete('interaction_history_id');
-      searchParams.delete('interaction_attachment_url');
+      searchParams.delete('interaction_attachment_count');
+      searchParams.delete('interaction_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -305,7 +320,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachment
+    handleViewInteractionAttachmentCount
   );
 
   const filterFields = !viewInteractionHistory
@@ -314,14 +329,14 @@ const Interactions: React.FC<InteractionsProps> = ({
         memoizedInteractionSources,
         memoizedInteractionStatus
       )
-    : getInteractionHistoryFilterFields();
+    : getInteractionHistoryFilterFields(memoizedInteractionStatus);
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={InteractionsTabs}
         filterMenu={filterFields}
-        filterVisibility={!viewDetails}
+        filterVisibility={!viewDetails && !viewInteractionAttachment}
         showFilter={showFilter}
         contextKey='project-interactions'
         appliedFilters={appliedFilters}
@@ -346,6 +361,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectDetails={projectDetails}
           accountInActive={accountInActive}
           refresh={refreshInteractions}
+          appliedFilters={appliedFilters}
         />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment
