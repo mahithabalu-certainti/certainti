@@ -6,7 +6,6 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import SchemaService from "./schemaService";
 import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -16,6 +15,7 @@ import { generateSasUrl } from "../../utils/blob";
 import { surveyMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
+import axios from 'axios'
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -621,12 +621,8 @@ export class InteractionService {
     let createdByConditions;
     let modifiedByFilter;
     let modifiedByConditions;
-    let typeFilter;
-    let typeCondition;
     let sourceFilter;
     let sourceConditions;
-    let statusFilter;
-    let statusConditions;
     let filterKeyName;
     let disablePagination : boolean = false
     let totalResults : number = 0
@@ -646,16 +642,12 @@ export class InteractionService {
       modifiedByFilter = data.filters.updated_user_name
       modifiedByConditions = detectConditions(modifiedByFilter)
     }
-    if(data.filters?.interaction_type_name) {
-      typeFilter = data.filters.interaction_type_name
-      typeCondition = detectConditions(typeFilter)
-    }
     if(data.filters?.interaction_source_name) {
       sourceFilter = data.filters.interaction_source_name
       sourceConditions = detectConditions(sourceFilter)
     }
 
-    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name"].forEach(key => {
+    ["created_user_name", "updated_user_name", "interaction_source_name"].forEach(key => {
       if(data.filters[key]) {
         disablePagination = true
         delete data.filters[key]
@@ -732,9 +724,6 @@ export class InteractionService {
         finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "updated_user_name")
       if(sourceConditions != null && sourceConditions != undefined)
         finalData = applyFilters(finalData, sourceConditions, sourceFilter, "interaction_source_name")
-      if(typeCondition != undefined && typeCondition != null) {
-        finalData = applyFilters(finalData, typeCondition, typeFilter, "interaction_type_name")
-      }
       if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'asc') {
         finalData = finalData.sort((a : any, b : any) => {
           return a[data.sort].localeCompare(b[data.sort])
@@ -997,10 +986,10 @@ export class InteractionService {
           response_on : d.response_on,
           attachments : await Promise.all(d.attachments.filter((f : any) => f !== null).map(async (da : any) => {
             return {
-              file_name : da.file_name,
-              file_url : da.file_url == null ? null : await generateSasUrl(da.file_url),
-              file_type : da.file_type,
-              file_size : da.file_size
+              fileName : da.file_name,
+              fileUrl : da.file_url == null ? null : await generateSasUrl(da.file_url),
+              fileType : da.file_type,
+              fileSize : da.file_size
             }
           }))
         }
@@ -1022,5 +1011,21 @@ export class InteractionService {
         data : []
       }
     }
+  }
+  async triggerAI (data : any) {
+    let payload = {
+      project_id : data.project_rid, //"test_project_123" 
+      company_id : data.account_rid, // "test_company_456",
+      input_text : "This is some text to be processed by the AI.",
+      model_type : "NA"
+    }
+    let headers = {
+      contentType : "application/json"
+    }
+    let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+      headers : headers
+    })
+    const sendAiResponse = await this.interactionSchemaService.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
+    return sendAiResponse
   }
 }

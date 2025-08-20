@@ -1158,6 +1158,14 @@ async updateInteractionInfo(
     );
   }
 }
+async fetchAndUpdateFromAiTriggerResponse (data : any) {
+  console.log("Response : ", data)
+  return {
+    statusMessage : "Details updated successfully",
+    status : data.status,
+    data : data.project_summary
+  };
+}
 }
 
 
