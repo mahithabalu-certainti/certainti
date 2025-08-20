@@ -1922,15 +1922,14 @@ private async createInteractionTable(
       "account_rid",
       "project_rid",
       "fiscal_year",
-      "project_fiscal_rid",
-      "interaction_rid",
+      "project_fiscal_rid"
     ];
 
     for (const field of fieldsToIndex) {
       const indexName = `${schemaName}_interaction_items_${field}_idx`;
       await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
-      ON "${schemaName}"."interaction_items"("${field}");
+      ON "${schemaName}"."interactions"("${field}");
     `);
     }
 

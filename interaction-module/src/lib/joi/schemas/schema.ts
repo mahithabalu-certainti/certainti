@@ -23,6 +23,28 @@ const createInteractionSchema = Joi.object({
     .required(),
 });
 
+const sendInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  interaction_rid: Joi.array()
+    .items(Joi.string().pattern(uuidRegex).required())
+    .min(1)
+    .required(),
+  customRecipient: Joi.boolean().required(),
+  sendInfo: Joi.object({
+    email: Joi.string().email().required(),
+    name: Joi.string().max(255).required(),
+  }).when('customRecipient', {
+    is: true,
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+});
+const getInteractionStatusSchema = Joi.object({
+  status_scope: Joi.string().optional(),
+  current_status: Joi.string().optional(),
+});
 const updateInteractionSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
@@ -82,5 +104,7 @@ const updateInteractionResponseSchema = Joi.object({
 export {
   createInteractionSchema,
   updateInteractionSchema,
-  updateInteractionResponseSchema
+  updateInteractionResponseSchema,
+  getInteractionStatusSchema,
+  sendInteractionSchema
 };
