@@ -977,7 +977,7 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
 async function fetchResponseHistoryDetails (req : Request, res : Response) {
    const methodName = "fetchResponseHistoryDetails"
     try {
-      console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
     console.log(`[${methodName}] userId:`, userId);
@@ -1021,6 +1021,44 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
   }
   }
 
+  async function triggerAIAndPassResponse (req : Request, res : Response) {
+    const methodName = "triggerAIAndSendPassResponse"
+    try {
+     console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    console.log(`[${methodName}] userId:`, userId);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.triggerAI(data)
+    return res.status(HttpStatus.SUCCESS).json({
+      statusCode : HttpStatus.SUCCESS,
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      statusMessage : result.statusMessage,
+      data: result.data
+    })
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+  }
+
 
 
 export default {
@@ -1043,5 +1081,6 @@ export default {
   deleteAttachmentFromAzure,
   listInteractionHistory,
   fetchInteractionAttachments,
-  fetchResponseHistoryDetails
+  fetchResponseHistoryDetails,
+  triggerAIAndPassResponse
 };

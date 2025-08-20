@@ -103,4 +103,9 @@ export interface IInteractionService {
     statusCodeValue : string,
     data : any
   }>
+  triggerAI(data : any) : Promise<{
+    statusMessage : string,
+    status : any,
+    data : any
+  }>
 }
