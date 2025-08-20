@@ -24,6 +24,8 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_rid') || '';
+  const mainSource = searchParams.get('main_source') || '';
+  const isGlobalInteractions = mainSource === 'interactions';
 
   const [tableParams, setTableParams] =
     useState<InteractionAttachmentListParams>({
@@ -87,7 +89,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           onBackClick={handleBackClick}
-          showBackArrow={true}
+          showBackArrow={!isGlobalInteractions}
           count={data?.data.totalRecords || 0}
           showItemCount={true}
         />

@@ -35,6 +35,8 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   const [sortField, setSortField] = useState<string>('action');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [totalItems, setTotalItems] = useState<number>(0);
+  const mainSource = searchParams.get('main_source') || '';
+  const isGlobalInteractions = mainSource === 'interactions';
 
   const {
     data: interactionHistoryData,
@@ -105,7 +107,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           onBackClick={handleBackClick}
-          showBackArrow={true}
+          showBackArrow={!isGlobalInteractions}
           count={totalItems}
           showItemCount={true}
         />
