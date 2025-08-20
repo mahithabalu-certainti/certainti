@@ -8,6 +8,7 @@ import {
   InteractionAttachmentListParams,
   InteractionAttachmentType,
 } from '../../../../../types';
+import { useSearchParams } from 'react-router-dom';
 
 interface InteractionAttachmentProps {
   handleBackClick: () => void;
@@ -20,10 +21,17 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState(100);
+  // const { projectid } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
+  const interactionId = searchParams.get('interaction_id') || '';
+
   const [tableParams, setTableParams] =
     useState<InteractionAttachmentListParams>({
       page: currentPage,
       limit: rowsPerPage,
+      account_rid: accountId,
+      interaction_rid: interactionId,
     });
 
   const { data, isLoading, isError } = useGetInteractionAttachmentList(
@@ -46,8 +54,14 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   };
 
   useEffect(() => {
-    setTableParams({ page: currentPage, limit: rowsPerPage });
-  }, [currentPage, rowsPerPage]);
+    setTableParams((prevParams) => ({
+      ...prevParams,
+      page: currentPage,
+      limit: rowsPerPage,
+      account_rid: accountId,
+      interaction_rid: interactionId,
+    }));
+  }, [currentPage, rowsPerPage, accountId, interactionId]);
 
   return (
     <>

@@ -5,13 +5,13 @@ export const getInteractionHistoryListColumns =
   () // permissionMap: Record<string, { read: boolean; edit: boolean }>
   : ListTableColumn<InteractionHistoryList>[] => [
     {
-      id: 'action',
-      sortId: 'action',
+      id: 'status_name',
+      sortId: 'status_name',
       label: 'Action',
       width: 160,
       sortable: true,
       sticky: true,
-      render: (row: InteractionHistoryList) => row.action || '-',
+      render: (row: InteractionHistoryList) => row.status_name || '-',
       // hide:
       //   !permissionMap?.['r_number']?.edit &&
       //   !permissionMap?.['r_number']?.read,

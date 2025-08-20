@@ -9,7 +9,51 @@ import {
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
-import { getInteractionListUrl } from '../urls/interactions-url';
+import {
+  getInteractionExportUrl,
+  getInteractionListUrl,
+} from '../urls/interactions-url';
+
+export const exportInteractions = async (
+  body: InteractionListURLParams
+): Promise<void> => {
+  try {
+    const response = await interactionServiceApi.post(
+      getInteractionExportUrl(),
+      body,
+      {
+        responseType: 'blob',
+      }
+    );
+
+    const contentDisposition = response.headers['content-disposition'];
+    let fileName = 'project_interactions.xlsx';
+    if (contentDisposition) {
+      const fileNameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      if (fileNameMatch && fileNameMatch[1]) {
+        fileName = fileNameMatch[1];
+      }
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting interactions:', error);
+    throw error;
+  }
+};
+
+export const useExportInteractions = () => {
+  return useMutation<void, Error, InteractionListURLParams>({
+    mutationFn: (body) => exportInteractions(body),
+  });
+};
 
 const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
   return `/api/interactions/detail/${accountId}/${interactionId}`;

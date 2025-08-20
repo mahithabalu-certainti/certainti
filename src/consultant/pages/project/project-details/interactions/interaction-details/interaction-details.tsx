@@ -110,24 +110,24 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: (
         <span
           className={`font-semibold ${
-            data?.status === 'Draft'
+            data?.status_name === 'Draft'
               ? 'text-gray-500'
-              : data?.status === 'Created'
+              : data?.status_name === 'Created'
                 ? 'text-blue-500'
-                : data?.status === 'Sent'
+                : data?.status_name === 'Sent'
                   ? 'text-purple-500'
-                  : data?.status === 'Response Draft'
+                  : data?.status_name === 'Response Draft'
                     ? 'text-orange-500'
-                    : data?.status === 'Response Received'
+                    : data?.status_name === 'Response Received'
                       ? 'text-green-600'
-                      : data?.status === 'On-Hold'
+                      : data?.status_name === 'On-Hold'
                         ? 'text-yellow-500'
-                        : data?.status === 'Cancelled'
+                        : data?.status_name === 'Cancelled'
                           ? 'text-red-600'
                           : 'text-gray-700'
           }`}
         >
-          {data?.status}
+          {data?.status_name}
         </span>
       ),
       key: 'status',

@@ -55,13 +55,13 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,
   },
   {
-    id: 'status',
-    sortId: 'status_rid',
+    id: 'status_name',
+    sortId: 'status_name',
     label: 'Status',
     width: 140,
     sortable: true,
     // hide: !permissionMap?.['status_rid']?.edit && !permissionMap?.['status_rid']?.read,
-    render: (row: InteractionList) => row.status || '-',
+    render: (row: InteractionList) => row.status_name || '-',
   },
   {
     id: 'recipient_name',
@@ -95,7 +95,7 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['last_sent_on']?.edit &&
     //   !permissionMap?.['last_sent_on']?.read,
     render: (row: InteractionList) =>
-      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_sent_on),
+      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
   },
   {
     id: 'last_reminder_on',
@@ -137,11 +137,12 @@ export const getInteractionListColumns = (
       formatDateToYYYYMMDDWithTime(row.response_updated_on),
   },
   {
-    id: 'attachments',
-    sortId: 'attachments',
+    id: 'attachment_count',
+    sortId: 'attachment_count',
     label: 'Attachments',
     width: 160,
     sortable: true,
+    render: (row: InteractionList) => row.attachment_count || '-',
     // hide:
     //   !permissionMap?.['attachments']?.edit &&
     //   !permissionMap?.['attachments']?.read,
@@ -159,9 +160,9 @@ export const getInteractionListColumns = (
       row.interaction_history ? (
         <span
           onClick={() => handleViewInteractionHistory(row.interaction_history)}
-          className='text-[#1755E7] hover:underline'
+          className='text-[#1755E7] hover:underline cursor-pointer'
         >
-          {row.interaction_history}
+          View
         </span>
       ) : (
         '-'
@@ -183,7 +184,7 @@ export const getInteractionListColumns = (
             row.interaction_url &&
             handleViewInteractionAttachment(row.interaction_url)
           }
-          className='text-[#1755E7] hover:underline'
+          className='text-[#1755E7] hover:underline cursor-pointer'
         >
           Link
         </span>
@@ -202,13 +203,12 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['parent_interaction_rid']?.read,
   },
   {
-    id: 'interaction_type',
-    sortId: 'interaction_type',
+    id: 'interaction_type_name',
+    sortId: 'interaction_type_name',
     label: 'Type',
     width: 140,
     sortable: true,
     // hide: !permissionMap?.['interaction_type']?.edit && !permissionMap?.['interaction_type']?.read,
-    render: (row: InteractionList) => row.interaction_type_name || '-',
   },
   {
     id: 'response_source',
@@ -221,8 +221,8 @@ export const getInteractionListColumns = (
     //   !permissionMap?.['response_source']?.read,
   },
   {
-    id: 'created_by',
-    sortId: 'created_by',
+    id: 'created_user_name',
+    sortId: 'created_user_name',
     label: 'Created By',
     width: 160,
     sortable: true,
@@ -244,8 +244,8 @@ export const getInteractionListColumns = (
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
-    id: 'modified_by',
-    sortId: 'modified_by',
+    id: 'updated_user_name',
+    sortId: 'updated_user_name',
     label: 'Last Updated By',
     width: 180,
     sortable: true,

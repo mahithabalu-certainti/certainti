@@ -120,7 +120,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       account_rid: accountId,
       flag: 'project',
     },
-    !viewDetails,
+    !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
     refreshInteractions
   );
   const totalItems = data?.count || 0;
@@ -319,7 +319,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         memoizedInteractionSources,
         memoizedInteractionStatus
       )
-    : getInteractionHistoryFilterFields();
+    : getInteractionHistoryFilterFields(memoizedInteractionStatus);
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -351,6 +351,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectDetails={projectDetails}
           accountInActive={accountInActive}
           refresh={refreshInteractions}
+          appliedFilters={appliedFilters}
         />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment
