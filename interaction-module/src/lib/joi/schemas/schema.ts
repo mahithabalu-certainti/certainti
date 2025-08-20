@@ -50,7 +50,8 @@ const updateInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  status_rid: Joi.string().pattern(uuidRegex).required(),
+  status_rid: Joi.string().required().allow("",null),
+  status_action: Joi.string().optional(),
   parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
