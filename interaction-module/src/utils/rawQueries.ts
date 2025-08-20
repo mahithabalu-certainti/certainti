@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys } from "./constants"
+import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys } from "./constants"
 
 type filterType = {
         [key : string] : {
@@ -400,54 +400,64 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     return query
 }
 
-export const listInteractionHistory = (page : number, limit : number, sort : string, sortBy : string, filter : filterType, interactionRid : string, schemaName : string, disablPagination : boolean) => {
+export const listInteractionHistory = (page : number, limit : number, sort : string, sortBy : string, filter : filterType, interactionRid : string, schemaName : string) => {
     let offset = (page - 1 ) * limit
-    let pagination;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
     let filterQueryArray : string[]  = []
     let sortValue : any = ``
-    let keyType : string = ``
+    let keyType;
     let andConditions : string = ``
     let filterQueryCombinedValues : string  = ``
-
-    if(disablPagination) pagination = ` `
-    else pagination = `LIMIT ${limit} OFFSET ${offset}`
 
     if(sort.toLowerCase() === "date") sortValue = `ORDER BY ih.changed_at ${sortBy}`
     else sortValue = `ORDER BY ih.changed_at ASC`
 
     if(Object.keys(filter).length > 0) {
         for(let [key, condition] of Object.entries(filter)) {
-            if(key == 'date') {
-                keyType = `datetime`
+            if(Object.keys(filterTypesForIntHistory).includes(key)) {
+                keyType = filterTypesForIntHistory[key]
                 andConditions = ` AND `
             }
             for(let [cond, values] of Object.entries(condition)) {
-                if(keyType === 'datetime') {
-                    switch(ALPHANUMERIC_CONDITIONS[cond]) {
-                        case ALPHANUMERIC_CONDITIONS['equals'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) = '${values}'`)
-                            break
-                        }
-                        case ALPHANUMERIC_CONDITIONS['before'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) < '${values}'`)
+                switch(keyType) {
+                    case "string" : {
+                        if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
+                            filterQueryArray.push(`ih.new_status_rid = '${values}'`)
                             break;
                         }
-                        case ALPHANUMERIC_CONDITIONS['after'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) > '${values}'`)
+                        if(cond === ALPHANUMERIC_CONDITIONS['notEquals']) {
+                            filterQueryArray.push(`ih.new_status_rid != '${values}'`)
                             break;
                         }
-                        case ALPHANUMERIC_CONDITIONS['between'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
-                            break;
-                        }
-                        case ALPHANUMERIC_CONDITIONS['isEmpty'] : {
-                            filterQueryArray.push(`ih.changed_at IS NULL`)
-                            break;
-                        }
-                        default : {
+                        if(cond === ALPHANUMERIC_CONDITIONS['IN']) {
+                            filterQueryArray.push(`ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                             break;
                         }
                     }
+                    case "datetime" : {
+                        if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) = '${values}'`)
+                            break
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['before']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) < '${values}'`)
+                            break;
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['after']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) > '${values}'`)
+                            break;
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['between']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                            break;
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['isEmpty']) {
+                            filterQueryArray.push(`ih.changed_at IS NULL`)
+                            break;
+                        }
+                    }
+                    default : 
+                        break;
                 }
             }
         }

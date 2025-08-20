@@ -453,7 +453,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.interactionFetchedSuccess,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
         data : result.data
       })
       return;
@@ -548,9 +548,9 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
         totalCount: 0,
         interactions : []
       }
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : finalData
       })
@@ -657,9 +657,9 @@ async function listResponseHistory (req : Request, res : Response) {
         totalCount : 0,
         response_history : result.data
       }
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : responseData
       })
@@ -895,9 +895,9 @@ async function listInteractionHistory (req : Request, res : Response) {
         data : result.data
       })
     } else {
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : result.data
       })
@@ -908,8 +908,8 @@ async function listInteractionHistory (req : Request, res : Response) {
     console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
       error.message
     );
     return;
@@ -953,9 +953,9 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
         totalRecords : result.totalRecords,
         data : result.attachments
       }
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : finalData
       })
@@ -966,8 +966,8 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
     console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
       error.message
     );
     return;
@@ -1000,9 +1000,9 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
         data : result.data
       })
     } else {
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : result.data
       })
@@ -1013,8 +1013,8 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
       error.message
     );
     return;
