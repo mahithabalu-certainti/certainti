@@ -843,7 +843,7 @@ async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<v
       );
       return;
     }
-   if( req.file)
+   if(value.file_url)
    {
       let deleted = await deleteFromAzureBlob(value.file_url);
       handleSuccessResponse(res,deleted);

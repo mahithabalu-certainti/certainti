@@ -25,3 +25,25 @@ export type IOtpHistoryStatus =
   | "SEND_FAILED"
   | "VERIFIED"
   | "VERIFICATION_FAILED";
+
+export interface InteractionResponse {
+  interaction_rid: string;
+  interaction_item_rid: string;
+  project_fiscal_rid: string;
+  account_rid: string;
+  project_rid: string;
+  fiscal_year: number;
+  status_rid: string;
+  status_action: string;
+  attachments: any;
+  questions: {
+    rid: string;
+    notes: string;
+    response: string;
+    action_type: string;
+    question_seq_num?: string;
+    attachments: any; 
+  }[];
+  created_by: string;
+  modified_by?: string;
+}

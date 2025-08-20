@@ -17,6 +17,7 @@ export const HttpStatus = {
   UNAUTHORIZED_MESSAGE: "Unauthorized",
   SUCCESS_NOTIFICATION: "Operation completed successfully!",
 };
+
 export const statusAction = {
   CREATE: "Create",
   SENT: "Sent",
@@ -32,7 +33,7 @@ export const interactionSource = {
   MANUAL: "Manual",
 };
 
-export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
+export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const MAIN_SCHEMA_NAME = "trd365";
 export const constants = {
   SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM ${MAIN_SCHEMA_NAME}."user" as "user" ,${MAIN_SCHEMA_NAME}."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
@@ -41,9 +42,9 @@ export const constants = {
   SQL_GET_USER_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."user_permission_access" WHERE user_id = :userId AND module_permission_id = :permissionId LIMIT 1`,
   SQL_INSERT_API_DENIAL: `INSERT INTO ${MAIN_SCHEMA_NAME}."user_api_access_denials" (rid, user_id, permission_id, permission_name, api_endpoint, created_datetime, updated_datetime) VALUES (:rid, :userId, :permissionId, :permissionName, :apiEndpoint, NOW(), NOW())`,
   SQL_GET_ACCOUNT: `SELECT status, rid FROM ${MAIN_SCHEMA_NAME}."account" WHERE rid = :rid LIMIT 1`,
-  SELECT: 'SELECT',
-  INSERT: 'INSERT'
-}
+  SELECT: "SELECT",
+  INSERT: "INSERT",
+};
 
 export const NODE_ENV = {
   DEV: "DEV",
@@ -53,41 +54,39 @@ export const NODE_ENV = {
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
-export const filtersColumns : Record<string, string> =
-  {
-    r_number : "r_number",
-    iteration : "interaction_iteration",
-    interaction_age : "interaction_age",
-    recipient_name : "recipient_name",
-    recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
-    last_reminder_on : "last_reminder_on",
-    response_submitted_on : "response_submitted_on",
-    response_updated_on : "response_updated_on",
-    attachments : "attachments",
-    response_source : "response_source",
-    created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime"
-  }
+export const filtersColumns: Record<string, string> = {
+  r_number: "r_number",
+  iteration: "interaction_iteration",
+  interaction_age: "interaction_age",
+  recipient_name: "recipient_name",
+  recipient_email: "recipient_email",
+  last_resent_on: "last_resent_on",
+  last_reminder_on: "last_reminder_on",
+  response_submitted_on: "response_submitted_on",
+  response_updated_on: "response_updated_on",
+  attachments: "attachments",
+  response_source: "response_source",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+};
 
-  export const filterTypes : Record<string, any> = 
-  {
-    r_number : "string",
-    iteration : "number",
-    interaction_age : "number",
-    recipient_name : "string",
-    recipient_email : "string",
-    last_resent_on : "datetime",
-    last_reminder_on : "datetime",
-    response_submitted_on : "datetime",
-    response_updated_on : "datetime",
-    attachments : "number",
-    response_source : "string",
-    created_datetime : "datetime",
-    modified_datetime : "datetime"
-  }
+export const filterTypes: Record<string, any> = {
+  r_number: "string",
+  iteration: "number",
+  interaction_age: "number",
+  recipient_name: "string",
+  recipient_email: "string",
+  last_resent_on: "datetime",
+  last_reminder_on: "datetime",
+  response_submitted_on: "datetime",
+  response_updated_on: "datetime",
+  attachments: "number",
+  response_source: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+};
 
-  export const ALPHANUMERIC_CONDITIONS = {
+export const ALPHANUMERIC_CONDITIONS = {
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
@@ -101,17 +100,17 @@ export const filtersColumns : Record<string, string> =
 };
 
 export const interactionFlag = {
-  account : "account",
-  project : "project"
-}
+  account: "account",
+  project: "project",
+};
 
-export const mainTableFilters : Record<any, any> = {
-  created_user_name : "created_user_name",
-  updated_user_name : "updated_user_name",
-  interaction_type_name : "interaction_type_name",
-  interaction_source_name : "interaction_source_name",
-  status_name : "status_name"
-}
+export const mainTableFilters: Record<any, any> = {
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  interaction_type_name: "interaction_type_name",
+  interaction_source_name: "interaction_source_name",
+  status_name: "status_name",
+};
 
 export const STATUS_MESSAGE = {
   accountInactive: "Inactive Account",
@@ -183,9 +182,9 @@ export const STATUS_MESSAGE = {
   accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
-  interactionFetchedSuccess : "Interactions fetched successfully",
-  dataNotFound : "Data not found",
-  historyResponseFetched : "Interaction Response history fetched successfully"
+  interactionFetchedSuccess: "Interactions fetched successfully",
+  dataNotFound: "Data not found",
+  historyResponseFetched: "Interaction Response history fetched successfully",
 };
 
 export const rawQueries = {
@@ -212,70 +211,76 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
-  fetchInteractionTypes(data : any) {
-    let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionTypes(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`
+    SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`;
   },
-  fetchInteractionSource(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionSource(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`
+    SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`;
   },
-  fetchInteractionStatus(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionStatus(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
-  fetchUser(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchUser(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
-  }
+    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
+  },
 };
 
-export const filterTypesForSummaryInteractions : Record<string, any> = 
-  {
-    r_number : "string",
-    iteration : "number",
-    interaction_age : "number",
-    recipient_name : "string",
-    recipient_email : "string",
-    last_resent_on : "datetime",
-    last_reminder_on : "datetime",
-    response_submitted_on : "datetime",
-    response_updated_on : "datetime",
-    attachments : "number",
-    response_source : "string",
-    created_datetime : "datetime",
-    modified_datetime : "datetime",
-    status_name : "string",
-    interaction_type_name : "string",
-    interaction_source_name : "string",
-    created_user_name : "string",
-    updated_user_name : "string"
-  }
+export const filterTypesForSummaryInteractions: Record<string, any> = {
+  r_number: "string",
+  iteration: "number",
+  interaction_age: "number",
+  recipient_name: "string",
+  recipient_email: "string",
+  last_resent_on: "datetime",
+  last_reminder_on: "datetime",
+  response_submitted_on: "datetime",
+  response_updated_on: "datetime",
+  attachments: "number",
+  response_source: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  status_name: "string",
+  interaction_type_name: "string",
+  interaction_source_name: "string",
+  created_user_name: "string",
+  updated_user_name: "string",
+};
 
-  export const filtersColumnsForInteractionSummary : Record<string, string> =
-  {
-    r_number : "r_number",
-    iteration : "interaction_iteration",
-    interaction_age : "interaction_age",
-    recipient_name : "recipient_name",
-    recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
-    last_reminder_on : "last_reminder_on",
-    response_submitted_on : "response_submitted_on",
-    response_updated_on : "response_updated_on",
-    attachments : "attachments",
-    response_source : "response_source",
-    created_datetime : "created_datetime",
-    modified_datetime : "modified_datetime",
-    status_name : "string_name",
-    interaction_type_name : "interaction_type_name",
-    interaction_source_name : "interaction_source_name",
-    created_user_name : "created_user_name",
-    updated_user_name : "updated_user_name"
-  }
+export const filtersColumnsForInteractionSummary: Record<string, string> = {
+  r_number: "r_number",
+  iteration: "interaction_iteration",
+  interaction_age: "interaction_age",
+  recipient_name: "recipient_name",
+  recipient_email: "recipient_email",
+  last_resent_on: "last_resent_on",
+  last_reminder_on: "last_reminder_on",
+  response_submitted_on: "response_submitted_on",
+  response_updated_on: "response_updated_on",
+  attachments: "attachments",
+  response_source: "response_source",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  status_name: "string_name",
+  interaction_type_name: "interaction_type_name",
+  interaction_source_name: "interaction_source_name",
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+};
 
-  export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response"]
+export const responseSortKeys = [
+  "r_number",
+  "response_by",
+  "response_on",
+  "response_email",
+  "interaction_response",
+];
+
+export const INTERACTION_BASE_URL = 'https://development-thinkrd365-api-management.azure-api.net/interactionService/api'
