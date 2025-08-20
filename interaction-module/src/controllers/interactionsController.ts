@@ -13,6 +13,8 @@ import {
 import configurations from "../config/config";
 import {
   createInteractionSchema,
+  getInteractionStatusSchema,
+  sendInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
 } from "../lib/joi/schemas/schema";
@@ -328,7 +330,8 @@ async function getInteractionStatus(
 ): Promise<void> {
   const methodName = "Get resource roles";
   try {
-    const interactionStatus = await interactionService.getInteractionStatus();
+    const value = await validateRequest(req, getInteractionStatusSchema, res,"GET");
+    const interactionStatus = await interactionService.getInteractionStatus(value.status_scope,value.current_status);
     if (interactionStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionStatus.data);
@@ -450,7 +453,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.interactionFetchedSuccess,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
         data : result.data
       })
       return;
@@ -545,9 +548,9 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
         totalCount: 0,
         interactions : []
       }
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : finalData
       })
@@ -654,9 +657,9 @@ async function listResponseHistory (req : Request, res : Response) {
         totalCount : 0,
         response_history : result.data
       }
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : responseData
       })
@@ -720,8 +723,7 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Send interaction";
   try {
     console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
-  //  const value = await validateRequest(req, sendInteractionSchema, res);
-    const value = req.body;
+    const value = await validateRequest(req, sendInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -737,15 +739,12 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-   /* const interaction = {
-      statusCode: HttpStatus.SUCCESS,
-      data: { message: " interaction sent successfully" },
-      errorMessage: ""
-    };*/
      const interaction = await interactionService.sendInteraction(
        value.interaction_rid,
        value.account_rid,
-       userId
+       userId,
+       value.customRecipient,
+       value.emailInfo
      );
     console.log(
       `[${methodName}] Service response:`,
@@ -843,7 +842,7 @@ async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<v
       );
       return;
     }
-   if( req.file)
+   if(value.file_url)
    {
       let deleted = await deleteFromAzureBlob(value.file_url);
       handleSuccessResponse(res,deleted);
@@ -896,9 +895,9 @@ async function listInteractionHistory (req : Request, res : Response) {
         data : result.data
       })
     } else {
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : result.data
       })
@@ -909,8 +908,8 @@ async function listInteractionHistory (req : Request, res : Response) {
     console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
       error.message
     );
     return;
@@ -954,9 +953,9 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
         totalRecords : result.totalRecords,
         data : result.attachments
       }
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : finalData
       })
@@ -967,8 +966,8 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
     console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
       error.message
     );
     return;
@@ -1001,9 +1000,9 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
         data : result.data
       })
     } else {
-      return res.status(HttpStatus.NOT_FOUND).json({
-        statusCode : HttpStatus.NOT_FOUND,
-        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         statusMessage : STATUS_MESSAGE.dataNotFound,
         data : result.data
       })
@@ -1014,8 +1013,8 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
       error.message
     );
     return;

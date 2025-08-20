@@ -323,7 +323,7 @@ export class InteractionService {
     }
   }
 
-  async getInteractionStatus(): Promise<{
+  async getInteractionStatus(status_scope?: string,currentStatus?: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -331,7 +331,7 @@ export class InteractionService {
   }> {
     try {
       const interactionStatus =
-        await this.interactionSchemaService.getInteractionStatus();
+        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -392,7 +392,9 @@ export class InteractionService {
   async sendInteraction(
     interactionRid: string[],
     accountRid: string,
-    userId: string
+    userId: string,
+    customRecipient: boolean,
+    customEmailInfo: { name: string; email: string }
   ): Promise<{
     statusCode: number;
     message: string;
@@ -416,7 +418,9 @@ export class InteractionService {
               rid,
               accountNumber
             ),
-            this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
+            customRecipient
+              ? Promise.resolve(customEmailInfo)
+              : this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
           ]);
         const interactionLink = await this.generateInteractionLink(
           rid,
@@ -650,12 +654,8 @@ export class InteractionService {
       sourceFilter = data.filters.interaction_source_name
       sourceConditions = detectConditions(sourceFilter)
     }
-     if(data.filters?.status_name) {
-      statusFilter = data.filters.status_name
-      statusConditions = detectConditions(statusFilter)
-    }
 
-    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name", "status_name"].forEach(key => {
+    ["created_user_name", "updated_user_name", "interaction_type_name", "interaction_source_name"].forEach(key => {
       if(data.filters[key]) {
         disablePagination = true
         delete data.filters[key]
@@ -734,9 +734,6 @@ export class InteractionService {
         finalData = applyFilters(finalData, sourceConditions, sourceFilter, "interaction_source_name")
       if(typeCondition != undefined && typeCondition != null) {
         finalData = applyFilters(finalData, typeCondition, typeFilter, "interaction_type_name")
-      }
-      if(statusConditions != undefined && statusConditions != null) {
-        finalData = applyFilters(finalData, statusConditions, statusFilter, "status_name")
       }
       if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'asc') {
         finalData = finalData.sort((a : any, b : any) => {
@@ -866,53 +863,11 @@ export class InteractionService {
     }
   }
   async fetchInteractionHistory (data : any) {
-    let actionFilter;
-    let actionConditionsFilter : string | undefined;
-    let disablePagination : boolean = false
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-
-    const detectConditions = (filters : any) => {
-      for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
-        if(Object.keys(filters).includes(conditions)) {
-          return conditions
-        }
-      }
-    }
-    const applyFilters = (finalData : any, filters : filterType, conditions : any, values : any) => {
-        finalData = finalData.filter((d : any) => {
-          let statusName = d[values].toLowerCase()
-          let value : any =  filters[conditions]
-          
-          switch(conditions) {
-            case "equals" : {
-              return statusName === value.toLowerCase()
-            }
-            case "not_equals" : {
-              return statusName != value.toLowerCase()
-            }
-            case "contains" : {
-              return statusName.includes(value)
-            }
-            case "is_empty" : {
-              return !statusName
-            }
-          }
-        })
-      return finalData
-    }
-
-    if(Object.keys(data.filters).length > 0) {
-      if(data.filters.status_name != undefined) {
-        actionFilter = data.filters.status_name;
-        delete data.filters.status_name;
-        disablePagination = true
-        actionConditionsFilter = detectConditions(actionFilter)
-      }
-    }
-    const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName, disablePagination));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number); 
+    const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName));
     if(result[0][0].interaction_history !== null) {
       let finalResponseData;
       let totalRecords;
@@ -926,16 +881,15 @@ export class InteractionService {
           status_name : mapStatus.get(d.new_status_rid)
         }
       })
-    finalResponseData = disablePagination ? applyFilters(responseData, actionFilter, actionConditionsFilter, "status_name") : responseData
-    totalRecords = disablePagination ? finalResponseData.length : finalResponseData[0].total_records
-    let paginatedData = disablePagination ? finalResponseData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalResponseData
-    let finalSortedData = data.sort === 'status_name' ? paginatedData.sort((a : any, b : any) => {
+    finalResponseData = responseData
+    totalRecords =  finalResponseData[0].total_records
+    let finalSortedData = data.sort === 'status_name' ? finalResponseData.sort((a : any, b : any) => {
       if(data.sort_by.toLowerCase() === 'desc') {
         return b.status_name.localeCompare(a.status_name)
       } else {
         return a.status_name.localeCompare(b.status_name)
       }
-    }) : paginatedData
+    }) : finalResponseData
 
     let finalStructuredData = {
       interaction_rnumber : finalSortedData[0].interaction_rnumber,
@@ -945,6 +899,7 @@ export class InteractionService {
       interaction_history : finalSortedData.map((d : any) => {
         return {
           rid : d.interaction_history_rid,
+          status_rid : d.new_status_rid,
           status_name : d.status_name,
           date : d.date
         }
@@ -1042,7 +997,10 @@ export class InteractionService {
           response_on : d.response_on,
           attachments : await Promise.all(d.attachments.filter((f : any) => f !== null).map(async (da : any) => {
             return {
-              interaction_url : da.interaction_url == null ? null : await generateSasUrl(da.interaction_url)
+              file_name : da.file_name,
+              file_url : da.file_url == null ? null : await generateSasUrl(da.file_url),
+              file_type : da.file_type,
+              file_size : da.file_size
             }
           }))
         }

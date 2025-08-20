@@ -643,16 +643,32 @@ class InteractionSchemaService {
     };
   }
 
-  async getInteractionStatus() {
+  async getInteractionStatus(status_scope?: string,currentStatus?: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-
-    const interactionStatus = await this.mainDbSequelize.query(
-      `Select rid, status_name from ${MAIN_SCHEMA_NAME}.interaction_status WHERE status = 'active' order by status_name ASC`,
+  let whereClause = "status = 'active'";
+  if (status_scope && status_scope === "UI") {
+    whereClause += " AND status_type = 'UI'";
+  }
+  if (currentStatus) {
+    // Fetch status_name for the given status_rid (currentStatus)
+    const [statusResult]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionStatus(currentStatus),
       {
-        type: "SELECT",
+      replacements: { rid: currentStatus },
+      type: "SELECT",
+      }
+    );
+    if (statusResult?.status_name === "On-Hold") {
+      whereClause += " OR status_type = 'CONDITIONAL'";
+    }
+  }
+    const interactionStatus = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionStatusList(whereClause),
+      {
+      type: "SELECT",
       }
     );
 
@@ -996,6 +1012,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
           where: { interaction_item_rid: item.rid },
           order: [["response_on", "DESC"]],
         });
+        item.is_editable = !response;
         item.response =
           response && typeof response.interaction_response === "string"
         ? response.interaction_response
@@ -1084,9 +1101,14 @@ async fetchInteractionQuestionsById(
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
-
+      if (!interactionInfo?.project_fiscal_rid) {
+       return {
+         name: null,
+         email: null
+       };
+      }
       const [result]: any[] = await this.mainDbSequelize!.query(
-        `SELECT project_point_of_contact, project_point_of_contact_email FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = :projectRid LIMIT 1`,
+        rawQueries.fetchPOCEmail(interactionInfo?.project_fiscal_rid),
         {
           replacements: { projectRid: interactionInfo?.project_fiscal_rid },
           type: "SELECT",

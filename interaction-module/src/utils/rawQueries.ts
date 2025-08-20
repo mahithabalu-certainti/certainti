@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys } from "./constants"
+import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys } from "./constants"
 
 type filterType = {
         [key : string] : {
@@ -31,10 +31,12 @@ export const fetchInteractionForProjectLevelQuery = (
     else pagination
 
     if(flag == interactionFlag.account) {
+        let fiscalQuery = ``
+        if(fiscal_year === 0) fiscalQuery = ` `
+        else fiscalQuery = ` AND i.fiscal_year = ${fiscal_year}`
         whereConditions = `
         i.account_rid = '${account_rid}' 
-        AND 
-        i.fiscal_year = ${fiscal_year}`
+        ${fiscalQuery}`
     } else {
         whereConditions = `
         i.account_rid = '${account_rid}' 
@@ -206,7 +208,7 @@ export const listAllInteractionSummary = (
     let query =
     `
     WITH fetch_all_interactions AS 
-    (SELECT i.rid, i.r_number, i.interaction_iteration, i.interaction_status_rid,
+    (SELECT i.rid, i.r_number, i.interaction_iteration, i.status_rid,
     s.status_name, i.recipient_name, i.recipient_email,
     i.last_resent_on, i.last_reminder_on, i.response_submitted_on,
     i.response_updated_on, i.attachment_count, i.rid AS interaction_history,
@@ -220,7 +222,7 @@ export const listAllInteractionSummary = (
     FROM
     ${MAIN_SCHEMA_NAME}.interactions_summary i
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s ON s.rid = i.interaction_status_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s ON s.rid = i.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = i.created_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = i.modified_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.rid = i.parent_interaction_rid
@@ -241,7 +243,7 @@ export const listAllInteractionSummary = (
             'r_number', i.r_number,
             'interaction_iteration', i.interaction_iteration,
             'interaction_age', i.interaction_age,
-            'interaction_status_rid', i.interaction_status_rid,
+            'status_rid', i.status_rid,
             'recipient_name', i.recipient_name,
             'recipient_email', i.recipient_email,
             'last_resent_on', i.last_resent_on,
@@ -398,54 +400,64 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     return query
 }
 
-export const listInteractionHistory = (page : number, limit : number, sort : string, sortBy : string, filter : filterType, interactionRid : string, schemaName : string, disablPagination : boolean) => {
+export const listInteractionHistory = (page : number, limit : number, sort : string, sortBy : string, filter : filterType, interactionRid : string, schemaName : string) => {
     let offset = (page - 1 ) * limit
-    let pagination;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
     let filterQueryArray : string[]  = []
     let sortValue : any = ``
-    let keyType : string = ``
+    let keyType;
     let andConditions : string = ``
     let filterQueryCombinedValues : string  = ``
-
-    if(disablPagination) pagination = ` `
-    else pagination = `LIMIT ${limit} OFFSET ${offset}`
 
     if(sort.toLowerCase() === "date") sortValue = `ORDER BY ih.changed_at ${sortBy}`
     else sortValue = `ORDER BY ih.changed_at ASC`
 
     if(Object.keys(filter).length > 0) {
         for(let [key, condition] of Object.entries(filter)) {
-            if(key == 'date') {
-                keyType = `datetime`
+            if(Object.keys(filterTypesForIntHistory).includes(key)) {
+                keyType = filterTypesForIntHistory[key]
                 andConditions = ` AND `
             }
             for(let [cond, values] of Object.entries(condition)) {
-                if(keyType === 'datetime') {
-                    switch(ALPHANUMERIC_CONDITIONS[cond]) {
-                        case ALPHANUMERIC_CONDITIONS['equals'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) = '${values}'`)
-                            break
-                        }
-                        case ALPHANUMERIC_CONDITIONS['before'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) < '${values}'`)
+                switch(keyType) {
+                    case "string" : {
+                        if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
+                            filterQueryArray.push(`ih.new_status_rid = '${values}'`)
                             break;
                         }
-                        case ALPHANUMERIC_CONDITIONS['after'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) > '${values}'`)
+                        if(cond === ALPHANUMERIC_CONDITIONS['notEquals']) {
+                            filterQueryArray.push(`ih.new_status_rid != '${values}'`)
                             break;
                         }
-                        case ALPHANUMERIC_CONDITIONS['between'] : {
-                            filterQueryArray.push(`DATE(ih.changed_at) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
-                            break;
-                        }
-                        case ALPHANUMERIC_CONDITIONS['isEmpty'] : {
-                            filterQueryArray.push(`ih.changed_at IS NULL`)
-                            break;
-                        }
-                        default : {
+                        if(cond === ALPHANUMERIC_CONDITIONS['IN']) {
+                            filterQueryArray.push(`ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                             break;
                         }
                     }
+                    case "datetime" : {
+                        if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) = '${values}'`)
+                            break
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['before']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) < '${values}'`)
+                            break;
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['after']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) > '${values}'`)
+                            break;
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['between']) {
+                            filterQueryArray.push(`DATE(ih.changed_at) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                            break;
+                        }
+                        if(cond === ALPHANUMERIC_CONDITIONS['isEmpty']) {
+                            filterQueryArray.push(`ih.changed_at IS NULL`)
+                            break;
+                        }
+                    }
+                    default : 
+                        break;
                 }
             }
         }
@@ -566,7 +578,7 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
     ),
     fetch_attachments AS (
         SELECT 
-            a.attachment_url, a.interaction_rid, a.interaction_item_rid
+            a.attachment_name, a.attachment_size, a.attachment_type, a.attachment_url, a.interaction_rid, a.interaction_item_rid
         FROM
         ${schemaName}.interaction_attachments a
         LEFT JOIN fetch_rid_response_history irh ON irh.rid = a.interaction_response_rid
@@ -580,7 +592,10 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
             irh.rid, irh.interaction_item_rid, irh.interaction_response,
             irh.response_on, irh.r_number, irh.interaction_version,
             array_agg(jsonb_build_object(
-            'interaction_url', a.attachment_url
+            'file_name', a.attachment_name,
+            'file_size', a.attachment_size,
+            'file_type', a.attachment_type,
+            'file_url', a.attachment_url
             )) AS attachments
         FROM
         ${schemaName}.interaction_response_history irh
