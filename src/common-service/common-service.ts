@@ -1,15 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   accountServiceApi,
   userServiceApi,
   resourceServiceApi,
 } from '../api/api';
 import {
+  CommonApiResponse,
   DocumentTypeResponse,
+  GenerateOtp,
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
   GetStatusApiResponse,
+  VerifyOtp,
+  VerifyOtpApiResponse,
 } from './';
 
 export const getAllCountriesUrl = (): string => {
@@ -185,4 +189,89 @@ export const useGetImportEntityTypes = () => {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+};
+
+export const usePostGenerateOtp = () => {
+  return useMutation<CommonApiResponse, Error, GenerateOtp>({
+    mutationFn: (body) => postMailIntractionOtp(body),
+  });
+};
+
+export const postMailIntractionOtp = async (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _body: GenerateOtp
+): Promise<CommonApiResponse> => {
+  try {
+    // const { data } = await accountServiceApi.post<CommonApiResponse>(
+    //   `/api/generateOtp`,
+    //   body
+    // );
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    return {
+      statusCode: 200,
+      statusCodeValue: 'Success',
+      statusMessage: 'Operation completed successfully!',
+    };
+  } catch (error) {
+    console.error('Error fetching highlights details:', error);
+    throw error;
+  }
+};
+
+export const usePostReSendOtp = () => {
+  return useMutation<CommonApiResponse, Error, GenerateOtp>({
+    mutationFn: (body) => postReSendOtp(body),
+  });
+};
+
+export const postReSendOtp = async (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _body: GenerateOtp
+): Promise<CommonApiResponse> => {
+  try {
+    // const { data } = await accountServiceApi.post<CommonApiResponse>(
+    //   `/api/generateOtp`,
+    //   body
+    // );
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    return {
+      statusCode: 200,
+      statusCodeValue: 'Success',
+      statusMessage: 'Operation completed successfully!',
+    };
+  } catch (error) {
+    console.error('Error fetching highlights details:', error);
+    throw error;
+  }
+};
+
+export const usePostVerifyOtp = () => {
+  return useMutation<VerifyOtpApiResponse, Error, VerifyOtp>({
+    mutationFn: (body) => postVerifyOtp(body),
+  });
+};
+
+export const postVerifyOtp = async (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _body: VerifyOtp
+): Promise<VerifyOtpApiResponse> => {
+  try {
+    // const { data } = await accountServiceApi.post<CommonApiResponse>(
+    //   `/api/verifyOtp`,
+    //   body
+    // );
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    return {
+      statusCode: 200,
+      statusCodeValue: 'Success',
+      statusMessage: 'Operation completed successfully!',
+      data: {
+        auth_token:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X3JpZCI6IkQwMDEtMTE3OGFjOGMtYzQwNy00YWQ1LWEzNzUtNTVkMGJkMTQ4OTI2IiwiaW50ZXJhY3Rpb25fcmlkIjoiRDAwMS1hZDMyNDdlMy1hNzQwLTRjNTQtOTA2Zi0xMWY1OGJjNWFhYzQiLCJlbWFpbCI6Im90cHRlc3R1c2VyQHlvcG1haWwuY29tIiwiaWF0IjoxNzU1NTA5ODQxLCJleHAiOjE3NTU1MTM0NDF9.gKpVmcfgPwzxGn25fpU-ogfaSArUiragoJyY8iGWpaU',
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching highlights details:', error);
+    throw error;
+  }
 };

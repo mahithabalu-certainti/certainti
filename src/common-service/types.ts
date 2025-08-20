@@ -9,6 +9,12 @@ export interface CommonApiResponse {
 export interface ProfileApiResponse extends CommonApiResponse {
   data: ManageProfileResponse;
 }
+
+export interface VerifyOtpApiResponse extends CommonApiResponse {
+  data: {
+    auth_token: string;
+  };
+}
 export interface ManageProfileResponse {
   profile_id: string;
   profile_number: string;
@@ -366,4 +372,13 @@ export interface EntityTypes {
 
 export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
   data: EntityTypes[];
+}
+
+export interface GenerateOtp {
+  interaction_rid: string;
+  account_rid: string;
+}
+
+export interface VerifyOtp extends GenerateOtp {
+  otp: string;
 }

@@ -1,2 +1,2 @@
-export * from './email-interaction'
-export * from './interaction-qustions'
+export * from './email-interaction';
+export * from './interaction-qustions';

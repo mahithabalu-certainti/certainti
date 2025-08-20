@@ -6,7 +6,7 @@ import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 
 interface Props {
   questions: InteractionQuestion[];
-  isEditing: boolean
+  isEditing: boolean;
 }
 
 const InteractionQuestions: React.FC<Props> = ({ questions, isEditing }) => {
@@ -38,7 +38,7 @@ const InteractionQuestions: React.FC<Props> = ({ questions, isEditing }) => {
         {questions.map((q, i) => (
           <div key={q.question_id} className='p-3'>
             <div className='text-[14px] text-[#2D3E4F] font-bold'>
-              <span>{i+1}</span>. {q.question}
+              <span>{i + 1}</span>. {q.question}
             </div>
 
             {isEditing ? (
