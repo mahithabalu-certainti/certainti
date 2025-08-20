@@ -1,8 +1,7 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 
 import {
-  InteractionDetails,
-  InteractionDetailsResponse,
+  InteractionDetailsHistoryResponse,
   InteractionListURLParams,
   InteractionQuestionResUpdateRequest,
   InteractionQuestionResUpdateResponse,
@@ -57,22 +56,19 @@ export const useInteractionResponseHistoryList = (
 
 const fetchResponseInteractionDetails = async (
   params: ResponseListURLParams
-): Promise<InteractionDetails> => {
-  const response = await interactionServiceApi.post<InteractionDetailsResponse>(
-    getInteractionResponseHistoryDetailsURL(),
-    params
-  );
-  // return {
-  //   interactions: response.data.response_history,
-  //   count: response.data.totalCount,
-  // };
-  return response.data.data.interactionDetails;
+): Promise<InteractionDetailsHistoryResponse> => {
+  const response =
+    await interactionServiceApi.post<InteractionDetailsHistoryResponse>(
+      getInteractionResponseHistoryDetailsURL(),
+      params
+    );
+  return response.data;
 };
 
 export const useResponseInteractionDetails = (
   params: ResponseListURLParams
-): UseQueryResult<InteractionDetails | undefined, Error> => {
-  return useQuery<InteractionDetails | undefined, Error>({
+): UseQueryResult<InteractionDetailsHistoryResponse | undefined, Error> => {
+  return useQuery<InteractionDetailsHistoryResponse | undefined, Error>({
     queryKey: ['response-interaction-details', params],
     queryFn: () => fetchResponseInteractionDetails(params),
     retry: 0,

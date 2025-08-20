@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill from 'react-quill';
@@ -80,6 +80,30 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const uploadFileMutation = useUploadInteractionAttachment();
   const updateInteractionQusResponse = useUpdateInteractionQuestionResponse();
 
+  useEffect(() => {
+    setEditedAnswers(
+      questions.reduce(
+        (acc, q) => {
+          acc[q.rid] = q.response || '';
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    );
+
+    setNewGlobalAttachments(globalAttachments || []);
+
+    setQuestionAttachments(
+      questions.reduce(
+        (acc, q) => {
+          acc[q.rid] = q.attachments || [];
+          return acc;
+        },
+        {} as Record<string, Attachment[]>
+      )
+    );
+  }, [questions, globalAttachments]);
+
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -135,8 +159,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       ...payload,
     };
     updateInteractionQusResponse.mutate(finalPayload, {
-      onSuccess: () => {
-        refetchDeetails?.();
+      onSuccess: async () => {
+        await refetchDeetails?.();
         setIsEditing(false);
       },
     });
@@ -367,27 +391,57 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
 
             {isEditing ? (
               <div className='mt-2 relative'>
+                <div
+                  id={`toolbar-${q.rid}`}
+                  className='flex flex-wrap items-center gap-1'
+                >
+                  <select className='ql-header' defaultValue=''>
+                    <option value='1'></option>
+                    <option value='2'></option>
+                    <option value='3'></option>
+                    <option value='4'></option>
+                    <option value='5'></option>
+                    <option value='6'></option>
+                    <option value=''></option>
+                  </select>
+                  <select className='ql-font'></select>
+                  <select className='ql-size'></select>
+                  <button className='ql-bold'></button>
+                  <button className='ql-italic'></button>
+                  <button className='ql-underline'></button>
+                  <button className='ql-strike'></button>
+                  <button
+                    type='button'
+                    onClick={() =>
+                      questionFileInputRefs.current[q.rid]?.click()
+                    }
+                    className='ml-2 flex items-center'
+                  >
+                    <AttachmentsSideIcon className='w-4 h-2.5 attachment-icon' />
+                  </button>
+                  <select className='ql-color'></select>
+                  <select className='ql-background'></select>
+                  <button className='ql-script' value='sub'></button>
+                  <button className='ql-script' value='super'></button>
+                  <button className='ql-blockquote'></button>
+                  <button className='ql-list' value='ordered'></button>
+                  <button className='ql-list' value='bullet'></button>
+                  <button className='ql-indent' value='-1'></button>
+                  <button className='ql-indent' value='+1'></button>
+                  <button className='ql-direction' value='rtl'></button>
+                  <select className='ql-align'></select>
+                  <button className='ql-clean'></button>
+                </div>
+
                 <ReactQuill
                   value={editedAnswers[q.rid]}
                   onChange={(value) => handleAnswerChange(q.rid, value)}
                   theme='snow'
                   className='rounded-[2px] bg-white'
                   modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                      [{ font: [] }],
-                      [{ size: [] }],
-                      ['bold', 'italic', 'underline', 'strike'],
-                      [{ color: [] }, { background: [] }],
-                      [{ script: 'sub' }, { script: 'super' }],
-                      ['blockquote'],
-                      [{ list: 'ordered' }, { list: 'bullet' }],
-                      [{ indent: '-1' }, { indent: '+1' }],
-                      [{ direction: 'rtl' }],
-                      [{ align: [] }],
-                      // ['image', 'video'],
-                      ['clean'],
-                    ],
+                    toolbar: {
+                      container: `#toolbar-${q.rid}`,
+                    },
                   }}
                   formats={[
                     'header',
@@ -401,25 +455,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     'background',
                     'script',
                     'blockquote',
-                    // 'code-block',
                     'list',
                     'bullet',
                     'indent',
                     'direction',
                     'align',
-                    // 'link',
-                    // 'image',
-                    // 'video',
                     'clean',
                   ]}
                 />
-                <button
-                  type='button'
-                  onClick={() => questionFileInputRefs.current[q.rid]?.click()}
-                  className='absolute top-3 right-[8%] w-6 h-5 flex items-center justify-center cursor-pointer'
-                >
-                  <AttachmentsSideIcon className='w-4 h-4' />
-                </button>
+
+                {/* Hidden File Input */}
                 <input
                   ref={(el) => (questionFileInputRefs.current[q.rid] = el)}
                   type='file'

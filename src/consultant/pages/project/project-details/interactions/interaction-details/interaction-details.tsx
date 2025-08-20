@@ -199,7 +199,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         ) : error ? (
           <div className='flex items-center justify-center h-64 p-4'>
             <Typography variant='h6' color='error' className='mb-2'>
-              Error loading import details
+              Error loading interaction details
             </Typography>
           </div>
         ) : (
