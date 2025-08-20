@@ -134,9 +134,9 @@ export type InteractionList = {
   fiscal_year: number;
   total_records: number;
   totalCount: number;
-  status_name: string | null;
   last_resent_on: string | null;
   interaction_iteration: number | null;
+  status_name: string | null;
   attachment_count: number | null;
 };
 export type ResponseInteractionList = {
@@ -249,7 +249,6 @@ export interface InteractionDetailsResponse {
     interactionDetails: InteractionDetails;
   };
 }
-
 export interface InteractionAttachmentType {
   rid: string;
   name: string;

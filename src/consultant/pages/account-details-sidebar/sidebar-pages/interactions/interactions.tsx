@@ -32,6 +32,7 @@ import { useSelector } from 'react-redux';
 import { InteractionHistory } from './interaction-history';
 import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
+import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -84,7 +85,9 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
-  const interactionAttachmentId = searchParams.get('interaction_attachment_id');
+  const interactionAttachmentId = searchParams.get(
+    'interaction_attachment_count'
+  );
   const responseHistory = searchParams.get('history');
   const interactionResponseId = searchParams.get('interactionResponse_id');
   const viewDetails = !!interactionId;
@@ -103,7 +106,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       fiscal_year: newFiscalYear,
       flag: 'account',
     },
-    !viewDetails,
+    !viewDetails &&
+      !viewInteractionHistory &&
+      !viewInteractionAttachment &&
+      !viewHistory,
     refreshInteractions
   );
   const totalItems = data?.count || 0;
@@ -248,7 +254,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
       searchParams.delete('interaction_history_id');
-      searchParams.delete('interaction_attachment_id');
+      searchParams.delete('interaction_attachment_count');
+      searchParams.delete('interaction_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -283,9 +290,16 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleViewInteractionAttachment = (interactionAttachmentId: string) => {
-    if (interactionAttachmentId) {
-      searchParams.set('interaction_attachment_id', interactionAttachmentId);
+  const handleViewInteractionAttachmentCount = (
+    interactionAttachentCount: string | number,
+    rowId: string
+  ) => {
+    if (interactionAttachentCount) {
+      searchParams.set('interaction_rid', rowId);
+      searchParams.set(
+        'interaction_attachment_count',
+        String(interactionAttachentCount)
+      );
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -294,21 +308,23 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachment
+    handleViewInteractionAttachmentCount
   );
 
-  const filterFields = getInteractionFilterFields(
-    memoizedInteractionTypes,
-    memoizedInteractionSources,
-    memoizedInteractionStatus
-  );
+  const filterFields = !viewInteractionHistory
+    ? getInteractionFilterFields(
+        memoizedInteractionTypes,
+        memoizedInteractionSources,
+        memoizedInteractionStatus
+      )
+    : getInteractionHistoryFilterFields(memoizedInteractionStatus);
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={InteractionsTabs}
         filterMenu={filterFields}
-        filterVisibility={!viewDetails}
+        filterVisibility={!viewDetails && !viewInteractionAttachment}
         showFilter={showFilter}
         contextKey='project-interactions'
         appliedFilters={appliedFilters}
@@ -331,9 +347,14 @@ const Interactions: React.FC<InteractionsProps> = ({
         <InteractionHistory
           handleBackClick={handleBackClick}
           accountInActive={accountInActive}
+          appliedFilters={appliedFilters}
+          refresh={refreshInteractions}
         />
       ) : viewInteractionAttachment ? (
-        <InteractionAttachment handleBackClick={handleBackClick} />
+        <InteractionAttachment
+          handleBackClick={handleBackClick}
+          refresh={refreshInteractions}
+        />
       ) : (
         <>
           <SectionHeader

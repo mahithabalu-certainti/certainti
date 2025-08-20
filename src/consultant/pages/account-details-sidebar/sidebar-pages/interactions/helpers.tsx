@@ -1,4 +1,4 @@
-import { FieldConfig } from '../../components/filter/filterType';
+import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 
 const textOptions = [
   { option: 'Equals', value: 'equals' },
@@ -44,7 +44,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Iteration',
-      value: 'iteration',
+      value: 'interaction_iteration',
       type: 'number',
       // hide:
       //   !permissionMap?.['iteration']?.edit &&
@@ -52,7 +52,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Age (Days)',
-      value: 'age_days',
+      value: 'interaction_age',
       type: 'number',
       // hide:
       //   !permissionMap?.['age_days']?.edit &&
@@ -60,7 +60,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Status',
-      value: 'status',
+      value: 'status_rid',
       type: 'enum',
       options: interactionStatus,
       operatorOption: enumOptions,
@@ -87,7 +87,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Sent Date',
-      value: 'last_sent_date',
+      value: 'last_resent_on',
       type: 'date',
       // hide:
       //   !permissionMap?.['last_sent_date']?.edit &&
@@ -95,7 +95,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Reminder Date',
-      value: 'last_reminder_date',
+      value: 'last_reminder_on',
       type: 'date',
       // hide:
       //   !permissionMap?.['last_reminder_date']?.edit &&
@@ -103,7 +103,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Response Date',
-      value: 'response_date',
+      value: 'response_submitted_on',
       type: 'date',
       // hide:
       //   !permissionMap?.['response_date']?.edit &&
@@ -111,7 +111,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Response Update',
-      value: 'last_response_update',
+      value: 'response_updated_on',
       type: 'date',
       // hide:
       //   !permissionMap?.['last_response_update']?.edit &&
@@ -119,7 +119,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Attachments',
-      value: 'attachments',
+      value: 'attachment_count',
       type: 'text',
       // hide:
       //   !permissionMap?.['attachments']?.edit &&
@@ -127,7 +127,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Parent Interaction ID',
-      value: 'parent_interaction_id',
+      value: 'parent_interaction_rid',
       type: 'text',
       operatorOption: nonReqTextOptions,
       // hide:
@@ -136,7 +136,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Type',
-      value: 'type',
+      value: 'interaction_type_rid',
       type: 'enum',
       options: interactionTypes,
       operatorOption: enumOptions,
@@ -154,7 +154,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Created By',
-      value: 'created_by',
+      value: 'created_user_name',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -163,7 +163,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Created Date',
-      value: 'created_date',
+      value: 'created_datetime',
       type: 'date',
       operatorOption: dateOptions,
       // hide:
@@ -172,7 +172,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Updated By',
-      value: 'last_updated_by',
+      value: 'updated_user_name',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -181,7 +181,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Updated Date',
-      value: 'last_updated_date',
+      value: 'modified_datetime',
       type: 'date',
       // hide:
       //   !permissionMap?.['last_updated_date']?.edit &&
@@ -191,7 +191,7 @@ export const getInteractionFilterFields = (
       name: 'Sort Options',
       value: 'sort_options',
       type: 'system-sort',
-      options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
+      options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
     },
   ];
 };
