@@ -556,6 +556,7 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
     'version', i.interaction_version,
     'download_link', i.attachment_url
     )) AS attachments
+     
     FROM
     paginated_data i 
     `
