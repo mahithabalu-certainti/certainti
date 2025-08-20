@@ -190,6 +190,12 @@ export interface InteractionListResponse {
     interactions: InteractionList[];
   };
 }
+export interface ExportInteractionResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: string;
+}
 export interface ResponseInteractionListResponse {
   statusCode: number;
   statusMessage: string;
