@@ -469,8 +469,8 @@ class InteractionSchemaService {
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
         status_name: metainfo?.interaction_status_name ?? "",
-        modified_by: userInfo.modified_by ?? "",
-        created_by: userInfo.created_by ?? "",
+        modified_by: userInfo.modified_name ?? "",
+        created_by: userInfo.created_name ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
         interactionDetails.dataValues.modified_datetime ?? null,
@@ -482,12 +482,6 @@ class InteractionSchemaService {
 
       return response;
     }
-    return {
-      statusCode: 200,
-      message: "Interaction details fetched successfully",
-      data: { interactionDetails: interactionDetails },
-    };
-
     return interactionDetails;
   }
 
@@ -754,7 +748,10 @@ class InteractionSchemaService {
     try {
       const { InteractionResponseHistory, InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
-
+      if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
       let responseCreated = false;
       let interactionVersion = 0;
       const latestResponse = await InteractionResponseHistory.max(
@@ -763,14 +760,11 @@ class InteractionSchemaService {
           where: { interaction_rid: responseData.interaction_rid },
         }
       );
-      console.log("Latest response version", latestResponse);
-
       if (latestResponse !== null && latestResponse !== undefined) {
         interactionVersion = Number(latestResponse) + 1;
       } else {
         interactionVersion = 1;
       }
-      console.log("Latest interactionVersion ", interactionVersion);
       if (
         responseData.attachments &&
         Array.isArray(responseData.attachments) &&
@@ -844,19 +838,16 @@ class InteractionSchemaService {
         });
         const attachmentcount = attachmentCount;
         const { Interaction, InteractionSummary } =
-          await this.interactionModelService.getModels(accountNumber);
+         await this.interactionModelService.getModels(accountNumber);
          const status = statusAction[responseData.status_action as keyof typeof statusAction];
-        console.log("Status action", status);
-          if (!this.mainDbSequelize) {
-      this.mainDbSequelize =
-        await this.interactionModelService.getMainSequelize();
-    }
-        const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
-    const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
-        const updateData: any = {
+         const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+         const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+         const [result]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
+         const userEmailId = result[0]?.email ?? userId;
+         const updateData: any = {
           status_rid: statusRid,
           response_updated_on: new Date(),
-          response_updated_by: userId,
+          response_updated_by: userEmailId,
           response_source: "Manual",
           attachment_count: attachmentcount
         };
@@ -864,16 +855,16 @@ class InteractionSchemaService {
         const summaryUpdateData: any = {
           status_rid: statusRid,
           response_updated_on: new Date(),
-          response_updated_by: userId,
+          response_updated_by: userEmailId,
           response_source: "Manual",
           attachment_count: attachmentcount
         };
        
         if (status === "Response Received") {
           updateData.response_submitted_on = new Date();
-          updateData.response_submission_by = userId;
+          updateData.response_submission_by = userEmailId;
           summaryUpdateData.response_submitted_on = new Date();
-          summaryUpdateData.response_submission_by = userId;
+          summaryUpdateData.response_submission_by = userEmailId;
         }
 
         await Interaction.update(updateData, {

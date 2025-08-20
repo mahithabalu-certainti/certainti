@@ -262,6 +262,11 @@ export const rawQueries = {
   fetchInteractionStatusList(whereClause: string) {
     return `
     SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
+  },
+  fetchUserEmail(userId:string)
+  {
+    return `
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`
   }
 };
 
