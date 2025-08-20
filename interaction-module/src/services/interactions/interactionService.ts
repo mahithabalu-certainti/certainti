@@ -57,9 +57,9 @@ export class InteractionService {
         throw new Error("Invalid account ID");
       }
 
-      const { interactionStatus, intSource } =
-        await this.getInteractionStatusAndSource(interactionData.status_action);
-      interactionData.status_rid = interactionStatus || "";
+      const {  intSource } =
+        await this.getInteractionStatusAndSource();
+    //  interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
 
       const interaction =
@@ -106,18 +106,18 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
-  async getInteractionStatusAndSource(status_action?: string) {
-    let interactionStatus = "";
-    if (status_action) {
-      const status = statusAction[status_action as keyof typeof statusAction];
-      if (status) {
-        interactionStatus = (await this.interactionSchemaService.getInteractionStatusByType(status)) ?? "";
-      }
-    }
+  async getInteractionStatusAndSource() {
+    //let interactionStatus = "";
+    // if (status_action) {
+    //   const status = statusAction[status_action as keyof typeof statusAction];
+    //   if (status) {
+    //     interactionStatus = (await this.interactionSchemaService.getInteractionStatusByType(status)) ?? "";
+    //   }
+    // }
     const intSource = await this.interactionSchemaService.getInteractionSourceByType(
       interactionSource.MANUAL
     );
-    return { interactionStatus, intSource };
+    return {  intSource };
   }
 
   async updateInteraction(
@@ -145,21 +145,23 @@ export class InteractionService {
           accountNumber,
           interactionData.interaction_rid
         );
-      if(interactionData.status_action === 'DRAFT')
-      {
-       const { interactionStatus, intSource } =
-        await this.getInteractionStatusAndSource(interactionData.status_action);
-        interactionData.status_rid = interactionStatus || "";
+         const {  intSource } =
+        await this.getInteractionStatusAndSource();
         interactionData.interaction_source_rid = intSource || "";
-      }
-      else{
+      // if(interactionData.status_action === 'DRAFT')
+      // {
+      //  const {  intSource } =
+      //   await this.getInteractionStatusAndSource(interactionData.status_action);
+      //   interactionData.interaction_source_rid = intSource || "";
+      // }
+      // else{
 
-        const { interactionStatus, intSource } =
-          await this.getInteractionStatusAndSource(interactionData.status_action);
-        if(!interactionData.status_rid)
-          interactionData.status_rid = interactionStatus || "";
-        interactionData.interaction_source_rid = intSource || "";
-      }
+      //   const { interactionStatus, intSource } =
+      //     await this.getInteractionStatusAndSource(interactionData.status_action);
+      //   if(!interactionData.status_rid)
+      //     interactionData.status_rid = interactionStatus || "";
+      //   interactionData.interaction_source_rid = intSource || "";
+      // }
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
           accountNumber,

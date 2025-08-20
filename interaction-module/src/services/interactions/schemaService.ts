@@ -9,7 +9,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries, statusAction } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -845,8 +845,16 @@ class InteractionSchemaService {
         const attachmentcount = attachmentCount;
         const { Interaction, InteractionSummary } =
           await this.interactionModelService.getModels(accountNumber);
+         const status = statusAction[responseData.status_action as keyof typeof statusAction];
+        console.log("Status action", status);
+          if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+        const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+    const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
         const updateData: any = {
-          status_rid: responseData.status_rid,
+          status_rid: statusRid,
           response_updated_on: new Date(),
           response_updated_by: userId,
           response_source: "Manual",
@@ -854,14 +862,14 @@ class InteractionSchemaService {
         };
 
         const summaryUpdateData: any = {
-          status_rid: responseData.status_rid,
+          status_rid: statusRid,
           response_updated_on: new Date(),
           response_updated_by: userId,
           response_source: "Manual",
           attachment_count: attachmentcount
         };
-
-        if (responseData.status_action === "Submit") {
+       
+        if (status === "Response Received") {
           updateData.response_submitted_on = new Date();
           updateData.response_submission_by = userId;
           summaryUpdateData.response_submitted_on = new Date();
