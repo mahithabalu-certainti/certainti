@@ -997,7 +997,10 @@ export class InteractionService {
           response_on : d.response_on,
           attachments : await Promise.all(d.attachments.filter((f : any) => f !== null).map(async (da : any) => {
             return {
-              interaction_url : da.interaction_url == null ? null : await generateSasUrl(da.interaction_url)
+              file_name : da.file_name,
+              file_url : da.file_url == null ? null : await generateSasUrl(da.file_url),
+              file_size : da.file_size,
+              file_type : da.file_type
             }
           }))
         }

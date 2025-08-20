@@ -578,7 +578,7 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
     ),
     fetch_attachments AS (
         SELECT 
-            a.attachment_url, a.interaction_rid, a.interaction_item_rid
+            a.attachment_name, a.attachment_size, a.attachment_type, a.attachment_url, a.interaction_rid, a.interaction_item_rid
         FROM
         ${schemaName}.interaction_attachments a
         LEFT JOIN fetch_rid_response_history irh ON irh.rid = a.interaction_response_rid
@@ -592,7 +592,10 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
             irh.rid, irh.interaction_item_rid, irh.interaction_response,
             irh.response_on, irh.r_number, irh.interaction_version,
             array_agg(jsonb_build_object(
-            'interaction_url', a.attachment_url
+            'file_name', a.attachment_name,
+            'file_size', a.attachment_size,
+            'file_type', a.attachment_type,
+            'file_url', a.attachment_url
             )) AS attachments
         FROM
         ${schemaName}.interaction_response_history irh
