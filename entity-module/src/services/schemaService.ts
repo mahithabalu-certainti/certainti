@@ -639,7 +639,8 @@ class SchemaService {
     whereClause: Record<string, string> = {},
     havingClause: Record<string, string> = {},
     geoDataSort: string[][],
-    accountId: string
+    accountId: string,
+    documentRid?: string
   ) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
@@ -700,6 +701,8 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+
       Resource.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         as: "AccountDetails",
@@ -711,6 +714,41 @@ class SchemaService {
         sourceKey: "rid",
         as: "ResourceFiscal",
       });
+
+      Resource.hasMany(ResourceTimelineModel, {
+        foreignKey: "entity_rid",
+        sourceKey: "rid",
+        as: "ResourceTimelines",
+      });
+
+      // Build the include array dynamically
+      const include: any[] = [
+        {
+          model: ResourceFiscalModel,
+          as: "ResourceFiscal",
+          attributes: [],
+          required: false,
+        },
+        {
+          model: AccountDetailsModel,
+          as: "AccountDetails",
+          attributes: [],
+          required: false,
+        },
+      ];
+
+      // Add ResourceTimeline join if documentRid is provided
+      if (documentRid) {
+        include.push({
+          model: ResourceTimelineModel,
+          as: "ResourceTimelines",
+          required: true,
+          where: {
+            document_rid: documentRid
+          },
+          attributes: [] // Only join, don't select fields
+        });
+      }
 
       const resources = await Resource.findAll({
         where: {
@@ -771,20 +809,7 @@ class SchemaService {
             "estimated_rd_hours",
           ],
         ],
-        include: [
-          {
-            model: ResourceFiscalModel,
-            as: "ResourceFiscal",
-            attributes: [],
-            required: false,
-          },
-          {
-            model: AccountDetailsModel,
-            as: "AccountDetails",
-            attributes: [],
-            required: false,
-          },
-        ],
+        include: include,
       });
 
       const results = await Resource.findAll({
@@ -816,20 +841,7 @@ class SchemaService {
           "ResourceFiscal.rid",
         ],
         raw: true,
-        include: [
-          {
-            model: ResourceFiscalModel,
-            as: "ResourceFiscal",
-            attributes: [],
-            required: false,
-          },
-          {
-            model: AccountDetailsModel,
-            as: "AccountDetails",
-            attributes: [],
-            required: false,
-          },
-        ],
+        include: include,
       });
 
       const totalCount = results.length;
