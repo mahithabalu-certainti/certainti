@@ -999,8 +999,8 @@ export class InteractionService {
             return {
               file_name : da.file_name,
               file_url : da.file_url == null ? null : await generateSasUrl(da.file_url),
-              file_size : da.file_size,
-              file_type : da.file_type
+              file_type : da.file_type,
+              file_size : da.file_size
             }
           }))
         }
