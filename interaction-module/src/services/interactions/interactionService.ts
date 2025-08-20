@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, triggerAIUrl } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -1022,7 +1022,7 @@ export class InteractionService {
     let headers = {
       contentType : "application/json"
     }
-    let callTriggerAi = await axios.post(triggerAIUrl, payload, {
+    let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
       headers : headers
     })
     const sendAiResponse = await this.interactionSchemaService.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)

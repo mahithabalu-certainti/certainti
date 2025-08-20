@@ -319,4 +319,3 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     status_rid : "string",
     date : "datetime"
   }
-  export const triggerAIUrl = "https://platform-demo.certainti.ai/thinkrd365_triggerai"
