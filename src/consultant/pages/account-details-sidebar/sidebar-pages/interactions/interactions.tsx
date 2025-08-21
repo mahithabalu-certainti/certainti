@@ -155,6 +155,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (data) {
       setInteractionList(data.interactions || []);
       setCount(data.count || 0);
+      setSelectedRows([]);
     }
   }, [data]);
 
@@ -170,6 +171,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
     };
     setInteractionsParams(updatedParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
@@ -244,6 +246,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+    setSelectedRows([]);
   };
 
   const handleRowsPerPageChange = (newPageSize: number) => {
@@ -268,6 +271,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (rowId) {
       searchParams.set('interaction_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
     }
   };
 
@@ -308,6 +312,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (interactionHistoryId) {
       searchParams.set('interaction_history_id', interactionHistoryId);
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
     }
   };
 
@@ -322,6 +327,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         String(interactionAttachentCount)
       );
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
     }
   };
 
@@ -432,10 +438,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             isOpen={sendModalOpen}
             onClose={() => setSendModalOpen(false)}
             selectedRows={selectedRows}
-            onSend={(emails) => {
-              console.log('Emails to send:', emails);
-              setSendModalOpen(false);
-            }}
           />
         </>
       )}

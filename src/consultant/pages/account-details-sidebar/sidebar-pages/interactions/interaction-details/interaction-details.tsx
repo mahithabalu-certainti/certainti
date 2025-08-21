@@ -17,6 +17,8 @@ import { Typography } from '@mui/material';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { accountDetailsProps } from '../../../../account-details/utils';
 import { InteractionQuestions } from '../../../../../../components';
+import { getInteractionStatusColor } from '../helpers';
+import { StatusTypeEnum } from '../../../../../types';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -38,6 +40,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     accountid,
     interactionId
   );
+  const disableEditResBtn =
+    data?.status_name.toLowerCase() === StatusTypeEnum.cancelled;
 
   const handleEdit = () => {
     const accountId = accountid ?? '';
@@ -97,23 +101,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       label: 'Interaction Status',
       value: (
         <span
-          className={`font-semibold ${
-            data?.status_name === 'Draft'
-              ? 'text-gray-500'
-              : data?.status_name === 'Created'
-                ? 'text-blue-500'
-                : data?.status_name === 'Sent'
-                  ? 'text-purple-500'
-                  : data?.status_name === 'Response Draft'
-                    ? 'text-orange-500'
-                    : data?.status_name === 'Response Received'
-                      ? 'text-green-600'
-                      : data?.status_name === 'On-Hold'
-                        ? 'text-yellow-500'
-                        : data?.status_name === 'Cancelled'
-                          ? 'text-red-600'
-                          : 'text-gray-700'
-          }`}
+          className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
         >
           {data?.status_name}
         </span>
@@ -209,7 +197,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         <InteractionQuestions
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
-          isEditEnable={true}
+          isEditEnable={!disableEditResBtn}
           actionButtonEnable={true}
           handleResponseHistory={handleResponseHistory}
           refetchDeetails={refetch}
