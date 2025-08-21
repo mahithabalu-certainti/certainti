@@ -1084,6 +1084,14 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
         }))
         const generateBase64Response = await generateExcelBase64(finalStructuredData, "Interaction-History")
         handleSuccessResponse(res, generateBase64Response);
+        return;
+      } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
       }
     } catch (err) {
     const error = err as Error;

@@ -191,7 +191,8 @@ export const STATUS_MESSAGE = {
   dataNotFound : "Data not found",
   historyResponseFetched : "Interaction Response history fetched successfully",
   interactionHistoryFetched : "Interaction history fetched successfully",
-  interactionAttachmentFetched : "Interaction attachments fetched successfully"
+  interactionAttachmentFetched : "Interaction attachments fetched successfully",
+  nodDataToExport : "No Data available for download"
 };
 
 export const rawQueries = {
