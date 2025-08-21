@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -57,10 +57,11 @@ export class InteractionService {
         throw new Error("Invalid account ID");
       }
 
-      const {  intSource } =
+      const {  intSource,intType } =
         await this.getInteractionStatusAndSource();
     //  interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
+      interactionData.interaction_type_rid = intType || "";
 
       const interaction =
         await this.interactionSchemaService.createInteractions(
@@ -93,6 +94,12 @@ export class InteractionService {
         );
       }
       await transaction.commit();
+      //check if auto send enabled
+      const interactionStatus = await this.interactionSchemaService.getInteractionStatusByType(
+        interactionData.status_rid
+      );
+      if(interactionStatus === "Created")
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -102,22 +109,29 @@ export class InteractionService {
       };
     } catch (err) {
       await transaction.rollback();
-      console.log("Error creatng resource", err);
-      throw this.throwServiceError(err as Error);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: (err as Error).message,
+        };
+    }
+  }
+  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string) {
+    const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
+    if (isEnabled) {
+      //await this.sendInteraction([interactionId], interactionData.account_rid, userId, false);
     }
   }
   async getInteractionStatusAndSource() {
-    //let interactionStatus = "";
-    // if (status_action) {
-    //   const status = statusAction[status_action as keyof typeof statusAction];
-    //   if (status) {
-    //     interactionStatus = (await this.interactionSchemaService.getInteractionStatusByType(status)) ?? "";
-    //   }
-    // }
+  
     const intSource = await this.interactionSchemaService.getInteractionSourceByType(
       interactionSource.MANUAL
     );
-    return {  intSource };
+    const intType = await this.interactionSchemaService.getInteractionType(
+      interactionType.RD
+    );
+   
+    return { intSource, intType };
   }
 
   async updateInteraction(
@@ -145,9 +159,9 @@ export class InteractionService {
           accountNumber,
           interactionData.interaction_rid
         );
-         const {  intSource } =
-        await this.getInteractionStatusAndSource();
-        interactionData.interaction_source_rid = intSource || "";
+       //  const {  intSource } =
+       // await this.getInteractionStatusAndSource();
+      //  interactionData.interaction_source_rid = intSource || "";
       // if(interactionData.status_action === 'DRAFT')
       // {
       //  const {  intSource } =
@@ -207,8 +221,11 @@ export class InteractionService {
       };
     } catch (err) {
       await transaction.rollback();
-      console.log("Error creatng resource", err);
-      throw this.throwServiceError(err as Error);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: (err as Error).message,
+        };
     }
   }
 
@@ -230,7 +247,11 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
-        throw new Error("Invalid account ID");
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
       }
       const updatedInteractionResponse =
         await this.interactionSchemaService.updateInteractionResponse(
@@ -249,8 +270,11 @@ export class InteractionService {
       };
     } catch (err) {
       await transaction.rollback();
-      console.log("Error creatng resource", err);
-      throw this.throwServiceError(err as Error);
+      return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: (err as Error).message,
+        };
     }
   }
   async getInteractionDetailsById(
@@ -269,7 +293,11 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
-        throw new Error("Invalid account ID");
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
       }
       const interactionDetails =
         await this.interactionSchemaService.fetchInteractionDetailsById(
@@ -278,7 +306,11 @@ export class InteractionService {
         );
 
       if (!interactionDetails) {
-        throw new Error("Invalid interaction ID");
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
       }
 
       return {
@@ -319,8 +351,11 @@ export class InteractionService {
         );
 
       if (!interactionQuestions) {
-        throw new Error("Invalid interaction ID");
-      } else {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
       }
 
       return {
@@ -403,11 +438,15 @@ export class InteractionService {
   }
 
   async sendInteraction(
-    interactionRid: string[],
+   interactions: {
+      interaction_rid: string;
+      emailInfo: {
+        email: string;
+        name: string | null;
+      };
+    }[],
     accountRid: string,
-    userId: string,
-    customRecipient: boolean,
-    customEmailInfo: { name: string; email: string }
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -416,12 +455,37 @@ export class InteractionService {
   }> {
     try {
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
-      if (!accountNumber) throw new Error("Invalid account ID");
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
 
       const interactionResponse: any[] = [];
 
-      for (const rid of interactionRid) {
-        const [interactionItems, interactionInfo, emailInfo] =
+      for (const { interaction_rid, emailInfo } of interactions) {
+        const rid = interaction_rid;
+        // If emailInfo.email is empty, fetch POC email
+        let sendEmailInfo = emailInfo;
+        if (!emailInfo?.email) {
+          sendEmailInfo =  await this.interactionSchemaService.fetchPOCEmail(accountNumber, rid);
+        }
+
+        if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
+          interactionResponse.push({
+            interactionRid: rid,
+            csvSent: false,
+            error: "No email info found"
+          });
+          continue;
+        }
+        console.log("Sending email to:", sendEmailInfo);
+
+
+
+        const [interactionItems, interactionInfo] =
           await Promise.all([
             this.interactionSchemaService.fetchInteractionQuestionsById(
               accountNumber,
@@ -431,9 +495,6 @@ export class InteractionService {
               rid,
               accountNumber
             ),
-            customRecipient
-              ? Promise.resolve(customEmailInfo)
-              : this.interactionSchemaService.fetchPOCEmail(accountNumber, rid),
           ]);
         const interactionLink = await this.generateInteractionLink(
           rid,
@@ -452,10 +513,18 @@ export class InteractionService {
           contentType:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         };
+        if (!emailInfo) {
+            interactionResponse.push({
+            interactionRid: rid,
+            csvSent: false,
+            error: "No email info found"
+            });
+            continue;
+        }
 
         // Send email
         const emailResponse = await this.sendEmailWithAttachment(
-          emailInfo,
+          sendEmailInfo,
           interactionInfo.projectInfo,
           interactionInfo.accountInfo,
           excelAttachment,
@@ -467,7 +536,7 @@ export class InteractionService {
             rid,
             statusAction.SENT,
             userId,
-            emailInfo
+            sendEmailInfo
           );
         } else {
           //need to add logic for sending toPS team
@@ -485,6 +554,7 @@ export class InteractionService {
         data: { interactionResponse },
       };
     } catch (err) {
+      console.log("Error sending interaction", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -556,8 +626,7 @@ export class InteractionService {
   }
 
   async sendEmailWithAttachment(
-    emailInfo: { name: string; email: string },
-
+    emailInfo: { name: string | null; email: string  },
     projectInfo: {
       project_id: string;
       project_name: string;

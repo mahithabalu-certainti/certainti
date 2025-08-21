@@ -13,7 +13,6 @@ export interface InteractionTimelineAttributes {
   event_name?: string;
   event_type?: string;
   event_status?: string;
-  document_rid?: string;
   event_datetime?: Date;
 }
 
@@ -38,7 +37,6 @@ export class InteractionTimeline
   public event_name?: string;
   public event_type?: string;
   public event_status?: string;
-  public document_rid?: string;
   public event_datetime?: Date;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
@@ -90,10 +88,6 @@ export class InteractionTimeline
         },
         event_status: {
           type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        document_rid: {
-          type: DataTypes.STRING(50),
           allowNull: true,
         },
         event_datetime: {

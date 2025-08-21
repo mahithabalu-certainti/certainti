@@ -715,7 +715,8 @@ export interface IImportListGraphqlServices {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    documentRid: string
+    documentRid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -737,7 +738,27 @@ export interface IImportListGraphqlServices {
     message: string;
     errorMessage?: string;
     data?: { tasks: any[]; totalCount: number };
-  }>; 
+  }>;
+  
+  exportAccountLevelImportedProjectTasks(
+    accountRid: string,
+    documentRid: string,
+    userId: string,
+    filters: Record<string, any>,
+    search: string,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }>;
+
+  getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
 }
 
 export interface IProjectTaskIngestionService {

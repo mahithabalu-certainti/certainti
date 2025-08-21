@@ -31,7 +31,10 @@ export const interactionSource = {
   AUTO: "Auto",
   MANUAL: "Manual",
 };
-
+export const interactionType = {
+  RD: "RD",
+  GREENENERGY: "Green Energy",
+};
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
 export const constants = {
@@ -247,7 +250,7 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
-    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project WHERE rid = '${rid}'`
+    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
   },
   fetchAccountInfo(rid: string) {
     return `
@@ -260,7 +263,11 @@ export const rawQueries = {
   },
   fetchPOCEmail(projectFiscalRid: string) {
     return `
-    SELECT project_point_of_contact_email FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+    SELECT project_point_of_contact_email,project_point_of_contact FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+  },
+  fetchisAutoSendEnabled(projectFiscalRid: string,schemaName : string) {
+    return `
+    SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
   },
   fetchInteractionStatusList(whereClause: string) {
     return `
@@ -270,6 +277,11 @@ export const rawQueries = {
   {
     return `
     SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`
+  },
+  fetchInteractionType(type:string)
+  {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`
   }
 };
 

@@ -25,21 +25,18 @@ const createInteractionSchema = Joi.object({
 
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  interaction_rid: Joi.array()
-    .items(Joi.string().pattern(uuidRegex).required())
-    .min(1)
-    .required(),
-  customRecipient: Joi.boolean().required(),
-  sendInfo: Joi.object({
-    email: Joi.string().email().required(),
-    name: Joi.string().max(255).required(),
-  }).when('customRecipient', {
-    is: true,
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
+  interactions: Joi.array()
+  .items(
+    Joi.object({
+      interaction_rid: Joi.string().pattern(uuidRegex).required(),
+      emailInfo: Joi.object({
+        email: Joi.string().email().optional().allow("",null),
+        name: Joi.string().max(255).optional().allow("",null),
+      }).required(),
+    })
+  )
+  .min(1)
+  .required(),
 });
 const getInteractionStatusSchema = Joi.object({
   status_scope: Joi.string().optional(),

@@ -19,9 +19,6 @@ export interface InteractionItemAttributes {
   question: string;
   notes?: string;
   response?: string;
-  response_by?: string;
-  response_on_datetime?: Date;
-  response_via?: string;
   is_attachment?: boolean;
   is_editable?: boolean;
 }
@@ -50,9 +47,7 @@ export class InteractionItem
   public question!: string;
   public notes?: string;
   public response?: string;
-  public response_by?: string;
-  public response_on_datetime?: Date;
-  public response_via?: string;
+ 
   public is_attachment?: boolean;
   public is_editable?: boolean;
 
@@ -88,10 +83,7 @@ export class InteractionItem
         is_mandatory: { type: DataTypes.BOOLEAN, allowNull: true },
         question: { type: DataTypes.TEXT, allowNull: true },
         notes: { type: DataTypes.TEXT, allowNull: true },
-        response: { type: DataTypes.TEXT, allowNull: true },
-        response_by: { type: DataTypes.STRING(50), allowNull: true },
-        response_on_datetime: { type: DataTypes.DATE, allowNull: true },
-        response_via: { type: DataTypes.STRING(50), allowNull: true },
+      
         is_attachment: { type: DataTypes.BOOLEAN, allowNull: true },
       },
       {

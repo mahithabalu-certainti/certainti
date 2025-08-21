@@ -1,10 +1,10 @@
 import { Request, Response } from 'express'
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
+import { HttpStatus, IMPORT_FIELD_MAPPINGS_FOR_EXPORT, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
-import { exportImportedAccountLevelProjects, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
+import { exportImportedAccountLevelProjects, exportImportedAccountLevelProjectTasks, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -534,9 +534,21 @@ async function importListByRid (req : Request, res : Response) {
 
 async function exportAllImportedData (req : Request, res : Response) {
     const data = req.body;
+    const {permissionModule} = data;
     let importedByFilter;
     let importedByCondition : string;
     let totalCount : number = 0
+
+    const userId = req.headers['x-user-id'] as string;
+    if (!userId) {
+        handleErrorResponse(
+            res,
+            HttpStatus.BAD_REQUEST,
+            HttpStatus.BAD_REQUEST_MESSAGE,
+            "User id is required"
+        );
+        return;
+    }
     
     const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters, data.fiscal_year);
         if (result.statusCode !== HttpStatus.SUCCESS) {
@@ -616,24 +628,33 @@ async function exportAllImportedData (req : Request, res : Response) {
         if(result.data[0].imports == null) totalCount = 0
         else totalCount = result.data[0].imports[0].count
 
-        let finalPaginatedData = paginatedData.map((data : any) => {
-            return {
-                "Import ID" : data.r_number,
-                "File Name" : data.file_name,
-                "Format" : data.format,
-                "Size" : data.size,
-                "Fiscal Year" : data.fiscal,
-                "Entity" : data.entity,
-                "Total Records" : data.total_records,
-                "Records Loaded Successfully" : data.records_loaded_successfully,
-                "Records with Warning" : data.records_with_warning,
-                "Records Failed to Load" : data.records_failed_to_load,
-                "Status" : data.status,
-                "Status Description" : data.status_description,
-                "Imported By" : data.imported_by,
-                "Imported On" : new Date(data.imported_on).toISOString().slice(0, 10),
-            }
-        })
+        const [importFields] = await Promise.all([
+        importServices.getAllowedExportFields(
+          userId,
+          permissionModule
+        ),
+      ]);
+
+      const allowedFieldSet = new Set<string>();
+      for (const field of importFields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
+        let finalPaginatedData = paginatedData.map((data: any) => {
+          const exportRecord: Record<string, any> = {};
+          
+          IMPORT_FIELD_MAPPINGS_FOR_EXPORT.forEach(mapping => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] = mapping.formatter 
+                      ? mapping.formatter(data[mapping.dataField])
+                      : data[mapping.dataField];
+              }
+          });
+          
+          return exportRecord;
+      });
 
         const base64Response = await generateExcelBase64(finalPaginatedData, "Imports")
 
@@ -877,7 +898,8 @@ async function exportImportedResourceList(req: Request, res: Response): Promise<
       parsedFilters,
       value.sortBy,
       value.sortOrder,
-      value.documentRid
+      value.documentRid,
+      userId
     );
 
     if (resourcesList.statusCode === HttpStatus.SUCCESS) {
@@ -979,6 +1001,78 @@ async function importedAccountLevelProjectTaskList(req: Request, res: Response):
   }
 }
 
+async function exportImportedProjectTaskList(req: Request, res: Response): Promise<void> {
+  const methodName = "exportImportedProjectTaskList";
+  try {
+    const { accountId } = req.params;
+    const value = await validateRequest(
+      req,
+      exportImportedAccountLevelProjectTasks,
+      res,
+      "GET"
+    );
+    if (!value) {
+      return;
+    }
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+    // Before calling buildRawWhereClause
+    if (typeof value.filters === "string") {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error("Invalid filters JSON:", value.filters);
+        value.filters = {};
+      }
+    }
+    const tasks = await importServices.exportAccountLevelImportedProjectTasks(
+      accountId,
+      value.documentRid,
+      userId,
+      value.filters,
+      value.search,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (tasks.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(tasks?.data?.tasks,"Project Tasks"));
+      return;
+    } else {
+      errorLog(methodName, tasks.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        tasks.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
     fetchAllImportList,
     importListByRid,
@@ -989,5 +1083,6 @@ export default {
     importedAccountLevelresourceList,
     importedAccountLevelProjectTaskList,
     exportImportedProjectList,
-    exportImportedResourceList
+    exportImportedResourceList,
+    exportImportedProjectTaskList
 }   
