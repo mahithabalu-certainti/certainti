@@ -33,7 +33,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   const interactionHistoryId = searchParams.get('interaction_history_id') || '';
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('action');
+  const [sortField, setSortField] = useState<string>('status_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [totalItems, setTotalItems] = useState<number>(0);
 

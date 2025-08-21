@@ -195,7 +195,7 @@ export const AccountDetails = () => {
   });
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
-      sortBy: 'interaction_version',
+      sortBy: 'status_name',
       sortOrder: 'ASC',
       filters: {},
       page: 1,
@@ -309,7 +309,7 @@ export const AccountDetails = () => {
           interaction_rid: interactionHistoryId,
           page: interactionsParams?.page || 1,
           limit: interactionsParams?.limit || 100,
-          sort: '',
+          sort: interactionsParams.sortBy || 'status_name',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
           flag: 'account',
