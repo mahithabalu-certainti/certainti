@@ -29,6 +29,7 @@ import { SendInteractionModal } from '../../../../../components/interaction';
 import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -47,11 +48,15 @@ const InteractionsTabs: OverviewTabs[] = [
 interface InteractionsProps {
   accountInActive: boolean;
   projectDetails: NewProjectData | null;
+  setInteractionsParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
   accountInActive,
   projectDetails,
+  setInteractionsParams,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -161,6 +166,17 @@ const Interactions: React.FC<InteractionsProps> = ({
       setSelectedRows([]);
     }
   }, [data]);
+
+  useEffect(() => {
+    const updatedParams = {
+      sortBy: sortField,
+      filters: appliedFilters,
+      page: currentPage,
+      sortOrder: sortBy,
+      limit: rowsPerPage,
+    };
+    setInteractionsParams(updatedParams);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -362,6 +378,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           accountInActive={accountInActive}
           refresh={refreshInteractions}
           appliedFilters={appliedFilters}
+          setInteractionsParams={setInteractionsParams}
         />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment
