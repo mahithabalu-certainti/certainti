@@ -6,13 +6,98 @@ import {
   InteractionList,
   InteractionListResponse,
   InteractionListURLParams,
+  ExportInteractionResponse,
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
 import {
+  getInteractionExportUrl,
+  getInteractionHistoryExportUrl,
+  // getInteractionExportUrl,
   getInteractionListUrl,
   getGlobalInteractionListUrl,
 } from '../urls/interactions-url';
+
+export const exportInteractions = async (
+  params: InteractionListURLParams
+): Promise<void> => {
+  try {
+    const filename = 'project_interactions.xlsx';
+    const response =
+      await interactionServiceApi.post<ExportInteractionResponse>(
+        getInteractionExportUrl(),
+        params
+      );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+export const exportInteractionsHistory = async (
+  params: InteractionListURLParams
+): Promise<void> => {
+  try {
+    const filename = 'project_history_interactions.xlsx';
+    const response =
+      await interactionServiceApi.post<ExportInteractionResponse>(
+        getInteractionHistoryExportUrl(),
+        params
+      );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
+export const useExportInteractions = () => {
+  return useMutation<void, Error, InteractionListURLParams>({
+    mutationFn: (body) => exportInteractions(body),
+  });
+};
 
 const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
   return `/api/interactions/detail/${accountId}/${interactionId}`;

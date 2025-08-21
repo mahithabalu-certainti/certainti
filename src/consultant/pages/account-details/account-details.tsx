@@ -72,6 +72,10 @@ import {
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
+import {
+  exportInteractionsHistory,
+  exportInteractions,
+} from '../../services/interactions/interactions-service';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -90,6 +94,10 @@ export const AccountDetails = () => {
     (state: RootState) => state.account
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const viewDetails = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -185,7 +193,14 @@ export const AccountDetails = () => {
     fiscal_year: convertedFiscalYear,
     account_rid: accountid || '',
   });
-
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'interaction_version',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'project_code',
@@ -210,7 +225,8 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
-      searchParams.get('list') !== 'timesheet'
+      searchParams.get('list') !== 'timesheet' &&
+      searchParams.get('list') !== 'interactions'
     ) {
       return;
     }
@@ -285,6 +301,36 @@ export const AccountDetails = () => {
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'interactions') {
+      if (interactionHistoryId) {
+        console.log('interactions history');
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountid || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: '',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        console.log('interactions table');
+        const projectInteractionExportPayload = {
+          account_rid: accountid || '',
+          fiscal_year: convertedFiscalYear,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'action',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     } else {
       exportData(exportType, exportPayload);
     }
@@ -375,6 +421,8 @@ export const AccountDetails = () => {
       return !isFinancialProjectCostExportEnable;
     } else if (list === 'timesheet') {
       return !isTimesheetExportEnable;
+    } else if (list === 'interactions') {
+      return viewDetails;
     } else {
       return true;
     }
@@ -414,7 +462,6 @@ export const AccountDetails = () => {
       setActiveKey(location.state.activeKey);
     }
   }, [location.state]);
-
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -473,6 +520,8 @@ export const AccountDetails = () => {
           <Interactions
             accountInActive={accountInActive}
             accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setInteractionsParams={setInteractionsParams}
           />
         );
       case 'cases':

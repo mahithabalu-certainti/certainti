@@ -12,7 +12,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { InteractionList } from '../../../../types';
+import { ExportType, InteractionList } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
@@ -33,6 +33,7 @@ import { InteractionHistory } from './interaction-history';
 import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -51,11 +52,17 @@ const InteractionsTabs: OverviewTabs[] = [
 interface InteractionsProps {
   accountInActive: boolean;
   accountDetails?: accountDetailsProps;
+  setExportType?: (type: ExportType) => void;
+  setInteractionsParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
   accountInActive,
   accountDetails,
+  setExportType,
+  setInteractionsParams,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -89,7 +96,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     'interaction_attachment_count'
   );
   const responseHistory = searchParams.get('history');
-  const interactionResponseId = searchParams.get('interactionResponse_id');
+  const interactionResponseId = searchParams.get('versionID');
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
@@ -150,6 +157,20 @@ const Interactions: React.FC<InteractionsProps> = ({
       setCount(data.count || 0);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('interactions');
+    }
+    const updatedParams = {
+      sortBy: sortField,
+      filters: appliedFilters,
+      page: currentPage,
+      sortOrder: sortBy,
+      limit: rowsPerPage,
+    };
+    setInteractionsParams(updatedParams);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -261,7 +282,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const handleBackFromResponse = () => {
     if (interactionResponseId) {
-      searchParams.delete('interactionResponse_id');
+      searchParams.delete('versionID');
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {
       searchParams.delete('history');
@@ -346,9 +367,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       ) : viewInteractionHistory ? (
         <InteractionHistory
           handleBackClick={handleBackClick}
-          accountInActive={accountInActive}
           appliedFilters={appliedFilters}
           refresh={refreshInteractions}
+          setInteractionsParams={setInteractionsParams}
         />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment

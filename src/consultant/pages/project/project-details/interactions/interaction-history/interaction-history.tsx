@@ -11,18 +11,23 @@ import {
 } from './utils';
 import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
 import { useSearchParams } from 'react-router-dom';
+import { AttachmentsListExportParams } from '../../../../../types/attachment';
 
 interface InteractionHistoryProps {
   accountInActive: boolean;
   handleBackClick: () => void;
   refresh?: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
+  setInteractionsParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
 }
 
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   handleBackClick,
   refresh,
   appliedFilters,
+  setInteractionsParams,
 }) => {
   const [searchParams] = useSearchParams();
   const interactionHistoryId = searchParams.get('interaction_history_id') || '';
@@ -60,6 +65,17 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   useEffect(() => {
     setTotalItems(actionData.length);
   }, [actionData]);
+
+  useEffect(() => {
+    const updatedParams = {
+      sortBy: sortField,
+      filters: appliedFilters,
+      page: currentPage,
+      sortOrder: sortBy,
+      limit: rowsPerPage,
+    };
+    setInteractionsParams(updatedParams);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const getRowId = (row: InteractionHistoryAction) => row.rid;
   const interactionHistoryColumns = getInteractionHistoryListColumns();

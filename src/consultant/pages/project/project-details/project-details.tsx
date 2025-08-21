@@ -57,6 +57,10 @@ import { exportFinancialResourceCost } from '../../../services/financial/financi
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
 import { Interactions } from './interactions';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
+import {
+  exportInteractions,
+  exportInteractionsHistory,
+} from '../../../services/interactions/interactions-service';
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
@@ -71,6 +75,14 @@ export const ProjectDetails = () => {
   const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
     Date.now()
   );
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'interaction_version',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -94,6 +106,8 @@ export const ProjectDetails = () => {
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
+      page: 1,
+      limit: 100,
     });
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
@@ -143,6 +157,11 @@ export const ProjectDetails = () => {
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
   const parent = searchParams.get('source');
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const viewDetails = !!interactionId || !!interactionRID;
+  console.log('viewDetails', viewDetails);
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
     projectID || '',
@@ -210,11 +229,13 @@ export const ProjectDetails = () => {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'projectResources') {
       return !isResourceExportViewEnable;
+    } else if (list === 'interactions') {
+      return viewDetails;
     } else {
       return true;
     }
   };
-
+  console.log('export', checkExport());
   const handleExport = (exportType: ExportType) => {
     const list = searchParams.get('list');
 
@@ -233,7 +254,8 @@ export const ProjectDetails = () => {
       list !== 'attachments' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
-      list !== 'projectsTask'
+      list !== 'projectsTask' &&
+      list !== 'interactions'
     ) {
       return;
     }
@@ -276,6 +298,37 @@ export const ProjectDetails = () => {
         ...projectTaskParams,
       });
       return;
+    }
+    if (list === 'interactions') {
+      if (interactionHistoryId) {
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountID || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: '',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'project',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        const projectInteractionExportPayload = {
+          account_rid: accountID || '',
+          project_rid: data?.data?.project?.project_rid || '',
+          project_fiscal_rid: projectID || '',
+          fiscal_year: projectData?.fiscal_year,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'r_number',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'project',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     }
 
     return;
@@ -381,6 +434,7 @@ export const ProjectDetails = () => {
           <Interactions
             accountInActive={accountInActive}
             projectDetails={projectData}
+            setInteractionsParams={setInteractionsParams}
           />
         );
       case 'technicalSummary':

@@ -3,7 +3,7 @@ import { ListTableColumn } from '../../../../../../components/table/types';
 import { ResponseInteractionList } from '../../../../../types';
 
 export const getInteractionListColumns = (
-  handleViewInteraction: (rid: string) => void
+  handleViewInteraction: (rid: ResponseInteractionList) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ResponseInteractionList>[] => [
   {
@@ -26,7 +26,7 @@ export const getInteractionListColumns = (
     },
     render: (row: ResponseInteractionList) => (
       <span
-        onClick={() => handleViewInteraction(row.rid)}
+        onClick={() => handleViewInteraction(row)}
         className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
       >
         {row?.response_source}
