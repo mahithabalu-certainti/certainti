@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys } from "./constants"
+import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys, separateDb } from "./constants"
 
 type filterType = {
         [key : string] : {
@@ -375,6 +375,8 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
     WHERE
     i.rid = '${interaction_rid}'
+    AND
+    r.interaction_item_rid IS NOT NULL
     ),
     paginated_data AS (
     SELECT * FROM fetch_interaction_response ${pagination}
@@ -409,8 +411,8 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     let andConditions : string = ``
     let filterQueryCombinedValues : string  = ``
 
-    if(sort.toLowerCase() === "date") sortValue = `ORDER BY ih.changed_at ${sortBy}`
-    else sortValue = `ORDER BY ih.changed_at ASC`
+    if(sort.toLowerCase() === "date") sortValue = `ORDER BY ih.created_datetime ${sortBy}`
+    else sortValue = `ORDER BY ih.created_datetime ASC`
 
     if(Object.keys(filter).length > 0) {
         for(let [key, condition] of Object.entries(filter)) {
@@ -436,23 +438,23 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
                     }
                     case "datetime" : {
                         if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`DATE(ih.changed_at) = '${values}'`)
+                            filterQueryArray.push(`DATE(ih.created_datetime) = '${values}'`)
                             break
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['before']) {
-                            filterQueryArray.push(`DATE(ih.changed_at) < '${values}'`)
+                            filterQueryArray.push(`DATE(ih.created_datetime) < '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['after']) {
-                            filterQueryArray.push(`DATE(ih.changed_at) > '${values}'`)
+                            filterQueryArray.push(`DATE(ih.created_datetime) > '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['between']) {
-                            filterQueryArray.push(`DATE(ih.changed_at) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                            filterQueryArray.push(`DATE(ih.created_datetime) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['isEmpty']) {
-                            filterQueryArray.push(`ih.changed_at IS NULL`)
+                            filterQueryArray.push(`ih.created_datetime IS NULL`)
                             break;
                         }
                     }
@@ -475,7 +477,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     let query = 
     `WITH fetch_interaction_history AS (
     SELECT 
-    i.r_number, ih.rid, ih.new_status_rid, ih.changed_at,
+    i.r_number, ih.rid, ih.new_status_rid, ih.created_datetime,
     i.response_source, p.project_code, p.project_name,
     COUNT(*) OVER() AS total_records
     FROM 
@@ -501,7 +503,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     'response_source', ih.response_source,
     'interaction_history_rid', ih.rid,
     'new_status_rid', ih.new_status_rid,
-    'date', ih.changed_at
+    'date', ih.created_datetime
     )${sortValue}) AS interaction_history
     FROM
     paginated_data ih
