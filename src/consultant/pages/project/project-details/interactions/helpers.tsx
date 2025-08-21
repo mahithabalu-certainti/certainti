@@ -195,3 +195,28 @@ export const getInteractionFilterFields = (
     },
   ];
 };
+
+export const getInteractionStatusColor = (status?: string): string => {
+  switch (status) {
+    case 'Draft':
+      return 'text-gray-500';
+    case 'Created':
+      return 'text-blue-500';
+    case 'Sent':
+      return 'text-purple-500';
+    case 'Response Draft':
+      return 'text-orange-500';
+    case 'Response Received':
+      return 'text-green-600';
+    case 'On Hold':
+      return 'text-yellow-500';
+    case 'Cancelled':
+      return 'text-red-600';
+    case 'Completed':
+      return 'text-green-700';
+    case 'Question Updated':
+      return 'text-indigo-500';
+    default:
+      return 'text-gray-700';
+  }
+};
