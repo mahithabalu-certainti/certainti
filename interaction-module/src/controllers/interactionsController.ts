@@ -740,11 +740,9 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
       return;
     }
      const interaction = await interactionService.sendInteraction(
-       value.interaction_rid,
+       value.interactions,
        value.account_rid,
-       userId,
-       value.customRecipient,
-       value.emailInfo
+       userId
      );
     console.log(
       `[${methodName}] Service response:`,

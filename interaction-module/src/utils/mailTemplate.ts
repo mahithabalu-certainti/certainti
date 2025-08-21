@@ -1,7 +1,7 @@
 import { IEmailMessage } from "./types";
 
 function surveyMailTemplate(
-  recipient: { name: string; email: string },
+  recipient: { name: string | null; email: string },
   project: { project_name: string; project_code: string,fiscalYear: number },
   account: { account_name: string;},
   interactionLink: string
