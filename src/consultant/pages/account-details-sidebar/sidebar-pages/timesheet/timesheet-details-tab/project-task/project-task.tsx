@@ -5,22 +5,24 @@ import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import { AllPermissions } from '../../../../../../../common-service';
 import { useTimesheetProjectTaskList } from '../../../../../../services/import';
-import { ExportType } from '../../../../../../types';
 import { ProjectTaskListType } from '../../../../../../types/project-task';
 import { getProjectTaskColumns } from './columns';
+import { TimesheetProjectExportListURLParams } from '../../../../../../types/timesheet-projects';
 
 interface projectTaskProps {
   documentRid: string;
   appliedFilters?: Record<string, string | number | boolean | string[]>;
-  setExportType?: (type: ExportType) => void;
   onRefreshClick?: number;
+  setTimesheetTaskParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
 }
 
 const TimesheetProjectTask: React.FC<projectTaskProps> = ({
   documentRid,
   appliedFilters,
-  setExportType,
   onRefreshClick,
+  setTimesheetTaskParams,
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
@@ -33,9 +35,6 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
   // hooks
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -56,7 +55,7 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
   const tabName = searchParams.get('tab');
   const isTaskTable = tabName === 'timesheet_project_task';
   const viewDetails = !!isTaskTable;
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
   const {
     data: projectApiListData,
     isLoading,
@@ -69,7 +68,6 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
       sort_by: sortOrder,
       filters: { ...appliedFilters },
       account_rid: accountid || '',
-      fiscal_year: convertedFiscalYear,
       documentRid,
     },
     viewDetails,
@@ -82,11 +80,21 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
     }
   }, [projectApiListData]);
   useEffect(() => {
-    if (setExportType) {
-      setExportType('timesheet_project_task');
-    }
+    setTimesheetTaskParams({
+      sortOrder: sortOrder,
+      sortBy: sortField,
+      filters: appliedFilters,
+      account_rid: accountid || '',
+      documentRid: documentRid,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    sortField,
+    sortOrder,
+    appliedFilters,
+    accountid,
+    documentRid
+  ]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);

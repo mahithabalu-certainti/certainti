@@ -24,6 +24,7 @@ import TimesheetProjectTab from './timesheet-details-tab/project-tab/project-tab
 import { ExportType, TimeSheetListURLParams } from '../../../../types';
 import TimesheetResourcesTab from './timesheet-details-tab/resource-tab/resource-tab';
 import TimesheetProjectTask from './timesheet-details-tab/project-task/project-task';
+import { TimesheetProjectExportListURLParams } from '../../../../types/timesheet-projects';
 
 interface TimesheetDetailsProps {
   handleBackClick: () => void;
@@ -34,6 +35,15 @@ interface TimesheetDetailsProps {
     React.SetStateAction<TimeSheetListURLParams>
   >;
   onRefreshClick?: number;
+  setTimesheetProjectParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
+  setTimesheetResourceParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
+  setTimesheetTaskParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
 }
 
 const tabs: TabMenus[] = [
@@ -69,6 +79,9 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   appliedFilters,
   setExportType,
   onRefreshClick,
+  setTimesheetProjectParams,
+  setTimesheetResourceParams,
+  setTimesheetTaskParams,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -163,12 +176,12 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
       value: (
         <span
           className={`font-semibold ${data?.status === 'Failed'
-              ? 'text-red-600'
-              : data?.status === 'Completed'
-                ? 'text-green-600'
-                : data?.status === 'Processing'
-                  ? 'text-yellow-600'
-                  : 'text-gray-700'
+            ? 'text-red-600'
+            : data?.status === 'Completed'
+              ? 'text-green-600'
+              : data?.status === 'Processing'
+                ? 'text-yellow-600'
+                : 'text-gray-700'
             }`}
         >
           {data?.status}
@@ -242,6 +255,7 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     // update the URL with the tab value
     searchParams.set('tab', newValue);
+    if (setExportType) setExportType(undefined as unknown as ExportType);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
@@ -331,16 +345,16 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
               bothParentAndChild={bothParentAndChild}
               documentRid={documentRid}
               appliedFilters={appliedFilters}
-              setExportType={setExportType}
               onRefreshClick={onRefreshClick}
+              setTimesheetProjectParams={setTimesheetProjectParams}
             />
           )}
           {value === 'timesheet_project_resource' && (
             <TimesheetResourcesTab
               documentRid={documentRid}
               appliedFilters={appliedFilters}
-              setExportType={setExportType}
               onRefreshClick={onRefreshClick}
+              setTimesheetResourceParams={setTimesheetResourceParams}
             />
           )}
 
@@ -348,8 +362,8 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
             <TimesheetProjectTask
               documentRid={documentRid}
               appliedFilters={appliedFilters}
-              setExportType={setExportType}
               onRefreshClick={onRefreshClick}
+              setTimesheetTaskParams={setTimesheetTaskParams}
             />
           )}
         </>

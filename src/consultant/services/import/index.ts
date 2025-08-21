@@ -11,7 +11,7 @@ import {
   ImportsListURLParams,
 } from '../../types/imports';
 import { uploadUrl } from '../urls';
-import { TimesheetProjectList, TimesheetProjectTableListResponse, TimesheetProjectTableListURLParams, TimesheetResourceListType, TimesheetResourceTableListResponse, } from '../../types/timesheet-projects';
+import { TimesheetProjectExportListURLParams, TimesheetProjectList, TimesheetProjectTableListResponse, TimesheetProjectTableListURLParams, TimesheetResourceListType, TimesheetResourceTableListResponse, } from '../../types/timesheet-projects';
 
 import { TimesheetDetails, TimesheetDetailsResponse, TimeSheetList, TImesheetListResponse, TimeSheetListURLParams } from '../../types';
 import { ProjectTaskApiResponse, ProjectTaskListType } from '../../types/project-task';
@@ -293,7 +293,6 @@ export const useTimesheetProjectTableList = (
 export const fetchTimesheetProjectTableList = async (
   params: TimesheetProjectTableListURLParams
 ): Promise<{ timesheet_projects: TimesheetProjectList[]; count: number }> => {
-  console.log("bothParentAndChild-api1", params.bothParentAndChild)
   const response = await resourceServiceApi.get<TimesheetProjectTableListResponse>(
     TimesheetProjectURL(params)
   );
@@ -307,8 +306,6 @@ export const getTimesheetProjectUrl = (
 ) => `/api/timesheet/importedProjects/${account_rid}`;
 
 const returnTimesheetProjectURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-  console.log("bothParentAndChild-api2", params.bothParentAndChild)
-
   const { page, limit, sort, sort_by, filters, fiscalYear, bothParentAndChild, documentRid, } = params;
 
   const searchParams = new URLSearchParams();
@@ -337,7 +334,7 @@ export const TimesheetProjectURL = ({
   sort,
   sort_by,
   filters,
-  fiscal_year,
+  fiscalYear,
   account_rid,
   bothParentAndChild,
   documentRid,
@@ -349,11 +346,91 @@ export const TimesheetProjectURL = ({
     sort,
     sort_by,
     filters,
-    fiscal_year,
+    fiscalYear,
     bothParentAndChild: bothParentAndChild ? "true" : "false",
     documentRid,
   });
 };
+// Timesheet project export api
+export const getExportTimesheetProjectUrl = (
+  account_rid: string,
+) => `/api/timesheet/export/importedProjects/${account_rid}`;
+const exportProjectURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+
+  const { page, limit, sort, sort_by, filters, fiscalYear, bothParentAndChild, documentRid, } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (page !== undefined) searchParams.set('page', String(page));
+  if (limit !== undefined) searchParams.set('limit', String(limit));
+  if (sort) searchParams.set('sortBy', String(sort));
+  if (sort_by) searchParams.set('sortOrder', String(sort_by));
+  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (bothParentAndChild !== undefined) {
+    searchParams.set("bothParentAndChild", String(bothParentAndChild));
+  }
+
+  if (documentRid) {
+    searchParams.set('documentRid', String(documentRid));
+  }
+  return `${baseURL}/?${searchParams.toString()}`;
+};
+export const exportTimesheetProjectURL = ({
+  sortOrder,
+  sortBy,
+  filters,
+  fiscalYear,
+  account_rid,
+  bothParentAndChild,
+  documentRid,
+}: TimesheetProjectExportListURLParams): string => {
+  const base = getExportTimesheetProjectUrl(account_rid ?? '');
+  return exportProjectURL(base, {
+    sortOrder,
+    sortBy,
+    filters,
+    fiscalYear,
+    bothParentAndChild: bothParentAndChild ? "true" : "false",
+    documentRid,
+  });
+};
+export const exportTimesheetProjectData = async (params: TimesheetProjectExportListURLParams) => {
+  try {
+    const response = await resourceServiceApi.get(
+      exportTimesheetProjectURL(params)
+    );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'timesheet_project_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
 // Timesheet view Resource tab table
 export const useTimesheetResourceTableList = (
   params: TimesheetProjectTableListURLParams,
@@ -386,7 +463,7 @@ export const getProjectResourcesUrl = (
 ) => `/api/timesheet/importedResources/${account_rid}`;
 
 const returnURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-  const { page, limit, sort, sort_by, filters, fiscalYear, documentRid } = params;
+  const { page, limit, sort, sort_by, filters, documentRid } = params;
 
   const searchParams = new URLSearchParams();
 
@@ -394,7 +471,7 @@ const returnURL = (baseURL: string, params: Record<string, string | number | und
   if (limit !== undefined) searchParams.set('limit', String(limit));
   if (sort) searchParams.set('sortBy', String(sort));
   if (sort_by) searchParams.set('sortOrder', String(sort_by));
-  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+  // if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -410,7 +487,7 @@ export const TimesheetProjectResourcesURL = ({
   sort,
   sort_by,
   filters,
-  fiscal_year,
+  // fiscalYear,
   account_rid,
   documentRid,
 }: TimesheetProjectTableListURLParams): string => {
@@ -421,8 +498,79 @@ export const TimesheetProjectResourcesURL = ({
     sort,
     sort_by,
     filters,
-    fiscal_year,
+    // fiscalYear,
     documentRid
+  });
+};
+// Timesheet resources export api
+export const exportTimesheetResourceData = async (params: TimesheetProjectExportListURLParams) => {
+  try {
+    const response = await resourceServiceApi.get(exportTimesheetResourcesURL(params));
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'timesheet_resource_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
+export const getExportTimesheetResourcesUrl = (
+  account_rid: string,
+) => `/api/timesheet/export/importedResources/${account_rid}`;
+
+const returnExportResourcesURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+
+  const { sort, sort_by, filters, fiscalYear, documentRid, } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (sort) searchParams.set('sortBy', String(sort));
+  if (sort_by) searchParams.set('sortOrder', String(sort_by));
+  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+
+  if (documentRid) {
+    searchParams.set('documentRid', String(documentRid));
+  }
+  return `${baseURL}/?${searchParams.toString()}`;
+};
+
+export const exportTimesheetResourcesURL = ({
+  sortOrder,
+  sortBy,
+  filters,
+  account_rid,
+  documentRid,
+}: TimesheetProjectExportListURLParams): string => {
+  const base = getExportTimesheetResourcesUrl(account_rid ?? '');
+  return returnExportResourcesURL(base, {
+    sortOrder,
+    sortBy,
+    filters,
+    documentRid,
   });
 };
 
@@ -458,7 +606,7 @@ export const getProjectTaskUrl = (
 ) => `/api/timesheet/importedProjectTasks/${account_rid}`;
 
 const returnTimesheetProjectTaskURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-  const { page, limit, sort, sort_by, filters, fiscalYear, documentRid } = params;
+  const { page, limit, sort, sort_by, filters, documentRid } = params;
 
   const searchParams = new URLSearchParams();
 
@@ -466,7 +614,7 @@ const returnTimesheetProjectTaskURL = (baseURL: string, params: Record<string, s
   if (limit !== undefined) searchParams.set('limit', String(limit));
   if (sort) searchParams.set('sortBy', String(sort));
   if (sort_by) searchParams.set('sortOrder', String(sort_by));
-  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+  // if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -482,7 +630,7 @@ export const TimesheetProjectTaskURL = ({
   sort,
   sort_by,
   filters,
-  fiscal_year,
+  // fiscalYear,
   account_rid,
   documentRid,
 }: TimesheetProjectTableListURLParams): string => {
@@ -493,7 +641,78 @@ export const TimesheetProjectTaskURL = ({
     sort,
     sort_by,
     filters,
-    fiscal_year,
+    // fiscalYear,
     documentRid
+  });
+};
+
+// Timesheet resources export api
+export const exportTimesheetTaskData = async (params: TimesheetProjectExportListURLParams) => {
+  try {
+    const response = await resourceServiceApi.get(exportTimesheetTaskURL(params));
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'timesheet_resource_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
+export const getExportTimesheetTaskUrl = (
+  account_rid: string,
+) => `/api/timesheet/export/importedTasks/${account_rid}`;
+
+const returnExportTaskURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+
+  const { sort, sort_by, filters, fiscalYear, documentRid, } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (sort) searchParams.set('sortBy', String(sort));
+  if (sort_by) searchParams.set('sortOrder', String(sort_by));
+  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (documentRid) {
+    searchParams.set('documentRid', String(documentRid));
+  }
+  return `${baseURL}/?${searchParams.toString()}`;
+};
+
+export const exportTimesheetTaskURL = ({
+  sortOrder,
+  sortBy,
+  filters,
+  account_rid,
+  documentRid,
+}: TimesheetProjectExportListURLParams): string => {
+  const base = getExportTimesheetTaskUrl(account_rid ?? '');
+  return returnExportTaskURL(base, {
+    sortOrder,
+    sortBy,
+    filters,
+    documentRid,
   });
 };

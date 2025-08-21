@@ -1,49 +1,33 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useEffect, useMemo, useState } from 'react';
-//Commented lines for future use
-// import { checkPermission, getFiscalYears } from '../../../../../common-utils';
-// import { SectionTabPanel } from '../../../../../components';
-// import {
-// AccountDetailsResponse,
-// ExportType,
-// Project,
-// } from '../../../../types';
-// import { ImportsListURLParams } from '../../../../types/imports';
-// import { ResourceTabs } from '../resources/resources';
-// import { getTimesheetFilterFields } from './helpers';
 import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
-// import ImportFile from './import-file';
-// import SectionHeader from '../../../../../components/details-section/section-header';
-// import { TimeSheetIcon } from '../../../../../assets';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import { AllPermissions } from '../../../../../../../common-service';
 import { useTimesheetProjectTableList } from '../../../../../../services/import';
-// import { checkPermission } from '../../../../../../../common-utils';
 import { getProjectTabTableColumns } from './columns';
-import { TimesheetProjectList } from '../../../../../../types/timesheet-projects';
-import { ExportType } from '../../../../../../types';
+import { TimesheetProjectList, TimesheetProjectExportListURLParams } from '../../../../../../types/timesheet-projects';
 
 interface projectTabListProps {
   bothParentAndChild: boolean;
   documentRid: string;
   appliedFilters?: Record<string, string | number | boolean | string[]>;
-  setExportType?: (type: ExportType) => void;
   onRefreshClick?: number;
+  setTimesheetProjectParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
 }
 
 const TimesheetProjectTab: React.FC<projectTabListProps> = ({
   bothParentAndChild,
   documentRid,
   appliedFilters,
-  setExportType,
   onRefreshClick,
+  setTimesheetProjectParams,
 }) => {
+
   const [currentPage, setCurrentPage] = useState(0);
-  // const [showFilter, setShowFilter] = useState<boolean>(false);
-  // const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('project_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -96,9 +80,9 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
       limit: rowsPerPage,
       sort: sortField,
       sort_by: sortOrder,
-      filters: { ...appliedFilters },
+      filters: appliedFilters,
       account_rid: accountid || '',
-      fiscal_year: convertedFiscalYear,
+      fiscalYear: convertedFiscalYear,
       bothParentAndChild,
       documentRid,
     },
@@ -111,37 +95,29 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
       setProjectTabList(projectApiListData.timesheet_projects || []);
     }
   }, [projectApiListData]);
+
   useEffect(
     () => {
-      if (setExportType) {
-        setExportType('timesheet_project');
-      }
-      // setTimesheetParams({
-      //   page: currentPage + 1,
-      //   limit: rowsPerPage,
-      //   sort: sortField,
-      //   sort_by: sortOrder,
-      //   filters: appliedFilters,
-      //   account_rid: accountid || '',
-      //   fiscal_year: convertedFiscalYear,
-      // });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setTimesheetProjectParams({
+        sortOrder: sortOrder,
+        sortBy: sortField,
+        filters: appliedFilters,
+        account_rid: accountid || '',
+        fiscalYear: convertedFiscalYear,
+        bothParentAndChild,
+        documentRid,
+      });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      // sortField,
-      // sortOrder,
-      // appliedFilters,
-      // currentPage,
-      // rowsPerPage,
-      // convertedFiscalYear,
+      sortField,
+      sortOrder,
+      appliedFilters,
+      convertedFiscalYear,
+      bothParentAndChild,
+      documentRid,
     ]
   );
-
-  // const handleBackClick = () => {
-  //     searchParams.delete('timesheet_id');
-  //     searchParams.delete('tab');
-  //     navigate({ search: searchParams.toString() }, { replace: true });
-  // };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);

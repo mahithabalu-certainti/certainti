@@ -1,7 +1,4 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-// import { SelectOption } from '../../../../types';
-// import { FieldConfig } from '../../components/filter/filterType';
-
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../../../../store/store";
 import { FieldConfig } from "../../../../components/filter/filterType";
@@ -37,6 +34,9 @@ const enumOptions: { option: string; value: string }[] = [
 ];
 
 export const getTimesheetResourceTabFilterFields = (
+  countries: { option: string; value: string }[],
+  regions: { option: string; value: string }[],
+
 ): FieldConfig[] => {
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -66,8 +66,9 @@ export const getTimesheetResourceTabFilterFields = (
     {
       name: 'Resource Country',
       value: 'country_name',
-      type: 'text',
-      operatorOption: textOptions,
+      type: 'enum',
+      operatorOption: enumOptions,
+      options: countries,
       hide:
         !permissionMap?.['country_rid']?.edit &&
         !permissionMap?.['country_rid']?.read,
@@ -75,8 +76,9 @@ export const getTimesheetResourceTabFilterFields = (
     {
       name: 'Resource Region',
       value: 'region_name',
-      type: 'text',
-      operatorOption: textOptions,
+      type: 'enum',
+      operatorOption: enumOptions,
+      options: regions,
       hide:
         !permissionMap?.['region_rid']?.edit && !permissionMap?.['region_rid']?.read,
     },

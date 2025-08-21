@@ -1,10 +1,10 @@
 export interface TimesheetProjectTableListURLParams {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
   sort: string;
   sort_by: 'ASC' | 'DESC';
   filters?: object;
-  fiscal_year?: number | string;
+  fiscalYear?: number | string;
   account_rid: string;
   documentRid: string;
   bothParentAndChild?: boolean;
@@ -137,3 +137,15 @@ export type TimesheetResourceListType = {
   currency_symbol: string;
 
 };
+
+export interface TimesheetProjectExportListURLParams {
+  page?: number;
+  limit?: number;
+  sortOrder: 'ASC' | 'DESC';
+  sortBy: string;
+  filters?: object;
+  fiscalYear?: number | string;
+  account_rid: string;
+  documentRid: string;
+  bothParentAndChild?: boolean;
+}
