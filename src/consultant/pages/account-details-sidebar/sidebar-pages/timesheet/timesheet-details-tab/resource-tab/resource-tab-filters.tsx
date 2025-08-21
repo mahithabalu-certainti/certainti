@@ -68,6 +68,7 @@ export const getTimesheetResourceTabFilterFields = (
       value: 'country_name',
       type: 'enum',
       operatorOption: enumOptions,
+      onChange: true,
       options: countries,
       hide:
         !permissionMap?.['country_rid']?.edit &&

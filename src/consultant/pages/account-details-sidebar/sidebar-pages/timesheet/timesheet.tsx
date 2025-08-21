@@ -287,7 +287,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     return timesheetFilterFields;
   };
   const handleCountry = (fieldName: string, value: FilterValue) => {
-    if (fieldName === 'country_rid' && value) {
+    if (fieldName === 'country_name' && value) {
       setCurrentCountry(String(value));
     }
   };

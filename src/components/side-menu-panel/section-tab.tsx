@@ -43,7 +43,6 @@ interface TabPanelProps {
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
-
   hideTabPanel?: boolean;
 
   allYears?: SelectOption[];
