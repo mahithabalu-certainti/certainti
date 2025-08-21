@@ -372,3 +372,19 @@ export interface UploadInteractionAttachmentResponse {
     fileUrl: string;
   };
 }
+
+// Send Interaction types
+
+export interface InteractionItem {
+  interaction_rid: string;
+  emailInfo?: {
+    email?: string;
+    name?: string;
+  };
+}
+
+export interface SendInteractionPayload {
+  account_rid: string;
+  interactions: InteractionItem[];
+  customRecipient: boolean;
+}
