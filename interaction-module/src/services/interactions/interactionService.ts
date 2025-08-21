@@ -903,6 +903,7 @@ export class InteractionService {
       }
     }) : finalResponseData
 
+    
     let finalStructuredData = {
       interaction_rnumber : finalSortedData[0].interaction_rnumber,
       project_code : finalSortedData[0].project_code,
