@@ -158,7 +158,7 @@ export const getStatusId = (
   currentStatusId: string,
   statusOptions: { label: string; value: string; hide: boolean }[]
 ): string => {
-  if (formData.status && formData.status !== currentStatusId) {
+  if (formData.status) {
     return formData.status;
   }
 
@@ -168,9 +168,7 @@ export const getStatusId = (
         (option) =>
           option.label.toLowerCase() === StatusTypeEnum.question_updated
       );
-      return (
-        updatedStatus?.value || 'D001-19160669-3f82-4ca6-8403-213f-updated'
-      );
+      return updatedStatus?.value || '';
     }
     return currentStatusId;
   }
