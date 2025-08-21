@@ -303,10 +303,10 @@ export const ProjectDetails = () => {
       if (interactionHistoryId) {
         const projectInteractionHistoryExportPayload = {
           account_rid: accountID || '',
-          interaction_rid: 'D001-db1f5e74-5bd1-45f8-8dbd-664eff575e24',
+          interaction_rid: interactionHistoryId,
           page: interactionsParams?.page || 1,
           limit: interactionsParams?.limit || 100,
-          sort: interactionsParams?.sortBy || 'r_number',
+          sort: '',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
           flag: 'project',
