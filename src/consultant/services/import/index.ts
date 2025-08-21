@@ -471,7 +471,6 @@ const returnURL = (baseURL: string, params: Record<string, string | number | und
   if (limit !== undefined) searchParams.set('limit', String(limit));
   if (sort) searchParams.set('sortBy', String(sort));
   if (sort_by) searchParams.set('sortOrder', String(sort_by));
-  // if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -540,13 +539,12 @@ export const getExportTimesheetResourcesUrl = (
 
 const returnExportResourcesURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
 
-  const { sort, sort_by, filters, fiscalYear, documentRid, } = params;
+  const { sort, sort_by, filters, documentRid, } = params;
 
   const searchParams = new URLSearchParams();
 
   if (sort) searchParams.set('sortBy', String(sort));
   if (sort_by) searchParams.set('sortOrder', String(sort_by));
-  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -614,7 +612,6 @@ const returnTimesheetProjectTaskURL = (baseURL: string, params: Record<string, s
   if (limit !== undefined) searchParams.set('limit', String(limit));
   if (sort) searchParams.set('sortBy', String(sort));
   if (sort_by) searchParams.set('sortOrder', String(sort_by));
-  // if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -669,7 +666,7 @@ export const exportTimesheetTaskData = async (params: TimesheetProjectExportList
 
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'timesheet_resource_records.xlsx';
+    link.download = 'timesheet_task_records.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -680,17 +677,16 @@ export const exportTimesheetTaskData = async (params: TimesheetProjectExportList
 
 export const getExportTimesheetTaskUrl = (
   account_rid: string,
-) => `/api/timesheet/export/importedTasks/${account_rid}`;
+) => `/api/timesheet/export/importedProjectTasks/${account_rid}`;
 
 const returnExportTaskURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
 
-  const { sort, sort_by, filters, fiscalYear, documentRid, } = params;
+  const { sortOrder, sortBy, filters, documentRid, } = params;
 
   const searchParams = new URLSearchParams();
 
-  if (sort) searchParams.set('sortBy', String(sort));
-  if (sort_by) searchParams.set('sortOrder', String(sort_by));
-  if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
+  if (sortOrder) searchParams.set('sortOrder', String(sortOrder));
+  if (sortBy) searchParams.set('sortBy', String(sortBy));
 
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
