@@ -22,6 +22,7 @@ import SchemaService from "./schemaService";
 import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
 import { raw } from "express";
+import moment from "moment";
 
 export default class ImportGraphqlServices {
   private orgSequelize: Sequelize | null = null;
@@ -562,7 +563,7 @@ async exportAccountLevelImportedProjects(
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    documentRid: string
+    documentRid: string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -632,7 +633,8 @@ async exportAccountLevelImportedProjects(
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    documentRid: string
+    documentRid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -678,11 +680,70 @@ async exportAccountLevelImportedProjects(
         documentRid
       );
 
+      const rawResult = resources.resources || [];
+      const [
+        accountFields,
+        resourceFields,
+      ] = await Promise.all([
+        this.schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+        this.schemaService.getAllowedExportFields(userId, "account_resources_view_edit")
+      ]);
+     // const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"account_resources_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of resourceFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+        const requiredAccountFields = new Set(["account_name"]); // Add more if needed
+      for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
+      const labelMap: Record<string, string> = {
+        "account_name": "Account Name",
+        "resource_code": "Resource Code",
+        "resource_name": "Name",
+        "resource_type_rid": "Resource Type",
+        "resource_orgname": "Org Name",
+        "resource_designation": "Designation",
+        "resource_role": "Role",
+        "country_rid": "Country",
+        "region_rid": "Region",
+        "total_project_hours": "Total Project Hours",
+        "estimated_rd_hours": "Estimated R&D Hours",
+        "status_rid": "Status",
+        "comments": "Comments",
+        "r_number": "Resource ID",
+      };
+      const fieldValueMap: Record<string, string> = {
+        "resource_type_rid": "resource_type_name",
+        "region_rid":"region_name",
+        "country_rid":"country_name",
+         "status_rid":"status_name",
+
+      };
+
+      const exportData = rawResult.map((resource: any) => {
+      const row: Record<string, string> = {};
+
+      for (const [field, label] of Object.entries(labelMap)) {
+       if (allowedFieldSet.has(field)) {
+      const actualField = fieldValueMap[field] || field; // fallback to same field if not mapped
+      row[label] = resource[actualField] ?? "-";
+      }
+      }
+
+      return row;
+    });
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          resources: resources.resources,
+          resources: exportData,
           count: resources.totalCount,
         },
       };
@@ -820,6 +881,197 @@ async exportAccountLevelImportedProjects(
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           tasks: formattedTasks,
+          totalCount: total,
+        },
+      };
+    } catch (err) {
+      throw new Error(
+        "Error fetching imported project_tasks: " + (err as Error).message
+      );
+    }
+  }
+
+  async exportAccountLevelImportedProjectTasks(
+    accountRid: string,
+    documentRid: string,
+    userId: string,
+    filters: Record<string, any> = {},
+    search?: string,
+    sortBy: string = "created_datetime",
+    sortOrder: string = "DESC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }> {
+    try {
+      const sequelize = await initOrgSequelize();
+      const mainSequelize = await initMainDbSequelize();
+
+      const schemaName = await this.projectTaskService.getSchemaInfo(
+        accountRid
+      );
+
+      // ✅ Initialize all models first
+      const { models } =
+        await this.projectTaskService.initializeModelsAndAssociations(
+          schemaName
+        );
+
+      let resourceFilter: Record<string, any> | undefined;
+      if (filters.resource_name) {
+        resourceFilter = filters.resource_name;
+        delete filters.resource_name;
+      }
+
+      // ✅ Build where clause with project filter
+      const { whereClause } = this.projectTaskService.buildRawWhereClause(
+        filters,
+        search
+      );
+
+      // ✅ Define includes with ProjectTaskTimeline join
+      const includes = [
+        {
+          model: models.AccountDetailsModel,
+          attributes: ["account_name"],
+          required: false,
+          as: "account",
+        },
+        {
+          model: models.ProjectFiscalModel,
+          attributes: ["project_name", "project_code", "currency_rid"],
+          required: false,
+          as: "project",
+        },
+        {
+          model: models.ResourceModel,
+          attributes: [
+            "resource_code",
+            "resource_name",
+            "resource_type_rid",
+            "resource_role",
+            "resource_orgname",
+          ],
+          required: false,
+          as: "resource",
+        },
+        // ✅ New: Join with ProjectTaskTimeline
+        {
+          model: models.ProjectTaskTimelineModel, // Ensure this model is initialized
+          as: "ProjectTimeline",
+          required: true, // INNER JOIN (only tasks with matching timeline entries)
+          where: {
+            document_rid: documentRid, // Filter by the provided documentRid
+          },
+          attributes: [], // No need to select timeline fields
+        },
+      ];
+
+      // ✅ Get all tasks without pagination first to properly handle sorting of related data
+      const allTasks = await models.ProjectTaskModel.findAll({
+        where: whereClause,
+        include: includes,
+      });
+
+      // ✅ Fetch and map related data
+      const { resourceTypeMap, currencyMap } =
+        await this.projectTaskService.fetchRelatedData(allTasks, mainSequelize);
+
+      // ✅ Format all tasks
+      let formattedTasks = allTasks.map((task) =>
+        this.projectTaskService.formatTaskData(
+          task,
+          resourceTypeMap,
+          currencyMap
+        )
+      );
+
+      if (resourceFilter) {
+        formattedTasks = formattedTasks.filter((task) => {
+          const resourcePass = resourceFilter
+            ? this.projectTaskService.applyTextFilter(
+                task.resource_name,
+                resourceFilter
+              )
+            : true;
+
+          return resourcePass;
+        });
+      }
+
+      // ✅ Handle special sorting cases
+      formattedTasks = this.projectTaskService.sortTasks(
+        formattedTasks,
+        sortBy,
+        sortOrder
+      );
+
+      const total = formattedTasks.length;
+
+      const [projectTaskFields] = await Promise.all([
+        this.schemaService.getAllowedExportFields(
+          userId,
+          "projects_task_view_edit"
+        ),
+      ]);
+
+      const allowedFieldSet = new Set<string>();
+      for (const field of projectTaskFields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
+      const exportData = await Promise.all(
+      formattedTasks.map(async (task: any) => {
+        const exportRecord: Record<string, any> = {};
+        
+        // Only add fields that are in the allowedFieldSet
+        if (allowedFieldSet.has('resource_code')) {
+          exportRecord['Resource Code'] = task.resource_code || "-";
+        }
+        if (allowedFieldSet.has('resource_name')) {
+          exportRecord['Resource Name'] = task.resource_name || "-";
+        }
+        if (allowedFieldSet.has('resource_type_name')) {
+          exportRecord['Resource Type'] = task.resource_type_name || "-";
+        }
+        if (allowedFieldSet.has('resource_role')) {
+          exportRecord['Role'] = task.resource_role || "-";
+        }
+        if (allowedFieldSet.has('start_date')) {
+          exportRecord['Task Date'] = moment(task.start_date).format("YYYY-MM-DD") || "-";
+        }
+        if (allowedFieldSet.has('total_cost_pro_task')) {
+          exportRecord['Cost'] = await this.projectTaskService.formatNumberForExport(
+            task.total_cost_pro_task,
+            task.currency_symbol
+          ) || "-";
+        }
+        if (allowedFieldSet.has('total_hours_pro_task')) {
+          exportRecord['Effort in Hrs'] = task.total_hours_pro_task || "-";
+        }
+        if (allowedFieldSet.has('comments')) {
+          exportRecord['Comments'] = task.comments || "-";
+        }
+        if (allowedFieldSet.has('r_number')) {
+          exportRecord['Project Task ID'] = task.r_number || "-";
+        }
+        
+        return exportRecord;
+      })
+    );
+
+      // Ensure we always return at least an empty object in the array if there are no tasks
+      const finalExportData = exportData.length > 0 ? exportData : [{}];
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          tasks: finalExportData,
           totalCount: total,
         },
       };

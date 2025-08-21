@@ -4,7 +4,7 @@ import Configurations from '../config/config';
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
-import { exportImportedAccountLevelProjects, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
+import { exportImportedAccountLevelProjects, exportImportedAccountLevelProjectTasks, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
 
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
@@ -877,7 +877,8 @@ async function exportImportedResourceList(req: Request, res: Response): Promise<
       parsedFilters,
       value.sortBy,
       value.sortOrder,
-      value.documentRid
+      value.documentRid,
+      userId
     );
 
     if (resourcesList.statusCode === HttpStatus.SUCCESS) {
@@ -979,6 +980,78 @@ async function importedAccountLevelProjectTaskList(req: Request, res: Response):
   }
 }
 
+async function exportImportedProjectTaskList(req: Request, res: Response): Promise<void> {
+  const methodName = "exportImportedProjectTaskList";
+  try {
+    const { accountId } = req.params;
+    const value = await validateRequest(
+      req,
+      exportImportedAccountLevelProjectTasks,
+      res,
+      "GET"
+    );
+    if (!value) {
+      return;
+    }
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+    // Before calling buildRawWhereClause
+    if (typeof value.filters === "string") {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error("Invalid filters JSON:", value.filters);
+        value.filters = {};
+      }
+    }
+    const tasks = await importServices.exportAccountLevelImportedProjectTasks(
+      accountId,
+      value.documentRid,
+      userId,
+      value.filters,
+      value.search,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (tasks.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(tasks?.data?.tasks,"Project Tasks"));
+      return;
+    } else {
+      errorLog(methodName, tasks.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        tasks.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
     fetchAllImportList,
     importListByRid,
@@ -989,5 +1062,6 @@ export default {
     importedAccountLevelresourceList,
     importedAccountLevelProjectTaskList,
     exportImportedProjectList,
-    exportImportedResourceList
+    exportImportedResourceList,
+    exportImportedProjectTaskList
 }   
