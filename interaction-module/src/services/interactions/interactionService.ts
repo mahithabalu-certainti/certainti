@@ -743,7 +743,7 @@ export class InteractionService {
           if(!b?.[data.sort]) return -1 
           return a[data.sort].localeCompare(b[data.sort])
         })
-      } else {
+      } else if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'desc'){
         finalData = finalData.sort((a : any, b : any) => {
           if(!b?.[data.sort]) return 1
           if(!a?.[data.sort]) return -1 
