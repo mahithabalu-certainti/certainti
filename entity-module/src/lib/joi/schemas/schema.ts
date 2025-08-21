@@ -2663,6 +2663,22 @@ const importedAccountLevelProjectTasks = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
 
+const exportImportedAccountLevelProjectTasks = Joi.object({
+  documentRid: Joi.string().pattern(uuidRegex).required(),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2703,5 +2719,6 @@ export {
   importedAccountLevelResources,
   importedAccountLevelProjectTasks,
   exportImportedAccountLevelProjects,
-  exportImportedAccountLevelResources
+  exportImportedAccountLevelResources,
+  exportImportedAccountLevelProjectTasks
 };

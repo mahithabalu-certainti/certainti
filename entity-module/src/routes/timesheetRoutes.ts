@@ -11,6 +11,10 @@ router.get('/list/:accountRid/:rid',
       controller.importListController.importListByRid)
 router.post('/list/export',
      checkUserStatusMiddleware('timesheet_export'),
+(req, res, next) => {
+    req.body.permissionModule = 'timesheet_view_edit'; // Pass specific module
+    next();
+  },          
       controller.importListController.exportAllImportedData)
 router.get('/export/stagingFailure/:accountRid/:importRid/:entityType',
      checkUserStatusMiddleware('timesheet_view_edit'),
@@ -32,5 +36,8 @@ router.get('/export/importedProjects/:accountId',
        controller.importListController.exportImportedProjectList)
 router.get('/export/importedResources/:accountId',
      checkUserStatusMiddleware('account_resources_export'),
-       controller.importListController.exportImportedResourceList);              
+       controller.importListController.exportImportedResourceList);
+router.get('/export/importedProjectTasks/:accountId',
+     checkUserStatusMiddleware('projects_task_export'),
+       controller.importListController.exportImportedProjectTaskList);                               
 export default router;
