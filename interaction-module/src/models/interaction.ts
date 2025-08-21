@@ -35,6 +35,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   interaction_age?: number;
   recipient_email?: string | null;
   recipient_name?: string | null;
+  attachment_count?: number;
 }
 
 export interface InteractionCreationAttributes
@@ -77,6 +78,7 @@ export class Interaction
   public interaction_age?: number;
   public recipient_email?: string | null;
   public recipient_name?: string | null;
+  public attachment_count?: number;
 
   static initialize(
     sequelize: Sequelize,
@@ -127,6 +129,7 @@ export class Interaction
         interaction_url: { type: DataTypes.STRING(255), allowNull: true },
         interaction_age: { type: DataTypes.INTEGER, allowNull: true },
         recipient_email: { type: DataTypes.STRING(255), allowNull: true },
+        attachment_count: { type: DataTypes.INTEGER, allowNull: true }
       },
       {
         sequelize,

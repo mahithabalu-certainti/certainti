@@ -9,7 +9,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries, statusAction } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -469,8 +469,8 @@ class InteractionSchemaService {
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
         status_name: metainfo?.interaction_status_name ?? "",
-        modified_by: userInfo.modified_by ?? "",
-        created_by: userInfo.created_by ?? "",
+        modified_by: userInfo.modified_name ?? "",
+        created_by: userInfo.created_name ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
         interactionDetails.dataValues.modified_datetime ?? null,
@@ -482,12 +482,6 @@ class InteractionSchemaService {
 
       return response;
     }
-    return {
-      statusCode: 200,
-      message: "Interaction details fetched successfully",
-      data: { interactionDetails: interactionDetails },
-    };
-
     return interactionDetails;
   }
 
@@ -648,10 +642,7 @@ class InteractionSchemaService {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-  let whereClause = "status = 'active'";
-  if (status_scope && status_scope === "UI") {
-    whereClause += " AND status_type = 'UI'";
-  }
+  let whereClause = "status = 'active' AND (status_type IS NULL OR status_type = 'UI')";
   if (currentStatus) {
     // Fetch status_name for the given status_rid (currentStatus)
     const [statusResult]: any[] = await this.mainDbSequelize.query(
@@ -661,7 +652,7 @@ class InteractionSchemaService {
       type: "SELECT",
       }
     );
-    if (statusResult?.status_name === "On-Hold") {
+    if (statusResult?.status_name === "On Hold") {
       whereClause += " OR status_type = 'CONDITIONAL'";
     }
   }
@@ -757,7 +748,10 @@ class InteractionSchemaService {
     try {
       const { InteractionResponseHistory, InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
-
+      if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
       let responseCreated = false;
       let interactionVersion = 0;
       const latestResponse = await InteractionResponseHistory.max(
@@ -766,14 +760,11 @@ class InteractionSchemaService {
           where: { interaction_rid: responseData.interaction_rid },
         }
       );
-      console.log("Latest response version", latestResponse);
-
       if (latestResponse !== null && latestResponse !== undefined) {
         interactionVersion = Number(latestResponse) + 1;
       } else {
         interactionVersion = 1;
       }
-      console.log("Latest interactionVersion ", interactionVersion);
       if (
         responseData.attachments &&
         Array.isArray(responseData.attachments) &&
@@ -782,7 +773,7 @@ class InteractionSchemaService {
         await InteractionResponseHistory.create({
           interaction_rid: responseData.interaction_rid,
           interaction_version: interactionVersion,
-          interaction_item_rid: "",
+          interaction_item_rid: null,
           interaction_response: "",
           created_by: userId,
           response_by: userId,
@@ -794,7 +785,7 @@ class InteractionSchemaService {
             {
               interaction_rid: responseData.interaction_rid,
               interaction_version: interactionVersion,
-              interaction_response_rid: "",
+              interaction_response_rid: null,
               attachment_url: attachment.fileUrl,
               attachment_name: attachment.fileName,
               attachment_size: attachment.fileSize,
@@ -842,27 +833,38 @@ class InteractionSchemaService {
       }
 
       if (responseCreated) {
+        const attachmentCount = await InteractionAttachment.count({
+          where: { interaction_rid: responseData.interaction_rid }
+        });
+        const attachmentcount = attachmentCount;
         const { Interaction, InteractionSummary } =
-          await this.interactionModelService.getModels(accountNumber);
-        const updateData: any = {
-          status_rid: responseData.status_rid,
+         await this.interactionModelService.getModels(accountNumber);
+         const status = statusAction[responseData.status_action as keyof typeof statusAction];
+         const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+         const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+         const [result]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
+         const userEmailId = result[0]?.email ?? userId;
+         const updateData: any = {
+          status_rid: statusRid,
           response_updated_on: new Date(),
-          response_updated_by: userId,
+          response_updated_by: userEmailId,
           response_source: "Manual",
+          attachment_count: attachmentcount
         };
 
         const summaryUpdateData: any = {
-          status_rid: responseData.status_rid,
+          status_rid: statusRid,
           response_updated_on: new Date(),
-          response_updated_by: userId,
+          response_updated_by: userEmailId,
           response_source: "Manual",
+          attachment_count: attachmentcount
         };
-
-        if (responseData.status_action === "Submit") {
+       
+        if (status === "Response Received") {
           updateData.response_submitted_on = new Date();
-          updateData.response_submission_by = userId;
+          updateData.response_submission_by = userEmailId;
           summaryUpdateData.response_submitted_on = new Date();
-          summaryUpdateData.response_submission_by = userId;
+          summaryUpdateData.response_submission_by = userEmailId;
         }
 
         await Interaction.update(updateData, {
@@ -873,7 +875,9 @@ class InteractionSchemaService {
         });
       }
     } catch (err) {
+      console.log(err)
       throw new Error(
+
         "Error updating interaction response: " + (err as Error).message
       );
     }

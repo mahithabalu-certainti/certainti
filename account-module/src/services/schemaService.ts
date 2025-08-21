@@ -177,6 +177,7 @@ class SchemaService {
     document_category_others character varying(120) COLLATE pg_catalog."default",
     document_type_others character varying(120) COLLATE pg_catalog."default",
     comments character varying(2000) COLLATE pg_catalog."default",
+    is_ai_processed boolean default false,
     CONSTRAINT attachments_pkey PRIMARY KEY (rid),
     CONSTRAINT attachments_r_number_key UNIQUE (r_number)
    )`);
@@ -1914,6 +1915,8 @@ private async createInteractionTable(
       status_rid character varying(50),
       interaction_url character varying(255),
       interaction_age integer,
+      attachment_count integer,
+      is_ai_processed boolean default false,
       CONSTRAINT interactions_rid_unique UNIQUE (rid)
     );
   `);
@@ -2095,7 +2098,7 @@ private async createInteractionTable(
         modified_datetime TIMESTAMP WITHOUT TIME ZONE,
         interaction_rid character varying(50),
         interaction_item_rid character varying(50),
-        interaction_response character varying(50),
+        interaction_response text,
         response_on timestamp with time zone,
         response_email character varying(255),
         response_by character varying(50),

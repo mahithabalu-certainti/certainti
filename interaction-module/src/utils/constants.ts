@@ -18,11 +18,10 @@ export const HttpStatus = {
   SUCCESS_NOTIFICATION: "Operation completed successfully!",
 };
 export const statusAction = {
-  CREATE: "Create",
+  CREATE: "Created",
   DRAFT: "Draft",
   SENT: "Sent",
   RESPONSE_DRAFT: "Response Draft",
-  CREATED: "Created",
   RESPONSE_RECEIVED: "Response Received",
   CANCELLED: "Cancelled",
   ON_HOLD: "On-Hold",
@@ -239,7 +238,7 @@ export const rawQueries = {
       ids = [];
     }
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
+    SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
   fetchInteractionStatusByType(type : string) {
     return `
@@ -264,7 +263,12 @@ export const rawQueries = {
   },
   fetchInteractionStatusList(whereClause: string) {
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
+    SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
+  },
+  fetchUserEmail(userId:string)
+  {
+    return `
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`
   }
 };
 
