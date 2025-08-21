@@ -1059,6 +1059,46 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
   }
   }
 
+  async function exportInteractionHistory (req : Request, res : Response) {
+    const methodName = "exportInteractionHistory"
+    try {
+      console.log(`[${methodName}] Request received`);
+      const userId = req.headers["x-user-id"] as string;
+      let data = req.body;
+      console.log(`[${methodName}] userId:`, userId);
+      if (!userId) {
+        errorLog(methodName, "User ID is required in headers");
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "User ID is required in headers"
+        );
+        return;
+      }
+      const result = await interactionService.fetchInteractionHistory(data)
+      if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+        let finalStructuredData = result.data.data.interaction_history.map((data : any) => ({
+          "Action" : data.status_name,
+          "Date" : new Date(data.date).toISOString().split('T')[0]
+        }))
+        const generateBase64Response = await generateExcelBase64(finalStructuredData, "Interaction-History")
+        handleSuccessResponse(res, generateBase64Response);
+      }
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+  }
+
 
 
 export default {
@@ -1082,5 +1122,6 @@ export default {
   listInteractionHistory,
   fetchInteractionAttachments,
   fetchResponseHistoryDetails,
-  triggerAIAndPassResponse
+  triggerAIAndPassResponse,
+  exportInteractionHistory
 };
