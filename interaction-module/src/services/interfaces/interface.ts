@@ -77,11 +77,15 @@ export interface IInteractionService {
     data?: { interactionQuestions: any };
   }>;
   sendInteraction(
-    interactionRid: string[],
+    interactions: {
+      interaction_rid: string;
+      emailInfo: {
+        email: string;
+        name: string | null;
+      };
+    }[],
     accountId: string,
     userId: string,
-    customRecipient:boolean,
-    emailInfo: { name: string; email: string }
   ): Promise<{
     statusCode: number;
     message: string;

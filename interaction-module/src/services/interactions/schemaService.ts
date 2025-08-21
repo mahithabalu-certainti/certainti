@@ -686,6 +686,17 @@ class InteractionSchemaService {
     }>;
     return statusArr.length > 0 ? statusArr[0]?.rid : null;
   }
+  async getInteractionStatusById(id: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const interactionStatus:any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionStatus(id),
+    );
+    return interactionStatus.length > 0 ? interactionStatus[0].status_name : null;
+  }
   async getInteractionSourceByType(type: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
@@ -1169,6 +1180,26 @@ async fetchAndUpdateFromAiTriggerResponse (data : any) {
     status : data.status,
     data : data.project_summary
   };
+}
+async isAutoSendInteractionEnabled(accountNumber: string,interactionDetails: any, interactionRid: string) {
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    // Fetch project info
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchisAutoSendEnabled(interactionDetails.project_fiscal_rid, schemaName),
+      { type: "SELECT" }
+    );
+
+    return projectInfo?.auto_send_ai_interaction ?? false;
+  } catch (err) {
+    throw new Error(
+      "Error checking auto-send interaction status: " + (err as Error).message
+    );
+  }
 }
 }
 
