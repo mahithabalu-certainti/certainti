@@ -5,7 +5,7 @@ import {
   InteractionHistoryResponse,
   ResponseInteractionList,
 } from '../../../../../types';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ListTable } from '../../../../../../components/table';
 import {
   InfoSection,
@@ -32,7 +32,8 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
   const [detailQuestions, setDetailQuestions] = useState<any[]>([]);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const accountId = searchParams.get('accountID') || '';
+  // const accountId = searchParams.get('accountID') || '';
+  const { accountid } = useParams();
   const interactionId = searchParams.get('interaction_id') || undefined;
   const interactionResponseId = searchParams.get('versionID') || undefined;
   const {
@@ -42,7 +43,7 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
   } = useResponseInteractionDetails({
     // account_rid: 'D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3',
     // interaction_rid: 'D001-21b89b4b-15ba-47dc-abed-7ec186cd16a3',
-    account_rid: accountId,
+    account_rid: accountid,
     interaction_rid: interactionId,
     version: Number(interactionResponseId),
   });
@@ -73,7 +74,7 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
     fiscal_year: 2023,
     // account_rid: 'D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3',
     // interaction_rid: 'D001-21b89b4b-15ba-47dc-abed-7ec186cd16a3',
-    account_rid: accountId,
+    account_rid: accountid,
     interaction_rid: interactionId,
   });
   useEffect(() => {
