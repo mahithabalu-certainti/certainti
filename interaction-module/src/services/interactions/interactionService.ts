@@ -739,10 +739,14 @@ export class InteractionService {
         finalData = applyFilters(finalData, sourceConditions, sourceFilter, "interaction_source_name")
       if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'asc') {
         finalData = finalData.sort((a : any, b : any) => {
+          if(!a?.[data.sort]) return 1
+          if(!b?.[data.sort]) return -1 
           return a[data.sort].localeCompare(b[data.sort])
         })
       } else {
         finalData = finalData.sort((a : any, b : any) => {
+          if(!b?.[data.sort]) return 1
+          if(!a?.[data.sort]) return -1 
           return b[data.sort].localeCompare(a[data.sort])
         })
       }
@@ -846,10 +850,14 @@ export class InteractionService {
       
       if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'asc') {
         updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
+          if(!a?.interaction_source_name) return 1
+          if(!b?.interaction_source_name) return -1 
           return a.interaction_source_name.localeCompare(b.interaction_source_name)
         })
       } else if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'desc'){
          updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
+          if(!b?.interaction_source_name) return 1
+          if(!a?.interaction_source_name) return -1 
           return b.interaction_source_name.localeCompare(a.interaction_source_name)
         })
       }
@@ -887,6 +895,8 @@ export class InteractionService {
     totalRecords =  finalResponseData[0].total_records
     let finalSortedData = data.sort === 'status_name' ? finalResponseData.sort((a : any, b : any) => {
       if(data.sort_by.toLowerCase() === 'desc') {
+        if(!a?.status_name) return 1
+        if(!b?.status_name) return -1 
         return b.status_name.localeCompare(a.status_name)
       } else {
         return a.status_name.localeCompare(b.status_name)
