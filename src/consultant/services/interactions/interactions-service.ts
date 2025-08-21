@@ -61,7 +61,7 @@ export const exportInteractionsHistory = async (
   params: InteractionListURLParams
 ): Promise<void> => {
   try {
-    const filename = 'project_history_interactions.xlsx';
+    const filename = 'interaction_history.xlsx';
     const response =
       await interactionServiceApi.post<ExportInteractionResponse>(
         getInteractionHistoryExportUrl(),

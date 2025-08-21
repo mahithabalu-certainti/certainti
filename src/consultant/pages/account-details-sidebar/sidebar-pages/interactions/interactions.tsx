@@ -163,6 +163,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (setExportType) {
       setExportType('interactions');
     }
+    if (interactionHistoryId) {
+      return;
+    }
     const updatedParams = {
       sortBy: sortField,
       filters: appliedFilters,

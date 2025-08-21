@@ -77,7 +77,7 @@ export const ProjectDetails = () => {
   );
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
-      sortBy: 'interaction_version',
+      sortBy: '',
       sortOrder: 'ASC',
       filters: {},
       page: 1,
@@ -106,8 +106,6 @@ export const ProjectDetails = () => {
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
-      page: 1,
-      limit: 100,
     });
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
@@ -161,7 +159,6 @@ export const ProjectDetails = () => {
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
   const viewDetails = !!interactionId || !!interactionRID;
-  console.log('viewDetails', viewDetails);
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
     projectID || '',
@@ -306,7 +303,7 @@ export const ProjectDetails = () => {
           interaction_rid: interactionHistoryId,
           page: interactionsParams?.page || 1,
           limit: interactionsParams?.limit || 100,
-          sort: '',
+          sort: interactionsParams.sortBy || 'status_name',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
           flag: 'project',
