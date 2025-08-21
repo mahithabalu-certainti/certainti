@@ -21,31 +21,34 @@ import DetailsSectionSkeleton from '../../../../../../components/skeleton-compon
 interface HistoryTableProps {
   loading?: boolean;
   isError?: boolean;
+  setCount: (value: number) => void;
 }
 
-const HistoryTable: React.FC<HistoryTableProps> = () => {
+const HistoryTable: React.FC<HistoryTableProps> = ({ setCount }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('interaction_version');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
-  const [accountDetails, setAccountDetails] = useState<DisplayColumn[]>([]);
+  const [responseHistoryDetails, setResponseHistoryDetails] = useState<
+    DisplayColumn[]
+  >([]);
   const [detailQuestions, setDetailQuestions] = useState<any[]>([]);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
   const interactionResponseId = searchParams.get('versionID') || undefined;
+
   const {
     data: detialsResponse,
     isLoading: detailsLoading,
     isError: detailsError,
   } = useResponseInteractionDetails({
-    // account_rid: 'D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3',
-    // interaction_rid: 'D001-21b89b4b-15ba-47dc-abed-7ec186cd16a3',
     account_rid: accountId,
     interaction_rid: interactionId,
     version: Number(interactionResponseId),
   });
+
   useEffect(() => {
     if (detialsResponse?.data.history_details) {
       const updatedData = detialsResponse?.data.history_details.map(
@@ -61,38 +64,52 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
       setDetailQuestions(updatedData);
     }
   }, [detialsResponse?.data.history_details]);
+
   const {
     data: responseDataList,
     isLoading,
     isError,
-  } = useInteractionResponseHistoryList({
-    page: currentPage + 1,
-    limit: rowsPerPage,
-    sort: sortField,
-    sort_by: sortBy,
-    fiscal_year: 2023,
-    // account_rid: 'D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3',
-    // interaction_rid: 'D001-21b89b4b-15ba-47dc-abed-7ec186cd16a3',
-    account_rid: accountId,
-    interaction_rid: interactionId,
-  });
+  } = useInteractionResponseHistoryList(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sort: sortField,
+      sort_by: sortBy,
+      fiscal_year: 2023,
+      account_rid: accountId,
+      interaction_rid: interactionId,
+    },
+    !interactionResponseId
+  );
+
   useEffect(() => {
-    if (responseDataList) {
-      setAccountDetails(transformInteractionData(detialsResponse));
+    if (detialsResponse) {
+      setResponseHistoryDetails(transformInteractionData(detialsResponse));
     }
   }, [detialsResponse]);
+
+  useEffect(() => {
+    if (responseDataList) {
+      setCount(responseDataList?.count || 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [responseDataList]);
+
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
+
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
   };
+
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setSortBy(apiOrder);
     setSortField(property);
   };
+
   const handleViewInteraction = (row: ResponseInteractionList) => {
     if (row) {
       console.log('rowId', row);
@@ -101,17 +118,16 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
-  const handleSelectionChange = (selectedIds: string[]) => {
-    console.log(selectedIds);
-  };
+
   const getRowId = (row: ResponseInteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(handleViewInteraction);
+
   return (
-    <div className='border border-[#CBD6E2]'>
+    <div>
       {interactionResponseId ? (
         <>
           <InfoSection
-            columns={accountDetails}
+            columns={responseHistoryDetails}
             loading={detailsLoading}
             error={detailsError}
             singleLineView={true}
@@ -145,8 +161,7 @@ const HistoryTable: React.FC<HistoryTableProps> = () => {
           }}
           stickyHeader={true}
           stickyColumnsCount={1}
-          selectable={true}
-          onSelectionChange={handleSelectionChange}
+          selectable={false}
           actionWidth={80}
           actionDisplayMode='dropdown'
           actionMenuItems={[]}

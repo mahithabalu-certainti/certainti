@@ -83,6 +83,7 @@ export const ProjectDetails = () => {
       page: 1,
       limit: 100,
     });
+
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -159,6 +160,7 @@ export const ProjectDetails = () => {
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
   const viewDetails = !!interactionId || !!interactionRID;
+
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
     projectID || '',
@@ -232,7 +234,7 @@ export const ProjectDetails = () => {
       return true;
     }
   };
-  console.log('export', checkExport());
+
   const handleExport = (exportType: ExportType) => {
     const list = searchParams.get('list');
 

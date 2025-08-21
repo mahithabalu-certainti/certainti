@@ -21,35 +21,58 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const accountId = searchParams.get('accountID') || '';
-  const [emails, setEmails] = useState<Record<string, string>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [emails, setEmails] = useState<
+    Record<string, { email: string; name: string }>
+  >({});
+  const [errors, setErrors] = useState<
+    Record<string, { name?: string; email?: string }>
+  >({});
   const [showEmailFields, setShowEmailFields] = useState<boolean>(false);
 
   const sendInteraction = useSendInteraction();
 
   useEffect(() => {
-    const initialEmails: Record<string, string> = {};
+    const initial: Record<string, { email: string; name: string }> = {};
     selectedRows.forEach((row) => {
-      initialEmails[row.rid] = '';
+      initial[row.rid] = { email: '', name: '' };
     });
-    setEmails(initialEmails);
+    setEmails(initial);
     setErrors({});
     setShowEmailFields(false);
   }, [selectedRows, isOpen]);
 
   if (!isOpen) return null;
 
-  const validateAllEmails = () => {
-    const newErrors: Record<string, string> = {};
+  // validation function
+  const validateAllInputs = () => {
+    const newErrors: Record<string, { name?: string; email?: string }> = {};
 
     selectedRows.forEach((row) => {
-      const value = emails[row.rid]?.trim();
-      if (value) {
-        if (!REGEX_PATTERNS.MAX_EMAIL_REGEX.test(value)) {
-          newErrors[row.rid] = 'Max length exceeded';
-        } else if (!REGEX_PATTERNS.EMAIL.test(value)) {
-          newErrors[row.rid] = 'Invalid Email Address';
+      const { email, name } = emails[row.rid] || {};
+      const rowErrors: { name?: string; email?: string } = {};
+
+      // Email validation
+      if (email?.trim()) {
+        if (!REGEX_PATTERNS.MAX_EMAIL_REGEX.test(email)) {
+          rowErrors.email = 'Max length exceeded';
+        } else if (!REGEX_PATTERNS.EMAIL.test(email)) {
+          rowErrors.email = 'Invalid Email Address';
         }
+      }
+
+      // Name validation
+      if (name?.trim()) {
+        if (!REGEX_PATTERNS.NAME_REGEX.test(name.trim())) {
+          rowErrors.name =
+            "Name must contain only letters, spaces, apostrophes(') and hyphens(-).";
+        } else if (name?.trim() && !email?.trim()) {
+          rowErrors.email = 'Email is required when name is provided';
+        }
+      }
+
+      if (rowErrors.name || rowErrors.email) {
+        newErrors[row.rid] = rowErrors;
       }
     });
 
@@ -57,12 +80,17 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (id: string, value: string) => {
-    setEmails((prev) => ({ ...prev, [id]: value }));
+  const handleChange = (id: string, field: 'email' | 'name', value: string) => {
+    setEmails((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+
     setErrors((prev) => {
-      if (!prev[id]) return prev;
+      if (!prev[id]?.[field]) return prev;
       const updated = { ...prev };
-      delete updated[id];
+      updated[id] = { ...updated[id], [field]: undefined };
+      // remove empty objects
+      if (!updated[id].name && !updated[id].email) {
+        delete updated[id];
+      }
       return updated;
     });
   };
@@ -78,16 +106,19 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
     if (!selectedRows.length) return;
     const accountRid = accountId || accountid || selectedRows[0].account_rid;
 
-    // without emails
+    // without email/name
     if (!showEmailFields) {
       const interactions = selectedRows.map((row) => ({
         interaction_rid: row.rid,
+        emailInfo: {
+          email: '',
+          name: '',
+        },
       }));
 
       const payload = {
         account_rid: accountRid,
         interactions,
-        customRecipient: false,
       };
       sendInteraction.mutate(payload, {
         onSuccess: () => handleClose(),
@@ -95,25 +126,21 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       return;
     }
 
-    if (validateAllEmails()) {
+    if (validateAllInputs()) {
       const interactions = selectedRows.map((row) => {
-        const email = emails[row.rid]?.trim();
-        if (email) {
-          return {
-            interaction_rid: row.rid,
-            emailInfo: {
-              email,
-              name: email.split('@')[0],
-            },
-          };
-        }
-        return { interaction_rid: row.rid };
+        const { email, name } = emails[row.rid] || {};
+        return {
+          interaction_rid: row.rid,
+          emailInfo: {
+            email: email.trim() || '',
+            name: name?.trim() || email.split('@')[0] || '',
+          },
+        };
       });
 
       const payload = {
         account_rid: accountRid,
         interactions,
-        customRecipient: true,
       };
       sendInteraction.mutate(payload, {
         onSuccess: () => handleClose(),
@@ -186,37 +213,84 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
                     <label className='block font-medium mb-1'>
                       {row.r_number || row.rid}
                     </label>
-                    <div
-                      className={`relative ${errors[row.rid] ? 'bg-[#FEF2F2]' : ''}`}
-                    >
-                      <input
-                        type='text'
-                        placeholder='Enter Recipient Email (optional)'
-                        value={emails[row.rid] || ''}
-                        onChange={(e) => handleChange(row.rid, e.target.value)}
-                        className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors[row.rid] && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
-                      />
-                      {errors[row.rid] && (
-                        <Tooltip
-                          title={errors[row.rid]}
-                          arrow
-                          placement='top'
-                          slotProps={{
-                            tooltip: {
-                              sx: { backgroundColor: '#FEF2F2', mr: 1 },
-                            },
-                          }}
-                        >
-                          <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] bg-[#FEF2F2] right-1.5 cursor-pointer'>
-                            <React.Suspense fallback={null}>
-                              <ErrorInfoIcon
-                                alt='error'
-                                className='w-5 h-3.5'
-                              />
-                            </React.Suspense>
-                          </span>
-                        </Tooltip>
-                      )}
+                    <div className='flex gap-3'>
+                      {/* Name field */}
+                      <div
+                        className={`relative w-1/2 ${errors[row.rid]?.name ? 'bg-[#FEF2F2]' : ''}`}
+                      >
+                        <input
+                          type='text'
+                          placeholder='Enter Recipient Name'
+                          value={emails[row.rid]?.name || ''}
+                          onChange={(e) =>
+                            handleChange(row.rid, 'name', e.target.value)
+                          }
+                          className={`placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
+                            errors[row.rid]?.name &&
+                            'border-red-500 bg-[#FEF2F2]'
+                          }`}
+                        />
+                        {errors[row.rid]?.name && (
+                          <Tooltip
+                            title={errors[row.rid]?.name}
+                            arrow
+                            placement='top'
+                            slotProps={{
+                              tooltip: {
+                                sx: { backgroundColor: '#FEF2F2', mr: 1 },
+                              },
+                            }}
+                          >
+                            <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-1.5 cursor-pointer'>
+                              <React.Suspense fallback={null}>
+                                <ErrorInfoIcon
+                                  alt='error'
+                                  className='w-5 h-3.5'
+                                />
+                              </React.Suspense>
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
+
+                      {/* Email field */}
+                      <div
+                        className={`relative w-1/2 ${errors[row.rid]?.email ? 'bg-[#FEF2F2]' : ''}`}
+                      >
+                        <input
+                          type='text'
+                          placeholder='Enter Recipient Email (optional)'
+                          value={emails[row.rid]?.email || ''}
+                          onChange={(e) =>
+                            handleChange(row.rid, 'email', e.target.value)
+                          }
+                          className={`placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${
+                            errors[row.rid]?.email &&
+                            'border-red-500 bg-[#FEF2F2]'
+                          }`}
+                        />
+                        {errors[row.rid]?.email && (
+                          <Tooltip
+                            title={errors[row.rid]?.email}
+                            arrow
+                            placement='top'
+                            slotProps={{
+                              tooltip: {
+                                sx: { backgroundColor: '#FEF2F2', mr: 1 },
+                              },
+                            }}
+                          >
+                            <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-1.5 cursor-pointer'>
+                              <React.Suspense fallback={null}>
+                                <ErrorInfoIcon
+                                  alt='error'
+                                  className='w-5 h-3.5'
+                                />
+                              </React.Suspense>
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))

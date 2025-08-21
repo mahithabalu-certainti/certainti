@@ -1,3 +1,5 @@
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface DisplayColumn {
   items: Array<{
@@ -19,17 +21,14 @@ export const transformInteractionData = (
   data: any
   //   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
-  const account = data?.data;
-  console.log('account', account);
-  // const status = account?.status?.status_name?.toLowerCase();
+  const interaction = data?.data;
 
   return [
     {
       items: [
         {
           label: 'Interaction ID',
-          value: account?.interaction_rid || '-',
-          // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          value: interaction?.interaction_rid || '-',
           //   hide:
           //     !permissionMap?.['r_number']?.read &&
           //     !permissionMap?.['r_number']?.edit,
@@ -40,7 +39,7 @@ export const transformInteractionData = (
       items: [
         {
           label: 'Project Name',
-          value: account?.project_name || '-',
+          value: interaction?.project_name || '-',
           //   hide:
           //     !permissionMap?.['parent_account_rid']?.read &&
           //     !permissionMap?.['parent_account_rid']?.edit,
@@ -51,7 +50,7 @@ export const transformInteractionData = (
       items: [
         {
           label: 'Email ID',
-          value: account?.email || '-',
+          value: interaction?.email || '-',
           //   hide:
           //     !permissionMap?.['country_rid']?.read &&
           //     !permissionMap?.['country_rid']?.edit,
@@ -62,7 +61,10 @@ export const transformInteractionData = (
       items: [
         {
           label: 'Response Date',
-          value: account?.source,
+          value:
+            formatDateToYYYYMMDDWithTime(
+              interaction?.history_details?.[0].response_on
+            ) || '-',
           //   hide:
           //     !permissionMap?.['industry_rid']?.read &&
           //     !permissionMap?.['industry_rid']?.edit,

@@ -156,7 +156,7 @@ export const getStatusId = (
   isDraftStatus: boolean,
   saveFlag: StatusActionEnum,
   currentStatusId: string,
-  statusOptions: { label: string; value: string; hide: boolean }[]
+  statusOptions: { label: string; value: string; disable: boolean }[]
 ): string => {
   if (formData.status) {
     return formData.status;
@@ -213,6 +213,7 @@ export const transFormPayload = (
       '',
     status_rid: statusRid,
     questions: transformedQuestions,
+    fiscal_year: formData.fiscalYear || interactionData?.fiscal_year,
   };
 
   if (isEditView && interactionData) {
@@ -222,8 +223,5 @@ export const transFormPayload = (
     };
   }
 
-  return {
-    ...basePayload,
-    fiscal_year: formData.fiscalYear,
-  };
+  return basePayload;
 };
