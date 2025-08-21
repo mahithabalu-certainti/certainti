@@ -29,6 +29,7 @@ import { SendInteractionModal } from '../../../../../components/interaction';
 import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
+import { AttachmentsListExportParams } from '../../../../types/attachment';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -47,11 +48,15 @@ const InteractionsTabs: OverviewTabs[] = [
 interface InteractionsProps {
   accountInActive: boolean;
   projectDetails: NewProjectData | null;
+  setInteractionsParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
   accountInActive,
   projectDetails,
+  setInteractionsParams,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -77,11 +82,11 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionAttachmentId = searchParams.get(
-    'interaction_attachment_url'
+    'interaction_attachment_count'
   );
 
   const responseHistory = searchParams.get('history');
-  const interactionResponseId = searchParams.get('interactionResponse_id');
+  const interactionResponseId = searchParams.get('versionID');
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
@@ -158,8 +163,21 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (data) {
       setInteractionList(data.interactions || []);
       setCount(data.count || 0);
+      setSelectedRows([]);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (interactionHistoryId) return;
+    const updatedParams = {
+      sortBy: sortField,
+      filters: appliedFilters,
+      page: currentPage,
+      sortOrder: sortBy,
+      limit: rowsPerPage,
+    };
+    setInteractionsParams(updatedParams);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -231,6 +249,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+    setSelectedRows([]);
   };
 
   const handleRowsPerPageChange = (newPageSize: number) => {
@@ -255,6 +274,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (rowId) {
       searchParams.set('interaction_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
     }
   };
 
@@ -262,13 +282,22 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (interactionHistoryId) {
       searchParams.set('interaction_history_id', interactionHistoryId);
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
     }
   };
 
-  const handleViewInteractionAttachment = (interactionAttachentURL: string) => {
-    if (interactionAttachentURL) {
-      searchParams.set('interaction_attachment_url', interactionAttachentURL);
+  const handleViewInteractionAttachmentCount = (
+    interactionAttachentCount: string | number,
+    rowId: string
+  ) => {
+    if (interactionAttachentCount) {
+      searchParams.set('interaction_rid', rowId);
+      searchParams.set(
+        'interaction_attachment_count',
+        String(interactionAttachentCount)
+      );
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
     }
   };
 
@@ -276,14 +305,15 @@ const Interactions: React.FC<InteractionsProps> = ({
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
       searchParams.delete('interaction_history_id');
-      searchParams.delete('interaction_attachment_url');
+      searchParams.delete('interaction_attachment_count');
+      searchParams.delete('interaction_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
 
   const handleBackFromResponse = () => {
     if (interactionResponseId) {
-      searchParams.delete('interactionResponse_id');
+      searchParams.delete('versionID');
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {
       searchParams.delete('history');
@@ -308,7 +338,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachment
+    handleViewInteractionAttachmentCount
   );
 
   const filterFields = !viewInteractionHistory
@@ -324,7 +354,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       <SectionTabPanel
         tabs={InteractionsTabs}
         filterMenu={filterFields}
-        filterVisibility={!viewDetails}
+        filterVisibility={!viewDetails && !viewInteractionAttachment}
         showFilter={showFilter}
         contextKey='project-interactions'
         appliedFilters={appliedFilters}
@@ -346,10 +376,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       ) : viewInteractionHistory ? (
         <InteractionHistory
           handleBackClick={handleBackClick}
-          projectDetails={projectDetails}
           accountInActive={accountInActive}
           refresh={refreshInteractions}
           appliedFilters={appliedFilters}
+          setInteractionsParams={setInteractionsParams}
         />
       ) : viewInteractionAttachment ? (
         <InteractionAttachment
@@ -412,10 +442,6 @@ const Interactions: React.FC<InteractionsProps> = ({
               isOpen={sendModalOpen}
               onClose={() => setSendModalOpen(false)}
               selectedRows={selectedRows}
-              onSend={(emails) => {
-                console.log('Emails to send:', emails);
-                setSendModalOpen(false);
-              }}
             />
           </div>
         </>

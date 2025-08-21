@@ -3,36 +3,38 @@ import SectionHeader from '../../../../../../components/details-section/section-
 import { InteractionDetailIcon } from '../../../../../../assets';
 import { ListTable } from '../../../../../../components/table';
 import { getInteractionHistoryListColumns } from './columns';
-import { NewProjectData } from '../../../../../types/project';
 import { InfoSection } from '../../../../../../components';
 import { Box } from '@mui/material';
 import {
   InteractionHistoryAction,
   transformInteractionHistoryData,
 } from './utils';
-
 import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
 import { useSearchParams } from 'react-router-dom';
+import { AttachmentsListExportParams } from '../../../../../types/attachment';
 
 interface InteractionHistoryProps {
   accountInActive: boolean;
   handleBackClick: () => void;
-  projectDetails: NewProjectData | null;
   refresh?: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
+  setInteractionsParams: React.Dispatch<
+    React.SetStateAction<AttachmentsListExportParams>
+  >;
 }
 
 const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   handleBackClick,
   refresh,
-  projectDetails,
   appliedFilters,
+  setInteractionsParams,
 }) => {
   const [searchParams] = useSearchParams();
   const interactionHistoryId = searchParams.get('interaction_history_id') || '';
+  const accountId = searchParams.get('accountID') || '';
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('action');
+  const [sortField, setSortField] = useState<string>('status_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [totalItems, setTotalItems] = useState<number>(0);
 
@@ -47,10 +49,9 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       sort: sortField,
       sort_by: sortBy.toLowerCase() as 'asc' | 'desc',
       filters: appliedFilters,
-      account_rid: projectDetails?.account_rid || '',
+      account_rid: accountId || '',
       interaction_rid: interactionHistoryId,
     },
-    !!interactionHistoryId,
     refresh
   );
 
@@ -62,6 +63,17 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   useEffect(() => {
     setTotalItems(actionData.length);
   }, [actionData]);
+
+  useEffect(() => {
+    const updatedParams = {
+      sortBy: sortField,
+      filters: appliedFilters,
+      page: currentPage,
+      sortOrder: sortBy,
+      limit: rowsPerPage,
+    };
+    setInteractionsParams(updatedParams);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const getRowId = (row: InteractionHistoryAction) => row.rid;
   const interactionHistoryColumns = getInteractionHistoryListColumns();

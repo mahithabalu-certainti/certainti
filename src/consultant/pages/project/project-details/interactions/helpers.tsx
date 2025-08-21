@@ -154,7 +154,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Created By',
-      value: 'created_by',
+      value: 'created_user_name',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -172,7 +172,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Updated By',
-      value: 'modified_by',
+      value: 'updated_user_name',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -194,4 +194,29 @@ export const getInteractionFilterFields = (
       options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
     },
   ];
+};
+
+export const getInteractionStatusColor = (status?: string): string => {
+  switch (status) {
+    case 'Draft':
+      return 'text-gray-500';
+    case 'Created':
+      return 'text-blue-500';
+    case 'Sent':
+      return 'text-purple-500';
+    case 'Response Draft':
+      return 'text-orange-500';
+    case 'Response Received':
+      return 'text-green-600';
+    case 'On Hold':
+      return 'text-yellow-500';
+    case 'Cancelled':
+      return 'text-red-600';
+    case 'Completed':
+      return 'text-green-700';
+    case 'Question Updated':
+      return 'text-indigo-500';
+    default:
+      return 'text-gray-700';
+  }
 };

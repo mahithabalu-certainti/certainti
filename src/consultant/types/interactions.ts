@@ -13,14 +13,16 @@ export enum StatusActionEnum {
 }
 
 export enum StatusTypeEnum {
-  create = 'create',
-  draft = 'draft',
-  sent = 'sent',
-  response_draft = 'response draft',
-  created = 'created',
-  response_received = 'response received',
   cancelled = 'cancelled',
-  on_hold = 'on-hold',
+  completed = 'completed',
+  created = 'created',
+  draft = 'draft',
+  on_hold = 'on hold',
+  question_updated = 'question updated',
+  response_draft = 'response draft',
+  response_received = 'response received',
+  resume = 'resume',
+  sent = 'sent',
 }
 
 export interface InteractionFormTableColumn {
@@ -148,8 +150,11 @@ export type ResponseInteractionList = {
   response_by_rid: string;
   response_source: string;
   interaction_response: string;
+  interaction_rid: string;
+  interaction_item_rid: string;
   interaction_source_rid: string;
   interaction_source_name: string;
+  interaction_version: number;
   response_by: string;
 };
 export interface InteractionListURLParams {
@@ -159,6 +164,7 @@ export interface InteractionListURLParams {
   sort_by: 'ASC' | 'DESC';
   filters?: object;
   account_rid?: string;
+  interaction_rid?: string;
   project_rid?: string;
   project_fiscal_rid?: string;
   fiscal_year?: number;
@@ -170,7 +176,7 @@ export interface InteractionListURLParams {
 export interface ResponseListURLParams {
   account_rid?: string;
   interaction_rid?: string;
-  version: 1;
+  version: number;
 }
 
 export interface InteractionListResponse {
@@ -183,6 +189,12 @@ export interface InteractionListResponse {
     totalCount: number;
     interactions: InteractionList[];
   };
+}
+export interface ExportInteractionResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: string;
 }
 export interface ResponseInteractionListResponse {
   statusCode: number;
@@ -250,15 +262,38 @@ export interface InteractionDetailsResponse {
   };
 }
 
+export interface InteractionHistoryResponse {
+  interaction_response_rid: string;
+  interaction_item_rid: string;
+  response_submitted_on: string;
+  question_id: string;
+  question: string;
+  response: string;
+  response_on: string;
+  attachments: Attachment[];
+}
+export interface InteractionDetailsHistoryResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    history_details: InteractionHistoryResponse[];
+    interaction_rid: string;
+    project_name: string;
+  };
+}
+
 export interface InteractionAttachmentType {
   rid: string;
-  question_number: string;
   name: string;
+  size: number;
   type: string;
-  size: string;
-  uploaded_by: string;
+  version: number;
+  created_by: string;
   uploaded_date: string;
-  download: string;
+  question_rnumber: string;
+  uploaded_by: string;
+  download_link: string;
   [key: string]: unknown;
 }
 
@@ -287,8 +322,8 @@ export interface InteractionAttachmentListParams {
 
 export interface InteractionAttachmentApiResponse {
   data: {
-    attachments: InteractionAttachmentType[];
-    total_count: number;
+    data: InteractionAttachmentType[];
+    totalRecords: number;
   };
 }
 
@@ -336,4 +371,20 @@ export interface UploadInteractionAttachmentResponse {
     fileType: string;
     fileUrl: string;
   };
+}
+
+// Send Interaction types
+
+export interface InteractionItem {
+  interaction_rid: string;
+  emailInfo?: {
+    email?: string;
+    name?: string;
+  };
+}
+
+export interface SendInteractionPayload {
+  account_rid: string;
+  interactions: InteractionItem[];
+  customRecipient: boolean;
 }

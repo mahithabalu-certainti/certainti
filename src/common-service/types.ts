@@ -387,6 +387,7 @@ export interface VerifyOtp extends GenerateOtp {
 export interface InteractionStatusItem {
   rid: string;
   status_name: string;
+  status_type?: string | null;
 }
 
 export interface GetInteractionStatusApiResponse extends CommonApiResponse {

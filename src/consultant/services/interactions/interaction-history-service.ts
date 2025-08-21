@@ -18,13 +18,12 @@ export const getInteractionHistory = async (
 
 export const useInteractionHistoryList = (
   payload: InteractionHistoryRequest,
-  enabled: boolean,
   refreshTrigger?: number
 ) => {
   return useQuery<InteractionHistoryResponse, Error>({
     queryKey: ['interactionHistory', payload, refreshTrigger],
     queryFn: () => getInteractionHistory(payload),
-    enabled: enabled,
+    enabled: !!payload.account_rid && !!payload.interaction_rid,
     staleTime: 0,
     gcTime: 0,
   });
