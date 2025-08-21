@@ -71,7 +71,9 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       limit: rowsPerPage,
     };
     setInteractionsParams(updatedParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
+
   const getRowId = (row: InteractionHistoryAction) => row.rid;
   const interactionHistoryColumns = getInteractionHistoryListColumns();
 

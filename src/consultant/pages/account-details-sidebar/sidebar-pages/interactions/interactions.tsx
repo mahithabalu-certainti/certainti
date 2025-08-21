@@ -12,7 +12,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ExportType, InteractionList } from '../../../../types';
+import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
@@ -100,7 +100,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
-  const viewHistory = !!responseHistory;
+  const viewResponseHistory = !!responseHistory;
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -116,7 +116,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     !viewDetails &&
       !viewInteractionHistory &&
       !viewInteractionAttachment &&
-      !viewHistory,
+      !viewResponseHistory,
     refreshInteractions
   );
   const totalItems = data?.count || 0;
@@ -153,8 +153,17 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   useEffect(() => {
     if (data) {
-      setInteractionList(data.interactions || []);
       setCount(data.count || 0);
+      const updatedInteractions =
+        data.interactions?.map((item) => {
+          const status = (item.status_name || '').toLowerCase();
+          return {
+            ...item,
+            disableCheckBox: status === StatusTypeEnum.draft || status === '',
+          };
+        }) || [];
+
+      setInteractionList(updatedInteractions);
       setSelectedRows([]);
     }
   }, [data]);
@@ -235,7 +244,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: selectedRows.length === 0 || accountInActive,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
-      hide: viewHistory,
+      hide: viewResponseHistory,
     },
     {
       label: 'New',
@@ -243,7 +252,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: viewHistory,
+      hide: viewResponseHistory,
     },
   ];
 
@@ -275,6 +284,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setCount(0);
     }
   };
 
@@ -287,6 +297,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
+
   const handleBackFromResponse = () => {
     if (interactionResponseId) {
       searchParams.delete('versionID');
@@ -298,12 +309,22 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const disableInteractionEditBtn = (row: InteractionList): boolean => {
+    const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
+    return [
+      StatusTypeEnum.cancelled,
+      StatusTypeEnum.completed,
+      StatusTypeEnum.response_received,
+    ].includes(status);
+  };
+
   const actionButtons: ActionItem<InteractionList>[] = [
     {
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),
       icon: EditIcon,
-      disabled: accountInActive,
+      disabled: (row: InteractionList) =>
+        accountInActive || disableInteractionEditBtn(row),
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -367,7 +388,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
       />
-      {viewDetails && !viewHistory ? (
+      {viewDetails && !viewResponseHistory ? (
         <InteractionDetails
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
@@ -388,21 +409,25 @@ const Interactions: React.FC<InteractionsProps> = ({
       ) : (
         <>
           <SectionHeader
-            title='Interaction'
+            title={
+              viewResponseHistory
+                ? `Interaction Response History${interactionResponseId ? ' Details' : ''}`
+                : 'Interaction'
+            }
             titleIcon={
               <InteractionDetailIcon
                 alt='financial-header-icon'
-                className={`w-7 h-7 p-1 bg-[#E25A32] rounded-full`}
+                className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
               />
             }
-            count={count}
-            showItemCount={true}
-            showBackArrow={viewHistory}
+            count={viewResponseHistory ? count : totalItems}
+            showItemCount={interactionResponseId ? false : true}
+            showBackArrow={viewResponseHistory}
             onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
-            {!viewHistory ? (
+            {!viewResponseHistory ? (
               <ListTable
                 data={interactionList}
                 columns={interactionColumns}
@@ -434,7 +459,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 onSort={handleSortRequest}
               />
             ) : (
-              <HistoryTable />
+              <HistoryTable setCount={setCount} />
             )}
           </div>
           <SendInteractionModal
