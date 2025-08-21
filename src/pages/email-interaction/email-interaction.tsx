@@ -1,118 +1,115 @@
 import React, { useState, useEffect } from 'react';
 import { certaintiLogo } from '../../assets/images';
 import InteractionQuestions from './interaction-qustions';
-import { CircularProgress, SxProps } from '@mui/material';
-import { Theme } from '@emotion/react';
-import TextButton from '../../components/button/text-button';
-import { DownloadIcon, PdfIcon } from '../../assets';
-import { useSearchParams } from 'react-router-dom';
+import { CircularProgress } from '@mui/material';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  useGetInteractionQuestions,
   usePostGenerateOtp,
   usePostReSendOtp,
   usePostVerifyOtp,
 } from '../../common-service';
+import { LOGIN } from '../../routes';
 
-interface SectionHeaderButton {
-  label: string;
-  variant: 'text' | 'outlined' | 'contained';
-  onClick?: () => void;
-  sx?: SxProps<Theme>;
-  hide?: boolean;
-  disabled?: boolean;
-  loading?: boolean;
-}
-
-const questions = [
-  {
-    question_id: 'Q001',
-    rid: 'a1b2c3d4e5-0001',
-    question:
-      'What advancement in technology is being sought, what were the problems or challenges that you could not solve using commonly available tools and or resource experience that required you to seek an advance in the underlying technology to achieve the objective, or what was the new scientific knowledge sought in your work?',
-    answer:
-      'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
-    response_received_on: '2024-04-28',
-    notes:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
-    mandatory: true,
-    attachments: [
-      {
-        file_id: 'f001',
-        file_name: 'status_report.pdf',
-        file_url: 'https://example.com/files/status_report.pdf',
-      },
-      {
-        file_id: 'f002',
-        file_name: 'summary.docx',
-        file_url: 'https://example.com/files/summary.docx',
-      },
-    ],
-  },
-  {
-    question_id: 'Q002',
-    rid: 'a1b2c3d4e5-0002',
-    question: 'What is the project status?',
-    answer: '',
-    response_received_on: '2024-04-28',
-    notes:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
-    mandatory: false,
-    attachments: [],
-  },
-  {
-    question_id: 'Q003',
-    rid: 'a1b2c3d4e5-0003',
-    question:
-      'Referring to the description of technical uncertainty above, what were the primary unsolved technical uncertainties at the outset of the project. Please include metrics if possible, for example, as relates to requirements for accuracy, performance, scalability, low latency, supportability, code maintainability, etc. ',
-    answer: '',
-    response_received_on: '2024-04-28',
-    notes:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
-    mandatory: false,
-    attachments: [],
-  },
-  {
-    question_id: 'Q004',
-    rid: 'a1b2c3d4e5-0004',
-    question:
-      'Referring to the description of a process of experimentation above, what type of technical improvements (successful or not) were made to try to meet stated requirements?',
-    answer: '',
-    response_received_on: '2024-04-28',
-    notes:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
-    mandatory: false,
-    attachments: [],
-  },
-  {
-    question_id: 'Q005',
-    rid: 'a1b2c3d4e5-0005',
-    question:
-      'How the process or tasks were performed prior to the new solution. ',
-    answer: '',
-    response_received_on: '2024-04-28',
-    notes:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos.',
-    mandatory: false,
-    attachments: [],
-  },
-];
+// const questions = [
+//   {
+//     rid: 'D001-f712f508-439a-4b8b-b3c9-f2d131197cf7',
+//     question_seq_num: 'QUE-0000000011',
+//     question: 'What is the difference between RAM and ROM?',
+//     notes: 'Test',
+//     is_mandatory: true,
+//     response_on_datetime: null,
+//     attachments: [
+//       {
+//         fileUrl:
+//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/file_example_xls_5000_web_20250722T140934%20(3).csv',
+//         fileName: 'file_example_xls_5000_web_20250722T1409343',
+//         fileSize: '0.64',
+//         fileType: '.csv',
+//       },
+//       {
+//         fileUrl:
+//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/file_example_xls_5000_web_20250722T140934%20(3).csv',
+//         fileName: 'file_example_xls_5000_web_20250722T1409343',
+//         fileSize: '0.64',
+//         fileType: '.csv',
+//       },
+//       {
+//         fileUrl:
+//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/download.jpeg',
+//         fileName: 'download',
+//         fileSize: '0.01',
+//         fileType: '.jpeg',
+//       },
+//       {
+//         fileUrl:
+//           'https://developmentthinkrd365sto.blob.core.windows.net/account////attachements/download.jpeg',
+//         fileName: 'download',
+//         fileSize: '0.01',
+//         fileType: '.jpeg',
+//       },
+//       {
+//         fileUrl:
+//           'https://developmentthinkrd365sto.blob.core.windows.net/account////attachements/UIFields_Requirement%20(2).xlsx',
+//         fileName: 'UIFields_Requirement2',
+//         fileSize: '0.06',
+//         fileType: '.xlsx',
+//       },
+//       {
+//         fileUrl:
+//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/file_example_xls_5000_web_20250722T140934%20(3).csv',
+//         fileName: 'file_example_xls_5000_web_20250722T1409343',
+//         fileSize: '0.64',
+//         fileType: '.csv',
+//       },
+//     ],
+//     is_editable: false,
+//     response: '<p><strong>RAM </strong>is Random Access Memory</p>',
+//   },
+//   {
+//     rid: 'D001-f712f508-439a-4b8b-b3c9-f2d131197cr4',
+//     question_seq_num: 'QUE-0000000012',
+//     question: 'What is the project status?',
+//     notes: 'Test',
+//     is_mandatory: true,
+//     response_on_datetime: null,
+//     attachments: [],
+//     is_editable: false,
+//     response:
+//       'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos',
+//   },
+// ];
 
 const EmailInteraction: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(600); // 10 minutes in seconds
   const [isAuthentic, setIsAuthentic] = useState(false);
-  const [isEditing, setIsEditing] = useState<boolean>(true);
+
   const timeout = localStorage.getItem('otp_timeout');
   const auth_token = localStorage.getItem('temAuth');
+  const account_rid = searchParams.get('acc');
+  const interaction_rid = searchParams.get('int');
   const checkEveryOtpValue = otp.every((digit) => digit !== '');
+
   // API Hooks
   const { mutate, isPending, data } = usePostGenerateOtp();
   const reSendOtp = usePostReSendOtp();
   const verifyOtp = usePostVerifyOtp();
+  const {
+    data: questions,
+    isLoading,
+    refetch,
+  } = useGetInteractionQuestions(
+    account_rid as string,
+    interaction_rid as string,
+    auth_token as string
+  );
+
+  console.log('questions', questions);
 
   useEffect(() => {
-    const account_rid = searchParams.get('acc');
-    const interaction_rid = searchParams.get('int');
     if (
       account_rid &&
       interaction_rid &&
@@ -162,7 +159,7 @@ const EmailInteraction: React.FC = () => {
   useEffect(() => {
     if (verifyOtp.data) {
       const authdata = verifyOtp.data.data.auth_token;
-      localStorage.setItem('temAuth', JSON.stringify(authdata));
+      localStorage.setItem('temAuth', authdata);
       setIsAuthentic(true);
     }
   }, [verifyOtp.data]);
@@ -180,26 +177,6 @@ const EmailInteraction: React.FC = () => {
       }
     }
   };
-
-  const buttons: SectionHeaderButton[] = [
-    {
-      label: 'Save as Draft',
-      variant: 'contained' as const,
-      sx: { p: 1 },
-      onClick: () => setIsEditing(false),
-    },
-    {
-      label: 'Save & Submit',
-      variant: 'contained' as const,
-      sx: { p: 1 },
-      onClick: () => setIsEditing(false),
-    },
-    {
-      label: 'Upload File',
-      variant: 'outlined' as const,
-      sx: { p: 1 },
-    },
-  ];
 
   const resetTimer = () => {
     const account_rid = searchParams.get('acc');
@@ -227,7 +204,7 @@ const EmailInteraction: React.FC = () => {
       <header className='w-full flex items-center px-10 py-4 bg-[#2D3E4F] shadow-sm'>
         <img src={certaintiLogo} alt='Logo' className='h-[16px]' />
       </header>
-      {(isPending || reSendOtp.isPending) && (
+      {(isPending || reSendOtp.isPending || isLoading) && (
         <div className='flex-1 flex justify-center items-center w-full min-h-[calc(100vh-48px)]'>
           <CircularProgress />
         </div>
@@ -235,57 +212,14 @@ const EmailInteraction: React.FC = () => {
       {(!isPending || !reSendOtp.isPending) &&
         (isAuthentic ? (
           <div className='px-10 py-4'>
-            <div className='flex justify-between py-2'>
-              <span className='text-[14px] text-[#2D3E4F] font-bold'>
-                Hello James
-              </span>
-              <div className='flex gap-2'>
-                {buttons.map((button, index) => (
-                  <TextButton
-                    key={`section-header-btn-${index}`}
-                    label={button.label}
-                    onClick={button.onClick}
-                    loading={button.loading}
-                    aria-label={button.label}
-                    sx={button.sx}
-                    disabled={button.disabled}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className='my-3 border border-[#CBD6E2] rounded-[2px] p-2'>
-              <div className='text-[14px] text-[#2D3E4F] font-bold mb-2'>
-                Uploaded Files
-              </div>
-              {questions[0].attachments.map((file, index) => (
-                <div
-                  key={index}
-                  className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3 mb-[-1px]'
-                >
-                  <div className='flex items-center gap-2'>
-                    <PdfIcon />
-                    <div className='text-[14px] text-[#425A76] font-normal'>
-                      {file.file_name}
-                    </div>
-                  </div>
-                  <a
-                    href={file.file_url}
-                    download
-                    style={{
-                      boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                      background:
-                        'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                    }}
-                    className='p-1 border border-[#CBD6E2] rounded-[2px]'
-                  >
-                    <DownloadIcon />
-                  </a>
-                </div>
-              ))}
-            </div>
-
-            <InteractionQuestions questions={questions} isEditing={isEditing} />
+            {questions?.questions && questions?.questions.length > 0 && (
+              <InteractionQuestions
+                questions={questions?.questions}
+                globalAttachments={questions?.global_attachments}
+                actionButtonEnable
+                refetchDeetails={refetch}
+              />
+            )}
           </div>
         ) : (
           <div className='flex flex-col items-center justify-center min-h-[calc(100vh-48px)]'>
@@ -357,7 +291,10 @@ const EmailInteraction: React.FC = () => {
                   'Verify'
                 )}
               </button>
-              <button className='w-full mt-3 border border-[#F16137] text-[#F16137] py-2 rounded-sm hover:bg-orange-50 transition cursor-pointer'>
+              <button
+                className='w-full mt-3 border border-[#F16137] text-[#F16137] py-2 rounded-sm hover:bg-orange-50 transition cursor-pointer'
+                onClick={() => navigate(LOGIN)}
+              >
                 Cancel
               </button>
             </div>

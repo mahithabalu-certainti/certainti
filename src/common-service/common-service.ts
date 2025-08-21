@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   accountServiceApi,
   userServiceApi,
@@ -19,6 +19,10 @@ import {
   VerifyOtp,
   VerifyOtpApiResponse,
 } from './';
+import {
+  InteractionDetails,
+  InteractionDetailsResponse,
+} from '../consultant/types';
 
 export const getAllCountriesUrl = (): string => {
   return `/api/accounts/country`;
@@ -379,5 +383,36 @@ export const useGetInteractionSources = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+  });
+};
+
+const fetchInteractionQuestions = async (
+  accountId: string,
+  interactionId: string,
+  auth_token: string
+): Promise<InteractionDetails> => {
+  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
+    `/api/interactions/detail/${accountId}/${interactionId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth_token}`,
+      },
+    }
+  );
+  return response.data.data.interactionDetails;
+};
+
+export const useGetInteractionQuestions = (
+  accountId?: string,
+  interactionId?: string,
+  auth_token?: string
+): UseQueryResult<InteractionDetails | undefined, Error> => {
+  return useQuery<InteractionDetails | undefined, Error>({
+    queryKey: ['interaction-questions', accountId, interactionId],
+    queryFn: () =>
+      fetchInteractionQuestions(accountId!, interactionId!, auth_token!),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!auth_token && !!interactionId && !!accountId,
   });
 };
