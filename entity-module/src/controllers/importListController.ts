@@ -287,6 +287,26 @@ async function exportStagingFailureList (req : Request, res : Response) {
                     "Error Description": data.error_descriptions
                 }));
                 break;
+            
+            case "resource_cost":
+                failureType = "Import - Load Failures - Resource Cost";
+                finalPaginatedData = results.map((data : any) => ({
+                    "Resource Id" : data.resource_id,
+                    "Bonus" : data.bonus,
+                    "Insurance" : data.insurance,
+                    "Deductions" : data.deductions,
+                    "Resource Cost" : data.resource_cost,
+                    "Comments" : data.comments,
+                    "Resource Name" : data.resource_name,
+                    "Resource Type" : data.resource_type,
+                    "Resource Organization" : data.resource_organization,
+                    "Currency" : data.currency,
+                    "Start Date" : data.start_date,
+                    "End Date" : data.end_date,
+                    "Effort In Hours" : data.effort_in_hours,
+                    "Salary" : data.salary
+                }))
+                break;
 
             default:
                 return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "Invalid entity type.");
@@ -454,6 +474,26 @@ async function exportLoadFailureList(req: Request, res: Response) {
                     "Status": data.status,
                     "Error Description": data.error_descriptions
                 }));
+                break;
+                
+            case "resource_cost":
+                failureType = "Import - Load Failures - Resource Cost";
+                finalPaginatedData = results.map((data : any) => ({
+                    "Resource Id" : data.resource_id,
+                    "Bonus" : data.bonus,
+                    "Insurance" : data.insurance,
+                    "Deductions" : data.deductions,
+                    "Resource Cost" : data.resource_cost,
+                    "Comments" : data.comments,
+                    "Resource Name" : data.resource_name,
+                    "Resource Type" : data.resource_type,
+                    "Resource Organization" : data.resource_organization,
+                    "Currency" : data.currency,
+                    "Start Date" : data.start_date,
+                    "End Date" : data.end_date,
+                    "Effort In Hours" : data.effort_in_hours,
+                    "Salary" : data.salary
+                }))
                 break;
 
             default:
