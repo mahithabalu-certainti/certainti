@@ -63,6 +63,7 @@ class InteractionSchemaService {
                 interactionData,
                 interactionRid,
                 question,
+                userId,
                 transaction
               );
               break;
@@ -110,9 +111,11 @@ class InteractionSchemaService {
     interactionData: ICreateInteraction,
     interactionRid: string,
     question: any,
+    userId: string,
     transaction: Transaction
   ) {
     if (interactionRid) {
+      interactionData.created_by = userId;
       const item = {
         interaction_rid: interactionRid,
         ...question,
@@ -718,6 +721,21 @@ class InteractionSchemaService {
     return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
   }
 
+   async getInteractionType(type: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+    const interactionTypeArr: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionType(type),
+      { type: "SELECT" }
+    );
+     console.log(interactionTypeArr);
+    const interactionType = Array.isArray(interactionTypeArr) && interactionTypeArr.length > 0 ? interactionTypeArr[0] : null;
+    console.log(interactionType);
+    return interactionType?.rid ? interactionType.rid : null;
+  }
+
   async getInteractionTypes() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
@@ -960,7 +978,12 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
     const { InteractionAttachment } = await this.interactionModelService.getModels(accountNumber);
 
     const attachments = await InteractionAttachment.findAll({
-      where: { interaction_rid: interactionRid, interaction_item_rid: '' },
+      where: {
+        interaction_rid: interactionRid,
+        interaction_item_rid: {
+          [require("sequelize").Op.or]: ["", null]
+        }
+      },
       attributes: [
         "attachment_url",
         "attachment_name",
@@ -996,8 +1019,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
-          "response_on_datetime",
+          "is_mandatory"
         ],
         where: { interaction_rid: interactionRid },
       });
@@ -1066,8 +1088,7 @@ async fetchInteractionQuestionsById(
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
-          "response_on_datetime",
+          "is_mandatory"
         ],
         where: { interaction_rid: interactionRid },
       });

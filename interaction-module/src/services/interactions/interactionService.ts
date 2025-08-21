@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -57,10 +57,11 @@ export class InteractionService {
         throw new Error("Invalid account ID");
       }
 
-      const {  intSource } =
+      const {  intSource,intType } =
         await this.getInteractionStatusAndSource();
     //  interactionData.status_rid = interactionStatus || "";
       interactionData.interaction_source_rid = intSource || "";
+      interactionData.interaction_type_rid = intType || "";
 
       const interaction =
         await this.interactionSchemaService.createInteractions(
@@ -122,17 +123,15 @@ export class InteractionService {
     }
   }
   async getInteractionStatusAndSource() {
-    //let interactionStatus = "";
-    // if (status_action) {
-    //   const status = statusAction[status_action as keyof typeof statusAction];
-    //   if (status) {
-    //     interactionStatus = (await this.interactionSchemaService.getInteractionStatusByType(status)) ?? "";
-    //   }
-    // }
+  
     const intSource = await this.interactionSchemaService.getInteractionSourceByType(
       interactionSource.MANUAL
     );
-    return {  intSource };
+    const intType = await this.interactionSchemaService.getInteractionType(
+      interactionType.RD
+    );
+   
+    return { intSource, intType };
   }
 
   async updateInteraction(
@@ -160,9 +159,9 @@ export class InteractionService {
           accountNumber,
           interactionData.interaction_rid
         );
-         const {  intSource } =
-        await this.getInteractionStatusAndSource();
-        interactionData.interaction_source_rid = intSource || "";
+       //  const {  intSource } =
+       // await this.getInteractionStatusAndSource();
+      //  interactionData.interaction_source_rid = intSource || "";
       // if(interactionData.status_action === 'DRAFT')
       // {
       //  const {  intSource } =

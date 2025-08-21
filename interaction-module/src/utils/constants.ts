@@ -31,7 +31,10 @@ export const interactionSource = {
   AUTO: "Auto",
   MANUAL: "Manual",
 };
-
+export const interactionType = {
+  RD: "RD",
+  GREENENERGY: "Green Energy",
+};
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
 export const constants = {
@@ -273,6 +276,11 @@ export const rawQueries = {
   {
     return `
     SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`
+  },
+  fetchInteractionType(type:string)
+  {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`
   }
 };
 
