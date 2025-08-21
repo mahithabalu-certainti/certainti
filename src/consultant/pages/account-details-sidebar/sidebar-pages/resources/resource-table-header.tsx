@@ -24,6 +24,7 @@ interface ResourceTableHeaderProps {
   resourceNumber?: string;
   showCount?: boolean;
   iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 
 const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
@@ -38,6 +39,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   resourceNumber,
   showCount = true,
   iconBg,
+  bgType,
 }) => {
   return (
     <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[40px] rounded-tr-[2px]'>
@@ -53,7 +55,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           )}
           {titleIcon && (
             <div
-              className='w-[24px] h-[24px] flex items-center justify-center rounded-full'
+              className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
               style={{ backgroundColor: iconBg }}
             >
               {titleIcon}

@@ -9,6 +9,7 @@ import { ImportsIcon, UploadIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import {
   ButtonDropdown,
+  FileList,
   GlobalFiscalYearDropdown,
 } from '../../../../../../components';
 
@@ -86,9 +87,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
     setMessage({ type: 'error', text });
   };
 
-  const showSuccess = (text: string) => {
-    setMessage({ type: 'success', text });
-  };
   const ACCEPTED_FILE_TYPES = [
     'text/csv',
     'application/vnd.ms-excel', // .xls
@@ -204,7 +202,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -214,7 +211,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
     if (validFiles.length > 0) {
       setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -337,6 +333,12 @@ const ImportFile: React.FC<ImportFileProps> = ({
             {message.text}
           </div>
         )}
+
+        <FileList
+          fileInputRef={fileInputRef}
+          selectedFiles={selectedFiles}
+          setSelectedFiles={setSelectedFiles}
+        />
       </div>
     </div>
   );

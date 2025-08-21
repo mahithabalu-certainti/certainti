@@ -7,7 +7,6 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ResourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import {
@@ -51,6 +50,7 @@ import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
 import { ExportType, SelectOption } from '../../../../types';
 import { FilterValue } from '../../components/filter/filterType';
+import { ResourcesIcon } from '../../../../../assets';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -846,10 +846,17 @@ const Resource: React.FC<ResourceProps> = ({
               title='Resources'
               count={count}
               resourceNumber={resourceData?.r_number ?? resourceNumber}
-              titleIcon={<ResourceProfileIcon alt='resource header icon' />}
+              titleIcon={
+                <ResourcesIcon
+                  alt='resource header icon'
+                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                />
+              }
               headerButtons={headerButtons}
               showBackArrow={showBackArrow}
               onBackClick={handleBackClick}
+              iconBg='#7785ff'
+              bgType={showBackArrow ? 'react' : 'circle'}
             />
 
             {!viewResourceList && value && (

@@ -6,6 +6,7 @@ import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
 import AttachmentForm from './attachment-from';
 import { AttachmentUploadPayload } from '../../consultant/types/attachment';
+import { FileList } from '../file-list';
 interface UploadsProps {
   accountId: string | undefined | null;
   attachID: string | undefined | null;
@@ -55,10 +56,6 @@ const Uploads: React.FC<UploadsProps> = ({
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
-  };
-
-  const showSuccess = (text: string) => {
-    setMessage({ type: 'success', text });
   };
 
   const validateFiles = (files: FileList | null): File[] => {
@@ -156,7 +153,6 @@ const Uploads: React.FC<UploadsProps> = ({
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -166,7 +162,6 @@ const Uploads: React.FC<UploadsProps> = ({
 
     if (validFiles.length > 0) {
       setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -266,6 +261,12 @@ const Uploads: React.FC<UploadsProps> = ({
               {message.text}
             </div>
           )}
+
+          <FileList
+            fileInputRef={fileInputRef}
+            selectedFiles={selectedFiles}
+            setSelectedFiles={setSelectedFiles}
+          />
         </div>
       </div>
     </div>

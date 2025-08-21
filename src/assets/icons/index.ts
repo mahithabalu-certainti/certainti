@@ -87,11 +87,9 @@ const icons = {
   projectDetails: () => import('./project-details.svg?react'),
   projects: () => import('./projects.svg?react'),
   projectsSideIcon: () => import('./projects-icon.svg?react'),
-  relatedListDetailsIcon: () => import('./related-list-details-icon.svg?react'),
   refresh: () => import('./refresh.svg?react'),
   resourceFilterIcon: () => import('./resourceFilterIcon.svg?react'),
   resourceHeader: () => import('./resource-header.svg?react'),
-  resourceProfileIcon: () => import('./resourceProfileIcon.svg?react'),
   resourcesIcon: () => import('./resources-icon.svg?react'),
   search: () => import('./search.svg?react'),
   searchBlack: () => import('./search-black.svg?react'),
@@ -209,13 +207,9 @@ export const ProjectDetailsIcon = createLazySvgIcon('projectDetails');
 export const ProjectsBook = createLazySvgIcon('projectBook');
 export const ProjectsIcon = createLazySvgIcon('projects');
 export const ProjectsSideIcon = createLazySvgIcon('projectsSideIcon');
-export const RealatedListDetailsIcon = createLazySvgIcon(
-  'relatedListDetailsIcon'
-);
 export const RefreshIcon = createLazySvgIcon('refresh');
 export const ResourceFilterIcon = createLazySvgIcon('resourceFilterIcon');
 export const ResourceHeaderIcon = createLazySvgIcon('resourceHeader');
-export const ResourceProfileIcon = createLazySvgIcon('resourceProfileIcon');
 export const ResourcesIcon = createLazySvgIcon('resourcesIcon');
 export const SearchBlackIcon = createLazySvgIcon('searchBlack');
 export const SearchIcon = createLazySvgIcon('search');

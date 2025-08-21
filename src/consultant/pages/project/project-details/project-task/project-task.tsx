@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
   useProjectTaskDetail,
@@ -429,7 +429,14 @@ export const ProjectTask = ({
           <SectionHeader
             title={'Project Task'}
             titleIcon={
-              viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
+              viewDetails ? (
+                <ResourcesIcon
+                  alt='resource header icon'
+                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                />
+              ) : (
+                <CreateResourceIcon />
+              )
             }
             count={totalItems}
             showItemCount={!viewDetails}
@@ -437,6 +444,7 @@ export const ProjectTask = ({
             buttons={headerButtons}
             subValue={resourceData?.r_number}
             onBackClick={handleBackClick}
+            iconBg={viewDetails ? '#7785ff' : ''}
           />
           <div className='border border-[#CBD6E2]'>
             {showProjectTaskDetails ? (
