@@ -168,6 +168,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   }, [data]);
 
   useEffect(() => {
+    if (interactionHistoryId) return;
     const updatedParams = {
       sortBy: sortField,
       filters: appliedFilters,

@@ -77,12 +77,13 @@ export const ProjectDetails = () => {
   );
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
-      sortBy: 'interaction_version',
+      sortBy: '',
       sortOrder: 'ASC',
       filters: {},
       page: 1,
       limit: 100,
     });
+  console.log('interactionsParams', interactionsParams);
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -106,8 +107,6 @@ export const ProjectDetails = () => {
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
-      page: 1,
-      limit: 100,
     });
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
