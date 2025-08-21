@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import {
@@ -1081,4 +1081,91 @@ async exportAccountLevelImportedProjects(
       );
     }
   }
+
+  async getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]> {
+      const mainDbSequelize = await initMainDbSequelize();
+      const [userInfo] = (await mainDbSequelize.query(
+        `SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;`,
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT,
+        }
+      )) as [{ profile_rid: string }] | [];
+  
+      if (!userInfo?.profile_rid) {
+        return [];
+      }
+  
+      const [profileFields, userFields] = await Promise.all([
+        mainDbSequelize.query(
+          `
+        SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+        FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+        JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+        JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+        WHERE mp.permission_name = :permissionName
+          AND pfa.profile_id = :profileId
+        `,
+          {
+            replacements: {
+              permissionName: permission_name,
+              profileId: userInfo?.profile_rid,
+            },
+            type: "SELECT",
+          }
+        ),
+        mainDbSequelize.query(
+          `
+        SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+        FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+        JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+        JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+        WHERE mp.permission_name = :permissionName
+          AND ufa.user_id = :userId
+        `,
+          {
+            replacements: {
+              permissionName: permission_name,
+              userId,
+            },
+            type: QueryTypes.SELECT,
+          }
+        ),
+      ]);
+  
+      // Merge: user overrides profile
+      const userFieldMap = new Map<string, any>();
+      for (const field of userFields as any[]) {
+        userFieldMap.set(field.field_name, field);
+      }
+  
+      const merged = (profileFields as any[]).map((pf) => {
+        const userPerm = userFieldMap.get(pf.field_name);
+        if (userPerm) {
+          userFieldMap.delete(pf.field_name);
+          return {
+            field_desc: pf.field_desc,
+            field_name: pf.field_name,
+            read: pf.read ? true : userPerm?.read === true,
+          };
+        }
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read,
+        };
+      });
+  
+      const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+        field_desc: uf.field_desc,
+        field_name: uf.field_name,
+        read: uf.read,
+      }));
+  
+      const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+      return exportableFields;
+    }
 }

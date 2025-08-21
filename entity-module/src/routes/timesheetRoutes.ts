@@ -11,6 +11,10 @@ router.get('/list/:accountRid/:rid',
       controller.importListController.importListByRid)
 router.post('/list/export',
      checkUserStatusMiddleware('timesheet_export'),
+(req, res, next) => {
+    req.body.permissionModule = 'timesheet_view_edit'; // Pass specific module
+    next();
+  },          
       controller.importListController.exportAllImportedData)
 router.get('/export/stagingFailure/:accountRid/:importRid/:entityType',
      checkUserStatusMiddleware('timesheet_view_edit'),

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from '../utils/constants'
+import { HttpStatus, IMPORT_FIELD_MAPPINGS_FOR_EXPORT, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
@@ -534,9 +534,21 @@ async function importListByRid (req : Request, res : Response) {
 
 async function exportAllImportedData (req : Request, res : Response) {
     const data = req.body;
+    const {permissionModule} = data;
     let importedByFilter;
     let importedByCondition : string;
     let totalCount : number = 0
+
+    const userId = req.headers['x-user-id'] as string;
+    if (!userId) {
+        handleErrorResponse(
+            res,
+            HttpStatus.BAD_REQUEST,
+            HttpStatus.BAD_REQUEST_MESSAGE,
+            "User id is required"
+        );
+        return;
+    }
     
     const result: any = await importServices.listAllImportedData(data.page, data.limit, data.sort, data.sort_by, data.account_rid, data.filters, data.fiscal_year);
         if (result.statusCode !== HttpStatus.SUCCESS) {
@@ -616,24 +628,33 @@ async function exportAllImportedData (req : Request, res : Response) {
         if(result.data[0].imports == null) totalCount = 0
         else totalCount = result.data[0].imports[0].count
 
-        let finalPaginatedData = paginatedData.map((data : any) => {
-            return {
-                "Import ID" : data.r_number,
-                "File Name" : data.file_name,
-                "Format" : data.format,
-                "Size" : data.size,
-                "Fiscal Year" : data.fiscal,
-                "Entity" : data.entity,
-                "Total Records" : data.total_records,
-                "Records Loaded Successfully" : data.records_loaded_successfully,
-                "Records with Warning" : data.records_with_warning,
-                "Records Failed to Load" : data.records_failed_to_load,
-                "Status" : data.status,
-                "Status Description" : data.status_description,
-                "Imported By" : data.imported_by,
-                "Imported On" : new Date(data.imported_on).toISOString().slice(0, 10),
-            }
-        })
+        const [importFields] = await Promise.all([
+        importServices.getAllowedExportFields(
+          userId,
+          permissionModule
+        ),
+      ]);
+
+      const allowedFieldSet = new Set<string>();
+      for (const field of importFields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
+        let finalPaginatedData = paginatedData.map((data: any) => {
+          const exportRecord: Record<string, any> = {};
+          
+          IMPORT_FIELD_MAPPINGS_FOR_EXPORT.forEach(mapping => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] = mapping.formatter 
+                      ? mapping.formatter(data[mapping.dataField])
+                      : data[mapping.dataField];
+              }
+          });
+          
+          return exportRecord;
+      });
 
         const base64Response = await generateExcelBase64(finalPaginatedData, "Imports")
 

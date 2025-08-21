@@ -754,6 +754,11 @@ export interface IImportListGraphqlServices {
     errorMessage?: string;
     data?: { tasks: any[]; totalCount: number };
   }>;
+
+  getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
 }
 
 export interface IProjectTaskIngestionService {
