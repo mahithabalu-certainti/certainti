@@ -11,7 +11,6 @@ import {
   UploadInteractionAttachmentRequest,
   UploadInteractionAttachmentResponse,
 } from '../../types';
-// import { mockResponse } from '../../pages/project/project-details/interactions/response-history/mockresponse';
 import { interactionServiceApi } from '../../../api/api';
 import {
   getInteractionResponseHistoryDetailsURL,
@@ -21,8 +20,6 @@ import {
 export const fetchInteractionList = async (
   params: InteractionListURLParams
 ): Promise<{ interactions: ResponseInteractionList[]; count: number }> => {
-  // console.log('interaction-params', params);
-  // await new Promise((resolve) => setTimeout(resolve, 3000));
   const { data } =
     await interactionServiceApi.post<ResponseInteractionListResponse>(
       getInteractionResponseHistroyListUrl(),
@@ -35,9 +32,8 @@ export const fetchInteractionList = async (
   };
 };
 export const useInteractionResponseHistoryList = (
-  params: InteractionListURLParams
-  // shouldFetchList: boolean,
-  // refreshInteractions?: number
+  params: InteractionListURLParams,
+  shouldFetchList: boolean
 ): UseQueryResult<
   { interactions: ResponseInteractionList[]; count: number },
   Error
@@ -50,7 +46,7 @@ export const useInteractionResponseHistoryList = (
     queryFn: () => fetchInteractionList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.account_rid && !!params.fiscal_year,
+    enabled: !!params.account_rid && !!params.fiscal_year && !!shouldFetchList,
   });
 };
 
@@ -106,7 +102,6 @@ export const useUpdateInteractionQuestionResponse = () => {
 };
 
 // Upload Interaction Attachment
-
 export const uploadInteractionAttachmentUrl = () =>
   `/api/interactions/uploadAttachment`;
 

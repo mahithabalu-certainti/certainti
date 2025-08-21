@@ -47,13 +47,14 @@ import {
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
-import { useGetInteractionStatus } from '../../../../common-service';
+import { useGetInteractionStatusById } from '../../../../common-service';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
+  const [currentStatusId, setCurrentStatusId] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
     project_code: '',
@@ -129,7 +130,7 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatus = useGetInteractionStatus();
+  const interactionStatus = useGetInteractionStatusById(currentStatusId);
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
   const isDraftStatus =
@@ -151,13 +152,14 @@ const InteractionForm = () => {
       interactionStatus.data?.data.interactionStatus.map((status) => ({
         label: status.status_name,
         value: status.rid,
-        hide: !status.status_type,
+        disable: !status.status_type,
       })) || [],
     [interactionStatus.data?.data.interactionStatus]
   );
 
   useEffect(() => {
     if (interactionData && isEditView) {
+      setCurrentStatusId(interactionData.status || '');
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
@@ -381,7 +383,7 @@ const InteractionForm = () => {
       interactionData,
       selectedProject
     );
-    console.log(payload);
+
     if (isEditView && interactionData) {
       updateInteraction.mutate(payload);
     } else {
@@ -395,7 +397,8 @@ const InteractionForm = () => {
     window.history.back();
   };
 
-  const formLoading = isLoading || projectsLoading;
+  const formLoading =
+    isLoading || projectsLoading || interactionStatus.isPending;
 
   return (
     <div>
@@ -759,11 +762,11 @@ const InteractionForm = () => {
                         color: '#425A76',
                         fontSize: '13px',
                         fontWeight: '500',
-                        display: option.hide ? 'none' : 'block',
                       }}
                       key={`${option.value}-${i}`}
                       value={option.value}
                       title={option.label}
+                      disabled={option.disable}
                     >
                       {option.label}
                     </MenuItem>
@@ -1055,7 +1058,9 @@ const InteractionForm = () => {
                   onClick={handleAddQuestion}
                 >
                   <span>
-                    <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                    <React.Suspense fallback={null}>
+                      <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                    </React.Suspense>
                   </span>
                   Add New Question
                 </button>

@@ -152,7 +152,7 @@ export type ListTableColumn<T> = {
 export interface ActionItem<T extends RowData> {
   label: string;
   onClick: (row: T) => void;
-  disabled?: boolean;
+  disabled?: boolean | ((row: T) => boolean);
   icon?: React.ElementType;
   iconStyle?: React.CSSProperties;
   hide?: boolean;

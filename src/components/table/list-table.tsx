@@ -174,6 +174,9 @@ const ListTable = <T extends RowData>({
     rowId: string,
     row: T & { _level: number; _type: string }
   ) => {
+    if (row.disableCheckBox) {
+      return;
+    }
     const newSelected = new Set(selectedRows);
 
     // Function to get all child IDs recursively
@@ -261,7 +264,9 @@ const ListTable = <T extends RowData>({
   //handle SelectAll
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      const allIds = new Set(flattenedData.map(getRowId));
+      const allIds = new Set(
+        flattenedData.filter((row) => !row.disableCheckBox).map(getRowId)
+      );
       setSelectedRows(allIds);
       onSelectionChange?.(Array.from(allIds));
     } else {
@@ -791,6 +796,10 @@ const ListTable = <T extends RowData>({
     );
   };
 
+  const selectableRowsCount = useMemo(() => {
+    return flattenedData.filter((row) => !row.disableCheckBox).length;
+  }, [flattenedData]);
+
   const isEditingAnyCell = Object.keys(editingCells).length > 0;
 
   return (
@@ -853,14 +862,14 @@ const ListTable = <T extends RowData>({
                         size='small'
                         indeterminate={
                           selectedRows.size > 0 &&
-                          selectedRows.size < flattenedData.length
+                          selectedRows.size < selectableRowsCount
                         }
                         checked={
-                          flattenedData.length > 0 &&
-                          selectedRows.size === flattenedData.length
+                          selectableRowsCount > 0 &&
+                          selectedRows.size === selectableRowsCount
                         }
                         onChange={handleSelectAll}
-                        disabled={flattenedData.length === 0 || loading}
+                        disabled={selectableRowsCount === 0 || loading}
                         inputProps={{ 'aria-label': 'select all rows' }}
                         disableRipple
                         sx={{
@@ -1079,7 +1088,9 @@ const ListTable = <T extends RowData>({
                             borderBottom: '1px solid #CBD6E2 !important',
                           }}
                         >
-                          <Box className='flex items-center justify-center !h-[32px] !w-[32px]'>
+                          <Box
+                            className={`flex items-center justify-center !h-[32px] !w-[31px] ${row.disableCheckBox ? 'bg-gray-100' : ''}`}
+                          >
                             <Checkbox
                               size='small'
                               checked={selectedRows.has(rowId)}
@@ -1088,6 +1099,7 @@ const ListTable = <T extends RowData>({
                                 'aria-label': `select row ${rowId}`,
                               }}
                               disableRipple
+                              disabled={Boolean(row.disableCheckBox)}
                               sx={{
                                 color: '#CBD6E2',
                                 '&.Mui-checked': {
@@ -1419,7 +1431,9 @@ const ListTable = <T extends RowData>({
                                         component === 'global-project'
                                           ? row.account_status_name ===
                                             'In-Active'
-                                          : item.disabled,
+                                          : typeof item.disabled === 'function'
+                                            ? item.disabled(row)
+                                            : item.disabled,
                                       onClick: () => item.onClick(row),
                                     }))}
                                   />

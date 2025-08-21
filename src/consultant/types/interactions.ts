@@ -140,6 +140,7 @@ export type InteractionList = {
   last_resent_on: string | null;
   interaction_iteration: number | null;
   attachment_count: number | null;
+  disableCheckBox?: boolean;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -386,5 +387,5 @@ export interface InteractionItem {
 export interface SendInteractionPayload {
   account_rid: string;
   interactions: InteractionItem[];
-  customRecipient: boolean;
+  customRecipient?: boolean;
 }
