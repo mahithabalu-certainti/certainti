@@ -19,6 +19,7 @@ import {
   useGetInteractionTypes,
 } from '../../../../common-service';
 import { reshapeGlobalFilter } from '../../../../common-utils';
+import { exportGlobalInteractions } from '../../../services/interactions/interactions-service';
 
 const Interaction: React.FC = () => {
   const { fiscalYear, filters } = useSelector<
@@ -93,7 +94,16 @@ const Interaction: React.FC = () => {
   };
 
   const handleExport = () => {
-    console.log('export clicked');
+    const projectInteractionHistoryExportPayload = {
+      page: tableParams.page || 1,
+      limit: tableParams?.limit || 100,
+      sort: tableParams?.sort || 'r_number',
+      sort_by: tableParams?.sort_by || 'ASC',
+      filters: tableParams?.filters || {},
+      fiscal_year: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState) || {},
+    };
+    exportGlobalInteractions(projectInteractionHistoryExportPayload);
   };
 
   const menuItems = [
