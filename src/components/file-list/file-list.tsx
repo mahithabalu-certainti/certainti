@@ -16,7 +16,7 @@ export const FileList: React.FC<FileListProps> = ({
     return (
       <div className='w-[502px] max-w-[502px] space-y-2'>
         <div className='text-sm font-medium text-[#2D3E4F] mb-2'>
-          Selected Files:
+          Selected File:
         </div>
         {selectedFiles.map((file, index) => (
           <div
