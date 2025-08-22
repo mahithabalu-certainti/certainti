@@ -27,7 +27,7 @@ interface HistoryTableProps {
 const HistoryTable: React.FC<HistoryTableProps> = ({ setCount }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('interaction_version');
+  const [sortField, setSortField] = useState<string>('response_source');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [responseHistoryDetails, setResponseHistoryDetails] = useState<
     DisplayColumn[]
