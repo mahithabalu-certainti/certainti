@@ -50,7 +50,7 @@ export const getInteractionListColumns = (
     id: 'response_email',
     sortId: 'response_email',
     label: 'Response Email ID',
-    width: 150,
+    width: 220,
     sortable: true,
     // hide:
     //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,

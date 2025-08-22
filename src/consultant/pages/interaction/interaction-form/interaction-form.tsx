@@ -376,7 +376,11 @@ const InteractionForm = () => {
   const handleSubmit = (saveFlag: StatusActionEnum) => {
     setActiveFlag(saveFlag);
 
-    if (isEditView && !hasFormValuesChanged(formData, interactionData)) {
+    if (
+      isEditView &&
+      !isDraftStatus &&
+      !hasFormValuesChanged(formData, interactionData)
+    ) {
       goBack(); // No changes, just go back
       return;
     }
