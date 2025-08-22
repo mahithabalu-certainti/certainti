@@ -140,7 +140,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ setCount }) => {
                 globalAttachments={[]}
                 isEditEnable={false}
                 actionButtonEnable={false}
-                // handleResponseHistory={handleResponseHistory}
+                className='border-0'
               />
             )
           )}
