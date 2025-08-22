@@ -466,13 +466,13 @@ export interface FormField {
   id: string;
   label: string;
   type:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'select'
-    | 'textarea'
-    | 'checkbox'
-    | 'date';
+  | 'text'
+  | 'number'
+  | 'email'
+  | 'select'
+  | 'textarea'
+  | 'checkbox'
+  | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;
@@ -501,7 +501,10 @@ export type ExportType =
   | 'resource_attachments'
   | 'projectTask'
   | 'project_resource'
-  | 'timesheet';
+  | 'timesheet'
+  | 'timesheet_project'
+  | 'timesheet_project_resource'
+  | 'timesheet_project_task';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
