@@ -197,7 +197,11 @@ export const STATUS_MESSAGE = {
   historyResponseFetched : "Interaction Response history fetched successfully",
   interactionHistoryFetched : "Interaction history fetched successfully",
   interactionAttachmentFetched : "Interaction attachments fetched successfully",
-  nodDataToExport : "No Data available for download"
+  nodDataToExport : "No Data available for download",
+  technicalIssue:"Technical Issue",
+  interactionFailed:"Interaction Creation Failed",
+  interactionUpdateFailed:"Interaction Update Failed",
+  responseUpdateFailed:"Interaction Response Update Failed"
 };
 
 export const rawQueries = {
@@ -281,7 +285,7 @@ export const rawQueries = {
   },
   fetchisAutoSendEnabled(projectFiscalRid: string,schemaName : string) {
     return `
-    SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+    SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`
   },
   fetchInteractionStatusList(whereClause: string) {
     return `

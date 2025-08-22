@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -95,7 +95,7 @@ export class InteractionService {
       }
       await transaction.commit();
       //check if auto send enabled
-      const interactionStatus = await this.interactionSchemaService.getInteractionStatusByType(
+      const interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
         interactionData.status_rid
       );
       if(interactionStatus === statusAction.CREATE)
@@ -109,10 +109,11 @@ export class InteractionService {
       };
     } catch (err) {
       await transaction.rollback();
+     this.logger.error("Error creating interaction", err);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: (err as Error).message,
+          errorMessage: STATUS_MESSAGE.interactionFailed,
         };
     }
   }
@@ -237,10 +238,11 @@ export class InteractionService {
       };
     } catch (err) {
       await transaction.rollback();
+      this.logger.error("Error updating interaction", err);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: (err as Error).message,
+          errorMessage: STATUS_MESSAGE.interactionUpdateFailed,
         };
     }
   }
@@ -294,7 +296,7 @@ export class InteractionService {
       return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: (err as Error).message,
+          errorMessage: STATUS_MESSAGE.responseUpdateFailed,
         };
     }
   }
