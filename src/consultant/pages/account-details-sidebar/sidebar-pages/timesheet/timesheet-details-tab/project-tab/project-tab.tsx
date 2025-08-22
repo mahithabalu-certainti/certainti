@@ -11,7 +11,7 @@ import { TimesheetProjectList, TimesheetProjectExportListURLParams } from '../..
 import { AccessRestricted } from '../../../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../../../common-utils';
 
-interface projectTabListProps {
+interface ProjectTabListProps {
   bothParentAndChild: boolean;
   documentRid: string;
   appliedFilters?: Record<string, string | number | boolean | string[]>;
@@ -21,7 +21,7 @@ interface projectTabListProps {
   >;
 }
 
-const TimesheetProjectTab: React.FC<projectTabListProps> = ({
+const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   bothParentAndChild,
   documentRid,
   appliedFilters,

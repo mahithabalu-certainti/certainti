@@ -11,7 +11,7 @@ import { TimesheetProjectExportListURLParams } from '../../../../../../types/tim
 import { checkPermission } from '../../../../../../../common-utils';
 import { AccessRestricted } from '../../../../../../../components/account-restricted';
 
-interface projectTaskProps {
+interface ProjectTaskProps {
   documentRid: string;
   appliedFilters?: Record<string, string | number | boolean | string[]>;
   onRefreshClick?: number;
@@ -20,7 +20,7 @@ interface projectTaskProps {
   >;
 }
 
-const TimesheetProjectTask: React.FC<projectTaskProps> = ({
+const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   documentRid,
   appliedFilters,
   onRefreshClick,

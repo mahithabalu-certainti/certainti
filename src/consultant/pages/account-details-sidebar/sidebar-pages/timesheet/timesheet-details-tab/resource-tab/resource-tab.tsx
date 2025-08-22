@@ -10,7 +10,7 @@ import { TimesheetProjectExportListURLParams, TimesheetResourceListType } from '
 import { checkPermission } from '../../../../../../../common-utils';
 import { AccessRestricted } from '../../../../../../../components/account-restricted';
 
-interface projectTabListProps {
+interface ProjectTabListProps {
     documentRid: string;
     appliedFilters?: Record<string, string | number | boolean | string[]>;
     onRefreshClick?: number;
@@ -20,7 +20,7 @@ interface projectTabListProps {
 
 }
 
-const TimesheetResourcesTab: React.FC<projectTabListProps> = ({ documentRid,
+const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({ documentRid,
     appliedFilters,
     onRefreshClick,
     setTimesheetResourceParams }) => {
