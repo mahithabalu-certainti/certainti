@@ -275,11 +275,16 @@ export class InteractionService {
           transaction
         );
       await transaction.commit();
+      await this.interactionSchemaService.updateAttachmentCount(
+        accountNumber,
+        interactionData.interaction_rid,
+        updatedInteractionResponse.interactionVersion
+      );
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          interactions: updatedInteractionResponse,
+          interactions: null,
         },
       };
     } catch (err) {

@@ -886,10 +886,6 @@ if(!this.orgDbSequelize)
       }
 
       if (responseCreated) {
-        const attachmentCount = await InteractionAttachment.count({
-          where: { interaction_rid: responseData.interaction_rid, interaction_version: interactionVersion },
-        });
-        const attachmentcount = attachmentCount;
         const { Interaction, InteractionSummary } =
          await this.interactionModelService.getModels(accountNumber);
          const status = statusAction[responseData.status_action as keyof typeof statusAction];
@@ -902,7 +898,7 @@ if(!this.orgDbSequelize)
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source: "Manual",
-          attachment_count: attachmentcount
+       //   attachment_count: attachmentcount
         };
 
         const summaryUpdateData: any = {
@@ -910,7 +906,7 @@ if(!this.orgDbSequelize)
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source: "Manual",
-          attachment_count: attachmentcount
+       //   attachment_count: attachmentcount
         };
        
         if (status === "Response Received") {
@@ -927,6 +923,9 @@ if(!this.orgDbSequelize)
           where: { rid: responseData.interaction_rid },
         });
       }
+      return {
+        interactionVersion
+      };
     } catch (err) {
       console.log(err)
       throw new Error(
@@ -934,6 +933,24 @@ if(!this.orgDbSequelize)
         "Error updating interaction response: " + (err as Error).message
       );
     }
+  }
+
+  async updateAttachmentCount(accountNumber: string, interactionRid: string, interactionVersion: number)
+  {
+     const { Interaction, InteractionSummary, InteractionAttachment } =
+         await this.interactionModelService.getModels(accountNumber);
+
+     const attachmentCount = await InteractionAttachment.count({
+       where: { interaction_rid: interactionRid, interaction_version: interactionVersion },
+     });
+
+     await Interaction.update({ attachment_count: attachmentCount }, {
+       where: { rid: interactionRid },
+     });
+
+     await InteractionSummary.update({ attachment_count: attachmentCount }, {
+       where: { rid: interactionRid },
+     });
   }
 
   /**
