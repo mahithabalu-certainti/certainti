@@ -24,7 +24,8 @@ export const statusAction = {
   RESPONSE_DRAFT: "Response Draft",
   RESPONSE_RECEIVED: "Response Received",
   CANCELLED: "Cancelled",
-  ON_HOLD: "On-Hold",
+  ON_HOLD: "On Hold",
+  RESUME: "Resume"
 };
 
 export const interactionSource = {

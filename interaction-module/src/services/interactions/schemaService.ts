@@ -376,9 +376,10 @@ if(!this.orgDbSequelize)
 {
   this.orgDbSequelize = await this.interactionModelService.getSequelize();
 }
-const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
-    const [previousStatus]: any[] = await this.orgDbSequelize.query(
-      rawQueries.fetchPreviousInteractionStatus(statusRid,schemaName),
+  const prevStatus = await this.getInteractionStatusByType(statusAction.ON_HOLD)
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+  const [previousStatus]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchPreviousInteractionStatus(prevStatus || statusAction.CREATE,schemaName),
       {
         replacements: { rid: statusRid },
         type: "SELECT",
@@ -694,9 +695,8 @@ const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
     }
 
     const interactionStatus = await this.mainDbSequelize.query(
-      `Select rid, status_name from ${MAIN_SCHEMA_NAME}.interaction_status WHERE  status_name = :type limit 1`,
+      rawQueries.fetchInteractionStatusByType(type),
       {
-        replacements: { type },
         type: "SELECT",
       }
     );
@@ -713,10 +713,12 @@ const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
         await this.interactionModelService.getMainSequelize();
     }
 
-    const interactionStatus:any[] = await this.mainDbSequelize.query(
+    const interactionStatusArr: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchInteractionStatus(id),
+      {  type: "SELECT" }
     );
-    return interactionStatus.length > 0 ? interactionStatus[0].status_name : null;
+    const interactionStatus = Array.isArray(interactionStatusArr) && interactionStatusArr.length > 0 ? interactionStatusArr[0] : null;
+    return interactionStatus ? interactionStatus.status_name : null;
   }
   async getInteractionSourceByType(type: string) {
     if (!this.mainDbSequelize) {

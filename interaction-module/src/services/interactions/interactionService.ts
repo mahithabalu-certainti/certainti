@@ -98,7 +98,7 @@ export class InteractionService {
       const interactionStatus = await this.interactionSchemaService.getInteractionStatusByType(
         interactionData.status_rid
       );
-      if(interactionStatus === "Created")
+      if(interactionStatus === statusAction.CREATE)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -176,10 +176,10 @@ export class InteractionService {
       //     interactionData.status_rid = interactionStatus || "";
       //   interactionData.interaction_source_rid = intSource || "";
       // }
-       const interactionStatus = await this.interactionSchemaService.getInteractionStatusByType(
+       const interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
         interactionData.status_rid
       );
-      if(interactionStatus ==="Resume")
+      if(interactionStatus === statusAction.RESUME)
       {
         const prevStatus = await this.interactionSchemaService.getPreviousInteractionStatus(interactionData.status_rid, accountNumber);
         if(prevStatus)
