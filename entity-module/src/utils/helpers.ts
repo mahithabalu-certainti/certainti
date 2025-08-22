@@ -935,6 +935,16 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     dataStorage = `comments = '${newData.comments.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
+  if(requestData.start_date != undefined) {
+    newData.start_date = requestData.start_date != dbData.start_date ? requestData.start_date : dbData.start_date
+    dataStorage = newData.start_date == '' ? `start_date = null` : `start_date = '${newData.start_date}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.end_date != undefined) {
+    newData.end_date = requestData.end_date != dbData.end_date ? requestData.end_date : dbData.end_date
+    dataStorage = newData.end_date == '' ? `end_date = null` : `end_date = '${newData.end_date}'`
+    newDataArray.push(dataStorage)
+  }  
 
   if(newDataArray.length < 1) {
     return {

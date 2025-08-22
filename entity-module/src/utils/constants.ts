@@ -140,6 +140,7 @@ export const STATUS_MESSAGE = {
   accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
+  startDateLessThanEndDate: "Start date must be less than end date",
 };
 
 export const TYPES = {
