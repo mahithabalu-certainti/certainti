@@ -76,14 +76,21 @@ export const projectTaskFilterFields = (
         !permissionMap?.['resource_role']?.edit,
     },
     {
-      name: 'Task Date',
+      name: 'Start Date',
       value: 'start_date',
       type: 'date',
       hide:
         !permissionMap?.['start_date']?.read &&
         !permissionMap?.['start_date']?.edit,
     },
-
+{
+      name: 'End Date',
+      value: 'end_date',
+      type: 'date',
+      hide:
+        !permissionMap?.['end_date']?.read &&
+        !permissionMap?.['end_date']?.edit,
+    },
     {
       name: 'Cost',
       value: 'total_cost_pro_task',
