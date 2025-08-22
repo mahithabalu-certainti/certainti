@@ -374,7 +374,6 @@ const InteractionForm = () => {
   };
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
-
     if (
       isEditView &&
       !isDraftStatus &&
@@ -396,7 +395,6 @@ const InteractionForm = () => {
     if (!validateForm()) {
       return;
     }
-    setActiveFlag(saveFlag);
     const payload = transFormPayload(
       accountId,
       formData,
@@ -406,10 +404,26 @@ const InteractionForm = () => {
       selectedProject
     );
 
+    setActiveFlag(saveFlag);
+
     if (isEditView && interactionData) {
-      updateInteraction.mutate(payload);
+      updateInteraction.mutate(payload, {
+        onError: () => {
+          setActiveFlag(null);
+        },
+        onSuccess: () => {
+          setActiveFlag(null);
+        },
+      });
     } else {
-      createInteraction.mutate(payload);
+      createInteraction.mutate(payload, {
+        onError: () => {
+          setActiveFlag(null);
+        },
+        onSuccess: () => {
+          setActiveFlag(null);
+        },
+      });
     }
   };
 
