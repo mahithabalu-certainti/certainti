@@ -88,7 +88,7 @@ export const ProjectTask = ({
   projectCode?: string;
   accountOrProjectInActive?: boolean;
 }) => {
-  const { errorToast, successToast } = useToast();
+  const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
   const [, setSortFilterCount] = useState<number>(0);
@@ -340,11 +340,27 @@ export const ProjectTask = ({
     setShowProjectTaskDetails(true);
     setShowFilter(false);
   };
+  const convertDates = (pfy: FormFiscalDateType) => {
+    return {
+      ...pfy,
+      endMax: pfy.endMax ? new Date(pfy.endMax).toISOString() : null,
+      startMax: pfy.startMax ? new Date(pfy.startMax).toISOString() : null,
+      startMin: pfy.startMin ? new Date(pfy.startMin).toISOString() : null,
+    };
+  };
+  const fiscalDate = PFY ? convertDates(PFY) : null;
+
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
     permissionMapTaskTableColumn,
-    accountOrProjectInActive
+    accountOrProjectInActive,
+    fiscalDate ? {
+      endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
+      startMax: fiscalDate.startMax ? new Date(fiscalDate.startMax) : undefined,
+      startMin: fiscalDate.startMin ? new Date(fiscalDate.startMin) : undefined,
+      year: fiscalDate.year
+    } : undefined,
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -385,7 +401,6 @@ export const ProjectTask = ({
           }
           return project;
         });
-        successToast(result?.statusMessage);
         setProjectTaskList(newProjects);
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');

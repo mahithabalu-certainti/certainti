@@ -374,7 +374,6 @@ const InteractionForm = () => {
   };
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
-    setActiveFlag(saveFlag);
 
     if (
       isEditView &&
@@ -397,7 +396,7 @@ const InteractionForm = () => {
     if (!validateForm()) {
       return;
     }
-
+    setActiveFlag(saveFlag);
     const payload = transFormPayload(
       accountId,
       formData,
