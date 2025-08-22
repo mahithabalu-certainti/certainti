@@ -250,11 +250,23 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
-    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
+    SELECT rid, project_name,project_code,r_number,fiscal_year FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
+  },
+   updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
+    return `
+    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`
+  },
+  updateQreInfoSummary(rid: string, qrePercent: number) {
+    return `
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET qre_final = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`
   },
   fetchAccountInfo(rid: string) {
     return `
     SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+  },
+  fetchPreviousInteractionStatus(statusRid: string,schemaName: string) {
+    return `
+    SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`
   },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)

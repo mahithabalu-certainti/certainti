@@ -119,7 +119,7 @@ export class InteractionService {
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string) {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
     if (isEnabled) {
-      //await this.sendInteraction([interactionId], interactionData.account_rid, userId, false);
+      await this.sendInteraction([{ interaction_rid: interactionId }], interactionData.account_rid, userId);
     }
   }
   async getInteractionStatusAndSource() {
@@ -176,6 +176,17 @@ export class InteractionService {
       //     interactionData.status_rid = interactionStatus || "";
       //   interactionData.interaction_source_rid = intSource || "";
       // }
+       const interactionStatus = await this.interactionSchemaService.getInteractionStatusByType(
+        interactionData.status_rid
+      );
+      if(interactionStatus ==="Resume")
+      {
+        const prevStatus = await this.interactionSchemaService.getPreviousInteractionStatus(interactionData.status_rid, accountNumber);
+        if(prevStatus)
+        {
+          interactionData.status_rid = prevStatus;
+        }
+      }
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
           accountNumber,
@@ -211,6 +222,9 @@ export class InteractionService {
       }
 
       await transaction.commit();
+      
+       if(interactionStatus === "Created")
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -440,7 +454,7 @@ export class InteractionService {
   async sendInteraction(
    interactions: {
       interaction_rid: string;
-      emailInfo: {
+      emailInfo?: {
         email: string;
         name: string | null;
       };
@@ -469,7 +483,7 @@ export class InteractionService {
         const rid = interaction_rid;
         // If emailInfo.email is empty, fetch POC email
         let sendEmailInfo = emailInfo;
-        if (!emailInfo?.email) {
+        if (!emailInfo || !emailInfo?.email) {
           sendEmailInfo =  await this.interactionSchemaService.fetchPOCEmail(accountNumber, rid);
         }
 
@@ -536,7 +550,8 @@ export class InteractionService {
             rid,
             statusAction.SENT,
             userId,
-            sendEmailInfo
+            sendEmailInfo,
+            interactionLink
           );
         } else {
           //need to add logic for sending toPS team
@@ -1118,7 +1133,38 @@ export class InteractionService {
     let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
       headers : headers
     })
-    const sendAiResponse = await this.interactionSchemaService.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
+    const sendAiResponse = await this.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
     return sendAiResponse
   }
+  async fetchAndUpdateFromAiTriggerResponse (data : any) {
+    const account_rid = data.company_id;
+    
+    const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          account_rid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+        let techSummaryPayload ={
+     // created_by: userId,
+     account_rid:account_rid,
+     fiscal_year:"",//need to update
+      project_id: data.project_id,
+      project_fiscal_rid:data.project_fiscal_rid,
+      technical_summary: data.project_summary,
+    //  version:"",
+      status: data.status,
+      entity_transaction_id: data.correlation_id
+
+    }
+    await this.interactionSchemaService.updateQrePercentAndTechSummary(data.qre, accountNumber,data.project_id,techSummaryPayload)
+    return {
+      statusMessage : "Details updated successfully",
+      status : data.status,
+      data : data.project_summary
+    };
+  }
+  
 }
