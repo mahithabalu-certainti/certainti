@@ -505,7 +505,14 @@ async function exportAllInteractions (req : Request, res : Response) {
       const base64Response = await generateExcelBase64(finalStructuredData, "Interactions")
         handleSuccessResponse(res, base64Response);
         return; 
-    }
+    } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
   } catch (error : any) {
     handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
   }
@@ -607,9 +614,13 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
     handleSuccessResponse(res, base64Response);
     return; 
     } else {
-      handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.dataNotFound)
-      return;
-    }
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
   } catch (error : any) {
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
@@ -706,9 +717,13 @@ async function exportResponseHistory (req : Request, res : Response) {
     handleSuccessResponse(res, base64Response);
     return;
     } else {
-      handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.dataNotFound)
-      return;
-    }
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
   } catch (error : any) {
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,

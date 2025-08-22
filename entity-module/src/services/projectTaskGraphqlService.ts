@@ -77,6 +77,34 @@ export default class ProjectTaskGraphqlServies {
             };
           }
         }
+        if(data.start_date) {
+          data.start_date = new Date(data.start_date).toISOString().split('T')[0];
+          if(checkForExistingData[0][0].end_date) {
+            const existingEndDate = new Date(checkForExistingData[0][0].end_date);
+            const newStartDate = new Date(data.start_date);
+            if(newStartDate > existingEndDate) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+                data: null,
+              };
+            }
+          }
+        }
+        if(data.end_date) {
+          data.end_date = new Date(data.end_date).toISOString().split('T')[0];
+          if(checkForExistingData[0][0].start_date) {
+            const existingStartDate = new Date(checkForExistingData[0][0].start_date);
+            const newEndDate = new Date(data.end_date);
+            if(newEndDate < existingStartDate) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+                data: null,
+              };
+            }
+          }
+        }
 
         const newEffort = new Decimal(data.total_hours_pro_task || "0");
 
