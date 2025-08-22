@@ -529,9 +529,9 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
             ia.created_by, COUNT(*) OVER() AS total_records,
             ia.interaction_version
         FROM
-        ${schemaName}.interactions i
-        LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
-		LEFT JOIN ${schemaName}.interaction_attachments ia ON ia.interaction_rid = ii.interaction_rid
+        ${schemaName}.interaction_attachments ia
+		LEFT JOIN ${schemaName}.interaction_items ii ON ii.rid = ia.interaction_item_rid
+        LEFT JOIN ${schemaName}.interactions i ON ia.interaction_rid = i.rid
         WHERE
         ia.interaction_rid = '${interaction_rid}'
         AND
