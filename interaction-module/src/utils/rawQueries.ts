@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys, separateDb } from "./constants"
+import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys, STATUS_MESSAGE } from "./constants"
 
 type filterType = {
         [key : string] : {
@@ -522,6 +522,8 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
     ${schemaName}.interaction_response_history iah
     WHERE
     iah.interaction_rid = '${interaction_rid}'
+    AND
+    iah.interaction_item_rid IS NOT NULL
     ORDER BY iah.created_datetime DESC
     ),
     fetch_attachments AS (
@@ -539,6 +541,8 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
         fla.rid = ia.interaction_response_rid
         WHERE
         ia.interaction_rid = '${interaction_rid}'
+        AND
+        ia.interaction_item_rid IS NOT NULL
         AND
         ia.interaction_response_rid IN (fla.rid)
     ),
@@ -654,3 +658,32 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
     return query;
 }
 
+export const fetchAllParentRNumber = () => {
+    let query =
+    `SELECT r_number
+        FROM
+           "${MAIN_SCHEMA_NAME}".account
+        WHERE
+           storage_type = '${STATUS_MESSAGE.separateDb}'
+           AND
+           parent_account_rid IS NULL`
+    return query;
+
+}
+
+export const fetchProjectAttachmentsRids = (schemaName : string) => {
+    let query =
+    `
+    SELECT attach_to, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
+    is_ai_processed = false
+    `
+    return query;
+}
+
+export const fetchProjectInteractionRid = (schemaName : string) => {
+    let query =
+    `
+    SELECT account_rid, project_fiscal_rid FROM ${schemaName}.interactions WHERE is_ai_processed = false
+    `
+    return query;
+}
