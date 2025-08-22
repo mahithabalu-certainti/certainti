@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-else-if */
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
@@ -65,7 +66,14 @@ import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
-import { exportImportsData, exportTimesheetData } from '../../services/import';
+import {
+  exportImportsData,
+  exportTimesheetData,
+  exportTimesheetProjectData,
+  exportTimesheetResourceData,
+  exportTimesheetTaskData,
+} from '../../services/import';
+
 import { ImportsListURLParams } from '../../types/imports';
 import {
   exportFinancialProjectCost,
@@ -76,6 +84,7 @@ import {
   exportInteractionsHistory,
   exportInteractions,
 } from '../../services/interactions/interactions-service';
+import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -117,7 +126,14 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
-
+  const isProjectResourceExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
+  const isProjectTaskExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_EXPORT
+  );
   const isAttachmentViewEnable = checkPermission(
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -201,6 +217,33 @@ export const AccountDetails = () => {
       page: 1,
       limit: 100,
     });
+  const [timesheetProjectParams, setTimesheetProjectParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+      account_rid: accountid || '',
+      bothParentAndChild: toggleEnabled,
+      documentRid: '',
+    });
+  const [timesheetResourceParams, setTimesheetResourceParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+  const [timesheetTaskParams, setTimesheetTaskParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'project_code',
@@ -219,6 +262,7 @@ export const AccountDetails = () => {
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
+    const tab = searchParams.get('tab');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
@@ -226,7 +270,10 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
-      searchParams.get('list') !== 'interactions'
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('tab') !== 'timesheet_project' &&
+      searchParams.get('tab') !== 'timesheet_project_resource' &&
+      searchParams.get('tab') !== 'timesheet_project_task'
     ) {
       return;
     }
@@ -283,7 +330,7 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
-    } else if (exportType === 'timesheet') {
+    } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,
         filters: {
@@ -291,6 +338,12 @@ export const AccountDetails = () => {
           entity: { equals: 'project_task' },
         },
       });
+    } else if (exportType === 'timesheet_project') {
+      exportTimesheetProjectData(timesheetProjectParams);
+    } else if (exportType === 'timesheet_project_resource') {
+      exportTimesheetResourceData(timesheetResourceParams);
+    } else if (exportType === 'timesheet_project_task') {
+      exportTimesheetTaskData(timesheetTaskParams);
     } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
@@ -419,10 +472,16 @@ export const AccountDetails = () => {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
       return !isFinancialProjectCostExportEnable;
-    } else if (list === 'timesheet') {
+    } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
     } else if (list === 'interactions') {
       return viewDetails;
+    } else if (list === 'timesheet' && tab === 'timesheet_project') {
+      return !isProjectExportEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
+      return !isProjectResourceExportViewEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_task') {
+      return !isProjectTaskExportViewEnable;
     } else {
       return true;
     }
@@ -537,6 +596,9 @@ export const AccountDetails = () => {
           <Timesheet
             setExportType={setExportType}
             setTimesheetParams={setImportsParams}
+            setTimesheetProjectParams={setTimesheetProjectParams}
+            setTimesheetResourceParams={setTimesheetResourceParams}
+            setTimesheetTaskParams={setTimesheetTaskParams}
           />
         );
       case 'imports':

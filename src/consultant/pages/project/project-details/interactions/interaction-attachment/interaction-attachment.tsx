@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getInteractionAttachmentListColumns } from './columns';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import { ListTable } from '../../../../../../components/table';
 import { useGetInteractionAttachmentList } from '../../../../../services/interactions/interaction-attachment-service';
-import {
-  InteractionAttachmentListParams,
-  InteractionAttachmentType,
-} from '../../../../../types';
+import { InteractionAttachmentType } from '../../../../../types';
 import { useSearchParams } from 'react-router-dom';
 
 interface InteractionAttachmentProps {
@@ -25,16 +22,13 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_rid') || '';
 
-  const [tableParams, setTableParams] =
-    useState<InteractionAttachmentListParams>({
-      page: currentPage,
+  const { data, isLoading, isError } = useGetInteractionAttachmentList(
+    {
+      page: currentPage + 1,
       limit: rowsPerPage,
       account_rid: accountId,
       interaction_rid: interactionId || '',
-    });
-
-  const { data, isLoading, isError } = useGetInteractionAttachmentList(
-    tableParams,
+    },
     refresh
   );
 
@@ -56,24 +50,12 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
-    setTableParams({ ...tableParams, limit: newPageSize, page: 1 });
   };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    setTableParams({ ...tableParams, page: newPage });
   };
 
-  useEffect(() => {
-    setTableParams((prevParams) => ({
-      ...prevParams,
-      page: currentPage,
-      limit: rowsPerPage,
-      account_rid: accountId,
-      interaction_rid: interactionId || '',
-    }));
-  }, [currentPage, rowsPerPage, accountId, interactionId]);
-  console.log(data?.data.totalRecords, 'total counts');
   return (
     <>
       <div className='border border-[#CBD6E2]'>

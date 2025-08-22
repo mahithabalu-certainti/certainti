@@ -502,7 +502,10 @@ export type ExportType =
   | 'projectTask'
   | 'project_resource'
   | 'timesheet'
-  | 'interactions';
+  | 'interactions'
+  | 'timesheet_project'
+  | 'timesheet_project_resource'
+  | 'timesheet_project_task';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
