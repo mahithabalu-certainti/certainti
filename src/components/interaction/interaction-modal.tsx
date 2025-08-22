@@ -11,12 +11,14 @@ interface SendInteractionModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedRows: InteractionList[];
+  onSuccessRefetch: () => void;
 }
 
 const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   isOpen,
   onClose,
   selectedRows,
+  onSuccessRefetch,
 }) => {
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
@@ -121,7 +123,10 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         interactions,
       };
       sendInteraction.mutate(payload, {
-        onSuccess: () => handleClose(),
+        onSuccess: () => {
+          handleClose();
+          onSuccessRefetch();
+        },
       });
       return;
     }
@@ -143,7 +148,10 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         interactions,
       };
       sendInteraction.mutate(payload, {
-        onSuccess: () => handleClose(),
+        onSuccess: () => {
+          handleClose();
+          onSuccessRefetch();
+        },
       });
     }
   };

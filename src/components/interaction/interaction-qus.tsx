@@ -15,6 +15,7 @@ import {
   useUpdateInteractionQuestionResponse,
   useUploadInteractionAttachment,
 } from '../../consultant/services/interactions/response-interaction-service';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface SectionHeaderButton {
   label: string;
@@ -24,6 +25,11 @@ interface SectionHeaderButton {
   hide?: boolean;
   disabled?: boolean;
   loading?: boolean;
+}
+
+enum FlagTypeEnum {
+  draft = 'draft',
+  submit = 'submit',
 }
 
 interface InteractionQuesProps {
@@ -47,6 +53,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   refetchDeetails,
   formData,
 }) => {
+  const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
     questions.reduce(
@@ -137,15 +144,21 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     );
   };
 
-  const handleSave = async (flag: 'draft' | 'submit') => {
+  const sanitizeQuillValue = (value: string) => {
+    const trimmed = value.replace(/<(.|\n)*?>/g, '').trim();
+    return trimmed ? value : '';
+  };
+
+  const handleSave = async (flag: FlagTypeEnum) => {
+    setActiveFlag(flag);
     const payload = {
-      status_action: (flag === 'draft'
+      status_action: (flag === FlagTypeEnum.draft
         ? 'RESPONSE_DRAFT'
         : 'RESPONSE_RECEIVED') as 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED',
       attachments: newGlobalAttachments,
       questions: questions.map((q) => ({
         question: q.question,
-        response: editedAnswers[q.rid] || '',
+        response: sanitizeQuillValue(editedAnswers[q.rid] || ''),
         rid: q.rid,
         attachments: questionAttachments[q.rid] || [],
       })),
@@ -162,6 +175,10 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       onSuccess: async () => {
         await refetchDeetails?.();
         setIsEditing(false);
+        setActiveFlag(null);
+      },
+      onError: () => {
+        setActiveFlag(null);
       },
     });
   };
@@ -246,18 +263,22 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {
           label: 'Save as Draft',
           variant: 'contained' as const,
-          onClick: () => handleSave('draft'),
+          onClick: () => handleSave(FlagTypeEnum.draft),
           sx: { width: '110px', minWidth: '110px' },
-          loading: isUpdateLoading,
-          disabled: uploadFileMutation.isPending,
+          loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
+          disabled:
+            (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
+            uploadFileMutation.isPending,
         },
         {
           label: 'Save & Submit',
           variant: 'contained' as const,
-          onClick: () => handleSave('submit'),
+          onClick: () => handleSave(FlagTypeEnum.submit),
           sx: { width: '110px', minWidth: '110px' },
-          loading: isUpdateLoading,
-          disabled: uploadFileMutation.isPending,
+          loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
+          disabled:
+            (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
+            uploadFileMutation.isPending,
         },
         {
           label: 'Upload Files',
@@ -343,10 +364,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   key={idx}
                   className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                 >
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 w-full'>
                     <PdfIcon />
-                    <div className='text-[14px] text-[#425A76] font-normal'>
-                      {file.fileName}.{file.fileType}
+                    <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
+                      <TruncateWithTooltip
+                        text={`${file.fileName}${file.fileType}`}
+                        maxWidth={'100%'}
+                      >
+                        {file.fileName}
+                        {file.fileType}
+                      </TruncateWithTooltip>
                     </div>
                   </div>
                   {isEditing ? (
@@ -474,9 +501,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               </div>
             ) : (
               <div
-                className={`mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20 text-[14px] text-[#425A76] font-normal ${
-                  q.response ? 'bg-[#FFFBFA]' : 'bg-[#FCFCFC]'
-                }`}
+                className={`
+                mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20
+                text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]
+                [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic
+                [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
+                [&_li]:mb-1 [&_a]:text-blue-600 [&_blockquote]:border-l-2 [&_blockquote]:pl-2 [&_blockquote]:italic
+              `}
                 dangerouslySetInnerHTML={{ __html: q.response || '' }}
               />
             )}
@@ -498,10 +529,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       key={index}
                       className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                     >
-                      <div className='flex items-center gap-2'>
+                      <div className='flex items-center gap-2 w-full'>
                         <PdfIcon />
-                        <div className='text-[14px] text-[#425A76] font-normal'>
-                          {file.fileName}.{file.fileType}
+                        <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
+                          <TruncateWithTooltip
+                            text={`${file.fileName}${file.fileType}`}
+                            maxWidth={'100%'}
+                          >
+                            {file.fileName}
+                            {file.fileType}
+                          </TruncateWithTooltip>
                         </div>
                       </div>
                       {isEditing ? (
