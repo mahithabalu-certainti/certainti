@@ -47,7 +47,10 @@ import {
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
-import { useGetInteractionStatusById } from '../../../../common-service';
+import {
+  useGetInteractionStatus,
+  useGetInteractionStatusById,
+} from '../../../../common-service';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
@@ -55,6 +58,7 @@ const InteractionForm = () => {
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [currentStatusId, setCurrentStatusId] = useState<string>('');
+  const [activeFlag, setActiveFlag] = useState<StatusActionEnum | null>(null);
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
     project_code: '',
@@ -130,7 +134,13 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatus = useGetInteractionStatusById(currentStatusId);
+  const interactionStatusById = useGetInteractionStatusById(currentStatusId);
+  const interactionAllStatus = useGetInteractionStatus();
+
+  const interactionStatus = isEditView
+    ? interactionStatusById
+    : interactionAllStatus;
+
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
   const isDraftStatus =
@@ -182,10 +192,10 @@ const InteractionForm = () => {
         questions:
           interactionData.questions.length > 0
             ? interactionData.questions.map((qus, index) => ({
-                question_seq_num: qus.question_seq_num || `Q00${index + 1}`,
-                question: qus.question || '',
+                question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
+                question: qus.question.trim() || '',
                 is_mandatory: qus.is_mandatory ?? false,
-                notes: qus.notes || '',
+                notes: qus.notes.trim() || '',
                 is_editable: qus.is_editable ?? true,
                 rid: qus.rid,
               }))
@@ -363,6 +373,7 @@ const InteractionForm = () => {
   };
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
+    setActiveFlag(saveFlag);
     const statusRid = getStatusId(
       formData,
       isEditView,
@@ -398,7 +409,7 @@ const InteractionForm = () => {
   };
 
   const formLoading =
-    isLoading || projectsLoading || interactionStatus.isPending;
+    isLoading || projectsLoading || interactionStatus.isLoading;
 
   return (
     <div>
@@ -429,7 +440,13 @@ const InteractionForm = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Save as Draft'
-            loading={createInteraction.isPending || updateInteraction.isPending}
+            loading={
+              activeFlag === StatusActionEnum.Draft &&
+              (createInteraction.isPending || updateInteraction.isPending)
+            }
+            disabled={
+              activeFlag !== null && activeFlag !== StatusActionEnum.Draft
+            }
             onClick={() => handleSubmit(StatusActionEnum.Draft)}
             sx={{
               width: '110px',
@@ -441,7 +458,13 @@ const InteractionForm = () => {
           />
           <TextButton
             label='Save & Submit'
-            loading={createInteraction.isPending || updateInteraction.isPending}
+            loading={
+              activeFlag === StatusActionEnum.Create &&
+              (createInteraction.isPending || updateInteraction.isPending)
+            }
+            disabled={
+              activeFlag !== null && activeFlag !== StatusActionEnum.Create
+            }
             onClick={() => handleSubmit(StatusActionEnum.Create)}
             sx={{
               width: '110px',
@@ -854,7 +877,7 @@ const InteractionForm = () => {
                           key={index}
                           sx={{
                             position: 'relative',
-                            height: '32px !important',
+                            p: 0,
                           }}
                           className={`${!question.is_editable && isEditView ? 'bg-[#f3f4f6] cursor-default pointer-events-none' : ''}`}
                         >
@@ -879,11 +902,11 @@ const InteractionForm = () => {
                                     width: col.width,
                                     textAlign: col.align ?? 'left',
                                     position: 'relative',
-                                    height: '32px !important',
                                     backgroundColor: error
                                       ? '#FEF2F2'
                                       : 'transparent',
                                   }}
+                                  sx={{ padding: 0 }}
                                 >
                                   {col.name === 'questionNo' && (
                                     <div
@@ -902,7 +925,7 @@ const InteractionForm = () => {
 
                                   {col.name === 'question' && (
                                     <div
-                                      className={`relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                      className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
                                       <textarea
                                         name='interaction_question'
@@ -965,7 +988,7 @@ const InteractionForm = () => {
 
                                   {col.name === 'notes' && (
                                     <div
-                                      className={`box-border relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                      className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
                                       <textarea
                                         name='notes'
