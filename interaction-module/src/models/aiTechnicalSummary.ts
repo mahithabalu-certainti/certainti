@@ -16,7 +16,6 @@ export interface AiTechnicalSummaryAttributes {
   project_fiscal_rid?: string;
   technical_summary?: string;
   version?: number;
-  generated_on?: Date;
   status?: string;
   entity_transaction_rid?: string;
   technical_summary_refinement_prompt?: string;
@@ -42,7 +41,6 @@ export class AiTechnicalSummary
   public project_fiscal_rid?: string;
   public technical_summary?: string;
   public version?: number;
-  public generated_on?: Date;
   public status?: string;
   public entity_transaction_rid?: string;
   public technical_summary_refinement_prompt?: string;
@@ -75,7 +73,6 @@ export class AiTechnicalSummary
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true },
         technical_summary: { type: DataTypes.TEXT, allowNull: true },
         version: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 1 },
-        generated_on: { type: DataTypes.DATE, allowNull: true },
         status: { type: DataTypes.STRING(50), allowNull: true },
         entity_transaction_rid: { type: DataTypes.STRING(50), allowNull: true },
         technical_summary_refinement_prompt: { type: DataTypes.TEXT, allowNull: true },

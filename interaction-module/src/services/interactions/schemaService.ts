@@ -299,7 +299,7 @@ class InteractionSchemaService {
         await this.interactionModelService.getModels(accountNumber);
 
       await InteractionSummary.create({
-        rid: interactionRid,
+        interaction_rid: interactionRid,
         r_number: interactionRnumber,
         ...interactionData,
       });
