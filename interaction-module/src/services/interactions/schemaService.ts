@@ -299,7 +299,7 @@ class InteractionSchemaService {
         await this.interactionModelService.getModels(accountNumber);
 
       await InteractionSummary.create({
-        rid: interactionRid,
+        interaction_rid: interactionRid,
         r_number: interactionRnumber,
         ...interactionData,
       });
@@ -1176,28 +1176,21 @@ async fetchInteractionQuestionsById(
     }
   }
 
-  async fetchPOCEmail(accountNumber: string, interactionRid: string) {
+  async fetchPOCEmail(accountNumber: string, interactionRid: string, projectFiscalRid: string) {
     try {
-      const { Interaction } =
-        await this.interactionModelService.getModels(accountNumber);
-        const interactionInfo = await Interaction.findOne({
-          where: { rid: interactionRid },
-          raw: true,
-        });
         if (!this.mainDbSequelize) {
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
-      if (!interactionInfo?.project_fiscal_rid) {
+      if (!projectFiscalRid) {
        return {
          name: null,
          email: null
        };
       }
       const [result]: any[] = await this.mainDbSequelize!.query(
-        rawQueries.fetchPOCEmail(interactionInfo?.project_fiscal_rid),
+        rawQueries.fetchPOCEmail(projectFiscalRid),
         {
-          replacements: { projectRid: interactionInfo?.project_fiscal_rid },
           type: "SELECT",
         }
       );
@@ -1228,19 +1221,34 @@ async updateInteractionInfo(
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-    const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
-    const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
-    await Interaction.update(
-      { status_rid: statusRid, modified_by: userId, modified_datetime: new Date(),
-        recipient_email: emailInfo.email,
-        recipient_name: emailInfo.name,
-        sent_by_rid: userId,
-        sent_by_mail_id: "dhivya.s@hubino.com",
-        sent_on_datetime: new Date(),
-        interaction_url: interactionLink
-      },
-      { where: { rid: interactionRid } }
-    );
+   
+    const [senderemailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
+    const userEmailId = senderemailInfo[0]?.email ?? userId;
+    const interaction = await Interaction.findOne({ where: { rid: interactionRid } });
+    const updateData: any = {
+      
+      modified_by: userId,
+      modified_datetime: new Date(),
+      recipient_email: emailInfo.email,
+      recipient_name: emailInfo.name,
+      sent_by_rid: userId,
+      sent_by_mail_id: userEmailId,
+      interaction_url: interactionLink,
+    };
+
+    if (interaction?.sent_on_datetime) {
+      updateData.last_resent_on = new Date();
+      const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(statusAction.RESENT));
+      const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+      updateData.status_rid = statusRid;
+    } else {
+      updateData.sent_on_datetime = new Date();
+      const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+      const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+      updateData.status_rid = statusRid;
+    }
+
+    await Interaction.update(updateData, { where: { rid: interactionRid } });
   } catch (err) {
     throw new Error(
       "Error updating interaction status: " + (err as Error).message
