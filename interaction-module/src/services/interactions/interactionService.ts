@@ -812,7 +812,7 @@ export class InteractionService {
           if(!b?.[data.sort]) return -1 
           return a[data.sort].localeCompare(b[data.sort])
         })
-      } else {
+      } else if(mainTableFilters[data.sort] != undefined && data.sort_by.toLowerCase() == 'desc'){
         finalData = finalData.sort((a : any, b : any) => {
           if(!b?.[data.sort]) return 1
           if(!a?.[data.sort]) return -1 
@@ -1077,8 +1077,8 @@ export class InteractionService {
           question : d.question,
           response : d.response,
           response_on : d.response_on,
-          attachments : await Promise.all(d.attachments.filter((f : any) => f !== null).map(async (da : any) => {
-            return {
+          attachments : await Promise.all(d.attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
+              return {
               fileName : da.file_name,
               fileUrl : da.file_url == null ? null : await generateSasUrl(da.file_url),
               fileType : da.file_type,
@@ -1089,7 +1089,7 @@ export class InteractionService {
         return data
       }))
       let structuredData = {
-        interaction_rid : result[0][0].responses_history_details[0].interaction_rid,
+        interaction_rid : result[0][0].responses_history_details[0].response_id,
         interaction_r_number : result[0][0].responses_history_details[0].r_number,
         project_name : result[0][0].responses_history_details[0].project_name,
         history_details : finalData
