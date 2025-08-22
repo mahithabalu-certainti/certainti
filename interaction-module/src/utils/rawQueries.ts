@@ -368,10 +368,10 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     `
     WITH fetch_interaction_response AS (
     SELECT 
-    DISTINCT ON (i.interaction_version) 
+    DISTINCT ON (r.interaction_version) 
     r.rid, i.r_number, r.response_by, r.response_on, r.response_email,
     r.interaction_response, i.interaction_source_rid,
-    r.response_source, i.interaction_version, r.interaction_rid, r.interaction_item_rid
+    r.response_source, r.interaction_version, r.interaction_rid, r.interaction_item_rid
     FROM 
     ${schemaName}.interaction_response_history r
     LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
