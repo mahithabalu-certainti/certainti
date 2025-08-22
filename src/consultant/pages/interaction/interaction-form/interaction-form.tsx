@@ -34,6 +34,7 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import {
   getQuestionTableColumns,
   getStatusId,
+  hasFormValuesChanged,
   ProjectDetails,
   transFormPayload,
   validateInteractionForm,
@@ -374,6 +375,12 @@ const InteractionForm = () => {
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
     setActiveFlag(saveFlag);
+
+    if (isEditView && !hasFormValuesChanged(formData, interactionData)) {
+      goBack(); // No changes, just go back
+      return;
+    }
+
     const statusRid = getStatusId(
       formData,
       isEditView,
@@ -382,6 +389,7 @@ const InteractionForm = () => {
       interactionData?.status || '',
       statusOptions
     );
+
     if (!validateForm()) {
       return;
     }
@@ -931,7 +939,7 @@ const InteractionForm = () => {
                                         name='interaction_question'
                                         placeholder='Enter Interaction Question'
                                         autoComplete='off'
-                                        className='outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         onChange={(e) =>
                                           handleQuestionChange(
                                             index,
@@ -957,11 +965,13 @@ const InteractionForm = () => {
                                             },
                                           }}
                                         >
-                                          <span className='h-[32px] w-5 flex items-center justify-center absolute top-0 bg-[#FEF2F2] right-0 pt-1 pr-1 cursor-pointer'>
-                                            <ErrorInfoIcon
-                                              alt='error'
-                                              className='w-5 h-3.5'
-                                            />
+                                          <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                            <React.Suspense fallback={null}>
+                                              <ErrorInfoIcon
+                                                alt='error'
+                                                className='w-5 h-3.5'
+                                              />
+                                            </React.Suspense>
                                           </span>
                                         </Tooltip>
                                       )}
@@ -994,7 +1004,7 @@ const InteractionForm = () => {
                                         name='notes'
                                         placeholder='Enter Notes'
                                         autoComplete='off'
-                                        className='outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         value={question.notes}
                                         onChange={(e) =>
                                           handleQuestionChange(
@@ -1021,10 +1031,12 @@ const InteractionForm = () => {
                                           }}
                                         >
                                           <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                            <ErrorInfoIcon
-                                              alt='error'
-                                              className='w-5 h-3.5'
-                                            />
+                                            <React.Suspense fallback={null}>
+                                              <ErrorInfoIcon
+                                                alt='error'
+                                                className='w-5 h-3.5'
+                                              />
+                                            </React.Suspense>
                                           </span>
                                         </Tooltip>
                                       )}
