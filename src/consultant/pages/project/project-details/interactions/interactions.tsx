@@ -26,8 +26,8 @@ import { ActionItem } from '../../../../../components/table/types';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
 import { SendInteractionModal } from '../../../../../components/interaction';
-import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
+import { InteractionAttachment } from './interaction-attachment';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 
@@ -338,6 +338,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
     } else {
       searchParams.delete('history');
+      searchParams.delete('interaction_attachment_id');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };

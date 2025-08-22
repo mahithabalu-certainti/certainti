@@ -14,9 +14,11 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
-import InteractionQuestions from './interaction-qus';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { accountDetailsProps } from '../../../../account-details/utils';
+import { InteractionQuestions } from '../../../../../../components';
+import { getInteractionStatusColor } from '../helpers';
+import { StatusTypeEnum } from '../../../../../types';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -34,16 +36,24 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const [searchParams] = useSearchParams();
   const interactionId = searchParams.get('interaction_id') || undefined;
 
-  const { data, isLoading, error } = useInteractionDetails(
+  const { data, isLoading, error, refetch } = useInteractionDetails(
     accountid,
     interactionId
   );
+  const disableEditResBtn =
+    data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+
+  const disableInteractionEditBtn = [
+    StatusTypeEnum.cancelled,
+    StatusTypeEnum.completed,
+    StatusTypeEnum.response_received,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const handleEdit = () => {
     const accountId = accountid ?? '';
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'account',
-      interactionId: data?.rid || '',
+      interactionId: data?.interaction_rid || interactionId || '',
     });
     const queryParams = new URLSearchParams({
       accountId,
@@ -53,11 +63,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  const handleResponseHistory = () => {
+    searchParams.set('history', 'response_histroy');
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
+
   const headerButtons = [
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: false,
@@ -85,32 +100,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const InteractionInfo: DetailItem[] = [
     {
       label: 'Interaction Type',
-      value: data?.interaction_type,
+      value: data?.interaction_type_name,
       key: 'interaction_type',
     },
     {
       label: 'Interaction Status',
       value: (
         <span
-          className={`font-semibold ${
-            data?.status === 'Draft'
-              ? 'text-gray-500'
-              : data?.status === 'Created'
-                ? 'text-blue-500'
-                : data?.status === 'Sent'
-                  ? 'text-purple-500'
-                  : data?.status === 'Response Draft'
-                    ? 'text-orange-500'
-                    : data?.status === 'Response Received'
-                      ? 'text-green-600'
-                      : data?.status === 'On-Hold'
-                        ? 'text-yellow-500'
-                        : data?.status === 'Cancelled'
-                          ? 'text-red-600'
-                          : 'text-gray-700'
-          }`}
+          className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
         >
-          {data?.status}
+          {data?.status_name}
         </span>
       ),
       key: 'status',
@@ -122,15 +121,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: data?.response_received_on,
-      key: 'response_received_on',
+      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
+      key: 'response_updated_on',
     },
   ];
 
   const auditInfo: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid,
+      value: data?.interaction_rid || interactionId,
       key: 'rid',
     },
     {
@@ -140,8 +139,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(data?.created_on),
-      key: 'created_on',
+      value: formatDateToYYYYMMDDWithTime(data?.created_datetime),
+      key: 'created_datetime',
     },
     {
       label: 'Created By',
@@ -150,13 +149,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.updated_on),
-      key: 'updated_on',
+      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+      key: 'modified_datetime',
     },
     {
       label: 'Updated By',
-      value: data?.updated_by,
-      key: 'updated_by',
+      value: data?.modified_by,
+      key: 'modified_by',
     },
   ];
 
@@ -201,7 +200,20 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         )}
       </div>
       {data?.questions && data?.questions.length > 0 && (
-        <InteractionQuestions questions={data?.questions} />
+        <InteractionQuestions
+          questions={data?.questions}
+          globalAttachments={data?.global_attachments}
+          isEditEnable={!disableEditResBtn}
+          actionButtonEnable={true}
+          handleResponseHistory={handleResponseHistory}
+          refetchDeetails={refetch}
+          formData={{
+            account_rid: accountid || data?.account_rid || '',
+            project_rid: data?.project_rid || '',
+            project_fiscal_rid: data?.project_fiscal_rid || '',
+            interaction_rid: data?.interaction_rid || interactionId || '',
+          }}
+        />
       )}
       {!isLoading && !error && (
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>
