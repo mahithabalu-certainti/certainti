@@ -135,7 +135,6 @@ export type TimesheetResourceListType = {
   qre_percent: number | null;
   qre_final: number | null;
   currency_symbol: string;
-
 };
 
 export interface TimesheetProjectExportListURLParams {

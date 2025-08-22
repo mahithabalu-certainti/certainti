@@ -64,7 +64,13 @@ import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
-import { exportImportsData, exportTimesheetData, exportTimesheetProjectData, exportTimesheetResourceData, exportTimesheetTaskData } from '../../services/import';
+import {
+  exportImportsData,
+  exportTimesheetData,
+  exportTimesheetProjectData,
+  exportTimesheetResourceData,
+  exportTimesheetTaskData,
+} from '../../services/import';
 
 import { ImportsListURLParams } from '../../types/imports';
 import {
@@ -72,7 +78,7 @@ import {
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
-import { TimesheetProjectExportListURLParams, } from '../../types/timesheet-projects';
+import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -110,7 +116,7 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
-const isProjectResourceExportViewEnable = checkPermission(
+  const isProjectResourceExportViewEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_RESOURCES_EXPORT
   );
@@ -194,29 +200,32 @@ const isProjectResourceExportViewEnable = checkPermission(
     account_rid: accountid || '',
   });
 
-  const [timesheetProjectParams, setTimesheetProjectParams] = useState<TimesheetProjectExportListURLParams>({
-    sortBy: 'project_code',
-    sortOrder: 'ASC',
-    filters: {},
-    fiscalYear: convertedFiscalYear,
-    account_rid: accountid || '',
-    bothParentAndChild: toggleEnabled,
-    documentRid: '',
-  });
-  const [timesheetResourceParams, setTimesheetResourceParams] = useState<TimesheetProjectExportListURLParams>({
-    sortBy: 'project_code',
-    sortOrder: 'ASC',
-    filters: {},
-    account_rid: accountid || '',
-    documentRid: '',
-  });
-  const [timesheetTaskParams, setTimesheetTaskParams] = useState<TimesheetProjectExportListURLParams>({
-    sortBy: 'project_code',
-    sortOrder: 'ASC',
-    filters: {},
-    account_rid: accountid || '',
-    documentRid: '',
-  });
+  const [timesheetProjectParams, setTimesheetProjectParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+      account_rid: accountid || '',
+      bothParentAndChild: toggleEnabled,
+      documentRid: '',
+    });
+  const [timesheetResourceParams, setTimesheetResourceParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+  const [timesheetTaskParams, setTimesheetTaskParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
 
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
@@ -236,7 +245,7 @@ const isProjectResourceExportViewEnable = checkPermission(
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
-    const tab = searchParams.get("tab");
+    const tab = searchParams.get('tab');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
@@ -313,16 +322,11 @@ const isProjectResourceExportViewEnable = checkPermission(
       });
     } else if (exportType === 'timesheet_project') {
       exportTimesheetProjectData(timesheetProjectParams);
-    }
-    else if (exportType === 'timesheet_project_resource') {
+    } else if (exportType === 'timesheet_project_resource') {
       exportTimesheetResourceData(timesheetResourceParams);
-
-    }
-    else if (exportType === 'timesheet_project_task') {
+    } else if (exportType === 'timesheet_project_task') {
       exportTimesheetTaskData(timesheetTaskParams);
-
-    }
-    else if (exportType === 'financial_resource_cost') {
+    } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
@@ -695,9 +699,9 @@ const isProjectResourceExportViewEnable = checkPermission(
           primaryButton={
             isAccountFieldsEditable
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -715,10 +719,11 @@ const isProjectResourceExportViewEnable = checkPermission(
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

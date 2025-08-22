@@ -18,7 +18,7 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 ];
 
 export const projectTaskFilterFields = (
-  resourceTypeOptions: { option: string; value: string }[],
+  resourceTypeOptions: { option: string; value: string }[]
 ): FieldConfig[] => {
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -107,7 +107,8 @@ export const projectTaskFilterFields = (
       value: 'comments',
       type: 'text',
       hide:
-        !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+        !permissionMap?.['comments']?.read &&
+        !permissionMap?.['comments']?.edit,
     },
 
     {
@@ -117,7 +118,8 @@ export const projectTaskFilterFields = (
       required: true,
       filterOptions: requiredFieldFilterOptionsForText,
       hide:
-        !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
+        !permissionMap?.['r_number']?.read &&
+        !permissionMap?.['r_number']?.edit,
     },
     {
       name: 'Sort Options',

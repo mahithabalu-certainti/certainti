@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../../../../store/store";
-import { FieldConfig } from "../../../../components/filter/filterType";
-import { useMemo } from "react";
-import { AllPermissions } from "../../../../../../../common-service";
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../../store/store';
+import { FieldConfig } from '../../../../components/filter/filterType';
+import { useMemo } from 'react';
+import { AllPermissions } from '../../../../../../../common-service';
 
 const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -35,15 +35,15 @@ const enumOptions: { option: string; value: string }[] = [
 
 export const getTimesheetResourceTabFilterFields = (
   countries: { option: string; value: string }[],
-  regions: { option: string; value: string }[],
-
+  regions: { option: string; value: string }[]
 ): FieldConfig[] => {
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const timesheetResourceViewEditFields = useMemo(
     () =>
-      permission?.find((item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT)
-        ?.fields ?? [],
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -81,7 +81,8 @@ export const getTimesheetResourceTabFilterFields = (
       operatorOption: enumOptions,
       options: regions,
       hide:
-        !permissionMap?.['region_rid']?.edit && !permissionMap?.['region_rid']?.read,
+        !permissionMap?.['region_rid']?.edit &&
+        !permissionMap?.['region_rid']?.read,
     },
     {
       name: 'Effort (Hours)',
@@ -98,7 +99,8 @@ export const getTimesheetResourceTabFilterFields = (
       type: 'number',
       operatorOption: numberOptions,
       hide:
-        !permissionMap?.['total_cost_pro_res']?.edit && !permissionMap?.['total_cost_pro_res']?.read,
+        !permissionMap?.['total_cost_pro_res']?.edit &&
+        !permissionMap?.['total_cost_pro_res']?.read,
     },
     {
       name: 'QRE %',

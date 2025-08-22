@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AllPermissions, useGetAllCountries, useGetStatus, } from '../../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllCountries,
+  useGetStatus,
+} from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
@@ -95,7 +99,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     return map;
   }, [timesheetViewEditFields]);
 
-
   const isTimesheetExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_TIMESHEET_EXPORT
@@ -137,10 +140,10 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   }, [data]);
   useEffect(() => {
     if (setExportType) {
-      setExportType(tabName as ExportType || 'timesheet' as ExportType);
+      setExportType((tabName as ExportType) || ('timesheet' as ExportType));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabName])
+  }, [tabName]);
   useEffect(() => {
     setTimesheetParams({
       page: currentPage + 1,
@@ -240,10 +243,12 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   );
   const memoizedStatus = useMemo(
     () =>
-      statusOptions?.data?.data?.status.map((status: { status_name: string; rid: string }) => ({
-        option: status.status_name,
-        value: status.rid,
-      })) || [],
+      statusOptions?.data?.data?.status.map(
+        (status: { status_name: string; rid: string }) => ({
+          option: status.status_name,
+          value: status.rid,
+        })
+      ) || [],
     [statusOptions?.data?.data?.status]
   );
   // Variables
@@ -257,14 +262,16 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const timesheetProjectFilterFields = getTimesheetProjectTabFilterFields(
     fiscalYears,
     memoizedResourceType,
-    memoizedStatus,
+    memoizedStatus
   );
 
-  const timesheetResourcesFilterFields = getTimesheetResourceTabFilterFields(memoizedCountry, memoizedRegion);
-
-  const timesheetProjectTaskFilterFields = projectTaskFilterFields(
-    memoizedResourceType,
+  const timesheetResourcesFilterFields = getTimesheetResourceTabFilterFields(
+    memoizedCountry,
+    memoizedRegion
   );
+
+  const timesheetProjectTaskFilterFields =
+    projectTaskFilterFields(memoizedResourceType);
 
   const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
@@ -278,11 +285,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
 
   const getFiltersMenu = () => {
     if (isProjectTab) {
-      return timesheetProjectFilterFields
+      return timesheetProjectFilterFields;
     } else if (isResourceTab) {
-      return timesheetResourcesFilterFields
+      return timesheetResourcesFilterFields;
     } else if (isProjectTaskTab) {
-      return timesheetProjectTaskFilterFields
+      return timesheetProjectTaskFilterFields;
     }
     return timesheetFilterFields;
   };
@@ -296,7 +303,9 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       <SectionTabPanel
         tabs={TimesheetTabs}
         filterMenu={getFiltersMenu()}
-        filterVisibility={!viewDetails || isProjectTab || isResourceTab || isProjectTaskTab}
+        filterVisibility={
+          !viewDetails || isProjectTab || isResourceTab || isProjectTaskTab
+        }
         showFilter={showFilter}
         contextKey='timesheet'
         appliedFilters={appliedFilters}
@@ -309,7 +318,13 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         showToggle={isProjectTab}
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
-        showRefresh={!showUploads || !viewDetails || isProjectTab || isResourceTab || isProjectTaskTab}
+        showRefresh={
+          !showUploads ||
+          !viewDetails ||
+          isProjectTab ||
+          isResourceTab ||
+          isProjectTaskTab
+        }
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCountry}
       />
