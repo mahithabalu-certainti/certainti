@@ -211,6 +211,7 @@ export enum AllPermissions {
   PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
   IMPORTS_VIEW_EDIT = 'imports_view_edit',
   TIMESHEET_VIEW_EDIT = 'timesheet_view_edit',
+  TIMESHEET_PROJECT_TASK_VIEW_EDIT = 'timesheet_project_task_view_edit',
   IMPORTS_EXPORT = 'imports_export',
   MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
   PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
