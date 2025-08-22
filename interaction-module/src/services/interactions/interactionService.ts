@@ -119,7 +119,9 @@ export class InteractionService {
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string) {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
     if (isEnabled) {
-      await this.sendInteraction([{ interaction_rid: interactionId }], interactionData.account_rid, userId);
+      await this.sendInteraction([{ interaction_rid: interactionId,
+        project_fiscal_rid: interactionData.project_fiscal_rid
+       }], interactionData.account_rid, userId);
     }
   }
   async getInteractionStatusAndSource() {
@@ -459,10 +461,11 @@ export class InteractionService {
   async sendInteraction(
    interactions: {
       interaction_rid: string;
-      emailInfo?: {
+      email_info?: {
         email: string;
         name: string | null;
       };
+      project_fiscal_rid: string;
     }[],
     accountRid: string,
     userId: string
@@ -484,17 +487,16 @@ export class InteractionService {
 
       const interactionResponse: any[] = [];
 
-      for (const { interaction_rid, emailInfo } of interactions) {
-        const rid = interaction_rid;
+      for (const { interaction_rid, email_info, project_fiscal_rid } of interactions) {
         // If emailInfo.email is empty, fetch POC email
-        let sendEmailInfo = emailInfo;
-        if (!emailInfo || !emailInfo?.email) {
-          sendEmailInfo =  await this.interactionSchemaService.fetchPOCEmail(accountNumber, rid);
+        let sendEmailInfo = email_info;
+        if (!email_info || !email_info?.email) {
+          sendEmailInfo =  await this.interactionSchemaService.fetchPOCEmail(accountNumber, interaction_rid, project_fiscal_rid);
         }
 
         if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
           interactionResponse.push({
-            interactionRid: rid,
+            interaction_rid,
             csvSent: false,
             error: "No email info found"
           });
@@ -508,38 +510,31 @@ export class InteractionService {
           await Promise.all([
             this.interactionSchemaService.fetchInteractionQuestionsById(
               accountNumber,
-              rid
+              interaction_rid
             ),
             this.interactionSchemaService.fetchInteractionInfo(
-              rid,
+              interaction_rid,
               accountNumber
             ),
           ]);
         const interactionLink = await this.generateInteractionLink(
-          rid,
+          interaction_rid,
           interactionInfo.accountInfo.account_rid
         );
 
         // Prepare Excel workbook
         const excelBuffer = await this.generateExcelBuffer(
-          rid,
+          interaction_rid,
           interactionItems,
           interactionInfo
         );
         const excelAttachment = {
-          filename: `interaction_${rid}.xlsx`,
+          filename: `interaction_${interaction_rid}.xlsx`,
           content: Buffer.from(excelBuffer).toString("base64"),
           contentType:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         };
-        if (!emailInfo) {
-            interactionResponse.push({
-            interactionRid: rid,
-            csvSent: false,
-            error: "No email info found"
-            });
-            continue;
-        }
+       
 
         // Send email
         const emailResponse = await this.sendEmailWithAttachment(
@@ -552,7 +547,7 @@ export class InteractionService {
         if (emailResponse) {
           await this.interactionSchemaService.updateInteractionInfo(
             accountNumber,
-            rid,
+            interaction_rid,
             statusAction.SENT,
             userId,
             sendEmailInfo,
@@ -563,7 +558,7 @@ export class InteractionService {
         }
 
         interactionResponse.push({
-          interactionRid: rid,
+          interactionRid: interaction_rid,
           csvSent: !!emailResponse,
         });
       }

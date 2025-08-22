@@ -79,7 +79,8 @@ export interface IInteractionService {
   sendInteraction(
     interactions: {
       interaction_rid: string;
-      emailInfo: {
+      project_fiscal_rid: string;
+      email_info: {
         email: string;
         name: string | null;
       };
