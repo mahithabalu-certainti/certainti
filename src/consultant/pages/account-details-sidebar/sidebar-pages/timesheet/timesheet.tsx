@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, useGetAllCountries, useGetStatus, } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../../../types';
 import { ResourceTabs } from '../resources/resources';
 import { getTimesheetFilterFields } from './helpers';
+import { getTimesheetProjectTabFilterFields } from './timesheet-details-tab/project-tab/project-tab-filters';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -18,11 +19,26 @@ import { TimeSheetIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { getTimesheetListColumns } from './columns';
 import TimesheetDetails from './timesheet-details';
+import { getTimesheetResourceTabFilterFields } from './timesheet-details-tab/resource-tab/resource-tab-filters';
+import { projectTaskFilterFields } from './timesheet-details-tab/project-task/filters';
+import { useGetResourceType } from '../../../../services/resource-list';
+import { TimesheetProjectExportListURLParams } from '../../../../types/timesheet-projects';
+import { useFetchState } from '../../../../services/account';
+import { FilterValue } from '../../components/filter/filterType';
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
   setTimesheetParams: React.Dispatch<
     React.SetStateAction<TimeSheetListURLParams>
+  >;
+  setTimesheetProjectParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
+  setTimesheetResourceParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
+  setTimesheetTaskParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
   >;
 }
 
@@ -37,6 +53,9 @@ const TimesheetTabs: ResourceTabs[] = [
 const Timesheet: React.FC<TimeSheetProps> = ({
   setExportType,
   setTimesheetParams,
+  setTimesheetProjectParams,
+  setTimesheetResourceParams,
+  setTimesheetTaskParams,
 }) => {
   // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
@@ -75,13 +94,21 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     });
     return map;
   }, [timesheetViewEditFields]);
+
+
   const isTimesheetExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
+  const [toggleEnabled, setToggleEnabled] = useState(false);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
 
   // API Hooks
-  const fileId = searchParams.get('file_id');
+  const fileId = searchParams.get('timesheet_id');
+  const tabName = searchParams.get('tab');
+  const isProjectTab = tabName === 'timesheet_project';
+  const isResourceTab = tabName === 'timesheet_project_resource';
+  const isProjectTaskTab = tabName === 'timesheet_project_task';
   const viewDetails = !!fileId;
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const { data, isLoading, isError } = useTimesheetList(
@@ -97,6 +124,10 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     !viewDetails,
     refreshTimesheet
   );
+  const allCountries = useGetAllCountries();
+  const Regions = useFetchState(currentCountry?.toString() || '');
+  const resourceTypeOptions = useGetResourceType();
+  const statusOptions = useGetStatus();
 
   // UseEffects
   useEffect(() => {
@@ -106,8 +137,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   }, [data]);
   useEffect(() => {
     if (setExportType) {
-      setExportType('timesheet');
+      setExportType(tabName as ExportType || 'timesheet' as ExportType);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabName])
+  useEffect(() => {
     setTimesheetParams({
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -149,13 +183,13 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     setRefreshTimesheet(Date.now());
   };
   const handleBackClick = () => {
-    searchParams.delete('file_id');
+    searchParams.delete('timesheet_id');
     searchParams.delete('tab');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
   const handleDocument = (rowId: string) => {
     if (rowId) {
-      searchParams.set('file_id', rowId);
+      searchParams.set('timesheet_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -180,7 +214,38 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     setSortOrder(sortOrder);
     setSortField(property);
   };
-
+  const memoizedCountry: { option: string; value: string }[] = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        option: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
+  const memoizedRegion = useMemo(
+    () =>
+      Regions.data?.data.states.map((state) => ({
+        option: state.state_name,
+        value: state.rid,
+      })) || [],
+    [Regions.data?.data.states]
+  );
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status: { status_name: string; rid: string }) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
   // Variables
   const currentYear = new Date().getFullYear();
   const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
@@ -188,6 +253,20 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     fiscalYears,
     permissionMap
   );
+
+  const timesheetProjectFilterFields = getTimesheetProjectTabFilterFields(
+    fiscalYears,
+    memoizedResourceType,
+    memoizedStatus,
+  );
+
+  const timesheetResourcesFilterFields = getTimesheetResourceTabFilterFields(memoizedCountry, memoizedRegion);
+
+  const timesheetProjectTaskFilterFields = projectTaskFilterFields(
+    memoizedResourceType,
+  );
+
+  const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
   const timesheetColumns = getTimesheetListColumns(
     handleDocument,
@@ -197,12 +276,27 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   );
   const getRowId = (row: TimeSheetList) => row.rid;
 
+  const getFiltersMenu = () => {
+    if (isProjectTab) {
+      return timesheetProjectFilterFields
+    } else if (isResourceTab) {
+      return timesheetResourcesFilterFields
+    } else if (isProjectTaskTab) {
+      return timesheetProjectTaskFilterFields
+    }
+    return timesheetFilterFields;
+  };
+  const handleCountry = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'country_name' && value) {
+      setCurrentCountry(String(value));
+    }
+  };
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={TimesheetTabs}
-        filterMenu={timesheetFilterFields}
-        filterVisibility={viewDetails ? false : true}
+        filterMenu={getFiltersMenu()}
+        filterVisibility={!viewDetails || isProjectTab || isResourceTab || isProjectTaskTab}
         showFilter={showFilter}
         contextKey='timesheet'
         appliedFilters={appliedFilters}
@@ -212,11 +306,24 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={viewDetails ? false : true}
+        showToggle={isProjectTab}
+        toggleEnabled={toggleEnabled}
+        setToggleEnabled={setToggleEnabled}
+        showRefresh={!showUploads || !viewDetails || isProjectTab || isResourceTab || isProjectTaskTab}
         onRefreshClick={onRefreshClick}
+        onFilterChange={handleCountry}
       />
       {viewDetails ? (
-        <TimesheetDetails handleBackClick={handleBackClick} />
+        <TimesheetDetails
+          handleBackClick={handleBackClick}
+          bothParentAndChild={toggleEnabled}
+          appliedFilters={appliedFilters}
+          setExportType={setExportType}
+          onRefreshClick={refreshTimesheet}
+          setTimesheetProjectParams={setTimesheetProjectParams}
+          setTimesheetResourceParams={setTimesheetResourceParams}
+          setTimesheetTaskParams={setTimesheetTaskParams}
+        />
       ) : (
         <>
           <SectionHeader
