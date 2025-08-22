@@ -4,7 +4,6 @@ import { TimesheetResourceListType } from '../../../../../../types/timesheet-pro
 
 export const getResourceTabTableColumns = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  // isImportExportEnable?: boolean
 ): ListTableColumn<TimesheetResourceListType>[] =>
   [
     {

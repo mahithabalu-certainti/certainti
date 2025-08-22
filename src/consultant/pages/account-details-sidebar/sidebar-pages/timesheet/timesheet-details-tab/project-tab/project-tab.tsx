@@ -4,10 +4,12 @@ import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
-import { AllPermissions } from '../../../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../../../common-service';
 import { useTimesheetProjectTableList } from '../../../../../../services/import';
 import { getProjectTabTableColumns } from './columns';
 import { TimesheetProjectList, TimesheetProjectExportListURLParams } from '../../../../../../types/timesheet-projects';
+import { AccessRestricted } from '../../../../../../../components/account-restricted';
+import { checkPermission } from '../../../../../../../common-utils';
 
 interface projectTabListProps {
   bothParentAndChild: boolean;
@@ -35,8 +37,6 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
     []
   );
 
-  // hooks
-  // const navigate = useNavigate();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -44,7 +44,11 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
   );
 
   // Permission Mangement
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const timesheetProjectIsEnable = checkPermission(
+    modules,
+    AllModules.PROJECTS
+  );
   // TODO: Have to update view & edit permissions
   const timesheet_Project_ViewEditFields = useMemo(
     () =>
@@ -59,11 +63,6 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
     });
     return map;
   }, [timesheet_Project_ViewEditFields]);
-  // TODO: Have to update export permissions
-  // const isTimesheetProjectExportEnable = checkPermission(
-  //     permission,
-  //     AllPermissions.IMPORTS_EXPORT
-  // );
 
   // API Hooks
   const tabName = searchParams.get('tab');
@@ -133,7 +132,7 @@ const TimesheetProjectTab: React.FC<projectTabListProps> = ({
 
   const totalItems = projectApiListData?.count || 0;
   const projectTabTableColumns = getProjectTabTableColumns(permissionMap);
-
+  if (!timesheetProjectIsEnable) return <AccessRestricted />;
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable

@@ -1,20 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import {
-  downloadTimesheetFailureData,
-  useTimesheetDetails,
-} from '../../../../services/import';
+import { downloadTimesheetFailureData, useTimesheetDetails, } from '../../../../services/import';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { Tab, Tabs, Typography } from '@mui/material';
-import DetailsSection, {
-  DetailItem,
-} from '../../../../../components/details-section/details';
+import DetailsSection, { DetailItem, } from '../../../../../components/details-section/details';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { TimeSheetIcon } from '../../../../../assets';
-import {
-  applyHidePermission,
-  formatDateToYYYYMMDDWithTime,
-} from '../../../../../common-utils';
+import { applyHidePermission, formatDateToYYYYMMDDWithTime, } from '../../../../../common-utils';
 import { FailureType, ImportEntityType } from '../../../../types/imports';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -89,7 +81,7 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   const fileId = searchParams.get('timesheet_id') || undefined;
   const { permission } = useSelector((state: RootState) => state.permission);
 
-  const [value, setValue] = useState('details'); // Resource inner tab value
+  const [value, setValue] = useState('details');
   const [documentRid, setDocumentRid] = useState<string>('');
   const { data, isLoading, error } = useTimesheetDetails(accountid, fileId);
 
@@ -253,14 +245,12 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    // update the URL with the tab value
     searchParams.set('tab', newValue);
     if (setExportType) setExportType(undefined as unknown as ExportType);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
   useEffect(() => {
-    // update tab when refereshing the page
     const tab = searchParams.get('tab');
     if (tab) {
       setValue(tab);

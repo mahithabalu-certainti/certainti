@@ -8,7 +8,6 @@ import { TimesheetProjectList } from '../../../../../../types/timesheet-projects
 
 export const getProjectTabTableColumns = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
-  // isImportExportEnable?: boolean
 ): ListTableColumn<TimesheetProjectList>[] => [
     {
       id: 'project_code',

@@ -3,10 +3,12 @@ import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
-import { AllPermissions } from '../../../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../../../common-service';
 import { useTimesheetResourceTableList } from '../../../../../../services/import';
 import { getResourceTabTableColumns } from './columns';
 import { TimesheetProjectExportListURLParams, TimesheetResourceListType } from '../../../../../../types/timesheet-projects';
+import { checkPermission } from '../../../../../../../common-utils';
+import { AccessRestricted } from '../../../../../../../components/account-restricted';
 
 interface projectTabListProps {
     documentRid: string;
@@ -33,7 +35,11 @@ const TimesheetResourcesTab: React.FC<projectTabListProps> = ({ documentRid,
     const [searchParams] = useSearchParams();
 
     // Permission Mangement
-    const { permission } = useSelector((state: RootState) => state.permission);
+    const { modules, permission } = useSelector((state: RootState) => state.permission);
+    const timesheetResourcesIsEnable = checkPermission(
+        modules,
+        AllModules.PROJECT_RESOURCES
+    );
     // TODO: Have to update view & edit permissions
     const timesheetResourceViewEditFields = useMemo(
         () =>
@@ -87,7 +93,6 @@ const TimesheetResourcesTab: React.FC<projectTabListProps> = ({ documentRid,
         sortOrder,
         appliedFilters,
         accountid,
-        // convertedFiscalYear,
         documentRid
     ]);
 
@@ -108,7 +113,7 @@ const TimesheetResourcesTab: React.FC<projectTabListProps> = ({ documentRid,
     const projectTabTableColumns = getResourceTabTableColumns(
         permissionMap,
     );
-
+    if (!timesheetResourcesIsEnable) return <AccessRestricted />;
     return (
         <div className='border border-[#CBD6E2]'>
             <ListTable

@@ -1,7 +1,4 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-// import { SelectOption } from '../../../../types';
-// import { FieldConfig } from '../../components/filter/filterType';
-
 import { useMemo } from 'react';
 import { SelectOption } from '../../../../../../types';
 import { FieldConfig } from '../../../../components/filter/filterType';
@@ -70,7 +67,6 @@ export const getTimesheetProjectTabFilterFields = (
       value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
-      // options: memoizedProjectTaskResourceCode,
       hide:
         !permissionMap?.['project_code']?.edit &&
         !permissionMap?.['project_code']?.read,

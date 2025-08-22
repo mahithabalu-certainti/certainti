@@ -3,11 +3,13 @@ import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
-import { AllPermissions } from '../../../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../../../common-service';
 import { useTimesheetProjectTaskList } from '../../../../../../services/import';
 import { ProjectTaskListType } from '../../../../../../types/project-task';
 import { getProjectTaskColumns } from './columns';
 import { TimesheetProjectExportListURLParams } from '../../../../../../types/timesheet-projects';
+import { checkPermission } from '../../../../../../../common-utils';
+import { AccessRestricted } from '../../../../../../../components/account-restricted';
 
 interface projectTaskProps {
   documentRid: string;
@@ -37,7 +39,11 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
   const [searchParams] = useSearchParams();
 
   // Permission Mangement
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const timesheetTaskIsEnable = checkPermission(
+    modules,
+    AllModules.PROJECT_TASK
+  );
   const projectTaskViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -110,7 +116,7 @@ const TimesheetProjectTask: React.FC<projectTaskProps> = ({
 
   const totalItems = projectApiListData?.count || 0;
   const projectTaskColumns = getProjectTaskColumns(permissionMap);
-
+  if (!timesheetTaskIsEnable) return <AccessRestricted />;
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable
