@@ -41,6 +41,7 @@ interface InteractionQuesProps {
   handleResponseHistory?: () => void;
   refetchDeetails?: () => void;
   formData?: Record<string, string>;
+  className?: string;
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -52,6 +53,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   handleResponseHistory,
   refetchDeetails,
   formData,
+  className,
 }) => {
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -315,7 +317,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
 
   return (
     <div
-      className={`my-3 border border-[#CBD6E2] rounded-[2px] ${isUpdateLoading ? 'pointer-events-none' : ''}`}
+      className={`${className ? className : 'my-3 border border-[#CBD6E2] rounded-[2px]'} ${isUpdateLoading ? 'pointer-events-none' : ''}`}
     >
       <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
         <div className='text-[14px] text-[#2D3E4F] font-semibold'>

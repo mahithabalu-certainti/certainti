@@ -1,5 +1,3 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface DisplayColumn {
   items: Array<{
@@ -9,14 +7,6 @@ export interface DisplayColumn {
     hide?: boolean;
   }>;
 }
-
-// const getValueOrDefault = (
-//   value?: string | number | null,
-//   defaultValue = '-'
-// ): string => {
-//   return value?.toString() || defaultValue;
-// };
-
 export const transformInteractionData = (
   data: any
   //   permissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -43,31 +33,6 @@ export const transformInteractionData = (
           //   hide:
           //     !permissionMap?.['parent_account_rid']?.read &&
           //     !permissionMap?.['parent_account_rid']?.edit,
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Email ID',
-          value: interaction?.email || '-',
-          //   hide:
-          //     !permissionMap?.['country_rid']?.read &&
-          //     !permissionMap?.['country_rid']?.edit,
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Response Date',
-          value:
-            formatDateToYYYYMMDDWithTime(
-              interaction?.history_details?.[0].response_on
-            ) || '-',
-          //   hide:
-          //     !permissionMap?.['industry_rid']?.read &&
-          //     !permissionMap?.['industry_rid']?.edit,
         },
       ],
     },
