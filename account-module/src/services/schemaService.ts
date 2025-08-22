@@ -1998,7 +1998,7 @@ private async createInteractionTable(
 
   await sequelize.query(`
     CREATE TRIGGER trg_log_interaction_status_change
-    AFTER INSERT OR UPDATE ON "${schemaName}".interactions
+    AFTER INSERT OR UPDATE OF status_rid ON "${schemaName}".interactions
     FOR EACH ROW
     EXECUTE FUNCTION "${schemaName}".log_interaction_status_change();
   `);

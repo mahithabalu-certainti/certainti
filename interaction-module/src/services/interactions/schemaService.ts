@@ -454,9 +454,9 @@ if(!this.orgDbSequelize)
     });
     let interactionItems = await this.fetchInteractionItems(
       accountNumber,
-      interactionRid
+      interactionRid,
+      interactionDetails?.dataValues.interaction_version ||  1
     );
-    console.log("Interaction items", interactionItems);
     const globalAttachments = await this.fetchGlobalAttachmentsByInteractionRid(
         accountNumber,
         interactionRid,
@@ -464,9 +464,6 @@ if(!this.orgDbSequelize)
       );
 
     if (interactionDetails && interactionDetails.dataValues) {
-      // Attach interaction items (questions) to the response
-      //interactionDetails.dataValues.questions = interactionItems;
-      // Optionally, pick only required fields for the response
       const {
         rid,
         account_rid,
@@ -1062,7 +1059,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
   /**
    * Fetches interaction items for a given interaction.
    */
-  async fetchInteractionItems(accountNumber: string, interactionRid: string) {
+  async fetchInteractionItems(accountNumber: string, interactionRid: string,interactionVersion:number) {
     try {
       const { InteractionItem, InteractionResponseHistory,InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
@@ -1082,7 +1079,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
       for (const item of plainItems) {
         // Fetch attachments for each question
         const attachments = await InteractionAttachment.findAll({
-          where: { interaction_item_rid: item.rid },
+          where: { interaction_item_rid: item.rid,interaction_version: interactionVersion },
           attributes: [
         "attachment_url",
         "attachment_name",
