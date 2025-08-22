@@ -296,7 +296,13 @@ export const rawQueries = {
   {
     return `
     SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`
-  }
+  },
+  fetchAllParentRNumber () {
+    let query =
+    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL`
+    return query;
+
+}
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -337,10 +343,12 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",
     interaction_source_name : "interaction_source_name",
+    interaction_type_name : "interaction_type_name",
     created_user_name : "created_user_name",
     updated_user_name : "updated_user_name",
     status_rid : "status_rid",
-    interaction_type_rid : "interaction_type_rid"
+    interaction_type_rid : "interaction_type_rid",
+    status_name : "status_name"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]

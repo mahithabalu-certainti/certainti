@@ -836,22 +836,6 @@ export class InteractionService {
       }
       totalResults = disablePagination ? finalData.length : finalData[0].total_records
       let finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
-      finalPaginatedData = await Promise.all(finalPaginatedData.map(async (d : any) => {
-        let data = {
-          ...d,
-          url : d.interaction_url == '' || d.interaction_url == null ? null : await generateSasUrl(d.interaction_url)
-        }
-        delete data.interaction_url
-        return data;
-      }))
-      finalPaginatedData = finalPaginatedData.map((d : any) => {
-        const data = {
-          ...d,
-          interaction_url : d.url
-        }
-        delete data.url
-        return data;
-      })
       let organizedData = {
         page : data.page,
         limit : data.limit,
@@ -882,25 +866,9 @@ export class InteractionService {
       data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by
     ))
     if(result[0][0].interactions != null) {
-      let finalData = await Promise.all(result[0][0].interactions.map(async (d : any) => {
-        let data = {
-          ...d,
-          url : d.interaction_url == '' || d.interaction_url == null ? null : await generateSasUrl(d.interaction_url)
-        }
-        delete data.interaction_url
-        return data;
-      }))
-      finalData = finalData.map((d : any) => {
-        let data = {
-          ...d,
-          interaction_url : d.url
-        }
-        delete data.url
-        return data;
-      })
       return {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        data : finalData
+        data : result[0][0].interactions
       }
     } else {
       return {
@@ -1107,6 +1075,14 @@ export class InteractionService {
         interaction_rid : result[0][0].responses_history_details[0].response_id,
         interaction_r_number : result[0][0].responses_history_details[0].r_number,
         project_name : result[0][0].responses_history_details[0].project_name,
+        global_attachments : await Promise.all(result[0][0].responses_history_details[0].global_attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
+          return {
+            fileName : da.file_name,
+            fileUrl : da.file_url == null ? null : await generateSasUrl(da.file_url),
+            fileType : da.file_type,
+            fileSize : da.file_size
+          }
+        })),
         history_details : finalData
       }
       return {
@@ -1166,5 +1142,5 @@ export class InteractionService {
       data : data.project_summary
     };
   }
-  
+
 }
