@@ -55,6 +55,31 @@ export const getQuestionTableColumns = (
   },
 ];
 
+export const hasFormValuesChanged = (
+  formData: InteractionFormData,
+  interactionData: InteractionDetails | undefined
+): boolean => {
+  if (!interactionData) return true;
+  const statusChanged =
+    formData.status && formData.status !== interactionData.status;
+
+  const getNormalizedQuestions = (questions: InteractionFormQuestion[]) =>
+    questions.map((q) => ({
+      question: q.question,
+      notes: q.notes,
+      is_mandatory: q.is_mandatory,
+      question_seq_num: q.question_seq_num,
+      is_editable: q.is_editable,
+      rid: q.rid,
+    }));
+
+  const questionsChanged =
+    JSON.stringify(getNormalizedQuestions(formData.questions)) !==
+    JSON.stringify(getNormalizedQuestions(interactionData.questions));
+
+  return statusChanged || questionsChanged;
+};
+
 export const validateInteractionForm = (
   formData: InteractionFormData,
   source: string | null

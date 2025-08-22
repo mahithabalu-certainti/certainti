@@ -378,9 +378,10 @@ export interface UploadInteractionAttachmentResponse {
 
 export interface InteractionItem {
   interaction_rid: string;
-  emailInfo?: {
-    email?: string;
-    name?: string;
+  project_fiscal_rid: string;
+  email_info: {
+    email: string;
+    name: string;
   };
 }
 

@@ -112,7 +112,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
     if (!showEmailFields) {
       const interactions = selectedRows.map((row) => ({
         interaction_rid: row.rid,
-        emailInfo: {
+        project_fiscal_rid: row.project_fiscal_rid || '',
+        email_info: {
           email: '',
           name: '',
         },
@@ -136,7 +137,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         const { email, name } = emails[row.rid] || {};
         return {
           interaction_rid: row.rid,
-          emailInfo: {
+          project_fiscal_rid: row.project_fiscal_rid || '',
+          email_info: {
             email: email.trim() || '',
             name: name?.trim() || email.split('@')[0] || '',
           },
