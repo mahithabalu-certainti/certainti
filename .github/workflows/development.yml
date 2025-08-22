@@ -467,6 +467,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
           NODE_ENV_DB_PREFIX="D001-"
+          INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
