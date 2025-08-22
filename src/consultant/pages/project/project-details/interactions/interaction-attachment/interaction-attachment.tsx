@@ -19,7 +19,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   handleBackClick,
   refresh,
 }) => {
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -73,7 +73,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
       interaction_rid: interactionId || '',
     }));
   }, [currentPage, rowsPerPage, accountId, interactionId]);
-
+  console.log(data?.data.totalRecords, 'total counts');
   return (
     <>
       <div className='border border-[#CBD6E2]'>

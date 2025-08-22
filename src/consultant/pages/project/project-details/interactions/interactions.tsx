@@ -154,7 +154,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     () =>
       interactionSources.data?.data.interactionSource.map((source) => ({
         option: source.interaction_source_name,
-        value: source.rid,
+        value: source.interaction_source_name,
       })) || [],
     [interactionSources.data?.data.interactionSource]
   );
@@ -166,7 +166,11 @@ const Interactions: React.FC<InteractionsProps> = ({
           const status = (item.status_name || '').toLowerCase();
           return {
             ...item,
-            disableCheckBox: status === StatusTypeEnum.draft || status === '',
+            disableCheckBox:
+              status === StatusTypeEnum.draft ||
+              status === StatusTypeEnum.cancelled ||
+              status === StatusTypeEnum.response_received ||
+              status === '',
           };
         }) || [];
 
@@ -419,7 +423,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           <SectionHeader
             title={
               viewResponseHistory
-                ? `Interaction Response History${interactionResponseId ? ' Details' : ''}`
+                ? `Interaction Response History`
                 : 'Interaction'
             }
             titleIcon={
@@ -474,6 +478,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               isOpen={sendModalOpen}
               onClose={() => setSendModalOpen(false)}
               selectedRows={selectedRows}
+              onSuccessRefetch={handleRefresh}
             />
           </div>
         </>
