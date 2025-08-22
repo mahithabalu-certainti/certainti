@@ -47,6 +47,7 @@ const updateInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().required(),
   parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
@@ -82,8 +83,8 @@ const updateInteractionResponseSchema = Joi.object({
     .items(
       Joi.object({
         rid: Joi.string().pattern(uuidRegex).allow(null, ""),
-        question: Joi.string().max(255).required(),
-        response: Joi.string().max(1000).allow(""),
+        question: Joi.string().required(),
+        response: Joi.string().allow(""),
         attachments: Joi.array().items(
           Joi.object({
             fileName: Joi.string().max(255).required(),
