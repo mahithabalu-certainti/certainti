@@ -32,6 +32,19 @@ class InteractionSchemaService {
         accountNumber
       );
 
+      const interactionExists = await Interaction.findOne({
+        where: {
+          account_rid: interactionData.account_rid,
+          project_fiscal_rid: interactionData.project_fiscal_rid,
+        },
+      });
+
+      if (interactionExists) {
+        interactionData.parent_interaction_rid = interactionExists.rid;
+        
+      }
+      interactionData.interaction_iteration = (interactionExists?.interaction_iteration ?? 0) + 1;
+
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });

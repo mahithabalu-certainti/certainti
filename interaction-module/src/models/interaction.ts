@@ -20,7 +20,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   sent_by_mail_id?: string;
   sent_on_datetime?: Date;
   parent_interaction_rid?: string;
-  interaction_iteration?: number;
+  interaction_iteration?: number | null;
   last_resent_on?: Date;
   last_reminder_on?: Date;
   last_reminder_by?: string | null;
@@ -64,7 +64,7 @@ export class Interaction
   public sent_by_mail_id?: string;
   public sent_on_datetime?: Date;
   public parent_interaction_rid?: string;
-  public interaction_iteration?: number;
+  public interaction_iteration?: number | null;
   public last_resent_on?: Date;
   public last_reminder_on?: Date;
   public last_reminder_by?: string | null;
