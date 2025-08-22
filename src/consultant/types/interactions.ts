@@ -140,6 +140,7 @@ export type InteractionList = {
   last_resent_on: string | null;
   interaction_iteration: number | null;
   attachment_count: number | null;
+  disableCheckBox?: boolean;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -377,14 +378,15 @@ export interface UploadInteractionAttachmentResponse {
 
 export interface InteractionItem {
   interaction_rid: string;
-  emailInfo?: {
-    email?: string;
-    name?: string;
+  project_fiscal_rid: string;
+  email_info: {
+    email: string;
+    name: string;
   };
 }
 
 export interface SendInteractionPayload {
   account_rid: string;
   interactions: InteractionItem[];
-  customRecipient: boolean;
+  customRecipient?: boolean;
 }

@@ -55,6 +55,31 @@ export const getQuestionTableColumns = (
   },
 ];
 
+export const hasFormValuesChanged = (
+  formData: InteractionFormData,
+  interactionData: InteractionDetails | undefined
+): boolean => {
+  if (!interactionData) return true;
+  const statusChanged =
+    formData.status && formData.status !== interactionData.status;
+
+  const getNormalizedQuestions = (questions: InteractionFormQuestion[]) =>
+    questions.map((q) => ({
+      question: q.question,
+      notes: q.notes,
+      is_mandatory: q.is_mandatory,
+      question_seq_num: q.question_seq_num,
+      is_editable: q.is_editable,
+      rid: q.rid,
+    }));
+
+  const questionsChanged =
+    JSON.stringify(getNormalizedQuestions(formData.questions)) !==
+    JSON.stringify(getNormalizedQuestions(interactionData.questions));
+
+  return statusChanged || questionsChanged;
+};
+
 export const validateInteractionForm = (
   formData: InteractionFormData,
   source: string | null
@@ -156,7 +181,7 @@ export const getStatusId = (
   isDraftStatus: boolean,
   saveFlag: StatusActionEnum,
   currentStatusId: string,
-  statusOptions: { label: string; value: string; hide: boolean }[]
+  statusOptions: { label: string; value: string; disable: boolean }[]
 ): string => {
   if (formData.status) {
     return formData.status;
@@ -213,6 +238,7 @@ export const transFormPayload = (
       '',
     status_rid: statusRid,
     questions: transformedQuestions,
+    fiscal_year: formData.fiscalYear || interactionData?.fiscal_year,
   };
 
   if (isEditView && interactionData) {
@@ -222,8 +248,5 @@ export const transFormPayload = (
     };
   }
 
-  return {
-    ...basePayload,
-    fiscal_year: formData.fiscalYear,
-  };
+  return basePayload;
 };

@@ -9,10 +9,11 @@ import { getInteractionAttachmentListUrl } from '../urls/interactions-url';
 export const fetchInteractionAttachmentList = async (
   params: InteractionAttachmentListParams
 ): Promise<InteractionAttachmentApiResponse> => {
-  const { data } = await interactionServiceApi.post<InteractionAttachmentApiResponse>(
-    getInteractionAttachmentListUrl(),
-    params
-  );
+  const { data } =
+    await interactionServiceApi.post<InteractionAttachmentApiResponse>(
+      getInteractionAttachmentListUrl(),
+      params
+    );
   return data;
 };
 
@@ -26,5 +27,6 @@ export const useGetInteractionAttachmentList = (
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     retry: 0,
+    enabled: !!params.interaction_rid,
   });
 };

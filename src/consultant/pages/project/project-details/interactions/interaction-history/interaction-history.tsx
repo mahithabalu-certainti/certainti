@@ -36,7 +36,6 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('status_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
-  const [totalItems, setTotalItems] = useState<number>(0);
 
   const {
     data: interactionHistoryData,
@@ -54,15 +53,12 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     },
     refresh
   );
+  const totalItems = interactionHistoryData?.data?.total_records || 0;
 
   const actionData = useMemo(
     () => interactionHistoryData?.data?.data?.interaction_history || [],
     [interactionHistoryData]
   );
-
-  useEffect(() => {
-    setTotalItems(actionData.length);
-  }, [actionData]);
 
   useEffect(() => {
     const updatedParams = {
@@ -73,6 +69,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       limit: rowsPerPage,
     };
     setInteractionsParams(updatedParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const getRowId = (row: InteractionHistoryAction) => row.rid;
@@ -137,7 +134,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             hoverHighlight={false}
             tableStyle={{
               height: '100%',
-              maxHeight: 'calc(100vh - 290px)',
+              maxHeight: 'calc(100vh - 330px)',
               overflow: 'auto',
             }}
             stickyHeader={true}

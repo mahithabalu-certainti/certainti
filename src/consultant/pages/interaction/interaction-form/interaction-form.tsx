@@ -34,6 +34,7 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import {
   getQuestionTableColumns,
   getStatusId,
+  hasFormValuesChanged,
   ProjectDetails,
   transFormPayload,
   validateInteractionForm,
@@ -47,13 +48,18 @@ import {
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
-import { useGetInteractionStatus } from '../../../../common-service';
+import {
+  useGetInteractionStatus,
+  useGetInteractionStatusById,
+} from '../../../../common-service';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
+  const [currentStatusId, setCurrentStatusId] = useState<string>('');
+  const [activeFlag, setActiveFlag] = useState<StatusActionEnum | null>(null);
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
     project_code: '',
@@ -129,7 +135,13 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatus = useGetInteractionStatus();
+  const interactionStatusById = useGetInteractionStatusById(currentStatusId);
+  const interactionAllStatus = useGetInteractionStatus();
+
+  const interactionStatus = isEditView
+    ? interactionStatusById
+    : interactionAllStatus;
+
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
   const isDraftStatus =
@@ -151,13 +163,14 @@ const InteractionForm = () => {
       interactionStatus.data?.data.interactionStatus.map((status) => ({
         label: status.status_name,
         value: status.rid,
-        hide: !status.status_type,
+        disable: !status.status_type,
       })) || [],
     [interactionStatus.data?.data.interactionStatus]
   );
 
   useEffect(() => {
     if (interactionData && isEditView) {
+      setCurrentStatusId(interactionData.status || '');
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
@@ -180,10 +193,10 @@ const InteractionForm = () => {
         questions:
           interactionData.questions.length > 0
             ? interactionData.questions.map((qus, index) => ({
-                question_seq_num: qus.question_seq_num || `Q00${index + 1}`,
-                question: qus.question || '',
+                question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
+                question: qus.question.trim() || '',
                 is_mandatory: qus.is_mandatory ?? false,
-                notes: qus.notes || '',
+                notes: qus.notes.trim() || '',
                 is_editable: qus.is_editable ?? true,
                 rid: qus.rid,
               }))
@@ -361,6 +374,13 @@ const InteractionForm = () => {
   };
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
+    setActiveFlag(saveFlag);
+
+    if (isEditView && !hasFormValuesChanged(formData, interactionData)) {
+      goBack(); // No changes, just go back
+      return;
+    }
+
     const statusRid = getStatusId(
       formData,
       isEditView,
@@ -369,6 +389,7 @@ const InteractionForm = () => {
       interactionData?.status || '',
       statusOptions
     );
+
     if (!validateForm()) {
       return;
     }
@@ -381,7 +402,7 @@ const InteractionForm = () => {
       interactionData,
       selectedProject
     );
-    console.log(payload);
+
     if (isEditView && interactionData) {
       updateInteraction.mutate(payload);
     } else {
@@ -395,7 +416,8 @@ const InteractionForm = () => {
     window.history.back();
   };
 
-  const formLoading = isLoading || projectsLoading;
+  const formLoading =
+    isLoading || projectsLoading || interactionStatus.isLoading;
 
   return (
     <div>
@@ -426,7 +448,13 @@ const InteractionForm = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Save as Draft'
-            loading={createInteraction.isPending || updateInteraction.isPending}
+            loading={
+              activeFlag === StatusActionEnum.Draft &&
+              (createInteraction.isPending || updateInteraction.isPending)
+            }
+            disabled={
+              activeFlag !== null && activeFlag !== StatusActionEnum.Draft
+            }
             onClick={() => handleSubmit(StatusActionEnum.Draft)}
             sx={{
               width: '110px',
@@ -438,7 +466,13 @@ const InteractionForm = () => {
           />
           <TextButton
             label='Save & Submit'
-            loading={createInteraction.isPending || updateInteraction.isPending}
+            loading={
+              activeFlag === StatusActionEnum.Create &&
+              (createInteraction.isPending || updateInteraction.isPending)
+            }
+            disabled={
+              activeFlag !== null && activeFlag !== StatusActionEnum.Create
+            }
             onClick={() => handleSubmit(StatusActionEnum.Create)}
             sx={{
               width: '110px',
@@ -759,11 +793,11 @@ const InteractionForm = () => {
                         color: '#425A76',
                         fontSize: '13px',
                         fontWeight: '500',
-                        display: option.hide ? 'none' : 'block',
                       }}
                       key={`${option.value}-${i}`}
                       value={option.value}
                       title={option.label}
+                      disabled={option.disable}
                     >
                       {option.label}
                     </MenuItem>
@@ -851,7 +885,7 @@ const InteractionForm = () => {
                           key={index}
                           sx={{
                             position: 'relative',
-                            height: '32px !important',
+                            p: 0,
                           }}
                           className={`${!question.is_editable && isEditView ? 'bg-[#f3f4f6] cursor-default pointer-events-none' : ''}`}
                         >
@@ -876,11 +910,11 @@ const InteractionForm = () => {
                                     width: col.width,
                                     textAlign: col.align ?? 'left',
                                     position: 'relative',
-                                    height: '32px !important',
                                     backgroundColor: error
                                       ? '#FEF2F2'
                                       : 'transparent',
                                   }}
+                                  sx={{ padding: 0 }}
                                 >
                                   {col.name === 'questionNo' && (
                                     <div
@@ -899,13 +933,13 @@ const InteractionForm = () => {
 
                                   {col.name === 'question' && (
                                     <div
-                                      className={`relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                      className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
                                       <textarea
                                         name='interaction_question'
                                         placeholder='Enter Interaction Question'
                                         autoComplete='off'
-                                        className='outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         onChange={(e) =>
                                           handleQuestionChange(
                                             index,
@@ -931,11 +965,13 @@ const InteractionForm = () => {
                                             },
                                           }}
                                         >
-                                          <span className='h-[32px] w-5 flex items-center justify-center absolute top-0 bg-[#FEF2F2] right-0 pt-1 pr-1 cursor-pointer'>
-                                            <ErrorInfoIcon
-                                              alt='error'
-                                              className='w-5 h-3.5'
-                                            />
+                                          <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                            <React.Suspense fallback={null}>
+                                              <ErrorInfoIcon
+                                                alt='error'
+                                                className='w-5 h-3.5'
+                                              />
+                                            </React.Suspense>
                                           </span>
                                         </Tooltip>
                                       )}
@@ -962,13 +998,13 @@ const InteractionForm = () => {
 
                                   {col.name === 'notes' && (
                                     <div
-                                      className={`box-border relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                      className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
                                       <textarea
                                         name='notes'
                                         placeholder='Enter Notes'
                                         autoComplete='off'
-                                        className='outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         value={question.notes}
                                         onChange={(e) =>
                                           handleQuestionChange(
@@ -995,10 +1031,12 @@ const InteractionForm = () => {
                                           }}
                                         >
                                           <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                            <ErrorInfoIcon
-                                              alt='error'
-                                              className='w-5 h-3.5'
-                                            />
+                                            <React.Suspense fallback={null}>
+                                              <ErrorInfoIcon
+                                                alt='error'
+                                                className='w-5 h-3.5'
+                                              />
+                                            </React.Suspense>
                                           </span>
                                         </Tooltip>
                                       )}
@@ -1055,7 +1093,9 @@ const InteractionForm = () => {
                   onClick={handleAddQuestion}
                 >
                   <span>
-                    <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                    <React.Suspense fallback={null}>
+                      <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                    </React.Suspense>
                   </span>
                   Add New Question
                 </button>
