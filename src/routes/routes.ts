@@ -67,6 +67,14 @@ export const PROJECT_TASK_EDIT = `${PROJECT_TASK}/edit/:taskId`;
 export const PROJECT_RESOURCE = '/project/resource';
 export const PROJECT_RESOURCE_CREATE = `${PROJECT_RESOURCE}/create`;
 export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
+
+// Interaction route
+export const INTERACTIONS = '/interactions';
+export const INTERACTIONS_DETAILS = `${INTERACTIONS}/details/:interactionId`;
+export const INTERACTIONS_BASE = `/:module/interactions`;
+export const INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/create`;
+export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 export const NOT_FOUND = '/page-not-found';

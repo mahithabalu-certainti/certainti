@@ -9,6 +9,7 @@ interface TextButtonProps {
   color?: ButtonOwnProps['color'];
   loading?: boolean;
   disabled?: boolean;
+  hide?: boolean;
   onClick?: () => void;
 }
 const StyledButton = styled(Button)(() => {
@@ -29,7 +30,8 @@ const StyledButton = styled(Button)(() => {
   };
 });
 
-const TextButton: React.FC<TextButtonProps> = ({ label, ...rest }) => {
+const TextButton: React.FC<TextButtonProps> = ({ label, hide, ...rest }) => {
+  if (hide) return null;
   return <StyledButton {...rest}>{label}</StyledButton>;
 };
 
