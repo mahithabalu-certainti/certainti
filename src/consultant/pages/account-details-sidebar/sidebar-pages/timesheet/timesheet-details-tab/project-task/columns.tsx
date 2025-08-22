@@ -62,7 +62,7 @@ export const getProjectTaskColumns = (
     },
     {
       id: 'start_date',
-      label: 'Task Date',
+      label: 'Start Date',
       sortable: true,
       sortId: 'start_date',
       width: 160,
@@ -72,7 +72,18 @@ export const getProjectTaskColumns = (
       render: (row: ProjectTaskListType) =>
         row.start_date ? getDateFormat(row.start_date) : '-',
     },
-
+{
+      id: 'end_date',
+      label: 'End Date',
+      sortable: true,
+      sortId: 'end_date',
+      width: 160,
+      hide:
+        !permissionMap?.['end_date']?.read &&
+        !permissionMap?.['end_date']?.edit,
+      render: (row: ProjectTaskListType) =>
+        row.end_date ? getDateFormat(row.end_date) : '-',
+    },
     {
       id: 'total_cost_pro_task',
       label: 'Cost',
