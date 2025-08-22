@@ -466,13 +466,13 @@ export interface FormField {
   id: string;
   label: string;
   type:
-  | 'text'
-  | 'number'
-  | 'email'
-  | 'select'
-  | 'textarea'
-  | 'checkbox'
-  | 'date';
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'select'
+    | 'textarea'
+    | 'checkbox'
+    | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;
@@ -502,6 +502,7 @@ export type ExportType =
   | 'projectTask'
   | 'project_resource'
   | 'timesheet'
+  | 'interactions'
   | 'timesheet_project'
   | 'timesheet_project_resource'
   | 'timesheet_project_task';

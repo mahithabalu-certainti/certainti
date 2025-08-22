@@ -21,6 +21,7 @@ import {
   SettingIcon,
   TimeSheetIcon,
   ConfigIcon,
+  InteractionsIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -38,6 +39,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Interactions,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -64,7 +66,13 @@ import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
-import { exportImportsData, exportTimesheetData, exportTimesheetProjectData, exportTimesheetResourceData, exportTimesheetTaskData } from '../../services/import';
+import {
+  exportImportsData,
+  exportTimesheetData,
+  exportTimesheetProjectData,
+  exportTimesheetResourceData,
+  exportTimesheetTaskData,
+} from '../../services/import';
 
 import { ImportsListURLParams } from '../../types/imports';
 import {
@@ -72,7 +80,11 @@ import {
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
-import { TimesheetProjectExportListURLParams, } from '../../types/timesheet-projects';
+import {
+  exportInteractionsHistory,
+  exportInteractions,
+} from '../../services/interactions/interactions-service';
+import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -91,6 +103,10 @@ export const AccountDetails = () => {
     (state: RootState) => state.account
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const viewDetails = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -110,7 +126,7 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
-const isProjectResourceExportViewEnable = checkPermission(
+  const isProjectResourceExportViewEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_RESOURCES_EXPORT
   );
@@ -193,30 +209,40 @@ const isProjectResourceExportViewEnable = checkPermission(
     fiscal_year: convertedFiscalYear,
     account_rid: accountid || '',
   });
-
-  const [timesheetProjectParams, setTimesheetProjectParams] = useState<TimesheetProjectExportListURLParams>({
-    sortBy: 'project_code',
-    sortOrder: 'ASC',
-    filters: {},
-    fiscalYear: convertedFiscalYear,
-    account_rid: accountid || '',
-    bothParentAndChild: toggleEnabled,
-    documentRid: '',
-  });
-  const [timesheetResourceParams, setTimesheetResourceParams] = useState<TimesheetProjectExportListURLParams>({
-    sortBy: 'project_code',
-    sortOrder: 'ASC',
-    filters: {},
-    account_rid: accountid || '',
-    documentRid: '',
-  });
-  const [timesheetTaskParams, setTimesheetTaskParams] = useState<TimesheetProjectExportListURLParams>({
-    sortBy: 'project_code',
-    sortOrder: 'ASC',
-    filters: {},
-    account_rid: accountid || '',
-    documentRid: '',
-  });
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'status_name',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
+  const [timesheetProjectParams, setTimesheetProjectParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+      account_rid: accountid || '',
+      bothParentAndChild: toggleEnabled,
+      documentRid: '',
+    });
+  const [timesheetResourceParams, setTimesheetResourceParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+  const [timesheetTaskParams, setTimesheetTaskParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
 
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
@@ -236,7 +262,7 @@ const isProjectResourceExportViewEnable = checkPermission(
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
-    const tab = searchParams.get("tab");
+    const tab = searchParams.get('tab');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
@@ -244,6 +270,7 @@ const isProjectResourceExportViewEnable = checkPermission(
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
+      searchParams.get('list') !== 'interactions' &&
       searchParams.get('tab') !== 'timesheet_project' &&
       searchParams.get('tab') !== 'timesheet_project_resource' &&
       searchParams.get('tab') !== 'timesheet_project_task'
@@ -313,16 +340,11 @@ const isProjectResourceExportViewEnable = checkPermission(
       });
     } else if (exportType === 'timesheet_project') {
       exportTimesheetProjectData(timesheetProjectParams);
-    }
-    else if (exportType === 'timesheet_project_resource') {
+    } else if (exportType === 'timesheet_project_resource') {
       exportTimesheetResourceData(timesheetResourceParams);
-
-    }
-    else if (exportType === 'timesheet_project_task') {
+    } else if (exportType === 'timesheet_project_task') {
       exportTimesheetTaskData(timesheetTaskParams);
-
-    }
-    else if (exportType === 'financial_resource_cost') {
+    } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
         ...financialPayload,
@@ -332,6 +354,36 @@ const isProjectResourceExportViewEnable = checkPermission(
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'interactions') {
+      if (interactionHistoryId) {
+        console.log('interactions history');
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountid || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams.sortBy || 'status_name',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        console.log('interactions table');
+        const projectInteractionExportPayload = {
+          account_rid: accountid || '',
+          fiscal_year: convertedFiscalYear,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'action',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     } else {
       exportData(exportType, exportPayload);
     }
@@ -422,6 +474,8 @@ const isProjectResourceExportViewEnable = checkPermission(
       return !isFinancialProjectCostExportEnable;
     } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
+    } else if (list === 'interactions') {
+      return viewDetails;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -467,7 +521,6 @@ const isProjectResourceExportViewEnable = checkPermission(
       setActiveKey(location.state.activeKey);
     }
   }, [location.state]);
-
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -519,6 +572,15 @@ const isProjectResourceExportViewEnable = checkPermission(
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
             setToggleEnabled={setToggleEnabled}
+          />
+        );
+      case 'interactions':
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setInteractionsParams={setInteractionsParams}
           />
         );
       case 'cases':
@@ -593,6 +655,13 @@ const isProjectResourceExportViewEnable = checkPermission(
         id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
       },
       {
         name: 'Cases',
@@ -695,9 +764,9 @@ const isProjectResourceExportViewEnable = checkPermission(
           primaryButton={
             isAccountFieldsEditable
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -715,10 +784,11 @@ const isProjectResourceExportViewEnable = checkPermission(
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

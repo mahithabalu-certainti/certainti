@@ -59,7 +59,7 @@ export const exportInteractionsHistory = async (
   params: InteractionListURLParams
 ): Promise<void> => {
   try {
-    const filename = 'project_history_interactions.xlsx';
+    const filename = 'interaction_history.xlsx';
     const response =
       await interactionServiceApi.post<ExportInteractionResponse>(
         getInteractionHistoryExportUrl(),
@@ -129,7 +129,11 @@ export const useInteractionList = (
     queryFn: () => fetchInteractionList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.account_rid && !!params.fiscal_year && !!shouldFetchList,
+    enabled:
+      !!params.account_rid &&
+      params.fiscal_year !== undefined &&
+      params.fiscal_year !== null &&
+      !!shouldFetchList,
   });
 };
 

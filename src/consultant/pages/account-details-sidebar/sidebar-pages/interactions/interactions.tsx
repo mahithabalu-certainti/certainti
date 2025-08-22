@@ -6,28 +6,32 @@ import {
   useGetInteractionStatus,
   useGetInteractionTypes,
 } from '../../../../../common-service';
-import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { SectionTabPanel } from '../../../../../components';
-import { ListTable } from '../../../../../components/table';
-import { InteractionList, StatusTypeEnum } from '../../../../types';
-import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import {
   generatePath,
   useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
+import { useInteractionList } from '../../../../services/interactions/interactions-service';
+import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
+import { ActionItem } from '../../../../../components/table/types';
+import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
+import {
+  SectionTabPanel,
+  SendInteractionModal,
+} from '../../../../../components';
 import InteractionDetails from './interaction-details/interaction-details';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { ListTable } from '../../../../../components/table';
+import { accountDetailsProps } from '../../../account-details/utils';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 import { InteractionHistory } from './interaction-history';
-import { ActionItem } from '../../../../../components/table/types';
-import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
-import { NewProjectData } from '../../../../types/project';
-import { SendInteractionModal } from '../../../../../components/interaction';
-import HistoryTable from './response-history/history-table';
 import { InteractionAttachment } from './interaction-attachment';
+import HistoryTable from './response-history/history-table';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 
@@ -47,7 +51,8 @@ const InteractionsTabs: OverviewTabs[] = [
 
 interface InteractionsProps {
   accountInActive: boolean;
-  projectDetails: NewProjectData | null;
+  accountDetails?: accountDetailsProps;
+  setExportType?: (type: ExportType) => void;
   setInteractionsParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
@@ -55,13 +60,13 @@ interface InteractionsProps {
 
 const Interactions: React.FC<InteractionsProps> = ({
   accountInActive,
-  projectDetails,
+  accountDetails,
+  setExportType,
   setInteractionsParams,
 }) => {
-  const { projectid } = useParams();
+  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const accountId = searchParams.get('accountID') || '';
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
@@ -79,33 +84,23 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
 
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionAttachmentId = searchParams.get(
     'interaction_attachment_count'
   );
-
   const responseHistory = searchParams.get('history');
   const interactionResponseId = searchParams.get('versionID');
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
   const viewResponseHistory = !!responseHistory;
-
-  const projectData = {
-    project_code: projectDetails?.project_code || '',
-    project_name: projectDetails?.project_name || '',
-    fiscal_year: projectDetails?.fiscal_year || '',
-    account_name: projectDetails?.account_name || '',
-    account_rid: projectDetails?.account_rid || '',
-    project_rid: projectDetails?.project_rid || '',
-    project_fiscal_rid:
-      projectDetails?.project_fiscal_rid ||
-      projectid ||
-      projectDetails?.rid ||
-      '',
-  };
-  const fiscalYear = Number(projectDetails?.fiscal_year);
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -114,17 +109,14 @@ const Interactions: React.FC<InteractionsProps> = ({
       sort: sortField,
       sort_by: sortBy,
       filters: appliedFilters,
-      project_rid: projectDetails?.project_rid || '',
-      project_fiscal_rid:
-        projectDetails?.project_fiscal_rid ||
-        projectid ||
-        projectDetails?.rid ||
-        '',
-      fiscal_year: fiscalYear,
-      account_rid: accountId,
-      flag: 'project',
+      account_rid: accountid || '',
+      fiscal_year: newFiscalYear,
+      flag: 'account',
     },
-    !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
+    !viewDetails &&
+      !viewInteractionHistory &&
+      !viewInteractionAttachment &&
+      !viewResponseHistory,
     refreshInteractions
   );
   const totalItems = data?.count || 0;
@@ -161,6 +153,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   useEffect(() => {
     if (data) {
+      setCount(data.count || 0);
       const updatedInteractions =
         data.interactions?.map((item) => {
           const status = (item.status_name || '').toLowerCase();
@@ -180,7 +173,12 @@ const Interactions: React.FC<InteractionsProps> = ({
   }, [data]);
 
   useEffect(() => {
-    if (interactionHistoryId) return;
+    if (setExportType) {
+      setExportType('interactions');
+    }
+    if (interactionHistoryId) {
+      return;
+    }
     const updatedParams = {
       sortBy: sortField,
       filters: appliedFilters,
@@ -190,14 +188,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     };
     setInteractionsParams(updatedParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    sortField,
-    appliedFilters,
-    currentPage,
-    rowsPerPage,
-    sortBy,
-    interactionHistoryId,
-  ]);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -224,26 +215,28 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const handleCreate = () => {
+    const accountId = accountid ?? '';
     const path = generatePath(INTERACTIONS_CREATE, {
-      module: 'project',
+      module: 'account',
     });
     const queryParams = new URLSearchParams({
       accountId,
-      source: 'project',
-      projectDetails: JSON.stringify(projectData),
+      source: 'account',
+      account_name: accountDetails?.accountById?.account_name || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: InteractionList) => {
+    const accountId = accountid ?? '';
     const path = generatePath(INTERACTIONS_EDIT, {
-      module: 'project',
+      module: 'account',
       interactionId: row.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      source: 'project',
-      projectDetails: JSON.stringify(projectData),
+      source: 'account',
+      account_name: accountDetails?.accountById?.account_name || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -299,29 +292,6 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
-  const handleViewInteractionHistory = (interactionHistoryId: string) => {
-    if (interactionHistoryId) {
-      searchParams.set('interaction_history_id', interactionHistoryId);
-      navigate({ search: searchParams.toString() }, { replace: true });
-      setSelectedRows([]);
-    }
-  };
-
-  const handleViewInteractionAttachmentCount = (
-    interactionAttachentCount: string | number,
-    rowId: string
-  ) => {
-    if (interactionAttachentCount) {
-      searchParams.set('interaction_rid', rowId);
-      searchParams.set(
-        'interaction_attachment_count',
-        String(interactionAttachentCount)
-      );
-      navigate({ search: searchParams.toString() }, { replace: true });
-      setSelectedRows([]);
-    }
-  };
-
   const handleBackClick = () => {
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
@@ -366,6 +336,29 @@ const Interactions: React.FC<InteractionsProps> = ({
     },
   ];
 
+  const handleViewInteractionHistory = (interactionHistoryId: string) => {
+    if (interactionHistoryId) {
+      searchParams.set('interaction_history_id', interactionHistoryId);
+      navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
+    }
+  };
+
+  const handleViewInteractionAttachmentCount = (
+    interactionAttachentCount: string | number,
+    rowId: string
+  ) => {
+    if (interactionAttachentCount) {
+      searchParams.set('interaction_rid', rowId);
+      searchParams.set(
+        'interaction_attachment_count',
+        String(interactionAttachentCount)
+      );
+      navigate({ search: searchParams.toString() }, { replace: true });
+      setSelectedRows([]);
+    }
+  };
+
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
@@ -403,14 +396,13 @@ const Interactions: React.FC<InteractionsProps> = ({
         <InteractionDetails
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
-          projectDetails={projectDetails}
+          accountDetails={accountDetails}
         />
       ) : viewInteractionHistory ? (
         <InteractionHistory
           handleBackClick={handleBackClick}
-          accountInActive={accountInActive}
-          refresh={refreshInteractions}
           appliedFilters={appliedFilters}
+          refresh={refreshInteractions}
           setInteractionsParams={setInteractionsParams}
         />
       ) : viewInteractionAttachment ? (
@@ -438,7 +430,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
-
           <div className='border border-[#CBD6E2]'>
             {!viewResponseHistory ? (
               <ListTable
@@ -459,7 +450,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 actionWidth={80}
                 actionDisplayMode='dropdown'
                 actionMenuItems={actionButtons}
-                loading={isLoading || !fiscalYear}
+                loading={isLoading}
                 error={isError ? 'Failed to load data' : undefined}
                 rowsPerPageOptions={[25, 50, 100]}
                 rowsPerPage={rowsPerPage}
@@ -474,13 +465,13 @@ const Interactions: React.FC<InteractionsProps> = ({
             ) : (
               <HistoryTable setCount={setCount} />
             )}
-            <SendInteractionModal
-              isOpen={sendModalOpen}
-              onClose={() => setSendModalOpen(false)}
-              selectedRows={selectedRows}
-              onSuccessRefetch={handleRefresh}
-            />
           </div>
+          <SendInteractionModal
+            isOpen={sendModalOpen}
+            onClose={() => setSendModalOpen(false)}
+            selectedRows={selectedRows}
+            onSuccessRefetch={handleRefresh}
+          />
         </>
       )}
     </div>
