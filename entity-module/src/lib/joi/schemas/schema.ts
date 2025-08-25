@@ -2620,6 +2620,12 @@ const importedAccountLevelProjectResources = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),  
   documentRid: Joi.string()
     .pattern(uuidRegex, "valid UUID")
 });
@@ -2633,6 +2639,12 @@ const exportImportedAccountLevelProjectResources = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),  
   documentRid: Joi.string()
     .pattern(uuidRegex, "valid UUID")
 });
