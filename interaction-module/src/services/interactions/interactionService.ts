@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -766,38 +766,56 @@ export class InteractionService {
       schemaName,
       disablePagination
     ))
+    let hasEmailRecipient = false;
+     if(data.flag == interactionFlag.project)
+     {
+
+      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName));
+      hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+     }
     if(result[0][0].interactions != null) {
       let statusIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.status))]
       let typeIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.interaction_type))]
       let sourceIds : any[] = [...new Set(result[0][0].interactions.map((d : any)=> d.interaction_source))]
       let createdByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.created_by))]
       let modifiedByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.modified_by))]
-      
+      let projectFiscalIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.project_fiscal_rid))]
       let fetchStatus = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
       let fetchTypes = await mainDb.query(rawQueries.fetchInteractionTypes(typeIds))
       let fetchSource = await mainDb.query(rawQueries.fetchInteractionSource(sourceIds))
       let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
       let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds))
-      
+      let isEmailRecipient : any;
+      let recipientMap : Map<string, boolean>;
+      if(data.flag === interactionFlag.account) {
+         isEmailRecipient = await mainDb.query(rawQueries.fetchInteractionRecipientSummary(projectFiscalIds, schemaName))
+      }
+
       let statusMap : Map<string, string> = new Map(fetchStatus[0].map((status : any) => [status.rid, status.status_name]))
       let typeMap : Map<string, string> = new Map(fetchTypes[0].map((types : any) => [types.rid, types.interaction_type_name]))
       let sourceMap : Map<string, string> = new Map(fetchSource[0].map((source : any) => [source.rid, source.interaction_source_name]))
       let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
       let modifiedMap : Map<string, string> = new Map(fetchModifiedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
+        if(data.flag === interactionFlag.account) {
+          recipientMap = new Map(isEmailRecipient[0].map((item : any) => [item.project_fiscal_rid, item.is_interaction_recipient]))
 
+        }
       let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions.map((d : any) => {
         return {
           ...d,
-          status_rid : d.status,
-          status_name : d.status == '' || d.status == null ? null :  statusMap.get(d.status),
-          interaction_type_rid : d.interaction_type,
-          interaction_type_name : typeMap.get(d.interaction_type),
-          interaction_source_rid : d.interaction_source,
-          interaction_source_name : sourceMap.get(d.interaction_source),
-          created_by : d.created_by,
-          created_user_name : createdMap.get(d.created_by) || null,
-          modified_by : d.modified_by,
-          updated_user_name : modifiedMap.get(d.modified_by) || null
+          status_rid: d.status,
+          status_name: d.status == '' || d.status == null ? null : statusMap.get(d.status),
+          interaction_type_rid: d.interaction_type,
+          interaction_type_name: typeMap.get(d.interaction_type),
+          interaction_source_rid: d.interaction_source,
+          interaction_source_name: sourceMap.get(d.interaction_source),
+          created_by: d.created_by,
+          created_user_name: createdMap.get(d.created_by) || null,
+          modified_by: d.modified_by,
+          updated_user_name: modifiedMap.get(d.modified_by) || null,
+          hasEmailRecipient: data.flag === interactionFlag.account
+            ? recipientMap.get(d.project_fiscal_rid) || false
+            : hasEmailRecipient
         }
       })
       const applyFilters = (data : any[], conditions : any, value : any, field : any) => {
