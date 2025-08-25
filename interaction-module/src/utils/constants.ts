@@ -281,10 +281,27 @@ export const rawQueries = {
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
   },
+  fetchInteractionRecipientSummary(projectFiscalRid: any, schemaName: string) {
+    let ids = projectFiscalRid.map((d : any) => `'${d}'`)
+    return `
+    SELECT  is_interaction_recipient,project_fiscal_rid FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid IN (${ids})`
+  },
   fetchPOCEmail(projectFiscalRid: string) {
     return `
     SELECT project_point_of_contact_email,project_point_of_contact FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
   },
+  isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string) {
+  return `
+    SELECT EXISTS (
+      SELECT 1
+      FROM ${schemaName}.key_contact_details
+      WHERE entity_type = 'Project'
+        AND include_in_communication IS true
+        AND entity_rid = '${projectFiscalRid}'
+    ) AS recipient_available
+  `;
+}
+,
   fetchInteractionRecipient(projectFiscalRid: string, schemaName: string) {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}'`
