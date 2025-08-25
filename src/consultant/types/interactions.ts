@@ -282,6 +282,7 @@ export interface InteractionDetailsHistoryResponse {
   statusMessage: string;
   data: {
     history_details: InteractionHistoryResponse[];
+    global_attachments: Attachment[];
     interaction_rid: string;
     project_name: string;
   };
