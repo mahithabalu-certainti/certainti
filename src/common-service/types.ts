@@ -221,6 +221,8 @@ export enum AllPermissions {
   ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
   ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
   ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
+  INTERACTIONS_OVERVIEW = 'interactions_overview',
+  INTERACTIONS_TIMELINE = 'interactions_timeline',
   ACCOUNT_TIMESHEET_EXPORT = 'timesheet_export',
 }
 
@@ -255,6 +257,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',
   LOGOUT = 'logout',
@@ -271,6 +274,13 @@ export enum MenuOption {
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
+}
+
+export interface OverviewTabs {
+  id: AllPermissions | AllMenus;
+  name: string;
+  hide: boolean;
+  disable?: boolean;
 }
 
 export type FailedQueueItem = {
@@ -357,4 +367,39 @@ export interface EntityTypes {
 
 export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
   data: EntityTypes[];
+}
+
+//Interactions
+export interface InteractionStatusItem {
+  rid: string;
+  status_name: string;
+  status_type?: string | null;
+}
+
+export interface GetInteractionStatusApiResponse extends CommonApiResponse {
+  data: {
+    interactionStatus: InteractionStatusItem[];
+  };
+}
+
+export interface InteractionTypeItem {
+  rid: string;
+  interaction_type_name: string;
+}
+
+export interface GetInteractionTypesApiResponse extends CommonApiResponse {
+  data: {
+    interactionTypes: InteractionTypeItem[];
+  };
+}
+
+export interface InteractionSourceItem {
+  rid: string;
+  interaction_source_name: string;
+}
+
+export interface GetInteractionSourcesApiResponse extends CommonApiResponse {
+  data: {
+    interactionSource: InteractionSourceItem[];
+  };
 }

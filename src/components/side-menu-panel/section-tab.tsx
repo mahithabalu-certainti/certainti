@@ -232,16 +232,15 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                   />
                 </Suspense>
               </Box>
-
-              {showRefresh && (
-                <button
-                  className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
-                  onClick={onRefreshClick}
-                >
-                  <RefreshIcon alt='refresh-icon' className='h-4' />
-                </button>
-              )}
             </>
+          )}
+          {showRefresh && (
+            <button
+              className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+              onClick={onRefreshClick}
+            >
+              <RefreshIcon alt='refresh-icon' className='h-4' />
+            </button>
           )}
           {showFiscalYear && allYears?.length && (
             <GlobalFiscalYearDropdown

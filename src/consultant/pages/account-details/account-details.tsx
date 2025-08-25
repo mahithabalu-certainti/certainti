@@ -21,6 +21,7 @@ import {
   SettingIcon,
   TimeSheetIcon,
   ConfigIcon,
+  InteractionsIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -38,6 +39,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Interactions,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -78,6 +80,10 @@ import {
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
+import {
+  exportInteractionsHistory,
+  exportInteractions,
+} from '../../services/interactions/interactions-service';
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
@@ -97,6 +103,10 @@ export const AccountDetails = () => {
     (state: RootState) => state.account
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const viewDetails = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -200,6 +210,14 @@ export const AccountDetails = () => {
     account_rid: accountid || '',
   });
 
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'status_name',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
   const [timesheetProjectParams, setTimesheetProjectParams] =
     useState<TimesheetProjectExportListURLParams>({
       sortBy: 'project_code',
@@ -253,6 +271,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
+      searchParams.get('list') !== 'interactions' &&
       searchParams.get('tab') !== 'timesheet_project' &&
       searchParams.get('tab') !== 'timesheet_project_resource' &&
       searchParams.get('tab') !== 'timesheet_project_task'
@@ -336,6 +355,36 @@ export const AccountDetails = () => {
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'interactions') {
+      if (interactionHistoryId) {
+        console.log('interactions history');
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountid || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams.sortBy || 'status_name',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        console.log('interactions table');
+        const projectInteractionExportPayload = {
+          account_rid: accountid || '',
+          fiscal_year: convertedFiscalYear,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'action',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     } else {
       exportData(exportType, exportPayload);
     }
@@ -426,6 +475,8 @@ export const AccountDetails = () => {
       return !isFinancialProjectCostExportEnable;
     } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
+    } else if (list === 'interactions') {
+      return viewDetails;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -471,7 +522,6 @@ export const AccountDetails = () => {
       setActiveKey(location.state.activeKey);
     }
   }, [location.state]);
-
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -523,6 +573,15 @@ export const AccountDetails = () => {
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
             setToggleEnabled={setToggleEnabled}
+          />
+        );
+      case 'interactions':
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setInteractionsParams={setInteractionsParams}
           />
         );
       case 'cases':
@@ -597,6 +656,13 @@ export const AccountDetails = () => {
         id: AllMenus.PROJECTS,
         disabled: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
       },
       {
         name: 'Cases',

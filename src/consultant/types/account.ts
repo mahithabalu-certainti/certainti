@@ -502,6 +502,7 @@ export type ExportType =
   | 'projectTask'
   | 'project_resource'
   | 'timesheet'
+  | 'interactions'
   | 'timesheet_project'
   | 'timesheet_project_resource'
   | 'timesheet_project_task';

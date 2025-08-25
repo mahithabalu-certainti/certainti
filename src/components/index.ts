@@ -17,3 +17,4 @@ export * from './fiscal-dropdown';
 export * from './info-section';
 export * from './side-menu-panel';
 export * from './file-list';
+export * from './interaction';
