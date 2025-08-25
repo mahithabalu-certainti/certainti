@@ -572,7 +572,7 @@ jobs:
           SERVER_PORT=5008
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -589,7 +589,7 @@ jobs:
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
-          INTERACTION_BASE_URL = 'https://development-thinkrd365-api-management.azure-api.net/interactionService/api'
+          INTERACTION_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/interactionService/api'
           NODE_ENV_DB_PREFIX="D001-"
           EOF
           echo "$ENV_FILE file created successfully!"
