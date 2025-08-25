@@ -615,7 +615,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail } =
+    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail,isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -628,7 +628,8 @@ class ProjectIngestionService {
       endDate,
       technicalConsultant,
       projectPointOfContact,
-      projectPointOfContactEmail
+      projectPointOfContactEmail,
+      isEmailRecipient
     );
 
     return await ProjectSummary.create(summaryData);
@@ -644,7 +645,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact,isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -665,7 +666,9 @@ class ProjectIngestionService {
       endDate,
       technicalConsultant,
       projectPointOfContact,
-      projectFiscalId
+      isEmailRecipient,
+      projectFiscalId,
+     
     );
 
     await ProjectFiscalSummary.create(summaryData);
@@ -1454,7 +1457,7 @@ class ProjectIngestionService {
       accountNumber
     );
 
-    const { technicalConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact, projectPointOfContactEmail, isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         projectData.key_contacts,
         this.mainDbSequelize
@@ -1472,7 +1475,9 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      projectPointOfContact
+      projectPointOfContact,
+      projectPointOfContactEmail,
+      isEmailRecipient
     );
 
     await ProjectFiscalSummary.update(baseData, {

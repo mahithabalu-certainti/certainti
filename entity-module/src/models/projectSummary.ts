@@ -61,6 +61,7 @@ export interface ProjectSummaryAttributes {
   project_point_of_contact?: string | null;
   technical_point_of_contact?: string | null;
   project_point_of_contact_email?: string | null;
+  is_interaction_recipient:boolean | false;
 }
 interface ProjectSummaryCreationAttributes
   extends Optional<ProjectSummaryAttributes, "rid"> {}
@@ -128,6 +129,7 @@ export class ProjectSummary
   public project_point_of_contact?: string | null;
   public project_point_of_contact_email?: string | null;
   public technical_point_of_contact?: string | null;
+  public is_interaction_recipient!: boolean | false;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
@@ -273,6 +275,10 @@ export class ProjectSummary
         },
         technical_point_of_contact: {
           type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        is_interaction_recipient: {
+          type: DataTypes.BOOLEAN,
           allowNull: true,
         },
       },

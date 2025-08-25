@@ -283,6 +283,18 @@ export const rawQueries = {
     return `
     SELECT project_point_of_contact_email,project_point_of_contact FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
   },
+  fetchInteractionRecipient(projectFiscalRid: string, schemaName: string) {
+    return `
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_recipient is true and entity_rid = '${projectFiscalRid}'`
+  },
+  fetchInteractionRecipientProject(projectFiscalRid: string, schemaName: string) {
+    return `
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`
+  },
+  fetchInteractionRecipientAccount(projectFiscalRid: string, schemaName: string) {
+    return `
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`
+  },
   fetchisAutoSendEnabled(projectFiscalRid: string,schemaName : string) {
     return `
     SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`

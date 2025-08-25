@@ -1,7 +1,7 @@
 import { IEmailMessage } from "./types";
 
 function surveyMailTemplate(
-  recipient: { name: string | null; email: string },
+  recipient: { name: string | null; email: string ,ccEmails?: string[] | [] },
   project: { project_name: string; project_code: string,fiscalYear: number },
   account: { account_name: string;},
   interactionLink: string
@@ -39,6 +39,11 @@ function surveyMailTemplate(
           },
         },
       ],
+      ccRecipients: recipient.ccEmails && recipient.ccEmails.length > 0
+        ? recipient.ccEmails.map(email => ({
+            emailAddress: { address: email }
+          }))
+        : [],
     },
   };
   return emailMessage;
