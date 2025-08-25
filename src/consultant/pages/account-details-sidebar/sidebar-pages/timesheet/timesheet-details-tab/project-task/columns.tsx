@@ -72,7 +72,7 @@ export const getProjectTaskColumns = (
       render: (row: ProjectTaskListType) =>
         row.start_date ? getDateFormat(row.start_date) : '-',
     },
-{
+    {
       id: 'end_date',
       label: 'End Date',
       sortable: true,
