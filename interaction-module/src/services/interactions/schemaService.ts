@@ -637,7 +637,7 @@ if(!this.orgDbSequelize)
 
     // Fetch project info
     const [projectInfo]: any[] = await this.orgDbSequelize.query(
-      rawQueries.fetchProjectInfo(interactionDetails.project_rid, schemaName),
+      rawQueries.fetchProjectInfo(interactionDetails.project_fiscal_rid, schemaName),
       { type: "SELECT" }
     );
 
