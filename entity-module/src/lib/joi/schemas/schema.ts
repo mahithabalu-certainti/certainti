@@ -1418,8 +1418,8 @@ const createProjectSchema = Joi.object({
       interaction_cc_recipient: Joi.boolean()
         .optional()
         .messages({
-          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
-          'any.required': 'interaction_cc_recipient is required',
+          'boolean.base': 'Interaction CC Recipient must be a boolean value (true or false)',
+          'any.required': 'Interaction CC Recipient is required',
         }),
       include_in_communication: Joi.boolean().optional().allow(null),
       status_rid: Joi.string().optional().allow(null),
