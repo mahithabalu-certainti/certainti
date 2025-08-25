@@ -110,6 +110,9 @@ class SchemaService {
       await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
 
+      await this.createOtpEntries(schemaName, sequelize);
+      await this.createOtpEntriesHistory(schemaName, sequelize);
+
       await transaction.commit();
     } catch (Err) {
       console.log("Table createng err", Err);
@@ -2242,8 +2245,52 @@ private async createInteractionTable(
     `);
   }
 
-  
+  private async createOtpEntries(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".otp_entries (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by text NOT NULL,
+        modified_by text NULL,
+        created_datetime timestamp NOT NULL,
+        modified_datetime timestamp NULL,
+        email varchar(120) NOT NULL,
+        account_rid text NOT NULL,
+        interaction_rid text NOT NULL,
+        otp varchar(100) NOT NULL,
+        is_verified bool DEFAULT false NOT NULL,
+        expires_at timestamptz NOT NULL,
+        otp_attempt_count numeric NULL,
+        otp_block_until timestamptz NULL
+    );  
+    `);
 
+    await sequelize.query(`
+     ALTER TABLE "${schemaName}".otp_entries ADD CONSTRAINT fk_otp_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE CASCADE;
+    `);
+  }
+
+  private async createOtpEntriesHistory(schemaName: string, sequelize: any){
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".otp_entries_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        created_datetime timestamp NOT NULL,
+        email varchar(120) NOT NULL,
+        account_rid varchar(50) NOT NULL,
+        interaction_rid varchar(100) NOT NULL,
+        otp varchar(100) NOT NULL,
+        status varchar(20) NOT NULL,
+        attempt_number int4 NOT NULL,
+        error_message text NULL,
+        CONSTRAINT otp_entries_history_status_check CHECK (((status)::text = ANY (ARRAY[('SENT'::character varying)::text, ('RESENT'::character varying)::text, ('SEND_FAILED'::character varying)::text, ('VERIFIED'::character varying)::text, ('VERIFICATION_FAILED'::character varying)::text])))
+    );  
+    `);
+
+    await sequelize.query(`
+     ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
+      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON DELETE SET NULL;
+    `);
+  }
 
   async insertAccountDetails(
     account_number: string,
