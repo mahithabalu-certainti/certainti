@@ -470,7 +470,6 @@ jobs:
  
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
-          VITE_INTERACTION_URL=/interactionService
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
