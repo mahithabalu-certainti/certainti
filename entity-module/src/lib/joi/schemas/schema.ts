@@ -1415,17 +1415,11 @@ const createProjectSchema = Joi.object({
       }),
       key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-       interaction_cc_recipient: Joi.boolean()
+      interaction_cc_recipient: Joi.boolean()
         .optional()
         .messages({
           'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
           'any.required': 'interaction_cc_recipient is required',
-        }),
-         interaction_recipient: Joi.boolean()
-        .optional()
-        .messages({
-          'boolean.base': 'interaction_recipient must be a boolean value (true or false)',
-          'any.required': 'interaction_recipient is required',
         }),
       include_in_communication: Joi.boolean().optional().allow(null),
       status_rid: Joi.string().optional().allow(null),
@@ -1673,14 +1667,8 @@ const updateProjectSchema = Joi.object({
         interaction_cc_recipient: Joi.boolean()
         .optional()
         .messages({
-          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
-          'any.required': 'interaction_cc_recipient is required',
-        }),
-         interaction_recipient: Joi.boolean()
-        .optional()
-        .messages({
-          'boolean.base': 'interaction_recipient must be a boolean value (true or false)',
-          'any.required': 'interaction_recipient is required',
+          'boolean.base': 'Interaction CC Recipient must be a boolean value (true or false)',
+          'any.required': 'Interaction CC Recipient is required',
         }),
         include_in_communication: Joi.boolean().optional().allow(null),
         status_rid: Joi.string().optional().allow(null)

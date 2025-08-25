@@ -2568,10 +2568,6 @@ class SchemaService {
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
           status_rid: keyContactDetails.status_rid || "Active",
-          interaction_recipient:
-            keyContactDetails.interaction_recipient === null
-              ? null
-              : keyContactDetails.interaction_recipient,
           interaction_cc_recipient:
             keyContactDetails.interaction_cc_recipient === null
               ? null
@@ -2611,7 +2607,6 @@ class SchemaService {
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
         status_rid: keyContactDetails.status_rid || null,
-        interaction_recipient:keyContactDetails.interaction_recipient || null,
         interaction_cc_recipient:keyContactDetails.interaction_cc_recipient || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:

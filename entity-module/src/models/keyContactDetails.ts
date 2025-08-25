@@ -12,7 +12,6 @@ export interface KeyContactDetailsAttributes {
   key_contact_role: string | null;
   is_primary_contact: boolean;
   include_in_communication?: boolean | null;
-  interaction_recipient: boolean | false;
   interaction_cc_recipient: boolean | false;
   status_rid: string;
   created_datetime?: Date;
@@ -45,7 +44,6 @@ export class KeyContact
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public interaction_recipient!: boolean | false;
   public interaction_cc_recipient!: boolean | false;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
@@ -104,10 +102,6 @@ export class KeyContact
           allowNull: true,
         },
         include_in_communication: {
-          type: DataTypes.BOOLEAN,
-          allowNull: true,
-        },
-         interaction_recipient: {
           type: DataTypes.BOOLEAN,
           allowNull: true,
         },

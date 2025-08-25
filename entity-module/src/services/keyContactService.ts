@@ -99,7 +99,7 @@ export class KeyContactService {
       );
 
       const isEmailRecipientInfo = enrichedKeyContacts.some(
-        (e: any) => e.interaction_recipient === true
+        (e: any) => e.include_in_communication === true
       );
 
       technicalConsultant = technicalContact
@@ -154,10 +154,6 @@ export class KeyContactService {
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
           status_rid: keyContactDetails.status_rid,
-          interaction_recipient:
-            keyContactDetails.interaction_recipient === null
-              ? null
-              : keyContactDetails.interaction_recipient,
           interaction_cc_recipient:
             keyContactDetails.interaction_cc_recipient === null
               ? null
@@ -198,7 +194,6 @@ export class KeyContactService {
         key_contact_role: keyContactDetails.key_contact_role || null,
         status_rid: keyContactDetails.status_rid || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
-        interaction_recipient: keyContactDetails.interaction_recipient || null,
         interaction_cc_recipient: keyContactDetails.interaction_cc_recipient || null,
         include_in_communication:
           keyContactDetails.include_in_communication === null ? null : keyContactDetails.include_in_communication,

@@ -81,7 +81,6 @@ const updateAccountTypeDefs = gql
       key_contact_email : String
       key_contact_role : String
       is_primary_contact : Boolean
-      include_in_communication : Boolean
       interaction_cc_recipient : Boolean
       status_rid : String
       rid : String

@@ -287,15 +287,15 @@ export const rawQueries = {
   },
   fetchInteractionRecipient(projectFiscalRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_recipient is true and entity_rid = '${projectFiscalRid}'`
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}'`
   },
   fetchInteractionRecipientProject(projectFiscalRid: string, schemaName: string) {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`
   },
-  fetchInteractionRecipientAccount(projectFiscalRid: string, schemaName: string) {
+  fetchInteractionRecipientAccount(accountRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}'`
   },
   fetchisAutoSendEnabled(projectFiscalRid: string,schemaName : string) {
     return `
