@@ -813,7 +813,7 @@ export class InteractionService {
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
           updated_user_name: modifiedMap.get(d.modified_by) || null,
-          hasEmailRecipient: data.flag === interactionFlag.account
+          has_email_recipient: data.flag === interactionFlag.account
             ? recipientMap.get(d.project_fiscal_rid) || false
             : hasEmailRecipient
         }
