@@ -106,14 +106,47 @@ class SchemaService {
       await this.createInteractionItemTable(schemaName, sequelize);
       await this.createInteractionHistoryTable(schemaName, sequelize);
       await this.createInteractionResponseTable(schemaName, sequelize);
-     // await this.createInteractionStatusHistoryTable(schemaName, sequelize);
       await this.createInteractionAttachments(schemaName, sequelize);
+      await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
       console.log("Table createng err", Err);
     }
+  }
+
+  private async  createAITechnicalSummary( schemaName: string,
+    sequelize: Sequelize) {
+     await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".ai_technical_summary_seq START 1;
+    `);
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_technical_summary (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) UNIQUE DEFAULT (('ATS-'::text || lpad(nextval('"${schemaName}".ai_technical_summary_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid character varying(50),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        account_rid varchar(50) NOT NULL,
+        project_rid VARCHAR(50) NOT NULL,
+        fiscal_year INT NOT NULL,
+        project_fiscal_rid VARCHAR(50),
+        technical_summary TEXT,
+        version INT DEFAULT 1,
+        status VARCHAR(50),
+        entity_transaction_rid VARCHAR(50),
+        technical_summary_refinement_prompt TEXT
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
   }
 
   private async createAttachmentTimeline(
@@ -177,6 +210,7 @@ class SchemaService {
     document_category_others character varying(120) COLLATE pg_catalog."default",
     document_type_others character varying(120) COLLATE pg_catalog."default",
     comments character varying(2000) COLLATE pg_catalog."default",
+    is_ai_processed boolean default false,
     CONSTRAINT attachments_pkey PRIMARY KEY (rid),
     CONSTRAINT attachments_r_number_key UNIQUE (r_number)
    )`);
@@ -1884,16 +1918,16 @@ private async createInteractionTable(
       rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
       r_number VARCHAR(20) UNIQUE DEFAULT 'INT-' || LPAD(nextval('"${schemaName}".interactions_seq')::TEXT, 10, '0'),
       eid character varying(50),
-      created_by character varying(50),
+      created_by character varying(50) NOT NULL,
       modified_by character varying(50),
-      created_datetime timestamp with time zone,
+      created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
       modified_datetime timestamp with time zone,
-      account_rid character varying(50),
-      project_rid character varying(50),
-      project_fiscal_rid character varying(50),
-      fiscal_year integer,
-      interaction_source_rid character varying(255),
-      interaction_type_rid character varying(50),
+      account_rid character varying(50) NOT NULL,
+      project_rid character varying(50) NOT NULL,
+      project_fiscal_rid character varying(50) NOT NULL,
+      fiscal_year integer NOT NULL,
+      interaction_source_rid character varying(255) NOT NULL,
+      interaction_type_rid character varying(50) NOT NULL,
       template_rid character varying(50),
       recipient_email character varying(50),
       recipient_name character varying(50),
@@ -1911,9 +1945,12 @@ private async createInteractionTable(
       response_submitted_on character varying(50),
       response_submission_by character varying(50),
       response_source character varying(255),
-      status_rid character varying(50),
+      status_rid character varying(50) NOT NULL,
       interaction_url character varying(255),
       interaction_age integer,
+      attachment_count integer,
+      is_ai_processed boolean default false,
+      interaction_version integer,
       CONSTRAINT interactions_rid_unique UNIQUE (rid)
     );
   `);
@@ -1994,7 +2031,7 @@ private async createInteractionTable(
 
   await sequelize.query(`
     CREATE TRIGGER trg_log_interaction_status_change
-    AFTER INSERT OR UPDATE ON "${schemaName}".interactions
+    AFTER INSERT OR UPDATE OF status_rid ON "${schemaName}".interactions
     FOR EACH ROW
     EXECUTE FUNCTION "${schemaName}".log_interaction_status_change();
   `);
@@ -2014,10 +2051,10 @@ private async createInteractionTable(
       created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
       modified_datetime TIMESTAMP WITHOUT TIME ZONE,
       interaction_rid varchar(50) NOT NULL,
-      interaction_item_rid varchar(50),
+      interaction_item_rid varchar(50) NOT NULL,
       attribute_name VARCHAR(100) NOT NULL,
       old_value VARCHAR(2000),
-      new_value VARCHAR(2000) NOT NULL
+      new_value VARCHAR(2000)
       );
     `);
 
@@ -2041,19 +2078,15 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITHOUT TIME ZONE,
-        account_rid character varying(50),
-        project_rid character varying(50),
-        fiscal_year character varying(50),
-        project_fiscal_rid character varying(50),
-        interaction_rid character varying(50),
+        account_rid character varying(50) NOT NULL,
+        project_rid character varying(50) NOT NULL,
+        fiscal_year character varying(50) NOT NULL,
+        project_fiscal_rid character varying(50) NOT NULL,
+        interaction_rid character varying(50) NOT NULL,
         question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
-        is_mandatory boolean,
+        is_mandatory boolean DEFAULT false NOT NULL,
         question text,
         notes text,
-        response text,
-        response_by character varying(50),
-        response_on_datetime timestamp with time zone,
-        response_via character varying(50),
         is_attachment boolean
       );
     `);
@@ -2093,9 +2126,9 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITHOUT TIME ZONE,
-        interaction_rid character varying(50),
+        interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
-        interaction_response character varying(50),
+        interaction_response text,
         response_on timestamp with time zone,
         response_email character varying(255),
         response_by character varying(50),
@@ -2149,13 +2182,13 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITHOUT TIME ZONE,
-        interaction_rid character varying(50),
+        interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response_rid character varying(50),
         attachment_name character varying(255) NOT NULL,
-        attachment_type character varying(50),
-        attachment_size numeric(10,2),
-        attachment_url character varying(1000),
+        attachment_type character varying(50) NOT NULL,
+        attachment_size numeric(10,2) NOT NULL,
+        attachment_url character varying(1000) NOT NULL,
         interaction_version integer
       );
     `);
@@ -2195,7 +2228,6 @@ private async createInteractionTable(
       created_datetime TIMESTAMP DEFAULT NOW(),
       modified_datetime TIMESTAMP,
       account_rid varchar(50) NOT NULL,
-      document_rid  varchar(50),
       entity_rid varchar(50) NOT NULL,
       event_name varchar(100) NOT NULL,
       event_type varchar(100) NOT NULL,
@@ -2656,6 +2688,7 @@ private async createInteractionTable(
           key_contact_role varchar(50),
           is_primary_contact BOOLEAN,
           include_in_communication BOOLEAN,
+          interaction_recipient BOOLEAN,
           interaction_cc_recipient BOOLEAN,
           status_rid VARCHAR(50)
         );

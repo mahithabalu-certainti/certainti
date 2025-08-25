@@ -8,7 +8,7 @@ const createInteractionSchema = Joi.object({
   project_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
-  status_action: Joi.string().required(),
+  status_rid: Joi.string().required(),
   parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
@@ -25,21 +25,19 @@ const createInteractionSchema = Joi.object({
 
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  interaction_rid: Joi.array()
-    .items(Joi.string().pattern(uuidRegex).required())
-    .min(1)
-    .required(),
-  customRecipient: Joi.boolean().required(),
-  sendInfo: Joi.object({
-    email: Joi.string().email().required(),
-    name: Joi.string().max(255).required(),
-  }).when('customRecipient', {
-    is: true,
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
+  interactions: Joi.array()
+  .items(
+    Joi.object({
+      interaction_rid: Joi.string().pattern(uuidRegex).required(),
+      project_fiscal_rid:Joi.string().pattern(uuidRegex).required(),
+      email_info: Joi.object({
+        email: Joi.string().email().optional().allow("",null),
+        name: Joi.string().max(255).optional().allow("",null),
+      }).required(),
+    })
+  )
+  .min(1)
+  .required(),
 });
 const getInteractionStatusSchema = Joi.object({
   status_scope: Joi.string().optional(),
@@ -50,7 +48,8 @@ const updateInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_rid: Joi.string().pattern(uuidRegex).required(),
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  status_rid: Joi.string().pattern(uuidRegex).required(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+  status_rid: Joi.string().required(),
   parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
@@ -85,8 +84,8 @@ const updateInteractionResponseSchema = Joi.object({
     .items(
       Joi.object({
         rid: Joi.string().pattern(uuidRegex).allow(null, ""),
-        question: Joi.string().max(255).required(),
-        response: Joi.string().max(1000).allow(""),
+        question: Joi.string().required(),
+        response: Joi.string().allow(""),
         attachments: Joi.array().items(
           Joi.object({
             fileName: Joi.string().max(255).required(),

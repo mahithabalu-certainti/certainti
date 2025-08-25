@@ -505,7 +505,14 @@ async function exportAllInteractions (req : Request, res : Response) {
       const base64Response = await generateExcelBase64(finalStructuredData, "Interactions")
         handleSuccessResponse(res, base64Response);
         return; 
-    }
+    } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
   } catch (error : any) {
     handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
   }
@@ -607,9 +614,13 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
     handleSuccessResponse(res, base64Response);
     return; 
     } else {
-      handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.dataNotFound)
-      return;
-    }
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
   } catch (error : any) {
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
@@ -706,9 +717,13 @@ async function exportResponseHistory (req : Request, res : Response) {
     handleSuccessResponse(res, base64Response);
     return;
     } else {
-      handleErrorResponse(res, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND_MESSAGE, STATUS_MESSAGE.dataNotFound)
-      return;
-    }
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
   } catch (error : any) {
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
@@ -740,11 +755,9 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
       return;
     }
      const interaction = await interactionService.sendInteraction(
-       value.interaction_rid,
+       value.interactions,
        value.account_rid,
-       userId,
-       value.customRecipient,
-       value.emailInfo
+       userId
      );
     console.log(
       `[${methodName}] Service response:`,
@@ -977,7 +990,7 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
 async function fetchResponseHistoryDetails (req : Request, res : Response) {
    const methodName = "fetchResponseHistoryDetails"
     try {
-      console.log(`[${methodName}] Request received`);
+    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
     console.log(`[${methodName}] userId:`, userId);
@@ -1021,6 +1034,92 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
   }
   }
 
+  async function triggerAIAndPassResponse (req : Request, res : Response) {
+    const methodName = "triggerAIAndSendPassResponse"
+    try {
+     console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.body;
+    console.log(`[${methodName}] userId:`, userId);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.triggerAI(data)
+    return res.status(HttpStatus.SUCCESS).json({
+      statusCode : HttpStatus.SUCCESS,
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      statusMessage : result.statusMessage,
+      data: result.data
+    })
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+  }
+
+  async function exportInteractionHistory (req : Request, res : Response) {
+    const methodName = "exportInteractionHistory"
+    try {
+      console.log(`[${methodName}] Request received`);
+      const userId = req.headers["x-user-id"] as string;
+      let data = req.body;
+      console.log(`[${methodName}] userId:`, userId);
+      if (!userId) {
+        errorLog(methodName, "User ID is required in headers");
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "User ID is required in headers"
+        );
+        return;
+      }
+      const result = await interactionService.fetchInteractionHistory(data)
+      if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+        let finalStructuredData = result.data.data.interaction_history.map((data : any) => ({
+          "Action" : data.status_name,
+          "Date" : new Date(data.date).toISOString().split('T')[0]
+        }))
+        const generateBase64Response = await generateExcelBase64(finalStructuredData, "Interaction-History")
+        handleSuccessResponse(res, generateBase64Response);
+        return;
+      } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+  }
+
 
 
 export default {
@@ -1043,5 +1142,7 @@ export default {
   deleteAttachmentFromAzure,
   listInteractionHistory,
   fetchInteractionAttachments,
-  fetchResponseHistoryDetails
+  fetchResponseHistoryDetails,
+  triggerAIAndPassResponse,
+  exportInteractionHistory
 };

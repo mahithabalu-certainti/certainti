@@ -9,7 +9,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries, statusAction } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -31,6 +31,19 @@ class InteractionSchemaService {
       const { Interaction } = await this.interactionModelService.getModels(
         accountNumber
       );
+
+      const interactionExists = await Interaction.findOne({
+        where: {
+          account_rid: interactionData.account_rid,
+          project_fiscal_rid: interactionData.project_fiscal_rid,
+        },
+      });
+
+      if (interactionExists) {
+        interactionData.parent_interaction_rid = interactionExists.rid;
+        
+      }
+      interactionData.interaction_iteration = (interactionExists?.interaction_iteration ?? 0) + 1;
 
       const interaction = await Interaction.create(interactionData, {
         transaction,
@@ -63,6 +76,7 @@ class InteractionSchemaService {
                 interactionData,
                 interactionRid,
                 question,
+                userId,
                 transaction
               );
               break;
@@ -110,9 +124,11 @@ class InteractionSchemaService {
     interactionData: ICreateInteraction,
     interactionRid: string,
     question: any,
+    userId: string,
     transaction: Transaction
   ) {
     if (interactionRid) {
+      interactionData.created_by = userId;
       const item = {
         interaction_rid: interactionRid,
         ...question,
@@ -296,7 +312,7 @@ class InteractionSchemaService {
         await this.interactionModelService.getModels(accountNumber);
 
       await InteractionSummary.create({
-        rid: interactionRid,
+        interaction_rid: interactionRid,
         r_number: interactionRnumber,
         ...interactionData,
       });
@@ -367,6 +383,24 @@ class InteractionSchemaService {
     return updatedInteraction;
   }
 
+  async getPreviousInteractionStatus(statusRid:string, accountNumber: string) {
+
+if(!this.orgDbSequelize)
+{
+  this.orgDbSequelize = await this.interactionModelService.getSequelize();
+}
+  const prevStatus = await this.getInteractionStatusByType(statusAction.ON_HOLD)
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+  const [previousStatus]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchPreviousInteractionStatus(prevStatus || statusAction.CREATE,schemaName),
+      {
+        replacements: { rid: statusRid },
+        type: "SELECT",
+      }
+    );
+
+    return previousStatus?.old_status_rid;
+  }
   async fetchValidAccountNumberById(accountId: string) {
     try {
       if (!this.mainDbSequelize) {
@@ -420,18 +454,16 @@ class InteractionSchemaService {
     });
     let interactionItems = await this.fetchInteractionItems(
       accountNumber,
-      interactionRid
+      interactionRid,
+      interactionDetails?.dataValues.interaction_version ||  1
     );
-    console.log("Interaction items", interactionItems);
     const globalAttachments = await this.fetchGlobalAttachmentsByInteractionRid(
         accountNumber,
-        interactionRid
+        interactionRid,
+        interactionDetails?.dataValues.interaction_version ||  1
       );
 
     if (interactionDetails && interactionDetails.dataValues) {
-      // Attach interaction items (questions) to the response
-      //interactionDetails.dataValues.questions = interactionItems;
-      // Optionally, pick only required fields for the response
       const {
         rid,
         account_rid,
@@ -469,8 +501,8 @@ class InteractionSchemaService {
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
         status_name: metainfo?.interaction_status_name ?? "",
-        modified_by: userInfo.modified_by ?? "",
-        created_by: userInfo.created_by ?? "",
+        modified_by: userInfo.modified_name ?? "",
+        created_by: userInfo.created_name ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
         interactionDetails.dataValues.modified_datetime ?? null,
@@ -482,12 +514,6 @@ class InteractionSchemaService {
 
       return response;
     }
-    return {
-      statusCode: 200,
-      message: "Interaction details fetched successfully",
-      data: { interactionDetails: interactionDetails },
-    };
-
     return interactionDetails;
   }
 
@@ -648,10 +674,7 @@ class InteractionSchemaService {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-  let whereClause = "status = 'active'";
-  if (status_scope && status_scope === "UI") {
-    whereClause += " AND status_type = 'UI'";
-  }
+  let whereClause = "status = 'active' AND (status_type IS NULL OR status_type = 'UI')";
   if (currentStatus) {
     // Fetch status_name for the given status_rid (currentStatus)
     const [statusResult]: any[] = await this.mainDbSequelize.query(
@@ -661,7 +684,7 @@ class InteractionSchemaService {
       type: "SELECT",
       }
     );
-    if (statusResult?.status_name === "On-Hold") {
+    if (statusResult?.status_name === "On Hold") {
       whereClause += " OR status_type = 'CONDITIONAL'";
     }
   }
@@ -682,9 +705,8 @@ class InteractionSchemaService {
     }
 
     const interactionStatus = await this.mainDbSequelize.query(
-      `Select rid, status_name from ${MAIN_SCHEMA_NAME}.interaction_status WHERE  status_name = :type limit 1`,
+      rawQueries.fetchInteractionStatusByType(type),
       {
-        replacements: { type },
         type: "SELECT",
       }
     );
@@ -694,6 +716,19 @@ class InteractionSchemaService {
       status_name: string;
     }>;
     return statusArr.length > 0 ? statusArr[0]?.rid : null;
+  }
+  async getInteractionStatusById(id: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const interactionStatusArr: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionStatus(id),
+      {  type: "SELECT" }
+    );
+    const interactionStatus = Array.isArray(interactionStatusArr) && interactionStatusArr.length > 0 ? interactionStatusArr[0] : null;
+    return interactionStatus ? interactionStatus.status_name : null;
   }
   async getInteractionSourceByType(type: string) {
     if (!this.mainDbSequelize) {
@@ -714,6 +749,21 @@ class InteractionSchemaService {
       interaction_source_name: string;
     }>;
     return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
+  }
+
+   async getInteractionType(type: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+    const interactionTypeArr: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchInteractionType(type),
+      { type: "SELECT" }
+    );
+     console.log(interactionTypeArr);
+    const interactionType = Array.isArray(interactionTypeArr) && interactionTypeArr.length > 0 ? interactionTypeArr[0] : null;
+    console.log(interactionType);
+    return interactionType?.rid ? interactionType.rid : null;
   }
 
   async getInteractionTypes() {
@@ -757,7 +807,12 @@ class InteractionSchemaService {
     try {
       const { InteractionResponseHistory, InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
-
+      if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+     const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
+     const userEmailId = emailInfo[0]?.email ?? userId;
       let responseCreated = false;
       let interactionVersion = 0;
       const latestResponse = await InteractionResponseHistory.max(
@@ -766,14 +821,11 @@ class InteractionSchemaService {
           where: { interaction_rid: responseData.interaction_rid },
         }
       );
-      console.log("Latest response version", latestResponse);
-
       if (latestResponse !== null && latestResponse !== undefined) {
         interactionVersion = Number(latestResponse) + 1;
       } else {
         interactionVersion = 1;
       }
-      console.log("Latest interactionVersion ", interactionVersion);
       if (
         responseData.attachments &&
         Array.isArray(responseData.attachments) &&
@@ -782,9 +834,10 @@ class InteractionSchemaService {
         await InteractionResponseHistory.create({
           interaction_rid: responseData.interaction_rid,
           interaction_version: interactionVersion,
-          interaction_item_rid: "",
+          interaction_item_rid: null,
           interaction_response: "",
           created_by: userId,
+          response_email: userEmailId,
           response_by: userId,
           response_on: new Date(),
           response_source: "Manual",
@@ -794,7 +847,7 @@ class InteractionSchemaService {
             {
               interaction_rid: responseData.interaction_rid,
               interaction_version: interactionVersion,
-              interaction_response_rid: "",
+              interaction_response_rid: null,
               attachment_url: attachment.fileUrl,
               attachment_name: attachment.fileName,
               attachment_size: attachment.fileSize,
@@ -815,6 +868,7 @@ class InteractionSchemaService {
               interaction_item_rid: question.rid,
               interaction_response: question.response,
               created_by: userId,
+              response_email: userEmailId,
               response_by: userId,
               response_on: new Date(),
               response_source: "Manual",
@@ -843,26 +897,33 @@ class InteractionSchemaService {
 
       if (responseCreated) {
         const { Interaction, InteractionSummary } =
-          await this.interactionModelService.getModels(accountNumber);
-        const updateData: any = {
-          status_rid: responseData.status_rid,
+         await this.interactionModelService.getModels(accountNumber);
+         const status = statusAction[responseData.status_action as keyof typeof statusAction];
+         const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+         const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+        
+         const updateData: any = {
+          status_rid: statusRid,
+          interaction_version: interactionVersion,
           response_updated_on: new Date(),
-          response_updated_by: userId,
+          response_updated_by: userEmailId,
           response_source: "Manual",
+       //   attachment_count: attachmentcount
         };
 
         const summaryUpdateData: any = {
-          status_rid: responseData.status_rid,
+          status_rid: statusRid,
           response_updated_on: new Date(),
-          response_updated_by: userId,
+          response_updated_by: userEmailId,
           response_source: "Manual",
+       //   attachment_count: attachmentcount
         };
-
-        if (responseData.status_action === "Submit") {
+       
+        if (status === "Response Received") {
           updateData.response_submitted_on = new Date();
-          updateData.response_submission_by = userId;
+          updateData.response_submission_by = userEmailId;
           summaryUpdateData.response_submitted_on = new Date();
-          summaryUpdateData.response_submission_by = userId;
+          summaryUpdateData.response_submission_by = userEmailId;
         }
 
         await Interaction.update(updateData, {
@@ -872,11 +933,34 @@ class InteractionSchemaService {
           where: { rid: responseData.interaction_rid },
         });
       }
+      return {
+        interactionVersion
+      };
     } catch (err) {
+      console.log(err)
       throw new Error(
+
         "Error updating interaction response: " + (err as Error).message
       );
     }
+  }
+
+  async updateAttachmentCount(accountNumber: string, interactionRid: string, interactionVersion: number)
+  {
+     const { Interaction, InteractionSummary, InteractionAttachment } =
+         await this.interactionModelService.getModels(accountNumber);
+
+     const attachmentCount = await InteractionAttachment.count({
+       where: { interaction_rid: interactionRid, interaction_version: interactionVersion },
+     });
+
+     await Interaction.update({ attachment_count: attachmentCount }, {
+       where: { rid: interactionRid },
+     });
+
+     await InteractionSummary.update({ attachment_count: attachmentCount }, {
+       where: { interaction_rid: interactionRid },
+     });
   }
 
   /**
@@ -940,12 +1024,18 @@ class InteractionSchemaService {
     }
   }
 
-async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionRid: string) {
+async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionRid: string,interaction_version:number) {
   try {
     const { InteractionAttachment } = await this.interactionModelService.getModels(accountNumber);
 
     const attachments = await InteractionAttachment.findAll({
-      where: { interaction_rid: interactionRid, interaction_item_rid: '' },
+      where: {
+        interaction_rid: interactionRid,
+        interaction_version: interaction_version,
+        interaction_item_rid: {
+          [require("sequelize").Op.or]: ["", null]
+        }
+      },
       attributes: [
         "attachment_url",
         "attachment_name",
@@ -969,7 +1059,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
   /**
    * Fetches interaction items for a given interaction.
    */
-  async fetchInteractionItems(accountNumber: string, interactionRid: string) {
+  async fetchInteractionItems(accountNumber: string, interactionRid: string,interactionVersion:number) {
     try {
       const { InteractionItem, InteractionResponseHistory,InteractionAttachment } =
         await this.interactionModelService.getModels(accountNumber);
@@ -981,8 +1071,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
-          "response_on_datetime",
+          "is_mandatory"
         ],
         where: { interaction_rid: interactionRid },
       });
@@ -990,7 +1079,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
       for (const item of plainItems) {
         // Fetch attachments for each question
         const attachments = await InteractionAttachment.findAll({
-          where: { interaction_item_rid: item.rid },
+          where: { interaction_item_rid: item.rid,interaction_version: interactionVersion },
           attributes: [
         "attachment_url",
         "attachment_name",
@@ -1008,8 +1097,17 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
 
        
         // Fetch latest response history for each question
+        console.log("Response History Query")
         const response = await InteractionResponseHistory.findOne({
-          where: { interaction_item_rid: item.rid },
+          where: {
+            interaction_item_rid: item.rid,
+            interaction_response: {
+              [require("sequelize").Op.and]: [
+          { [require("sequelize").Op.ne]: null },
+          { [require("sequelize").Op.ne]: "" }
+              ]
+            }
+          },
           order: [["response_on", "DESC"]],
         });
         item.is_editable = !response;
@@ -1051,8 +1149,7 @@ async fetchInteractionQuestionsById(
           "question_seq_num",
           "question",
           "notes",
-          "is_mandatory",
-          "response_on_datetime",
+          "is_mandatory"
         ],
         where: { interaction_rid: interactionRid },
       });
@@ -1089,28 +1186,21 @@ async fetchInteractionQuestionsById(
     }
   }
 
-  async fetchPOCEmail(accountNumber: string, interactionRid: string) {
+  async fetchPOCEmail(accountNumber: string, interactionRid: string, projectFiscalRid: string) {
     try {
-      const { Interaction } =
-        await this.interactionModelService.getModels(accountNumber);
-        const interactionInfo = await Interaction.findOne({
-          where: { rid: interactionRid },
-          raw: true,
-        });
         if (!this.mainDbSequelize) {
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
-      if (!interactionInfo?.project_fiscal_rid) {
+      if (!projectFiscalRid) {
        return {
          name: null,
          email: null
        };
       }
       const [result]: any[] = await this.mainDbSequelize!.query(
-        rawQueries.fetchPOCEmail(interactionInfo?.project_fiscal_rid),
+        rawQueries.fetchPOCEmail(projectFiscalRid),
         {
-          replacements: { projectRid: interactionInfo?.project_fiscal_rid },
           type: "SELECT",
         }
       );
@@ -1130,7 +1220,8 @@ async updateInteractionInfo(
   interactionRid: string,
   status: string,
   userId: string,
-  emailInfo: { name: string | null; email: string | null }
+  emailInfo: { name: string | null; email: string | null },
+  interactionLink:string
 ) {
   try {
     const { Interaction } = await this.interactionModelService.getModels(
@@ -1140,24 +1231,98 @@ async updateInteractionInfo(
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-    const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
-    const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
-    await Interaction.update(
-      { status_rid: statusRid, modified_by: userId, modified_datetime: new Date(),
-        recipient_email: emailInfo.email,
-        recipient_name: emailInfo.name,
-        sent_by_rid: userId,
-        sent_by_mail_id: "dhivya.s@hubino.com",
-        sent_on_datetime: new Date(),
-      },
-      { where: { rid: interactionRid } }
-    );
+   
+    const [senderemailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
+    const userEmailId = senderemailInfo[0]?.email ?? userId;
+    const interaction = await Interaction.findOne({ where: { rid: interactionRid } });
+    const updateData: any = {
+      
+      modified_by: userId,
+      modified_datetime: new Date(),
+      recipient_email: emailInfo.email,
+      recipient_name: emailInfo.name,
+      sent_by_rid: userId,
+      sent_by_mail_id: userEmailId,
+      interaction_url: interactionLink,
+    };
+
+    if (interaction?.sent_on_datetime) {
+      updateData.last_resent_on = new Date();
+      const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(statusAction.RESENT));
+      const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+      updateData.status_rid = statusRid;
+    } else {
+      updateData.sent_on_datetime = new Date();
+      const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
+      const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
+      updateData.status_rid = statusRid;
+    }
+
+    await Interaction.update(updateData, { where: { rid: interactionRid } });
   } catch (err) {
     throw new Error(
       "Error updating interaction status: " + (err as Error).message
     );
   }
 }
+
+async isAutoSendInteractionEnabled(accountNumber: string,interactionDetails: any, interactionRid: string) {
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    // Fetch project info
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchisAutoSendEnabled(interactionDetails.project_fiscal_rid, schemaName),
+      { type: "SELECT" }
+    );
+
+    return projectInfo?.auto_send_ai_interaction ?? false;
+  } catch (err) {
+    throw new Error(
+      "Error checking auto-send interaction status: " + (err as Error).message
+    );
+  }
+}
+async updateQrePercentAndTechSummary(qrePercent:number, accountNumber: string,projectFiscalRid:string, techSummaryPayload: any)
+{
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    if(!this.mainDbSequelize){
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+    
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    await this.orgDbSequelize.query(
+      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent, ),
+      { type: "UPDATE" }
+    );
+    await this.mainDbSequelize.query(
+      rawQueries.updateQreInfoSummary(projectFiscalRid,qrePercent, ),
+      { type: "UPDATE" }
+    );
+     const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(projectFiscalRid, schemaName),
+      { type: "SELECT" }
+    );
+    techSummaryPayload.fiscal_year = projectInfo?.fiscal_year ?? null;
+     const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
+    await AiTechnicalSummary.create(
+      techSummaryPayload
+    );
+    
+  } catch (err) {
+    throw new Error(
+      "Error updating QRE percent: " + (err as Error).message
+    );
+  }
+}
+
 }
 
 

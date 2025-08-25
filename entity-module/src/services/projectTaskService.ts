@@ -252,22 +252,44 @@ export class ProjectTaskService {
       }
 
       const exportData = await Promise.all(
-        formattedTasks.map(async (task: any) => ({
-          "Resource Code": task.resource_code || "-",
-          "Resource Name": task.resource_name || "-",
-          "Resource Type": task.resource_type_name || "-",
-          Role: task.resource_role || "-",
-          "Task Date": task.start_date || "-",
-          Cost:
-            (await this.formatNumberForExport(
-              task.total_cost_pro_task,
-              task.currency_symbol
-            )) || "-",
-          "Effort in Hrs": task.total_hours_pro_task || "-",
-          Comments: task.comments || "-",
-          "Project Task ID": task.r_number || "-",
-        }))
-      );
+            formattedTasks.map(async (task: any) => {
+              const exportRecord: Record<string, any> = {};
+              
+              // Only add fields that are in the allowedFieldSet
+              if (allowedFieldSet.has('resource_code')) {
+                exportRecord['Resource Code'] = task.resource_code || "-";
+              }
+              if (allowedFieldSet.has('resource_name')) {
+                exportRecord['Resource Name'] = task.resource_name || "-";
+              }
+              if (allowedFieldSet.has('resource_type_name')) {
+                exportRecord['Resource Type'] = task.resource_type_name || "-";
+              }
+              if (allowedFieldSet.has('resource_role')) {
+                exportRecord['Role'] = task.resource_role || "-";
+              }
+              if (allowedFieldSet.has('start_date')) {
+                exportRecord['Task Date'] = moment(task.start_date).format("YYYY-MM-DD") || "-";
+              }
+              if (allowedFieldSet.has('total_cost_pro_task')) {
+                exportRecord['Cost'] = await this.formatNumberForExport(
+                  task.total_cost_pro_task,
+                  task.currency_symbol
+                ) || "-";
+              }
+              if (allowedFieldSet.has('total_hours_pro_task')) {
+                exportRecord['Effort in Hrs'] = task.total_hours_pro_task || "-";
+              }
+              if (allowedFieldSet.has('comments')) {
+                exportRecord['Comments'] = task.comments || "-";
+              }
+              if (allowedFieldSet.has('r_number')) {
+                exportRecord['Project Task ID'] = task.r_number || "-";
+              }
+              
+              return exportRecord;
+            })
+          );
 
       // Ensure we always return at least an empty object in the array if there are no tasks
       const finalExportData = exportData.length > 0 ? exportData : [{}];

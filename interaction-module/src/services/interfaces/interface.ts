@@ -77,11 +77,16 @@ export interface IInteractionService {
     data?: { interactionQuestions: any };
   }>;
   sendInteraction(
-    interactionRid: string[],
+    interactions: {
+      interaction_rid: string;
+      project_fiscal_rid: string;
+      email_info: {
+        email: string;
+        name: string | null;
+      };
+    }[],
     accountId: string,
     userId: string,
-    customRecipient:boolean,
-    emailInfo: { name: string; email: string }
   ): Promise<{
     statusCode: number;
     message: string;
@@ -101,6 +106,11 @@ export interface IInteractionService {
   }>
   listResponseHistoryDetails(data : any) : Promise<{
     statusCodeValue : string,
+    data : any
+  }>
+  triggerAI(data : any) : Promise<{
+    statusMessage : string,
+    status : any,
     data : any
   }>
 }

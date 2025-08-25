@@ -16,7 +16,7 @@ export interface ICreateInteraction {
   template_rid?: string;
   parent_interaction_rid?: string;
   interaction_iteration?: number;
-  status_rid?: string;
+  status_rid: string;
   interaction_url?: string;
   interaction_age?: number;
   created_by: string;
@@ -41,7 +41,7 @@ export interface IUpdateInteraction {
   template_rid?: string;
   parent_interaction_rid?: string;
   interaction_iteration?: number;
-  status_rid?: string;
+  status_rid: string;
   interaction_url?: string;
   interaction_age?: number;
   created_by: string;

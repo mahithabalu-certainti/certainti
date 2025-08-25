@@ -12,6 +12,7 @@ interface InteractionSummaryAttributes {
   account_rid?: string;
   project_rid?: string;
   fiscal_year?: number;
+  interaction_rid:string;
   project_fiscal_rid?: string;
   interaction_source_rid?: string;
   interaction_type_rid?: string;
@@ -63,6 +64,7 @@ export class InteractionSummary
   public project_fiscal_rid?: string;
   public interaction_source_rid?: string;
   public interaction_type_rid?: string;
+  public interaction_rid!:string;
   public template_rid?: string;
   public sent_by_rid?: string;
   public sent_by_mail_id?: string;
@@ -113,6 +115,7 @@ export class InteractionSummary
         project_rid: { type: DataTypes.STRING(50), allowNull: true },
         fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true },
+        interaction_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_source_rid: {
           type: DataTypes.STRING(255),
           allowNull: true,

@@ -18,21 +18,25 @@ export const HttpStatus = {
   SUCCESS_NOTIFICATION: "Operation completed successfully!",
 };
 export const statusAction = {
-  CREATE: "Create",
+  CREATE: "Created",
   DRAFT: "Draft",
   SENT: "Sent",
   RESPONSE_DRAFT: "Response Draft",
-  CREATED: "Created",
   RESPONSE_RECEIVED: "Response Received",
   CANCELLED: "Cancelled",
-  ON_HOLD: "On-Hold",
+  ON_HOLD: "On Hold",
+  RESUME: "Resume",
+  RESENT: "Resent"
 };
 
 export const interactionSource = {
   AUTO: "Auto",
   MANUAL: "Manual",
 };
-
+export const interactionType = {
+  RD: "RD",
+  GREENENERGY: "Green Energy",
+};
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
 export const constants = {
@@ -69,7 +73,8 @@ export const filtersColumns : Record<string, string> =
     response_source : "response_source",
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",
-    status_rid : "status_rid"
+    status_rid : "status_rid",
+    interaction_type_rid : "interaction_type_rid"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -87,7 +92,8 @@ export const filtersColumns : Record<string, string> =
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
-    status_rid : "string"
+    status_rid : "string",
+    interaction_type_rid : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -190,7 +196,12 @@ export const STATUS_MESSAGE = {
   dataNotFound : "Data not found",
   historyResponseFetched : "Interaction Response history fetched successfully",
   interactionHistoryFetched : "Interaction history fetched successfully",
-  interactionAttachmentFetched : "Interaction attachments fetched successfully"
+  interactionAttachmentFetched : "Interaction attachments fetched successfully",
+  nodDataToExport : "No Data available for download",
+  technicalIssue:"Technical Issue",
+  interactionFailed:"Interaction Creation Failed",
+  interactionUpdateFailed:"Interaction Update Failed",
+  responseUpdateFailed:"Interaction Response Update Failed"
 };
 
 export const rawQueries = {
@@ -237,7 +248,7 @@ export const rawQueries = {
       ids = [];
     }
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
+    SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
   fetchInteractionStatusByType(type : string) {
     return `
@@ -245,11 +256,23 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
-    SELECT rid, project_name,project_code,r_number FROM ${schemaName}.project WHERE rid = '${rid}'`
+    SELECT rid, project_name,project_code,r_number,fiscal_year FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
+  },
+   updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
+    return `
+    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`
+  },
+  updateQreInfoSummary(rid: string, qrePercent: number) {
+    return `
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET qre_final = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`
   },
   fetchAccountInfo(rid: string) {
     return `
     SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+  },
+  fetchPreviousInteractionStatus(statusRid: string,schemaName: string) {
+    return `
+    SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`
   },
   fetchUser(data : any) {
      let ids = data.map((d : any) => `'${d}'`)
@@ -258,12 +281,32 @@ export const rawQueries = {
   },
   fetchPOCEmail(projectFiscalRid: string) {
     return `
-    SELECT project_point_of_contact_email FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+    SELECT project_point_of_contact_email,project_point_of_contact FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+  },
+  fetchisAutoSendEnabled(projectFiscalRid: string,schemaName : string) {
+    return `
+    SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`
   },
   fetchInteractionStatusList(whereClause: string) {
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
-  }
+    SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
+  },
+  fetchUserEmail(userId:string)
+  {
+    return `
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`
+  },
+  fetchInteractionType(type:string)
+  {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`
+  },
+  fetchAllParentRNumber () {
+    let query =
+    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL`
+    return query;
+
+}
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -281,12 +324,11 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
-    status_name : "string",
-    interaction_type_name : "string",
     interaction_source_name : "string",
     created_user_name : "string",
     updated_user_name : "string",
-    status_rid : "string"
+    status_rid : "string",
+    interaction_type_rid : "string"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -304,12 +346,13 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     response_source : "response_source",
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",
-    status_name : "string_name",
-    interaction_type_name : "interaction_type_name",
     interaction_source_name : "interaction_source_name",
+    interaction_type_name : "interaction_type_name",
     created_user_name : "created_user_name",
     updated_user_name : "updated_user_name",
-    status_rid : "status_rid"
+    status_rid : "status_rid",
+    interaction_type_rid : "interaction_type_rid",
+    status_name : "status_name"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]

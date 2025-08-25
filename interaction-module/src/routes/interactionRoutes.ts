@@ -56,6 +56,8 @@ routes.post('/responseHistory/export', checkUserStatusMiddleware("NA"), controll
 routes.post('/history', checkUserStatusMiddleware("NA"), controller.interactionsController.listInteractionHistory)
 routes.post('/attachments', checkUserStatusMiddleware("NA"), controller.interactionsController.fetchInteractionAttachments)
 routes.post('/responseHistory/details', checkUserStatusMiddleware('NA'), controller.interactionsController.fetchResponseHistoryDetails)
+routes.post('/triggerAi', checkUserStatusMiddleware("NA"), controller.interactionsController.triggerAIAndPassResponse)
+routes.post('/history/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportInteractionHistory)
 const upload = multer(); // You can configure storage if needed
 
 routes.post(

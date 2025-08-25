@@ -2571,6 +2571,28 @@ const importedAccountLevelProjects = Joi.object({
     .pattern(uuidRegex, "valid UUID")
 });
 
+const exportImportedAccountLevelProjects = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID"),
+  timezone: Joi.string().optional()  
+});
+
 const importedAccountLevelResources = Joi.object({
   page: Joi.string()
     .pattern(/^[0-9]+$/)
@@ -2578,6 +2600,19 @@ const importedAccountLevelResources = Joi.object({
   limit: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("100"),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
+});
+
+const exportImportedAccountLevelResources = Joi.object({
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime").optional().allow(""),
@@ -2614,6 +2649,22 @@ const importedAccountLevelProjectTasks = Joi.object({
             'number.min': 'Limit must be greater than or equal to 1',
             'number.max': 'Limit cannot exceed 100'
         }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const exportImportedAccountLevelProjectTasks = Joi.object({
+  documentRid: Joi.string().pattern(uuidRegex).required(),
     search: Joi.string()
         .max(255)
         .allow('')
@@ -2666,5 +2717,8 @@ export {
   exportListAccountLevelProjectCostsSchema,
   importedAccountLevelProjects,
   importedAccountLevelResources,
-  importedAccountLevelProjectTasks
+  importedAccountLevelProjectTasks,
+  exportImportedAccountLevelProjects,
+  exportImportedAccountLevelResources,
+  exportImportedAccountLevelProjectTasks
 };

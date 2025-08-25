@@ -140,6 +140,7 @@ export const STATUS_MESSAGE = {
   accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
+  startDateLessThanEndDate: "Start date must be less than end date",
 };
 
 export const TYPES = {
@@ -913,3 +914,21 @@ export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
   statewise: "state",
   summary: "summary",
 };
+
+
+export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
+    { permissionField: 'r_number', exportField: 'Import ID', dataField: 'r_number' },
+    { permissionField: 'file_name', exportField: 'File Name', dataField: 'file_name' },
+    { permissionField: 'format', exportField: 'Format', dataField: 'format' },
+    { permissionField: 'size', exportField: 'Size', dataField: 'size' },
+    { permissionField: 'fiscal', exportField: 'Fiscal Year', dataField: 'fiscal' },
+    { permissionField: 'entity', exportField: 'Entity', dataField: 'entity' },
+    { permissionField: 'total_records', exportField: 'Total Records', dataField: 'total_records' },
+    { permissionField: 'records_loaded_successfully', exportField: 'Records Loaded Successfully', dataField: 'records_loaded_successfully' },
+    { permissionField: 'records_with_warning', exportField: 'Records with Warning', dataField: 'records_with_warning' },
+    { permissionField: 'records_failed_to_load', exportField: 'Records Failed to Load', dataField: 'records_failed_to_load' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status' },
+    { permissionField: 'status_descriptions', exportField: 'Status Description', dataField: 'status_description' },
+    { permissionField: 'imported_by', exportField: 'Imported By', dataField: 'imported_by' },
+    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) => new Date(value).toISOString().slice(0, 10) }
+];
