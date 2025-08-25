@@ -2605,7 +2605,7 @@ const exportImportedAccountLevelProjects = Joi.object({
   timezone: Joi.string().optional()  
 });
 
-const importedAccountLevelResources = Joi.object({
+const importedAccountLevelProjectResources = Joi.object({
   page: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("1"),
@@ -2624,7 +2624,7 @@ const importedAccountLevelResources = Joi.object({
     .pattern(uuidRegex, "valid UUID")
 });
 
-const exportImportedAccountLevelResources = Joi.object({
+const exportImportedAccountLevelProjectResources = Joi.object({
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime").optional().allow(""),
@@ -2728,9 +2728,9 @@ export {
   listAccountLevelProjectCostsSchema,
   exportListAccountLevelProjectCostsSchema,
   importedAccountLevelProjects,
-  importedAccountLevelResources,
+  importedAccountLevelProjectResources,
   importedAccountLevelProjectTasks,
   exportImportedAccountLevelProjects,
-  exportImportedAccountLevelResources,
+  exportImportedAccountLevelProjectResources,
   exportImportedAccountLevelProjectTasks
 };
