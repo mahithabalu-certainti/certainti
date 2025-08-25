@@ -779,7 +779,7 @@ export class InteractionService {
       let sourceIds : any[] = [...new Set(result[0][0].interactions.map((d : any)=> d.interaction_source))]
       let createdByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.created_by))]
       let modifiedByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.modified_by))]
-      let projectFiscalIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.project_fiscal_rid))]
+      let projectFiscalIds : any[] = [...new Set(result[0][0].interactions.map((project : any) => project.project_fiscal_rid))]
       let fetchStatus = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
       let fetchTypes = await mainDb.query(rawQueries.fetchInteractionTypes(typeIds))
       let fetchSource = await mainDb.query(rawQueries.fetchInteractionSource(sourceIds))
