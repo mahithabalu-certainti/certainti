@@ -959,7 +959,7 @@ if(!this.orgDbSequelize)
      });
 
      await InteractionSummary.update({ attachment_count: attachmentCount }, {
-       where: { rid: interactionRid },
+       where: { interaction_rid: interactionRid },
      });
   }
 
