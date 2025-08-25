@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import {
@@ -529,13 +529,21 @@ export const ProjectResources = ({
               }
               title={'Project Resource'}
               titleIcon={
-                viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
+                viewDetails ? (
+                  <ResourcesIcon
+                    alt='resource header icon'
+                    className='[&>path]:stroke-white w-[14px] h-[14px]'
+                  />
+                ) : (
+                  <CreateResourceIcon />
+                )
               }
               count={totalItems}
               showBackArrow={viewDetails}
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
+              iconBg={viewDetails ? '#7785ff' : ''}
             />
             <div className='border border-[#CBD6E2]'>
               {showProjectResourceDetails ? (

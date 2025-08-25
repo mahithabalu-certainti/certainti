@@ -11,10 +11,26 @@ import {
   ImportsListURLParams,
 } from '../../types/imports';
 import { uploadUrl } from '../urls';
-import { TimesheetProjectExportListURLParams, TimesheetProjectList, TimesheetProjectTableListResponse, TimesheetProjectTableListURLParams, TimesheetResourceListType, TimesheetResourceTableListResponse, } from '../../types/timesheet-projects';
+import {
+  TimesheetProjectExportListURLParams,
+  TimesheetProjectList,
+  TimesheetProjectTableListResponse,
+  TimesheetProjectTableListURLParams,
+  TimesheetResourceListType,
+  TimesheetResourceTableListResponse,
+} from '../../types/timesheet-projects';
 
-import { TimesheetDetails, TimesheetDetailsResponse, TimeSheetList, TImesheetListResponse, TimeSheetListURLParams } from '../../types';
-import { ProjectTaskApiResponse, ProjectTaskListType } from '../../types/project-task';
+import {
+  TimesheetDetails,
+  TimesheetDetailsResponse,
+  TimeSheetList,
+  TImesheetListResponse,
+  TimeSheetListURLParams,
+} from '../../types';
+import {
+  ProjectTaskApiResponse,
+  ProjectTaskListType,
+} from '../../types/project-task';
 
 const getImportDetailsURL = (accountId: string, fileId: string) => {
   return `/api/import/list/${accountId}/${fileId}`;
@@ -280,8 +296,14 @@ export const useTimesheetProjectTableList = (
   params: TimesheetProjectTableListURLParams,
   shouldFetchList: boolean,
   refreshProject?: number
-): UseQueryResult<{ timesheet_projects: TimesheetProjectList[]; count: number }, Error> => {
-  return useQuery<{ timesheet_projects: TimesheetProjectList[]; count: number }, Error>({
+): UseQueryResult<
+  { timesheet_projects: TimesheetProjectList[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { timesheet_projects: TimesheetProjectList[]; count: number },
+    Error
+  >({
     queryKey: ['timesheetProjectList', params, refreshProject],
     queryFn: () => fetchTimesheetProjectTableList(params),
     retry: 0,
@@ -293,20 +315,32 @@ export const useTimesheetProjectTableList = (
 export const fetchTimesheetProjectTableList = async (
   params: TimesheetProjectTableListURLParams
 ): Promise<{ timesheet_projects: TimesheetProjectList[]; count: number }> => {
-  const response = await resourceServiceApi.get<TimesheetProjectTableListResponse>(
-    TimesheetProjectURL(params)
-  );
+  const response =
+    await resourceServiceApi.get<TimesheetProjectTableListResponse>(
+      TimesheetProjectURL(params)
+    );
   return {
     timesheet_projects: response?.data?.data?.projects || [],
     count: response?.data?.data?.totalCount || 0,
   };
 };
-export const getTimesheetProjectUrl = (
-  account_rid: string,
-) => `/api/timesheet/importedProjects/${account_rid}`;
+export const getTimesheetProjectUrl = (account_rid: string) =>
+  `/api/timesheet/importedProjects/${account_rid}`;
 
-const returnTimesheetProjectURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-  const { page, limit, sort, sort_by, filters, fiscalYear, bothParentAndChild, documentRid, } = params;
+const returnTimesheetProjectURL = (
+  baseURL: string,
+  params: Record<string, string | number | undefined | object>
+): string => {
+  const {
+    page,
+    limit,
+    sort,
+    sort_by,
+    filters,
+    fiscalYear,
+    bothParentAndChild,
+    documentRid,
+  } = params;
 
   const searchParams = new URLSearchParams();
 
@@ -320,7 +354,7 @@ const returnTimesheetProjectURL = (baseURL: string, params: Record<string, strin
     searchParams.set('filters', JSON.stringify(filters));
   }
   if (bothParentAndChild !== undefined) {
-    searchParams.set("bothParentAndChild", String(bothParentAndChild));
+    searchParams.set('bothParentAndChild', String(bothParentAndChild));
   }
 
   if (documentRid) {
@@ -347,17 +381,27 @@ export const TimesheetProjectURL = ({
     sort_by,
     filters,
     fiscalYear,
-    bothParentAndChild: bothParentAndChild ? "true" : "false",
+    bothParentAndChild: bothParentAndChild ? 'true' : 'false',
     documentRid,
   });
 };
 // Timesheet project export api
-export const getExportTimesheetProjectUrl = (
-  account_rid: string,
-) => `/api/timesheet/export/importedProjects/${account_rid}`;
-const exportProjectURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-
-  const { page, limit, sort, sort_by, filters, fiscalYear, bothParentAndChild, documentRid, } = params;
+export const getExportTimesheetProjectUrl = (account_rid: string) =>
+  `/api/timesheet/export/importedProjects/${account_rid}`;
+const exportProjectURL = (
+  baseURL: string,
+  params: Record<string, string | number | undefined | object>
+): string => {
+  const {
+    page,
+    limit,
+    sort,
+    sort_by,
+    filters,
+    fiscalYear,
+    bothParentAndChild,
+    documentRid,
+  } = params;
 
   const searchParams = new URLSearchParams();
 
@@ -371,7 +415,7 @@ const exportProjectURL = (baseURL: string, params: Record<string, string | numbe
     searchParams.set('filters', JSON.stringify(filters));
   }
   if (bothParentAndChild !== undefined) {
-    searchParams.set("bothParentAndChild", String(bothParentAndChild));
+    searchParams.set('bothParentAndChild', String(bothParentAndChild));
   }
 
   if (documentRid) {
@@ -394,11 +438,13 @@ export const exportTimesheetProjectURL = ({
     sortBy,
     filters,
     fiscalYear,
-    bothParentAndChild: bothParentAndChild ? "true" : "false",
+    bothParentAndChild: bothParentAndChild ? 'true' : 'false',
     documentRid,
   });
 };
-export const exportTimesheetProjectData = async (params: TimesheetProjectExportListURLParams) => {
+export const exportTimesheetProjectData = async (
+  params: TimesheetProjectExportListURLParams
+) => {
   try {
     const response = await resourceServiceApi.get(
       exportTimesheetProjectURL(params)
@@ -436,8 +482,14 @@ export const useTimesheetResourceTableList = (
   params: TimesheetProjectTableListURLParams,
   shouldFetchList: boolean,
   refreshResource?: number
-): UseQueryResult<{ timesheet_resources: TimesheetResourceListType[]; count: number }, Error> => {
-  return useQuery<{ timesheet_resources: TimesheetResourceListType[]; count: number }, Error>({
+): UseQueryResult<
+  { timesheet_resources: TimesheetResourceListType[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { timesheet_resources: TimesheetResourceListType[]; count: number },
+    Error
+  >({
     queryKey: ['timesheetResourceList', params, refreshResource],
     queryFn: () => fetchTimesheetResourceTableList(params),
     retry: 0,
@@ -448,21 +500,27 @@ export const useTimesheetResourceTableList = (
 
 export const fetchTimesheetResourceTableList = async (
   params: TimesheetProjectTableListURLParams
-): Promise<{ timesheet_resources: TimesheetResourceListType[]; count: number }> => {
-  const response = await resourceServiceApi.get<TimesheetResourceTableListResponse>(
-    TimesheetProjectResourcesURL(params),
-  );
+): Promise<{
+  timesheet_resources: TimesheetResourceListType[];
+  count: number;
+}> => {
+  const response =
+    await resourceServiceApi.get<TimesheetResourceTableListResponse>(
+      TimesheetProjectResourcesURL(params)
+    );
   return {
     timesheet_resources: response.data.data.resources || [],
     count: response.data.data.count || 0,
   };
 };
 
-export const getProjectResourcesUrl = (
-  account_rid: string,
-) => `/api/timesheet/importedResources/${account_rid}`;
+export const getProjectResourcesUrl = (account_rid: string) =>
+  `/api/timesheet/importedResources/${account_rid}`;
 
-const returnURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+const returnURL = (
+  baseURL: string,
+  params: Record<string, string | number | undefined | object>
+): string => {
   const { page, limit, sort, sort_by, filters, documentRid } = params;
 
   const searchParams = new URLSearchParams();
@@ -498,13 +556,17 @@ export const TimesheetProjectResourcesURL = ({
     sort_by,
     filters,
     // fiscalYear,
-    documentRid
+    documentRid,
   });
 };
 // Timesheet resources export api
-export const exportTimesheetResourceData = async (params: TimesheetProjectExportListURLParams) => {
+export const exportTimesheetResourceData = async (
+  params: TimesheetProjectExportListURLParams
+) => {
   try {
-    const response = await resourceServiceApi.get(exportTimesheetResourcesURL(params));
+    const response = await resourceServiceApi.get(
+      exportTimesheetResourcesURL(params)
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -533,13 +595,14 @@ export const exportTimesheetResourceData = async (params: TimesheetProjectExport
   }
 };
 
-export const getExportTimesheetResourcesUrl = (
-  account_rid: string,
-) => `/api/timesheet/export/importedResources/${account_rid}`;
+export const getExportTimesheetResourcesUrl = (account_rid: string) =>
+  `/api/timesheet/export/importedResources/${account_rid}`;
 
-const returnExportResourcesURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-
-  const { sort, sort_by, filters, documentRid, } = params;
+const returnExportResourcesURL = (
+  baseURL: string,
+  params: Record<string, string | number | undefined | object>
+): string => {
+  const { sort, sort_by, filters, documentRid } = params;
 
   const searchParams = new URLSearchParams();
 
@@ -577,8 +640,14 @@ export const useTimesheetProjectTaskList = (
   params: TimesheetProjectTableListURLParams,
   shouldFetchList: boolean,
   refreshProjectTask?: number
-): UseQueryResult<{ timesheet_project_task: ProjectTaskListType[]; count: number }, Error> => {
-  return useQuery<{ timesheet_project_task: ProjectTaskListType[]; count: number }, Error>({
+): UseQueryResult<
+  { timesheet_project_task: ProjectTaskListType[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { timesheet_project_task: ProjectTaskListType[]; count: number },
+    Error
+  >({
     queryKey: ['timesheetProjectTask', params, refreshProjectTask],
     queryFn: () => fetchTimesheetProjectTaskList(params),
     retry: 0,
@@ -589,9 +658,12 @@ export const useTimesheetProjectTaskList = (
 
 export const fetchTimesheetProjectTaskList = async (
   params: TimesheetProjectTableListURLParams
-): Promise<{ timesheet_project_task: ProjectTaskListType[]; count: number }> => {
+): Promise<{
+  timesheet_project_task: ProjectTaskListType[];
+  count: number;
+}> => {
   const response = await resourceServiceApi.get<ProjectTaskApiResponse>(
-    TimesheetProjectTaskURL(params),
+    TimesheetProjectTaskURL(params)
   );
   return {
     timesheet_project_task: response.data.data.tasks || [],
@@ -599,11 +671,13 @@ export const fetchTimesheetProjectTaskList = async (
   };
 };
 
-export const getProjectTaskUrl = (
-  account_rid: string,
-) => `/api/timesheet/importedProjectTasks/${account_rid}`;
+export const getProjectTaskUrl = (account_rid: string) =>
+  `/api/timesheet/importedProjectTasks/${account_rid}`;
 
-const returnTimesheetProjectTaskURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
+const returnTimesheetProjectTaskURL = (
+  baseURL: string,
+  params: Record<string, string | number | undefined | object>
+): string => {
   const { page, limit, sort, sort_by, filters, documentRid } = params;
 
   const searchParams = new URLSearchParams();
@@ -639,14 +713,18 @@ export const TimesheetProjectTaskURL = ({
     sort_by,
     filters,
     // fiscalYear,
-    documentRid
+    documentRid,
   });
 };
 
 // Timesheet resources export api
-export const exportTimesheetTaskData = async (params: TimesheetProjectExportListURLParams) => {
+export const exportTimesheetTaskData = async (
+  params: TimesheetProjectExportListURLParams
+) => {
   try {
-    const response = await resourceServiceApi.get(exportTimesheetTaskURL(params));
+    const response = await resourceServiceApi.get(
+      exportTimesheetTaskURL(params)
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -675,13 +753,14 @@ export const exportTimesheetTaskData = async (params: TimesheetProjectExportList
   }
 };
 
-export const getExportTimesheetTaskUrl = (
-  account_rid: string,
-) => `/api/timesheet/export/importedProjectTasks/${account_rid}`;
+export const getExportTimesheetTaskUrl = (account_rid: string) =>
+  `/api/timesheet/export/importedProjectTasks/${account_rid}`;
 
-const returnExportTaskURL = (baseURL: string, params: Record<string, string | number | undefined | object>): string => {
-
-  const { sortOrder, sortBy, filters, documentRid, } = params;
+const returnExportTaskURL = (
+  baseURL: string,
+  params: Record<string, string | number | undefined | object>
+): string => {
+  const { sortOrder, sortBy, filters, documentRid } = params;
 
   const searchParams = new URLSearchParams();
 

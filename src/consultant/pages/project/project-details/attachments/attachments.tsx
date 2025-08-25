@@ -14,7 +14,6 @@ import {
 } from '../../../../types/attachment';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
-import { Attachment } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
 import { ExportType, SelectOption } from '../../../../types';
@@ -37,6 +36,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { FilterValue } from '../../../account-details-sidebar/components/filter/filterType';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { AttachmentsSideIcon } from '../../../../../assets';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -383,7 +383,12 @@ const Attachments: React.FC<AttachmentsProps> = ({
             value={'attachments'}
             title='Attachments'
             count={totalItems}
-            titleIcon={<Attachment alt='attachment-header-icon' />}
+            titleIcon={
+              <AttachmentsSideIcon
+                alt='attachment-header-icon'
+                className='[&>path]:stroke-[#4B9BFF]'
+              />
+            }
             headerButtons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>

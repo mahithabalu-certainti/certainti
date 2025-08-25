@@ -366,7 +366,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   key={idx}
                   className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                 >
-                  <div className='flex items-center gap-2 w-full'>
+                  <div className='flex items-center gap-2 w-[95%]'>
                     <PdfIcon />
                     <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
                       <TruncateWithTooltip
@@ -531,7 +531,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       key={index}
                       className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                     >
-                      <div className='flex items-center gap-2 w-full'>
+                      <div className='flex items-center gap-2 w-[95%]'>
                         <PdfIcon />
                         <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
                           <TruncateWithTooltip

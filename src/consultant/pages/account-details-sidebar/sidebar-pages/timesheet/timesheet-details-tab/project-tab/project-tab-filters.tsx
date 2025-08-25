@@ -45,13 +45,14 @@ const dateOptions: { option: string; value: string }[] = [
 export const getTimesheetProjectTabFilterFields = (
   fiscalYears: SelectOption[],
   resourceTypeOptions: { option: string; value: string }[],
-  memoizedStatus: { option: string; value: string }[],
+  memoizedStatus: { option: string; value: string }[]
 ): FieldConfig[] => {
   const { permission } = useSelector((state: RootState) => state.permission);
   const timesheet_Project_ViewEditFields = useMemo(
     () =>
-      permission?.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
-        ?.fields ?? [],
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -87,7 +88,8 @@ export const getTimesheetProjectTabFilterFields = (
       operatorOption: enumOptions,
       options: resourceTypeOptions,
       hide:
-        !permissionMap?.['project_type_rid']?.edit && !permissionMap?.['project_type_rid']?.read,
+        !permissionMap?.['project_type_rid']?.edit &&
+        !permissionMap?.['project_type_rid']?.read,
     },
     {
       name: 'Fiscal Year',
@@ -140,7 +142,8 @@ export const getTimesheetProjectTabFilterFields = (
       type: 'number',
       operatorOption: numberOptions,
       hide:
-        !permissionMap?.['total_cost']?.edit && !permissionMap?.['total_cost']?.read,
+        !permissionMap?.['total_cost']?.edit &&
+        !permissionMap?.['total_cost']?.read,
     },
     {
       name: 'FTE Cost',
@@ -184,9 +187,7 @@ export const getTimesheetProjectTabFilterFields = (
       value: 'qre',
       type: 'number',
       operatorOption: numberOptions,
-      hide:
-        !permissionMap?.['qre']?.edit &&
-        !permissionMap?.['qre']?.read,
+      hide: !permissionMap?.['qre']?.edit && !permissionMap?.['qre']?.read,
     },
     {
       name: 'QRE',

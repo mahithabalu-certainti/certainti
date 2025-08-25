@@ -3,7 +3,10 @@ import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
-import { AllModules, AllPermissions } from '../../../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+} from '../../../../../../../common-service';
 import { useTimesheetProjectTaskList } from '../../../../../../services/import';
 import { ProjectTaskListType } from '../../../../../../types/project-task';
 import { getProjectTaskColumns } from './columns';
@@ -39,7 +42,9 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   const [searchParams] = useSearchParams();
 
   // Permission Mangement
-  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const timesheetTaskIsEnable = checkPermission(
     modules,
     AllModules.PROJECT_TASK
@@ -94,13 +99,7 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
       documentRid: documentRid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    sortField,
-    sortOrder,
-    appliedFilters,
-    accountid,
-    documentRid
-  ]);
+  }, [sortField, sortOrder, appliedFilters, accountid, documentRid]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -147,7 +146,8 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
         sortBy={sortField}
         sortOrder={sortOrder}
         onSort={(property: string, sortOrder: 'asc' | 'desc') =>
-          handleSortRequest(property, sortOrder.toUpperCase() as 'ASC' | 'DESC')}
+          handleSortRequest(property, sortOrder.toUpperCase() as 'ASC' | 'DESC')
+        }
       />
     </div>
   );
