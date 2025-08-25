@@ -6,6 +6,40 @@
   scrollbar-color: #888 #fff;
 }
 
+.loader {
+  width: 12px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: l5 1s infinite linear alternate;
+  margin: 8px 0;
+}
+@keyframes l5 {
+  0% {
+    box-shadow:
+      20px 0 #f16137,
+      -20px 0 #ffcfc1;
+    background: #f16137;
+  }
+  33% {
+    box-shadow:
+      20px 0 #f16137,
+      -20px 0 #ffcfc1;
+    background: #ffcfc1;
+  }
+  66% {
+    box-shadow:
+      20px 0 #ffcfc1,
+      -20px 0 #f16137;
+    background: #ffcfc1;
+  }
+  100% {
+    box-shadow:
+      20px 0 #ffcfc1,
+      -20px 0 #f16137;
+    background: #f16137;
+  }
+}
+
 .placeholder-custom-color::placeholder {
   color: #7d98b6;
   font-size: 13px;
