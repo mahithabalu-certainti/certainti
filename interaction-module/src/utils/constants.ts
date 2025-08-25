@@ -74,7 +74,8 @@ export const filtersColumns : Record<string, string> =
     created_datetime : "created_datetime",
     modified_datetime : "modified_datetime",
     status_rid : "status_rid",
-    interaction_type_rid : "interaction_type_rid"
+    interaction_type_rid : "interaction_type_rid",
+    interaction_iteration : "interaction_iteration"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -201,7 +202,8 @@ export const STATUS_MESSAGE = {
   technicalIssue:"Technical Issue",
   interactionFailed:"Interaction Creation Failed",
   interactionUpdateFailed:"Interaction Update Failed",
-  responseUpdateFailed:"Interaction Response Update Failed"
+  responseUpdateFailed:"Interaction Response Update Failed",
+  assessmentInitiated : "AI Assessment Initiated"
 };
 
 export const rawQueries = {
@@ -340,7 +342,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     created_user_name : "string",
     updated_user_name : "string",
     status_rid : "string",
-    interaction_type_rid : "string"
+    interaction_type_rid : "string",
+    interaction_iteration : "number"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -364,7 +367,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     updated_user_name : "updated_user_name",
     status_rid : "status_rid",
     interaction_type_rid : "interaction_type_rid",
-    status_name : "status_name"
+    status_name : "status_name",
+    interaction_iteration : "interaction_iteration"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
