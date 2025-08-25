@@ -83,7 +83,7 @@ export const projectTaskFilterFields = (
         !permissionMap?.['start_date']?.read &&
         !permissionMap?.['start_date']?.edit,
     },
-{
+    {
       name: 'End Date',
       value: 'end_date',
       type: 'date',
