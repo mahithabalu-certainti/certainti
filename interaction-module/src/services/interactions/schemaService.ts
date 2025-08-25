@@ -238,8 +238,6 @@ class InteractionSchemaService {
 
       if (key === "questions" && Array.isArray(newValue)) {
         oldValue = existingProjectTaskData["question"];
-        // Iterate over questions array
-        console.log("Question", newValue);
         for (let i = 0; i < newValue.length; i++) {
           const newQuestion = newValue[i];
           const oldQuestion = Array.isArray(oldValue) ? oldValue[i] : undefined;
@@ -307,7 +305,6 @@ class InteractionSchemaService {
     interactionRnumber: string
   ) {
     try {
-      console.log("Rnumber received", interactionRnumber);
       const { InteractionSummary } =
         await this.interactionModelService.getModels(accountNumber);
 
@@ -487,7 +484,6 @@ if(!this.orgDbSequelize)
         created_by ?? "",
         modified_by ?? ""
       );
-      console.log(metainfo);
       const response: InteractionDetailsResponse = {
         interaction_rid:rid,
         project_name: metainfo?.project_name ?? "",
@@ -641,7 +637,7 @@ if(!this.orgDbSequelize)
 
     // Fetch project info
     const [projectInfo]: any[] = await this.orgDbSequelize.query(
-      rawQueries.fetchProjectInfo(interactionDetails.project_rid, schemaName),
+      rawQueries.fetchProjectInfo(interactionDetails.project_fiscal_rid, schemaName),
       { type: "SELECT" }
     );
 
@@ -760,9 +756,7 @@ if(!this.orgDbSequelize)
       rawQueries.fetchInteractionType(type),
       { type: "SELECT" }
     );
-     console.log(interactionTypeArr);
     const interactionType = Array.isArray(interactionTypeArr) && interactionTypeArr.length > 0 ? interactionTypeArr[0] : null;
-    console.log(interactionType);
     return interactionType?.rid ? interactionType.rid : null;
   }
 
@@ -937,7 +931,6 @@ if(!this.orgDbSequelize)
         interactionVersion
       };
     } catch (err) {
-      console.log(err)
       throw new Error(
 
         "Error updating interaction response: " + (err as Error).message
@@ -1097,7 +1090,6 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
 
        
         // Fetch latest response history for each question
-        console.log("Response History Query")
         const response = await InteractionResponseHistory.findOne({
           where: {
             interaction_item_rid: item.rid,
@@ -1186,27 +1178,47 @@ async fetchInteractionQuestionsById(
     }
   }
 
-  async fetchPOCEmail(accountNumber: string, interactionRid: string, projectFiscalRid: string) {
+  async fetchEmailInfo(accountNumber: string, interactionRid: string, projectFiscalRid: string, accountRid: string) {
     try {
-        if (!this.mainDbSequelize) {
-        this.mainDbSequelize =
-          await this.interactionModelService.getMainSequelize();
-      }
+        if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
       if (!projectFiscalRid) {
        return {
          name: null,
-         email: null
+         email: null,
+         ccEmails: []
        };
       }
-      const [result]: any[] = await this.mainDbSequelize!.query(
-        rawQueries.fetchPOCEmail(projectFiscalRid),
+      const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipient(projectFiscalRid, schemaName),
         {
           type: "SELECT",
         }
       );
+   
+      const interactionCCRecipients: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipientProject(projectFiscalRid, schemaName),
+        { type: "SELECT" }
+      );
+      const interactionCCRecipientsAccount: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipientAccount(accountRid, schemaName),
+        { type: "SELECT" }
+      );
+
+      // Combine emails for CC (filter out null/undefined and duplicates)
+      const ccEmails = [
+        ...interactionCCRecipients.map(rec => rec.key_contact_email).filter(Boolean),
+        ...interactionCCRecipientsAccount.map(rec => rec.key_contact_email).filter(Boolean)
+      ].filter((email, idx, arr) => email && arr.indexOf(email) === idx);
+
+      // Remove duplicates
+      const uniqueCCEmails = Array.from(new Set(ccEmails));
       return {
-        name: result?.project_point_of_contact ?? null,
-        email: result?.project_point_of_contact_email ?? null
+        name: interactionRecipients.key_contact_name ?? null,
+        email: interactionRecipients.key_contact_email ?? null,
+        ccEmails: uniqueCCEmails ?? []
       };
 
   } catch (err) {
@@ -1220,11 +1232,11 @@ async updateInteractionInfo(
   interactionRid: string,
   status: string,
   userId: string,
-  emailInfo: { name: string | null; email: string | null },
+  emailInfo: { name: string | null; email: string | null | string[]  },
   interactionLink:string
 ) {
   try {
-    const { Interaction } = await this.interactionModelService.getModels(
+    const { Interaction,InteractionSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
     if (!this.mainDbSequelize) {
@@ -1259,6 +1271,7 @@ async updateInteractionInfo(
     }
 
     await Interaction.update(updateData, { where: { rid: interactionRid } });
+    await InteractionSummary.update(updateData, { where: { interaction_rid: interactionRid } });
   } catch (err) {
     throw new Error(
       "Error updating interaction status: " + (err as Error).message

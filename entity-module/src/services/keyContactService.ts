@@ -39,6 +39,7 @@ export class KeyContactService {
     let financialConsultant = "-";
     let projectPointOfContact = "-";
     let projectPointOfContactEmail = '-';
+    let isEmailRecipient = false;
 
     if (keyContacts) {
       const keyContactIds = [
@@ -97,6 +98,10 @@ export class KeyContactService {
           e.role_name === "Client Project Point of Contact" && e.is_primary_contact
       );
 
+      const isEmailRecipientInfo = enrichedKeyContacts.some(
+        (e: any) => e.include_in_communication === true
+      );
+
       technicalConsultant = technicalContact
         ? technicalContact.key_contact_name
         : null;
@@ -109,16 +114,18 @@ export class KeyContactService {
       projectPointOfContactEmail = pointOfContact
         ? pointOfContact.key_contact_email
         : null;
+        isEmailRecipient = isEmailRecipientInfo || false;
     } else {
       return {
         technicalConsultant: null,
         financialConsultant: null,
         projectPointOfContact: null,
-        projectPointOfContactEmail:null
+        projectPointOfContactEmail:null,
+        isEmailRecipient:  false
       };
     }
 
-    return { technicalConsultant, financialConsultant, projectPointOfContact,projectPointOfContactEmail };
+    return { technicalConsultant, financialConsultant, projectPointOfContact,projectPointOfContactEmail,isEmailRecipient };
   }
 
   async deleteKeyContactDetails(
@@ -147,6 +154,10 @@ export class KeyContactService {
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
           status_rid: keyContactDetails.status_rid,
+          interaction_cc_recipient:
+            keyContactDetails.interaction_cc_recipient === null
+              ? null
+              : keyContactDetails.interaction_cc_recipient,
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -183,6 +194,7 @@ export class KeyContactService {
         key_contact_role: keyContactDetails.key_contact_role || null,
         status_rid: keyContactDetails.status_rid || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
+        interaction_cc_recipient: keyContactDetails.interaction_cc_recipient || null,
         include_in_communication:
           keyContactDetails.include_in_communication === null ? null : keyContactDetails.include_in_communication,
         entity_rid: project_rid,

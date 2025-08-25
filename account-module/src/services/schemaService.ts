@@ -2598,7 +2598,6 @@ private async createInteractionTable(
               key_contact_role = :key_contact_role_rid,
               status_rid = :status_rid,
               is_primary_contact = :is_primary_contact,
-              include_in_communication = :include_in_communication,
               interaction_cc_recipient = :interaction_cc_recipient,
               modified_by = :modified_by
             WHERE entity_rid = :account_rid
@@ -2614,8 +2613,6 @@ private async createInteractionTable(
             key_contact_role_rid: keyContactDetails.key_contact_role,
             status_rid: keyContactDetails.status_rid,
             is_primary_contact: keyContactDetails.is_primary_contact,
-            include_in_communication:
-              keyContactDetails.include_in_communication,
             interaction_cc_recipient:
               keyContactDetails.interaction_cc_recipient,
             modified_by: userId,
@@ -2640,12 +2637,12 @@ private async createInteractionTable(
         `INSERT INTO "${schemaName}"."key_contact_details" (
          entity_rid, key_contact_name, 
           key_contact_email, key_contact_role, status_rid, 
-          is_primary_contact, include_in_communication, interaction_cc_recipient,
+          is_primary_contact, interaction_cc_recipient,
           created_by, modified_by, entity_type
         ) VALUES (
           :account_rid, :key_contact_name, 
           :key_contact_email, :key_contact_role_rid, :status_rid, 
-          :is_primary_contact, :include_in_communication, :interaction_cc_recipient,
+          :is_primary_contact, :interaction_cc_recipient,
           :created_by, :modified_by, 'Account'
         );`,
         {
@@ -2656,8 +2653,6 @@ private async createInteractionTable(
             key_contact_role_rid: keyContactDetails.key_contact_role,
             status_rid: keyContactDetails.status_rid,
             is_primary_contact: keyContactDetails.is_primary_contact,
-            include_in_communication:
-              keyContactDetails.include_in_communication,
             interaction_cc_recipient:
               keyContactDetails.interaction_cc_recipient,
             created_by: userId,
@@ -2687,7 +2682,6 @@ private async createInteractionTable(
           key_contact_email VARCHAR(125),
           key_contact_role varchar(50),
           is_primary_contact BOOLEAN,
-          include_in_communication BOOLEAN,
           interaction_recipient BOOLEAN,
           interaction_cc_recipient BOOLEAN,
           status_rid VARCHAR(50)

@@ -466,6 +466,7 @@ export class InteractionService {
       email_info?: {
         email: string;
         name: string | null;
+        ccEmails?: string[] | [];
       };
       project_fiscal_rid: string;
     }[],
@@ -493,7 +494,7 @@ export class InteractionService {
         // If emailInfo.email is empty, fetch POC email
         let sendEmailInfo = email_info;
         if (!email_info || !email_info?.email) {
-          sendEmailInfo =  await this.interactionSchemaService.fetchPOCEmail(accountNumber, interaction_rid, project_fiscal_rid);
+          sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
         }
 
         if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
@@ -505,8 +506,6 @@ export class InteractionService {
           continue;
         }
         console.log("Sending email to:", sendEmailInfo);
-
-
 
         const [interactionItems, interactionInfo] =
           await Promise.all([
@@ -643,7 +642,7 @@ export class InteractionService {
   }
 
   async sendEmailWithAttachment(
-    emailInfo: { name: string | null; email: string  },
+    emailInfo: { name: string | null; email: string, ccEmails?: string[] | [] },
     projectInfo: {
       project_id: string;
       project_name: string;

@@ -195,7 +195,8 @@ export class ProjectMapper {
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
     projectPointOfContact: string | null,
-    projectPointOfContactEmail: string | null
+    projectPointOfContactEmail: string | null,
+    isEmailRecipient:boolean
   ) {
     return {
       project_code: projectData.project_code,
@@ -256,6 +257,7 @@ export class ProjectMapper {
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
       project_point_of_contact_email: projectPointOfContactEmail,
+      is_interaction_recipient:isEmailRecipient
     };
   }
 
@@ -267,6 +269,7 @@ export class ProjectMapper {
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
     projectPointOfContact: string | null,
+    isEmailRecipient:boolean, 
     projectFiscalId: string
   ) {
     return {
@@ -385,6 +388,7 @@ export class ProjectMapper {
 
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
+      is_interaction_recipient: isEmailRecipient
     };
   }
 
@@ -498,7 +502,9 @@ export class ProjectMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    projectPointOfContact: string | null
+    projectPointOfContact: string | null,
+    projectPointOfContactEmail: string | null,
+    isEmailRecipient: boolean | false
   ) {
     return {
       project_code: projectData.project_code,
@@ -548,6 +554,8 @@ export class ProjectMapper {
 
       technical_point_of_contact: technicalConsultant,
       project_point_of_contact: projectPointOfContact,
+      project_point_of_contact_email: projectPointOfContactEmail,
+      is_interaction_recipient: isEmailRecipient,
     };
   }
 }
