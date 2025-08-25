@@ -1951,7 +1951,7 @@ private async createInteractionTable(
       interaction_age integer,
       attachment_count integer,
       is_ai_processed boolean default false,
-      interaction_version interger,
+      interaction_version integer,
       CONSTRAINT interactions_rid_unique UNIQUE (rid)
     );
   `);
