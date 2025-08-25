@@ -136,7 +136,6 @@ class SchemaService {
         project_fiscal_rid VARCHAR(50),
         technical_summary TEXT,
         version INT DEFAULT 1,
-        generated_on TIMESTAMP,
         status VARCHAR(50),
         entity_transaction_rid VARCHAR(50),
         technical_summary_refinement_prompt TEXT
