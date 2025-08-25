@@ -282,7 +282,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const description: DetailItem[] = [
     {
       key: 'project_description',
-      label: 'description',
+      label: 'Description',
       value: projectDetails?.project_description,
     },
   ];
