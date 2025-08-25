@@ -48,7 +48,7 @@ export const fetchInteractionForProjectLevelQuery = (
         i.fiscal_year = ${fiscal_year}
         `
     }
-    let filteredData = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypes)
+    let filteredData = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypes, filtersColumns)
 
     if(sort === filtersColumns.r_number) sortValue = `ORDER BY i.r_number ${sortBy}`
     else if(sort === filtersColumns.iteration) sortValue = `ORDER BY i.interaction_iteration ${sortBy}`
@@ -153,7 +153,7 @@ export const listAllInteractionSummary = (
     let andConditionsForjoinsForThree : string = ` `
     let sortValue
 
-    let filterDatas = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypesForSummaryInteractions);
+    let filterDatas = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypesForSummaryInteractions, filtersColumnsForInteractionSummary);
     if(filterDatas?.filteredQueryArray?.length! > 0) {
         filterQueryValues = filterDatas?.filteredQueryArray.join(' AND ')
     } else {
@@ -283,13 +283,13 @@ export const listAllInteractionSummary = (
 
 const filterForInteractions = (
     filters : filterType, andConditions : string,
-    filteredQueryArray : string[], filterTypes : any
+    filteredQueryArray : string[], filterTypes : any, filterColumns : Record<string, any>
     ) => {
         let filteredColumns : string | undefined;
         if(Object.keys(filters).length > 0) {
         for(let [key, conditions] of Object.entries(filters)) {
             if(Object.keys(filterTypes).includes(key)) {
-                filteredColumns = filtersColumns[key]
+                filteredColumns = filterColumns[key]
                 andConditions = ` AND `
             }
             for(let [condition, values] of Object.entries(conditions)) {
