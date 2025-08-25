@@ -19,15 +19,14 @@ export const transformInteractionData = (
   data: any
   //   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
-  const account = data?.data;
-  // const status = account?.status?.status_name?.toLowerCase();
+  const interaction = data?.data;
 
   return [
     {
       items: [
         {
           label: 'Interaction ID',
-          value: account?.interaction_rid || '-',
+          value: interaction?.interaction_rid || '-',
           // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
           //   hide:
           //     !permissionMap?.['r_number']?.read &&
@@ -39,32 +38,10 @@ export const transformInteractionData = (
       items: [
         {
           label: 'Project Name',
-          value: account?.project_name || '-',
+          value: interaction?.project_name || '-',
           //   hide:
           //     !permissionMap?.['parent_account_rid']?.read &&
           //     !permissionMap?.['parent_account_rid']?.edit,
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Email ID',
-          value: account?.email || '-',
-          //   hide:
-          //     !permissionMap?.['country_rid']?.read &&
-          //     !permissionMap?.['country_rid']?.edit,
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Response Date',
-          value: account?.source,
-          //   hide:
-          //     !permissionMap?.['industry_rid']?.read &&
-          //     !permissionMap?.['industry_rid']?.edit,
         },
       ],
     },

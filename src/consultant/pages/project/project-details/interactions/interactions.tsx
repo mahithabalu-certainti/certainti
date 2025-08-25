@@ -10,7 +10,7 @@ import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { SectionTabPanel } from '../../../../../components';
 import { ListTable } from '../../../../../components/table';
-import { InteractionList } from '../../../../types';
+import { InteractionList, StatusTypeEnum } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import {
   generatePath,
@@ -90,7 +90,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewDetails = !!interactionId;
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
-  const viewHistory = !!responseHistory;
+  const viewResponseHistory = !!responseHistory;
 
   const projectData = {
     project_code: projectDetails?.project_code || '',
@@ -156,15 +156,27 @@ const Interactions: React.FC<InteractionsProps> = ({
     () =>
       interactionSources.data?.data.interactionSource.map((source) => ({
         option: source.interaction_source_name,
-        value: source.rid,
+        value: source.interaction_source_name,
       })) || [],
     [interactionSources.data?.data.interactionSource]
   );
 
   useEffect(() => {
     if (data) {
-      setInteractionList(data.interactions || []);
-      setCount(data.count || 0);
+      const updatedInteractions =
+        data.interactions?.map((item) => {
+          const status = (item.status_name || '').toLowerCase();
+          return {
+            ...item,
+            disableCheckBox:
+              status === StatusTypeEnum.draft ||
+              status === StatusTypeEnum.cancelled ||
+              status === StatusTypeEnum.response_received ||
+              status === '',
+          };
+        }) || [];
+
+      setInteractionList(updatedInteractions);
       setSelectedRows([]);
     }
   }, [data]);
@@ -179,7 +191,15 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
     };
     setInteractionsParams(updatedParams);
-  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    sortField,
+    appliedFilters,
+    currentPage,
+    rowsPerPage,
+    sortBy,
+    interactionHistoryId,
+  ]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -237,7 +257,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: selectedRows.length === 0 || accountInActive,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
-      hide: viewHistory,
+      hide: viewResponseHistory,
     },
     {
       label: 'New',
@@ -245,7 +265,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: viewHistory,
+      hide: viewResponseHistory,
     },
   ];
 
@@ -277,6 +297,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setCount(0);
     }
   };
 
@@ -324,12 +345,22 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const disableInteractionEditBtn = (row: InteractionList): boolean => {
+    const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
+    return [
+      StatusTypeEnum.cancelled,
+      StatusTypeEnum.completed,
+      StatusTypeEnum.response_received,
+    ].includes(status);
+  };
+
   const actionButtons: ActionItem<InteractionList>[] = [
     {
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),
       icon: EditIcon,
-      disabled: accountInActive,
+      disabled: (row: InteractionList) =>
+        accountInActive || disableInteractionEditBtn(row),
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -370,7 +401,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
       />
-      {viewDetails && !viewHistory ? (
+      {viewDetails && !viewResponseHistory ? (
         <InteractionDetails
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
@@ -393,21 +424,25 @@ const Interactions: React.FC<InteractionsProps> = ({
         // !isGlobalInteractions && (
         <>
           <SectionHeader
-            title='Interaction'
+            title={
+              viewResponseHistory
+                ? `Interaction Response History`
+                : 'Interaction'
+            }
             titleIcon={
               <InteractionDetailIcon
                 alt='financial-header-icon'
-                className={`w-7 h-7 p-1 bg-[#E25A32] rounded-full`}
+                className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
               />
             }
-            count={count}
-            showItemCount={true}
-            showBackArrow={viewHistory}
+            count={viewResponseHistory ? count : totalItems}
+            showItemCount={interactionResponseId ? false : true}
+            showBackArrow={viewResponseHistory}
             onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
-            {!viewHistory ? (
+            {!viewResponseHistory ? (
               <ListTable
                 data={interactionList}
                 columns={interactionColumns}
@@ -439,12 +474,13 @@ const Interactions: React.FC<InteractionsProps> = ({
                 onSort={handleSortRequest}
               />
             ) : (
-              <HistoryTable />
+              <HistoryTable setCount={setCount} />
             )}
             <SendInteractionModal
               isOpen={sendModalOpen}
               onClose={() => setSendModalOpen(false)}
               selectedRows={selectedRows}
+              onSuccessRefetch={handleRefresh}
             />
           </div>
         </>

@@ -194,7 +194,7 @@ export const useGetImportEntityTypes = () => {
 
 export const getInteractionStatusUrl = (statusId?: string): string => {
   return statusId
-    ? `/api/interactions/interactionStatus?status_scope=UI&current_status=${statusId}`
+    ? `/api/interactions/interactionStatus?current_status=${statusId}`
     : `/api/interactions/interactionStatus`;
 };
 
@@ -222,6 +222,15 @@ export const useGetInteractionStatus = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+  });
+};
+
+export const useGetInteractionStatusById = (statusId: string) => {
+  return useQuery<GetInteractionStatusApiResponse, Error>({
+    queryKey: ['gat-interaction-status-by-id'],
+    queryFn: () => fetchInteractionStatus(statusId),
+    retry: 0,
+    enabled: !!statusId,
   });
 };
 

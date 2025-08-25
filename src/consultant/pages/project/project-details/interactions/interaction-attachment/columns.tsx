@@ -1,4 +1,5 @@
 import { DownloadIcon } from '../../../../../../assets';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
 import { InteractionAttachmentType } from '../../../../../types';
 
@@ -53,8 +54,9 @@ export const getInteractionAttachmentListColumns = (
     id: 'uploaded_date',
     sortId: 'uploaded_date',
     label: 'Uploaded Date',
-    width: 140,
-    render: (row: InteractionAttachmentType) => row.uploaded_date || '-',
+    width: 160,
+    render: (row: InteractionAttachmentType) =>
+      formatDateToYYYYMMDDWithTime(row.uploaded_date) || '-',
   },
   {
     id: 'download_link',

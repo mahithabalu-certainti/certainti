@@ -1,9 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import {
-  InteractionAttachmentListParams,
-  InteractionAttachmentType,
-} from '../../../../../types';
+import { InteractionAttachmentType } from '../../../../../types';
 import { useGetInteractionAttachmentList } from '../../../../../services/interactions/interaction-attachment-service';
 import { getInteractionAttachmentListColumns } from './columns';
 import SectionHeader from '../../../../../../components/details-section/section-header';
@@ -19,22 +16,19 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   handleBackClick,
   refresh,
 }) => {
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const interactionId = searchParams.get('interaction_rid') || '';
 
-  const [tableParams, setTableParams] =
-    useState<InteractionAttachmentListParams>({
-      page: currentPage,
+  const { data, isLoading, isError } = useGetInteractionAttachmentList(
+    {
+      page: currentPage + 1,
       limit: rowsPerPage,
       account_rid: accountid,
       interaction_rid: interactionId || '',
-    });
-
-  const { data, isLoading, isError } = useGetInteractionAttachmentList(
-    tableParams,
+    },
     refresh
   );
 
@@ -56,23 +50,11 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
-    setTableParams({ ...tableParams, limit: newPageSize, page: 1 });
   };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    setTableParams({ ...tableParams, page: newPage });
   };
-
-  useEffect(() => {
-    setTableParams((prevParams) => ({
-      ...prevParams,
-      page: currentPage,
-      limit: rowsPerPage,
-      account_rid: accountid,
-      interaction_rid: interactionId || '',
-    }));
-  }, [currentPage, rowsPerPage, accountid, interactionId]);
 
   return (
     <>

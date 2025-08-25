@@ -27,5 +27,6 @@ export const useGetInteractionAttachmentList = (
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     retry: 0,
+    enabled: !!params.interaction_rid,
   });
 };

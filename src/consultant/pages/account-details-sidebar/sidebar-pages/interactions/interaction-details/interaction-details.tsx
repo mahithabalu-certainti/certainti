@@ -41,7 +41,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     interactionId
   );
   const disableEditResBtn =
-    data?.status_name.toLowerCase() === StatusTypeEnum.cancelled;
+    data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+
+  const disableInteractionEditBtn = [
+    StatusTypeEnum.cancelled,
+    StatusTypeEnum.completed,
+    StatusTypeEnum.response_received,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const handleEdit = () => {
     const accountId = accountid ?? '';
@@ -66,7 +72,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: false,
@@ -94,7 +100,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const InteractionInfo: DetailItem[] = [
     {
       label: 'Interaction Type',
-      value: data?.interaction_type,
+      value: data?.interaction_type_name,
       key: 'interaction_type',
     },
     {
@@ -115,7 +121,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
     {
       label: 'Response Received On',
-      value: data?.response_updated_on,
+      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
       key: 'response_updated_on',
     },
   ];

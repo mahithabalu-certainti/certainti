@@ -27,6 +27,7 @@ export interface TimeSheetListURLParams {
   filters?: object;
   fiscal_year?: number | string;
   account_rid: string;
+  documentRid?: string;
 }
 
 export interface TImesheetListResponse {
@@ -60,6 +61,7 @@ export interface TimesheetDetails {
   imported_by: string;
   status_description: string;
   document_url: string;
+  document_rid: string;
 }
 
 export interface TimesheetDetailsResponse {

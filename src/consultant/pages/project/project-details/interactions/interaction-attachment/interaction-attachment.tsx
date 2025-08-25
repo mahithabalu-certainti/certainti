@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getInteractionAttachmentListColumns } from './columns';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { InteractionDetailIcon } from '../../../../../../assets';
 import { ListTable } from '../../../../../../components/table';
 import { useGetInteractionAttachmentList } from '../../../../../services/interactions/interaction-attachment-service';
-import {
-  InteractionAttachmentListParams,
-  InteractionAttachmentType,
-} from '../../../../../types';
+import { InteractionAttachmentType } from '../../../../../types';
 import { useSearchParams } from 'react-router-dom';
 
 interface InteractionAttachmentProps {
@@ -19,7 +16,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   handleBackClick,
   refresh,
 }) => {
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -27,16 +24,13 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const mainSource = searchParams.get('main_source') || '';
   const isGlobalInteractions = mainSource === 'interactions';
 
-  const [tableParams, setTableParams] =
-    useState<InteractionAttachmentListParams>({
-      page: currentPage,
+  const { data, isLoading, isError } = useGetInteractionAttachmentList(
+    {
+      page: currentPage + 1,
       limit: rowsPerPage,
       account_rid: accountId,
       interaction_rid: interactionId || '',
-    });
-
-  const { data, isLoading, isError } = useGetInteractionAttachmentList(
-    tableParams,
+    },
     refresh
   );
 
@@ -58,23 +52,11 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
-    setTableParams({ ...tableParams, limit: newPageSize, page: 1 });
   };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    setTableParams({ ...tableParams, page: newPage });
   };
-
-  useEffect(() => {
-    setTableParams((prevParams) => ({
-      ...prevParams,
-      page: currentPage,
-      limit: rowsPerPage,
-      account_rid: accountId,
-      interaction_rid: interactionId || '',
-    }));
-  }, [currentPage, rowsPerPage, accountId, interactionId]);
 
   return (
     <>
