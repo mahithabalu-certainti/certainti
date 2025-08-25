@@ -62,7 +62,8 @@ export class InteractionService {
   async getInteractionDetailsById(
     interactionRid: string,
     accountRid: string,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -75,7 +76,7 @@ export class InteractionService {
         {
           headers: {
             "x-user-id": userId,
-            Authorization: "Bearer ",
+            Authorization: authToken,
           },
         }
       );
