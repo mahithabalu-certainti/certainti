@@ -106,14 +106,48 @@ class SchemaService {
       await this.createInteractionItemTable(schemaName, sequelize);
       await this.createInteractionHistoryTable(schemaName, sequelize);
       await this.createInteractionResponseTable(schemaName, sequelize);
-     // await this.createInteractionStatusHistoryTable(schemaName, sequelize);
       await this.createInteractionAttachments(schemaName, sequelize);
+      await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
       console.log("Table createng err", Err);
     }
+  }
+
+  private async  createAITechnicalSummary( schemaName: string,
+    sequelize: Sequelize) {
+     await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".ai_technical_summary_seq START 1;
+    `);
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_technical_summary (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) UNIQUE DEFAULT (('ATS-'::text || lpad(nextval('"${schemaName}".ai_technical_summary_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid character varying(50),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        account_rid varchar(50) NOT NULL,
+        project_rid VARCHAR(50) NOT NULL,
+        fiscal_year INT NOT NULL,
+        project_fiscal_rid VARCHAR(50),
+        technical_summary TEXT,
+        version INT DEFAULT 1,
+        generated_on TIMESTAMP,
+        status VARCHAR(50),
+        entity_transaction_rid VARCHAR(50),
+        technical_summary_refinement_prompt TEXT
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
   }
 
   private async createAttachmentTimeline(
@@ -2655,6 +2689,7 @@ private async createInteractionTable(
           key_contact_role varchar(50),
           is_primary_contact BOOLEAN,
           include_in_communication BOOLEAN,
+          interaction_recipient BOOLEAN,
           interaction_cc_recipient BOOLEAN,
           status_rid VARCHAR(50)
         );
