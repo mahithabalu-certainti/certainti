@@ -4,7 +4,7 @@ import { useGlobalInteractionList } from '../../../../services/interactions/inte
 import { ListTable } from '../../../../../components/table';
 import { getGlobalInteractionListColumns } from './columns';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { INTERACTIONS_EDIT } from '../../../../../routes';
+import { GLOBAL_INTERACTIONS_EDIT } from '../../../../../routes';
 import { EditIcon } from '../../../../../assets';
 import { ActionItem } from '../../../../../components/table/types';
 
@@ -65,12 +65,12 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   };
 
   const handleEdit = (row: InteractionList) => {
-    const path = generatePath(INTERACTIONS_EDIT, {
-      module: 'interactions',
+    const path = generatePath(GLOBAL_INTERACTIONS_EDIT, {
       interactionId: row.rid,
     });
     const queryParams = new URLSearchParams({
-      accountId: row.rid,
+      accountId: row.account_rid,
+      account_name: row.account_name ?? '',
       source: 'account',
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -97,7 +97,7 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
 
   const handleViewInteractionHistory = (row: InteractionList) => {
     navigate(
-      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_history_id=${row.interaction_history}&main_source=interactions`
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_history_id=${row.rid}&main_source=interactions`
     );
   };
 

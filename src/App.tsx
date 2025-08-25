@@ -50,6 +50,7 @@ import {
   INTERACTIONS_EDIT,
   INTERACTIONS,
   INTERACTIONS_DETAILS,
+  GLOBAL_INTERACTIONS_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -199,6 +200,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<InteractionForm />}
                 />
                 <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />
+                <Route
+                  path={GLOBAL_INTERACTIONS_EDIT}
+                  element={<InteractionForm />}
+                />
                 <Route path={ATTACHMENTS} element={<Attachments />} />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />

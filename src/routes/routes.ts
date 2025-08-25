@@ -74,6 +74,7 @@ export const INTERACTIONS_DETAILS = '/interactions/details/:projectid';
 export const INTERACTIONS_BASE = `/:module/interactions`;
 export const INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/create`;
 export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
+export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
 
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';

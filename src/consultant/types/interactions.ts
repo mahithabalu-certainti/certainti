@@ -141,6 +141,7 @@ export type InteractionList = {
   interaction_iteration: number | null;
   attachment_count: number | null;
   disableCheckBox?: boolean;
+  account_name?: string | null;
 };
 export type ResponseInteractionList = {
   rid: string;
