@@ -83,6 +83,9 @@ async function getInteractionDetailsById(
   try {
     console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
+    
+    const authToken = req.headers['authorization'] as string;
+
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -113,7 +116,8 @@ async function getInteractionDetailsById(
       await interactionService.getInteractionDetailsById(
         interactionRid,
         accountId,
-        userId
+        userId,
+        authToken
       );
     console.log(
       `[${methodName}] Service response:`,

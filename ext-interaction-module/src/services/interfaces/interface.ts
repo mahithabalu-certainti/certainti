@@ -38,7 +38,8 @@ export interface IInteractionService {
   getInteractionDetailsById(
     interactionRid: string,
     accountId: string,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
