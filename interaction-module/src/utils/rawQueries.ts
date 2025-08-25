@@ -48,7 +48,7 @@ export const fetchInteractionForProjectLevelQuery = (
         i.fiscal_year = ${fiscal_year}
         `
     }
-    let filteredData = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypes)
+    let filteredData = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypes, filtersColumns)
 
     if(sort === filtersColumns.r_number) sortValue = `ORDER BY i.r_number ${sortBy}`
     else if(sort === filtersColumns.iteration) sortValue = `ORDER BY i.interaction_iteration ${sortBy}`
@@ -153,7 +153,7 @@ export const listAllInteractionSummary = (
     let andConditionsForjoinsForThree : string = ` `
     let sortValue
 
-    let filterDatas = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypesForSummaryInteractions);
+    let filterDatas = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypesForSummaryInteractions, filtersColumnsForInteractionSummary);
     if(filterDatas?.filteredQueryArray?.length! > 0) {
         filterQueryValues = filterDatas?.filteredQueryArray.join(' AND ')
     } else {
@@ -218,7 +218,8 @@ export const listAllInteractionSummary = (
     CONCAT(uu.first_name, ' ', uu.last_name) AS updated_user_name,
     i.created_datetime, i.modified_datetime, i.fiscal_year, i.account_rid, i.project_rid,
     i.interaction_source_rid, sn.interaction_source_name,
-    i.project_fiscal_rid, COUNT(*) OVER() AS total_records, i.modified_by, i.interaction_age
+    i.project_fiscal_rid, COUNT(*) OVER() AS total_records, i.modified_by, i.interaction_age,
+    a.account_name
     FROM
     ${MAIN_SCHEMA_NAME}.interactions_summary i
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
@@ -227,6 +228,7 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = i.modified_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.rid = i.parent_interaction_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_source sn ON sn.rid = i.interaction_source_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
     ${whereKey}
     ${globalFiltersQueryConditions}
     ${andConditionsForjoinsForTwo}
@@ -257,6 +259,7 @@ export const listAllInteractionSummary = (
             'modified_datetime', i.modified_datetime,
             'parent_interaction_rid', i.parent_r_number,
             'account_rid', i.account_rid,
+            'account_name', i.account_name,
             'project_rid', i.project_rid,
             'project_fiscal_rid', i.project_fiscal_rid,
             'interaction_history', i.interaction_history,
@@ -280,13 +283,13 @@ export const listAllInteractionSummary = (
 
 const filterForInteractions = (
     filters : filterType, andConditions : string,
-    filteredQueryArray : string[], filterTypes : any
+    filteredQueryArray : string[], filterTypes : any, filterColumns : Record<string, any>
     ) => {
         let filteredColumns : string | undefined;
         if(Object.keys(filters).length > 0) {
         for(let [key, conditions] of Object.entries(filters)) {
             if(Object.keys(filterTypes).includes(key)) {
-                filteredColumns = filtersColumns[key]
+                filteredColumns = filterColumns[key]
                 andConditions = ` AND `
             }
             for(let [condition, values] of Object.entries(conditions)) {
