@@ -6,7 +6,6 @@ import { ImportsList, ImportsListURLParams } from '../../../../types/imports';
 import { getImportsListColumns } from './columns';
 import { getImportsFilterFields } from './helpers';
 import { SectionTabPanel } from '../../../../../components';
-import { ImportIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
 import { AccountDetailsResponse, ExportType } from '../../../../types';
 import ImportFile from './import-file/import-file';
@@ -17,6 +16,7 @@ import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { ImportsIcon } from '../../../../../assets';
 
 const ImportsTabs: ResourceTabs[] = [
   {
@@ -277,8 +277,15 @@ const Imports: React.FC<ImportsProps> = ({
             title='Imports'
             count={totalItems}
             showItemCount={true}
-            titleIcon={<ImportIcon alt='Imports-header-icon' />}
+            titleIcon={
+              <ImportsIcon
+                className='[&>path]:stroke-white'
+                alt='Imports-header-icon'
+              />
+            }
             buttons={headerButtons}
+            iconBg='#af78ff'
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             <ListTable

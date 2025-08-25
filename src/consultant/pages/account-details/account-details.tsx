@@ -209,6 +209,7 @@ export const AccountDetails = () => {
     fiscal_year: convertedFiscalYear,
     account_rid: accountid || '',
   });
+
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'status_name',

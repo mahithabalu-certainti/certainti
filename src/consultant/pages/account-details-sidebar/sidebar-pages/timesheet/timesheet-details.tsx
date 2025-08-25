@@ -1,12 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { downloadTimesheetFailureData, useTimesheetDetails, } from '../../../../services/import';
+import {
+  downloadTimesheetFailureData,
+  useTimesheetDetails,
+} from '../../../../services/import';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { Tab, Tabs, Typography } from '@mui/material';
-import DetailsSection, { DetailItem, } from '../../../../../components/details-section/details';
+import DetailsSection, {
+  DetailItem,
+} from '../../../../../components/details-section/details';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { TimeSheetIcon } from '../../../../../assets';
-import { applyHidePermission, formatDateToYYYYMMDDWithTime, } from '../../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../common-utils';
 import { FailureType, ImportEntityType } from '../../../../types/imports';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -87,9 +95,9 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
 
   useEffect(() => {
     if (data) {
-      setDocumentRid(data?.document_rid || '')
+      setDocumentRid(data?.document_rid || '');
     }
-  }, [data])
+  }, [data]);
   const handleExportFailureData = (
     type: FailureType,
     entity: ImportEntityType
@@ -167,14 +175,15 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
       label: 'Status',
       value: (
         <span
-          className={`font-semibold ${data?.status === 'Failed'
-            ? 'text-red-600'
-            : data?.status === 'Completed'
-              ? 'text-green-600'
-              : data?.status === 'Processing'
-                ? 'text-yellow-600'
-                : 'text-gray-700'
-            }`}
+          className={`font-semibold ${
+            data?.status === 'Failed'
+              ? 'text-red-600'
+              : data?.status === 'Completed'
+                ? 'text-green-600'
+                : data?.status === 'Processing'
+                  ? 'text-yellow-600'
+                  : 'text-gray-700'
+          }`}
         >
           {data?.status}
         </span>
@@ -264,7 +273,7 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
         subValue={data?.r_number}
         titleIcon={
           <TimeSheetIcon
-            className='[&>path]:stroke-white'
+            className='[&>path]:stroke-white w-[14px] h-[14px]'
             alt='Timesheet-header-icon'
           />
         }

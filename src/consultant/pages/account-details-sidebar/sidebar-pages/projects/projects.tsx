@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
 // import ListTable from '../../components/table';
 import { useSelector } from 'react-redux';
@@ -28,6 +27,7 @@ import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import { ProjectsSideIcon } from '../../../../../assets';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -486,8 +486,14 @@ const Projects: React.FC<ProjectsProps> = ({
             value={'projects'}
             title='Projects'
             count={totalItems}
-            titleIcon={<ProjectHeaderIcon alt='project-header-icon' />}
+            titleIcon={
+              <ProjectsSideIcon
+                alt='project-header-icon'
+                className='[&>path]:stroke-[#E54787] w-[14px] h-[14px]'
+              />
+            }
             headerButtons={headerButtons}
+            iconBg='#FFE7F1'
           />
           <div className='border border-[#CBD6E2]'>
             <ListTable

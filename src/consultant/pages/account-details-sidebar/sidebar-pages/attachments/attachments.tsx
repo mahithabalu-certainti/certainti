@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
-import { Attachment } from '../../../../../assets';
 import { ResourceTabs } from '../resources/resources';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -39,6 +38,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { FilterValue } from '../../components/filter/filterType';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { AttachmentsSideIcon } from '../../../../../assets';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -384,8 +384,14 @@ const Attachments: React.FC<AttachmentsProps> = ({
             value={'attachments'}
             title='Attachments'
             count={totalItems}
-            titleIcon={<Attachment alt='attachment-header-icon' />}
+            titleIcon={
+              <AttachmentsSideIcon
+                alt='attachment-header-icon'
+                className='[&>path]:stroke-[#4B9BFF]'
+              />
+            }
             headerButtons={headerButtons}
+            iconBg='#D8E9FF'
           />
           <div className='border border-[#CBD6E2]'>
             <ListTable

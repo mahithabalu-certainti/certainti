@@ -180,14 +180,11 @@ const Financial: React.FC<ProjectFinancialProps> = ({
       />
       <SectionHeader
         title='Financial Summary'
-        titleIcon={
-          <FinancialIcon
-            alt='financial-header-icon'
-            className='w-7 h-7 p-1.5 bg-[#D2E6FF] rounded-full'
-          />
-        }
+        titleIcon={<FinancialIcon alt='financial-header-icon' />}
         count={resourceCostCount}
         showItemCount={tabParam === 'resource_cost'}
+        iconBg='#D2E6FF'
+        bgType='circle'
       />
       <SectionHeaderTab
         tabs={tabs}

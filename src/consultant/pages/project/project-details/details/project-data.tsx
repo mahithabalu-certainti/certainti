@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  DetailsKeyContactErrorIcon,
-  ProjectsBook,
-} from '../../../../../assets';
+import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
 import TabPanel from './tab';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
@@ -29,6 +26,8 @@ interface ProjectsDataProps {
   detailsError: boolean;
   projectDownloadIsEnable?: boolean;
   projectEditIsEnable?: boolean;
+  iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 export interface DetailsTabs {
   id: AllPermissions | AllMenus;
@@ -156,7 +155,10 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           <ProjectOverview
             title='Projects'
             titleIcon={
-              <ProjectsBook alt='project-header-icon' className='w-6 h-6' />
+              <DetailsIcon
+                alt='project-header-icon'
+                className='[&>path]:stroke-white'
+              />
             }
             headerButtons={headerButtons}
             projectDetails={projectDetails}
@@ -164,6 +166,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             detailsError={detailsError}
             isKeyContactAvailable={isKeyContactAvailable}
             permission={permission}
+            iconBg='#AF78FF'
+            bgType='circle'
           />
         )}
       </Box>

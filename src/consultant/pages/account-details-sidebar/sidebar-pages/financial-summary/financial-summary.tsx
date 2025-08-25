@@ -224,7 +224,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         titleIcon={
           <FinancialIcon
             alt='financial-header-icon'
-            className='w-7 h-7 p-1.5 bg-[#ffeae5] rounded-full [&>path]:stroke-[#f16840]'
+            className='[&>path]:stroke-[#f16840]'
           />
         }
         buttons={[]}
@@ -232,6 +232,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
+        iconBg='#ffeae5'
+        bgType='circle'
       />
       <SectionHeaderTab
         tabs={tabs}

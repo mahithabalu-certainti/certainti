@@ -1,13 +1,18 @@
-
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
-import { AllModules, AllPermissions } from '../../../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+} from '../../../../../../../common-service';
 import { useTimesheetProjectTableList } from '../../../../../../services/import';
 import { getProjectTabTableColumns } from './columns';
-import { TimesheetProjectList, TimesheetProjectExportListURLParams } from '../../../../../../types/timesheet-projects';
+import {
+  TimesheetProjectList,
+  TimesheetProjectExportListURLParams,
+} from '../../../../../../types/timesheet-projects';
 import { AccessRestricted } from '../../../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../../../common-utils';
 
@@ -28,7 +33,6 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   onRefreshClick,
   setTimesheetProjectParams,
 }) => {
-
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('project_code');
@@ -44,7 +48,9 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   );
 
   // Permission Mangement
-  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const timesheetProjectIsEnable = checkPermission(
     modules,
     AllModules.PROJECTS
@@ -52,8 +58,9 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   // TODO: Have to update view & edit permissions
   const timesheet_Project_ViewEditFields = useMemo(
     () =>
-      permission?.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
-        ?.fields ?? [],
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -165,7 +172,8 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
         sortBy={sortField}
         sortOrder={sortOrder}
         onSort={(property: string, sortOrder: 'asc' | 'desc') =>
-          handleSortRequest(property, sortOrder.toUpperCase() as 'ASC' | 'DESC')}
+          handleSortRequest(property, sortOrder.toUpperCase() as 'ASC' | 'DESC')
+        }
         selectable={false}
         onSelectionChange={(selectedIds) =>
           console.log('Selected:', selectedIds)
