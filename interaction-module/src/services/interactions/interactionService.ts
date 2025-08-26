@@ -816,7 +816,7 @@ export class InteractionService {
           interaction_source_rid: d.interaction_source,
           interaction_source_name: sourceMap.get(d.interaction_source),
           response_source_rid: d.response_source,
-          response_source: responseSourceMap.get(d.response_source),
+          response_source_name : responseSourceMap.get(d.response_source) == undefined ? null : responseSourceMap.get(d.response_source),
           created_by: d.created_by,
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
@@ -1188,7 +1188,7 @@ export class InteractionService {
         return;
       }
       if(type === 'QRE'){
-         await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
+        await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
       }
       if(type ==="TECH_SUMMARY"){
          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_fiscal_id,company_id,correlation_id)
