@@ -267,12 +267,16 @@ export const Accounts: React.FC = () => {
       </div>
 
       <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
-        <button
-          className={`w-[130px] h-[24px] text-[13px] text-[#425A76] cursor-pointer font-semibold rounded-[2px] ${expandChild ? 'bg-[#F3F3F3]' : ''}`}
+        <TextButton
+          label='Expand / Collapse'
           onClick={() => setExpandChild(!expandChild)}
-        >
-          Expand / Collapse
-        </button>
+          sx={{
+            ...BUTTON_STYLES,
+            width: '130px',
+            minWidth: '130px',
+            maxWidth: '130px',
+          }}
+        />
         <div className='relative'>
           <button
             aria-describedby={filterId}
