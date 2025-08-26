@@ -80,7 +80,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
             i.status_rid, i.recipient_name, i.recipient_email,
             i.last_resent_on, i.last_reminder_on, i.response_updated_on,
-            i.response_submitted_on, i.response_source, i.created_by, i.modified_by,
+            i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
             i.created_datetime, i.modified_datetime, p.r_number AS parent_r_number,
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
             i.interaction_url, i.fiscal_year, i.project_fiscal_rid,
@@ -114,7 +114,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'last_reminder_on', i.last_reminder_on,
         'response_updated_on', i.response_updated_on,
         'response_submitted_on', i.response_submitted_on,
-        'response_source', i.response_source,
+        'response_source', i.response_source_rid,
         'created_by', i.created_by,
         'modified_by', i.modified_by,
         'created_datetime', i.created_datetime,
@@ -210,6 +210,7 @@ export const listAllInteractionSummary = (
     else if(sort === filtersColumnsForInteractionSummary.project_code) sortValue = ` ORDER BY i.project_code ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.account_name) sortValue = ` ORDER BY i.account_name ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.fiscal_year) sortValue = ` ORDER BY i.fiscal_year ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.response_source_name) sortValue = ` ORDER BY i.response_source_name ${sortBy}`
     else sortValue = `ORDER BY i.r_number ASC`
 
 
@@ -221,7 +222,7 @@ export const listAllInteractionSummary = (
     i.last_resent_on, i.last_reminder_on, i.response_submitted_on,
     i.response_updated_on, i.attachment_count, i.rid AS interaction_history,
     i.interaction_url, p.r_number AS parent_r_number, i.interaction_type_rid,
-    it.interaction_type_name, i.response_source,
+    it.interaction_type_name, ir.rid AS response_source_rid, ir.response_source_name,
     i.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
     CONCAT(uu.first_name, ' ', uu.last_name) AS updated_user_name,
     i.created_datetime, i.modified_datetime, i.fiscal_year, i.account_rid, i.project_rid,
@@ -238,6 +239,7 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_source sn ON sn.rid = i.interaction_source_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary pf ON pf.project_rid = i.project_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_response_source ir ON ir.rid = i.response_source_rid
     ${whereKey}
     ${globalFiltersQueryConditions}
     ${andConditionsForjoinsForTwo}
@@ -261,7 +263,8 @@ export const listAllInteractionSummary = (
             'last_reminder_on', i.last_reminder_on,
             'response_updated_on', i.response_updated_on,
             'response_submitted_on', i.response_submitted_on,
-            'response_source', i.response_source,
+            'response_source_rid', i.response_source_rid,
+            'response_source_name', i.response_source_name,
             'created_by', i.created_by,
             'modified_by', i.modified_by,
             'created_datetime', i.created_datetime,

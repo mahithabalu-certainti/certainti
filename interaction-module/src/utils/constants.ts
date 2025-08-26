@@ -82,7 +82,8 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_iteration : "interaction_iteration",
     project_code : "project_code",
-    fiscal_year : "fiscal_year"
+    fiscal_year : "fiscal_year",
+    response_source_rid : "response_source_rid"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -103,7 +104,8 @@ export const filtersColumns : Record<string, string> =
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
-    fiscal_year : "number"
+    fiscal_year : "number",
+    response_source_rid : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -129,7 +131,8 @@ export const mainTableFilters : Record<any, any> = {
   updated_user_name : "updated_user_name",
   interaction_type_name : "interaction_type_name",
   interaction_source_name : "interaction_source_name",
-  status_name : "status_name"
+  status_name : "status_name",
+  response_source_name : "response_source_name"
 }
 
 export const STATUS_MESSAGE = {
@@ -381,7 +384,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_iteration : "number",
     account_name : "string",
     project_code : "string",
-    fiscal_year : "number"
+    fiscal_year : "number",
+    response_source_rid : "response_source_rid"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -409,7 +413,9 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_iteration : "interaction_iteration",
     account_name : "account_name",
     project_code : "project_code",
-    fiscal_year : "fiscal_year"
+    fiscal_year : "fiscal_year",
+    response_source_rid : "response_source_rid",
+    response_source_name : "response_source_name"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
