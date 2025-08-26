@@ -46,7 +46,7 @@ export const LeftPane: React.FC<ILeftPane> = ({ handleLogin, isLoading }) => {
           },
         }}
       >
-        {isLoading ? t('core', 'login.loading') : t('core', 'login.button')}
+        {isLoading ? <span className='loader' /> : t('core', 'login.button')}
       </Button>
     </Box>
   );

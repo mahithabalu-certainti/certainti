@@ -46,33 +46,24 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
   { name: 'key_contact_role', label: 'Key Contact Role', width: '180px' },
   { name: 'key_contact_email', label: 'Key Contact Email', width: '180px' },
-  // { name: 'key_contact_rid', label: 'Key Contact ID', width: '120px' },
   { name: 'is_primary_contact', label: 'Is Primary Contact?', width: '140px' },
   {
     name: 'include_in_communication',
     label: 'Interaction Recipient?',
     width: '200px',
   },
-  // {
-  //   name: 'interaction_cc_recipient',
-  //   label: 'Interaction CC Recipient?',
-  //   width: '200px',
-  // },
-  {
-    name: 'key_contact_status',
-    label: 'Key Contact Status',
-    width: '140px',
-  },
+  { name: 'key_contact_status', label: 'Key Contact Status', width: '140px' },
   { name: 'button', label: '', width: '35px' },
 ];
+
 export interface Breadcrumb {
   label: string;
   path?: string;
 }
+
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
@@ -85,6 +76,28 @@ const ProjectForm: React.FC = () => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const getProjectData = useProjectDetail(accountID, projectID || '');
   const account = getProjectData.data?.data?.project;
+
+  const [isFormReadyForEdit, setIsFormReadyForEdit] = useState(!isEditView);
+
+  const [effortFinancials, setEffortFinancials] = useState({
+    total_effort_fte: '',
+    total_effort_subcon: '',
+    total_effort: '',
+  });
+
+  const [costFinancials, setCostFinancials] = useState({
+    total_cost_fte: '',
+    total_cost_subcon: '',
+    total_cost_nonlabor: '',
+    total_cost: '',
+  });
+
+  // State to track field edits for disabling logic
+  const [isEffortFteEdited, setIsEffortFteEdited] = useState(false);
+  const [isEffortSubconEdited, setIsEffortSubconEdited] = useState(false);
+  const [isCostFteEdited, setIsCostFteEdited] = useState(false);
+  const [isCostSubconEdited, setIsCostSubconEdited] = useState(false);
+  const [isNonLaborCostEdited, setIsNonLaborCostEdited] = useState(false);
 
   const accountName = account?.account_name;
   const projectCode = account?.project_code;
@@ -101,19 +114,17 @@ const ProjectForm: React.FC = () => {
     case 'createAccount':
       breadcrumbLabel = `Account > ${AccountNameValue || ''}`;
       break;
-
     case 'account':
       breadcrumbLabel = `Account > ${accountName || ''} > ${projectCode || ''}`;
       break;
-
     case 'project':
       breadcrumbLabel = `Project > ${projectCode || ''}`;
       break;
-
     default:
       breadcrumbLabel = '';
       break;
   }
+
   const statusOptions = useGetStatus();
   const projectTypeOptions = useGetProjectType();
   const allCountries = useGetAllCountries();
@@ -125,7 +136,7 @@ const ProjectForm: React.FC = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
 
-  // Permission Mangement
+  // Permission Management
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
@@ -165,7 +176,6 @@ const ProjectForm: React.FC = () => {
     return activeOption?.value || '';
   }, [memoizedStatus]);
 
-  // need to change this
   const projectData = useMemo(
     () => ({
       ...account,
@@ -196,6 +206,34 @@ const ProjectForm: React.FC = () => {
     [account, memoizedStatus]
   );
 
+  // Calculation functions
+  const calculateTotalEffort = ({
+    total_effort_fte = '0',
+    total_effort_subcon = '0',
+  }: {
+    total_effort_fte?: string;
+    total_effort_subcon?: string;
+  }) => {
+    const fte = parseFloat(total_effort_fte) || 0;
+    const subcon = parseFloat(total_effort_subcon) || 0;
+    return fte + subcon;
+  };
+
+  const calculateTotalCost = ({
+    total_cost_fte = '0',
+    total_cost_subcon = '0',
+    total_cost_nonlabor = '0',
+  }: {
+    total_cost_fte?: string;
+    total_cost_subcon?: string;
+    total_cost_nonlabor?: string;
+  }) => {
+    const fte = parseFloat(total_cost_fte) || 0;
+    const subcon = parseFloat(total_cost_subcon) || 0;
+    const nonlabor = parseFloat(total_cost_nonlabor) || 0;
+    return fte + subcon + nonlabor;
+  };
+
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -219,7 +257,7 @@ const ProjectForm: React.FC = () => {
     [projectTypeOptions?.data?.data?.projectType]
   );
 
-  const memoizedContry: SelectOption[] = useMemo(
+  const memoizedCountry: SelectOption[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
         label: country.country_name,
@@ -227,6 +265,7 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [allCountries.data?.data.country]
   );
+
   const memoizedClassification: SelectOption[] = useMemo(
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
@@ -244,6 +283,7 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [currency.data?.data.currency]
   );
+
   const memoizedIndustry: SelectOption[] = useMemo(
     () =>
       industry.data?.data.industries.map((industries) => ({
@@ -270,6 +310,7 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [keyContactRoles.data?.data.keyContactRoles]
   );
+
   useEffect(() => {
     const existingContacts = account?.keyContact || [];
     const disabled =
@@ -287,20 +328,74 @@ const ProjectForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-    setIsKeyContactsReady(
-      !getProjectData.isPending &&
-        !keyContactRoles.isPending &&
-        !statusOptions.isPending
-    );
-  }, [
-    getProjectData.isPending,
-    keyContactRoles.isPending,
-    statusOptions.isPending,
-    memoizedRole,
-    account?.keyContact,
-    isEditView,
-    permissionMap,
-  ]);
+  }, [memoizedRole, account?.keyContact, isEditView, permissionMap]);
+  useEffect(() => {
+    if (isEditView && projectData?.project_rid) {
+      // --- Effort Calculation Logic ---
+      const initialEffortFte = projectData.total_effort_fte?.toString() || '';
+      const initialEffortSubcon =
+        projectData.total_effort_subcon?.toString() || '';
+      let initialTotalEffort = projectData.total_effort?.toString() || '';
+
+      if (!initialTotalEffort && (initialEffortFte || initialEffortSubcon)) {
+        const calculatedEffort = calculateTotalEffort({
+          total_effort_fte: initialEffortFte,
+          total_effort_subcon: initialEffortSubcon,
+        });
+        initialTotalEffort =
+          calculatedEffort % 1 === 0
+            ? calculatedEffort.toString()
+            : calculatedEffort.toFixed(2);
+      }
+
+      const efforts = {
+        total_effort_fte: initialEffortFte,
+        total_effort_subcon: initialEffortSubcon,
+        total_effort: initialTotalEffort,
+      };
+      setEffortFinancials(efforts);
+
+      // *** FIX: Set the disable flags based on initial data ***
+      setIsEffortFteEdited(!!initialEffortFte);
+      setIsEffortSubconEdited(!!initialEffortSubcon);
+
+      // --- Cost Calculation Logic ---
+      const initialCostFte = projectData.total_cost_fte?.toString() || '';
+      const initialCostSubcon = projectData.total_cost_subcon?.toString() || '';
+      const initialCostNonLabor =
+        projectData.total_cost_nonlabor?.toString() || '';
+      let initialTotalCost = projectData.total_cost?.toString() || '';
+
+      if (
+        !initialTotalCost &&
+        (initialCostFte || initialCostSubcon || initialCostNonLabor)
+      ) {
+        const calculatedCost = calculateTotalCost({
+          total_cost_fte: initialCostFte,
+          total_cost_subcon: initialCostSubcon,
+          total_cost_nonlabor: initialCostNonLabor,
+        });
+        initialTotalCost =
+          calculatedCost % 1 === 0
+            ? calculatedCost.toString()
+            : calculatedCost.toFixed(2);
+      }
+
+      const costs = {
+        total_cost_fte: initialCostFte,
+        total_cost_subcon: initialCostSubcon,
+        total_cost_nonlabor: initialCostNonLabor,
+        total_cost: initialTotalCost,
+      };
+      setCostFinancials(costs);
+
+      setIsCostFteEdited(!!initialCostFte);
+      setIsCostSubconEdited(!!initialCostSubcon);
+      setIsNonLaborCostEdited(!!initialCostNonLabor);
+
+      setIsFormReadyForEdit(true);
+    }
+  }, [projectData, isEditView]);
 
   const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
@@ -319,6 +414,7 @@ const ProjectForm: React.FC = () => {
     const newKeyData = newKeyContactFields(memoizedRole);
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
+
   const submitData = (formValues: Partial<NewProjectData>) => {
     const projectData = transformFormData(
       {
@@ -349,6 +445,12 @@ const ProjectForm: React.FC = () => {
     window.history.back();
   };
 
+  const formatNumber = (value: string): string => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return '';
+    return num % 1 === 0 ? num.toString() : num.toFixed(2);
+  };
+
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
@@ -357,7 +459,6 @@ const ProjectForm: React.FC = () => {
       const selectedIndustry = memoizedIndustry.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
-
       setShowOthersField(
         selectedIndustry?.label.toLowerCase() === OthersEnum.Other
       );
@@ -366,12 +467,85 @@ const ProjectForm: React.FC = () => {
       const selectedClassification = memoizedClassification.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
-
       setShowClassifyOthersField(
         selectedClassification?.label.toLowerCase() === OthersEnum.Other
       );
     }
+
+    // Handle effort fields
+    if (
+      data.fieldName === 'total_effort_fte' ||
+      data.fieldName === 'total_effort_subcon'
+    ) {
+      const isFte = data.fieldName === 'total_effort_fte';
+      setIsEffortFteEdited(isFte ? !!data.fieldValue : isEffortFteEdited);
+      setIsEffortSubconEdited(
+        !isFte ? !!data.fieldValue : isEffortSubconEdited
+      );
+      setEffortFinancials((prev) => {
+        const updated = {
+          ...prev,
+          [data.fieldName]: formatNumber(data.fieldValue as string),
+        };
+
+        if (!updated.total_effort_fte && !updated.total_effort_subcon) {
+          updated.total_effort = '';
+        } else {
+          const sum = calculateTotalEffort(updated);
+          updated.total_effort =
+            sum % 1 === 0 ? sum.toString() : sum.toFixed(2);
+        }
+
+        return updated;
+      });
+    } else if (data.fieldName === 'total_effort') {
+      setEffortFinancials((prev) => ({
+        ...prev,
+        [data.fieldName]: formatNumber(data.fieldValue as string),
+      }));
+    }
+
+    // Handle cost fields
+    if (
+      data.fieldName === 'total_cost_fte' ||
+      data.fieldName === 'total_cost_subcon' ||
+      data.fieldName === 'total_cost_nonlabor'
+    ) {
+      if (data.fieldName === 'total_cost_fte')
+        setIsCostFteEdited(!!data.fieldValue);
+      if (data.fieldName === 'total_cost_subcon')
+        setIsCostSubconEdited(!!data.fieldValue);
+      if (data.fieldName === 'total_cost_nonlabor')
+        setIsNonLaborCostEdited(!!data.fieldValue);
+
+      setCostFinancials((prev) => {
+        const updated = {
+          ...prev,
+          [data.fieldName]: formatNumber(data.fieldValue as string),
+        };
+
+        if (
+          !updated.total_cost_fte &&
+          !updated.total_cost_subcon &&
+          !updated.total_cost_nonlabor
+        ) {
+          updated.total_cost = '';
+        } else {
+          const total = calculateTotalCost(updated);
+          updated.total_cost =
+            total % 1 === 0 ? total.toString() : total.toFixed(2);
+        }
+
+        return updated;
+      });
+    } else if (data.fieldName === 'total_cost') {
+      setCostFinancials((prev) => ({
+        ...prev,
+        [data.fieldName]: formatNumber(data.fieldValue as string),
+      }));
+    }
   };
+
   useEffect(() => {
     if (account?.country) {
       setCurrentCountry(account?.country);
@@ -382,7 +556,6 @@ const ProjectForm: React.FC = () => {
     const selectedIndustry = memoizedIndustry.find(
       (option) => String(option.value) === String(account?.industry_rid)
     );
-
     setShowOthersField(
       selectedIndustry?.label.toLowerCase() === OthersEnum.Other
     );
@@ -393,21 +566,28 @@ const ProjectForm: React.FC = () => {
       (option) =>
         String(option.value) === String(account?.project_classification_rid)
     );
-
     setShowClassifyOthersField(
       selectedClassification?.label.toLowerCase() === OthersEnum.Other
     );
   }, [account?.project_classification_rid, memoizedClassification]);
 
+  const disableTotalEffort = isEffortFteEdited || isEffortSubconEdited;
+  const disableTotalCost =
+    isCostFteEdited || isCostSubconEdited || isNonLaborCostEdited;
+
+  const finalTotalCost =
+    costFinancials.total_cost && costFinancials.total_cost !== '0'
+      ? costFinancials.total_cost
+      : '';
+
   const formConfig = FormData(
     memoizedStatus,
     memoizedProjectTypes,
-    memoizedContry,
+    memoizedCountry,
     memoizedCurrency,
     memoizedState,
     memoizedIndustry,
     memoizedClassification,
-    // memoizedRole,
     keyContacts,
     addKeyContactInfo,
     removeKeyContactInfo,
@@ -415,7 +595,11 @@ const ProjectForm: React.FC = () => {
     showOthersField,
     showClassifyOthersField,
     states.isLoading,
-    permissionMap
+    permissionMap,
+    effortFinancials.total_effort || '',
+    finalTotalCost,
+    disableTotalEffort,
+    disableTotalCost
   );
 
   const formLoading =
@@ -428,6 +612,9 @@ const ProjectForm: React.FC = () => {
     keyContactRoles.isLoading;
 
   if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
+
+  const showSkeleton = formLoading || !isFormReadyForEdit;
+
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
@@ -443,7 +630,6 @@ const ProjectForm: React.FC = () => {
               className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
             />
           )}
-
           <div className='w-[90%]'>
             {isEditView && getProjectData?.isPending ? (
               <div className='ml-2'>
@@ -454,7 +640,6 @@ const ProjectForm: React.FC = () => {
                 {breadcrumbLabel}
               </div>
             )}
-
             <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
               {isEditView ? 'Edit Project' : 'Create Project'}
             </h4>
@@ -485,26 +670,30 @@ const ProjectForm: React.FC = () => {
         </div>
       </div>
       <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
-        {formLoading ? (
+        {showSkeleton ? (
           <SkeletonForm />
         ) : (
           <FormBuilder
             data={formConfig}
             loading={false}
             values={
-              isEditView && isKeyContactsReady
-                ? { ...projectData }
-                : !isEditView
-                  ? {
-                      project_status: defaultActiveValue,
-                      status: defaultActiveValue,
-                      auto_send_ai_interaction:
-                        settings?.auto_send_interaction || enumValue.No,
-                      auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
-                      max_ai_interaction: settings?.max_ai_interactions,
-                      currency: settings?.currency_rid,
-                    }
-                  : {}
+              isEditView
+                ? {
+                    ...projectData,
+                    ...effortFinancials,
+                    ...costFinancials,
+                  }
+                : {
+                    project_status: defaultActiveValue,
+                    status: defaultActiveValue,
+                    auto_send_ai_interaction:
+                      settings?.auto_send_interaction || enumValue.No,
+                    auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
+                    max_ai_interaction: settings?.max_ai_interactions,
+                    currency: settings?.currency_rid,
+                    ...effortFinancials,
+                    ...costFinancials,
+                  }
             }
             outData={submitData}
             formRef={formRef}

@@ -61,6 +61,7 @@ interface FormBuilderProps {
   logo?: File | null;
   keyContactHeaders?: KeyContactHeader[];
   highlight?: { field: string; section: string };
+  isFrom?: string;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -78,6 +79,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   keyContactHeaders = [],
   newContactLength,
   highlight,
+  isFrom = '',
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -1942,11 +1944,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               ] as string;
               const endDate = constructFormData['project_enddate'] as string;
 
-              if ((startDate && !endDate) || (!startDate && endDate)) {
+              if (!startDate && endDate) {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Start Date and End Date must be be provided',
+                  error: 'Start Date is required if End Date is provided',
                 };
               }
 
@@ -2008,11 +2010,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 }
               }
 
-              if ((startDate && !endDate) || (!startDate && endDate)) {
+              if (!startDate && endDate && isFrom === 'project_resource') {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Effective From and End Date must be be provided',
+                  error: 'Start Date is required if End Date is provided',
+                };
+              }
+
+              if (
+                isFrom !== 'project_resource' &&
+                ((startDate && !endDate) || (!startDate && endDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both Start Date and End Date must be be provided',
                 };
               }
 
