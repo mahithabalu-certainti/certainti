@@ -32,18 +32,27 @@ class InteractionSchemaService {
         accountNumber
       );
 
-      const interactionExists = await Interaction.findOne({
+      // Find both parent interaction and max interaction iteration in one query
+      const interactions = await Interaction.findAll({
         where: {
           account_rid: interactionData.account_rid,
           project_fiscal_rid: interactionData.project_fiscal_rid,
         },
+        order: [["created_datetime", "DESC"]],
       });
+       const maxIteration = interactions.reduce(
+        (max, curr) => Math.max(max, curr.interaction_iteration ?? 0),
+        0
+      );
+
+      const interactionExists = interactions.length > 0 ? interactions[0] : null;
 
       if (interactionExists) {
-        interactionData.parent_interaction_rid = interactionExists.rid;
-        
+         // Find parent interaction (first one created)
+      const parentInteraction = interactions.length > 0 ? interactions[interactions.length - 1] : null;
+       interactionData.parent_interaction_rid = parentInteraction?.rid || null;
       }
-      interactionData.interaction_iteration = (interactionExists?.interaction_iteration ?? 0) + 1;
+      interactionData.interaction_iteration = (maxIteration ?? 0) + 1;
 
       const interaction = await Interaction.create(interactionData, {
         transaction,
@@ -791,6 +800,22 @@ if(!this.orgDbSequelize)
 
     return interactionSource;
   }
+    async getResponseSource() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const responseSource = await this.mainDbSequelize.query(
+      `Select rid, response_source_name from ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE status = 'active' order by response_source_name ASC`,
+      {
+        type: "SELECT",
+      }
+    );
+
+    return responseSource;
+  }
+
 
   async updateInteractionResponse(
     accountNumber: string,
@@ -805,7 +830,9 @@ if(!this.orgDbSequelize)
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
-     const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
+    const [responseSourceIDs]:any= await this.mainDbSequelize.query(rawQueries.fetchResponseSourceByType(responseData.response_source));
+    responseData.response_source = responseSourceIDs[0]?.rid ?? null;
+    const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
      const userEmailId = emailInfo[0]?.email ?? userId;
       let responseCreated = false;
       let interactionVersion = 0;
@@ -901,7 +928,7 @@ if(!this.orgDbSequelize)
           interaction_version: interactionVersion,
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
-          response_source: "Manual",
+          response_source: responseData.response_source,
        //   attachment_count: attachmentcount
         };
 
@@ -909,7 +936,7 @@ if(!this.orgDbSequelize)
           status_rid: statusRid,
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
-          response_source: "Manual",
+          response_source: responseData.response_source,
        //   attachment_count: attachmentcount
         };
        
@@ -924,7 +951,7 @@ if(!this.orgDbSequelize)
           where: { rid: responseData.interaction_rid },
         });
         await InteractionSummary.update(summaryUpdateData, {
-          where: { rid: responseData.interaction_rid },
+          where: { interaction_rid: responseData.interaction_rid },
         });
       }
       return {
@@ -1327,6 +1354,34 @@ async updateQrePercentAndTechSummary(qrePercent:number, accountNumber: string,pr
      const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
     await AiTechnicalSummary.create(
       techSummaryPayload
+    );
+    
+  } catch (err) {
+    throw new Error(
+      "Error updating QRE percent: " + (err as Error).message
+    );
+  }
+}
+
+async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string)
+{
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+    
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    await this.orgDbSequelize.query(
+      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent, ),
+      { type: "UPDATE" }
+    );
+    await this.mainDbSequelize.query(
+      rawQueries.updateQreInfoSummary(projectFiscalRid,qrePercent, ),
+      { type: "UPDATE" }
     );
     
   } catch (err) {

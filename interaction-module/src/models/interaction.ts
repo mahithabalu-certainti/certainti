@@ -19,7 +19,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   sent_by_rid?: string;
   sent_by_mail_id?: string;
   sent_on_datetime?: Date;
-  parent_interaction_rid?: string;
+  parent_interaction_rid?: string | null;
   interaction_iteration?: number | null;
   last_resent_on?: Date;
   last_reminder_on?: Date;
@@ -63,7 +63,7 @@ export class Interaction
   public sent_by_rid?: string;
   public sent_by_mail_id?: string;
   public sent_on_datetime?: Date;
-  public parent_interaction_rid?: string;
+  public parent_interaction_rid?: string | null;
   public interaction_iteration?: number | null;
   public last_resent_on?: Date;
   public last_reminder_on?: Date;
@@ -131,6 +131,7 @@ export class Interaction
         interaction_url: { type: DataTypes.STRING(255), allowNull: true },
         interaction_age: { type: DataTypes.INTEGER, allowNull: true },
         recipient_email: { type: DataTypes.STRING(255), allowNull: true },
+        recipient_name: { type: DataTypes.STRING(255), allowNull: true },
         attachment_count: { type: DataTypes.INTEGER, allowNull: true },
         interaction_version: { type: DataTypes.INTEGER, allowNull: true }
       },

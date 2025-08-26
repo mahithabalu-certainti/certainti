@@ -58,6 +58,12 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionSource: any };
   }>;
+  getResponseSource(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { responseSource: any };
+  }>;
   getInteractionDetailsById(
     interactionRid: string,
     accountId: string
