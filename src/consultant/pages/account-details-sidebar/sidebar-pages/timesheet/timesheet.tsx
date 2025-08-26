@@ -315,7 +315,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showToggle={isProjectTab}
+        // showToggle={isProjectTab}
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
         showRefresh={
@@ -331,7 +331,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       {viewDetails ? (
         <TimesheetDetails
           handleBackClick={handleBackClick}
-          bothParentAndChild={toggleEnabled}
+          bothParentAndChild={false}
           appliedFilters={appliedFilters}
           setExportType={setExportType}
           onRefreshClick={refreshTimesheet}

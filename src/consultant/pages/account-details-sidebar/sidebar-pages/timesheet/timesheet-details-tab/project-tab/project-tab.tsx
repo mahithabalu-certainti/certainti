@@ -178,7 +178,7 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
         onSelectionChange={(selectedIds) =>
           console.log('Selected:', selectedIds)
         }
-        component='project'
+        component='timesheet-project'
       />
     </div>
   );
