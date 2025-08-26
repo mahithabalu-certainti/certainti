@@ -53,7 +53,7 @@ export class AiTechnicalSummary
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`${ENV_PREFIX} || gen_random_uuid()`),
+           defaultValue: Sequelize.literal( `'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {

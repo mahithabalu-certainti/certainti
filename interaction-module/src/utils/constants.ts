@@ -29,6 +29,11 @@ export const statusAction = {
   RESENT: "Resent"
 };
 
+export const techSummaryStatus = {
+  ACTIVE: "active",
+  INACTIVE: "inactive"
+}
+
 export const interactionSource = {
   AUTO: "Auto",
   MANUAL: "Manual",
@@ -271,7 +276,7 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
+    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
   },
    updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
     return `
@@ -283,7 +288,7 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+    SELECT rid, account_name,r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
   },
   fetchPreviousInteractionStatus(statusRid: string,schemaName: string) {
     return `
