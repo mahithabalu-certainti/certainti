@@ -42,7 +42,8 @@ const interactionServiceApi = axios.create({
 });
 
 const exInteractionServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_EX_INTERACTION_URL,
+  baseURL:
+    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_EX_INTERACTION_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 

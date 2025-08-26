@@ -224,7 +224,9 @@ const EmailInteraction: React.FC = () => {
                 actionButtonEnable
                 refetchDeetails={refetch}
               />
-            ) : <p>No questions are available!</p>}
+            ) : (
+              <p>No questions are available!</p>
+            )}
           </div>
         ) : (
           <div className='flex flex-col items-center justify-center min-h-[calc(100vh-48px)]'>
