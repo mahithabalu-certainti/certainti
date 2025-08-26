@@ -44,8 +44,8 @@ export const getInteractionFilterFields = (
       //   !permissionMap?.['r_number']?.read,
     },
     {
-      name: 'Account Name',
-      value: 'account_name',
+      name: 'Project Code',
+      value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
       // hide:

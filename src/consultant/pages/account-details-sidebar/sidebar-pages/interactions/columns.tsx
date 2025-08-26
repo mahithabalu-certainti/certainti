@@ -39,9 +39,9 @@ export const getInteractionListColumns = (
     ),
   },
   {
-    id: 'account_name',
-    sortId: 'account_name',
-    label: 'Account Name',
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
     width: 140,
     sortable: true,
     // hide:
