@@ -39,7 +39,7 @@ interface InteractionQuesProps {
   isLoading?: boolean;
   actionButtonEnable?: boolean;
   handleResponseHistory?: () => void;
-  refetchDeetails?: () => void;
+  refetchDetails?: () => void;
   formData?: Record<string, string>;
   className?: string;
 }
@@ -51,7 +51,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   isLoading = false,
   actionButtonEnable,
   handleResponseHistory,
-  refetchDeetails,
+  refetchDetails,
   formData,
   className,
 }) => {
@@ -171,11 +171,12 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       project_rid: formData?.project_rid || '',
       project_fiscal_rid: formData?.project_fiscal_rid || '',
       interaction_rid: formData?.interaction_rid || '',
+      response_source: 'Manual' as 'Manual' | 'Email' | 'Sheet',
       ...payload,
     };
     updateInteractionQusResponse.mutate(finalPayload, {
       onSuccess: async () => {
-        await refetchDeetails?.();
+        await refetchDetails?.();
         setIsEditing(false);
         setActiveFlag(null);
       },

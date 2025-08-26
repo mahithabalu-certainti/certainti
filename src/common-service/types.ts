@@ -393,13 +393,14 @@ export interface GetInteractionTypesApiResponse extends CommonApiResponse {
   };
 }
 
-export interface InteractionSourceItem {
+export interface InteractionResSourceItem {
   rid: string;
-  interaction_source_name: string;
+  response_source_name: string;
 }
 
-export interface GetInteractionSourcesApiResponse extends CommonApiResponse {
+export interface GetInteractionResponeSourcesApiResponse
+  extends CommonApiResponse {
   data: {
-    interactionSource: InteractionSourceItem[];
+    responseSource: InteractionResSourceItem[];
   };
 }
