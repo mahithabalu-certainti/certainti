@@ -340,7 +340,7 @@ export class ProjectResourceSchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name,
+        accountName: account?.account_name,
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -402,6 +402,7 @@ export class ProjectResourceSchemaService {
     const startDateTocheck = projectResourceData.start_date
       ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
       : null;
+
     const endDateToCheck = projectResourceData.end_date ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD") : null;
 
     const projectData = await ProjectResource.findOne({
@@ -413,16 +414,32 @@ export class ProjectResourceSchemaService {
         rid: { [Op.ne]: projectResourceData.project_resource_rid },
         project_fiscal_rid: projectResourceData.project_fiscal_rid,
         resource_rid: resourceData.rid
-        // [Op.and]: [
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
-        //     Sequelize.fn("LOWER", projectCode)
-        //   ),
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
-        //     Sequelize.fn("LOWER", projectResourceData.resource_code)
-        //   ),
-        // ],
+      },
+    });
+
+    return !!projectData;
+  }
+
+  async validateProjectResourceInlineEdit(accountNumber: string, projectResourceData: any,
+    fiscalYear: number, projectCode: string, existingProjectResource: any, resourceData: any
+  ){
+    const { ProjectResource } = await this.getModels(accountNumber);
+
+    const startDateTocheck = projectResourceData.start_date
+      ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
+      : existingProjectResource.start_date ? moment.utc(existingProjectResource.start_date, "YYYY-MM-DD") : null;
+
+    const endDateToCheck = projectResourceData.end_date ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD") : existingProjectResource.end_date ? moment.utc(existingProjectResource.end_date, "YYYY-MM-DD") : null;
+
+    const projectData = await ProjectResource.findOne({
+      where: {
+        account_rid: projectResourceData.account_rid,
+        fiscal_year: fiscalYear,
+        start_date: startDateTocheck ? startDateTocheck?.toDate() : null,
+        end_date: endDateToCheck ? endDateToCheck?.toDate() : null,
+        rid: { [Op.ne]: projectResourceData.project_resource_rid },
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
+        resource_rid: resourceData.rid
       },
     });
 
@@ -453,7 +470,7 @@ export class ProjectResourceSchemaService {
         fiscal_year: fiscalYear,
         start_date: startDateTocheck ? startDateTocheck?.toDate() : null,
         end_date: endDateToCheck ? endDateToCheck?.toDate() : null,
-        project_rid: projectData.rid,
+        project_fiscal_rid: projectData.rid,
         resource_rid: resourceData.rid
         // [Op.and]: [
         //   Sequelize.where(
