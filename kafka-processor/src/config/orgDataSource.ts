@@ -5,21 +5,18 @@ import { getSecret } from "../utils/azureSecrets";
 let sequelize: Sequelize;
 
 const requiredEnvVariables = [
-  "MAINDB_NAME",
-  "MAINDB_USERNAME",
-  "MAINDB_PASSWORD",
-  "MAINDB_ENDPOINT",
+  "ORGDB_NAME",
+  "ORGDB_PASSWORD",
+  "ORGDB_USERNAME",
+  "ORGDB_ENDPOINT",
 ];
 
 requiredEnvVariables.forEach((envVar) => {
   if (!process.env[envVar]) {
-    throw new Error(`Missing required environment variable: ${envVar}`);
+    throw new Error(`Missing environment variable: ${envVar}`);
   }
 });
 
-const dbPort = process.env.MAIN_PG_DB_PORT
-  ? parseInt(process.env.MAIN_PG_DB_PORT)
-  : 5432;
 const env = process.env.NODE_ENV || NODE_ENV.DEV;
 
 const sslOptions =
@@ -37,10 +34,10 @@ const sslOptions =
 async function getAzureSecrets() {
   try {
     const secrets = await Promise.all([
-      getSecret(process.env.MAINDB_NAME as string),
-      getSecret(process.env.MAINDB_USERNAME as string),
-      getSecret(process.env.MAINDB_PASSWORD as string),
-      getSecret(process.env.MAINDB_ENDPOINT as string),
+      getSecret(process.env.ORGDB_NAME as string),
+      getSecret(process.env.ORGDB_USERNAME as string),
+      getSecret(process.env.ORGDB_PASSWORD as string),
+      getSecret(process.env.ORGDB_ENDPOINT as string),
     ]);
 
     return {
@@ -55,7 +52,8 @@ async function getAzureSecrets() {
     );
   }
 }
-export async function initMainDbSequelize() {
+
+export async function initOrgSequelize() {
   try {
     if (sequelize) {
       return sequelize;
@@ -66,34 +64,22 @@ export async function initMainDbSequelize() {
       throw new Error("One or more required database secrets are missing.");
     }
 
-    /*sequelize = new Sequelize(
-      DB_NAME,
-      DB_USER,
-      DB_PASSWORD,
-      {
-        host: DB_HOST,
-        dialect: "postgres",
-        port: 5432,
-        logging: env !== "production",
-        define: {
-          freezeTableName: true,
-          timestamps: false,
-        },
-        dialectOptions: {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false,
-          },
-        },
-      }
-    ); */
-    sequelize = new Sequelize("maindb", "postgres", "postgres", {
-      host: "localhost",
+    sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+      host: DB_HOST,
+      dialect: "postgres",
       port: 5432,
-      dialect: 'postgres',
-      logging: console.log,
-      dialectOptions: { ssl: false },
-    });
+      logging: env !== "production",
+      define: {
+        freezeTableName: true,
+        timestamps: false,
+      },
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      },
+    }); 
     await sequelize.authenticate();
     console.log("Database connection established successfully.");
     return sequelize;
