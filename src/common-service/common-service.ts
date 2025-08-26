@@ -4,6 +4,7 @@ import {
   userServiceApi,
   resourceServiceApi,
   interactionServiceApi,
+  exInteractionServiceApi,
 } from '../api/api';
 import {
   CommonApiResponse,
@@ -205,20 +206,14 @@ export const usePostGenerateOtp = () => {
 };
 
 export const postMailIntractionOtp = async (
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _body: GenerateOtp
+  body: GenerateOtp
 ): Promise<CommonApiResponse> => {
   try {
-    // const { data } = await accountServiceApi.post<CommonApiResponse>(
-    //   `/api/generateOtp`,
-    //   body
-    // );
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    return {
-      statusCode: 200,
-      statusCodeValue: 'Success',
-      statusMessage: 'Operation completed successfully!',
-    };
+    const { data } = await exInteractionServiceApi.post<CommonApiResponse>(
+      `/api/otp/generate`,
+      body
+    );
+    return data;
   } catch (error) {
     console.error('Error fetching highlights details:', error);
     throw error;
@@ -254,20 +249,14 @@ export const usePostReSendOtp = () => {
 };
 
 export const postReSendOtp = async (
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _body: GenerateOtp
+  body: GenerateOtp
 ): Promise<CommonApiResponse> => {
   try {
-    // const { data } = await accountServiceApi.post<CommonApiResponse>(
-    //   `/api/generateOtp`,
-    //   body
-    // );
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    return {
-      statusCode: 200,
-      statusCodeValue: 'Success',
-      statusMessage: 'Operation completed successfully!',
-    };
+    const { data } = await exInteractionServiceApi.post<CommonApiResponse>(
+      `/api/otp/resend`,
+      body
+    );
+    return data;
   } catch (error) {
     console.error('Error fetching highlights details:', error);
     throw error;
@@ -281,24 +270,14 @@ export const usePostVerifyOtp = () => {
 };
 
 export const postVerifyOtp = async (
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _body: VerifyOtp
+  body: VerifyOtp
 ): Promise<VerifyOtpApiResponse> => {
   try {
-    // const { data } = await accountServiceApi.post<CommonApiResponse>(
-    //   `/api/verifyOtp`,
-    //   body
-    // );
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    return {
-      statusCode: 200,
-      statusCodeValue: 'Success',
-      statusMessage: 'Operation completed successfully!',
-      data: {
-        auth_token:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50X3JpZCI6IkQwMDEtMTE3OGFjOGMtYzQwNy00YWQ1LWEzNzUtNTVkMGJkMTQ4OTI2IiwiaW50ZXJhY3Rpb25fcmlkIjoiRDAwMS1hZDMyNDdlMy1hNzQwLTRjNTQtOTA2Zi0xMWY1OGJjNWFhYzQiLCJlbWFpbCI6Im90cHRlc3R1c2VyQHlvcG1haWwuY29tIiwiaWF0IjoxNzU1NTA5ODQxLCJleHAiOjE3NTU1MTM0NDF9.gKpVmcfgPwzxGn25fpU-ogfaSArUiragoJyY8iGWpaU',
-      },
-    };
+    const { data } = await accountServiceApi.post<VerifyOtpApiResponse>(
+      `/api/otp/verify`,
+      body
+    );
+    return data;
   } catch (error) {
     console.error('Error fetching highlights details:', error);
     throw error;
@@ -391,11 +370,13 @@ const fetchInteractionQuestions = async (
   interactionId: string,
   auth_token: string
 ): Promise<InteractionDetails> => {
+  const parseData = JSON.parse(auth_token);
   const response = await interactionServiceApi.get<InteractionDetailsResponse>(
     `/api/interactions/detail/${accountId}/${interactionId}`,
     {
       headers: {
-        Authorization: `Bearer ${auth_token}`,
+        Authorization: `Bearer ${parseData.auth_token}`,
+        email: parseData.email,
       },
     }
   );

@@ -107,8 +107,6 @@ const EmailInteraction: React.FC = () => {
     auth_token as string
   );
 
-  console.log('questions', questions);
-
   useEffect(() => {
     if (
       account_rid &&
@@ -146,7 +144,7 @@ const EmailInteraction: React.FC = () => {
   }, [timeout]);
 
   useEffect(() => {
-    if (timer > 0 && !isPending && !reSendOtp.isPending) {
+    if (timer > 0 && timeout) {
       const countdown = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
@@ -154,15 +152,27 @@ const EmailInteraction: React.FC = () => {
         clearInterval(countdown);
       };
     }
-  }, [timer, isPending, reSendOtp.isPending]);
+  }, [timer, timeout, data]);
 
   useEffect(() => {
     if (verifyOtp.data) {
-      const authdata = verifyOtp.data.data.auth_token;
-      localStorage.setItem('temAuth', authdata);
+      localStorage.setItem(
+        'temAuth',
+        JSON.stringify({
+          auth_token: verifyOtp.data.data.auth_token,
+          email: verifyOtp.data.data.email,
+        })
+      );
       setIsAuthentic(true);
     }
   }, [verifyOtp.data]);
+
+  useEffect(() => {
+    if (reSendOtp.data) {
+      localStorage.setItem('otp_timeout', JSON.stringify(Date.now()));
+      setTimer(600);
+    }
+  }, [reSendOtp.data]);
 
   const handleChange = (value: string, index: number) => {
     if (/^\d?$/.test(value)) {
@@ -179,23 +189,19 @@ const EmailInteraction: React.FC = () => {
   };
 
   const resetTimer = () => {
-    const account_rid = searchParams.get('acc');
-    const interaction_rid = searchParams.get('int');
     if (account_rid && interaction_rid) {
       reSendOtp.mutate({
         account_rid,
         interaction_rid,
       });
-      localStorage.setItem('otp_timeout', JSON.stringify(Date.now()));
-      setTimer(600);
     }
   };
 
   const validateOtp = () => {
     verifyOtp.mutate({
-      account_rid: '',
-      interaction_rid: '',
-      otp: '',
+      account_rid: account_rid as string,
+      interaction_rid: interaction_rid as string,
+      otp: otp.join(''),
     });
   };
 
@@ -244,6 +250,7 @@ const EmailInteraction: React.FC = () => {
                     maxLength={1}
                     onChange={(e) => handleChange(e.target.value, idx)}
                     className='w-12 h-12 border border-gray-300 rounded-md text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#F16137]'
+                    disabled={!timeout}
                   />
                 ))}
               </div>

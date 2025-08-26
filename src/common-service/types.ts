@@ -13,6 +13,7 @@ export interface ProfileApiResponse extends CommonApiResponse {
 export interface VerifyOtpApiResponse extends CommonApiResponse {
   data: {
     auth_token: string;
+    email: string
   };
 }
 export interface ManageProfileResponse {
