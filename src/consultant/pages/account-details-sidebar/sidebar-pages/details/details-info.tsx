@@ -47,7 +47,6 @@ interface DetailItem {
 const DetailsInfo: React.FC<DetailsInfoProps> = ({
   detailsInfo,
   detailsError,
-  isKeyContactAvailable,
 }) => {
   const accountById = detailsInfo?.accountById;
   const accountDetails = detailsInfo?.accountDetails;
@@ -274,7 +273,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         data={locationDetails}
         customStyle=' pt-2 mt-2 mb-4'
       />
-      {isKeyContactAvailable && keyContactsList && !keycontactVisable && (
+      {!keycontactVisable && (
         <KeyContactSection
           title='Key Contacts List'
           data={keyContactsList || []}

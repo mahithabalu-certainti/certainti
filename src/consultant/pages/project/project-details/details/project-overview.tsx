@@ -64,7 +64,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
-  isKeyContactAvailable,
   permission,
 }) => {
   const projectViewEditFields = useMemo(
@@ -373,7 +372,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             title='Location and Currency Information'
             data={locationInfoDetails as DetailItem[]}
           />
-          {isKeyContactAvailable && keyContactsList && !keycontactVisable && (
+          {!keycontactVisable && (
             <KeyContactSection
               title='Key Contacts List'
               data={keyContactsList || []}

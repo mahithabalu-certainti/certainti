@@ -43,7 +43,7 @@ const BUTTON_STYLES = {
 
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
-  // const [searchTerm, setSearchTerm] = useState<string>('');
+  const [expandChild, setExpandChild] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -266,7 +266,13 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
+      <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
+        <button
+          className={`w-[130px] h-[24px] text-[13px] text-[#425A76] cursor-pointer font-semibold rounded-[2px] ${expandChild ? 'bg-[#F3F3F3]' : ''}`}
+          onClick={() => setExpandChild(!expandChild)}
+        >
+          Expand / Collapse
+        </button>
         <div className='relative'>
           <button
             aria-describedby={filterId}
@@ -317,6 +323,7 @@ export const Accounts: React.FC = () => {
           countryOptions={countryOptions}
           industryOptions={industryOptions}
           onRefreshClick={onRefreshClick}
+          expandChild={expandChild}
         />
       </div>
     </div>
