@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   GetProjectTypeApiResponse,
   Project,
+  ProjectFiscalSummary,
   // ProjectList,
   ProjectListParams,
 } from '../../../../types/project';
@@ -297,7 +298,17 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
         const newProjects = allProjectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });
