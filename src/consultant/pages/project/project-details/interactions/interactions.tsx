@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllPermissions,
   OverviewTabs,
-  useGetInteractionSources,
+  useGetInteractionResponeSources,
   useGetInteractionStatus,
   useGetInteractionTypes,
 } from '../../../../../common-service';
@@ -129,7 +129,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
-  const interactionSources = useGetInteractionSources();
+  const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
 
   const memoizedInteractionStatus = useMemo(
@@ -150,13 +150,13 @@ const Interactions: React.FC<InteractionsProps> = ({
     [interactionTypes.data?.data.interactionTypes]
   );
 
-  const memoizedInteractionSources = useMemo(
+  const memoizedInteractionResSources = useMemo(
     () =>
-      interactionSources.data?.data.interactionSource.map((source) => ({
-        option: source.interaction_source_name,
-        value: source.interaction_source_name,
+      interactionResSources.data?.data.responseSource.map((source) => ({
+        option: source.response_source_name,
+        value: source.rid,
       })) || [],
-    [interactionSources.data?.data.interactionSource]
+    [interactionResSources.data?.data.responseSource]
   );
 
   useEffect(() => {
@@ -167,6 +167,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           return {
             ...item,
             disableCheckBox:
+              !item.has_email_recipient ||
               status === StatusTypeEnum.draft ||
               status === StatusTypeEnum.cancelled ||
               status === StatusTypeEnum.response_received ||
@@ -376,7 +377,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
         memoizedInteractionTypes,
-        memoizedInteractionSources,
+        memoizedInteractionResSources,
         memoizedInteractionStatus
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);

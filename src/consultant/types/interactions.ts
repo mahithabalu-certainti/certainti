@@ -140,6 +140,7 @@ export type InteractionList = {
   interaction_iteration: number | null;
   status_name: string | null;
   attachment_count: number | null;
+  has_email_recipient: boolean;
   disableCheckBox?: boolean;
 };
 export type ResponseInteractionList = {
@@ -345,6 +346,7 @@ export interface InteractionQuestionResUpdateRequest {
   status_action: 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED';
   attachments: Attachment[];
   questions: InteractionQuestionResponseType[];
+  response_source: 'Manual' | 'Email' | 'Sheet';
 }
 
 export interface InteractionQuestionResUpdateResponse {
