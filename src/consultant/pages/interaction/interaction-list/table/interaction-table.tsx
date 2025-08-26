@@ -91,19 +91,19 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
 
   const handleViewInteraction = (row: InteractionList) => {
     navigate(
-      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_id=${row.rid}&main_source=interactions`
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_id=${row.rid}`
     );
   };
 
   const handleViewInteractionHistory = (row: InteractionList) => {
     navigate(
-      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_history_id=${row.rid}&main_source=interactions`
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_history_id=${row.rid}`
     );
   };
 
   const handleViewInteractionAttachmentCount = (row: InteractionList) => {
     navigate(
-      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_rid=${row.rid}&interaction_attachment_count=${row.attachment_count}&main_source=interactions`
+      `/interactions/details/${row.project_fiscal_rid}?accountID=${row.account_rid}&source=project&currency_rid=&list=interactions&interaction_rid=${row.rid}&interaction_attachment_count=${row.attachment_count}`
     );
   };
 

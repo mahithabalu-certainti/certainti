@@ -106,8 +106,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       '',
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
-  // const mainSource = searchParams.get('main_source') || '';
-  // const isGlobalInteractions = mainSource === 'interactions';
 
   const { data, isLoading, isError } = useInteractionList(
     {
@@ -421,7 +419,6 @@ const Interactions: React.FC<InteractionsProps> = ({
           refresh={refreshInteractions}
         />
       ) : (
-        // !isGlobalInteractions && (
         <>
           <SectionHeader
             title={
@@ -484,7 +481,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             />
           </div>
         </>
-        // )
       )}
     </div>
   );

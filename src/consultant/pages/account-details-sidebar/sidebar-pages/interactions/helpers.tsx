@@ -1,4 +1,5 @@
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
+import { fiscalOptions, fiscalYearOption } from '../projects/utils';
 
 const textOptions = [
   { option: 'Equals', value: 'equals' },
@@ -43,6 +44,15 @@ export const getInteractionFilterFields = (
       //   !permissionMap?.['r_number']?.read,
     },
     {
+      name: 'Account Name',
+      value: 'account_name',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !permissionMap?.['r_number']?.edit &&
+      //   !permissionMap?.['r_number']?.read,
+    },
+    {
       name: 'Iteration',
       value: 'interaction_iteration',
       type: 'number',
@@ -57,6 +67,13 @@ export const getInteractionFilterFields = (
       // hide:
       //   !permissionMap?.['age_days']?.edit &&
       //   !permissionMap?.['age_days']?.read,
+    },
+    {
+      name: 'Fiscal Year',
+      value: 'fiscal_year',
+      type: 'enum',
+      options: fiscalYearOption,
+      operatorOption: fiscalOptions,
     },
     {
       name: 'Status',

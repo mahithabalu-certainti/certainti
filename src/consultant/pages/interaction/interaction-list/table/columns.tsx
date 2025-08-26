@@ -36,6 +36,26 @@ export const getGlobalInteractionListColumns = (
     ),
   },
   {
+    id: 'account_name',
+    sortId: 'account_name',
+    label: 'Account Name',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['iteration']?.edit &&
+    //   !permissionMap?.['iteration']?.read,
+  },
+  {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['iteration']?.edit &&
+    //   !permissionMap?.['iteration']?.read,
+  },
+  {
     id: 'interaction_iteration',
     sortId: 'interaction_iteration',
     label: 'Iteration',
@@ -53,6 +73,16 @@ export const getGlobalInteractionListColumns = (
     sortable: true,
     // hide:
     //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,
+  },
+  {
+    id: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal Year',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['iteration']?.edit &&
+    //   !permissionMap?.['iteration']?.read,
   },
   {
     id: 'status_name',

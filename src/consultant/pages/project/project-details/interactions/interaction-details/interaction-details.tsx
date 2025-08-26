@@ -36,8 +36,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
-  const mainSource = searchParams.get('main_source') || '';
-  const isGlobalInteractions = mainSource === 'interactions';
 
   const { data, isLoading, error, refetch } = useInteractionDetails(
     accountId,
@@ -189,7 +187,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
           onBackClick={handleBackClick}
-          showBackArrow={!isGlobalInteractions}
+          showBackArrow={true}
         />
         {isLoading ? (
           <DetailsSectionSkeleton className='p-0 m-0' />
