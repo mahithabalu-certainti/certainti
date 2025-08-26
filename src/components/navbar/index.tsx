@@ -436,7 +436,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <button
                         aria-describedby={globalFilterId}
                         onClick={handleGlobalFilterModal}
-                        className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+                        className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[110px] min-w-[110px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                       >
                         <div className='relative'>
                           <GlobeIcon
@@ -450,7 +450,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           )}
                         </div>
                         <span className='text-[13px] font-normal text-white'>
-                          Accounts
+                          Accounts ({isFilterApplied ? filters.length : 0})
                         </span>
                       </button>
                       <GlobalFilterModal
