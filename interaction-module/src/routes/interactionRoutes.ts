@@ -46,6 +46,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionSource
 );
+routes.get(
+  "/responseSource",
+  checkUserStatusMiddleware("NA"),
+  controller.interactionsController.getResponseSource
+);
 
 routes.post('/list', checkUserStatusMiddleware("NA"), controller.interactionsController.listAllInteractionPrjAcc)
 routes.post('/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportAllInteractions)

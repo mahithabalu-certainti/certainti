@@ -20,7 +20,7 @@ interface InteractionSummaryAttributes {
   sent_by_rid?: string;
   sent_by_mail_id?: string;
   sent_on_datetime?: Date;
-  parent_interaction_rid?: string;
+  parent_interaction_rid?: string | null;
   interaction_iteration?: number;
   last_resent_on?: Date;
   last_reminder_on?: Date;
@@ -69,7 +69,7 @@ export class InteractionSummary
   public sent_by_rid?: string;
   public sent_by_mail_id?: string;
   public sent_on_datetime?: Date;
-  public parent_interaction_rid?: string;
+  public parent_interaction_rid?: string | null;
   public interaction_iteration?: number;
   public last_resent_on?: Date;
   public last_reminder_on?: Date;
