@@ -155,7 +155,8 @@ const Projects: React.FC<ProjectsProps> = ({
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
       accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
-      bothParentAndChild: toggleEnabled,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled  // Commented for it may use in future
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
     refreshProjectsTrigger
@@ -232,11 +233,11 @@ const Projects: React.FC<ProjectsProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-            state: {
-              field: fieldValue || '',
-              section: fieldValue ? '' : section,
-            },
-          }
+          state: {
+            field: fieldValue || '',
+            section: fieldValue ? '' : section,
+          },
+        }
         : undefined
     );
   };
@@ -451,11 +452,11 @@ const Projects: React.FC<ProjectsProps> = ({
       setProjectList(previousProject);
     }
   };
-
-  const isProjectViewEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECTS_VIEW_EDIT
-  );
+  // Commented for it may use in future
+  // const isProjectViewEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECTS_VIEW_EDIT
+  // );
 
   if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
 
@@ -476,7 +477,8 @@ const Projects: React.FC<ProjectsProps> = ({
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         toggleLabel='Include Parent'
-        showToggle={isProjectViewEditEnable}
+        showToggle={false}
+        // showToggle={isProjectViewEditEnable} // Commented for it may use in future
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
       />

@@ -38,6 +38,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   refreshAccountTrigger,
   countryOptions,
   industryOptions,
+  expandChild,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -296,7 +297,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         }}
         //Expansion
         expandAllParent={true}
-        expandAllChild={false}
+        expandAllChild={expandChild}
         expandable={true}
         childrenKey='child_accounts'
         grandchildrenKey='projects_by_fiscal_year'
