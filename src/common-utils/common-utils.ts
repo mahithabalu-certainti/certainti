@@ -47,6 +47,7 @@ export const createTextField = (
     hide?: boolean;
     defaultValue?: string;
     errorHandling?: ErrorHandling[];
+    resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     lengthRequired?: {
       key: string;
@@ -74,6 +75,7 @@ export const createTextField = (
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createPhoneInputField = (

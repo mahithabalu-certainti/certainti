@@ -149,6 +149,7 @@ export const AccountForm: React.FC = () => {
       const fileType = getMimeTypeFromExtension(logoName);
       setLogo({ name: logoName, type: fileType } as File);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, logoName]);
 
   const statusOptions = useGetStatus();
@@ -189,30 +190,30 @@ export const AccountForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-          ...transformKeyContactsFromAPI(
-            account?.accountDetails?.keyContacts || [],
-            memoizedStatus
-          ),
-          status: account?.accountById?.status_rid,
-          record_id: account?.accountDetails?.rid,
-          account_id: account?.accountById?.r_number,
-          created_on: formatDateToYYYYMMDDWithTime(
-            account?.accountById?.created_datetime
-          ),
-          updated_on: account?.accountById?.modified_datetime
-            ? formatDateToYYYYMMDDWithTime(
-                account?.accountById?.modified_datetime || '-'
-              )
-            : '-',
-          created_by: account?.accountDetails?.created_by,
-          updated_by: account?.accountDetails?.modified_by || '-',
-          website: account?.accountDetails?.website || '',
-        }),
+        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+        autosend_interaction: account?.accountDetails.autosend_interaction
+          ? 'yes'
+          : 'no',
+        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+        ...transformKeyContactsFromAPI(
+          account?.accountDetails?.keyContacts || [],
+          memoizedStatus
+        ),
+        status: account?.accountById?.status_rid,
+        record_id: account?.accountDetails?.rid,
+        account_id: account?.accountById?.r_number,
+        created_on: formatDateToYYYYMMDDWithTime(
+          account?.accountById?.created_datetime
+        ),
+        updated_on: account?.accountById?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(
+            account?.accountById?.modified_datetime || '-'
+          )
+          : '-',
+        created_by: account?.accountDetails?.created_by,
+        updated_by: account?.accountDetails?.modified_by || '-',
+        website: account?.accountDetails?.website || '',
+      }),
     }),
     [account, memoizedStatus]
   );
@@ -237,7 +238,13 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
-
+  useEffect(() => {
+    if (accountData.is_parent === YesNo.Yes) {
+      setDataResidency([]);
+    } else {
+      setDataResidency(DATA_STORAGE_OPTIONS);
+    }
+  }, [accountData.is_parent]);
   const memoizedContry: SelectOption[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -321,9 +328,10 @@ export const AccountForm: React.FC = () => {
     setKeyContacts(fields);
     setIsKeyContactsReady(
       !getAccount.isPending &&
-        !keyContactRoles.isPending &&
-        !statusOptions.isPending
+      !keyContactRoles.isPending &&
+      !statusOptions.isPending
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     getAccount.isPending,
     keyContactRoles.isPending,
@@ -396,9 +404,7 @@ export const AccountForm: React.FC = () => {
     if (data.fieldName === 'is_parent') {
       if (data.fieldValue === YesNo.Yes) {
         setDataResidency(
-          DATA_STORAGE_OPTIONS.filter(
-            (item) => item.value !== 'store_in_parent'
-          )
+          []
         );
         setIsParentAccountRequired(false);
       } else {
@@ -516,11 +522,11 @@ export const AccountForm: React.FC = () => {
                 ? { ...accountData }
                 : !isEditView
                   ? {
-                      // Set default values in Create Account
-                      status: defaultActiveValue,
-                      autosend_interaction: YesNo.No,
-                      auto_access_rd: YesNo.Yes,
-                    }
+                    // Set default values in Create Account
+                    status: defaultActiveValue,
+                    autosend_interaction: YesNo.No,
+                    auto_access_rd: YesNo.Yes,
+                  }
                   : {}
             }
             outData={submitData}

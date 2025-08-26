@@ -136,10 +136,10 @@ export const FormData = (
               permissionMap?.['is_consultant_firm']?.read &&
               !permissionMap?.['is_consultant_firm']?.edit,
           }),
-          createSelectField('org_id', 'Org Name', {
+          createSelectField('org_id', 'Business Name', {
             required: true,
             options: orgNames,
-            placeholder: 'Choose Org Name',
+            placeholder: 'Choose Business Name',
             hide:
               isEditView &&
               !permissionMap?.['org_rid']?.read &&

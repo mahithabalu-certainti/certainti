@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   GetProjectTypeApiResponse,
   Project,
+  ProjectFiscalSummary,
   // ProjectList,
   ProjectListParams,
 } from '../../../../types/project';
@@ -49,7 +50,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshProjectsTrigger,
-  toggleEnabled,
+  // toggleEnabled, // Commented for it may use in future
   dropdownOptions,
 }) => {
   const navigate = useNavigate();
@@ -93,7 +94,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(
-    { ...tableParams, bothParentAndChild: toggleEnabled },
+    {
+      ...tableParams,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled // Commented for it may use in future
+    },
     refreshProjectsTrigger
   );
   const totalItems = data?.count || 0;
@@ -144,11 +149,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-            state: {
-              field: fieldValue || '',
-              section: fieldValue ? '' : section,
-            },
-          }
+          state: {
+            field: fieldValue || '',
+            section: fieldValue ? '' : section,
+          },
+        }
         : undefined
     );
   };
@@ -293,7 +298,17 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
         const newProjects = allProjectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });
