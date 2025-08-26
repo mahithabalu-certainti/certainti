@@ -423,6 +423,40 @@ async function getInteractionSource(
     return;
   }
 }
+async function getResponseSource(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get response source";
+  try {
+    const responseSource = await interactionService.getResponseSource();
+    if (responseSource.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, responseSource.data);
+      return;
+    } else {
+      errorLog(methodName, responseSource.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        responseSource.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 
 async function listAllInteractionPrjAcc (req : Request, res : Response) {
   try {
@@ -1135,6 +1169,7 @@ export default {
   getInteractionStatus,
   getInteractionTypes,
   getInteractionSource,
+  getResponseSource,
   getInteractionDetailsById,
   getInteractionQuestionsById,
   sendInteraction,

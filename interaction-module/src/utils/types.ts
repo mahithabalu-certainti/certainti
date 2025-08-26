@@ -14,7 +14,7 @@ export interface ICreateInteraction {
     question_seq_num?: string;
   }[];
   template_rid?: string;
-  parent_interaction_rid?: string;
+  parent_interaction_rid?: string | null;
   interaction_iteration?: number;
   status_rid: string;
   interaction_url?: string;
@@ -79,8 +79,9 @@ export interface InteractionResponse {
   project_rid: string;
   fiscal_year: number;
   status_rid: string;
-  status_action:string
-   attachments:any;
+  status_action:string;
+  response_source:string;
+  attachments:any;
   questions: {
     rid: string;
     notes: string;

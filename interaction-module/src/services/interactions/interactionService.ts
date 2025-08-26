@@ -460,6 +460,27 @@ export class InteractionService {
     }
   }
 
+  async getResponseSource(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { responseSource: any };
+  }> {
+    try {
+      const responseSource =
+        await this.interactionSchemaService.getResponseSource();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          responseSource,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
   async sendInteraction(
    interactions: {
       interaction_rid: string;
@@ -777,12 +798,14 @@ export class InteractionService {
       let statusIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.status))]
       let typeIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.interaction_type))]
       let sourceIds : any[] = [...new Set(result[0][0].interactions.map((d : any)=> d.interaction_source))]
+      let responseSourceIds : any[] = [...new Set(result[0][0].interactions.map((d : any)=> d.response_source))]
       let createdByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.created_by))]
       let modifiedByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.modified_by))]
       let projectFiscalIds : any[] = [...new Set(result[0][0].interactions.map((project : any) => project.project_fiscal_rid))]
       let fetchStatus = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
       let fetchTypes = await mainDb.query(rawQueries.fetchInteractionTypes(typeIds))
       let fetchSource = await mainDb.query(rawQueries.fetchInteractionSource(sourceIds))
+      let fetchResponseSource = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds))
       let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
       let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds))
       let isEmailRecipient : any;
@@ -794,6 +817,7 @@ export class InteractionService {
       let statusMap : Map<string, string> = new Map(fetchStatus[0].map((status : any) => [status.rid, status.status_name]))
       let typeMap : Map<string, string> = new Map(fetchTypes[0].map((types : any) => [types.rid, types.interaction_type_name]))
       let sourceMap : Map<string, string> = new Map(fetchSource[0].map((source : any) => [source.rid, source.interaction_source_name]))
+      let responseSourceMap : Map<string, string> = new Map(fetchResponseSource[0].map((source : any) => [source.rid, source.response_source_name]))
       let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
       let modifiedMap : Map<string, string> = new Map(fetchModifiedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
         if(data.flag === interactionFlag.account) {
@@ -809,6 +833,8 @@ export class InteractionService {
           interaction_type_name: typeMap.get(d.interaction_type),
           interaction_source_rid: d.interaction_source,
           interaction_source_name: sourceMap.get(d.interaction_source),
+          response_source_rid: d.response_source,
+          response_source: responseSourceMap.get(d.response_source),
           created_by: d.created_by,
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
@@ -1162,4 +1188,49 @@ export class InteractionService {
     };
   }
 
+  async processKafkaMessage(message: any): Promise<void> {
+    try {
+      // Parse message if needed
+      const parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
+
+      // Example: Extract required fields
+      const { company_id, project_fiscal_id, type, qre_percent } = parsedMessage;
+
+      // Validate required fields
+      if (!company_id || !project_fiscal_id || !type) {
+        this.logger.error("Kafka message missing required fields", parsedMessage);
+        return;
+      }
+       // Fetch account number
+      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
+      if (!accountNumber) {
+        this.logger.error("Invalid account ID in Kafka message", company_id);
+        return;
+      }
+      if(type === 'QRE'){
+ await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
+      }
+
+
+     
+
+      // Update interaction in DB
+      // await this.interactionSchemaService.updateInteraction(
+      //   accountNumber,
+      //   { ...updateData, interaction_rid },
+      //   userId || "system",
+      //   undefined // No transaction for Kafka consumer
+      // );
+
+      this.logger.info(`Processed Kafka message for interaction_rid: ${company_id}`);
+    } catch (err) {
+      this.logger.error("Error processing Kafka message", err);
+    }
+  }
+
 }
+
+
+
+// Call this function somewhere in your app startup
+// startKafkaConsumer(yourInteractionServiceInstance);

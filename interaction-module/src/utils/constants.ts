@@ -240,6 +240,11 @@ export const rawQueries = {
     return `
     SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`
   },
+  fetchInteractionResponseSource(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE rid IN (${ids})`
+  },
   fetchInteractionStatus(data: any) {
     let ids: string[];
     if (Array.isArray(data)) {
@@ -255,6 +260,10 @@ export const rawQueries = {
   fetchInteractionStatusByType(type : string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
+  },
+  fetchResponseSourceByType(type : string) {
+    return `
+    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = '${type}'`
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
