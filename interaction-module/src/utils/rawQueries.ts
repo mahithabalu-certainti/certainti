@@ -63,6 +63,8 @@ export const fetchInteractionForProjectLevelQuery = (
     else if(sort === filtersColumns.response_source) sortValue = `ORDER BY i.response_source ${sortBy}`
     else if(sort === filtersColumns.created_datetime) sortValue = `ORDER BY i.created_datetime ${sortBy}`
     else if(sort === filtersColumns.modified_datetime) sortValue = `ORDER BY i.modified_datetime ${sortBy}`
+    else if(sort === filtersColumns.project_code) sortValue = `ORDER BY i.project_code ${sortBy}`
+    else if(sort === filtersColumns.fiscal_year) sortValue = `ORDER BY i.fiscal_year ${sortBy}`
     else sortValue = `ORDER BY i.r_number ASC`
 
     if(filteredData?.filteredQueryArray.length! > 0) {
@@ -83,11 +85,13 @@ export const fetchInteractionForProjectLevelQuery = (
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
             i.interaction_url, i.fiscal_year, i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
-            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count
+            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,
+            pf.project_code
 
             FROM
             ${schemaName}.interactions i
             LEFT JOIN ${schemaName}.interactions p ON p.rid = i.parent_interaction_rid
+            LEFT JOIN ${schemaName}.project pf ON pf.rid = i.project_rid
             WHERE
             ${whereConditions}
             ${filteredData?.andConditions}
@@ -125,7 +129,8 @@ export const fetchInteractionForProjectLevelQuery = (
         'total_records', i.total_records,
         'interaction_type', i.interaction_type_rid,
         'interaction_source', i.interaction_source_rid,
-        'attachment_count', i.attachment_count
+        'attachment_count', i.attachment_count,
+        'project_code', i.project_code
         )${sortValue} NULLS LAST) AS interactions
 
         FROM
@@ -200,8 +205,11 @@ export const listAllInteractionSummary = (
     else if(sort === filtersColumnsForInteractionSummary.status_name) sortValue = ` ORDER BY i.status_name ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.interaction_type_name) sortValue = ` ORDER BY i.interaction_type_name ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.interaction_source_name) sortValue = ` ORDER BY i.interaction_source_name ${sortBy}`
-    else if(sort === filterTypesForSummaryInteractions.created_user_name) sortValue = ` ORDER BY i.created_user_name ${sortBy}`
-    else if(sort === filterTypesForSummaryInteractions.updated_user_name) sortValue = ` ORDER BY i.updated_user_name ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.created_user_name) sortValue = ` ORDER BY i.created_user_name ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.updated_user_name) sortValue = ` ORDER BY i.updated_user_name ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.project_code) sortValue = ` ORDER BY i.project_code ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.account_name) sortValue = ` ORDER BY i.account_name ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.fiscal_year) sortValue = ` ORDER BY i.fiscal_year ${sortBy}`
     else sortValue = `ORDER BY i.r_number ASC`
 
 
@@ -219,7 +227,7 @@ export const listAllInteractionSummary = (
     i.created_datetime, i.modified_datetime, i.fiscal_year, i.account_rid, i.project_rid,
     i.interaction_source_rid, sn.interaction_source_name,
     i.project_fiscal_rid, COUNT(*) OVER() AS total_records, i.modified_by, i.interaction_age,
-    a.account_name
+    a.account_name, pf.project_code
     FROM
     ${MAIN_SCHEMA_NAME}.interactions_summary i
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
@@ -229,6 +237,7 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.rid = i.parent_interaction_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_source sn ON sn.rid = i.interaction_source_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary pf ON pf.project_rid = i.project_rid
     ${whereKey}
     ${globalFiltersQueryConditions}
     ${andConditionsForjoinsForTwo}
@@ -273,7 +282,8 @@ export const listAllInteractionSummary = (
             'interaction_source_name', i.interaction_source_name,
             'created_user_name', i.created_user_name,
             'updated_user_name', i.updated_user_name,
-            'attachment_count', i.attachment_count
+            'attachment_count', i.attachment_count,
+            'project_code', i.project_code
         )${sortValue} NULLS LAST) AS interactions
 
         FROM
@@ -295,16 +305,20 @@ const filterForInteractions = (
             for(let [condition, values] of Object.entries(conditions)) {
                 switch(filterTypes[key]) {
                     case "string" : {
+                        let dynamicReference = ``
+                        if(filteredColumns == 'project_code') dynamicReference = `pf`
+                        else if(filteredColumns == 'account_name') dynamicReference = `a`
+                        else dynamicReference = `i`
                         if(condition == ALPHANUMERIC_CONDITIONS.equals) 
-                            filteredQueryArray.push(`LOWER(i.${filteredColumns}) = LOWER('${values}')`)
+                            filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`)
                         if(condition == ALPHANUMERIC_CONDITIONS.notEquals)
-                            filteredQueryArray.push(`LOWER(i.${filteredColumns}) != LOWER('${values}')`)
+                            filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}')`)
                         if(condition == ALPHANUMERIC_CONDITIONS.isEmpty) 
-                            filteredQueryArray.push(`i.${filteredColumns} IS NULL`)
+                            filteredQueryArray.push(`${dynamicReference}.${filteredColumns} IS NULL`)
                         if(condition == ALPHANUMERIC_CONDITIONS.contains)
-                            filteredQueryArray.push(`i.${filteredColumns} ILIKE '%${values}%'`)
+                            filteredQueryArray.push(`${dynamicReference}.${filteredColumns} ILIKE '%${values}%'`)
                         if(condition == ALPHANUMERIC_CONDITIONS.IN)
-                            filteredQueryArray.push(`i.${filteredColumns} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                            filteredQueryArray.push(`${dynamicReference}.${filteredColumns} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                         break;
                     }
                     case "number" : {
@@ -332,13 +346,12 @@ const filterForInteractions = (
                         if(condition == ALPHANUMERIC_CONDITIONS.between) 
                             filteredQueryArray.push(`DATE(i.${filteredColumns}) BETWEEN '${values.map((d : any) => `'${d}'`).join(' AND ')}'`)
                         if(condition == ALPHANUMERIC_CONDITIONS.isEmpty)
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`)
-                    }
+                            filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`)                    }
                 }
             }
-            return {
-                filteredQueryArray, andConditions
-            }
+        }
+        return {
+            filteredQueryArray, andConditions
         }
     } else {
         filteredQueryArray = []
