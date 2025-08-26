@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllPermissions,
   OverviewTabs,
-  useGetInteractionSources,
+  useGetInteractionResponseSources,
   useGetInteractionStatus,
   useGetInteractionTypes,
 } from '../../../../../common-service';
@@ -129,8 +129,18 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
-  const interactionSources = useGetInteractionSources();
   const interactionStatus = useGetInteractionStatus();
+  const interactionResponseSources = useGetInteractionResponseSources();
+
+  const memoizedInteractionResponseSources = useMemo(
+    () =>
+      interactionResponseSources.data?.data.responseSource.map((type) => ({
+        option: type.response_source_name,
+        value: type.rid,
+      })) || [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [interactionResponseSources.data?.data.responseSource]
+  );
 
   const memoizedInteractionStatus = useMemo(
     () =>
@@ -148,15 +158,6 @@ const Interactions: React.FC<InteractionsProps> = ({
         value: type.rid,
       })) || [],
     [interactionTypes.data?.data.interactionTypes]
-  );
-
-  const memoizedInteractionSources = useMemo(
-    () =>
-      interactionSources.data?.data.interactionSource.map((source) => ({
-        option: source.interaction_source_name,
-        value: source.rid,
-      })) || [],
-    [interactionSources.data?.data.interactionSource]
   );
 
   useEffect(() => {
@@ -376,7 +377,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
         memoizedInteractionTypes,
-        memoizedInteractionSources,
+        memoizedInteractionResponseSources,
         memoizedInteractionStatus
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);

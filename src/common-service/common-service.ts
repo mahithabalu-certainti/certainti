@@ -10,6 +10,7 @@ import {
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
+  GetInteractionResponseSourcesApiResponse,
   GetInteractionSourcesApiResponse,
   GetInteractionStatusApiResponse,
   GetInteractionTypesApiResponse,
@@ -286,6 +287,36 @@ export const useGetInteractionSources = () => {
   return useQuery<GetInteractionSourcesApiResponse, Error>({
     queryKey: ['interaction-sources'],
     queryFn: () => fetchInteractionSources(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getInteractionResponseSourcesUrl = (): string => {
+  return `/api/interactions/responseSource`;
+};
+
+export const fetchInteractionResponseSources =
+  async (): Promise<GetInteractionResponseSourcesApiResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<GetInteractionResponseSourcesApiResponse>(
+          getInteractionResponseSourcesUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction sources:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionResponseSources = () => {
+  return useQuery<GetInteractionResponseSourcesApiResponse, Error>({
+    queryKey: ['interaction-response-sources'],
+    queryFn: () => fetchInteractionResponseSources(),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

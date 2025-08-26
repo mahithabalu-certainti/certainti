@@ -32,8 +32,9 @@ const dateOptions = [
 
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
-  interactionSources: { option: string; value: string }[],
-  interactionStatus: { option: string; value: string }[]
+  // interactionSources: { option: string; value: string }[],
+  interactionStatus: { option: string; value: string }[],
+  interactionResponseSources: { option: string; value: string }[]
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
@@ -175,7 +176,7 @@ export const getInteractionFilterFields = (
       name: 'Response Source',
       value: 'response_source_rid',
       type: 'enum',
-      options: interactionSources,
+      options: interactionResponseSources,
       operatorOption: enumOptions,
       // hide:
       //   !permissionMap?.['response_source']?.edit &&

@@ -403,3 +403,14 @@ export interface GetInteractionSourcesApiResponse extends CommonApiResponse {
     interactionSource: InteractionSourceItem[];
   };
 }
+
+export interface InteractionResponseSourceItem {
+  rid: string;
+  response_source_name: string;
+}
+export interface GetInteractionResponseSourcesApiResponse
+  extends CommonApiResponse {
+  data: {
+    responseSource: InteractionResponseSourceItem[];
+  };
+}

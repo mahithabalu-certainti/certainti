@@ -14,7 +14,7 @@ import { InteractionTable } from './table/interaction-table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import {
-  useGetInteractionSources,
+  useGetInteractionResponseSources,
   useGetInteractionStatus,
   useGetInteractionTypes,
 } from '../../../../common-service';
@@ -115,8 +115,8 @@ const Interaction: React.FC = () => {
   ];
 
   const interactionTypes = useGetInteractionTypes();
-  const interactionSources = useGetInteractionSources();
   const interactionStatus = useGetInteractionStatus();
+  const interactionResponseSources = useGetInteractionResponseSources();
 
   const memoizedInteractionStatus = useMemo(
     () =>
@@ -136,19 +136,20 @@ const Interaction: React.FC = () => {
     [interactionTypes.data?.data.interactionTypes]
   );
 
-  const memoizedInteractionSources = useMemo(
+  const memoizedInteractionResponseSources = useMemo(
     () =>
-      interactionSources.data?.data.interactionSource.map((source) => ({
-        option: source.interaction_source_name,
-        value: source.rid,
+      interactionResponseSources.data?.data.responseSource.map((type) => ({
+        option: type.response_source_name,
+        value: type.rid,
       })) || [],
-    [interactionSources.data?.data.interactionSource]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [interactionResponseSources.data?.data.responseSource]
   );
-
   const filterFields = getInteractionFilterFields(
     memoizedInteractionTypes,
-    memoizedInteractionSources,
-    memoizedInteractionStatus
+    // memoizedInteractionSources,
+    memoizedInteractionStatus,
+    memoizedInteractionResponseSources
   );
 
   return (
