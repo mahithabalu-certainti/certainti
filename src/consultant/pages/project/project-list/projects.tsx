@@ -26,10 +26,10 @@ import {
   useGetProjectType,
 } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
-import { Switch } from '@mui/material';
+// import { Switch } from '@mui/material'; // Commented for it may use in future
 
 export const Projects: React.FC = () => {
-  const [toggleEnabled, setToggleEnabled] = useState(false);
+  // const [toggleEnabled, setToggleEnabled] = useState(false); // Commented for it may use in future
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -119,7 +119,8 @@ export const Projects: React.FC = () => {
       fiscalYear: tableParams.fiscalYear,
       globalFilters: tableParams.globalFilters,
       timezone: systemTimezone,
-      bothParentAndChild: toggleEnabled,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled, // Commented for it may use in future
     };
     exportProjectData('projectall', projectParams);
   };
@@ -186,12 +187,12 @@ export const Projects: React.FC = () => {
     memoizedStatus,
     projectPermissionMap
   );
-
-  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (setToggleEnabled) {
-      setToggleEnabled(event.target.checked);
-    }
-  };
+  // Commented for it may use in future
+  // const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (setToggleEnabled) {
+  //     setToggleEnabled(event.target.checked);
+  //   }
+  // };
 
   const dropdownOptions = {
     classification: Classification?.data,
@@ -236,7 +237,7 @@ export const Projects: React.FC = () => {
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-        <div className='flex items-center gap-2'>
+        {/* <div className='flex items-center gap-2'>  // Commented for it may use in future
           <span className='font-semibold text-[13px] text-[#425A76]'>
             Include Parent
           </span>
@@ -246,7 +247,7 @@ export const Projects: React.FC = () => {
             size='small'
             color='success'
           />
-        </div>
+        </div> */}
         <div className='relative'>
           <button
             aria-describedby={filterId}
@@ -257,7 +258,7 @@ export const Projects: React.FC = () => {
             <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-            sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -296,7 +297,7 @@ export const Projects: React.FC = () => {
           isProjectEditEnable={isProjectFieldsEditable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
-          toggleEnabled={toggleEnabled}
+          // toggleEnabled={toggleEnabled} // Commented for it may use in future
           dropdownOptions={dropdownOptions}
         />
       </div>
