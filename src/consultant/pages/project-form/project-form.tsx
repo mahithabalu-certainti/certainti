@@ -328,16 +328,7 @@ const ProjectForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-  }, [
-    getProjectData.isPending,
-    keyContactRoles.isPending,
-    statusOptions.isPending,
-    memoizedRole,
-    account?.keyContact,
-    isEditView,
-    permissionMap,
-  ]);
-
+  }, [memoizedRole, account?.keyContact, isEditView, permissionMap]);
   useEffect(() => {
     if (isEditView && projectData?.project_rid) {
       // --- Effort Calculation Logic ---
@@ -363,6 +354,10 @@ const ProjectForm: React.FC = () => {
         total_effort: initialTotalEffort,
       };
       setEffortFinancials(efforts);
+
+      // *** FIX: Set the disable flags based on initial data ***
+      setIsEffortFteEdited(!!initialEffortFte);
+      setIsEffortSubconEdited(!!initialEffortSubcon);
 
       // --- Cost Calculation Logic ---
       const initialCostFte = projectData.total_cost_fte?.toString() || '';
@@ -393,6 +388,11 @@ const ProjectForm: React.FC = () => {
         total_cost: initialTotalCost,
       };
       setCostFinancials(costs);
+
+      setIsCostFteEdited(!!initialCostFte);
+      setIsCostSubconEdited(!!initialCostSubcon);
+      setIsNonLaborCostEdited(!!initialCostNonLabor);
+
       setIsFormReadyForEdit(true);
     }
   }, [projectData, isEditView]);
@@ -612,7 +612,9 @@ const ProjectForm: React.FC = () => {
     keyContactRoles.isLoading;
 
   if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
+
   const showSkeleton = formLoading || !isFormReadyForEdit;
+
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
