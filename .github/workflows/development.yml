@@ -590,6 +590,7 @@ jobs:
           NODE_ENV=DEVELOPMENT
           INTERACTION_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/interactionService/api'
           NODE_ENV_DB_PREFIX="D001-"
+          JWT_SECRET='lknmpsa*2626_ddm'
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
