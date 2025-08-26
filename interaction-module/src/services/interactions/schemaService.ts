@@ -9,7 +9,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME, rawQueries, statusAction } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries, statusAction, techSummaryStatus } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -196,7 +196,8 @@ class InteractionSchemaService {
         transaction,
       }
     );
-    await InteractionHistory.create(
+    await Promise.all([
+      InteractionHistory.create(
       {
         interaction_rid: interactionRid,
         attribute_name: "question",
@@ -206,7 +207,30 @@ class InteractionSchemaService {
         created_by: userId,
       },
       { transaction }
-    );
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "notes",
+        old_value: existingData?.dataValues?.notes ?? "",
+        new_value: question?.notes ?? "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "is_mandatory",
+        old_value: existingData?.dataValues?.is_mandatory ?? "",
+        new_value: question?.is_mandatory ?? "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      )
+    ]);
     console.log(`[addInteractionItems] Edited question:`, question.rid);
   }
 
@@ -665,7 +689,8 @@ if(!this.orgDbSequelize)
       },
       accountInfo: {
         account_name: accountInfo?.account_name ?? null,
-        account_rid: accountInfo?.rid ?? null
+        account_rid: accountInfo?.rid ?? null,
+        r_number: accountInfo?.r_number ?? null
       },
       interactionInfo:{
         interaction_id: interactionDetails?.r_number ?? null,
@@ -1326,7 +1351,7 @@ async isAutoSendInteractionEnabled(accountNumber: string,interactionDetails: any
     );
   }
 }
-async updateQrePercentAndTechSummary(qrePercent:number, accountNumber: string,projectFiscalRid:string, techSummaryPayload: any)
+async updateTechSummary( projectSummary: string, accountNumber: string, projectFiscalId: string, accountId: string,correlationId: string)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1338,24 +1363,71 @@ async updateQrePercentAndTechSummary(qrePercent:number, accountNumber: string,pr
     
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
 
-    await this.orgDbSequelize.query(
-      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent, ),
-      { type: "UPDATE" }
-    );
-    await this.mainDbSequelize.query(
-      rawQueries.updateQreInfoSummary(projectFiscalRid,qrePercent, ),
-      { type: "UPDATE" }
-    );
      const [projectInfo]: any[] = await this.orgDbSequelize.query(
-      rawQueries.fetchProjectInfo(projectFiscalRid, schemaName),
+      rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
       { type: "SELECT" }
     );
-    techSummaryPayload.fiscal_year = projectInfo?.fiscal_year ?? null;
-     const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
-    await AiTechnicalSummary.create(
+   
+    const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
+    const maxVersion = await AiTechnicalSummary.max("version", {
+      where: {
+        account_rid: accountId,
+        project_rid: projectInfo?.project_rid ?? null,
+        project_fiscal_rid: projectFiscalId,
+      },
+    });
+   let version = (typeof maxVersion === "number" ? maxVersion : parseInt(maxVersion as any) || 0) + 1;
+     let techSummaryPayload ={
+      created_by: process.env.SYSTEM_USER_ID || "system",
+      account_rid: accountId,
+      fiscal_year: projectInfo?.fiscal_year ?? null,
+      project_rid: projectInfo?.project_rid ?? null,
+      project_fiscal_rid:projectFiscalId,
+      technical_summary: projectSummary,
+      version,
+      status: techSummaryStatus.ACTIVE,
+      entity_transaction_id: correlationId
+     }
+    const aiResponse = await AiTechnicalSummary.create(
       techSummaryPayload
     );
+    if(aiResponse.rid)
+    {
+      await AiTechnicalSummary.update(
+        { status: techSummaryStatus.INACTIVE, },
+        {
+          where: {
+            account_rid: accountId,
+            project_rid: projectInfo?.project_rid ?? null,
+            project_fiscal_rid: projectFiscalId,
+            rid: { [require("sequelize").Op.ne]: aiResponse.rid }
+          }
+        }
+      );
+    }
     
+  } catch (err) {
+    throw new Error(
+      "Error updating Tech Summary: " + (err as Error).message
+    );
+  }
+}
+
+async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
+{
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+     const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
+      { type: "SELECT" }
+    );
+
+    return projectInfo;
   } catch (err) {
     throw new Error(
       "Error updating QRE percent: " + (err as Error).message
