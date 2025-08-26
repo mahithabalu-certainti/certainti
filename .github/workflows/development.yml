@@ -614,7 +614,8 @@ jobs:
           
             # Update only the ext-interaction-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*ext-interaction-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            # sed -i 's|image:.*ext-interaction-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i '/^\s*image:.*\/ext-interaction-module:/c\    image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 

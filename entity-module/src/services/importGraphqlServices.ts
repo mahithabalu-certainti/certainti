@@ -1,4 +1,4 @@
-import { Op, QueryTypes, Sequelize } from "sequelize";
+import { Op, Order, QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import {
@@ -18,6 +18,8 @@ import { generateSasUrl } from "../utils/blob";
 import { ProjectService } from "./projectService";
 import { ResourceService } from "./resourceServices";
 import { ProjectTaskService } from "./projectTaskService";
+import { ProjectResourceService } from "./projectResource/projectResourceService";
+import { ProjectResourceSchemaService } from "./projectResource/schemaService";
 import SchemaService from "./schemaService";
 import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
@@ -30,6 +32,8 @@ export default class ImportGraphqlServices {
   private projectService: ProjectService;
   private resourceService: ResourceService;
   private projectTaskService: ProjectTaskService;
+  private projectResourceService: ProjectResourceService;
+  private projectResourceSchema: ProjectResourceSchemaService;
   private schemaService: SchemaService;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
@@ -41,6 +45,8 @@ export default class ImportGraphqlServices {
     this.projectTaskService = new ProjectTaskService(logger);
     this.schemaService = new SchemaService();
     this.projectIngestion = new ProjectIngestionService(logger);
+    this.projectResourceService = new ProjectResourceService(logger);
+    this.projectResourceSchema = new ProjectResourceSchemaService();
   }
 
   private async getOrgSequelize(): Promise<Sequelize> {
@@ -555,11 +561,12 @@ async exportAccountLevelImportedProjects(
   }
 
 
-  async fetchAccountLevelImportedResources(
+  async fetchAccountLevelImportedProjectResources(
     accountId: string,
     page: number = 1,
     limit: number = 10,
     search: string,
+    fiscalYear: number = 0,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
@@ -568,7 +575,7 @@ async exportAccountLevelImportedProjects(
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { resources: any; count: number };
+    data?: { projectResources: any; count: number };
   }> {
     try {
       const mainDb = await this.getMainDbSequelize();
@@ -590,56 +597,60 @@ async exportAccountLevelImportedProjects(
 
       const offset = (page - 1) * limit;
 
-      const [finalSortBy, finalSortOrder] =
-        this.resourceService.getSortParameters(sortBy, sortOrder);
+      // construct sorting
+            const [finalSortBy, finalSortOrder] = this.projectResourceService.getSortParameters(
+              sortBy,
+              sortOrder
+            );
+            const order: Order = [[finalSortBy, finalSortOrder]];
+      
+            // construct filters
+            const { whereClause } = this.projectResourceService.buildWhereClause(filters);
 
-      const { whereClause, havingClause } =
-        this.resourceService.buildWhereClause(filters, search);
-      const { geoDataSort } = this.resourceService.processGeoDataSort(
-        sortBy,
-        sortOrder
-      );
-
-      const resources = await this.schemaService.fetchResources(
-        fetchAccountDetails[0][0].r_number,
-        offset,
-        limit,
-        [[finalSortBy, finalSortOrder]],
-        whereClause,
-        havingClause,
-        geoDataSort,
-        accountId,
-        documentRid
-      );
+      const { data: projectResources, count } =
+        await this.projectResourceSchema.listAccountLevelProjectResources(
+          fetchAccountDetails[0][0].r_number,
+          accountId,
+          filters,
+          whereClause,
+          fiscalYear,
+          offset,
+          limit,
+          order,
+          sortBy,
+          sortOrder,
+          documentRid
+        );
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          resources: resources.resources,
-          count: resources.totalCount,
+          projectResources: projectResources,
+          count: count,
         },
       };
     } catch (err) {
       throw new Error(
-        "Error fetching imported resources: " + (err as Error).message
+        "Error fetching imported project resources: " + (err as Error).message
       );
     }
   }
 
-  async exportAccountLevelImportedResources(
+  async exportAccountLevelImportedProjectResources(
     accountId: string,
     search: string,
+    fiscalYear: number = 0,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
+    userId: string,
     documentRid: string,
-    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { resources: any; count: number};
+    data?: { projectResources: any };
   }> {
     try {
       const mainDb = await this.getMainDbSequelize();
@@ -659,97 +670,40 @@ async exportAccountLevelImportedProjects(
         );
       }
 
+      // construct sorting
+            const [finalSortBy, finalSortOrder] = this.projectResourceService.getSortParameters(
+              sortBy,
+              sortOrder
+            );
+            const order: Order = [[finalSortBy, finalSortOrder]];
+      
+            // construct filters
+            const { whereClause } = this.projectResourceService.buildWhereClause(filters);
 
-      const [finalSortBy, finalSortOrder] =
-        this.resourceService.getSortParameters(sortBy, sortOrder);
-
-      const { whereClause, havingClause } =
-        this.resourceService.buildWhereClause(filters, search);
-      const { geoDataSort } = this.resourceService.processGeoDataSort(
-        sortBy,
-        sortOrder
-      );
-
-      const resources = await this.schemaService.fetchResourcesForExport(
-        fetchAccountDetails[0][0].r_number,
-        [[finalSortBy, finalSortOrder]],
-        whereClause,
-        havingClause,
-        geoDataSort,
-        accountId,
-        documentRid
-      );
-
-      const rawResult = resources.resources || [];
-      const [
-        accountFields,
-        resourceFields,
-      ] = await Promise.all([
-        this.schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
-        this.schemaService.getAllowedExportFields(userId, "account_resources_view_edit")
-      ]);
-     // const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"account_resources_view_edit");
-        const allowedFieldSet = new Set<string>();
-        for (const field of resourceFields) {
-          if (field.read) {
-            allowedFieldSet.add(field.field_name);
-          }
-        }
-        const requiredAccountFields = new Set(["account_name"]); // Add more if needed
-      for (const field of accountFields) {
-        if (field.read && requiredAccountFields.has(field.field_name)) {
-          allowedFieldSet.add(field.field_name);
-        }
-      }
-
-      const labelMap: Record<string, string> = {
-        "account_name": "Account Name",
-        "resource_code": "Resource Code",
-        "resource_name": "Name",
-        "resource_type_rid": "Resource Type",
-        "resource_orgname": "Org Name",
-        "resource_designation": "Designation",
-        "resource_role": "Role",
-        "country_rid": "Country",
-        "region_rid": "Region",
-        "total_project_hours": "Total Project Hours",
-        "estimated_rd_hours": "Estimated R&D Hours",
-        "status_rid": "Status",
-        "comments": "Comments",
-        "r_number": "Resource ID",
-      };
-      const fieldValueMap: Record<string, string> = {
-        "resource_type_rid": "resource_type_name",
-        "region_rid":"region_name",
-        "country_rid":"country_name",
-         "status_rid":"status_name",
-
-      };
-
-      const exportData = rawResult.map((resource: any) => {
-      const row: Record<string, string> = {};
-
-      for (const [field, label] of Object.entries(labelMap)) {
-       if (allowedFieldSet.has(field)) {
-      const actualField = fieldValueMap[field] || field; // fallback to same field if not mapped
-      row[label] = resource[actualField] ?? "-";
-      }
-      }
-
-      return row;
-    });
+      const projectResources =
+        await this.projectResourceSchema.exportAccountLevelProjectResources(
+          fetchAccountDetails[0][0].r_number,
+          accountId,
+          filters,
+          whereClause,
+          fiscalYear,
+          order,
+          sortBy,
+          sortOrder,
+          userId,
+          documentRid
+        );
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          resources: exportData,
-          count: resources.totalCount,
+          projectResources: projectResources,
         },
       };
     } catch (err) {
       throw new Error(
-        "Error fetching imported resources: " + (err as Error).message
+        "Error fetching imported project resources: " + (err as Error).message
       );
     }
   }

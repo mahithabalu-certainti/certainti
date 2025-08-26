@@ -2605,7 +2605,7 @@ const exportImportedAccountLevelProjects = Joi.object({
   timezone: Joi.string().optional()  
 });
 
-const importedAccountLevelResources = Joi.object({
+const importedAccountLevelProjectResources = Joi.object({
   page: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("1"),
@@ -2620,11 +2620,17 @@ const importedAccountLevelResources = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),  
   documentRid: Joi.string()
     .pattern(uuidRegex, "valid UUID")
 });
 
-const exportImportedAccountLevelResources = Joi.object({
+const exportImportedAccountLevelProjectResources = Joi.object({
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime").optional().allow(""),
@@ -2633,6 +2639,12 @@ const exportImportedAccountLevelResources = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),  
   documentRid: Joi.string()
     .pattern(uuidRegex, "valid UUID")
 });
@@ -2728,9 +2740,9 @@ export {
   listAccountLevelProjectCostsSchema,
   exportListAccountLevelProjectCostsSchema,
   importedAccountLevelProjects,
-  importedAccountLevelResources,
+  importedAccountLevelProjectResources,
   importedAccountLevelProjectTasks,
   exportImportedAccountLevelProjects,
-  exportImportedAccountLevelResources,
+  exportImportedAccountLevelProjectResources,
   exportImportedAccountLevelProjectTasks
 };
