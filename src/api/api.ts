@@ -36,6 +36,11 @@ const resourceServiceApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const interactionServiceApi = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_INTERACTION_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
@@ -44,7 +49,13 @@ const api = axios.create({
 });
 
 // Apply interceptors to both services
-[accountServiceApi, userServiceApi, resourceServiceApi, api].forEach((api) => {
+[
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+  interactionServiceApi,
+  api,
+].forEach((api) => {
   api.interceptors.request.use(
     (config) => {
       const auth = localStorage.getItem('auth');
@@ -79,7 +90,13 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 // Modify the response interceptor
-[accountServiceApi, userServiceApi, resourceServiceApi, api].forEach((api) => {
+[
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+  interactionServiceApi,
+  api,
+].forEach((api) => {
   api.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
@@ -183,4 +200,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
   );
 });
 
-export { accountServiceApi, userServiceApi, resourceServiceApi, api };
+export {
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+  interactionServiceApi,
+  api,
+};

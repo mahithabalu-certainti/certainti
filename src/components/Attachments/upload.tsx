@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Attachment, UploadIcon } from '../../assets';
+import { AttachmentsSideIcon, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
 import AttachmentForm from './attachment-from';
 import { AttachmentUploadPayload } from '../../consultant/types/attachment';
+import { FileList } from '../file-list';
 interface UploadsProps {
   accountId: string | undefined | null;
   attachID: string | undefined | null;
@@ -55,10 +56,6 @@ const Uploads: React.FC<UploadsProps> = ({
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
-  };
-
-  const showSuccess = (text: string) => {
-    setMessage({ type: 'success', text });
   };
 
   const validateFiles = (files: FileList | null): File[] => {
@@ -156,7 +153,6 @@ const Uploads: React.FC<UploadsProps> = ({
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -166,7 +162,6 @@ const Uploads: React.FC<UploadsProps> = ({
 
     if (validFiles.length > 0) {
       setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -186,7 +181,12 @@ const Uploads: React.FC<UploadsProps> = ({
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-1'>
-          <Attachment alt='Import Icon' className='w-6 h-6' />
+          <div className='w-[24px] h-[24px] flex items-center justify-center bg-[#D8E9FF] rounded-full'>
+            <AttachmentsSideIcon
+              alt='Import Icon'
+              className='[&>path]:stroke-[#4B9BFF]'
+            />
+          </div>
           <span className='text-[13px] text-[#2D3E4F] font-semibold'>
             Attachments
           </span>
@@ -261,6 +261,12 @@ const Uploads: React.FC<UploadsProps> = ({
               {message.text}
             </div>
           )}
+
+          <FileList
+            fileInputRef={fileInputRef}
+            selectedFiles={selectedFiles}
+            setSelectedFiles={setSelectedFiles}
+          />
         </div>
       </div>
     </div>

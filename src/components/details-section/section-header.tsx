@@ -26,6 +26,8 @@ interface SectionHeaderProps {
   subValue?: string;
   showItemCount?: boolean;
   className?: string;
+  iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -40,6 +42,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   subValue,
   showItemCount = false,
   className,
+  iconBg,
+  bgType,
 }) => {
   if (hideSection) {
     return null;
@@ -64,10 +68,19 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             </div>
           )}
 
-          {titleIcon && (
-            <div className='w-[24px] h-[24px] flex items-center justify-center'>
+          {iconBg ? (
+            <div
+              className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
+              style={{ backgroundColor: iconBg }}
+            >
               {titleIcon}
             </div>
+          ) : (
+            titleIcon && (
+              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+                {titleIcon}
+              </div>
+            )
           )}
 
           <div>

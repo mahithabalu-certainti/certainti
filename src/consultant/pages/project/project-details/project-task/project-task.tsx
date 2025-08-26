@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
   useProjectTaskDetail,
@@ -88,7 +88,7 @@ export const ProjectTask = ({
   projectCode?: string;
   accountOrProjectInActive?: boolean;
 }) => {
-  const { errorToast, successToast } = useToast();
+  const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
   const [, setSortFilterCount] = useState<number>(0);
@@ -340,11 +340,43 @@ export const ProjectTask = ({
     setShowProjectTaskDetails(true);
     setShowFilter(false);
   };
+  const convertDates = (pfy: FormFiscalDateType) => {
+    const isValidDate = (date?: Date) => {
+      return date && !isNaN(new Date(date).getTime());
+    };
+
+    return {
+      ...pfy,
+      endMax: isValidDate(pfy.endMax)
+        ? new Date(pfy.endMax as Date).toISOString()
+        : null,
+      startMax: isValidDate(pfy.startMax)
+        ? new Date(pfy.startMax as Date).toISOString()
+        : null,
+      startMin: isValidDate(pfy.startMin)
+        ? new Date(pfy.startMin as Date).toISOString()
+        : null,
+    };
+  };
+  const fiscalDate = PFY ? convertDates(PFY) : null;
+
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
     permissionMapTaskTableColumn,
-    accountOrProjectInActive
+    accountOrProjectInActive,
+    fiscalDate
+      ? {
+          endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
+          startMax: fiscalDate.startMax
+            ? new Date(fiscalDate.startMax)
+            : undefined,
+          startMin: fiscalDate.startMin
+            ? new Date(fiscalDate.startMin)
+            : undefined,
+          year: fiscalDate.year,
+        }
+      : undefined
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -385,7 +417,6 @@ export const ProjectTask = ({
           }
           return project;
         });
-        successToast(result?.statusMessage);
         setProjectTaskList(newProjects);
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');
@@ -415,6 +446,7 @@ export const ProjectTask = ({
         sortFilterCount={0}
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
+        projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
       />
       {showUploads ? (
@@ -428,7 +460,14 @@ export const ProjectTask = ({
           <SectionHeader
             title={'Project Task'}
             titleIcon={
-              viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
+              viewDetails ? (
+                <ResourcesIcon
+                  alt='resource header icon'
+                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                />
+              ) : (
+                <CreateResourceIcon />
+              )
             }
             count={totalItems}
             showItemCount={!viewDetails}
@@ -436,6 +475,7 @@ export const ProjectTask = ({
             buttons={headerButtons}
             subValue={resourceData?.r_number}
             onBackClick={handleBackClick}
+            iconBg={viewDetails ? '#7785ff' : ''}
           />
           <div className='border border-[#CBD6E2]'>
             {showProjectTaskDetails ? (

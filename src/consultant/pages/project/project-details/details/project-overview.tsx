@@ -52,6 +52,8 @@ interface ProjectOverviewProps {
   detailsError?: boolean;
   isKeyContactAvailable?: boolean;
   permission: Permissions[];
+  iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({
@@ -65,6 +67,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   isDetailsLoading,
   detailsError,
   permission,
+  iconBg,
+  bgType,
 }) => {
   const projectViewEditFields = useMemo(
     () =>
@@ -309,11 +313,22 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               <LeftArrowIcon alt='leftArrowIcon' />
             </div>
           )}
-          {titleIcon && (
-            <div className='text-[13px] text-[#2D3E4F] font-semibold'>
+
+          {iconBg ? (
+            <div
+              className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
+              style={{ backgroundColor: iconBg }}
+            >
               {titleIcon}
             </div>
+          ) : (
+            titleIcon && (
+              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+                {titleIcon}
+              </div>
+            )
           )}
+
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
         </div>
 

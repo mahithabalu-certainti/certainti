@@ -4,10 +4,10 @@ import {
   CaseIcon,
   DashboardIcon,
   HelpIcon,
+  InteractionDetailIcon,
   NotesIcon,
   ProjectsIcon,
   SettingsIcon,
-  SurveyIcon,
   TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
@@ -15,6 +15,7 @@ import { INavItem } from '../../consultant/types';
 import {
   ACCOUNT,
   ATTACHMENTS,
+  INTERACTIONS,
   MAIN_ROUTE,
   NOT_FOUND,
   PROJECT,
@@ -63,12 +64,12 @@ export const accountNavItems: INavItem[] = [
     matchLink: '',
   },
   {
-    id: MenuOption.SURVEY,
-    icon: SurveyIcon,
-    name: 'Survey',
-    link: NOT_FOUND,
+    id: MenuOption.INTERACTIONS,
+    icon: InteractionDetailIcon,
+    name: 'Interactions',
+    link: INTERACTIONS,
     type: 'link',
-    matchLink: '',
+    matchLink: INTERACTIONS,
   },
   {
     id: MenuOption.NOTES,

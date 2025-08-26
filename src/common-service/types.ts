@@ -100,7 +100,7 @@ export enum AllMenus {
   DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
-  TIMESHEETS = 'timeline',
+  TIMESHEETS = 'timesheet',
   CASES = 'cases',
   SURVEY = 'survey',
   NOTES = 'notes',
@@ -182,6 +182,10 @@ export enum AllPermissions {
   USER_VIEW_EDIT = 'user_view_edit',
   USER_GROUP_VIEW_EDIT = 'user_group_view_edit',
   PROFILE_VIEW_EDIT = 'profile_view_edit',
+  ACCOUNT_TIMESHEET_VIEW = 'account_timesheet_view',
+  ACCOUNT_TIMESHEET_PROJECT_VIEW = 'account_project_view',
+  ACCOUNT_TIMESHEET_RESOURCE_VIEW = 'account_resource_view',
+  ACCOUNT_TIMESHEET_PROJECT_TASK_VIEW = 'account_project_task_view',
   ACCOUNT_RESOURCES_VIEW_EDIT = 'account_resources_view_edit',
   ACCOUNT_RESOURCE_COST_EDIT_VIEW = 'account_resource_cost_edit_view',
   PROJECTS_RESOURCES_VIEW_EDIT = 'projects_resources_view_edit',
@@ -195,10 +199,13 @@ export enum AllPermissions {
   ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
   ACCOUNT_IMPORTS_OVERVIEW = 'account_imports_overview',
   ACCOUNT_IMPORTS_TIMELINE = 'account_imports_timeline',
+  ACCOUNT_TIMESHEET_OVERVIEW = 'account_timesheet_overview',
   ATTACHMENT_CREATE = 'attachments_create',
   ACCOUNT_SETTINGS_VIEW_EDIT = 'account_settings_view_edit',
   PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
   IMPORTS_VIEW_EDIT = 'imports_view_edit',
+  TIMESHEET_VIEW_EDIT = 'timesheet_view_edit',
+  TIMESHEET_PROJECT_TASK_VIEW_EDIT = 'timesheet_project_task_view_edit',
   IMPORTS_EXPORT = 'imports_export',
   MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
   PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
@@ -214,6 +221,9 @@ export enum AllPermissions {
   ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
   ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
   ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
+  INTERACTIONS_OVERVIEW = 'interactions_overview',
+  INTERACTIONS_TIMELINE = 'interactions_timeline',
+  ACCOUNT_TIMESHEET_EXPORT = 'timesheet_export',
 }
 
 export interface Country {
@@ -247,6 +257,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',
   LOGOUT = 'logout',
@@ -263,6 +274,13 @@ export enum MenuOption {
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
+}
+
+export interface OverviewTabs {
+  id: AllPermissions | AllMenus;
+  name: string;
+  hide: boolean;
+  disable?: boolean;
 }
 
 export type FailedQueueItem = {
@@ -349,4 +367,40 @@ export interface EntityTypes {
 
 export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
   data: EntityTypes[];
+}
+
+//Interactions
+export interface InteractionStatusItem {
+  rid: string;
+  status_name: string;
+  status_type?: string | null;
+}
+
+export interface GetInteractionStatusApiResponse extends CommonApiResponse {
+  data: {
+    interactionStatus: InteractionStatusItem[];
+  };
+}
+
+export interface InteractionTypeItem {
+  rid: string;
+  interaction_type_name: string;
+}
+
+export interface GetInteractionTypesApiResponse extends CommonApiResponse {
+  data: {
+    interactionTypes: InteractionTypeItem[];
+  };
+}
+
+export interface InteractionResSourceItem {
+  rid: string;
+  response_source_name: string;
+}
+
+export interface GetInteractionResponeSourcesApiResponse
+  extends CommonApiResponse {
+  data: {
+    responseSource: InteractionResSourceItem[];
+  };
 }
