@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { errorLog, successLog } from "../utils/helpers";
-
+import aiAssessmentRoutes from "./aiAssessmentRoutes";
 const routes: Router = Router();
 
 routes.get("/health", async (req, res) => {
@@ -24,4 +24,6 @@ routes.get("/health", async (req, res) => {
 
 
 
+
+routes.use("/aiAssessment", aiAssessmentRoutes);
 export default routes;
