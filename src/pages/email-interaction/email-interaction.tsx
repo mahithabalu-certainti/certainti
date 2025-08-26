@@ -117,7 +117,6 @@ const EmailInteraction: React.FC = () => {
         interaction_rid,
         account_rid,
       };
-      localStorage.setItem('mail_Intraction', JSON.stringify(payload));
       mutate(payload);
     }
 
@@ -144,7 +143,7 @@ const EmailInteraction: React.FC = () => {
   }, [timeout]);
 
   useEffect(() => {
-    if (timer > 0 && timeout) {
+    if (timer > 0 && (timeout || data)) {
       const countdown = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
@@ -218,14 +217,14 @@ const EmailInteraction: React.FC = () => {
       {(!isPending || !reSendOtp.isPending) &&
         (isAuthentic ? (
           <div className='px-10 py-4'>
-            {questions?.questions && questions?.questions.length > 0 && (
+            {questions?.questions && questions?.questions.length > 0 ? (
               <InteractionQuestions
                 questions={questions?.questions}
                 globalAttachments={questions?.global_attachments}
                 actionButtonEnable
                 refetchDeetails={refetch}
               />
-            )}
+            ) : <p>No questions are available!</p>}
           </div>
         ) : (
           <div className='flex flex-col items-center justify-center min-h-[calc(100vh-48px)]'>
@@ -251,6 +250,7 @@ const EmailInteraction: React.FC = () => {
                     onChange={(e) => handleChange(e.target.value, idx)}
                     className='w-12 h-12 border border-gray-300 rounded-md text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#F16137]'
                     disabled={!timeout}
+                    autoComplete='off'
                   />
                 ))}
               </div>

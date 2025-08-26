@@ -273,7 +273,7 @@ export const postVerifyOtp = async (
   body: VerifyOtp
 ): Promise<VerifyOtpApiResponse> => {
   try {
-    const { data } = await accountServiceApi.post<VerifyOtpApiResponse>(
+    const { data } = await exInteractionServiceApi.post<VerifyOtpApiResponse>(
       `/api/otp/verify`,
       body
     );
@@ -376,7 +376,7 @@ const fetchInteractionQuestions = async (
     {
       headers: {
         Authorization: `Bearer ${parseData.auth_token}`,
-        email: parseData.email,
+        'x-user-id': parseData.email,
       },
     }
   );
