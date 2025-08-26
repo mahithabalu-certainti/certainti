@@ -165,7 +165,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       key: 'status_rid',
     },
     {
-      label: 'Org Name',
+      label: 'Business Name',
       value: accountById?.organisation_name?.toString() || '-',
       key: 'organisation_name',
     },
