@@ -252,8 +252,8 @@ export const getGlobalInteractionListColumns = (
     // hide: !permissionMap?.['interaction_type']?.edit && !permissionMap?.['interaction_type']?.read,
   },
   {
-    id: 'response_source',
-    sortId: 'response_source',
+    id: 'response_source_name',
+    sortId: 'response_source_name',
     label: 'Response Source',
     width: 180,
     sortable: true,

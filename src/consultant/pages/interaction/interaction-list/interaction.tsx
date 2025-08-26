@@ -140,7 +140,7 @@ const Interaction: React.FC = () => {
     () =>
       interactionSources.data?.data.interactionSource.map((source) => ({
         option: source.interaction_source_name,
-        value: source.interaction_source_name,
+        value: source.rid,
       })) || [],
     [interactionSources.data?.data.interactionSource]
   );

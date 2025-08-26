@@ -144,7 +144,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Response Source',
-      value: 'response_source',
+      value: 'response_source_rid',
       type: 'enum',
       options: interactionSources,
       operatorOption: enumOptions,
