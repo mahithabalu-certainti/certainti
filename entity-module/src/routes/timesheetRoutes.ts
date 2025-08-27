@@ -25,18 +25,18 @@ router.get('/export/loadFailure/:accountRid/:importRid/:entityType',
 router.get('/importedProjects/:accountId',
      checkUserStatusMiddleware('projects_view_edit'),
        controller.importListController.importedAccountLevelprojectList)
-router.get('/importedProjectResources/:accountId',
-     checkUserStatusMiddleware('projects_resources_view_edit'),
-       controller.importListController.importedAccountLevelProjectResourcesList)    
+router.get('/importedResources/:accountId',
+     checkUserStatusMiddleware('account_resources_view_edit'),
+       controller.importListController.importedAccountLevelresourceList)
 router.get('/importedProjectTasks/:accountId',
      checkUserStatusMiddleware('projects_task_view_edit'),
        controller.importListController.importedAccountLevelProjectTaskList)
 router.get('/export/importedProjects/:accountId',
      checkUserStatusMiddleware('projects_export'),
        controller.importListController.exportImportedProjectList)
-router.get('/export/importedProjectResources/:accountId',
-     checkUserStatusMiddleware('projects_resources_export'),
-       controller.importListController.exportImportedProjectResourceList);
+router.get('/export/importedResources/:accountId',
+     checkUserStatusMiddleware('account_resources_export'),
+       controller.importListController.exportImportedResourceList);
 router.get('/export/importedProjectTasks/:accountId',
      checkUserStatusMiddleware('projects_task_export'),
        controller.importListController.exportImportedProjectTaskList);                               

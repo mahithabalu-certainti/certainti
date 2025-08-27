@@ -561,12 +561,11 @@ async exportAccountLevelImportedProjects(
   }
 
 
-  async fetchAccountLevelImportedProjectResources(
+  async fetchAccountLevelImportedResources(
     accountId: string,
     page: number = 1,
     limit: number = 10,
     search: string,
-    fiscalYear: number = 0,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
@@ -575,7 +574,7 @@ async exportAccountLevelImportedProjects(
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResources: any; count: number };
+    data?: { resources: any; count: number };
   }> {
     try {
       const mainDb = await this.getMainDbSequelize();
@@ -597,60 +596,56 @@ async exportAccountLevelImportedProjects(
 
       const offset = (page - 1) * limit;
 
-      // construct sorting
-            const [finalSortBy, finalSortOrder] = this.projectResourceService.getSortParameters(
-              sortBy,
-              sortOrder
-            );
-            const order: Order = [[finalSortBy, finalSortOrder]];
-      
-            // construct filters
-            const { whereClause } = this.projectResourceService.buildWhereClause(filters);
+      const [finalSortBy, finalSortOrder] =
+        this.resourceService.getSortParameters(sortBy, sortOrder);
 
-      const { data: projectResources, count } =
-        await this.projectResourceSchema.listAccountLevelProjectResources(
-          fetchAccountDetails[0][0].r_number,
-          accountId,
-          filters,
-          whereClause,
-          fiscalYear,
-          offset,
-          limit,
-          order,
-          sortBy,
-          sortOrder,
-          documentRid
-        );
+      const { whereClause, havingClause } =
+        this.resourceService.buildWhereClause(filters, search);
+      const { geoDataSort } = this.resourceService.processGeoDataSort(
+        sortBy,
+        sortOrder
+      );
+
+      const resources = await this.schemaService.fetchResources(
+        fetchAccountDetails[0][0].r_number,
+        offset,
+        limit,
+        [[finalSortBy, finalSortOrder]],
+        whereClause,
+        havingClause,
+        geoDataSort,
+        accountId,
+        documentRid
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          projectResources: projectResources,
-          count: count,
+          resources: resources.resources,
+          count: resources.totalCount,
         },
       };
     } catch (err) {
       throw new Error(
-        "Error fetching imported project resources: " + (err as Error).message
+        "Error fetching imported resources: " + (err as Error).message
       );
     }
   }
 
-  async exportAccountLevelImportedProjectResources(
+  async exportAccountLevelImportedResources(
     accountId: string,
     search: string,
-    fiscalYear: number = 0,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    userId: string,
     documentRid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projectResources: any };
+    data?: { resources: any; count: number};
   }> {
     try {
       const mainDb = await this.getMainDbSequelize();
@@ -670,40 +665,97 @@ async exportAccountLevelImportedProjects(
         );
       }
 
-      // construct sorting
-            const [finalSortBy, finalSortOrder] = this.projectResourceService.getSortParameters(
-              sortBy,
-              sortOrder
-            );
-            const order: Order = [[finalSortBy, finalSortOrder]];
-      
-            // construct filters
-            const { whereClause } = this.projectResourceService.buildWhereClause(filters);
 
-      const projectResources =
-        await this.projectResourceSchema.exportAccountLevelProjectResources(
-          fetchAccountDetails[0][0].r_number,
-          accountId,
-          filters,
-          whereClause,
-          fiscalYear,
-          order,
-          sortBy,
-          sortOrder,
-          userId,
-          documentRid
-        );
+      const [finalSortBy, finalSortOrder] =
+        this.resourceService.getSortParameters(sortBy, sortOrder);
+
+      const { whereClause, havingClause } =
+        this.resourceService.buildWhereClause(filters, search);
+      const { geoDataSort } = this.resourceService.processGeoDataSort(
+        sortBy,
+        sortOrder
+      );
+
+      const resources = await this.schemaService.fetchResourcesForExport(
+        fetchAccountDetails[0][0].r_number,
+        [[finalSortBy, finalSortOrder]],
+        whereClause,
+        havingClause,
+        geoDataSort,
+        accountId,
+        documentRid
+      );
+
+      const rawResult = resources.resources || [];
+      const [
+        accountFields,
+        resourceFields,
+      ] = await Promise.all([
+        this.schemaService.getAllowedExportFields(userId, "accounts_view_edit"),
+        this.schemaService.getAllowedExportFields(userId, "account_resources_view_edit")
+      ]);
+     // const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"account_resources_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of resourceFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+        const requiredAccountFields = new Set(["account_name"]); // Add more if needed
+      for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
+      const labelMap: Record<string, string> = {
+        "account_name": "Account Name",
+        "resource_code": "Resource Code",
+        "resource_name": "Name",
+        "resource_type_rid": "Resource Type",
+        "resource_orgname": "Org Name",
+        "resource_designation": "Designation",
+        "resource_role": "Role",
+        "country_rid": "Country",
+        "region_rid": "Region",
+        "total_project_hours": "Total Project Hours",
+        "estimated_rd_hours": "Estimated R&D Hours",
+        "status_rid": "Status",
+        "comments": "Comments",
+        "r_number": "Resource ID",
+      };
+      const fieldValueMap: Record<string, string> = {
+        "resource_type_rid": "resource_type_name",
+        "region_rid":"region_name",
+        "country_rid":"country_name",
+         "status_rid":"status_name",
+
+      };
+
+      const exportData = rawResult.map((resource: any) => {
+      const row: Record<string, string> = {};
+
+      for (const [field, label] of Object.entries(labelMap)) {
+       if (allowedFieldSet.has(field)) {
+      const actualField = fieldValueMap[field] || field; // fallback to same field if not mapped
+      row[label] = resource[actualField] ?? "-";
+      }
+      }
+
+      return row;
+    });
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          projectResources: projectResources,
+          resources: exportData,
+          count: resources.totalCount,
         },
       };
     } catch (err) {
       throw new Error(
-        "Error fetching imported project resources: " + (err as Error).message
+        "Error fetching imported resources: " + (err as Error).message
       );
     }
   }

@@ -385,7 +385,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     account_name : "string",
     project_code : "string",
     fiscal_year : "number",
-    response_source_rid : "response_source_rid"
+    response_source_rid : "string"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
