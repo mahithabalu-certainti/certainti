@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag, MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -16,6 +16,7 @@ import { surveyMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
+import { Kafka, Producer } from "kafkajs";
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -26,6 +27,7 @@ export class InteractionService {
   private interactionSchemaService: InteractionSchemaService;
   private interactionModelService: InteractionModelService; // Assuming this is defined somewhere in your code
   private logger: Logger;
+  private producer!: Producer;
   private orgDbSequelize : Sequelize | null = null
   private mainDbSequelize : Sequelize | null = null 
 
@@ -1120,21 +1122,74 @@ export class InteractionService {
       }
     }
   }
+  private async getProducer(): Promise<Producer> {
+    if (!this.producer) {
+      const kafka = new Kafka({
+        clientId: "my-app",
+        brokers: ["localhost:9092"],
+      });
+      this.producer = kafka.producer();
+      await this.producer.connect();
+    }
+    return this.producer;
+  }
   async triggerAI (data : any) {
-    let payload = {
-      project_id : data.project_rid, //"test_project_123" 
+    let payload: {
+      company_id: any;
+      input_text: string;
+      model_type: string;
+      project_id?: any;
+    } = {
       company_id : data.account_rid, // "test_company_456",
       input_text : "This is some text to be processed by the AI.",
       model_type : "NA"
     }
+    if(data.account_rid && !data.project_rid){
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+           data.account_rid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      if(!this.orgDbSequelize)
+      {
+        this.orgDbSequelize = await initOrgSequelize()
+      }
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+      const [projects]: any[] = await this.orgDbSequelize.query(rawQueries.fetchProjectsByAccount(data.account_rid,schemaName));
+      const projectIds = Array.isArray(projects) ? projects.map((p: any) => p.rid) : [];
+      payload.project_id = projectIds;
+    }
+    else
+    {
+      payload.project_id = data.project_rid;
+    }
+    console.log("Triggering AI with payload:", payload);
+
     let headers = {
       contentType : "application/json"
     }
-    let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
-      headers : headers
-    })
-    const sendAiResponse = await this.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
-    return sendAiResponse
+     const topic = "ai_assessment_request";
+      const message = {
+        value: JSON.stringify(payload),
+      };
+      const producer = await this.getProducer();
+      await producer.send({
+        topic,
+        messages: [message],
+      });
+      return {
+          statusMessage : "Request is being processed",
+    status : "success",
+    data : null
+      }
+    // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+    //   headers : headers
+    // })
+    // const sendAiResponse = await this.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
+    // return sendAiResponse
   }
   async fetchAndUpdateFromAiTriggerResponse (data : any) {
     const account_rid = data.company_id;

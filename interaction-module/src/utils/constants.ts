@@ -274,7 +274,11 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
   },
-   updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
+  fetchProjectsByAccount(accountRid: string, schemaName: string) {
+    return `
+    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`
+  },
+  updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
     return `
     UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`
   },

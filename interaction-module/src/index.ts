@@ -3,8 +3,8 @@ dotenv.config();
 import initExpressServer from "./servers/expressServer";
 // import initGraphQLServer from "./servers/graphqlServer";
 
-//import { Kafka } from "kafkajs";
-//import interactionsController from "./controllers/interactionsController";
+import { Kafka } from "kafkajs";
+import interactionsController from "./controllers/interactionsController";
 const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
@@ -21,14 +21,14 @@ async function startServer() {
   }
 }
 
-/*const kafka = new Kafka({
+const kafka = new Kafka({
   clientId: "my-app",
   brokers: [process.env.KAFKA_BROKER || "localhost:9092"], // update with your broker address
 });
 const consumer = kafka.consumer({ groupId: process.env.KAFKA_CONSUMER_GROUP || "interaction-group" });
 async function startKafkaConsumer() {
   await consumer.connect();
-  const topic = process.env.KAFKA_TOPIC_INTERACTION || 'test_topic';
+  const topic = process.env.KAFKA_TOPIC_INTERACTION || 'ai_assessment_response';
   await consumer.subscribe({ topic, fromBeginning: false });
 
   await consumer.run({
@@ -38,9 +38,9 @@ async function startKafkaConsumer() {
     },
   });
 }
-*/
+
 
 
 
 startServer();
-//startKafkaConsumer();
+startKafkaConsumer();

@@ -64,7 +64,7 @@ export async function initOrgSequelize() {
       throw new Error("One or more required database secrets are missing.");
     }
 
-   /* sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+    sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
       host: DB_HOST,
       dialect: "postgres",
       port: 5432,
@@ -79,14 +79,14 @@ export async function initOrgSequelize() {
           rejectUnauthorized: false,
         },
       },
-    }); */
-     sequelize = new Sequelize("orgdbjul18", "postgres", "postgres", {
+    }); 
+     /*sequelize = new Sequelize("orgdbjul18", "postgres", "postgres", {
           host: "localhost",
           port: 5432,
           dialect: 'postgres',
           logging: console.log,
           dialectOptions: { ssl: false },
-        });
+        }); */
     await sequelize.authenticate();
     console.log("Database connection established successfully.");
     return sequelize;
