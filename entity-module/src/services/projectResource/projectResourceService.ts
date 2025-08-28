@@ -657,7 +657,7 @@ export class ProjectResourceService {
       // construct filters
       const { whereClause } = this.buildWhereClause(filters);
 
-      const { data: projectResources, count } =
+      let { data: projectResources, count } =
         await this.projectResourceSchema.listProjectResourceSchema(
           accountNumber,
           accountId,
@@ -671,7 +671,9 @@ export class ProjectResourceService {
           sortBy,
           sortOrder
         );
-       
+
+      projectResources = projectResources.slice(offset, page * limit)
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
