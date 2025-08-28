@@ -1251,9 +1251,9 @@ export class InteractionService {
       
       const parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
 
-      const { company_id, project_fiscal_id, type, qre_percent,project_summary,correlation_id,questions } = parsedMessage;
+      const { company_id, project_id, type, qre_percent,project_summary,correlation_id,questions } = parsedMessage;
 
-      if (!company_id || !project_fiscal_id || !type) {
+      if (!company_id || !project_id || !type) {
         this.logger.error("Kafka message missing required fields", parsedMessage);
         return;
       }
@@ -1263,14 +1263,14 @@ export class InteractionService {
         return;
       }
       if(type === 'qre_percent'){
-        await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
+        await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_id)
       }
       if(type ==="project_summary"){
-         await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_fiscal_id,company_id,correlation_id)
+         await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_id,company_id,correlation_id)
       }
       if(type === "interaction_questions"){ 
        
-        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber,project_fiscal_id)
+        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber,project_id)
         const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE) 
         const questionsWithActionType = Array.isArray(questions)
           ? questions.map((q: any) => ({ ...q, action_type: "add" }))
@@ -1278,7 +1278,7 @@ export class InteractionService {
 
         let interactionData = {
           account_rid: company_id,
-          project_fiscal_rid: project_fiscal_id,
+          project_fiscal_rid: project_id,
           fiscal_year: projectInfo.fiscal_year,
           status_rid: statusRid ?? statusAction.CREATE,
           project_rid: projectInfo?.project_rid,
