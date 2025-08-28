@@ -268,13 +268,13 @@ export const Accounts: React.FC = () => {
 
       <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
         <TextButton
-          label={expandChild ? 'Collapse' : 'Expand'}
+          label={expandChild ? 'Collapse' : 'Expand All'}
           onClick={() => setExpandChild(!expandChild)}
           sx={{
             ...BUTTON_STYLES,
-            width: '70px',
-            minWidth: '70px',
-            maxWidth: '70px',
+            width: '80px',
+            minWidth: '80px',
+            maxWidth: '80px',
           }}
         />
         <div className='relative'>
