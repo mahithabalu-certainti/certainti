@@ -147,9 +147,9 @@ export type ListTableColumn<T> = {
   render?: (row: T) => React.ReactNode;
   field?: TableField;
   conditionallyEdit?: {
-    key: string;
-    matchValue: string | number | null | undefined;
-  };
+    key: keyof T;
+    matchValue: string | number | null | (string | number | null)[];
+  }[];
 };
 
 export interface ActionItem<T extends RowData> {

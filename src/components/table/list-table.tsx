@@ -621,12 +621,22 @@ const ListTable = <T extends RowData>({
       return;
     }
     // check if 'conditionallyEdit' have or not
-    const conditionallyEdit = column.conditionallyEdit?.key
-      ? // If yes
-        row[column.conditionallyEdit.key] ===
-          column.conditionallyEdit.matchValue && column.editable
-      : column.editable;
-    if (!conditionallyEdit) return;
+    const { conditionallyEdit, editable } = column;
+    let canEdit = editable;
+
+    if (canEdit && conditionallyEdit && conditionallyEdit.length > 0) {
+      canEdit = conditionallyEdit.every((condition) => {
+        const cellValue = row[condition.key];
+        const { matchValue } = condition;
+
+        if (Array.isArray(matchValue)) {
+          return matchValue.includes(cellValue as never);
+        } else {
+          return cellValue === matchValue;
+        }
+      });
+    }
+    if (!canEdit) return;
     if (Object.keys(editingCells).length > 0) {
       return;
     }
@@ -1144,12 +1154,25 @@ const ListTable = <T extends RowData>({
                             ? cellValue
                             : '-';
                         // check if 'conditionallyEdit' have or not
-                        const conditionallyEdit = column.conditionallyEdit?.key
-                          ? // If yes
-                            row[column.conditionallyEdit.key] ===
-                              column.conditionallyEdit.matchValue &&
-                            column.editable
-                          : column.editable;
+                        let conditionallyEdit = column.editable;
+                        if (
+                          conditionallyEdit &&
+                          column.conditionallyEdit &&
+                          column.conditionallyEdit.length > 0
+                        ) {
+                          conditionallyEdit = column.conditionallyEdit.every(
+                            (condition) => {
+                              const cellValue = row[condition.key];
+                              const { matchValue } = condition;
+
+                              if (Array.isArray(matchValue)) {
+                                return matchValue.includes(cellValue as never);
+                              } else {
+                                return cellValue === matchValue;
+                              }
+                            }
+                          );
+                        }
 
                         const isFirstDataColumn =
                           column.id === visibleColumns[0].id && expandable;

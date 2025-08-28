@@ -335,10 +335,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
-    conditionallyEdit: {
-      key: 'total_effort',
-      matchValue: null,
-    },
+    conditionallyEdit: [
+      {
+        key: 'total_effort',
+        matchValue: [null, '0.00'],
+      },
+    ],
     sx: {
       textAlign: 'right',
     },
@@ -371,10 +373,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['total_cost']?.read &&
       !permissionMap?.['total_cost']?.edit,
-    conditionallyEdit: {
-      key: 'total_cost',
-      matchValue: null,
-    },
+    conditionallyEdit: [
+      {
+        key: 'total_cost',
+        matchValue: [null, '0.00'],
+      },
+    ],
     sx: {
       textAlign: 'right',
     },
