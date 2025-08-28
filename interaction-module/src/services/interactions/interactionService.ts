@@ -10,13 +10,15 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,inter
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { surveyMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
 import { Kafka, Producer } from "kafkajs";
+import postRequestToKafka from "../../utils/kafka.producer";
+
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -1199,7 +1201,7 @@ export class InteractionService {
       // Check if the message was processed successfully
       console.log("Send result to topic", sendResult);
       return {
-        statusMessage: "Request is being processed",
+        statusMessage: STATUS_MESSAGE.assessmentInitiated,
         status: "success",
         data: null
       };
@@ -1295,4 +1297,55 @@ export class InteractionService {
     }
   }
 
+  async sendPayloadToAi (data : any) : Promise<any> {
+    const result = await postRequestToKafka(data);
+    if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+      return result.statusMessage
+    } 
+  }
+
+  async triggerAiFromScheduler () {
+    const mainDb = await this.getMainDb()
+    const orgDb = await this.getOrgDb()
+ 
+    let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
+    for(let account of fetchAllParentsAccountsRnumber[0]) {
+      let schemaName = rawQueries.fetchSchemaName(account.r_number);
+      let verifyTableExistsForAttachments : any = await orgDb.query(checkTableExists(schemaName, "attachments"))
+      let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
+      if(verifyTableExistsForInteractions[0][0].exists === true) {
+        await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
+        let fetchProjectIdsFromInteractions : any = await orgDb.query(fetchProjectInteractionRid(schemaName))
+        await this.createPayloadForTriggerAi(fetchProjectIdsFromInteractions[0])
+      }
+      if(verifyTableExistsForAttachments[0][0].exists == true) {
+        let fetchProjectIdsFromAttachments : any = await orgDb.query(fetchProjectAttachmentsRids(schemaName))
+        await this.createPayloadForTriggerAi(fetchProjectIdsFromAttachments[0])
+      }
+    }
+  }
+
+  async createPayloadForTriggerAi (data : any) {
+    let mappingData : Map<string, {account_rid : string, project_fiscal_rid : string[]}> = new Map()
+    if(data.length > 0) {
+      for(let items of data) {
+        if(!mappingData.has(items.account_rid)) {
+          mappingData.set(items.account_rid, {
+            account_rid : items.account_rid,
+            project_fiscal_rid : [items.project_fiscal_rid]
+          })
+        } else {
+          let existsIds = mappingData.get(items.account_rid)
+          if(existsIds && !existsIds?.project_fiscal_rid.includes(items.project_fiscal_rid)) {
+            existsIds.project_fiscal_rid.push(items.project_fiscal_rid)
+          }
+        }
+      }
+      let payload = {
+        data : Array.from(mappingData.values()),
+        type : "project"
+      }
+      await this.triggerAI(payload)
+    }
+  }
 }

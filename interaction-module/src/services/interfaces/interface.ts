@@ -121,4 +121,5 @@ export interface IInteractionService {
     status : any,
     data : any
   }>
+  triggerAiFromScheduler() : Promise<void>
 }

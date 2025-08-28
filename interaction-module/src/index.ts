@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
+import { schedulerForTriggerAi } from "./utils/cronScheduler";
 // import initGraphQLServer from "./servers/graphqlServer";
 
 import { Kafka } from "kafkajs";
@@ -11,10 +12,11 @@ async function startServer() {
   try {
     const { app } = await initExpressServer();
     // const { graphqlPath } = await initGraphQLServer(app);
+    await schedulerForTriggerAi()
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
-      console.log(`Server running on port : ${PORT}`);
+      console.log(`Server running on port : ${PORT}`);      
     });
   } catch (err: any) {
     console.log("Error starting server", err.message);
