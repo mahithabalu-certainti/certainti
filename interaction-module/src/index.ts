@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
+import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
 const PORT = process.env.SERVER_PORT || 3000;

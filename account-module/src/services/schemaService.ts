@@ -2510,7 +2510,7 @@ private async createInteractionTable(
           website: accountData.website ?? null,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
-          modified_datetime: new Date(),
+          modified_datetime: new Date()
         },
       }
     );
@@ -3263,7 +3263,7 @@ private async createInteractionTable(
       const mainDdSequilze = await initSequelize();
 
       const result: any = await mainDdSequilze.query(
-        `SELECT logo_url,firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
+        `SELECT logo_url, firm_name, domain_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
         {
           type: "SELECT",
         }

@@ -101,6 +101,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      console.log("Error fetching details", err);
       throw this.throwServiceError(err as Error);
     }
   }

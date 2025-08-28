@@ -94,6 +94,9 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { keyContactRoles: any };
   }>;
+  provisionMonitoredAccount(
+    account_name: string
+  ): void;
 }
 
 export interface GeoDataResponse<T> {
