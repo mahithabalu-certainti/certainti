@@ -55,7 +55,13 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         const menu = menus.find((menu) => menu.name === item.id);
         const updatedItem = {
           ...item,
-          hide: module ? !module.is_enabled : menu ? !menu.is_enabled : false,
+          hide: !item.hide
+            ? module
+              ? !module.is_enabled
+              : menu
+                ? !menu.is_enabled
+                : false
+            : true,
         };
         if (item.subMenu) {
           updatedItem.subMenu = updateMenuItems(item.subMenu);
@@ -205,6 +211,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   }, [accountMenus]); // Run when accountMenus is ready
 
   const renderMenuItem = (item: MenuItem): React.ReactNode => {
+    console.log('+++', item);
     if (item.hide) return null;
     const hasSubmenus = item.subMenu && item.subMenu.length > 0;
     const isExpanded = expandedItems.has(item.key);

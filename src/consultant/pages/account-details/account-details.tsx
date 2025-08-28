@@ -633,6 +633,7 @@ export const AccountDetails = () => {
         key: 'financial',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: disable,
+        hide: disable,
         icon: FinancialIcon,
       },
       {
@@ -647,6 +648,7 @@ export const AccountDetails = () => {
         key: 'resources',
         id: AllModules.RESOURCES,
         disabled: disable,
+        hide: disable,
         icon: ResourcesIcon,
       },
       {
@@ -654,6 +656,7 @@ export const AccountDetails = () => {
         key: 'projects',
         id: AllMenus.PROJECTS,
         disabled: disable,
+        hide: disable,
         icon: ProjectsSideIcon,
       },
       {
@@ -661,6 +664,7 @@ export const AccountDetails = () => {
         key: 'interactions',
         id: AllModules.PROJECT_INTERACTIONS,
         disabled: disable,
+        hide: disable,
         icon: InteractionsIcon,
       },
       {
@@ -668,6 +672,7 @@ export const AccountDetails = () => {
         key: 'cases',
         id: AllMenus.CASES,
         disabled: disable,
+        hide: disable,
         icon: CasesIcon,
       },
       {
@@ -675,6 +680,7 @@ export const AccountDetails = () => {
         key: 'activities',
         id: AllModules.ACTIVITIES,
         disabled: disable,
+        hide: disable,
         icon: ActivitiesIcon,
       },
       {
@@ -682,6 +688,7 @@ export const AccountDetails = () => {
         key: 'notes',
         id: AllMenus.NOTES,
         disabled: disable,
+        hide: disable,
         icon: NotesSideIcon,
       },
       {
@@ -689,6 +696,7 @@ export const AccountDetails = () => {
         key: 'attachments',
         id: AllMenus.ATTACHMENTS,
         disabled: disable,
+        hide: disable,
         icon: AttachmentsSideIcon,
       },
       {
@@ -696,6 +704,7 @@ export const AccountDetails = () => {
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: disable,
+        hide: disable,
         icon: ChecklistIcon,
       },
       {
@@ -710,6 +719,7 @@ export const AccountDetails = () => {
         key: 'imports',
         id: AllMenus.IMPORTS,
         disabled: disable,
+        hide: disable,
         icon: ImportsIcon,
       },
       {
@@ -717,6 +727,7 @@ export const AccountDetails = () => {
         key: 'configuration',
         id: AllMenus.CONFIGURATION,
         disabled: disable,
+        hide: disable,
         icon: ConfigIcon,
         subMenu: [
           {
@@ -724,6 +735,7 @@ export const AccountDetails = () => {
             key: 'users',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
+            hide: disable,
             icon: ResourcesIcon,
           },
           {
@@ -731,6 +743,7 @@ export const AccountDetails = () => {
             key: 'settings',
             id: AllMenus.ACCOUNT_SETTINGS,
             disabled: disable,
+            hide: disable,
             icon: SettingIcon,
           },
         ],
@@ -740,6 +753,8 @@ export const AccountDetails = () => {
       ? allMenus
       : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
   }, [disable, isFinancialHighlightsEnable]);
+
+  console.log('sidemenu', sideMenuItems);
 
   const goBack = () => {
     window.history.back();
