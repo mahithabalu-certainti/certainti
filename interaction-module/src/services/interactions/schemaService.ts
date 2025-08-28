@@ -954,7 +954,7 @@ if(!this.orgDbSequelize)
           interaction_version: interactionVersion,
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
-          response_source: responseData.response_source_rid,
+          response_source_rid: responseData.response_source_rid,
        //   attachment_count: attachmentcount
         };
 
@@ -962,7 +962,7 @@ if(!this.orgDbSequelize)
           status_rid: statusRid,
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
-          response_source: responseData.response_source_rid,
+          response_source_rid: responseData.response_source_rid,
        //   attachment_count: attachmentcount
         };
         if (status === statusAction.RESPONSE_RECEIVED) {
