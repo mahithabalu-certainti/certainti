@@ -1,4 +1,5 @@
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
+import { fiscalOptions, fiscalYearOption } from '../projects/utils';
 
 const textOptions = [
   { option: 'Equals', value: 'equals' },
@@ -28,7 +29,7 @@ const dateOptions = [
 
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
-  interactionSources: { option: string; value: string }[],
+  InteractionResponseSources: { option: string; value: string }[],
   interactionStatus: { option: string; value: string }[]
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
@@ -36,6 +37,15 @@ export const getInteractionFilterFields = (
     {
       name: 'Interaction ID',
       value: 'r_number',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !permissionMap?.['r_number']?.edit &&
+      //   !permissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Project Code',
+      value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -57,6 +67,13 @@ export const getInteractionFilterFields = (
       // hide:
       //   !permissionMap?.['age_days']?.edit &&
       //   !permissionMap?.['age_days']?.read,
+    },
+    {
+      name: 'Fiscal Year',
+      value: 'fiscal_year',
+      type: 'enum',
+      options: fiscalYearOption,
+      operatorOption: fiscalOptions,
     },
     {
       name: 'Status',
@@ -144,9 +161,9 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Response Source',
-      value: 'response_source',
+      value: 'response_source_rid',
       type: 'enum',
-      options: interactionSources,
+      options: InteractionResponseSources,
       operatorOption: enumOptions,
       // hide:
       //   !permissionMap?.['response_source']?.edit &&

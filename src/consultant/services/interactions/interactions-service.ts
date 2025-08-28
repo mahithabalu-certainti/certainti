@@ -16,6 +16,8 @@ import {
   getInteractionHistoryExportUrl,
   // getInteractionExportUrl,
   getInteractionListUrl,
+  getGlobalInteractionListUrl,
+  getGlobalInteractionExportUrl,
 } from '../urls/interactions-url';
 
 export const exportInteractions = async (
@@ -146,10 +148,49 @@ export const useGetAllInteractionList = (
 > => {
   return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
     queryKey: ['all-interaction-list', params, refreshTrigger],
-    queryFn: () => fetchInteractionList(params),
+    queryFn: () => fetchGlobalInteractionList(params), // Fixed: Use fetchGlobalInteractionList instead of fetchInteractionList
     retry: 0,
     gcTime: 0,
     enabled: !!params.isGlobal,
+  });
+};
+
+export const fetchGlobalInteractionList = async (
+  params: InteractionListURLParams
+): Promise<{ interactions: InteractionList[]; count: number }> => {
+  const globalPayload = {
+    page: params.page,
+    limit: params.limit,
+    sort: params.sort,
+    sort_by: params.sort_by,
+    filters: params.filters || {},
+    globalFilters: params.globalFilters || {},
+    fiscal_year: params.fiscal_year || 0,
+  };
+
+  const { data } = await interactionServiceApi.post<InteractionListResponse>(
+    getGlobalInteractionListUrl(),
+    globalPayload
+  );
+  return {
+    interactions: data.data.interactions,
+    count: data.data.totalCount,
+  };
+};
+
+export const useGlobalInteractionList = (
+  params: InteractionListURLParams,
+  refreshInteractions?: number
+): UseQueryResult<
+  { interactions: InteractionList[]; count: number },
+  Error
+> => {
+  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+    queryKey: ['global-interaction-list', params, refreshInteractions],
+    queryFn: () => fetchGlobalInteractionList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: params.fiscal_year !== undefined && params.fiscal_year !== null,
   });
 };
 
@@ -252,4 +293,43 @@ export const useSendInteraction = () => {
   return useMutation<CommonApiResponse, Error, SendInteractionPayload>({
     mutationFn: (body) => sendInteraction(body),
   });
+};
+
+export const exportGlobalInteractions = async (
+  params: InteractionListURLParams
+): Promise<void> => {
+  try {
+    const filename = 'global_interactions.xlsx';
+    console.log('params', params);
+    const response =
+      await interactionServiceApi.post<ExportInteractionResponse>(
+        getGlobalInteractionExportUrl(),
+        params
+      );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };
