@@ -404,3 +404,14 @@ export interface GetInteractionResponeSourcesApiResponse
     responseSource: InteractionResSourceItem[];
   };
 }
+
+export interface InteractionResponseSourceItem {
+  rid: string;
+  response_source_name: string;
+}
+export interface GetInteractionResponseSourcesApiResponse
+  extends CommonApiResponse {
+  data: {
+    responseSource: InteractionResponseSourceItem[];
+  };
+}

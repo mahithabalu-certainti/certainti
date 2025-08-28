@@ -1,4 +1,8 @@
-import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
+import { FieldConfig } from '../../account-details-sidebar/components/filter/filterType';
+import {
+  fiscalOptions,
+  fiscalYearOption,
+} from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
 const textOptions = [
   { option: 'Equals', value: 'equals' },
@@ -28,14 +32,33 @@ const dateOptions = [
 
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
-  interactionResponseSources: { option: string; value: string }[],
-  interactionStatus: { option: string; value: string }[]
+  // interactionSources: { option: string; value: string }[],
+  interactionStatus: { option: string; value: string }[],
+  interactionResponseSources: { option: string; value: string }[]
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
       name: 'Interaction ID',
       value: 'r_number',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !permissionMap?.['r_number']?.edit &&
+      //   !permissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Account Name',
+      value: 'account_name',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !permissionMap?.['r_number']?.edit &&
+      //   !permissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Project Code',
+      value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
       // hide:
@@ -57,6 +80,13 @@ export const getInteractionFilterFields = (
       // hide:
       //   !permissionMap?.['age_days']?.edit &&
       //   !permissionMap?.['age_days']?.read,
+    },
+    {
+      name: 'Fiscal Year',
+      value: 'fiscal_year',
+      type: 'enum',
+      options: fiscalYearOption,
+      operatorOption: fiscalOptions,
     },
     {
       name: 'Status',
@@ -120,7 +150,7 @@ export const getInteractionFilterFields = (
     {
       name: 'Attachments',
       value: 'attachment_count',
-      type: 'text',
+      type: 'number',
       // hide:
       //   !permissionMap?.['attachments']?.edit &&
       //   !permissionMap?.['attachments']?.read,
@@ -191,32 +221,7 @@ export const getInteractionFilterFields = (
       name: 'Sort Options',
       value: 'sort_options',
       type: 'system-sort',
-      options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
+      options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
     },
   ];
-};
-
-export const getInteractionStatusColor = (status?: string): string => {
-  switch (status) {
-    case 'Draft':
-      return 'text-gray-500';
-    case 'Created':
-      return 'text-blue-500';
-    case 'Sent':
-      return 'text-purple-500';
-    case 'Response Draft':
-      return 'text-orange-500';
-    case 'Response Received':
-      return 'text-green-600';
-    case 'On Hold':
-      return 'text-yellow-500';
-    case 'Cancelled':
-      return 'text-red-600';
-    case 'Completed':
-      return 'text-green-700';
-    case 'Question Updated':
-      return 'text-indigo-500';
-    default:
-      return 'text-gray-700';
-  }
 };

@@ -137,7 +137,9 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ setCount }) => {
             detialsResponse?.data?.history_details.length > 0 && (
               <InteractionQuestions
                 questions={detailQuestions}
-                globalAttachments={[]}
+                globalAttachments={
+                  detialsResponse?.data?.global_attachments || []
+                }
                 isEditEnable={false}
                 actionButtonEnable={false}
                 className='border-0'
