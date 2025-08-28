@@ -1947,7 +1947,7 @@ private async createInteractionTable(
       response_updated_by character varying(50),
       response_submitted_on character varying(50),
       response_submission_by character varying(50),
-      response_source character varying(255),
+      response_source_rid character varying(50),
       status_rid character varying(50) NOT NULL,
       interaction_url character varying(255),
       interaction_age integer,
@@ -2135,7 +2135,7 @@ private async createInteractionTable(
         response_on timestamp with time zone,
         response_email character varying(255),
         response_by character varying(50),
-        response_source character varying(50),
+        response_source_rid character varying(50),
         interaction_version integer
       );
     `);
