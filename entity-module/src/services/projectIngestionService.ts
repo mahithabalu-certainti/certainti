@@ -1665,7 +1665,7 @@ class ProjectIngestionService {
       } else {
         if (field === "created_datetime") {
           fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ${nullsHandled}`),
+            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
         } else {
           fullOrder.push([
