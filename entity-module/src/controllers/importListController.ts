@@ -303,7 +303,8 @@ async function exportStagingFailureList (req : Request, res : Response) {
                     "Start Date" : data.start_date,
                     "End Date" : data.end_date,
                     "Effort In Hours" : data.effort_in_hours,
-                    "Salary" : data.salary
+                    "Salary" : data.salary,
+                    "Error Description": data.error_descriptions
                 }))
                 break;
 
