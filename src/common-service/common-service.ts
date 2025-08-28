@@ -10,8 +10,7 @@ import {
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
-  GetInteractionResponseSourcesApiResponse,
-  GetInteractionSourcesApiResponse,
+  GetInteractionResponeSourcesApiResponse,
   GetInteractionStatusApiResponse,
   GetInteractionTypesApiResponse,
   GetStatusApiResponse,
@@ -265,58 +264,28 @@ export const useGetInteractionTypes = () => {
   });
 };
 
-export const getInteractionSourcesUrl = (): string => {
-  return `/api/interactions/interactionSource`;
-};
-
-export const fetchInteractionSources =
-  async (): Promise<GetInteractionSourcesApiResponse> => {
-    try {
-      const { data } =
-        await interactionServiceApi.get<GetInteractionSourcesApiResponse>(
-          getInteractionSourcesUrl()
-        );
-      return data;
-    } catch (error) {
-      console.error('Error fetching interaction sources:', error);
-      throw error;
-    }
-  };
-
-export const useGetInteractionSources = () => {
-  return useQuery<GetInteractionSourcesApiResponse, Error>({
-    queryKey: ['interaction-sources'],
-    queryFn: () => fetchInteractionSources(),
-    retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
-};
-
-export const getInteractionResponseSourcesUrl = (): string => {
+export const getInteractionResponeSourcesUrl = (): string => {
   return `/api/interactions/responseSource`;
 };
 
-export const fetchInteractionResponseSources =
-  async (): Promise<GetInteractionResponseSourcesApiResponse> => {
+export const fetchInteractionResponeSources =
+  async (): Promise<GetInteractionResponeSourcesApiResponse> => {
     try {
       const { data } =
-        await interactionServiceApi.get<GetInteractionResponseSourcesApiResponse>(
-          getInteractionResponseSourcesUrl()
+        await interactionServiceApi.get<GetInteractionResponeSourcesApiResponse>(
+          getInteractionResponeSourcesUrl()
         );
       return data;
     } catch (error) {
-      console.error('Error fetching interaction sources:', error);
+      console.error('Error fetching interaction respone sources:', error);
       throw error;
     }
   };
 
-export const useGetInteractionResponseSources = () => {
-  return useQuery<GetInteractionResponseSourcesApiResponse, Error>({
-    queryKey: ['interaction-response-sources'],
-    queryFn: () => fetchInteractionResponseSources(),
+export const useGetInteractionResponeSources = () => {
+  return useQuery<GetInteractionResponeSourcesApiResponse, Error>({
+    queryKey: ['interaction-sources'],
+    queryFn: () => fetchInteractionResponeSources(),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

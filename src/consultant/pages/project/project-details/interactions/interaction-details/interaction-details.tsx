@@ -219,7 +219,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           isEditEnable={!disableEditResBtn}
           actionButtonEnable={true}
           handleResponseHistory={handleResponseHistory}
-          refetchDeetails={refetch}
+          refetchDetails={refetch}
           formData={{
             account_rid: projectDetails?.account_rid || '',
             project_rid: projectDetails?.project_rid || '',

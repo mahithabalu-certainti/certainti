@@ -341,11 +341,21 @@ export const ProjectTask = ({
     setShowFilter(false);
   };
   const convertDates = (pfy: FormFiscalDateType) => {
+    const isValidDate = (date?: Date) => {
+      return date && !isNaN(new Date(date).getTime());
+    };
+
     return {
       ...pfy,
-      endMax: pfy.endMax ? new Date(pfy.endMax).toISOString() : null,
-      startMax: pfy.startMax ? new Date(pfy.startMax).toISOString() : null,
-      startMin: pfy.startMin ? new Date(pfy.startMin).toISOString() : null,
+      endMax: isValidDate(pfy.endMax)
+        ? new Date(pfy.endMax as Date).toISOString()
+        : null,
+      startMax: isValidDate(pfy.startMax)
+        ? new Date(pfy.startMax as Date).toISOString()
+        : null,
+      startMin: isValidDate(pfy.startMin)
+        ? new Date(pfy.startMin as Date).toISOString()
+        : null,
     };
   };
   const fiscalDate = PFY ? convertDates(PFY) : null;

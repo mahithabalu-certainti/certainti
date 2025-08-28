@@ -23,7 +23,7 @@ const DATE_CONFIG = {
 export const newKeyContactFields = (
   roles: SelectOption[],
   disabled?: boolean
-) => [
+): FieldType[] => [
   createTextField('key_contact_name', 'Key Contact Name', {
     required: false,
     width: '190px',
@@ -116,7 +116,7 @@ const createDynamicField = (
   index: number,
   removeKeyContact: (index: number) => void
 ) => {
-  const fieldsArr = [];
+  const fieldsArr: FieldType[] = [];
   const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
   const dynamicName = `${name}_${groupIndex}`;
@@ -135,7 +135,6 @@ const createDynamicField = (
       })
     );
   }
-
   if (contacts.type === 'radio') {
     fieldsArr.push(
       createRadioField(dynamicName, label, {
@@ -157,7 +156,6 @@ const createDynamicField = (
       })
     );
   }
-
   return fieldsArr;
 };
 
@@ -165,9 +163,7 @@ const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
   minDate.setFullYear(currentDate.getFullYear() - yearsBack);
-  const previousDate = new Date(currentDate);
-  previousDate.setDate(currentDate.getDate() - 1);
-  return { currentDate, minDate, previousDate };
+  return { currentDate, minDate };
 };
 
 const { currentDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
@@ -180,7 +176,6 @@ export const FormData = (
   state: SelectOption[],
   industry: SelectOption[],
   classification: SelectOption[],
-  // roles: SelectOption[],
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
@@ -188,7 +183,11 @@ export const FormData = (
   showOthersField?: boolean,
   showClassifyOthersField?: boolean,
   stateLoading?: boolean,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  totalEffort?: string,
+  calculatedTotalCost?: string,
+  disableTotalEffort?: boolean,
+  disableTotalCost?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -222,11 +221,6 @@ export const FormData = (
                 errorMessage:
                   "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
               },
-              // {
-              //   regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-              //   errorMessage:
-              //     'Cannot begin or end with a space or special character',
-              // },
             ],
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
@@ -245,7 +239,6 @@ export const FormData = (
               !permissionMap?.['fiscal_year']?.edit,
           }),
           createTextField('project_name', 'Name', {
-            // required: true,
             placeholder: 'Enter Name',
             disabled:
               isEditView &&
@@ -298,7 +291,6 @@ export const FormData = (
               !permissionMap?.['project_startdate']?.read &&
               !permissionMap?.['project_startdate']?.edit,
           }),
-
           createDateField('project_enddate', 'End Date', {
             required: false,
             minDate: new Date('2000-01-01'),
@@ -330,7 +322,6 @@ export const FormData = (
           createTextField('classification_name', 'Classification-Other', {
             required: true,
             placeholder: 'Enter Classification-Other',
-            // hide: !showClassifyOthersField,
             disabled:
               isEditView &&
               permissionMap?.['project_classification_rid']?.read &&
@@ -606,7 +597,7 @@ export const FormData = (
           createTextField('total_fte', 'Total FTE Count', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
-              'Total FTE Count Count must be a positive integer with up to 9 digits',
+              'Total FTE Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE Count',
             disabled:
               isEditView &&
@@ -642,6 +633,8 @@ export const FormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Effort',
+            onChange: true,
+            resetDependsFields: ['total_effort'],
             disabled:
               isEditView &&
               permissionMap?.['total_effort_fte']?.read &&
@@ -656,6 +649,8 @@ export const FormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Effort',
+            onChange: true,
+            resetDependsFields: ['total_effort'],
             disabled:
               isEditView &&
               permissionMap?.['total_effort_subcon']?.read &&
@@ -670,10 +665,13 @@ export const FormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Effort In Hrs',
+            onChange: true,
+            defaultValue: totalEffort || '',
             disabled:
-              isEditView &&
-              permissionMap?.['total_effort']?.read &&
-              !permissionMap?.['total_effort']?.edit,
+              (isEditView &&
+                permissionMap?.['total_effort']?.read &&
+                !permissionMap?.['total_effort']?.edit) ||
+              disableTotalEffort,
             hide:
               isEditView &&
               !permissionMap?.['total_effort']?.read &&
@@ -681,9 +679,11 @@ export const FormData = (
           }),
           createTextField('total_cost_fte', 'Total FTE Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            resetDependsFields: ['total_cost'],
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
+            onChange: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_fte']?.read &&
@@ -695,9 +695,11 @@ export const FormData = (
           }),
           createTextField('total_cost_subcon', 'Total Sub Con Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            resetDependsFields: ['total_cost'],
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
+            onChange: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_subcon']?.read &&
@@ -709,9 +711,11 @@ export const FormData = (
           }),
           createTextField('total_cost_nonlabor', 'Total Non Labor Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            resetDependsFields: ['total_cost'],
             regexErrorMessage:
               'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Non Labor Cost',
+            onChange: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_nonlabor']?.read &&
@@ -726,10 +730,13 @@ export const FormData = (
             regexErrorMessage:
               'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Cost',
+            onChange: true,
+            defaultValue: calculatedTotalCost || '',
             disabled:
-              isEditView &&
-              permissionMap?.['total_cost']?.read &&
-              !permissionMap?.['total_cost']?.edit,
+              (isEditView &&
+                permissionMap?.['total_cost']?.read &&
+                !permissionMap?.['total_cost']?.edit) ||
+              disableTotalCost,
             hide:
               isEditView &&
               !permissionMap?.['total_cost']?.read &&
@@ -830,9 +837,13 @@ export const FormData = (
       currency,
       keyContacts,
       addNewKeyContact,
-      isEditView,
       removeKeyContact,
+      isEditView,
       permissionMap,
+      totalEffort,
+      calculatedTotalCost,
+      disableTotalEffort,
+      disableTotalCost,
     ]
   );
 };

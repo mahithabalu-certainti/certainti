@@ -1,4 +1,3 @@
-/* eslint-disable no-dupe-else-if */
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
@@ -661,7 +660,7 @@ export const AccountDetails = () => {
         name: 'Interactions',
         key: 'interactions',
         id: AllModules.PROJECT_INTERACTIONS,
-        disabled: false,
+        disabled: disable,
         icon: InteractionsIcon,
       },
       {
