@@ -80,6 +80,7 @@ export interface InteractionResponse {
   fiscal_year: number;
   status_rid: string;
   status_action:string;
+  response_source_rid:string;
   response_source:string;
   attachments:any;
   questions: {

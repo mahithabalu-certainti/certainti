@@ -8,14 +8,14 @@ function surveyMailTemplate(
 ): { message: IEmailMessage } {
   const emailMessage = {
     message: {
-      subject: `Survey Invitation: R&D Credits Claims Process for ${project.project_name} (${project.project_code}) - FY ${project.fiscalYear}`,
+      subject: `Survey Invitation: R&D Credits Claims Process for ${project.project_name || ""} (${project.project_code}) - FY ${project.fiscalYear}`,
       body: {
         contentType: "HTML",
         content: `
-          <p>Dear ${recipient.name},</p>
+          <p>Dear ${recipient.name || ""},</p>
           <p>Greetings For The Day!</p>
           <p>
-            We are conducting a survey for R&D Credits Claims Process for ${account.account_name} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project ID: <strong>${project.project_code}</strong>).
+            We are conducting a survey for R&D Credits Claims Process for ${account.account_name || ""} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project ID: <strong>${project.project_code || ""}</strong>).
           </p>
           <p>Please take a moment to complete the survey using one of the following options:</p>
           <ol>
@@ -48,36 +48,7 @@ function surveyMailTemplate(
   };
   return emailMessage;
 }
-function interactionMailTemplate(
-  emailInfo: {name:string, email:string},
-): { message: IEmailMessage } {
-  console.log("Email info");
-  console.log(emailInfo);
-  const emailMessage: any = {
-    message: {
-      subject: "Security Alert: Your OTP for Account Verification",
-      body: {
-        contentType: "HTML",
-        content: `
-          <p>Hello ${emailInfo.name}</p> 
-          <p>Email: <a href="mailto:${process.env.SUPPORT_EMAIL}" style="color: #0073e6;">${process.env.SUPPORT_EMAIL}</a></p>
-          <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
-        `,
-      },
-      toRecipients: [
-        {
-          emailAddress: {
-            address: emailInfo.email,
-          },
-        },
-      ],
-    },
-  };
 
-
-
-  return emailMessage;
-}
 function otpMailTemplate(otp: string, email: string): { message: IEmailMessage } {
   const emailMessage = {
     message: {
@@ -127,4 +98,4 @@ function otpMailTemplate(otp: string, email: string): { message: IEmailMessage }
   return emailMessage;
 }
 
-export { otpMailTemplate,interactionMailTemplate,surveyMailTemplate };
+export { otpMailTemplate,surveyMailTemplate };
