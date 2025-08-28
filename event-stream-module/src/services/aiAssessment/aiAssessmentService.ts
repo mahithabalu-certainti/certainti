@@ -33,7 +33,7 @@ export class AIAssessmentService {
     try {
       const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || "ai_assessment_response";
       const message = {
-        value: JSON.stringify(aiResponse),
+        value: JSON.stringify(aiResponse.data),
       };
       if (!this.producer) {
         await this.initProducer();
