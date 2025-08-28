@@ -146,7 +146,10 @@ export type ListTableColumn<T> = {
   hide?: boolean;
   render?: (row: T) => React.ReactNode;
   field?: TableField;
-  conditionallyEdit?: { key: string; matchValue: string };
+  conditionallyEdit?: {
+    key: string;
+    matchValue: string | number | null | undefined;
+  };
 };
 
 export interface ActionItem<T extends RowData> {
