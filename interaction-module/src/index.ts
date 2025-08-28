@@ -29,7 +29,7 @@ const consumer = kafka.consumer({ groupId: process.env.KAFKA_CONSUMER_GROUP || "
 async function startKafkaConsumer() {
   try {
     await consumer.connect();
-    const topic = process.env.KAFKA_TOPIC_INTERACTION || 'ai_assessment_response';
+    const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || 'ai_assessment_response';
     await consumer.subscribe({ topic, fromBeginning: false });
 
     await consumer.run({

@@ -30,7 +30,7 @@ const consumer = kafka.consumer({
 });
 async function startKafkaConsumer() {
   await consumer.connect();
-  const topic = process.env.KAFKA_TOPIC_INTERACTION || "ai_assessment_request";
+  const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
   await consumer.subscribe({ topic, fromBeginning: false });
 
   await consumer.run({

@@ -30,7 +30,7 @@ export class AIAssessmentService {
   }> {
     console.log("AI Response received in service:", aiResponse);
     try {
-      const topic = "ai_assessment_response";
+      const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || "ai_assessment_response";
       const message = {
         value: JSON.stringify(aiResponse),
       };

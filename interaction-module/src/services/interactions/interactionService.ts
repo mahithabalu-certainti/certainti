@@ -1138,8 +1138,6 @@ export class InteractionService {
   }
   async triggerAI(req: any) {
     try {
-      console.log(req.data);
-      console.log(req.type);
       let payload: {
         company_id?: any;
         input_text: string;
@@ -1172,7 +1170,7 @@ export class InteractionService {
       }
       console.log("Triggering AI with payload:", payload);
 
-      const topic = "ai_assessment_request";
+      const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
       const message = {
         value: JSON.stringify(payload),
       };
