@@ -92,26 +92,19 @@ export class AIAssessmentService {
           const transaction_id = uuidv4();
 
           const payload = { company_id, project_id: id, input_text, transaction_id:transaction_id };
-          for (const type of ["QRE", "QUESTION", "TECH_SUMMARY"]) {
-            const payloadWithType = { ...payload, type };
-            console.log("Payload to be sent:", payloadWithType);
-             console.log("--------------if-------------------");
-            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payloadWithType, {
+            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
             //   headers: headers
             // });
-          }
+        
         }
       } else {
          const transaction_id = uuidv4();
         const payload = { company_id, project_id, input_text ,transaction_id};
-         for (const type of ["QRE", "QUESTION", "TECH_SUMMARY"]) {
-            const payloadWithType = { ...payload, type };
-             console.log("Payload to be sent:", payloadWithType);
-             console.log("---------------else------------------");
-            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payloadWithType, {
+
+            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
             //   headers: headers
             // });
-          }
+          
       }
 
       this.logger.info(

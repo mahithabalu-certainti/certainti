@@ -1262,13 +1262,13 @@ export class InteractionService {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
-      if(type === 'QRE'){
+      if(type === 'qre_percent'){
         await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
       }
-      if(type ==="TECH_SUMMARY"){
+      if(type ==="project_summary"){
          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_fiscal_id,company_id,correlation_id)
       }
-      if(type === "QUESTIONS"){ 
+      if(type === "interaction_questions"){ 
        
         const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber,project_fiscal_id)
         const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE) 
