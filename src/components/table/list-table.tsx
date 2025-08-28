@@ -1069,13 +1069,13 @@ const ListTable = <T extends RowData>({
                       sx={{
                         display: hideRow ? 'none' : '',
                         '&:hover td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         '&.Mui-selected td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         '&.Mui-selected:hover td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         ...(!parentBorder && rowLevel === 0
                           ? {
@@ -1220,7 +1220,7 @@ const ListTable = <T extends RowData>({
                                 })}
 
                                 {isSaving && (
-                                  <span className='absolute top-2.5 right-2 bg-white'>
+                                  <span className='absolute top-2.5 right-2 bg-white z-10'>
                                     <CircularProgress size='15px' />
                                   </span>
                                 )}
