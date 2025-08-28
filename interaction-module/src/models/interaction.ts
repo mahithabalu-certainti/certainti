@@ -29,7 +29,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   response_updated_by?: string;
   response_submitted_on?: Date;
   response_submission_by?: string;
-  response_source?: string;
+  response_source_rid?: string;
   status_rid?: string;
   interaction_url?: string;
   interaction_age?: number;
@@ -73,7 +73,7 @@ export class Interaction
   public response_updated_by?: string;
   public response_submitted_on?: Date;
   public response_submission_by?: string;
-  public response_source?: string;
+  public response_source_rid?: string;
   public status_rid?: string;
   public interaction_url?: string;
   public interaction_age?: number;
@@ -126,7 +126,7 @@ export class Interaction
         response_updated_by: { type: DataTypes.STRING(50), allowNull: true },
         response_submitted_on: { type: DataTypes.DATE, allowNull: true },
         response_submission_by: { type: DataTypes.STRING(50), allowNull: true },
-        response_source: { type: DataTypes.STRING(255), allowNull: true },
+        response_source_rid: { type: DataTypes.STRING(255), allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_url: { type: DataTypes.STRING(255), allowNull: true },
         interaction_age: { type: DataTypes.INTEGER, allowNull: true },

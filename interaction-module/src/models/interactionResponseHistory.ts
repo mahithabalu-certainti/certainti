@@ -13,7 +13,7 @@ interface InteractionResponseHistoryAttributes {
   response_on?: Date;
   response_email?: string;
   response_by?: string;
-  response_source?: string;
+  response_source_rid?: string;
   interaction_response?: string;
   interaction_version: number;
 }
@@ -41,7 +41,7 @@ export class InteractionResponseHistory
   public response_on?: Date;
   public response_email?: string;
   public response_by?: string;
-  public response_source?: string;
+  public response_source_rid?: string;
   public interaction_response?: string;
   public interaction_version!: number;
 
@@ -72,7 +72,7 @@ export class InteractionResponseHistory
         response_on: { type: DataTypes.DATE, allowNull: true },
         response_email: { type: DataTypes.STRING(255), allowNull: true },
         response_by: { type: DataTypes.STRING(50), allowNull: true },
-        response_source: { type: DataTypes.STRING(50), allowNull: true },
+        response_source_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_response: { type: DataTypes.STRING(50), allowNull: true },
         interaction_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
       },
