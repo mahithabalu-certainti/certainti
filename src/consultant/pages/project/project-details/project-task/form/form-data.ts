@@ -49,6 +49,7 @@ export const ProjectTaskFormData = (
             options: memoizedProjectResourceCode,
             required: true,
             onChange: true,
+            showCreateBtn: true,
             placeholder: 'Choose Resource Code',
             disabled:
               isEditView &&

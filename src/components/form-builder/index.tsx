@@ -1,6 +1,7 @@
 import {
   Autocomplete,
   Checkbox,
+  createFilterOptions,
   MenuItem,
   Select,
   Skeleton,
@@ -94,6 +95,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     confirmLabel?: string;
   }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
 
+  const autoCompleteFilter = createFilterOptions<SelectOption>();
+
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
   );
@@ -185,13 +188,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
 
     if (!keyContactSection) return;
-    const isFromAccount = formData?.find((item) => item.from === 'account');
+    const isFromProject = formData?.find((item) => item.from === 'project');
     const fieldsPerRow = newContactLength ?? 8;
     const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const baseIndex = rowIndex * fieldsPerRow;
-      const statusIndex = isFromAccount ? 7 : 6;
+      const statusIndex = isFromProject ? 7 : 6;
       const nameField = keyContactSection.fields[baseIndex];
       const roleField = keyContactSection.fields[baseIndex + 1];
       const emailField = keyContactSection.fields[baseIndex + 2];
@@ -258,6 +261,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [constructFormData, formData]);
 
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
@@ -333,7 +337,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const handleAddKeyContact = () => {
-    const isFromAccount = formData?.find((item) => item.from === 'account');
+    const isFromProject = formData?.find((item) => item.from === 'project');
     const fieldsPerRow = newContactLength ?? 8;
     // Update constructFormData with default values for the new row
     setConstructFormData((prevData) => {
@@ -350,7 +354,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       newData[`key_contact_rid_${newRowIndex}`] = '';
       newData[`is_primary_contact_${newRowIndex}`] = 'no';
       newData[`include_in_communication_${newRowIndex}`] = 'no';
-      if (isFromAccount) {
+      if (isFromProject) {
         newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
       }
       newData[`key_contact_status_${newRowIndex}`] = 'active';
@@ -1173,10 +1177,42 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <Autocomplete
               options={field.options || []}
               disableClearable
+              freeSolo
               popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
-              onChange={(_e, newValue: SelectOption) => {
-                handleChange(newValue?.value || '');
+              onChange={(_e, newValue) => {
+                if (typeof newValue === 'string') {
+                  handleChange(newValue || '');
+                } else if (newValue) {
+                  handleChange(newValue.value || '');
+                } else {
+                  handleChange('');
+                }
+              }}
+              filterOptions={(options, params) => {
+                const filtered = autoCompleteFilter(options, params);
+
+                const { inputValue } = params;
+                const hasPartialMatches = filtered.length > 0;
+                const isExisting = options.some(
+                  (option) =>
+                    inputValue.toLowerCase() === option.label?.toLowerCase() ||
+                    inputValue.toLowerCase() === option.value?.toLowerCase()
+                );
+                if (
+                  inputValue !== '' &&
+                  !hasPartialMatches &&
+                  !isExisting &&
+                  field.showCreateBtn
+                ) {
+                  filtered.push({
+                    label: `✚ Create "${inputValue}"`,
+                    value: inputValue,
+                    isCreate: true,
+                  });
+                }
+
+                return filtered;
               }}
               disabled={field.disabled}
               value={
@@ -1221,6 +1257,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 '& svg': {
                   color: '#7D98B6',
                 },
+              }}
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <li
+                    key={key}
+                    {...optionProps}
+                    style={{
+                      color: option.isCreate ? '#1976d2' : 'inherit',
+                    }}
+                  >
+                    {option.label}
+                  </li>
+                );
               }}
               renderInput={(params) => (
                 <TextField

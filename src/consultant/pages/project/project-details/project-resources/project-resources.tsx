@@ -69,7 +69,7 @@ const projectTabs: ResourceTabs[] = [
 
 export const ProjectResources = ({
   projectID,
-  accountID,
+  accountData,
   projectFiscalDate,
   setExportType,
   setAttachmentParams,
@@ -77,7 +77,11 @@ export const ProjectResources = ({
   accountOrProjectInActive,
 }: {
   projectID?: string;
-  accountID?: string;
+  accountData?: {
+    accountID: string;
+    accountName: string;
+    accountNumber: string;
+  };
   projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setAttachmentParams: React.Dispatch<
@@ -121,11 +125,12 @@ export const ProjectResources = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const navigate = useNavigate();
-  // const [searchParams] = useSearchParams();
   const fileId = searchParams.get('page');
   const resID = searchParams.get('pro_res_id');
   const checkDetail = fileId === 'details' && resID;
   const viewDetails = !!checkDetail;
+  const accountID =
+    accountData?.accountID || searchParams.get('accountID') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -390,6 +395,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: JSON.stringify(PFY),
       source: 'createProjectResource',
       currency_rid: currency_rid ?? '',

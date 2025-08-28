@@ -19,98 +19,98 @@ export const newKeyContactFields = (
   roles: SelectOption[],
   disabled?: boolean
 ) => [
-    createTextField('key_contact_name', 'Key Contact Name', {
-      required: false,
-      width: '190px',
-      placeholder: 'Enter Key Contact Name',
-      onChange: true,
-      disabled: disabled || false,
-      errorHandling: [
-        {
-          regex: REGEX_PATTERNS.MIN_2,
-          errorMessage: 'Key Contact Name must be at least 2 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-          errorMessage: 'Key Contact Name must not exceed 128 characters',
-        },
-        {
-          regex: REGEX_PATTERNS.CONTACT_NAME,
-          errorMessage:
-            "Key Contact Name can only contain letters, spaces, apostrophes ('), and hyphens (-)",
-        },
-        {
-          regex: REGEX_PATTERNS.KEY_CONTACT_NO_CONSECUTIVE,
-          errorMessage:
-            'Key Contact Name must not contain consecutive special characters',
-        },
-        {
-          regex: REGEX_PATTERNS.KEY_CONTACT_NO_TRAILING,
-          errorMessage:
-            'Key Contact Name cannot begin or end with a space or special character',
-        },
-      ],
-    }),
-    createSelectField('key_contact_role', 'Key Contact Role', {
-      options: roles,
-      width: '180px',
-      required: false,
-      placeholder: 'Choose Key Contact Role',
-      onChange: true,
-      disabled: disabled || false,
-    }),
-    createTextField('key_contact_email', 'Key Contact Email', {
-      required: false,
-      width: '180px',
-      placeholder: 'Enter Key Contact Email',
-      onChange: true,
-      disabled: disabled || false,
-      errorHandling: [
-        {
-          regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-          errorMessage: 'Max length exceeded',
-        },
-        {
-          regex: REGEX_PATTERNS.EMAIL,
-          errorMessage: 'Invalid email address',
-        },
-      ],
-    }),
-    createTextField('key_contact_rid', 'Key Contact ID', {
-      required: false,
-      hide: true,
-      placeholder: '',
-      disabled: disabled || false,
-    }),
-    createRadioField('is_primary_contact', 'Is Primary Contact?', {
-      radioOptions: YES_NO_OPTIONS,
-      width: '140px',
-      required: true,
-      disabled: disabled || false,
-    }),
-    createRadioField('include_in_communication', 'Interaction Recipient?', {
-      radioOptions: YES_NO_OPTIONS,
-      width: '200px',
-      required: true,
-      disabled: disabled || false,
-    }),
-    createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
-      radioOptions: YES_NO_OPTIONS,
-      width: '200px',
-      required: true,
-      disabled: disabled || false,
-    }),
-    createSelectField('key_contact_status', 'Key Contact Status', {
-      required: false,
-      width: '140px',
-      options: STATUS_OPTIONS,
-      disabled: disabled || false,
-    }),
-    createImgButton('button', CloseIcon, {
-      width: '30px',
-      disabled: disabled || false,
-    }),
-  ];
+  createTextField('key_contact_name', 'Key Contact Name', {
+    required: false,
+    width: '190px',
+    placeholder: 'Enter Key Contact Name',
+    onChange: true,
+    disabled: disabled || false,
+    errorHandling: [
+      {
+        regex: REGEX_PATTERNS.MIN_2,
+        errorMessage: 'Key Contact Name must be at least 2 characters long',
+      },
+      {
+        regex: REGEX_PATTERNS.MAX_NAME_REGEX,
+        errorMessage: 'Key Contact Name must not exceed 128 characters',
+      },
+      {
+        regex: REGEX_PATTERNS.CONTACT_NAME,
+        errorMessage:
+          "Key Contact Name can only contain letters, spaces, apostrophes ('), and hyphens (-)",
+      },
+      {
+        regex: REGEX_PATTERNS.KEY_CONTACT_NO_CONSECUTIVE,
+        errorMessage:
+          'Key Contact Name must not contain consecutive special characters',
+      },
+      {
+        regex: REGEX_PATTERNS.KEY_CONTACT_NO_TRAILING,
+        errorMessage:
+          'Key Contact Name cannot begin or end with a space or special character',
+      },
+    ],
+  }),
+  createSelectField('key_contact_role', 'Key Contact Role', {
+    options: roles,
+    width: '180px',
+    required: false,
+    placeholder: 'Choose Key Contact Role',
+    onChange: true,
+    disabled: disabled || false,
+  }),
+  createTextField('key_contact_email', 'Key Contact Email', {
+    required: false,
+    width: '180px',
+    placeholder: 'Enter Key Contact Email',
+    onChange: true,
+    disabled: disabled || false,
+    errorHandling: [
+      {
+        regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.EMAIL,
+        errorMessage: 'Invalid email address',
+      },
+    ],
+  }),
+  createTextField('key_contact_rid', 'Key Contact ID', {
+    required: false,
+    hide: true,
+    placeholder: '',
+    disabled: disabled || false,
+  }),
+  createRadioField('is_primary_contact', 'Is Primary Contact?', {
+    radioOptions: YES_NO_OPTIONS,
+    width: '140px',
+    required: true,
+    disabled: disabled || false,
+  }),
+  // createRadioField('include_in_communication', 'Interaction Recipient?', {
+  //   radioOptions: YES_NO_OPTIONS,
+  //   width: '200px',
+  //   required: true,
+  //   disabled: disabled || false,
+  // }),
+  createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
+    radioOptions: YES_NO_OPTIONS,
+    width: '200px',
+    required: true,
+    disabled: disabled || false,
+  }),
+  createSelectField('key_contact_status', 'Key Contact Status', {
+    required: false,
+    width: '140px',
+    options: STATUS_OPTIONS,
+    disabled: disabled || false,
+  }),
+  createImgButton('button', CloseIcon, {
+    width: '30px',
+    disabled: disabled || false,
+  }),
+];
 
 const createDynamicField = (
   contacts: FieldType,
@@ -118,7 +118,7 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 9);
+  const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
   const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {
@@ -361,7 +361,8 @@ export const AccFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
-                errorMessage: 'Business Name must be more than 6 characters long',
+                errorMessage:
+                  'Business Name must be more than 6 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_125,
