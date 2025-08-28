@@ -281,9 +281,17 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
   },
-   updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
+  fetchProjectsByAccount(accountRid: string, schemaName: string) {
+    return `
+    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`
+  },
+  updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
     return `
     UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`
+  },
+  updateAIProcessedFlag(rid: string, schemaName: string) {
+    return `
+    UPDATE ${schemaName}.interactions SET is_ai_processed = true WHERE rid = '${rid}'`
   },
   updateQreInfoSummary(rid: string, qrePercent: number) {
     return `
@@ -339,6 +347,11 @@ export const rawQueries = {
     return `
     SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`
   },
+  fetchisAutoTriggerEnabled(projectFiscalRid: string,schemaName : string) {
+    return `
+    SELECT auto_access_rd FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`
+  },
+  
   fetchInteractionStatusList(whereClause: string) {
     return `
     SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`

@@ -855,6 +855,7 @@ if(!this.orgDbSequelize)
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
+    let isAutoTriggerEnabled = false;
     const [responseSourceIDs]:any= await this.mainDbSequelize.query(rawQueries.fetchResponseSourceByType(responseData.response_source));
     responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
     const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
@@ -964,12 +965,14 @@ if(!this.orgDbSequelize)
           response_source_rid: responseData.response_source_rid,
        //   attachment_count: attachmentcount
         };
-       
-        if (status === "Response Received") {
+        if (status === statusAction.RESPONSE_RECEIVED) {
           updateData.response_submitted_on = new Date();
           updateData.response_submission_by = userEmailId;
           summaryUpdateData.response_submitted_on = new Date();
           summaryUpdateData.response_submission_by = userEmailId;
+          //check for auto trigger ai
+           isAutoTriggerEnabled = await this.isAutoTriggerEnabled(accountNumber, responseData.project_fiscal_rid);
+          console.log("isAutoTriggerEnabled",isAutoTriggerEnabled)
         }
 
         await Interaction.update(updateData, {
@@ -980,7 +983,8 @@ if(!this.orgDbSequelize)
         });
       }
       return {
-        interactionVersion
+        interactionVersion,
+        isAutoTriggerEnabled
       };
     } catch (err) {
       throw new Error(
@@ -1344,10 +1348,31 @@ async isAutoSendInteractionEnabled(accountNumber: string,interactionDetails: any
       { type: "SELECT" }
     );
 
-    return projectInfo?.auto_send_ai_interaction ?? false;
+    return projectInfo?.auto_access_rd ?? false;
   } catch (err) {
     throw new Error(
       "Error checking auto-send interaction status: " + (err as Error).message
+    );
+  }
+}
+
+async isAutoTriggerEnabled(accountNumber: string,project_fiscal_rid: string) {
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    // Fetch project info
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchisAutoTriggerEnabled(project_fiscal_rid, schemaName),
+      { type: "SELECT" }
+    );
+
+    return projectInfo?.auto_access_rd ?? false;
+  } catch (err) {
+    throw new Error(
+      "Error checking auto-trigger interaction status: " + (err as Error).message
     );
   }
 }
@@ -1362,6 +1387,10 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
     }
     
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+    await this.orgDbSequelize.query(
+      rawQueries.updateAIProcessedFlag(projectFiscalId,schemaName ),
+      { type: "UPDATE" }
+    );
 
      const [projectInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
@@ -1449,6 +1478,10 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
 
     await this.orgDbSequelize.query(
       rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent, ),
+      { type: "UPDATE" }
+    );
+    await this.orgDbSequelize.query(
+      rawQueries.updateAIProcessedFlag(projectFiscalRid,schemaName ),
       { type: "UPDATE" }
     );
     await this.mainDbSequelize.query(
