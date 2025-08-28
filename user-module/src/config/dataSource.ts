@@ -67,7 +67,7 @@ export async function initSequelize() {
       throw new Error("One or more required database secrets are missing.");
     }
 
-   /* sequelize = new Sequelize(
+    sequelize = new Sequelize(
       DB_NAME,
       DB_USER,
       DB_PASSWORD,
@@ -87,14 +87,7 @@ export async function initSequelize() {
           },
         },
       },
-    ); */
-     sequelize = new Sequelize("maindb", "postgres", "postgres", {
-  host: "localhost",
-  port: 5432,
-  dialect: 'postgres',
-  logging: console.log,
-  dialectOptions: { ssl: false },
-});
+    );
     await sequelize.authenticate();
     console.log("Database connection established successfully.");
     return sequelize;
