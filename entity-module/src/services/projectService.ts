@@ -857,7 +857,7 @@ export class ProjectService {
 
       const order = [[finalSortBy, finalSortOrder]];
 
-      const { projects, count } = await this.projectIngestion.fetchProjectList(
+      let { projects, count } = await this.projectIngestion.fetchProjectList(
         accountRNumber,
         accountData,
         whereClause,
@@ -872,6 +872,7 @@ export class ProjectService {
         {},
         accessibleIds
       );
+      projects = projects.slice(offset, page * limit)
 
       return {
         statusCode: HttpStatus.SUCCESS,
