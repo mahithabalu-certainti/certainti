@@ -23,37 +23,29 @@ async function startServer() {
 
 const kafka = new Kafka({
   clientId: "my-app",
-  brokers: [process.env.KAFKA_BROKER || "localhost:9092"], // update with your broker address
+  brokers: [process.env.KAFKA_BROKER || "kafka:9092"], // update with your broker address
 });
 const consumer = kafka.consumer({
-  groupId: process.env.KAFKA_CONSUMER_GROUP || "interaction-group",
+  groupId: process.env.KAFKA_CONSUMER_GROUP || "ai_assessment_request",
 });
-async function startKafkaConsumer() {
-  await consumer.connect();
-  const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
-  await consumer.subscribe({ topic, fromBeginning: false });
 
-  await consumer.run({
-    eachMessage: async ({ message }: { message: any }) => {
-      console.log("Received message:", message.value?.toString());
-      await aiAssessmentController.processKafkaMessages(
-        message.value?.toString()
-      );
-    },
-  });
+async function startKafkaConsumer() {
+  try {
+    await consumer.connect();
+    const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+    await consumer.subscribe({ topic, fromBeginning: false });
+
+    await consumer.run({
+      eachMessage: async ({ message }: { message: any }) => {
+        console.log("Received message:", message.value?.toString());
+        await aiAssessmentController.processKafkaMessages(message.value?.toString());
+      },
+    });
+  } catch (err: any) {
+    console.log("Kafka consumer could not be started:", err.message);
+
+  }
 }
 startServer();
 startKafkaConsumer();
-import configurations from "./config/config";
-const services = configurations.getInstance().getServices();
-const aiAssessmentService = services.aiAssessmentService;
 
-process.on("SIGINT", async () => {
-  await aiAssessmentService.disconnectProducer();
-  process.exit(0);
-});
-
-process.on("SIGTERM", async () => {
-  await aiAssessmentService.disconnectProducer();
-  process.exit(0);
-});

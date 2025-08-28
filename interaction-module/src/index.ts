@@ -23,7 +23,7 @@ async function startServer() {
 
 const kafka = new Kafka({
   clientId: "my-app",
-  brokers: [process.env.KAFKA_BROKER || "localhost:9092"], // update with your broker address
+  brokers: [process.env.KAFKA_BROKER || "kafka:9092"], // update with your broker address
 });
 const consumer = kafka.consumer({ groupId: process.env.KAFKA_CONSUMER_GROUP || "interaction-group" });
 async function startKafkaConsumer() {
@@ -40,7 +40,6 @@ async function startKafkaConsumer() {
     });
   } catch (err: any) {
     console.log("Kafka consumer could not be started:", err.message);
-    // Do not throw error, just log and continue
   }
 }
 

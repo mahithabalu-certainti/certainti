@@ -259,11 +259,28 @@ export class InteractionService {
           transaction
         );
       await transaction.commit();
-      await this.interactionSchemaService.updateAttachmentCount(
-        accountNumber,
-        interactionData.interaction_rid,
-        updatedInteractionResponse.interactionVersion
+      const parallelTasks = [];
+      if (updatedInteractionResponse.isAutoTriggerEnabled) {
+        const req = {
+          data: [
+        {
+          account_rid: interactionData.account_rid,
+          project_fiscal_rid: [interactionData.project_fiscal_rid],
+        },
+          ],
+          type: "project",
+        };
+        parallelTasks.push(this.triggerAI(req));
+      }
+
+      parallelTasks.push(
+        this.interactionSchemaService.updateAttachmentCount(
+          accountNumber,
+          interactionData.interaction_rid,
+          updatedInteractionResponse.interactionVersion
+        )
       );
+      await Promise.all(parallelTasks);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1129,7 +1146,7 @@ export class InteractionService {
     if (!this.producer) {
       const kafka = new Kafka({
         clientId: "my-app",
-        brokers: ["localhost:9092"],
+        brokers: [process.env.KAFKA_BROKER || "kafka:9092"],
       });
       this.producer = kafka.producer();
       await this.producer.connect();
@@ -1175,10 +1192,12 @@ export class InteractionService {
         value: JSON.stringify(payload),
       };
       const producer = await this.getProducer();
-      await producer.send({
+      const sendResult = await producer.send({
         topic,
         messages: [message],
       });
+      // Check if the message was processed successfully
+      console.log("Send result to topic", sendResult);
       return {
         statusMessage: "Request is being processed",
         status: "success",
