@@ -602,13 +602,14 @@ export class InteractionService {
     });
 
     // Column headers
-    worksheet.addRow(["Questions", "Answers", "Notes", "Is Mandatory"]);
+    worksheet.addRow(["Question No","Questions", "Answers", "Notes", "Is Mandatory"]);
     worksheet.getRow(5).eachCell((cell) => {
       cell.font = { bold: true };
       cell.protection = { locked: true };
     });
 
     worksheet.columns = [
+      { key: "question no", width: 15 },
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
@@ -619,17 +620,19 @@ export class InteractionService {
     interactionItems.forEach((item: any) => {
       const plain = item.get ? item.get({ plain: true }) : item;
       const row = worksheet.addRow({
-        question: plain.question,
-        answer: "",
-        notes: "",
-        is_mandatory: plain.is_mandatory ? "Yes" : "No",
+        "question no": plain.question_seq_num,
+        "question": plain.question,
+        "answer": "",
+        "notes": "",
+        "is_mandatory": plain.is_mandatory ? "Yes" : "No",
       });
 
       // Lock specific columns right away
       row.getCell(1).protection = { locked: true };
-      row.getCell(2).protection = { locked: false};
-      row.getCell(3).protection = { locked: true };
+      row.getCell(2).protection = { locked: true};
+      row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
+      row.getCell(5).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set
@@ -815,7 +818,7 @@ export class InteractionService {
           interaction_source_rid: d.interaction_source,
           interaction_source_name: sourceMap.get(d.interaction_source),
           response_source_rid: d.response_source,
-          response_source: responseSourceMap.get(d.response_source),
+          response_source_name : responseSourceMap.get(d.response_source) == undefined ? null : responseSourceMap.get(d.response_source),
           created_by: d.created_by,
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
@@ -1240,7 +1243,7 @@ export class InteractionService {
         return;
       }
       if(type === 'QRE'){
-         await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
+        await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
       }
       if(type ==="TECH_SUMMARY"){
          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_fiscal_id,company_id,correlation_id)

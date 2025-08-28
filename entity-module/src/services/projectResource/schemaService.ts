@@ -235,12 +235,6 @@ export class ProjectResourceSchemaService {
       as: "project_resource_timeline_project_resource"
     });
 
-    ProjectResourceModel.hasMany(ProjectResourceTimelineModel, {
-      foreignKey: "entity_rid",
-      sourceKey: "rid",
-      as: "ProjectResourceTimeline",
-    });
-
     ProjectResourceHistoryModel.belongsTo(ProjectResourceModel, {
       foreignKey: "project_resource_rid",
       targetKey: "rid",
@@ -4879,8 +4873,8 @@ export class ProjectResourceSchemaService {
         : order;
 
     let projectResource = await ProjectResource.findAll({
-      offset,
-      limit,
+      // offset,
+      // limit,
       order: dbOrder,
       where: {
         ...whereFilters,
@@ -4891,89 +4885,6 @@ export class ProjectResourceSchemaService {
       where: {
         ...whereFilters,
       },
-    });
-
-    if (projectResource && projectResource.length > 0) {
-      projectResource = await this.insertProjectRegionData(projectResource);
-      projectResource = await this.insertProjectCurrencyData(projectResource);
-      projectResource = await this.insertResourceTypeData(accountNumber, projectResource);
-      projectResource = await this.insertResourceCode(accountNumber, projectResource);
-
-      projectResource = await this.inMemorySortAndFilter(
-        projectResource,
-        sortBy,
-        sortOrder,
-        rawFilters
-      );
-    }
-
-    if (totalCount > projectResource.length) {
-      totalCount = projectResource.length;
-    }
-
-    return {
-      data: projectResource,
-      count: totalCount,
-    };
-  }
-
-  async listAccountLevelProjectResources(
-    accountNumber: string,
-    accountId: string,
-    rawFilters: Record<string, any> = {},
-    filters: Record<string, any> = {},
-    fiscalYear: number,
-    offset: number,
-    limit: number,
-    order: Order,
-    sortBy: string,
-    sortOrder: string,
-    documentRid: string
-  ) {
-    const { ProjectResource, ProjectResourceTimeline } = await this.getModels(accountNumber);
-
-    const whereFilters: any = {
-      account_rid: accountId,
-      ...filters,
-    };
-
-    if (fiscalYear) {
-      whereFilters.fiscal_year = fiscalYear;
-    }
-
-    const isDbField = !["region_name", "resource_type_name", "country_name", "resource_code", "resource_role", "resource_name", "resource_type_rid"].includes(sortBy);
-    const dbOrder =
-      isDbField && sortBy && sortOrder
-        ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
-        : order;
-
-    let projectResource = await ProjectResource.findAll({
-      offset,
-      limit,
-      order: dbOrder,
-      where: {
-        ...whereFilters,
-      },
-      include: documentRid ? [{
-        model: ProjectResourceTimeline,
-        as: 'ProjectResourceTimeline',
-        where: { document_rid: documentRid },
-        required: true,
-        attributes: []
-      }] : [],
-    });
-
-    let totalCount = await ProjectResource.count({
-      where: {
-        ...whereFilters,
-      },
-      include: documentRid ? [{
-        model: ProjectResourceTimeline,
-        as: 'ProjectResourceTimeline',
-        where: { document_rid: documentRid },
-        required: true,
-        attributes: []
-      }] : [],
     });
 
     if (projectResource && projectResource.length > 0) {
@@ -5035,113 +4946,6 @@ export class ProjectResourceSchemaService {
       where: {
         ...whereFilters,
       },
-    });
-
-    if (projectResource && projectResource.length > 0) {
-      projectResource = await this.insertProjectRegionData(projectResource);
-      projectResource = await this.insertResourceTypeData(accountNumber, projectResource);
-      projectResource = await this.insertResourceCode(accountNumber, projectResource);
-
-      projectResource = await this.inMemorySortAndFilter(
-        projectResource,
-        sortBy,
-        sortOrder,
-        rawFilters
-      );
-    }
-    const schemaService = new SchemaService();
-    const projectResourceFields = await schemaService.getAllowedExportFields(userId,"projects_resources_view_edit");
-    const allowedFieldSet = new Set<string>();
-        for (const field of projectResourceFields) {
-          if (field.read) {
-            allowedFieldSet.add(field.field_name);
-          }
-        }
-    const labelMap: Record<string, string> = {
-        "resource_code": "Resource Code",
-        "resource_name": "Name",
-        "country_rid": "Resource Country",
-        "region_rid": "Resource Region",
-        "fiscal_year":"Fiscal Year",
-        "resource_type_rid": "Resource Type",
-        "resource_role": "Role",
-        "total_hours_pro_res": "Effort (Hours)",
-        "total_cost_pro_res": "Cost",
-        "resource_designation": "Designation",
-        "qre_percent": "QRE %",
-        "qre_final": "QRE",
-        "description": "Comments",
-        // "r_number": "Project Resource ID",
-      };
-    let exportData = projectResource.map((resource: any) => {
-       const exportData: Record<string, string> = {};   
-      let resultMap =  {
-        "resource_code": resource.resource_code || "-",
-        "resource_name": resource.resource_name || "-",
-        "country_rid": resource.country_name || "-",
-        "region_rid": resource.region_name || "-",
-        "fiscal_year": resource.fiscal_year || "-",
-        "resource_type_rid": resource?.resource_type_name || "-",
-        "resource_role": resource.resource_role || "-",
-        "total_hours_pro_res": resource.total_hours_pro_res || "-",
-        "total_cost_pro_res": resource.total_cost_pro_res || "-",
-        "qre_percent": resource.qre_percent || "-",
-        "qre_final": resource.qre_final || "-",
-        "description": resource.description || "-",
-        // "r_number": resource.project_resource_code || "-",
-      };      
-      for (const [field, value] of Object.entries(resultMap)) {
-      if (allowedFieldSet.has(field)) {
-        exportData[labelMap[field]] = value;
-      }
-      }
-       return exportData
-    });
-
-    return exportData;
-  }
-
-  async exportAccountLevelProjectResources(
-    accountNumber: string,
-    accountId: string,
-    rawFilters: Record<string, any> = {},
-    filters: Record<string, any> = {},
-    fiscalYear: number,
-    order: Order,
-    sortBy: string,
-    sortOrder: string,
-    userId: string,
-    documentRid: string
-  ) {
-    const { ProjectResource, ProjectResourceTimeline } = await this.getModels(accountNumber);
-
-    const whereFilters: any = {
-      account_rid: accountId,
-      ...filters,
-    };
-
-    if (fiscalYear) {
-      whereFilters.fiscal_year = fiscalYear;
-    }
-
-    const isDbField = !["region_name", "resource_type_name", "country_name", "resource_code", "resource_role", "resource_name", "resource_type_rid"].includes(sortBy);
-    const dbOrder =
-      isDbField && sortBy && sortOrder
-        ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
-        : order;
-
-    let projectResource = await ProjectResource.findAll({
-      order: dbOrder,
-      where: {
-        ...whereFilters,
-      },
-      include: documentRid ? [{
-        model: ProjectResourceTimeline,
-        as: 'ProjectResourceTimeline',
-        where: { document_rid: documentRid },
-        required: true,
-        attributes: []
-      }] : [],
     });
 
     if (projectResource && projectResource.length > 0) {

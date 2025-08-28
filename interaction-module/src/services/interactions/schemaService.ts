@@ -856,7 +856,7 @@ if(!this.orgDbSequelize)
         await this.interactionModelService.getMainSequelize();
     }
     const [responseSourceIDs]:any= await this.mainDbSequelize.query(rawQueries.fetchResponseSourceByType(responseData.response_source));
-    responseData.response_source = responseSourceIDs[0]?.rid ?? null;
+    responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
     const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
      const userEmailId = emailInfo[0]?.email ?? userId;
       let responseCreated = false;
@@ -886,7 +886,7 @@ if(!this.orgDbSequelize)
           response_email: userEmailId,
           response_by: userId,
           response_on: new Date(),
-          response_source: "Manual",
+          response_source_rid: responseData.response_source_rid ,
         });
         for (const attachment of responseData.attachments) {
           await InteractionAttachment.create(
@@ -917,7 +917,7 @@ if(!this.orgDbSequelize)
               response_email: userEmailId,
               response_by: userId,
               response_on: new Date(),
-              response_source: "Manual",
+              response_source_rid:responseData.response_source_rid,
             },
             { transaction }
           );
@@ -953,7 +953,7 @@ if(!this.orgDbSequelize)
           interaction_version: interactionVersion,
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
-          response_source: responseData.response_source,
+          response_source: responseData.response_source_rid,
        //   attachment_count: attachmentcount
         };
 
@@ -961,7 +961,7 @@ if(!this.orgDbSequelize)
           status_rid: statusRid,
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
-          response_source: responseData.response_source,
+          response_source: responseData.response_source_rid,
        //   attachment_count: attachmentcount
         };
        

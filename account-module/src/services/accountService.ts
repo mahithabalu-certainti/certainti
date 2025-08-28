@@ -1641,12 +1641,12 @@ async listGlobalAccounts(
 
       const globalAccount = await repository.findAll({
         where: parentWhereClauseBase,
-        attributes: ['rid', 'account_name'],
+        attributes: ['rid', 'account_name','currency_rid'],
         include: [
           {
             model: Account,
             as: 'child_accounts',
-            attributes: ['rid', 'account_name'],
+            attributes: ['rid', 'account_name','currency_rid'],
             required: false,
             where: childWhereClauseBase,
             separate: true,
@@ -1674,12 +1674,12 @@ async listGlobalAccounts(
           [Op.is]: null
         }
       },
-      attributes: ['rid', 'account_name'],
+      attributes: ['rid', 'account_name','currency_rid'],
       include: [
         {
           model: Account,
           as: 'child_accounts',
-          attributes: ['rid', 'account_name'],
+          attributes: ['rid', 'account_name','currency_rid'],
           required: false,
           separate: true,
           order: [[sortBy, sortOrder]],
